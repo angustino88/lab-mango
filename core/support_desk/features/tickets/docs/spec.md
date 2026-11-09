@@ -1,5 +1,7 @@
 # Feature Specification: Support Desk & Ticket Management (`core/support_desk/features/tickets`)
 
+> Status: Implemented. Verified against `api/urls.py`, `api/views.py`, `application/policies.py` and migrations on 2026-11-09. This is the only ticket specification; it replaced the Jira-era draft (`docs/support-ticket-management-spec.md`, removed).
+
 ## 1. Domain Overview & Purpose
 Internal incident / service-request desk with resource traceability (bench, equipment, license, station, room),
 replacing the external Jira dependency. Modelled on ITIL service desks (Jira Service Management, Zendesk, ServiceNow):
@@ -57,26 +59,32 @@ Append-only. Enforced by model `save/delete` guards **and** PostgreSQL triggers 
 Recipients: requester, assignee, **watchers** (never for internal notes), **team members** for new/routed tickets (all agents if no team). Outbox rows are leased (`SELECT … FOR UPDATE SKIP LOCKED` + 5-minute lease) so concurrent workers never double-send; e-mail bodies are HTML-escaped and deep links absolute (`SUPPORT_DESK_BASE_URL`).
 
 ### 3.5 Attachments
-Type/size/count limits and magic-byte checks as before. Scanning is pluggable: set `SUPPORT_DESK_ATTACHMENT_SCANNER` to a dotted callable `(attachment) -> AttachmentScanStatus`. Without it uploads are `clean` immediately and verified by SHA-256 integrity; with it uploads start `pending` and **cannot be downloaded** (409) until scanned clean.
+Type/size/count limits (from `SupportSettings`) and magic-byte checks. Scanning is pluggable: set `SUPPORT_DESK_ATTACHMENT_SCANNER` to a dotted callable `(attachment) -> AttachmentScanStatus`. Without it uploads are `clean` immediately and verified by SHA-256 integrity; with it uploads start `pending` and **cannot be downloaded** (409) until scanned clean.
 
 ## 4. API
-Base `/api/support/`. All responses use the standard envelope. `{key}` is the ticket key.
+Base `/api/support/`. All responses use the [standard envelope](../../../../../docs/api/response-standard.md). `{key}` is the ticket key. "any" means `HasAPIKey | IsAuthenticated`; "visible" applies §3.1. Generated contract: `openapi/support-desk-tickets.yml`.
 
 | Method & Path | Access | Purpose |
 |---|---|---|
 | `GET/POST tickets` | any / any | List (scoped, filterable) / create |
 | `GET tickets/stats?days=30` | agent | Workload, SLA health, throughput, CSAT |
-| `GET/PATCH tickets/{key}` | visible | Detail / partial update (`version` required); `labels`, `team_id`, `parent_key` are agent-only; `null` clears `team_id`, `due_date`; empty `parent_key` clears parent |
-| `POST tickets/{key}/assign` · `/transitions` · `/resources` (POST/DELETE) | as before | `transitions` also accepts `resolution_code` |
+| `GET/PATCH tickets/{key}` | visible (requester may edit only while `open`) | Detail / partial update (`version` required); `labels`, `team_id`, `parent_key` are agent-only; `null` clears `team_id`, `due_date`; empty `parent_key` clears parent |
+| `POST tickets/{key}/assign` | agent | Assign / reassign (`version` optional) |
+| `POST tickets/{key}/transitions` | per `SupportStatusTransition.allowed_roles` | Change status; accepts `reason`, `resolution_code` as the transition requires |
+| `POST/DELETE tickets/{key}/resources` | link: agent, or a requester who can view the resource; unlink: agent | Link / unlink lab resources |
 | `POST/DELETE tickets/{key}/watchers` | visible (self) / agent (others) | Follow / unfollow (`user_id` optional) |
 | `GET/POST tickets/{key}/links`, `DELETE …/links/{id}` | read: visible; write: agent | Ticket links |
 | `POST tickets/{key}/csat` | requester | Rate 1-5 within `csat_window_days` of resolution |
-| `GET/POST tickets/{key}/comments`, `…/attachments`, `GET …/activity`, `GET attachments/{id}/download` | visible | As before |
+| `GET/POST tickets/{key}/comments`, `PATCH/DELETE …/comments/{id}` | visible; edit/delete by author within the edit window | Public replies and agent-only internal notes |
+| `GET/POST tickets/{key}/attachments`, `DELETE …/attachments/{id}`, `GET attachments/{id}/download` | visible | Upload, remove, download (blocked until scanned clean, §3.5) |
+| `GET tickets/{key}/activity` | visible | Audit trail (agent-only entries hidden from requesters) |
 | `GET resources/{type}/{id}/tickets` | any (scoped) | Resource incident history |
-| `GET categories|priorities|statuses|teams|labels/options` | any | Flat `{id, sku, name}` (category/priority/team `sku` = `code`) |
+| `GET {categories,priorities,statuses,teams,labels}/options` | any | Flat `{id, sku, name}` selectors ([ADR 002](../../../../../docs/architecture/decisions/002-catalog-and-selector-api.md)); category/team `sku` = `code`, priority `sku` = `code` or `null`, label/status `sku` = `null` |
+| `GET {categories,priorities,statuses,teams,labels}`, `GET …/{id}` | any | Catalog read |
+| `POST {categories,…}`, `PATCH/DELETE …/{id}` | admin | Catalog configuration |
 | `GET canned-responses[?ticket=KEY]` | agent | Usable templates, optionally rendered for a ticket |
-| `GET/POST admin/{categories,priorities,statuses,transitions,teams,labels,canned-responses}`, `PATCH/DELETE …/{id}` | admin | Configuration |
-| `GET/PATCH admin/settings` | admin | Singleton settings |
+| `GET/POST admin/{transitions,canned-responses}`, `PATCH/DELETE …/{id}` | read: any; write: admin | Workflow and canned-response configuration |
+| `GET/PATCH admin/settings` | read: any; write: admin | Singleton settings |
 
 ### Ticket list filters
 `key, status, status_id, system_state, priority_id, category_id, requester_id, assignee_id, unassigned, team_id, no_team, ticket_type, source, impact, urgency, label, parent_key, watcher_id, resolution_code, external_reference, resource_type, resource_id, created_after/before, updated_after/before, resolution_due_after/before`; search over `key, subject, description, external_reference`; ordering by `priority, created_at, updated_at, last_activity_at, resolution_due_at, number, id`.
@@ -85,5 +93,5 @@ Base `/api/support/`. All responses use the standard envelope. `{key}` is the ti
 `process_notification_outbox`, `auto_close_resolved_tickets` (moves to the `is_final` status), `scan_pending_attachments`, **`flag_sla_breaches`** (schedule every 1-5 minutes).
 
 ## 6. Operational notes
-- Migrations `0003` (schema) and `0004` (backfill: `is_final` for statuses named "Closed", `pauses_sla` for `waiting` statuses, `last_activity_at`, slug codes). Existing tickets get **no retroactive SLA**.
+- Migrations: `0001` initial, `0002` activity immutability triggers, `0003` (schema) and `0004` (backfill: `is_final` for statuses named "Closed", `pauses_sla` for `waiting` statuses, `last_activity_at`, slug codes). Existing tickets get **no retroactive SLA**. `0005` adds the `pg_trgm` label search index (ADR 002).
 - Not yet implemented (deliberate follow-ups): business-hours calendars, automatic assignment (round-robin / load based), e-mail-to-ticket ingestion, automation rules.
