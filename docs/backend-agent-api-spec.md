@@ -171,6 +171,19 @@ disabled credential cannot renew; operator recovery is required.
 | `PATCH /agent/equipment/activity` | Separate live resource activity through equipment owner command |
 | `POST /agent/events` | Bounded monitoring batch through monitoring public command; no snapshot/raw-session side effects |
 
+**Implemented interim (2026-11-09, owner-selected until installation mTLS exists):** `POST /agent/heartbeat`
+requires a request signed by the identity's enrolled Ed25519 key, not a client-supplied `agent_uid`.
+Headers: `X-Agent-Id` (agent_uid), `X-Agent-Timestamp` (unix seconds), `X-Agent-Nonce` (base64url, at
+least 16 random bytes) and `X-Agent-Signature` (base64url Ed25519 signature). The signed bytes are the
+NUL-joined `labmango-agent-request-v1`, `backend_id`, `agent_uid`, upper-case method, path, timestamp,
+nonce and the hex SHA-256 of the raw body (`core.agents.application.agent_request_message`). The server
+reads the ACTIVE identity on every request (no positive cache, so revocation applies to the next request),
+rejects timestamps outside `AGENT_REQUEST_MAX_SKEW_S` (default 300 s) and nonces seen within twice that
+window (`cache.add` on the shared cache, after the signature verifies). Every failure is the same `401`
+(`WWW-Authenticate: LabMango-Agent-Signature`). `/agent/info` advertises `request_signature_v1`. This is
+not a shared API key; mTLS replaces it when phase 3 lands. Operator writes under `/api/agents` require the
+Labs coordinator role (admin implies it); reads require authentication only.
+
 ### 4.4 Booking capability (design scope; implementation still gated)
 
 | Method / path | Purpose / permission |

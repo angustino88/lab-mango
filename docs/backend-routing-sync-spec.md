@@ -421,6 +421,14 @@ Appendix E holds test vectors that both sides MUST pass.
 | Maximum response size | 5 MiB |
 
 - Held requests MUST NOT exhaust workers: use async (ASGI) views or a dedicated worker pool for `changes`. Wake-ups come from `NOTIFY` (PUB-5), with one `LISTEN` connection per worker or a shared listener. Drop the request when the client disconnects. Cost is one open request per Router stream.
+- **Implemented (2026-11-09, pending owner approval of this deviation):** `changes` is an async view, so a
+  held request awaits on the event loop and never occupies Django's shared sync thread. Instead of `LISTEN`,
+  a waiter subscribes to in-process wake-ups, then re-reads the head, and re-reads it every
+  `ROUTING_SYNC_LONGPOLL_POLL_INTERVAL_S` (default 1 s) until its deadline. In-process commits wake it at
+  once; commits from other processes are seen within the interval (inside the 2 s SLO). Cost is two
+  indexed reads per held request per interval. The per-credential held-request and rate limits in the
+  table are not enforced yet. `snapshot`, `changes` and `digest` read in one read-only REPEATABLE READ
+  transaction (SNAP-1, DIG-2), and the digest cache key is `(entity, epoch, version)`.
 - Responses are bounded and `no-store`. `gzip` MAY be applied.
 - **Reference sizing (assumption; measure to confirm, O7):** up to 100k users and 50k agents per backend is about 150k claims, roughly 20 MB over 150 snapshot pages. One Router instance syncs at a time, so steady load is two held requests per backend.
 
