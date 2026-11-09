@@ -1,0 +1,3269 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/license-categories:
+    get:
+      operationId: labs_license_categories_retrieve
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCategoryCatalogListSerializersLicenseCategoryPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Categories
+  /api/labs/license-categories/{category_id}:
+    get:
+      operationId: labs_license_categories_retrieve_by_category_id
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: path
+        name: category_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCategoryCatalogDetailSerializersLicenseCategoryDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Categories by Category ID
+  /api/labs/license-categories/options:
+    get:
+      operationId: labs_license_categories_options_retrieve
+      description: 'Shared base view for dropdown selector endpoints (ADR 002).
+
+
+        Validates query parameters, enforces the size class and result cap,
+
+        calls the feature''s query selector, handles ETag generation / 304 Not Modified,
+
+        and returns {"data": [{"id": ..., "sku": ..., "name": ...}]}.'
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: licenses
+      summary: Get License Categories Options
+  /api/labs/license-products:
+    get:
+      operationId: labs_license_products_retrieve
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      - in: query
+        name: vendor_id
+        schema:
+          type: integer
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseProductCatalogListSerializersLicenseProductPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Products
+  /api/labs/license-products/{product_id}:
+    get:
+      operationId: labs_license_products_retrieve_by_product_id
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseProductCatalogDetailSerializersLicenseProductDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Products by Product ID
+  /api/labs/license-products/options:
+    get:
+      operationId: labs_license_products_options_retrieve
+      description: 'Shared base view for dropdown selector endpoints (ADR 002).
+
+
+        Validates query parameters, enforces the size class and result cap,
+
+        calls the feature''s query selector, handles ETag generation / 304 Not Modified,
+
+        and returns {"data": [{"id": ..., "sku": ..., "name": ...}]}.'
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      - in: query
+        name: vendor_id
+        schema:
+          type: integer
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: licenses
+      summary: Get License Products Options
+  /api/labs/license-restrictions:
+    get:
+      operationId: labs_license_restrictions_retrieve
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseRestrictionCatalogListSerializersLicenseRestrictionPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Restrictions
+  /api/labs/license-restrictions/{restriction_id}:
+    get:
+      operationId: labs_license_restrictions_retrieve_by_restriction_id
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: path
+        name: restriction_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseRestrictionCatalogDetailSerializersLicenseRestrictionDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Restrictions by Restriction ID
+  /api/labs/license-restrictions/options:
+    get:
+      operationId: labs_license_restrictions_options_retrieve
+      description: 'Shared base view for dropdown selector endpoints (ADR 002).
+
+
+        Validates query parameters, enforces the size class and result cap,
+
+        calls the feature''s query selector, handles ETag generation / 304 Not Modified,
+
+        and returns {"data": [{"id": ..., "sku": ..., "name": ...}]}.'
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: licenses
+      summary: Get License Restrictions Options
+  /api/labs/license-types:
+    get:
+      operationId: labs_license_types_retrieve
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseTypeCatalogListSerializersLicenseTypePaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Types
+  /api/labs/license-types/{type_id}:
+    get:
+      operationId: labs_license_types_retrieve_by_type_id
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: path
+        name: type_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseTypeCatalogDetailSerializersLicenseTypeDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Types by Type ID
+  /api/labs/license-types/options:
+    get:
+      operationId: labs_license_types_options_retrieve
+      description: 'Shared base view for dropdown selector endpoints (ADR 002).
+
+
+        Validates query parameters, enforces the size class and result cap,
+
+        calls the feature''s query selector, handles ETag generation / 304 Not Modified,
+
+        and returns {"data": [{"id": ..., "sku": ..., "name": ...}]}.'
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: licenses
+      summary: Get License Types Options
+  /api/labs/license-vendors:
+    get:
+      operationId: labs_license_vendors_retrieve
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseVendorCatalogListSerializersLicenseVendorPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Vendors
+  /api/labs/license-vendors/{vendor_id}:
+    get:
+      operationId: labs_license_vendors_retrieve_by_vendor_id
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: path
+        name: vendor_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseVendorCatalogDetailSerializersLicenseVendorDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Vendors by Vendor ID
+  /api/labs/license-vendors/options:
+    get:
+      operationId: labs_license_vendors_options_retrieve
+      description: 'Shared base view for dropdown selector endpoints (ADR 002).
+
+
+        Validates query parameters, enforces the size class and result cap,
+
+        calls the feature''s query selector, handles ETag generation / 304 Not Modified,
+
+        and returns {"data": [{"id": ..., "sku": ..., "name": ...}]}.'
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: licenses
+      summary: Get License Vendors Options
+  /api/labs/licenses:
+    get:
+      operationId: labs_licenses_retrieve
+      description: List non-deleted license inventory with acquisition information.
+      parameters:
+      - in: query
+        name: created_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: group_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: owner_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+      - in: query
+        name: status
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseListSerializersLicensePaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses
+  /api/labs/licenses/{license_id}:
+    get:
+      operationId: labs_licenses_retrieve_by_license_id
+      description: Retrieve a license's inventory and acquisition information.
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseDetailSerializersLicenseDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses by License ID
+  /api/labs/licenses/{license_id}/actions/assign:
+    post:
+      operationId: labs_licenses_actions_assign_create_by_license_id
+      description: Assign a license to an equipment via action endpoint (or DELETE
+        to unassign).
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseAssignmentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LicenseAssignmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LicenseAssignmentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseAssignActionSerializersLicenseAssignmentResultDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Assign Licenses by License ID
+    delete:
+      operationId: labs_licenses_actions_assign_destroy_by_license_id
+      description: Assign a license to an equipment via action endpoint (or DELETE
+        to unassign).
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Assign Licenses by License ID
+  /api/labs/licenses/{license_id}/actions/change-status:
+    post:
+      operationId: labs_licenses_actions_change_status_create_by_license_id
+      description: Record a new status for a license record.
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseStatus'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LicenseStatus'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LicenseStatus'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseDetailSerializersLicenseDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Status Licenses by License ID
+  /api/labs/licenses/{license_id}/actions/unassign:
+    post:
+      operationId: labs_licenses_actions_unassign_create_by_license_id
+      description: Deprecated alias. Use DELETE /api/labs/licenses/{license_id}/actions/assign
+        instead.
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseAssignmentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LicenseAssignmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LicenseAssignmentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '204':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Unassign Licenses by License ID
+  /api/labs/licenses/{license_id}/agreements:
+    get:
+      operationId: labs_licenses_agreements_retrieve_by_license_id
+      description: List and create commercial agreements for a license.
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseAgreementListSerializersLicenseAgreementPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Agreements by License ID
+    post:
+      operationId: labs_licenses_agreements_create_by_license_id
+      description: List and create commercial agreements for a license.
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseAgreementWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LicenseAgreementWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LicenseAgreementWrite'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseAgreementSerializersLicenseAgreementDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Licenses Agreements by License ID
+  /api/labs/licenses/categories/summary:
+    get:
+      operationId: labs_licenses_categories_summary_retrieve
+      description: Inventory counts by category, ordered by name/ID; page and page_size
+        only.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCategorySummaryListSerializersLicenseCategorySummaryPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Categories Summary
+  /api/labs/licenses/filters:
+    get:
+      operationId: labs_licenses_filters_retrieve
+      description: General metadata handler; concrete API bases own auth and responses.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseFiltersFilteringFilterMetadataDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Filters
+  /api/labs/licenses/reference-data/categories:
+    get:
+      operationId: labs_licenses_reference_data_categories_retrieve
+      description: List LicenseCategory reference records in a paginated data envelope.
+        Validates the declared search, relation and pagination query parameters and
+        delegates filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCategoryReferenceListSerializersLicenseCategoryCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Reference Data Categories
+    post:
+      operationId: labs_licenses_reference_data_categories_create
+      description: 'Create a LicenseCategory reference record from the declared writable
+        fields. Passes the validated values, authenticated user and Idempotency-Key
+        to the owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Licenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseCategoryCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LicenseCategoryCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LicenseCategoryCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCategoryReferenceCreateSerializersLicenseCategoryCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Licenses Reference Data Categories
+  /api/labs/licenses/reference-data/categories/{reference_id}:
+    get:
+      operationId: labs_licenses_reference_data_categories_retrieve_by_reference_id
+      description: Retrieve one LicenseCategory reference record by reference_id in
+        a data envelope. Delegates lookup and access checks to the owner-provided
+        retrieve callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCategoryReferenceDetailSerializersLicenseCategoryCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Reference Data Categories by Reference ID
+  /api/labs/licenses/reference-data/products:
+    get:
+      operationId: labs_licenses_reference_data_products_retrieve
+      description: List LicenseProduct reference records in a paginated data envelope.
+        Validates the declared search, relation and pagination query parameters and
+        delegates filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      - in: query
+        name: vendor_id
+        schema:
+          type: integer
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseProductReferenceListSerializersLicenseProductCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Reference Data Products
+    post:
+      operationId: labs_licenses_reference_data_products_create
+      description: 'Create a LicenseProduct reference record from the declared writable
+        fields. Passes the validated values, authenticated user and Idempotency-Key
+        to the owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Licenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseProductCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LicenseProductCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LicenseProductCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseProductReferenceCreateSerializersLicenseProductCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Licenses Reference Data Products
+  /api/labs/licenses/reference-data/products/{reference_id}:
+    get:
+      operationId: labs_licenses_reference_data_products_retrieve_by_reference_id
+      description: Retrieve one LicenseProduct reference record by reference_id in
+        a data envelope. Delegates lookup and access checks to the owner-provided
+        retrieve callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseProductReferenceDetailSerializersLicenseProductCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Reference Data Products by Reference ID
+  /api/labs/licenses/reference-data/restrictions:
+    get:
+      operationId: labs_licenses_reference_data_restrictions_retrieve
+      description: List LicenseRestriction reference records in a paginated data envelope.
+        Validates the declared search, relation and pagination query parameters and
+        delegates filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseRestrictionReferenceListSerializersLicenseRestrictionCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Reference Data Restrictions
+    post:
+      operationId: labs_licenses_reference_data_restrictions_create
+      description: 'Create a LicenseRestriction reference record from the declared
+        writable fields. Passes the validated values, authenticated user and Idempotency-Key
+        to the owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Licenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseRestrictionCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LicenseRestrictionCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LicenseRestrictionCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseRestrictionReferenceCreateSerializersLicenseRestrictionCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Licenses Reference Data Restrictions
+  /api/labs/licenses/reference-data/restrictions/{reference_id}:
+    get:
+      operationId: labs_licenses_reference_data_restrictions_retrieve_by_reference_id
+      description: Retrieve one LicenseRestriction reference record by reference_id
+        in a data envelope. Delegates lookup and access checks to the owner-provided
+        retrieve callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseRestrictionReferenceDetailSerializersLicenseRestrictionCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Reference Data Restrictions by Reference ID
+  /api/labs/licenses/reference-data/types:
+    get:
+      operationId: labs_licenses_reference_data_types_retrieve
+      description: List LicenseType reference records in a paginated data envelope.
+        Validates the declared search, relation and pagination query parameters and
+        delegates filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseTypeReferenceListSerializersLicenseTypeCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Reference Data Types
+    post:
+      operationId: labs_licenses_reference_data_types_create
+      description: 'Create a LicenseType reference record from the declared writable
+        fields. Passes the validated values, authenticated user and Idempotency-Key
+        to the owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Licenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseTypeCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LicenseTypeCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LicenseTypeCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseTypeReferenceCreateSerializersLicenseTypeCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Licenses Reference Data Types
+  /api/labs/licenses/reference-data/types/{reference_id}:
+    get:
+      operationId: labs_licenses_reference_data_types_retrieve_by_reference_id
+      description: Retrieve one LicenseType reference record by reference_id in a
+        data envelope. Delegates lookup and access checks to the owner-provided retrieve
+        callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseTypeReferenceDetailSerializersLicenseTypeCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Reference Data Types by Reference ID
+  /api/labs/licenses/reference-data/vendors:
+    get:
+      operationId: labs_licenses_reference_data_vendors_retrieve
+      description: List LicenseVendor reference records in a paginated data envelope.
+        Validates the declared search, relation and pagination query parameters and
+        delegates filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseVendorReferenceListSerializersLicenseVendorCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Reference Data Vendors
+    post:
+      operationId: labs_licenses_reference_data_vendors_create
+      description: 'Create a LicenseVendor reference record from the declared writable
+        fields. Passes the validated values, authenticated user and Idempotency-Key
+        to the owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Licenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseVendorCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LicenseVendorCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LicenseVendorCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseVendorReferenceCreateSerializersLicenseVendorCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Licenses Reference Data Vendors
+  /api/labs/licenses/reference-data/vendors/{reference_id}:
+    get:
+      operationId: labs_licenses_reference_data_vendors_retrieve_by_reference_id
+      description: Retrieve one LicenseVendor reference record by reference_id in
+        a data envelope. Delegates lookup and access checks to the owner-provided
+        retrieve callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseVendorReferenceDetailSerializersLicenseVendorCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Reference Data Vendors by Reference ID
+  /api/labs/licenses/status-summary:
+    get:
+      operationId: labs_licenses_status_summary_retrieve
+      description: Non-deleted licenses by latest recorded state; no expiry/assignment
+        inference.
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseStatusSummaryDataSerializersLicenseStatusSummaryDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Status Summary
+components:
+  schemas:
+    BillingPeriodEnum:
+      enum:
+      - one_time
+      - monthly
+      - quarterly
+      - annual
+      type: string
+      description: '* `one_time` - One-time
+
+        * `monthly` - Monthly
+
+        * `quarterly` - Quarterly
+
+        * `annual` - Annual'
+    CatalogOption:
+      type: object
+      description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
+        OPT-4).'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+          nullable: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - sku
+    CatalogOptionList:
+      type: object
+      description: Enveloped list of selector options.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogOption'
+          readOnly: true
+      required:
+      - data
+    FilterMetadata:
+      type: object
+      properties:
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        combination:
+          type: string
+        multi_value_combination:
+          type: string
+        separator:
+          type: string
+        search:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        ordering:
+          type: array
+          items:
+            type: string
+        default_ordering:
+          type: array
+          items:
+            type: string
+      required:
+      - combination
+      - default_ordering
+      - filters
+      - multi_value_combination
+      - ordering
+      - search
+      - separator
+    LabsChoiceReference:
+      type: object
+      description: Standard `{value, label}` representation for enum and lifecycle
+        choices.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+    LabsMoney:
+      type: object
+      description: Standard `{amount, currency}` representation for monetary values.
+      properties:
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+      required:
+      - amount
+      - currency
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+    LabsUIDNamedReference:
+      type: object
+      description: Compact `{id, uid, name}` object representation when target defines
+        a UUID.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - uid
+    License:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        owner:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        department:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        remark:
+          type: string
+          readOnly: true
+        product:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        vendor:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        restriction:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        seats:
+          type: integer
+          readOnly: true
+          description: How many assets may use the license at the same time.
+        seats_in_use:
+          type: integer
+          readOnly: true
+        max_version:
+          type: string
+          readOnly: true
+        expiry_date:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          nullable: true
+          readOnly: true
+        acquisition_price:
+          allOf:
+          - $ref: '#/components/schemas/LabsMoney'
+          nullable: true
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - acquisition_price
+      - category
+      - created_at
+      - department
+      - expiry_date
+      - id
+      - max_version
+      - name
+      - owner
+      - product
+      - remark
+      - restriction
+      - seats
+      - seats_in_use
+      - sku
+      - status
+      - type
+      - uid
+      - updated_at
+      - vendor
+    LicenseAgreement:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        license:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+        price:
+          allOf:
+          - $ref: '#/components/schemas/LabsMoney'
+          readOnly: true
+        billing_period:
+          allOf:
+          - $ref: '#/components/schemas/BillingPeriodEnum'
+          readOnly: true
+        valid_from:
+          type: string
+          format: date
+          readOnly: true
+        valid_until:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - billing_period
+      - created_at
+      - id
+      - license
+      - price
+      - valid_from
+      - valid_until
+    LicenseAgreementListSerializersLicenseAgreementPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseAgreementListSerializersLicenseAgreementPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseAgreement'
+      required:
+      - data
+      - meta
+    LicenseAgreementListSerializersLicenseAgreementPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseAgreementListSerializersLicenseAgreementPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseAgreementListSerializersLicenseAgreementPagination'
+      required:
+      - pagination
+    LicenseAgreementSerializersLicenseAgreementDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseAgreement'
+      required:
+      - data
+    LicenseAgreementWrite:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          description: Amount charged per billing period.
+        currency:
+          type: string
+          maxLength: 3
+        billing_period:
+          $ref: '#/components/schemas/BillingPeriodEnum'
+        valid_from:
+          type: string
+          format: date
+        valid_until:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - price
+      - valid_from
+    LicenseAssignActionSerializersLicenseAssignmentResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseAssignmentResult'
+      required:
+      - data
+    LicenseAssignmentRequest:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        equipment_id:
+          type: integer
+          minimum: 1
+      required:
+      - equipment_id
+    LicenseAssignmentResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        license:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        assigned_at:
+          type: string
+          format: date-time
+          readOnly: true
+        unassigned_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - assigned_at
+      - equipment
+      - id
+      - license
+      - unassigned_at
+    LicenseCategoryCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - name
+    LicenseCategoryCatalogDetailSerializersLicenseCategoryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCategoryCatalogItem'
+      required:
+      - data
+    LicenseCategoryCatalogItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    LicenseCategoryCatalogListSerializersLicenseCategoryPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseCategoryCatalogListSerializersLicenseCategoryPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCategoryCatalogItem'
+      required:
+      - data
+      - meta
+    LicenseCategoryCatalogListSerializersLicenseCategoryPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseCategoryCatalogListSerializersLicenseCategoryPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseCategoryCatalogListSerializersLicenseCategoryPagination'
+      required:
+      - pagination
+    LicenseCategoryCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - id
+      - name
+    LicenseCategoryReferenceCreateSerializersLicenseCategoryCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCategoryCatalogRecord'
+      required:
+      - data
+    LicenseCategoryReferenceDetailSerializersLicenseCategoryCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCategoryCatalogRecord'
+      required:
+      - data
+    LicenseCategoryReferenceListSerializersLicenseCategoryCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseCategoryReferenceListSerializersLicenseCategoryCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCategoryCatalogRecord'
+      required:
+      - data
+      - meta
+    LicenseCategoryReferenceListSerializersLicenseCategoryCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseCategoryReferenceListSerializersLicenseCategoryCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseCategoryReferenceListSerializersLicenseCategoryCatalogRecordPagination'
+      required:
+      - pagination
+    LicenseCategorySummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        resource_count:
+          type: integer
+          minimum: 0
+      required:
+      - id
+      - name
+      - resource_count
+    LicenseCategorySummaryListSerializersLicenseCategorySummaryPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseCategorySummaryListSerializersLicenseCategorySummaryPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCategorySummary'
+      required:
+      - data
+      - meta
+    LicenseCategorySummaryListSerializersLicenseCategorySummaryPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseCategorySummaryListSerializersLicenseCategorySummaryPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseCategorySummaryListSerializersLicenseCategorySummaryPagination'
+      required:
+      - pagination
+    LicenseDetailSerializersLicenseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/License'
+      required:
+      - data
+    LicenseFiltersFilteringFilterMetadataDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/FilterMetadata'
+      required:
+      - data
+    LicenseListSerializersLicensePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseListSerializersLicensePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/License'
+      required:
+      - data
+      - meta
+    LicenseListSerializersLicensePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseListSerializersLicensePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseListSerializersLicensePagination'
+      required:
+      - pagination
+    LicenseProductCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        vendor_id:
+          type: integer
+          minimum: 1
+          nullable: true
+      required:
+      - name
+    LicenseProductCatalogDetailSerializersLicenseProductDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseProductCatalogItem'
+      required:
+      - data
+    LicenseProductCatalogItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        vendor:
+          allOf:
+          - $ref: '#/components/schemas/LicenseVendorCatalogItem'
+          readOnly: true
+        vendor_id:
+          type: integer
+          writeOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+      - vendor
+    LicenseProductCatalogListSerializersLicenseProductPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseProductCatalogListSerializersLicenseProductPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseProductCatalogItem'
+      required:
+      - data
+      - meta
+    LicenseProductCatalogListSerializersLicenseProductPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseProductCatalogListSerializersLicenseProductPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseProductCatalogListSerializersLicenseProductPagination'
+      required:
+      - pagination
+    LicenseProductCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        vendor_id:
+          type: integer
+          readOnly: true
+          nullable: true
+      required:
+      - id
+      - name
+      - vendor_id
+    LicenseProductReferenceCreateSerializersLicenseProductCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseProductCatalogRecord'
+      required:
+      - data
+    LicenseProductReferenceDetailSerializersLicenseProductCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseProductCatalogRecord'
+      required:
+      - data
+    LicenseProductReferenceListSerializersLicenseProductCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseProductReferenceListSerializersLicenseProductCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseProductCatalogRecord'
+      required:
+      - data
+      - meta
+    LicenseProductReferenceListSerializersLicenseProductCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseProductReferenceListSerializersLicenseProductCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseProductReferenceListSerializersLicenseProductCatalogRecordPagination'
+      required:
+      - pagination
+    LicenseRestrictionCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - name
+    LicenseRestrictionCatalogDetailSerializersLicenseRestrictionDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseRestrictionCatalogItem'
+      required:
+      - data
+    LicenseRestrictionCatalogItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    LicenseRestrictionCatalogListSerializersLicenseRestrictionPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseRestrictionCatalogListSerializersLicenseRestrictionPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseRestrictionCatalogItem'
+      required:
+      - data
+      - meta
+    LicenseRestrictionCatalogListSerializersLicenseRestrictionPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseRestrictionCatalogListSerializersLicenseRestrictionPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseRestrictionCatalogListSerializersLicenseRestrictionPagination'
+      required:
+      - pagination
+    LicenseRestrictionCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - id
+      - name
+    LicenseRestrictionReferenceCreateSerializersLicenseRestrictionCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseRestrictionCatalogRecord'
+      required:
+      - data
+    LicenseRestrictionReferenceDetailSerializersLicenseRestrictionCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseRestrictionCatalogRecord'
+      required:
+      - data
+    LicenseRestrictionReferenceListSerializersLicenseRestrictionCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseRestrictionReferenceListSerializersLicenseRestrictionCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseRestrictionCatalogRecord'
+      required:
+      - data
+      - meta
+    LicenseRestrictionReferenceListSerializersLicenseRestrictionCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseRestrictionReferenceListSerializersLicenseRestrictionCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseRestrictionReferenceListSerializersLicenseRestrictionCatalogRecordPagination'
+      required:
+      - pagination
+    LicenseStatus:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        status:
+          $ref: '#/components/schemas/LicenseStatusEnum'
+        details: {}
+      required:
+      - status
+    LicenseStatusEnum:
+      enum:
+      - available
+      - assigned
+      - expired
+      - revoked
+      - suspended
+      type: string
+      description: '* `available` - Available
+
+        * `assigned` - Assigned
+
+        * `expired` - Expired
+
+        * `revoked` - Revoked
+
+        * `suspended` - Suspended'
+    LicenseStatusSummary:
+      type: object
+      description: Recorded state only; expiry and assignment are not recomputed.
+      properties:
+        total_count:
+          type: integer
+          minimum: 0
+        unknown_status_count:
+          type: integer
+          minimum: 0
+          description: Resources without a recorded status or with an unrecognized
+            status.
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/SummaryStatusCount'
+          description: All code-defined states, including zero counts. Values are
+            extensible.
+      required:
+      - statuses
+      - total_count
+      - unknown_status_count
+    LicenseStatusSummaryDataSerializersLicenseStatusSummaryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseStatusSummary'
+      required:
+      - data
+    LicenseTypeCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - name
+    LicenseTypeCatalogDetailSerializersLicenseTypeDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseTypeCatalogItem'
+      required:
+      - data
+    LicenseTypeCatalogItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    LicenseTypeCatalogListSerializersLicenseTypePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseTypeCatalogListSerializersLicenseTypePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseTypeCatalogItem'
+      required:
+      - data
+      - meta
+    LicenseTypeCatalogListSerializersLicenseTypePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseTypeCatalogListSerializersLicenseTypePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseTypeCatalogListSerializersLicenseTypePagination'
+      required:
+      - pagination
+    LicenseTypeCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - id
+      - name
+    LicenseTypeReferenceCreateSerializersLicenseTypeCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseTypeCatalogRecord'
+      required:
+      - data
+    LicenseTypeReferenceDetailSerializersLicenseTypeCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseTypeCatalogRecord'
+      required:
+      - data
+    LicenseTypeReferenceListSerializersLicenseTypeCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseTypeReferenceListSerializersLicenseTypeCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseTypeCatalogRecord'
+      required:
+      - data
+      - meta
+    LicenseTypeReferenceListSerializersLicenseTypeCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseTypeReferenceListSerializersLicenseTypeCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseTypeReferenceListSerializersLicenseTypeCatalogRecordPagination'
+      required:
+      - pagination
+    LicenseVendorCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - name
+    LicenseVendorCatalogDetailSerializersLicenseVendorDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseVendorCatalogItem'
+      required:
+      - data
+    LicenseVendorCatalogItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    LicenseVendorCatalogListSerializersLicenseVendorPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseVendorCatalogListSerializersLicenseVendorPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseVendorCatalogItem'
+      required:
+      - data
+      - meta
+    LicenseVendorCatalogListSerializersLicenseVendorPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseVendorCatalogListSerializersLicenseVendorPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseVendorCatalogListSerializersLicenseVendorPagination'
+      required:
+      - pagination
+    LicenseVendorCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - id
+      - name
+    LicenseVendorReferenceCreateSerializersLicenseVendorCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseVendorCatalogRecord'
+      required:
+      - data
+    LicenseVendorReferenceDetailSerializersLicenseVendorCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseVendorCatalogRecord'
+      required:
+      - data
+    LicenseVendorReferenceListSerializersLicenseVendorCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseVendorReferenceListSerializersLicenseVendorCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseVendorCatalogRecord'
+      required:
+      - data
+      - meta
+    LicenseVendorReferenceListSerializersLicenseVendorCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseVendorReferenceListSerializersLicenseVendorCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseVendorReferenceListSerializersLicenseVendorCatalogRecordPagination'
+      required:
+      - pagination
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    SummaryStatus:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+      required:
+      - label
+      - value
+    SummaryStatusCount:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SummaryStatus'
+        resource_count:
+          type: integer
+          minimum: 0
+      required:
+      - resource_count
+      - status
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Licenses
+  description: Licenses endpoints

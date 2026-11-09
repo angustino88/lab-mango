@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/users/avatar:
+    get:
+      operationId: users_avatar_retrieve
+      description: Retrieve, upload, or delete current authenticated user profile
+        avatar image.
+      tags:
+      - User Profiles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAvatarSerializersUserAvatarReadDetailResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Users Avatar
+    post:
+      operationId: users_avatar_create
+      description: Retrieve, upload, or delete current authenticated user profile
+        avatar image.
+      tags:
+      - User Profiles
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserAvatarUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAvatarSerializersUserAvatarReadDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Upload Users Avatar
+    delete:
+      operationId: users_avatar_destroy
+      description: Retrieve, upload, or delete current authenticated user profile
+        avatar image.
+      tags:
+      - User Profiles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Users Avatar
+components:
+  schemas:
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    UserAvatarRead:
+      type: object
+      properties:
+        avatar_url:
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+      - avatar_url
+    UserAvatarSerializersUserAvatarReadDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/UserAvatarRead'
+      required:
+      - data
+    UserAvatarUpload:
+      type: object
+      properties:
+        avatar:
+          type: string
+          format: uri
+      required:
+      - avatar
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: User Profiles
+  description: User Profiles endpoints

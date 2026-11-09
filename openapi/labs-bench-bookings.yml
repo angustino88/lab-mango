@@ -1,0 +1,1470 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/bench-bookings:
+    get:
+      operationId: labs_bench_bookings_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: approval_status
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: bench_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: booking_code
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: creator
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: creator_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          minLength: 1
+        description: 'Comma-separated ordering fields: starts_at, ends_at, created_at,
+          id; prefix with ''-'' for descending. Defaults to -starts_at,-id. An id
+          tie-breaker is added when omitted.'
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: project_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: starts_at_after
+        schema:
+          type: string
+        description: "Inclusive lower bound. Accepts strict YYYY-MM-DD in Django TIME_ZONE\
+          \ or an offset-aware RFC3339 datetime (YYYY-MM-DDTHH:MM:SS[.fraction](Z|\xB1\
+          HH:MM))."
+      - in: query
+        name: starts_at_before
+        schema:
+          type: string
+        description: "Exclusive upper bound. Accepts strict YYYY-MM-DD in Django TIME_ZONE\
+          \ or an offset-aware RFC3339 datetime (YYYY-MM-DDTHH:MM:SS[.fraction](Z|\xB1\
+          HH:MM)). A date-only value is midnight at the start of that date; to include\
+          \ November 2\u20138, use starts_at_after=2026-11-02 and starts_at_before=2026-11-09."
+      - in: query
+        name: status
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: view_side
+        schema:
+          enum:
+          - my_booking
+          - booking_calendar
+          type: string
+          minLength: 1
+        description: '* `my_booking` - my_booking
+
+          * `booking_calendar` - booking_calendar'
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingListSerializersBenchBookingPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Bench Bookings
+    post:
+      operationId: labs_bench_bookings_create
+      description: HTTP mapping for domain commands and selector projections.
+      tags:
+      - Bench Bookings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchBookingCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchBookingCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchBookingCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingCreateSerializersBenchBookingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Bench Bookings
+  /api/labs/bench-bookings/{booking_id}:
+    get:
+      operationId: labs_bench_bookings_retrieve_by_booking_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: booking_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingDetailSerializersBenchBookingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Bench Bookings by Booking ID
+    patch:
+      operationId: labs_bench_bookings_partial_update_by_booking_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: booking_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Bench Bookings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchBookingUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchBookingUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchBookingUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingUpdateSerializersBenchBookingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Bench Bookings by Booking ID
+  /api/labs/bench-bookings/{booking_id}/actions/approve:
+    post:
+      operationId: labs_bench_bookings_actions_approve_create_by_booking_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+          format: uuid
+        description: Required UUID. A matching completed request replays its original
+          response for 24 hours; reuse with a different request returns 422.
+        required: true
+      - in: path
+        name: booking_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingApproveActionSerializersBenchBookingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Approve Bench Bookings by Booking ID
+  /api/labs/bench-bookings/{booking_id}/actions/cancel:
+    post:
+      operationId: labs_bench_bookings_actions_cancel_create_by_booking_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: booking_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Bench Bookings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchBookingCancelAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchBookingCancelAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchBookingCancelAction'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingCancelActionSerializersBenchBookingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Cancel Bench Bookings by Booking ID
+  /api/labs/bench-bookings/{booking_id}/actions/complete:
+    post:
+      operationId: labs_bench_bookings_actions_complete_create_by_booking_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: booking_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingCompleteActionSerializersBenchBookingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Complete Bench Bookings by Booking ID
+  /api/labs/bench-bookings/{booking_id}/actions/reject:
+    post:
+      operationId: labs_bench_bookings_actions_reject_create_by_booking_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+          format: uuid
+        description: Required UUID. A matching completed request replays its original
+          response for 24 hours; reuse with a different request returns 422.
+        required: true
+      - in: path
+        name: booking_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Bench Bookings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchBookingRejectAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchBookingRejectAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchBookingRejectAction'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingRejectActionSerializersBenchBookingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Reject Bench Bookings by Booking ID
+  /api/labs/bench-bookings/code/{booking_code}:
+    get:
+      operationId: labs_bench_bookings_code_retrieve_by_booking_code
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: booking_code
+        schema:
+          type: string
+        required: true
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingDetailByCodeSerializersBenchBookingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Bench Bookings Code by Booking Code
+    patch:
+      operationId: labs_bench_bookings_code_partial_update_by_booking_code
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: booking_code
+        schema:
+          type: string
+        required: true
+      tags:
+      - Bench Bookings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchBookingUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchBookingUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchBookingUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingUpdateByCodeSerializersBenchBookingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Bench Bookings Code by Booking Code
+  /api/labs/bench-bookings/code/{booking_code}/actions/cancel:
+    post:
+      operationId: labs_bench_bookings_code_actions_cancel_create_by_booking_code
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: booking_code
+        schema:
+          type: string
+        required: true
+      tags:
+      - Bench Bookings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchBookingCancelAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchBookingCancelAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchBookingCancelAction'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchBookingCancelByCodeActionSerializersBenchBookingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Cancel Bench Bookings Code by Booking Code
+  /api/labs/bench-bookings/reference-data/projects:
+    get:
+      operationId: labs_bench_bookings_reference_data_projects_retrieve
+      description: List LabProject reference records in a paginated data envelope.
+        Validates the declared search, relation and pagination query parameters and
+        delegates filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+          nullable: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabProjectReferenceListSerializersLabProjectCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Bench Bookings Reference Data Projects
+    post:
+      operationId: labs_bench_bookings_reference_data_projects_create
+      description: 'Create a LabProject reference record from the declared writable
+        fields. Passes the validated values, authenticated user and Idempotency-Key
+        to the owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Bench Bookings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabProjectCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LabProjectCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LabProjectCatalogCreate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabProjectReferenceCreateSerializersLabProjectCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Bench Bookings Reference Data Projects
+  /api/labs/bench-bookings/reference-data/projects/{reference_id}:
+    get:
+      operationId: labs_bench_bookings_reference_data_projects_retrieve_by_reference_id
+      description: Retrieve one LabProject reference record by reference_id in a data
+        envelope. Delegates lookup and access checks to the owner-provided retrieve
+        callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabProjectReferenceDetailSerializersLabProjectCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Bench Bookings Reference Data Projects by Reference ID
+  /api/labs/lab-projects:
+    get:
+      operationId: labs_lab_projects_retrieve
+      description: List the lab projects a booking can be charged to.
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+          nullable: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabProjectListSerializersLabProjectPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Lab Projects
+  /api/labs/lab-projects/{project_id}:
+    get:
+      operationId: labs_lab_projects_retrieve_by_project_id
+      description: Retrieve one lab project.
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabProjectDetailSerializersLabProjectDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Lab Projects by Project ID
+  /api/labs/lab-projects/options:
+    get:
+      operationId: labs_lab_projects_options_retrieve
+      description: Selector options for lab projects.
+      parameters:
+      - in: query
+        name: active_on
+        schema:
+          type: string
+          format: date
+        description: Date within project starts_on and ends_on.
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: bench_bookings
+      summary: Get Lab Projects Options
+components:
+  schemas:
+    BenchBooking:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        booking_code:
+          type: string
+          readOnly: true
+        creator:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        approval_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        project:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        reason:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - approval_status
+      - bench
+      - booking_code
+      - created_at
+      - creator
+      - ends_at
+      - id
+      - project
+      - reason
+      - starts_at
+      - status
+      - updated_at
+    BenchBookingApproveActionSerializersBenchBookingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+    BenchBookingCancelAction:
+      type: object
+      properties:
+        reason:
+          type: string
+          default: Cancelled by user
+    BenchBookingCancelActionSerializersBenchBookingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+    BenchBookingCancelByCodeActionSerializersBenchBookingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+    BenchBookingCompleteActionSerializersBenchBookingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+    BenchBookingCreate:
+      type: object
+      properties:
+        bench_id:
+          type: integer
+          minimum: 1
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        project_id:
+          type: integer
+          minimum: 1
+      required:
+      - bench_id
+      - ends_at
+      - project_id
+      - reason
+      - starts_at
+    BenchBookingCreateSerializersBenchBookingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+    BenchBookingDetailByCodeSerializersBenchBookingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+    BenchBookingDetailSerializersBenchBookingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+    BenchBookingListSerializersBenchBookingPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BenchBookingListSerializersBenchBookingPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+      - meta
+    BenchBookingListSerializersBenchBookingPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchBookingListSerializersBenchBookingPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchBookingListSerializersBenchBookingPagination'
+      required:
+      - pagination
+    BenchBookingRejectAction:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+      required:
+      - reason
+    BenchBookingRejectActionSerializersBenchBookingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+    BenchBookingUpdateByCodeSerializersBenchBookingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+    BenchBookingUpdateSerializersBenchBookingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBooking'
+      required:
+      - data
+    CatalogOption:
+      type: object
+      description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
+        OPT-4).'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+          nullable: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - sku
+    CatalogOptionList:
+      type: object
+      description: Enveloped list of selector options.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogOption'
+          readOnly: true
+      required:
+      - data
+    LabProject:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+          nullable: true
+          description: Short unique project code, e.g. a cost-center number.
+        active:
+          type: boolean
+          readOnly: true
+        starts_on:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        ends_on:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+      required:
+      - active
+      - code
+      - ends_on
+      - id
+      - name
+      - starts_on
+    LabProjectCatalogCreate:
+      type: object
+      properties:
+        project_name:
+          type: string
+          maxLength: 255
+        code:
+          type: string
+          nullable: true
+          description: Short unique project code, e.g. a cost-center number.
+          maxLength: 50
+        starts_on:
+          type: string
+          format: date
+          nullable: true
+        ends_on:
+          type: string
+          format: date
+          nullable: true
+        active:
+          type: boolean
+    LabProjectCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        project_name:
+          type: string
+          maxLength: 255
+        code:
+          type: string
+          nullable: true
+          description: Short unique project code, e.g. a cost-center number.
+          maxLength: 50
+        starts_on:
+          type: string
+          format: date
+          nullable: true
+        ends_on:
+          type: string
+          format: date
+          nullable: true
+        active:
+          type: boolean
+      required:
+      - id
+    LabProjectDetailSerializersLabProjectDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LabProject'
+      required:
+      - data
+    LabProjectListSerializersLabProjectPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LabProjectListSerializersLabProjectPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabProject'
+      required:
+      - data
+      - meta
+    LabProjectListSerializersLabProjectPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LabProjectListSerializersLabProjectPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LabProjectListSerializersLabProjectPagination'
+      required:
+      - pagination
+    LabProjectReferenceCreateSerializersLabProjectCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LabProjectCatalogRecord'
+      required:
+      - data
+    LabProjectReferenceDetailSerializersLabProjectCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LabProjectCatalogRecord'
+      required:
+      - data
+    LabProjectReferenceListSerializersLabProjectCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LabProjectReferenceListSerializersLabProjectCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabProjectCatalogRecord'
+      required:
+      - data
+      - meta
+    LabProjectReferenceListSerializersLabProjectCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LabProjectReferenceListSerializersLabProjectCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LabProjectReferenceListSerializersLabProjectCatalogRecordPagination'
+      required:
+      - pagination
+    LabsChoiceReference:
+      type: object
+      description: Standard `{value, label}` representation for enum and lifecycle
+        choices.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+    LabsResourceOwner:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        display_name:
+          type: string
+          maxLength: 255
+      required:
+      - id
+      - username
+    LabsUIDNamedReference:
+      type: object
+      description: Compact `{id, uid, name}` object representation when target defines
+        a UUID.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - uid
+    PatchedBenchBookingUpdate:
+      type: object
+      description: Partial update payload; the command enforces which fields may change
+        in each state.
+      properties:
+        bench_id:
+          type: integer
+          minimum: 1
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        project_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        status:
+          type: string
+          readOnly: true
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Bench Bookings
+  description: Bench Bookings endpoints

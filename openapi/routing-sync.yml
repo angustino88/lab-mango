@@ -1,0 +1,524 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /internal/changes/{entity}:
+    get:
+      operationId: get_internal_changes
+      description: GET /internal/changes/{entity} - bounded changes with optional
+        long-poll.
+      summary: Compact change log delta with optional long-poll
+      parameters:
+      - in: path
+        name: entity
+        schema:
+          type: string
+        description: Stream entity type (users, agents)
+        required: true
+      - in: query
+        name: epoch
+        schema:
+          type: string
+          format: uuid
+        description: Held epoch UUID
+        required: true
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Max winners per page (1..2000)
+      - in: query
+        name: since
+        schema:
+          type: integer
+        description: Last seen version cursor
+        required: true
+      - in: query
+        name: wait
+        schema:
+          type: integer
+        description: Long-poll timeout in seconds (0..30)
+      tags:
+      - Routing Sync
+      security:
+      - routingSyncBearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangesResponse'
+          description: Change delta or reset signal
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Invalid query or body sent
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Forbidden
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Entity not supported
+        '405':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Method not allowed
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Service unavailable
+  /internal/digest/{entity}:
+    get:
+      operationId: get_internal_digest
+      description: GET /internal/digest/{entity} - drift check digest.
+      summary: Live claims checksum and row count
+      parameters:
+      - in: path
+        name: entity
+        schema:
+          type: string
+        description: Stream entity type (users, agents)
+        required: true
+      tags:
+      - Routing Sync
+      security:
+      - routingSyncBearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DigestResponse'
+          description: Live stream digest and version
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Invalid query or body sent
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Forbidden
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Entity not supported
+        '405':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Method not allowed
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Service unavailable
+  /internal/info:
+    get:
+      operationId: get_internal_info
+      description: GET /internal/info - stream advertisement and server metadata.
+      summary: Discover backend identity, streams, versions and limits
+      tags:
+      - Routing Sync
+      security:
+      - routingSyncBearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncInfoResponse'
+          description: Backend sync metadata and available streams
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Invalid query or body sent
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Forbidden
+        '405':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Method not allowed
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Service unavailable
+  /internal/snapshot/{entity}:
+    get:
+      operationId: get_internal_snapshot
+      description: GET /internal/snapshot/{entity} - keyset-paginated live stream
+        snapshot.
+      summary: Keyset-paginated consistent snapshot of live claims
+      parameters:
+      - in: query
+        name: after
+        schema:
+          type: string
+        description: Keyset pagination cursor
+      - in: path
+        name: entity
+        schema:
+          type: string
+        description: Stream entity type (users, agents)
+        required: true
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Page limit (1..5000)
+      tags:
+      - Routing Sync
+      security:
+      - routingSyncBearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotResponse'
+          description: Snapshot page of live claims
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Invalid query or body sent
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Forbidden
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Entity not supported
+        '405':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Method not allowed
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Service unavailable
+components:
+  schemas:
+    ChangeItem:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        op:
+          $ref: '#/components/schemas/OpEnum'
+        key:
+          type: string
+          maxLength: 128
+        state:
+          type: string
+        data:
+          type: object
+          additionalProperties: {}
+      required:
+      - key
+      - op
+      - version
+    ChangesResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ChangesResponseData'
+      required:
+      - data
+    ChangesResponseData:
+      type: object
+      properties:
+        backend_id:
+          type: string
+        entity_type:
+          type: string
+        epoch:
+          type: string
+          format: uuid
+        mode:
+          $ref: '#/components/schemas/ModeEnum'
+        version:
+          type: integer
+          minimum: 0
+        head_version:
+          type: integer
+          minimum: 0
+        has_more:
+          type: boolean
+        oldest_retained_version:
+          type: integer
+          minimum: 0
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChangeItem'
+        reason:
+          type: string
+      required:
+      - backend_id
+      - entity_type
+      - epoch
+      - head_version
+      - mode
+    DigestResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/DigestResponseData'
+      required:
+      - data
+    DigestResponseData:
+      type: object
+      properties:
+        entity_type:
+          type: string
+        epoch:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 0
+        count:
+          type: integer
+          minimum: 0
+        checksum:
+          type: string
+      required:
+      - checksum
+      - count
+      - entity_type
+      - epoch
+      - version
+    ErrorBody:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetailItem'
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ErrorDetailItem:
+      type: object
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      required:
+      - message
+    ErrorEnvelope:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+      required:
+      - error
+    ModeEnum:
+      enum:
+      - delta
+      - reset
+      type: string
+      description: '* `delta` - delta
+
+        * `reset` - reset'
+    OpEnum:
+      enum:
+      - upsert
+      - delete
+      type: string
+      description: '* `upsert` - upsert
+
+        * `delete` - delete'
+    SnapshotItem:
+      type: object
+      properties:
+        key:
+          type: string
+          maxLength: 128
+        version:
+          type: integer
+          minimum: 1
+        state:
+          type: string
+        data:
+          type: object
+          additionalProperties: {}
+      required:
+      - data
+      - key
+      - state
+      - version
+    SnapshotResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/SnapshotResponseData'
+      required:
+      - data
+    SnapshotResponseData:
+      type: object
+      properties:
+        backend_id:
+          type: string
+        entity_type:
+          type: string
+        epoch:
+          type: string
+          format: uuid
+        head_version:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SnapshotItem'
+        next_after:
+          type: string
+          nullable: true
+      required:
+      - backend_id
+      - entity_type
+      - epoch
+      - head_version
+      - items
+      - next_after
+    SyncInfoResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/SyncInfoResponseData'
+      required:
+      - data
+    SyncInfoResponseData:
+      type: object
+      properties:
+        backend_id:
+          type: string
+        server_time:
+          type: string
+        entities:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/SyncStreamEntityInfo'
+        limits:
+          $ref: '#/components/schemas/SyncStreamLimits'
+      required:
+      - backend_id
+      - entities
+      - limits
+      - server_time
+    SyncStreamEntityInfo:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 0
+        epoch:
+          type: string
+          format: uuid
+      required:
+      - epoch
+      - version
+    SyncStreamLimits:
+      type: object
+      properties:
+        snapshot_max_limit:
+          type: integer
+          minimum: 1
+        changes_max_limit:
+          type: integer
+          minimum: 1
+        longpoll_max_wait_s:
+          type: integer
+          minimum: 0
+      required:
+      - changes_max_limit
+      - longpoll_max_wait_s
+      - snapshot_max_limit
+  securitySchemes:
+    routingSyncBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Routing Sync
+  description: Routing Sync endpoints

@@ -1,0 +1,688 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/lab-monitoring:
+    get:
+      operationId: labs_lab_monitoring_retrieve
+      description: Deprecated alias for monitoring events. Use /api/labs/monitoring-events
+        instead.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Monitoring
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringEventListSerializersMonitoringEventPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Lab Monitoring
+    post:
+      operationId: labs_lab_monitoring_create
+      description: Deprecated alias for monitoring events. Use /api/labs/monitoring-events
+        instead.
+      tags:
+      - Monitoring
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoringEventCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MonitoringEventCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MonitoringEventCreate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringEventSerializersMonitoringEventDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Lab Monitoring
+  /api/labs/lab-monitoring/export:
+    get:
+      operationId: labs_lab_monitoring_export_retrieve
+      description: Deprecated alias for exporting monitoring events. Use /api/labs/monitoring-events/export
+        instead.
+      parameters:
+      - in: query
+        name: action
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: bench_id
+        schema:
+          type: integer
+      - in: query
+        name: computer_id
+        schema:
+          type: integer
+      - in: query
+        name: computer_sku
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: from_date
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: from_date_time
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: lab
+        schema:
+          type: integer
+      - in: query
+        name: subject_type
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: to_date
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: to_date_time
+        schema:
+          type: string
+          format: date-time
+      tags:
+      - Monitoring
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringEventExportSerializersMonitoringEventListResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Lab Monitoring Export
+  /api/labs/monitoring-events:
+    get:
+      operationId: labs_monitoring_events_retrieve
+      description: List monitoring events with pagination or record a new event.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Monitoring
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringEventListSerializersMonitoringEventPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Monitoring Events
+    post:
+      operationId: labs_monitoring_events_create
+      description: List monitoring events with pagination or record a new event.
+      tags:
+      - Monitoring
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoringEventCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MonitoringEventCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MonitoringEventCreate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringEventSerializersMonitoringEventDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Monitoring Events
+  /api/labs/monitoring-events/{id}:
+    get:
+      operationId: labs_monitoring_events_retrieve_by_id
+      description: Retrieve details of a single monitoring event.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Monitoring
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringEventDetailSerializersMonitoringEventDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Monitoring Events by ID
+  /api/labs/monitoring-events/export:
+    get:
+      operationId: labs_monitoring_events_export_retrieve
+      description: Export non-paginated monitoring event list for reporting and spreadsheet
+        download.
+      parameters:
+      - in: query
+        name: action
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: bench_id
+        schema:
+          type: integer
+      - in: query
+        name: computer_id
+        schema:
+          type: integer
+      - in: query
+        name: computer_sku
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: from_date
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: from_date_time
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: lab
+        schema:
+          type: integer
+      - in: query
+        name: subject_type
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: to_date
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: to_date_time
+        schema:
+          type: string
+          format: date-time
+      tags:
+      - Monitoring
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringEventExportSerializersMonitoringEventListResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Monitoring Events Export
+components:
+  schemas:
+    ActionEnum:
+      enum:
+      - heartbeat
+      - device_inserted
+      - device_removed
+      - device_changed
+      - device_status_changed
+      - inventory_snapshot
+      - metric_reported
+      - alert_raised
+      - alert_resolved
+      - custom
+      type: string
+      description: '* `heartbeat` - Heartbeat
+
+        * `device_inserted` - Device inserted
+
+        * `device_removed` - Device removed
+
+        * `device_changed` - Device changed
+
+        * `device_status_changed` - Device status changed
+
+        * `inventory_snapshot` - Inventory snapshot
+
+        * `metric_reported` - Metric reported
+
+        * `alert_raised` - Alert raised
+
+        * `alert_resolved` - Alert resolved
+
+        * `custom` - Custom'
+    MonitoringBenchMinimal:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        bench_name:
+          type: string
+          readOnly: true
+      required:
+      - bench_name
+      - id
+      - sku
+    MonitoringEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        computer_id:
+          type: integer
+          readOnly: true
+        computer_name:
+          type: string
+          readOnly: true
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/MonitoringBenchMinimal'
+          readOnly: true
+          nullable: true
+        agent_id:
+          type: string
+          readOnly: true
+        agent_version:
+          type: string
+          readOnly: true
+        event_id:
+          type: string
+          format: uuid
+          readOnly: true
+        reported_at:
+          type: string
+          format: date-time
+          readOnly: true
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+        action:
+          type: string
+          readOnly: true
+        action_name:
+          type: string
+          readOnly: true
+        subject_type:
+          type: string
+          readOnly: true
+        subject_id:
+          type: string
+          readOnly: true
+        subject_name:
+          type: string
+          readOnly: true
+        payload:
+          readOnly: true
+        source:
+          type: string
+          readOnly: true
+        event_type:
+          type: string
+          readOnly: true
+        category:
+          type: string
+          readOnly: true
+        object_name:
+          type: string
+          readOnly: true
+        object_id:
+          type: string
+          readOnly: true
+        details:
+          readOnly: true
+        details_str:
+          type: string
+          readOnly: true
+        technical_user:
+          type: string
+          readOnly: true
+          default: ''
+        remote_user:
+          type: string
+          readOnly: true
+          default: ''
+        remote_user_displayname:
+          type: string
+          readOnly: true
+          default: ''
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - action
+      - action_name
+      - agent_id
+      - agent_version
+      - bench
+      - category
+      - computer_id
+      - computer_name
+      - created
+      - details
+      - details_str
+      - event_id
+      - event_type
+      - id
+      - modified
+      - object_id
+      - object_name
+      - occurred_at
+      - payload
+      - remote_user
+      - remote_user_displayname
+      - reported_at
+      - source
+      - subject_id
+      - subject_name
+      - subject_type
+      - technical_user
+    MonitoringEventCreate:
+      type: object
+      properties:
+        computer_sku:
+          type: string
+          nullable: true
+        computer_id:
+          type: integer
+          nullable: true
+        action:
+          allOf:
+          - $ref: '#/components/schemas/ActionEnum'
+          default: heartbeat
+        action_name:
+          type: string
+          default: ''
+        subject_type:
+          type: string
+          default: ''
+        subject_id:
+          type: string
+          default: ''
+        subject_name:
+          type: string
+          default: ''
+        payload: {}
+        occurred_at:
+          type: string
+          format: date-time
+          nullable: true
+        agent_id:
+          type: string
+          default: agent
+        agent_version:
+          type: string
+          default: ''
+        event_id:
+          type: string
+          format: uuid
+        source:
+          type: string
+        event_type:
+          type: string
+        category:
+          type: string
+        object_name:
+          type: string
+        object_id:
+          type: string
+        details: {}
+    MonitoringEventDetailSerializersMonitoringEventDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/MonitoringEvent'
+      required:
+      - data
+    MonitoringEventExportSerializersMonitoringEventListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonitoringEvent'
+      required:
+      - data
+    MonitoringEventListSerializersMonitoringEventPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/MonitoringEventListSerializersMonitoringEventPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonitoringEvent'
+      required:
+      - data
+      - meta
+    MonitoringEventListSerializersMonitoringEventPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    MonitoringEventListSerializersMonitoringEventPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/MonitoringEventListSerializersMonitoringEventPagination'
+      required:
+      - pagination
+    MonitoringEventSerializersMonitoringEventDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/MonitoringEvent'
+      required:
+      - data
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Monitoring
+  description: Monitoring endpoints

@@ -1,0 +1,5568 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/support/admin/canned-responses:
+    get:
+      operationId: support_admin_canned_responses_retrieve
+      description: List all canned responses or create a new one.
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCannedResponseListSerializersCannedResponseListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Admin Canned Responses
+    post:
+      operationId: support_admin_canned_responses_create
+      description: List all canned responses or create a new one.
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCannedResponseCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminCannedResponseCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminCannedResponseCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCannedResponseCreateSerializersCannedResponseDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Admin Canned Responses
+  /api/support/admin/canned-responses/{response_id}:
+    patch:
+      operationId: support_admin_canned_responses_partial_update_by_response_id
+      description: Update or delete a canned response.
+      parameters:
+      - in: path
+        name: response_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminCannedResponseUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminCannedResponseUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminCannedResponseUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCannedResponseUpdateSerializersCannedResponseDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Admin Canned Responses by Response ID
+    delete:
+      operationId: support_admin_canned_responses_destroy_by_response_id
+      description: Update or delete a canned response.
+      parameters:
+      - in: path
+        name: response_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Admin Canned Responses by Response ID
+  /api/support/admin/settings:
+    get:
+      operationId: support_admin_settings_retrieve
+      description: View and update global Support Desk configuration settings.
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSettingsDetailSerializersSupportSettingsDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Admin Settings
+    patch:
+      operationId: support_admin_settings_partial_update
+      description: View and update global Support Desk configuration settings.
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminSettingsUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminSettingsUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminSettingsUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSettingsUpdateSerializersSupportSettingsDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Admin Settings
+  /api/support/admin/transitions:
+    get:
+      operationId: support_admin_transitions_retrieve
+      description: List all status transitions or define a new allowed transition.
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminTransitionListSerializersStatusTransitionListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Admin Transitions
+    post:
+      operationId: support_admin_transitions_create
+      description: List all status transitions or define a new allowed transition.
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminTransitionCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminTransitionCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminTransitionCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminTransitionCreateSerializersStatusTransitionDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Admin Transitions
+  /api/support/admin/transitions/{transition_id}:
+    patch:
+      operationId: support_admin_transitions_partial_update_by_transition_id
+      description: Update or remove a status transition.
+      parameters:
+      - in: path
+        name: transition_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminTransitionUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminTransitionUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminTransitionUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminTransitionUpdateSerializersStatusTransitionDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Admin Transitions by Transition ID
+    delete:
+      operationId: support_admin_transitions_destroy_by_transition_id
+      description: Update or remove a status transition.
+      parameters:
+      - in: path
+        name: transition_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Admin Transitions by Transition ID
+  /api/support/attachments/{attachment_id}/download:
+    get:
+      operationId: support_attachments_download_retrieve_by_attachment_id
+      description: Download an attachment file with security verification.
+      parameters:
+      - in: path
+        name: attachment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: Clean attachment binary (stored content type)
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Restricted attachment requires support staff
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Attachment is missing, deleted, hidden, or has no binary
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Attachment scan is pending
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Attachment is quarantined as infected
+      summary: Get Attachments Download by Attachment ID
+  /api/support/canned-responses:
+    get:
+      operationId: support_canned_responses_retrieve
+      description: Canned responses the calling agent may use; ``?ticket=KEY`` renders
+        the placeholders.
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CannedResponseListSerializersCannedResponseListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Canned Responses
+  /api/support/categories:
+    get:
+      operationId: support_categories_retrieve
+      description: List all categories or create a new category.
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategoryListSerializersCategoryListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Categories
+    post:
+      operationId: support_categories_create
+      description: List all categories or create a new category.
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCategoryCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminCategoryCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminCategoryCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategoryCreateSerializersCategoryDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Categories
+  /api/support/categories/{category_id}:
+    patch:
+      operationId: support_categories_partial_update_by_category_id
+      description: Update or delete a category.
+      parameters:
+      - in: path
+        name: category_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminCategoryUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminCategoryUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminCategoryUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategoryUpdateSerializersCategoryDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Categories by Category ID
+    delete:
+      operationId: support_categories_destroy_by_category_id
+      description: Update or delete a category.
+      parameters:
+      - in: path
+        name: category_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Categories by Category ID
+  /api/support/categories/options:
+    get:
+      operationId: support_categories_options_retrieve
+      description: Options selector endpoint for active categories.
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: tickets
+      summary: Get Categories Options
+  /api/support/labels:
+    get:
+      operationId: support_labels_retrieve
+      description: List all labels or create a new label.
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLabelListSerializersLabelListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Labels
+    post:
+      operationId: support_labels_create
+      description: List all labels or create a new label.
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLabelCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminLabelCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminLabelCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLabelCreateSerializersLabelDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Labels
+  /api/support/labels/{label_id}:
+    patch:
+      operationId: support_labels_partial_update_by_label_id
+      description: Rename, recolour or delete a label.
+      parameters:
+      - in: path
+        name: label_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminLabelUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminLabelUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminLabelUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLabelUpdateSerializersLabelDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Labels by Label ID
+    delete:
+      operationId: support_labels_destroy_by_label_id
+      description: Rename, recolour or delete a label.
+      parameters:
+      - in: path
+        name: label_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Labels by Label ID
+  /api/support/labels/options:
+    get:
+      operationId: support_labels_options_retrieve
+      description: Options selector endpoint for labels.
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: tickets
+      summary: Get Labels Options
+  /api/support/priorities:
+    get:
+      operationId: support_priorities_retrieve
+      description: List all priorities or create a new priority.
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPriorityListSerializersPriorityListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Priorities
+    post:
+      operationId: support_priorities_create
+      description: List all priorities or create a new priority.
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminPriorityCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminPriorityCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminPriorityCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPriorityCreateSerializersPriorityDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Priorities
+  /api/support/priorities/{priority_id}:
+    patch:
+      operationId: support_priorities_partial_update_by_priority_id
+      description: Update or delete a priority.
+      parameters:
+      - in: path
+        name: priority_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminPriorityUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminPriorityUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminPriorityUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPriorityUpdateSerializersPriorityDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Priorities by Priority ID
+    delete:
+      operationId: support_priorities_destroy_by_priority_id
+      description: Update or delete a priority.
+      parameters:
+      - in: path
+        name: priority_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Priorities by Priority ID
+  /api/support/priorities/options:
+    get:
+      operationId: support_priorities_options_retrieve
+      description: Options selector endpoint for active priorities.
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: tickets
+      summary: Get Priorities Options
+  /api/support/resources/{resource_type}/{resource_id}/tickets:
+    get:
+      operationId: support_resources_tickets_retrieve_by_resource_type_resource_id
+      description: Retrieve full incident history and open/total counts for a traceable
+        lab resource.
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: resource_type
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceTicketSummarySerializersResourceTicketSummaryDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Resources Tickets by Resource Type Resource ID
+  /api/support/statuses:
+    get:
+      operationId: support_statuses_retrieve
+      description: List all workflow statuses or create a new status.
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStatusListSerializersStatusListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Statuses
+    post:
+      operationId: support_statuses_create
+      description: List all workflow statuses or create a new status.
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminStatusCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminStatusCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminStatusCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStatusCreateSerializersStatusDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Statuses
+  /api/support/statuses/{status_id}:
+    patch:
+      operationId: support_statuses_partial_update_by_status_id
+      description: Update a workflow status.
+      parameters:
+      - in: path
+        name: status_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminStatusUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminStatusUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminStatusUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStatusUpdateSerializersStatusDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Statuses by Status ID
+  /api/support/statuses/options:
+    get:
+      operationId: support_statuses_options_retrieve
+      description: Options selector endpoint for active statuses.
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      - in: query
+        name: system_state
+        schema:
+          enum:
+          - open
+          - active
+          - waiting
+          - done
+          type: string
+          minLength: 1
+        description: '* `open` - Open
+
+          * `active` - Active
+
+          * `waiting` - Waiting
+
+          * `done` - Done'
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: tickets
+      summary: Get Statuses Options
+  /api/support/teams:
+    get:
+      operationId: support_teams_retrieve
+      description: List all support teams or create a new team.
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminTeamListSerializersTeamListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Teams
+    post:
+      operationId: support_teams_create
+      description: List all support teams or create a new team.
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminTeamCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminTeamCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminTeamCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminTeamCreateSerializersTeamDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Teams
+  /api/support/teams/{team_id}:
+    patch:
+      operationId: support_teams_partial_update_by_team_id
+      description: Update or delete a support team.
+      parameters:
+      - in: path
+        name: team_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminTeamUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminTeamUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminTeamUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminTeamUpdateSerializersTeamDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Teams by Team ID
+    delete:
+      operationId: support_teams_destroy_by_team_id
+      description: Update or delete a support team.
+      parameters:
+      - in: path
+        name: team_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk Administration
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Teams by Team ID
+  /api/support/teams/options:
+    get:
+      operationId: support_teams_options_retrieve
+      description: Options selector endpoint for active teams.
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: tickets
+      summary: Get Teams Options
+  /api/support/tickets:
+    get:
+      operationId: support_tickets_retrieve
+      description: List support tickets with rich filtering, or create a new support
+        ticket.
+      parameters:
+      - in: query
+        name: assignee_id
+        schema:
+          type: integer
+          maximum: 9007199254740991
+          minimum: 1
+          format: int64
+      - in: query
+        name: category_id
+        schema:
+          type: integer
+          maximum: 9007199254740991
+          minimum: 1
+          format: int64
+      - in: query
+        name: created_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: external_reference
+        schema:
+          type: string
+          maxLength: 128
+          minLength: 1
+      - in: query
+        name: impact
+        schema:
+          type: string
+          maxLength: 1
+          minLength: 1
+      - in: query
+        name: key
+        schema:
+          type: string
+          maxLength: 32
+          minLength: 1
+      - in: query
+        name: label
+        schema:
+          type: string
+          maxLength: 50
+          minLength: 1
+      - in: query
+        name: no_team
+        schema:
+          type: boolean
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: parent_key
+        schema:
+          type: string
+          maxLength: 32
+          minLength: 1
+      - in: query
+        name: priority_id
+        schema:
+          type: integer
+          maximum: 9007199254740991
+          minimum: 1
+          format: int64
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+      - in: query
+        name: requester_id
+        schema:
+          type: integer
+          maximum: 9007199254740991
+          minimum: 1
+          format: int64
+      - in: query
+        name: resolution_code
+        schema:
+          type: string
+          maxLength: 20
+          minLength: 1
+      - in: query
+        name: resolution_due_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: resolution_due_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: resource_id
+        schema:
+          type: string
+          maxLength: 64
+          minLength: 1
+      - in: query
+        name: resource_type
+        schema:
+          type: string
+          maxLength: 50
+          minLength: 1
+      - in: query
+        name: source
+        schema:
+          type: string
+          maxLength: 20
+          minLength: 1
+      - in: query
+        name: status
+        schema:
+          type: string
+          maxLength: 50
+          minLength: 1
+      - in: query
+        name: status_id
+        schema:
+          type: integer
+          maximum: 9007199254740991
+          minimum: 1
+          format: int64
+      - in: query
+        name: system_state
+        schema:
+          type: string
+          maxLength: 20
+          minLength: 1
+      - in: query
+        name: team_id
+        schema:
+          type: integer
+          maximum: 9007199254740991
+          minimum: 1
+          format: int64
+      - in: query
+        name: ticket_type
+        schema:
+          type: string
+          maxLength: 20
+          minLength: 1
+      - in: query
+        name: unassigned
+        schema:
+          type: boolean
+      - in: query
+        name: updated_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: updated_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: urgency
+        schema:
+          type: string
+          maxLength: 1
+          minLength: 1
+      - in: query
+        name: watcher_id
+        schema:
+          type: integer
+          maximum: 9007199254740991
+          minimum: 1
+          format: int64
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketListSerializersTicketListPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Tickets
+    post:
+      operationId: support_tickets_create
+      description: List support tickets with rich filtering, or create a new support
+        ticket.
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketCreateSerializersTicketDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Tickets
+  /api/support/tickets/{key}:
+    get:
+      operationId: support_tickets_retrieve_by_key
+      description: Retrieve full ticket projection or update mutable fields.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketDetailSerializersTicketDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Tickets by Key
+    patch:
+      operationId: support_tickets_partial_update_by_key
+      description: Retrieve full ticket projection or update mutable fields.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketUpdateRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketUpdateSerializersTicketDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Tickets by Key
+  /api/support/tickets/{key}/activity:
+    get:
+      operationId: support_tickets_activity_retrieve_by_key
+      description: Read the immutable audit trail of a support ticket.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketActivityListSerializersTicketActivityListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Tickets Activity by Key
+  /api/support/tickets/{key}/assign:
+    post:
+      operationId: support_tickets_assign_create_by_key
+      description: Assign or reassign a support ticket to an agent.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketAssignRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketAssignRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketAssignRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketAssignSerializersTicketDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Assign Tickets by Key
+  /api/support/tickets/{key}/attachments:
+    post:
+      operationId: support_tickets_attachments_create_by_key
+      description: Upload a file attachment to a ticket.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AttachmentUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AttachmentUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketAttachmentCreateSerializersTicketAttachmentDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Tickets Attachments by Key
+  /api/support/tickets/{key}/attachments/{attachment_id}:
+    delete:
+      operationId: support_tickets_attachments_destroy_by_key_attachment_id
+      description: Soft-delete an attachment from a ticket.
+      parameters:
+      - in: path
+        name: attachment_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Tickets Attachments by Key Attachment ID
+  /api/support/tickets/{key}/comments:
+    get:
+      operationId: support_tickets_comments_retrieve_by_key
+      description: List comments visible to current actor, or post a new comment.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketCommentListSerializersTicketCommentListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Tickets Comments by Key
+    post:
+      operationId: support_tickets_comments_create_by_key
+      description: List comments visible to current actor, or post a new comment.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommentCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommentCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketCommentCreateSerializersTicketCommentDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Tickets Comments by Key
+  /api/support/tickets/{key}/comments/{comment_id}:
+    patch:
+      operationId: support_tickets_comments_partial_update_by_key_comment_id
+      description: Edit or soft-delete a comment within the allowed edit window.
+      parameters:
+      - in: path
+        name: comment_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentUpdateRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketCommentUpdateSerializersTicketCommentDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Tickets Comments by Key Comment ID
+    delete:
+      operationId: support_tickets_comments_destroy_by_key_comment_id
+      description: Edit or soft-delete a comment within the allowed edit window.
+      parameters:
+      - in: path
+        name: comment_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Tickets Comments by Key Comment ID
+  /api/support/tickets/{key}/csat:
+    post:
+      operationId: support_tickets_csat_create_by_key
+      description: Requester satisfaction rating (1-5) for a resolved ticket.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CsatRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CsatRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CsatRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketCsatSerializersTicketDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Tickets Csat by Key
+  /api/support/tickets/{key}/links:
+    get:
+      operationId: support_tickets_links_retrieve_by_key
+      description: Link this ticket to another (relates to / duplicates / blocks /
+        caused by).
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketLinkListSerializersTicketLinkListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Tickets Links by Key
+    post:
+      operationId: support_tickets_links_create_by_key
+      description: Link this ticket to another (relates to / duplicates / blocks /
+        caused by).
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketLinkRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketLinkRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketLinkRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketLinkCreateSerializersTicketLinkDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Tickets Links by Key
+  /api/support/tickets/{key}/links/{link_id}:
+    delete:
+      operationId: support_tickets_links_destroy_by_key_link_id
+      description: Remove a ticket link.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: link_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Tickets Links by Key Link ID
+  /api/support/tickets/{key}/resources:
+    post:
+      operationId: support_tickets_resources_create_by_key
+      description: Link or unlink a Lab Mango resource on a support ticket.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkResourceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LinkResourceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LinkResourceRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResourceLinkCreateSerializersTicketResourceLinkDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Tickets Resources by Key
+    delete:
+      operationId: support_tickets_resources_destroy_by_key
+      description: Link or unlink a Lab Mango resource on a support ticket.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Tickets Resources by Key
+  /api/support/tickets/{key}/transitions:
+    post:
+      operationId: support_tickets_transitions_create_by_key
+      description: Execute a validated lifecycle status transition on a ticket.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketTransitionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketTransitionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketTransitionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketTransitionSerializersTicketDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Tickets Transitions by Key
+  /api/support/tickets/{key}/watchers:
+    post:
+      operationId: support_tickets_watchers_create_by_key
+      description: Subscribe to (POST) or unsubscribe from (DELETE) a ticket. Agents
+        may manage other users via ``user_id``.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatcherRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WatcherRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WatcherRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketWatcherAddSerializersWatcherDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Tickets Watchers by Key
+    delete:
+      operationId: support_tickets_watchers_destroy_by_key
+      description: Subscribe to (POST) or unsubscribe from (DELETE) a ticket. Agents
+        may manage other users via ``user_id``.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Tickets Watchers by Key
+  /api/support/tickets/stats:
+    get:
+      operationId: support_tickets_stats_retrieve
+      description: 'Agent dashboard: open workload, SLA health, throughput, CSAT.'
+      parameters:
+      - in: query
+        name: days
+        schema:
+          type: integer
+          maximum: 365
+          minimum: 1
+          default: 30
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportQueueStatsSerializersQueueStatsDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Tickets Stats
+components:
+  schemas:
+    AdminCannedResponseCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 120
+        body:
+          type: string
+        team_id:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+          default: true
+      required:
+      - body
+      - title
+    AdminCannedResponseCreateSerializersCannedResponseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/CannedResponse'
+      required:
+      - data
+    AdminCannedResponseListSerializersCannedResponseListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CannedResponse'
+      required:
+      - data
+    AdminCannedResponseUpdateSerializersCannedResponseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/CannedResponse'
+      required:
+      - data
+    AdminCategoryCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          pattern: ^[-a-zA-Z0-9_]*$
+          maxLength: 50
+          default: ''
+        default_team_id:
+          type: integer
+          nullable: true
+        description:
+          type: string
+          default: ''
+        sort_order:
+          type: integer
+          default: 0
+        is_active:
+          type: boolean
+          default: true
+      required:
+      - name
+    AdminCategoryCreateSerializersCategoryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Category'
+      required:
+      - data
+    AdminCategoryListSerializersCategoryListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+      required:
+      - data
+    AdminCategoryUpdateSerializersCategoryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Category'
+      required:
+      - data
+    AdminLabelCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        color_hex:
+          type: string
+          default: ''
+          pattern: ^(#[0-9A-Fa-f]{6})?$
+      required:
+      - name
+    AdminLabelCreateSerializersLabelDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Label'
+      required:
+      - data
+    AdminLabelListSerializersLabelListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Label'
+      required:
+      - data
+    AdminLabelUpdateSerializersLabelDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Label'
+      required:
+      - data
+    AdminPriorityCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        rank:
+          type: integer
+          minimum: 1
+        code:
+          type: string
+          pattern: ^[-a-zA-Z0-9_]*$
+          maxLength: 50
+          default: ''
+        color_hex:
+          type: string
+          default: ''
+          pattern: ^(#[0-9A-Fa-f]{6})?$
+        response_target_minutes:
+          type: integer
+          minimum: 1
+          nullable: true
+        resolution_target_minutes:
+          type: integer
+          minimum: 1
+          nullable: true
+        is_default:
+          type: boolean
+          default: false
+        is_active:
+          type: boolean
+          default: true
+      required:
+      - name
+      - rank
+    AdminPriorityCreateSerializersPriorityDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Priority'
+      required:
+      - data
+    AdminPriorityListSerializersPriorityListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Priority'
+      required:
+      - data
+    AdminPriorityUpdateSerializersPriorityDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Priority'
+      required:
+      - data
+    AdminSettingsDetailSerializersSupportSettingsDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/SupportSettings'
+      required:
+      - data
+    AdminSettingsUpdateSerializersSupportSettingsDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/SupportSettings'
+      required:
+      - data
+    AdminStatusCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        color_hex:
+          type: string
+          default: ''
+          pattern: ^(#[0-9A-Fa-f]{6})?$
+        is_final:
+          type: boolean
+          default: false
+        pauses_sla:
+          type: boolean
+          default: false
+        system_state:
+          $ref: '#/components/schemas/SystemStateEnum'
+        is_initial:
+          type: boolean
+          default: false
+        is_active:
+          type: boolean
+          default: true
+        sort_order:
+          type: integer
+          default: 0
+      required:
+      - name
+      - system_state
+    AdminStatusCreateSerializersStatusDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Status'
+      required:
+      - data
+    AdminStatusListSerializersStatusListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Status'
+      required:
+      - data
+    AdminStatusUpdateSerializersStatusDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Status'
+      required:
+      - data
+    AdminTeamCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          pattern: ^[-a-zA-Z0-9_]*$
+          maxLength: 50
+          default: ''
+        description:
+          type: string
+          default: ''
+        lead_id:
+          type: integer
+          nullable: true
+        member_ids:
+          type: array
+          items:
+            type: integer
+        is_active:
+          type: boolean
+          default: true
+      required:
+      - name
+    AdminTeamCreateSerializersTeamDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Team'
+      required:
+      - data
+    AdminTeamListSerializersTeamListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Team'
+      required:
+      - data
+    AdminTeamUpdateSerializersTeamDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Team'
+      required:
+      - data
+    AdminTransitionCreate:
+      type: object
+      properties:
+        from_status_id:
+          type: integer
+        to_status_id:
+          type: integer
+        allowed_roles:
+          type: array
+          items:
+            type: string
+        requires_reason:
+          type: boolean
+          default: false
+        requires_resolution:
+          type: boolean
+          default: false
+      required:
+      - from_status_id
+      - to_status_id
+    AdminTransitionCreateSerializersStatusTransitionDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StatusTransition'
+      required:
+      - data
+    AdminTransitionListSerializersStatusTransitionListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusTransition'
+      required:
+      - data
+    AdminTransitionUpdateSerializersStatusTransitionDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StatusTransition'
+      required:
+      - data
+    AttachmentUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: uri
+        comment_id:
+          type: integer
+          nullable: true
+        is_restricted:
+          type: boolean
+          default: false
+      required:
+      - file
+    BlankEnum:
+      enum:
+      - ''
+    CannedResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 120
+        body:
+          type: string
+        team:
+          allOf:
+          - $ref: '#/components/schemas/TeamSummary'
+          readOnly: true
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - body
+      - created_at
+      - id
+      - team
+      - title
+      - updated_at
+    CannedResponseListSerializersCannedResponseListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CannedResponse'
+      required:
+      - data
+    CatalogOption:
+      type: object
+      description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
+        OPT-4).'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+          nullable: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - sku
+    CatalogOptionList:
+      type: object
+      description: Enveloped list of selector options.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogOption'
+          readOnly: true
+      required:
+      - data
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Stable machine-readable identifier (exposed as 'sku' by the
+            options API).
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        default_team:
+          allOf:
+          - $ref: '#/components/schemas/TeamSummary'
+          readOnly: true
+        sort_order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - default_team
+      - id
+      - name
+    CommentCreateRequest:
+      type: object
+      properties:
+        body:
+          type: string
+        visibility:
+          allOf:
+          - $ref: '#/components/schemas/CommentCreateRequestVisibilityEnum'
+          default: public
+      required:
+      - body
+    CommentCreateRequestVisibilityEnum:
+      enum:
+      - public
+      - internal
+      type: string
+      description: '* `public` - public
+
+        * `internal` - internal'
+    CsatRequest:
+      type: object
+      properties:
+        score:
+          type: integer
+          maximum: 5
+          minimum: 1
+        comment:
+          type: string
+          default: ''
+      required:
+      - score
+    EventTypeEnum:
+      enum:
+      - created
+      - updated
+      - assigned
+      - unassigned
+      - status_changed
+      - priority_changed
+      - category_changed
+      - comment_added
+      - comment_edited
+      - comment_deleted
+      - attachment_added
+      - attachment_removed
+      - resource_linked
+      - resource_unlinked
+      - resolved
+      - reopened
+      - watcher_added
+      - watcher_removed
+      - ticket_linked
+      - ticket_unlinked
+      - sla_breached
+      - sla_paused
+      - sla_resumed
+      - csat_submitted
+      type: string
+      description: '* `created` - Created
+
+        * `updated` - Updated
+
+        * `assigned` - Assigned
+
+        * `unassigned` - Unassigned
+
+        * `status_changed` - Status Changed
+
+        * `priority_changed` - Priority Changed
+
+        * `category_changed` - Category Changed
+
+        * `comment_added` - Comment Added
+
+        * `comment_edited` - Comment Edited
+
+        * `comment_deleted` - Comment Deleted
+
+        * `attachment_added` - Attachment Added
+
+        * `attachment_removed` - Attachment Removed
+
+        * `resource_linked` - Resource Linked
+
+        * `resource_unlinked` - Resource Unlinked
+
+        * `resolved` - Resolved
+
+        * `reopened` - Reopened
+
+        * `watcher_added` - Watcher Added
+
+        * `watcher_removed` - Watcher Removed
+
+        * `ticket_linked` - Ticket Linked
+
+        * `ticket_unlinked` - Ticket Unlinked
+
+        * `sla_breached` - Sla Breached
+
+        * `sla_paused` - Sla Paused
+
+        * `sla_resumed` - Sla Resumed
+
+        * `csat_submitted` - Csat Submitted'
+    Label:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        color_hex:
+          type: string
+          description: Optional '#RRGGBB' badge colour.
+          maxLength: 7
+      required:
+      - id
+      - name
+    LinkResourceRequest:
+      type: object
+      properties:
+        resource_type:
+          $ref: '#/components/schemas/ResourceTypeEnum'
+        resource_id:
+          type: string
+          maxLength: 64
+      required:
+      - resource_id
+      - resource_type
+    LinkTypeEnum:
+      enum:
+      - relates_to
+      - duplicates
+      - blocks
+      - caused_by
+      type: string
+      description: '* `relates_to` - Relates To
+
+        * `duplicates` - Duplicates
+
+        * `blocks` - Blocks
+
+        * `caused_by` - Caused By'
+    LinkedResourceItem:
+      type: object
+      properties:
+        resource_type:
+          $ref: '#/components/schemas/ResourceTypeEnum'
+        resource_id:
+          type: string
+          maxLength: 64
+      required:
+      - resource_id
+      - resource_type
+    PatchedAdminCannedResponseUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 120
+        body:
+          type: string
+        team_id:
+          type: integer
+        clear_team:
+          type: boolean
+        is_active:
+          type: boolean
+    PatchedAdminCategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        default_team_id:
+          type: integer
+        clear_default_team:
+          type: boolean
+        description:
+          type: string
+        sort_order:
+          type: integer
+        is_active:
+          type: boolean
+    PatchedAdminLabelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        color_hex:
+          type: string
+          pattern: ^(#[0-9A-Fa-f]{6})?$
+    PatchedAdminPriorityUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        rank:
+          type: integer
+          minimum: 1
+        code:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        color_hex:
+          type: string
+          pattern: ^(#[0-9A-Fa-f]{6})?$
+        response_target_minutes:
+          type: integer
+          minimum: 1
+        resolution_target_minutes:
+          type: integer
+          minimum: 1
+        clear_response_target:
+          type: boolean
+        clear_resolution_target:
+          type: boolean
+        is_default:
+          type: boolean
+        is_active:
+          type: boolean
+    PatchedAdminSettingsUpdate:
+      type: object
+      properties:
+        reopen_window_days:
+          type: integer
+        auto_close_days:
+          type: integer
+        max_attachment_size_bytes:
+          type: integer
+        allowed_attachment_extensions:
+          type: array
+          items:
+            type: string
+        max_attachments_per_ticket:
+          type: integer
+        comment_edit_window_minutes:
+          type: integer
+        requesters_can_set_priority:
+          type: boolean
+        sla_enabled:
+          type: boolean
+        sla_at_risk_percent:
+          type: integer
+          maximum: 100
+          minimum: 1
+        csat_enabled:
+          type: boolean
+        csat_window_days:
+          type: integer
+          minimum: 0
+        default_ticket_type:
+          $ref: '#/components/schemas/TicketTypeEnum'
+    PatchedAdminStatusUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        color_hex:
+          type: string
+          pattern: ^(#[0-9A-Fa-f]{6})?$
+        is_final:
+          type: boolean
+        pauses_sla:
+          type: boolean
+        system_state:
+          $ref: '#/components/schemas/SystemStateEnum'
+        is_initial:
+          type: boolean
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+    PatchedAdminTeamUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        lead_id:
+          type: integer
+        clear_lead:
+          type: boolean
+        member_ids:
+          type: array
+          items:
+            type: integer
+        is_active:
+          type: boolean
+    PatchedAdminTransitionUpdate:
+      type: object
+      properties:
+        allowed_roles:
+          type: array
+          items:
+            type: string
+        requires_reason:
+          type: boolean
+        requires_resolution:
+          type: boolean
+    PatchedCommentUpdateRequest:
+      type: object
+      properties:
+        body:
+          type: string
+    PatchedTicketUpdateRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+        subject:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        category_id:
+          type: integer
+        priority_id:
+          type: integer
+        ticket_type:
+          $ref: '#/components/schemas/TicketTypeEnum'
+        impact:
+          oneOf:
+          - $ref: '#/components/schemas/UrgencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        urgency:
+          oneOf:
+          - $ref: '#/components/schemas/UrgencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        external_reference:
+          type: string
+          maxLength: 128
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        team_id:
+          type: integer
+          nullable: true
+        labels:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        parent_key:
+          type: string
+          nullable: true
+          maxLength: 32
+    Priority:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        code:
+          type: string
+          description: Stable machine-readable identifier.
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        rank:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Lower rank indicates higher urgency (1=Critical)
+        color_hex:
+          type: string
+          description: Optional '#RRGGBB' badge colour.
+          maxLength: 7
+        response_target_minutes:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          description: 'SLA: minutes allowed until the first agent response (empty
+            = no target).'
+        resolution_target_minutes:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          description: 'SLA: minutes allowed until the ticket is resolved (empty =
+            no target).'
+        is_default:
+          type: boolean
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - rank
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    QueueStats:
+      type: object
+      description: Aggregate statistics and SLA metrics for the agent support queue
+        dashboard.
+      properties:
+        window_days:
+          type: integer
+          description: Window in days used for recent throughput metrics.
+        open_total:
+          type: integer
+          description: Total number of active, non-done tickets.
+        unassigned:
+          type: integer
+          description: Total number of tickets without an assignee.
+        mine_open:
+          type: integer
+          description: Total number of open tickets assigned to the calling agent.
+        by_state:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Ticket count grouped by system state.
+        by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Open ticket count grouped by ticket type.
+        by_priority:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueStatsPriorityItem'
+          description: Breakdown of open tickets by priority.
+        by_team:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueStatsTeamItem'
+          description: Breakdown of open tickets by team.
+        by_assignee:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueStatsAssigneeItem'
+          description: Breakdown of open tickets by assignee (top 20).
+        sla:
+          allOf:
+          - $ref: '#/components/schemas/QueueStatsSla'
+          description: Current SLA breach and pause counters.
+        created:
+          type: integer
+          description: Total tickets created within the window.
+        resolved:
+          type: integer
+          description: Total tickets resolved within the window.
+        reopened:
+          type: integer
+          description: Total tickets reopened within the window.
+        avg_first_response_minutes:
+          type: number
+          format: double
+          nullable: true
+          description: Average first response time in minutes.
+        avg_resolution_minutes:
+          type: number
+          format: double
+          nullable: true
+          description: Average resolution time in minutes.
+        csat_average:
+          type: number
+          format: double
+          nullable: true
+          description: Average CSAT rating within the window (1.0 to 5.0).
+        csat_responses:
+          type: integer
+          description: Number of CSAT ratings submitted within the window.
+      required:
+      - avg_first_response_minutes
+      - avg_resolution_minutes
+      - by_assignee
+      - by_priority
+      - by_state
+      - by_team
+      - by_type
+      - created
+      - csat_average
+      - csat_responses
+      - mine_open
+      - open_total
+      - reopened
+      - resolved
+      - sla
+      - unassigned
+      - window_days
+    QueueStatsAssigneeItem:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          description: Primary key of the assigned user.
+        username:
+          type: string
+          description: Username of the assignee.
+        count:
+          type: integer
+          description: Number of open tickets assigned to this user.
+      required:
+      - count
+      - user_id
+      - username
+    QueueStatsPriorityItem:
+      type: object
+      properties:
+        priority_id:
+          type: integer
+          description: Primary key of the support priority.
+        name:
+          type: string
+          description: Name of the priority.
+        rank:
+          type: integer
+          description: Rank of the priority for ordering.
+        count:
+          type: integer
+          description: Number of open tickets with this priority.
+      required:
+      - count
+      - name
+      - priority_id
+      - rank
+    QueueStatsSla:
+      type: object
+      properties:
+        response_breached:
+          type: integer
+          description: Count of tickets that breached response SLA.
+        resolution_breached:
+          type: integer
+          description: Count of tickets that breached resolution SLA.
+        overdue_resolution:
+          type: integer
+          description: Count of open tickets overdue for resolution.
+        paused:
+          type: integer
+          description: Count of tickets currently in SLA pause.
+      required:
+      - overdue_resolution
+      - paused
+      - resolution_breached
+      - response_breached
+    QueueStatsTeamItem:
+      type: object
+      properties:
+        team_id:
+          type: integer
+          nullable: true
+          description: Primary key of the support team, or null if unassigned.
+        name:
+          type: string
+          description: Name of the team.
+        count:
+          type: integer
+          description: Number of open tickets assigned to this team.
+      required:
+      - count
+      - name
+      - team_id
+    ResolutionCodeEnum:
+      enum:
+      - fixed
+      - workaround
+      - cannot_reproduce
+      - duplicate
+      - wont_fix
+      - user_error
+      - vendor
+      type: string
+      description: '* `fixed` - Fixed
+
+        * `workaround` - Workaround
+
+        * `cannot_reproduce` - Cannot Reproduce
+
+        * `duplicate` - Duplicate
+
+        * `wont_fix` - Wont Fix
+
+        * `user_error` - User Error
+
+        * `vendor` - Vendor'
+    ResourceTicketDTOItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        subject:
+          type: string
+        status_name:
+          type: string
+        system_state:
+          type: string
+        priority_name:
+          type: string
+        priority_rank:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        is_link_active:
+          type: boolean
+      required:
+      - created_at
+      - id
+      - is_link_active
+      - key
+      - priority_name
+      - priority_rank
+      - status_name
+      - subject
+      - system_state
+    ResourceTicketSummary:
+      type: object
+      properties:
+        open_count:
+          type: integer
+        total_count:
+          type: integer
+        tickets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceTicketDTOItem'
+      required:
+      - open_count
+      - tickets
+      - total_count
+    ResourceTicketSummarySerializersResourceTicketSummaryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceTicketSummary'
+      required:
+      - data
+    ResourceTypeEnum:
+      enum:
+      - room
+      - station
+      - bench
+      - equipment
+      - license
+      type: string
+      description: '* `room` - Room
+
+        * `station` - Station
+
+        * `bench` - Bench
+
+        * `equipment` - Equipment
+
+        * `license` - License'
+    ScanStatusEnum:
+      enum:
+      - clean
+      - pending
+      - infected
+      type: string
+      description: '* `clean` - Clean
+
+        * `pending` - Pending
+
+        * `infected` - Infected'
+    SourceEnum:
+      enum:
+      - web
+      - email
+      - phone
+      - walk_in
+      - api
+      - system
+      type: string
+      description: '* `web` - Web
+
+        * `email` - Email
+
+        * `phone` - Phone
+
+        * `walk_in` - Walk In
+
+        * `api` - Api
+
+        * `system` - System'
+    Status:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        system_state:
+          $ref: '#/components/schemas/SystemStateEnum'
+        color_hex:
+          type: string
+          description: Optional '#RRGGBB' badge colour.
+          maxLength: 7
+        is_initial:
+          type: boolean
+        is_final:
+          type: boolean
+          description: Terminal status (e.g. Closed). Entering it stamps closed_at;
+            auto-close moves tickets here.
+        pauses_sla:
+          type: boolean
+          description: While a ticket is in this status (e.g. Waiting for Customer)
+            SLA clocks are paused.
+        sort_order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+    StatusTransition:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        from_status:
+          allOf:
+          - $ref: '#/components/schemas/Status'
+          readOnly: true
+        from_status_id:
+          type: integer
+          writeOnly: true
+        to_status:
+          allOf:
+          - $ref: '#/components/schemas/Status'
+          readOnly: true
+        to_status_id:
+          type: integer
+          writeOnly: true
+        allowed_roles:
+          description: List of roles allowed to trigger this transition, e.g. ['agent',
+            'admin'].
+        requires_reason:
+          type: boolean
+          description: Whether this transition requires a reason from the actor.
+        requires_resolution:
+          type: boolean
+          description: Whether this transition requires a resolution summary.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - from_status
+      - from_status_id
+      - id
+      - to_status
+      - to_status_id
+    SupportQueueStatsSerializersQueueStatsDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/QueueStats'
+      required:
+      - data
+    SupportSettings:
+      type: object
+      properties:
+        reopen_window_days:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Days after resolution during which a requester may reopen a
+            ticket.
+        auto_close_days:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Days after resolution before auto-closing a ticket (0 to disable).
+        max_attachment_size_bytes:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Maximum allowed attachment size in bytes (default 25 MB).
+        allowed_attachment_extensions:
+          description: List of permitted file extensions with dots, e.g. ['.png',
+            '.pdf'].
+        max_attachments_per_ticket:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Maximum number of attachments allowed on a single ticket.
+        comment_edit_window_minutes:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Minutes after creation during which an author may edit/delete
+            their comment.
+        requesters_can_set_priority:
+          type: boolean
+          description: If disabled, requesters describe impact/urgency and the priority
+            is derived (agents still set it).
+        sla_enabled:
+          type: boolean
+          description: Compute SLA deadlines and flag breaches from the priority targets.
+        sla_at_risk_percent:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          description: A ticket is 'at risk' once this percentage of its SLA window
+            has elapsed.
+        csat_enabled:
+          type: boolean
+          description: Allow requesters to rate resolved tickets (1-5).
+        csat_window_days:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Days after resolution during which the requester can submit
+            a satisfaction rating.
+        default_ticket_type:
+          allOf:
+          - $ref: '#/components/schemas/TicketTypeEnum'
+          description: 'Type applied when a ticket is created without one.
+
+
+            * `incident` - Incident
+
+            * `service_request` - Service Request
+
+            * `problem` - Problem
+
+            * `change` - Change
+
+            * `question` - Question'
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - updated_at
+    SystemStateEnum:
+      enum:
+      - open
+      - active
+      - waiting
+      - done
+      type: string
+      description: '* `open` - Open
+
+        * `active` - Active
+
+        * `waiting` - Waiting
+
+        * `done` - Done'
+    Team:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Stable machine-readable identifier used by the options API.
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        lead:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - lead
+      - members
+      - name
+    TeamSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Stable machine-readable identifier used by the options API.
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - code
+      - id
+      - name
+    TicketActivity:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        actor_name:
+          type: string
+          maxLength: 255
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+        payload: {}
+        correlation_id:
+          type: string
+          maxLength: 64
+      required:
+      - actor_name
+      - event_type
+      - id
+      - occurred_at
+    TicketActivityListSerializersTicketActivityListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketActivity'
+      required:
+      - data
+    TicketAssignRequest:
+      type: object
+      properties:
+        assignee_id:
+          type: integer
+          nullable: true
+        version:
+          type: integer
+          nullable: true
+      required:
+      - assignee_id
+    TicketAssignSerializersTicketDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketDetail'
+      required:
+      - data
+    TicketAttachment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        filename:
+          type: string
+          maxLength: 255
+        content_type:
+          type: string
+          maxLength: 100
+        size:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        is_restricted:
+          type: boolean
+          description: Restricted attachments are visible only to support agents and
+            administrators.
+        scan_status:
+          $ref: '#/components/schemas/ScanStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        uploaded_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        download_url:
+          type: string
+          readOnly: true
+      required:
+      - content_type
+      - created_at
+      - download_url
+      - filename
+      - id
+      - size
+      - uploaded_by
+    TicketAttachmentCreateSerializersTicketAttachmentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketAttachment'
+      required:
+      - data
+    TicketComment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        author:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        body:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/TicketCommentVisibilityEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        edited_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - author
+      - body
+      - created_at
+      - id
+    TicketCommentCreateSerializersTicketCommentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketComment'
+      required:
+      - data
+    TicketCommentListSerializersTicketCommentListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketComment'
+      required:
+      - data
+    TicketCommentUpdateSerializersTicketCommentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketComment'
+      required:
+      - data
+    TicketCommentVisibilityEnum:
+      enum:
+      - public
+      - internal
+      type: string
+      description: '* `public` - Public
+
+        * `internal` - Internal'
+    TicketCreateRequest:
+      type: object
+      properties:
+        subject:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        category_id:
+          type: integer
+        priority_id:
+          type: integer
+          nullable: true
+          description: 'Optional: derived from impact/urgency, then the default priority,
+            when omitted.'
+        ticket_type:
+          $ref: '#/components/schemas/TicketTypeEnum'
+        impact:
+          default: ''
+          oneOf:
+          - $ref: '#/components/schemas/UrgencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        urgency:
+          default: ''
+          oneOf:
+          - $ref: '#/components/schemas/UrgencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        source:
+          allOf:
+          - $ref: '#/components/schemas/TicketCreateRequestSourceEnum'
+          default: web
+        external_reference:
+          type: string
+          default: ''
+          maxLength: 128
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        team_id:
+          type: integer
+          nullable: true
+        labels:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        parent_key:
+          type: string
+          nullable: true
+          maxLength: 32
+        watcher_ids:
+          type: array
+          items:
+            type: integer
+        linked_resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkedResourceItem'
+        assignee_id:
+          type: integer
+          nullable: true
+        on_behalf_of_id:
+          type: integer
+          nullable: true
+        idempotency_key:
+          type: string
+          nullable: true
+          maxLength: 128
+      required:
+      - category_id
+      - description
+      - subject
+    TicketCreateRequestSourceEnum:
+      enum:
+      - web
+      - email
+      - phone
+      - walk_in
+      - api
+      type: string
+      description: '* `web` - Web
+
+        * `email` - Email
+
+        * `phone` - Phone
+
+        * `walk_in` - Walk In
+
+        * `api` - Api'
+    TicketCreateSerializersTicketDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketDetail'
+      required:
+      - data
+    TicketCsatSerializersTicketDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketDetail'
+      required:
+      - data
+    TicketDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        key:
+          type: string
+          readOnly: true
+        number:
+          type: integer
+          readOnly: true
+        subject:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        ticket_type:
+          $ref: '#/components/schemas/TicketTypeEnum'
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        impact:
+          oneOf:
+          - $ref: '#/components/schemas/UrgencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        urgency:
+          oneOf:
+          - $ref: '#/components/schemas/UrgencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        external_reference:
+          type: string
+          description: Reference in an external system (vendor RMA / case number,
+            legacy Jira key...).
+          maxLength: 128
+        due_date:
+          type: string
+          format: date
+          nullable: true
+          description: Requester/agent-set target date, independent of the SLA.
+        category:
+          allOf:
+          - $ref: '#/components/schemas/Category'
+          readOnly: true
+        priority:
+          allOf:
+          - $ref: '#/components/schemas/Priority'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status'
+          readOnly: true
+        requester:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        assignee:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        team:
+          allOf:
+          - $ref: '#/components/schemas/TeamSummary'
+          readOnly: true
+        labels:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        parent:
+          allOf:
+          - $ref: '#/components/schemas/TicketRef'
+          readOnly: true
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketRef'
+          readOnly: true
+        ticket_links:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        watchers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Watcher'
+          readOnly: true
+        is_watching:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        last_activity_at:
+          type: string
+          format: date-time
+        first_response_at:
+          type: string
+          format: date-time
+          nullable: true
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        resolved_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        reopen_count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        resolution_code:
+          oneOf:
+          - $ref: '#/components/schemas/ResolutionCodeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        resolution_summary:
+          type: string
+        root_cause:
+          type: string
+        csat_score:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
+        csat_comment:
+          type: string
+        csat_submitted_at:
+          type: string
+          format: date-time
+          nullable: true
+        sla:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        version:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        resource_links:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketResourceLink'
+          readOnly: true
+        comments:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        attachments:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        activities:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+      required:
+      - activities
+      - assignee
+      - attachments
+      - category
+      - children
+      - comments
+      - created_at
+      - created_by
+      - description
+      - id
+      - is_watching
+      - key
+      - labels
+      - number
+      - parent
+      - priority
+      - requester
+      - resolved_by
+      - resource_links
+      - sla
+      - status
+      - subject
+      - team
+      - ticket_links
+      - updated_at
+      - watchers
+    TicketDetailSerializersTicketDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketDetail'
+      required:
+      - data
+    TicketLink:
+      type: object
+      description: A link seen from one ticket's point of view (``direction`` + the
+        other ticket).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        link_type:
+          $ref: '#/components/schemas/LinkTypeEnum'
+        direction:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+        ticket:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - direction
+      - id
+      - label
+      - link_type
+      - ticket
+    TicketLinkCreateSerializersTicketLinkDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketLink'
+      required:
+      - data
+    TicketLinkListSerializersTicketLinkListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketLink'
+      required:
+      - data
+    TicketLinkRequest:
+      type: object
+      properties:
+        target_key:
+          type: string
+          maxLength: 32
+        link_type:
+          $ref: '#/components/schemas/LinkTypeEnum'
+      required:
+      - link_type
+      - target_key
+    TicketList:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        key:
+          type: string
+          readOnly: true
+        number:
+          type: integer
+          readOnly: true
+        subject:
+          type: string
+          maxLength: 200
+        ticket_type:
+          $ref: '#/components/schemas/TicketTypeEnum'
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        impact:
+          oneOf:
+          - $ref: '#/components/schemas/UrgencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        urgency:
+          oneOf:
+          - $ref: '#/components/schemas/UrgencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        category:
+          allOf:
+          - $ref: '#/components/schemas/Category'
+          readOnly: true
+        priority:
+          allOf:
+          - $ref: '#/components/schemas/Priority'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status'
+          readOnly: true
+        requester:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        assignee:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        team:
+          allOf:
+          - $ref: '#/components/schemas/TeamSummary'
+          readOnly: true
+        labels:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        due_date:
+          type: string
+          format: date
+          nullable: true
+          description: Requester/agent-set target date, independent of the SLA.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        last_activity_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        sla:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        version:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+      required:
+      - assignee
+      - category
+      - created_at
+      - id
+      - key
+      - labels
+      - number
+      - priority
+      - requester
+      - sla
+      - status
+      - subject
+      - team
+      - updated_at
+    TicketListSerializersTicketListPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/TicketListSerializersTicketListPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketList'
+      required:
+      - data
+      - meta
+    TicketListSerializersTicketListPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    TicketListSerializersTicketListPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/TicketListSerializersTicketListPagination'
+      required:
+      - pagination
+    TicketRef:
+      type: object
+      description: Compact reference to another ticket.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        key:
+          type: string
+          readOnly: true
+        subject:
+          type: string
+          maxLength: 200
+        status:
+          type: string
+          readOnly: true
+        system_state:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - key
+      - status
+      - subject
+      - system_state
+    TicketResourceLink:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        resource_type:
+          $ref: '#/components/schemas/ResourceTypeEnum'
+        resource_id:
+          type: string
+          maxLength: 64
+        snapshot:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        is_active:
+          type: boolean
+        linked_at:
+          type: string
+          format: date-time
+          readOnly: true
+        linked_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        unlinked_at:
+          type: string
+          format: date-time
+          nullable: true
+        unlinked_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        unlink_reason:
+          type: string
+        badge:
+          type: string
+          readOnly: true
+      required:
+      - badge
+      - id
+      - linked_at
+      - linked_by
+      - resource_id
+      - resource_type
+      - snapshot
+      - unlinked_by
+    TicketResourceLinkCreateSerializersTicketResourceLinkDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketResourceLink'
+      required:
+      - data
+    TicketTransitionRequest:
+      type: object
+      properties:
+        to_status_id:
+          type: integer
+        version:
+          type: integer
+        reason:
+          type: string
+          default: ''
+        resolution_summary:
+          type: string
+          default: ''
+        root_cause:
+          type: string
+          default: ''
+        resolution_code:
+          default: ''
+          oneOf:
+          - $ref: '#/components/schemas/ResolutionCodeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+      required:
+      - to_status_id
+      - version
+    TicketTransitionSerializersTicketDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketDetail'
+      required:
+      - data
+    TicketTypeEnum:
+      enum:
+      - incident
+      - service_request
+      - problem
+      - change
+      - question
+      type: string
+      description: '* `incident` - Incident
+
+        * `service_request` - Service Request
+
+        * `problem` - Problem
+
+        * `change` - Change
+
+        * `question` - Question'
+    TicketUpdateSerializersTicketDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketDetail'
+      required:
+      - data
+    TicketWatcherAddSerializersWatcherDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Watcher'
+      required:
+      - data
+    UrgencyEnum:
+      enum:
+      - '1'
+      - '2'
+      - '3'
+      type: string
+      description: '* `1` - High
+
+        * `2` - Medium
+
+        * `3` - Low'
+    UserSummary:
+      type: object
+      description: Compact public user representation.
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        full_name:
+          type: string
+          readOnly: true
+      required:
+      - full_name
+      - id
+      - username
+    Watcher:
+      type: object
+      properties:
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - user
+    WatcherRequest:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          nullable: true
+          description: Defaults to the caller.
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Support Desk
+  description: Support Desk endpoints
+- name: Support Desk Administration
+  description: Support Desk Administration endpoints

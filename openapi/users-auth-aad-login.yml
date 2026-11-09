@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/aad-login:
+    post:
+      operationId: aad_login_create
+      description: 'Validate a body-supplied Azure AD ID token without a DRF authenticator.
+
+
+        Requires the anti-replay challenge cookie obtained from the AAD challenge
+
+        endpoint and a valid CSRF cookie/token (normally the X-CSRFToken header).
+
+        Django CSRF origin/referer checks apply. Success issues an HttpOnly refresh
+        cookie.
+
+        Explicit public OpenAPI security does not exempt this operation from CSRF.'
+      tags:
+      - User Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AADLogin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AADLogin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AADLogin'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AADLoginSerializerAADLoginResponseDetailResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      security: []
+      summary: Azure AD Login
+  /api/aad-login/challenge:
+    post:
+      operationId: aad_login_challenge_create
+      description: Generate anti-replay nonce and CSRF challenge cookie for Azure
+        AD SSO.
+      tags:
+      - User Authentication
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AADChallengeSerializerAADChallengeResponseDetailResponse'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Azure AD Login Challenge
+components:
+  schemas:
+    AADChallengeResponse:
+      type: object
+      properties:
+        nonce:
+          type: string
+        csrf_token:
+          type: string
+      required:
+      - csrf_token
+      - nonce
+    AADChallengeSerializerAADChallengeResponseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/AADChallengeResponse'
+      required:
+      - data
+    AADLogin:
+      type: object
+      properties:
+        id_token:
+          type: string
+          writeOnly: true
+          maxLength: 16384
+      required:
+      - id_token
+    AADLoginResponse:
+      type: object
+      properties:
+        username:
+          type: string
+        access:
+          type: string
+        is_active:
+          type: boolean
+        csrf_token:
+          type: string
+      required:
+      - access
+      - is_active
+      - username
+    AADLoginSerializerAADLoginResponseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/AADLoginResponse'
+      required:
+      - data
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: User Authentication
+  description: User Authentication endpoints

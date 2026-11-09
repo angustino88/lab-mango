@@ -1,0 +1,835 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/benches/{id}/profile:
+    get:
+      operationId: labs_benches_profile_retrieve_by_id
+      description: Retrieve laboratory bench performance profile.
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          minLength: 1
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabProfileSerializersLabProfileDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Profile by ID
+  /api/labs/benches/{id}/weekly-usage:
+    get:
+      operationId: labs_benches_weekly_usage_retrieve_by_id
+      description: Weekly utilization heatmap for a specific laboratory bench.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabWeeklyUsageSerializersWeeklyUsageSlotListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Weekly Usage by ID
+  /api/labs/lab-dashboard:
+    get:
+      operationId: labs_lab_dashboard_retrieve
+      description: Laboratory dashboard overview with polymorphic paginated or unpaginated
+        list.
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabDashboardResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Lab Dashboard
+  /api/labs/lab-dashboard/summary:
+    get:
+      operationId: labs_lab_dashboard_summary_retrieve
+      description: Deprecated alias for dashboard summary. Use /api/labs/dashboard/summary
+        instead.
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummarySerializersDashboardSummaryDataDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Lab Dashboard Summary
+  /api/labs/leaderboard/export:
+    get:
+      operationId: labs_leaderboard_export_retrieve
+      description: Export leaderboard performance data.
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: type
+        schema:
+          enum:
+          - persona
+          - lab
+          type: string
+          default: persona
+          minLength: 1
+        description: '* `persona` - persona
+
+          * `lab` - lab'
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardExportSerializersLeaderboardPersonaListResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Leaderboard Export
+  /api/labs/leaderboard/lab:
+    get:
+      operationId: labs_leaderboard_lab_retrieve
+      description: Laboratory and bench utilization rankings.
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardLabSerializersLeaderboardLabListResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Leaderboard Lab
+  /api/labs/leaderboard/persona:
+    get:
+      operationId: labs_leaderboard_persona_retrieve
+      description: User performance rankings and operational metrics.
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardPersonaSerializersLeaderboardPersonaListResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Leaderboard Persona
+  /api/labs/leaderboard/users/{id}/profile:
+    get:
+      operationId: labs_leaderboard_users_profile_retrieve_by_id
+      description: User profile ranking and session summary.
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          minLength: 1
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileSerializersUserProfileDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Leaderboard Users Profile by ID
+  /api/labs/leaderboard/users/{id}/weekly-usage:
+    get:
+      operationId: labs_leaderboard_users_weekly_usage_retrieve_by_id
+      description: Weekly usage heatmap for an individual user.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWeeklyUsageSerializersWeeklyUsageSlotListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Leaderboard Users Weekly Usage by ID
+  /api/labs/profile/{id}:
+    get:
+      operationId: labs_profile_retrieve_by_id
+      description: Deprecated alias for bench profile. Use /api/labs/benches/{id}/profile
+        instead.
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          minLength: 1
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabProfileSerializersLabProfileDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Profile by ID
+  /api/labs/users/profile/{id}:
+    get:
+      operationId: labs_users_profile_retrieve_by_id
+      description: Deprecated alias for user profile. Use /api/labs/leaderboard/users/{id}/profile
+        instead.
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          minLength: 1
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileSerializersUserProfileDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Users Profile by ID
+  /api/labs/users/weekly-usage/{id}:
+    get:
+      operationId: labs_users_weekly_usage_retrieve_by_id
+      description: Deprecated alias for user weekly usage heatmap. Use /api/labs/leaderboard/users/{id}/weekly-usage
+        instead.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWeeklyUsageSerializersWeeklyUsageSlotListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Users Weekly Usage by ID
+  /api/labs/weekly-usage/{id}:
+    get:
+      operationId: labs_weekly_usage_retrieve_by_id
+      description: Deprecated alias for bench weekly usage heatmap. Use /api/labs/benches/{id}/weekly-usage
+        instead.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Leaderboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabWeeklyUsageSerializersWeeklyUsageSlotListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Weekly Usage by ID
+components:
+  schemas:
+    DashboardLabItem:
+      type: object
+      description: Item representation in dashboard laboratory listing.
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        sku:
+          type: string
+        status:
+          type: string
+          default: available
+      required:
+      - id
+      - name
+    DashboardPaginatedResponse:
+      type: object
+      description: Paginated envelope for dashboard laboratory listings.
+      properties:
+        meta:
+          type: object
+          additionalProperties: {}
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardLabItem'
+      required:
+      - data
+      - meta
+    DashboardSummaryData:
+      type: object
+      description: High-level asset count and status distribution summary.
+      properties:
+        total:
+          type: integer
+        status:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+      - status
+      - total
+    DashboardSummarySerializersDashboardSummaryDataDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/DashboardSummaryData'
+      required:
+      - data
+    DashboardUnpaginatedResponse:
+      type: object
+      description: Unpaginated envelope for dashboard laboratory listings.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardLabItem'
+      required:
+      - data
+    LabDashboardResponse:
+      oneOf:
+      - $ref: '#/components/schemas/DashboardUnpaginatedResponse'
+      - $ref: '#/components/schemas/DashboardPaginatedResponse'
+    LabProfile:
+      type: object
+      description: Laboratory bench profile metrics and usage statistics.
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        sku:
+          type: string
+        total_sessions:
+          type: integer
+        active_users:
+          type: integer
+        top_projects:
+          type: array
+          items:
+            type: string
+      required:
+      - active_users
+      - id
+      - name
+      - total_sessions
+    LabProfileSerializersLabProfileDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LabProfile'
+      required:
+      - data
+    LabWeeklyUsageSerializersWeeklyUsageSlotListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyUsageSlot'
+      required:
+      - data
+    LeaderboardExportSerializersLeaderboardPersonaListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardPersona'
+      required:
+      - data
+    LeaderboardLab:
+      type: object
+      description: Utilization rankings for laboratories and benches.
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        points:
+          type: integer
+        total_sessions:
+          type: integer
+        active_users:
+          type: integer
+          default: 0
+        last_remote:
+          type: string
+          format: date-time
+          nullable: true
+        downtime_minutes:
+          type: number
+          format: double
+          default: 0.0
+        top_projects:
+          type: array
+          items:
+            type: string
+      required:
+      - id
+      - name
+      - points
+      - total_sessions
+    LeaderboardLabSerializersLeaderboardLabListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardLab'
+      required:
+      - data
+    LeaderboardPersona:
+      type: object
+      description: Ranking metrics and performance breakdown for individual users.
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        display_name:
+          type: string
+          default: ''
+        avatar:
+          type: string
+          nullable: true
+        points:
+          type: integer
+        wfo_rate:
+          type: number
+          format: double
+          default: 0.0
+        wfh_rate:
+          type: number
+          format: double
+          default: 0.0
+        late_rate:
+          type: number
+          format: double
+          default: 0.0
+        usage_efficiency:
+          type: number
+          format: double
+          default: 0.0
+        booking_compliance:
+          type: number
+          format: double
+          default: 0.0
+        last_remote:
+          type: string
+          format: date-time
+          nullable: true
+        labs_accessed:
+          type: integer
+          default: 0
+        total_bookings:
+          type: integer
+          default: 0
+        total_sessions:
+          type: integer
+        total_usage_minutes:
+          type: number
+          format: double
+          default: 0.0
+        avg_session_minutes:
+          type: number
+          format: double
+          default: 0.0
+        longest_session_minutes:
+          type: number
+          format: double
+          default: 0.0
+        top_projects:
+          type: array
+          items:
+            type: string
+      required:
+      - id
+      - points
+      - total_sessions
+      - username
+    LeaderboardPersonaSerializersLeaderboardPersonaListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardPersona'
+      required:
+      - data
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    UserProfile:
+      type: object
+      description: User profile overview and ranking metrics.
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        display_name:
+          type: string
+          default: ''
+        total_sessions:
+          type: integer
+        points:
+          type: integer
+        top_projects:
+          type: array
+          items:
+            type: string
+      required:
+      - id
+      - points
+      - total_sessions
+      - username
+    UserProfileSerializersUserProfileDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/UserProfile'
+      required:
+      - data
+    UserWeeklyUsageSerializersWeeklyUsageSlotListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyUsageSlot'
+      required:
+      - data
+    WeeklyUsageSlot:
+      type: object
+      description: Weekly utilization heatmap slot.
+      properties:
+        day:
+          type: integer
+        hour:
+          type: integer
+        usage:
+          type: number
+          format: double
+      required:
+      - day
+      - hour
+      - usage
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Leaderboard
+  description: Leaderboard endpoints

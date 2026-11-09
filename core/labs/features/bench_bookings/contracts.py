@@ -1,0 +1,25 @@
+"""Allowlisted public notification snapshots; never remote identity or free text."""
+
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+
+
+@dataclass(frozen=True, slots=True)
+class BookingNotificationSnapshot:
+    booking_code: str
+    bench_id: int
+    starts_at: str
+    ends_at: str
+    status: str
+    approval_status: str
+    equipment_id: int | None = None
+    inactive_at: str | None = None
+    bench_name: str | None = None
+    equipment_name: str | None = None
+
+    def as_payload(self) -> dict:
+        return asdict(self)
+
+
+def scheduled_start_is_due(*, starts_at: datetime, ends_at: datetime, now: datetime) -> bool:
+    return starts_at <= now < min(ends_at, starts_at + timedelta(minutes=10))

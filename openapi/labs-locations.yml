@@ -1,0 +1,6085 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/buildings:
+    get:
+      operationId: labs_buildings_retrieve
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: query
+        name: city_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildingCatalogListGeoSerializersBuildingPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Buildings
+  /api/labs/buildings/{building_id}:
+    get:
+      operationId: labs_buildings_retrieve_by_building_id
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: path
+        name: building_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildingCatalogDetailGeoSerializersBuildingDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Buildings by Building ID
+  /api/labs/buildings/options:
+    get:
+      operationId: labs_buildings_options_retrieve
+      description: 'Shared base view for dropdown selector endpoints (ADR 002).
+
+
+        Validates query parameters, enforces the size class and result cap,
+
+        calls the feature''s query selector, handles ETag generation / 304 Not Modified,
+
+        and returns {"data": [{"id": ..., "sku": ..., "name": ...}]}.'
+      parameters:
+      - in: query
+        name: city_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: locations
+      summary: Get Buildings Options
+  /api/labs/cities:
+    get:
+      operationId: labs_cities_retrieve
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: query
+        name: country_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityCatalogListGeoSerializersCityPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Cities
+  /api/labs/cities/{city_id}:
+    get:
+      operationId: labs_cities_retrieve_by_city_id
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: path
+        name: city_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityCatalogDetailGeoSerializersCityDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Cities by City ID
+  /api/labs/cities/options:
+    get:
+      operationId: labs_cities_options_retrieve
+      description: 'Shared base view for dropdown selector endpoints (ADR 002).
+
+
+        Validates query parameters, enforces the size class and result cap,
+
+        calls the feature''s query selector, handles ETag generation / 304 Not Modified,
+
+        and returns {"data": [{"id": ..., "sku": ..., "name": ...}]}.'
+      parameters:
+      - in: query
+        name: country_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: locations
+      summary: Get Cities Options
+  /api/labs/countries:
+    get:
+      operationId: labs_countries_retrieve
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountryCatalogListGeoSerializersCountryPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Countries
+  /api/labs/countries/{country_id}:
+    get:
+      operationId: labs_countries_retrieve_by_country_id
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: path
+        name: country_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountryCatalogDetailGeoSerializersCountryDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Countries by Country ID
+  /api/labs/countries/options:
+    get:
+      operationId: labs_countries_options_retrieve
+      description: 'Shared base view for dropdown selector endpoints (ADR 002).
+
+
+        Validates query parameters, enforces the size class and result cap,
+
+        calls the feature''s query selector, handles ETag generation / 304 Not Modified,
+
+        and returns {"data": [{"id": ..., "sku": ..., "name": ...}]}.'
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: locations
+      summary: Get Countries Options
+  /api/labs/locations/reference-data/buildings:
+    get:
+      operationId: labs_locations_reference_data_buildings_retrieve
+      description: List Building reference records in a paginated data envelope. Validates
+        the declared search, relation and pagination query parameters and delegates
+        filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: city_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildingReferenceListSerializersBuildingCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Locations Reference Data Buildings
+    post:
+      operationId: labs_locations_reference_data_buildings_create
+      description: 'Create a Building reference record from the declared writable
+        fields. Passes the validated values, authenticated user and Idempotency-Key
+        to the owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Locations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildingCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BuildingCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BuildingCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildingReferenceCreateSerializersBuildingCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Locations Reference Data Buildings
+  /api/labs/locations/reference-data/buildings/{reference_id}:
+    get:
+      operationId: labs_locations_reference_data_buildings_retrieve_by_reference_id
+      description: Retrieve one Building reference record by reference_id in a data
+        envelope. Delegates lookup and access checks to the owner-provided retrieve
+        callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildingReferenceDetailSerializersBuildingCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Locations Reference Data Buildings by Reference ID
+  /api/labs/locations/reference-data/cities:
+    get:
+      operationId: labs_locations_reference_data_cities_retrieve
+      description: List City reference records in a paginated data envelope. Validates
+        the declared search, relation and pagination query parameters and delegates
+        filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: country_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityReferenceListSerializersCityCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Locations Reference Data Cities
+    post:
+      operationId: labs_locations_reference_data_cities_create
+      description: 'Create a City reference record from the declared writable fields.
+        Passes the validated values, authenticated user and Idempotency-Key to the
+        owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Locations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CityCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CityCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CityCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityReferenceCreateSerializersCityCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Locations Reference Data Cities
+  /api/labs/locations/reference-data/cities/{reference_id}:
+    get:
+      operationId: labs_locations_reference_data_cities_retrieve_by_reference_id
+      description: Retrieve one City reference record by reference_id in a data envelope.
+        Delegates lookup and access checks to the owner-provided retrieve callback;
+        a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityReferenceDetailSerializersCityCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Locations Reference Data Cities by Reference ID
+  /api/labs/locations/reference-data/countries:
+    get:
+      operationId: labs_locations_reference_data_countries_retrieve
+      description: List Country reference records in a paginated data envelope. Validates
+        the declared search, relation and pagination query parameters and delegates
+        filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountryReferenceListSerializersCountryCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Locations Reference Data Countries
+    post:
+      operationId: labs_locations_reference_data_countries_create
+      description: 'Create a Country reference record from the declared writable fields.
+        Passes the validated values, authenticated user and Idempotency-Key to the
+        owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Locations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountryCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CountryCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CountryCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountryReferenceCreateSerializersCountryCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Locations Reference Data Countries
+  /api/labs/locations/reference-data/countries/{reference_id}:
+    get:
+      operationId: labs_locations_reference_data_countries_retrieve_by_reference_id
+      description: Retrieve one Country reference record by reference_id in a data
+        envelope. Delegates lookup and access checks to the owner-provided retrieve
+        callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountryReferenceDetailSerializersCountryCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Locations Reference Data Countries by Reference ID
+  /api/labs/locations/reference-data/station-types:
+    get:
+      operationId: labs_locations_reference_data_station_types_retrieve
+      description: List StationType reference records in a paginated data envelope.
+        Validates the declared search, relation and pagination query parameters and
+        delegates filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationTypeReferenceListSerializersStationTypeCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Locations Reference Data Station Types
+    post:
+      operationId: labs_locations_reference_data_station_types_create
+      description: 'Create a StationType reference record from the declared writable
+        fields. Passes the validated values, authenticated user and Idempotency-Key
+        to the owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Locations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationTypeCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationTypeCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationTypeCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationTypeReferenceCreateSerializersStationTypeCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Locations Reference Data Station Types
+  /api/labs/locations/reference-data/station-types/{reference_id}:
+    get:
+      operationId: labs_locations_reference_data_station_types_retrieve_by_reference_id
+      description: Retrieve one StationType reference record by reference_id in a
+        data envelope. Delegates lookup and access checks to the owner-provided retrieve
+        callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationTypeReferenceDetailSerializersStationTypeCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Locations Reference Data Station Types by Reference ID
+  /api/labs/rooms:
+    get:
+      operationId: labs_rooms_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: building_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: city_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: country_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: created_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: group_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: owner_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+      - in: query
+        name: status
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomListSerializersRoomPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Rooms
+    post:
+      operationId: labs_rooms_create
+      description: HTTP mapping for domain commands and selector projections.
+      tags:
+      - Rooms
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomCreateSerializersRoomDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Rooms
+  /api/labs/rooms/{room_id}:
+    get:
+      operationId: labs_rooms_retrieve_by_room_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomDetailSerializersRoomDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Rooms by Room ID
+    put:
+      operationId: labs_rooms_update_by_room_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoomUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoomUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomReplaceSerializersRoomDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Rooms by Room ID
+    patch:
+      operationId: labs_rooms_partial_update_by_room_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoomUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRoomUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoomUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomUpdateSerializersRoomDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Rooms by Room ID
+    delete:
+      operationId: labs_rooms_destroy_by_room_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Rooms by Room ID
+  /api/labs/rooms/{room_id}/actions/change-status:
+    post:
+      operationId: labs_rooms_actions_change_status_create_by_room_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomStatusWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoomStatusWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoomStatusWrite'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomStatusChangeSerializersRoomDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Status Rooms by Room ID
+  /api/labs/rooms/{room_id}/actions/generate-slots:
+    post:
+      operationId: labs_rooms_actions_generate_slots_create_by_room_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomSlotGenerateSerializersRoomSlotPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Generate Slots Rooms by Room ID
+  /api/labs/rooms/{room_id}/history:
+    get:
+      operationId: labs_rooms_history_retrieve_by_room_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomHistorySerializersRoomStatusRecordPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Rooms History by Room ID
+  /api/labs/rooms/{room_id}/observations:
+    get:
+      operationId: labs_rooms_observations_retrieve_by_room_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomObservationListSerializersRoomObservationPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Rooms Observations by Room ID
+    post:
+      operationId: labs_rooms_observations_create_by_room_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomObservationWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoomObservationWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoomObservationWrite'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomObservationCreateSerializersRoomObservationDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Rooms Observations by Room ID
+  /api/labs/rooms/{room_id}/slots:
+    get:
+      operationId: labs_rooms_slots_retrieve_by_room_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomSlotListSerializersRoomSlotPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Rooms Slots by Room ID
+  /api/labs/rooms/filters:
+    get:
+      operationId: labs_rooms_filters_retrieve
+      description: General metadata handler; concrete API bases own auth and responses.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomFiltersFilteringFilterMetadataDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Rooms Filters
+  /api/labs/rooms/options:
+    get:
+      operationId: labs_rooms_options_retrieve
+      description: Selector options for rooms (ADR 002).
+      parameters:
+      - in: query
+        name: building_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: city_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: locations
+      summary: Get Rooms Options
+  /api/labs/rooms/status-summary:
+    get:
+      operationId: labs_rooms_status_summary_retrieve
+      description: Non-deleted rooms by latest recorded lifecycle state, unknown if
+        absent.
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomStatusSummaryDataSerializersRoomStatusSummaryDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Rooms Status Summary
+  /api/labs/station-types:
+    get:
+      operationId: labs_station_types_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationTypeListSerializersStationTypePaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Station Types
+    post:
+      operationId: labs_station_types_create
+      description: HTTP mapping for domain commands and selector projections.
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationTypeWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationTypeWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationTypeWrite'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationTypeCreateSerializersStationTypeDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Station Types
+  /api/labs/station-types/{type_id}:
+    get:
+      operationId: labs_station_types_retrieve_by_type_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: type_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationTypeDetailSerializersStationTypeDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Station Types by Type ID
+    patch:
+      operationId: labs_station_types_partial_update_by_type_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: type_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStationTypeWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStationTypeWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStationTypeWrite'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationTypeUpdateSerializersStationTypeDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Station Types by Type ID
+    delete:
+      operationId: labs_station_types_destroy_by_type_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: type_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Station Types by Type ID
+  /api/labs/station-types/options:
+    get:
+      operationId: labs_station_types_options_retrieve
+      description: Selector options for station types (ADR 002).
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: locations
+      summary: Get Station Types Options
+  /api/labs/stations:
+    get:
+      operationId: labs_stations_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: created_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: group_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: owner_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+      - in: query
+        name: room_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+      - in: query
+        name: status
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: type_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationListSerializersStationPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Stations
+    post:
+      operationId: labs_stations_create
+      description: HTTP mapping for domain commands and selector projections.
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationCreateSerializersStationDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Stations
+  /api/labs/stations/{station_id}:
+    get:
+      operationId: labs_stations_retrieve_by_station_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationDetailSerializersStationDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Stations by Station ID
+    put:
+      operationId: labs_stations_update_by_station_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationReplaceSerializersStationDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Stations by Station ID
+    patch:
+      operationId: labs_stations_partial_update_by_station_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStationUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStationUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStationUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationUpdateSerializersStationDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Stations by Station ID
+    delete:
+      operationId: labs_stations_destroy_by_station_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Stations by Station ID
+  /api/labs/stations/{station_id}/actions/change-status:
+    post:
+      operationId: labs_stations_actions_change_status_create_by_station_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationStatusWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationStatusWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationStatusWrite'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationStatusChangeSerializersStationDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Status Stations by Station ID
+  /api/labs/stations/{station_id}/actions/place:
+    post:
+      operationId: labs_stations_actions_place_create_by_station_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationPlacement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationPlacement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationPlacement'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationPlaceActionSerializersStationDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Place Stations by Station ID
+    patch:
+      operationId: labs_stations_actions_place_partial_update_by_station_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStationPlacement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStationPlacement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStationPlacement'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationPlacementSerializersStationDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Place Stations by Station ID
+  /api/labs/stations/{station_id}/history:
+    get:
+      operationId: labs_stations_history_retrieve_by_station_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationHistorySerializersStationStatusRecordPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Stations History by Station ID
+  /api/labs/stations/{station_id}/slots:
+    get:
+      operationId: labs_stations_slots_retrieve_by_station_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationSlotListSerializersStationSlotPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Stations Slots by Station ID
+    post:
+      operationId: labs_stations_slots_create_by_station_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationSlotCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationSlotCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationSlotCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationSlotCreateSerializersStationSlotDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Stations Slots by Station ID
+  /api/labs/stations/{station_id}/slots/{slot_id}:
+    get:
+      operationId: labs_stations_slots_retrieve_by_station_id_slot_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: slot_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationSlotDetailSerializersStationSlotDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Stations Slots by Station ID Slot ID
+    put:
+      operationId: labs_stations_slots_update_by_station_id_slot_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: slot_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationSlotUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationSlotUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationSlotUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationSlotReplaceSerializersStationSlotDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Stations Slots by Station ID Slot ID
+    patch:
+      operationId: labs_stations_slots_partial_update_by_station_id_slot_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: slot_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStationSlotUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStationSlotUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStationSlotUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationSlotUpdateSerializersStationSlotDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Stations Slots by Station ID Slot ID
+    delete:
+      operationId: labs_stations_slots_destroy_by_station_id_slot_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: slot_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Stations Slots by Station ID Slot ID
+  /api/labs/stations/filters:
+    get:
+      operationId: labs_stations_filters_retrieve
+      description: General metadata handler; concrete API bases own auth and responses.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationFiltersFilteringFilterMetadataDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Stations Filters
+  /api/labs/stations/options:
+    get:
+      operationId: labs_stations_options_retrieve
+      description: Selector options for stations (ADR 002).
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      - in: query
+        name: room_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: station_type_id
+        schema:
+          type: integer
+          minimum: 1
+      tags:
+      - Locations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: locations
+      summary: Get Stations Options
+  /api/labs/stations/reference-data:
+    get:
+      operationId: labs_stations_reference_data_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationReferenceDataSerializersStationReferenceDataDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Stations Reference Data
+  /api/labs/stations/status-summary:
+    get:
+      operationId: labs_stations_status_summary_retrieve
+      description: Non-deleted stations by latest recorded lifecycle state, unknown
+        if absent.
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationStatusSummaryDataSerializersStationStatusSummaryDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Stations Status Summary
+components:
+  schemas:
+    BuildingCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        address:
+          type: string
+          maxLength: 255
+        city_id:
+          type: integer
+          minimum: 1
+          nullable: true
+      required:
+      - name
+    BuildingCatalogDetailGeoSerializersBuildingDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BuildingCatalogItem'
+      required:
+      - data
+    BuildingCatalogItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        address:
+          type: string
+          maxLength: 255
+        city:
+          allOf:
+          - $ref: '#/components/schemas/CityCatalogItem'
+          readOnly: true
+        city_id:
+          type: integer
+          writeOnly: true
+      required:
+      - city
+      - id
+      - name
+    BuildingCatalogListGeoSerializersBuildingPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BuildingCatalogListGeoSerializersBuildingPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BuildingCatalogItem'
+      required:
+      - data
+      - meta
+    BuildingCatalogListGeoSerializersBuildingPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BuildingCatalogListGeoSerializersBuildingPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BuildingCatalogListGeoSerializersBuildingPagination'
+      required:
+      - pagination
+    BuildingCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        city_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        address:
+          type: string
+          maxLength: 255
+      required:
+      - city_id
+      - id
+      - name
+    BuildingReferenceCreateSerializersBuildingCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BuildingCatalogRecord'
+      required:
+      - data
+    BuildingReferenceDetailSerializersBuildingCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BuildingCatalogRecord'
+      required:
+      - data
+    BuildingReferenceListSerializersBuildingCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BuildingReferenceListSerializersBuildingCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BuildingCatalogRecord'
+      required:
+      - data
+      - meta
+    BuildingReferenceListSerializersBuildingCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BuildingReferenceListSerializersBuildingCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BuildingReferenceListSerializersBuildingCatalogRecordPagination'
+      required:
+      - pagination
+    CatalogOption:
+      type: object
+      description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
+        OPT-4).'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+          nullable: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - sku
+    CatalogOptionList:
+      type: object
+      description: Enveloped list of selector options.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogOption'
+          readOnly: true
+      required:
+      - data
+    CityCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        country_id:
+          type: integer
+          minimum: 1
+          nullable: true
+      required:
+      - name
+    CityCatalogDetailGeoSerializersCityDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/CityCatalogItem'
+      required:
+      - data
+    CityCatalogItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        country:
+          allOf:
+          - $ref: '#/components/schemas/CountryCatalogItem'
+          readOnly: true
+        country_id:
+          type: integer
+          writeOnly: true
+      required:
+      - country
+      - id
+      - name
+    CityCatalogListGeoSerializersCityPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/CityCatalogListGeoSerializersCityPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CityCatalogItem'
+      required:
+      - data
+      - meta
+    CityCatalogListGeoSerializersCityPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    CityCatalogListGeoSerializersCityPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CityCatalogListGeoSerializersCityPagination'
+      required:
+      - pagination
+    CityCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        country_id:
+          type: integer
+          readOnly: true
+          nullable: true
+      required:
+      - country_id
+      - id
+      - name
+    CityReferenceCreateSerializersCityCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/CityCatalogRecord'
+      required:
+      - data
+    CityReferenceDetailSerializersCityCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/CityCatalogRecord'
+      required:
+      - data
+    CityReferenceListSerializersCityCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/CityReferenceListSerializersCityCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CityCatalogRecord'
+      required:
+      - data
+      - meta
+    CityReferenceListSerializersCityCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    CityReferenceListSerializersCityCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CityReferenceListSerializersCityCatalogRecordPagination'
+      required:
+      - pagination
+    CountryCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          maxLength: 10
+      required:
+      - code
+      - name
+    CountryCatalogDetailGeoSerializersCountryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/CountryCatalogItem'
+      required:
+      - data
+    CountryCatalogItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        name:
+          type: string
+          maxLength: 100
+      required:
+      - code
+      - id
+      - name
+    CountryCatalogListGeoSerializersCountryPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/CountryCatalogListGeoSerializersCountryPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CountryCatalogItem'
+      required:
+      - data
+      - meta
+    CountryCatalogListGeoSerializersCountryPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    CountryCatalogListGeoSerializersCountryPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CountryCatalogListGeoSerializersCountryPagination'
+      required:
+      - pagination
+    CountryCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          maxLength: 10
+      required:
+      - code
+      - id
+      - name
+    CountryReferenceCreateSerializersCountryCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/CountryCatalogRecord'
+      required:
+      - data
+    CountryReferenceDetailSerializersCountryCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/CountryCatalogRecord'
+      required:
+      - data
+    CountryReferenceListSerializersCountryCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/CountryReferenceListSerializersCountryCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CountryCatalogRecord'
+      required:
+      - data
+      - meta
+    CountryReferenceListSerializersCountryCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    CountryReferenceListSerializersCountryCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CountryReferenceListSerializersCountryCatalogRecordPagination'
+      required:
+      - pagination
+    FilterMetadata:
+      type: object
+      properties:
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        combination:
+          type: string
+        multi_value_combination:
+          type: string
+        separator:
+          type: string
+        search:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        ordering:
+          type: array
+          items:
+            type: string
+        default_ordering:
+          type: array
+          items:
+            type: string
+      required:
+      - combination
+      - default_ordering
+      - filters
+      - multi_value_combination
+      - ordering
+      - search
+      - separator
+    LabsChoiceReference:
+      type: object
+      description: Standard `{value, label}` representation for enum and lifecycle
+        choices.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+    LabsCoordinate3D:
+      type: object
+      description: Standard `{x, y, z}` representation for 3D coordinates.
+      properties:
+        x:
+          type: number
+          format: double
+          readOnly: true
+        y:
+          type: number
+          format: double
+          readOnly: true
+        z:
+          type: number
+          format: double
+          readOnly: true
+      required:
+      - x
+      - y
+      - z
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+    LabsStationRoomReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - sku
+    LabsUIDNamedReference:
+      type: object
+      description: Compact `{id, uid, name}` object representation when target defines
+        a UUID.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - uid
+    PatchedRoomUpdate:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        label:
+          type: string
+          nullable: true
+          description: Position within the parent location, e.g. R1C1 or U12.
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        map_url:
+          type: string
+          format: uri
+          maxLength: 500
+        length_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          nullable: true
+        width_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          nullable: true
+        country_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        city_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        building_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        floor:
+          type: string
+          maxLength: 50
+        layout_rows:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          nullable: true
+        layout_columns:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          nullable: true
+        usable_height_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          nullable: true
+        floor_plan_revision:
+          type: string
+          maxLength: 64
+        floor_plan_url:
+          type: string
+          format: uri
+          maxLength: 500
+        max_occupancy:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        power_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        cooling_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        network_port_capacity:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        utilities:
+          type: object
+          additionalProperties: {}
+    PatchedStationPlacement:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        room_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        slot_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        power_reserved_w:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        position:
+          nullable: true
+        orientation_degrees:
+          type: integer
+          maximum: 359
+          minimum: 0
+    PatchedStationSlotUpdate:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        position_index:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        slot_code:
+          type: string
+          maxLength: 32
+        label:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/StationSlotStatusEnum'
+        width_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        depth_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        height_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        max_load_kg:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        power_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        network_port_count:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        utilities:
+          type: object
+          additionalProperties: {}
+        compatible_bench_types:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+    PatchedStationTypeWrite:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+    PatchedStationUpdate:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        label:
+          type: string
+          nullable: true
+          description: Position within the parent location, e.g. R1C1 or U12.
+          maxLength: 255
+        type_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        room_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        slot_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        position:
+          nullable: true
+        height_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        width_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        depth_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        orientation_degrees:
+          type: integer
+          maximum: 359
+          minimum: 0
+        max_load_kg:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        bench_capacity:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        max_concurrent_users:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        usable_surface_mm2:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        power_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        power_reserved_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        cooling_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        network_port_capacity:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        utilities:
+          type: object
+          additionalProperties: {}
+        safety_classification:
+          type: string
+          maxLength: 64
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    Room:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+          nullable: true
+          description: Position within the parent location, e.g. R1C1 or U12.
+        department:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        group:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        owner:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        remark:
+          type: string
+          readOnly: true
+        image:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+        map_url:
+          type: string
+          format: uri
+          readOnly: true
+        length_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          readOnly: true
+          nullable: true
+        width_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          readOnly: true
+          nullable: true
+        area_m2:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          readOnly: true
+          nullable: true
+        country:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        city:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        building:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        floor:
+          type: string
+          readOnly: true
+        layout_rows:
+          type: integer
+          readOnly: true
+          nullable: true
+        layout_columns:
+          type: integer
+          readOnly: true
+          nullable: true
+        slot_capacity:
+          type: integer
+          readOnly: true
+          nullable: true
+        usable_height_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          readOnly: true
+          nullable: true
+        coordinate_unit:
+          type: string
+          readOnly: true
+        floor_plan_revision:
+          type: string
+          readOnly: true
+        floor_plan_url:
+          type: string
+          format: uri
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          nullable: true
+          readOnly: true
+        operational_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          nullable: true
+          readOnly: true
+        max_occupancy:
+          type: integer
+          readOnly: true
+          nullable: true
+        power_capacity_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        cooling_capacity_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        network_port_capacity:
+          type: integer
+          readOnly: true
+          nullable: true
+        utilities:
+          readOnly: true
+        location_path:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - area_m2
+      - building
+      - city
+      - cooling_capacity_w
+      - coordinate_unit
+      - country
+      - created_at
+      - department
+      - floor
+      - floor_plan_revision
+      - floor_plan_url
+      - group
+      - id
+      - image
+      - label
+      - layout_columns
+      - layout_rows
+      - length_m
+      - location_path
+      - map_url
+      - max_occupancy
+      - name
+      - network_port_capacity
+      - operational_status
+      - owner
+      - power_capacity_w
+      - remark
+      - sku
+      - slot_capacity
+      - status
+      - uid
+      - updated_at
+      - usable_height_m
+      - utilities
+      - width_m
+    RoomCreate:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        label:
+          type: string
+          nullable: true
+          description: Position within the parent location, e.g. R1C1 or U12.
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        map_url:
+          type: string
+          format: uri
+          maxLength: 500
+        length_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          nullable: true
+        width_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          nullable: true
+        country_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        city_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        building_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        floor:
+          type: string
+          maxLength: 50
+        layout_rows:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          nullable: true
+        layout_columns:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          nullable: true
+        usable_height_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          nullable: true
+        floor_plan_revision:
+          type: string
+          maxLength: 64
+        floor_plan_url:
+          type: string
+          format: uri
+          maxLength: 500
+        max_occupancy:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        power_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        cooling_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        network_port_capacity:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        utilities:
+          type: object
+          additionalProperties: {}
+      required:
+      - sku
+    RoomCreateSerializersRoomDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Room'
+      required:
+      - data
+    RoomDetailSerializersRoomDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Room'
+      required:
+      - data
+    RoomFiltersFilteringFilterMetadataDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/FilterMetadata'
+      required:
+      - data
+    RoomHistorySerializersRoomStatusRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/RoomHistorySerializersRoomStatusRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomStatusRecord'
+      required:
+      - data
+      - meta
+    RoomHistorySerializersRoomStatusRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    RoomHistorySerializersRoomStatusRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/RoomHistorySerializersRoomStatusRecordPagination'
+      required:
+      - pagination
+    RoomListSerializersRoomPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/RoomListSerializersRoomPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Room'
+      required:
+      - data
+      - meta
+    RoomListSerializersRoomPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    RoomListSerializersRoomPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/RoomListSerializersRoomPagination'
+      required:
+      - pagination
+    RoomObservation:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        room:
+          type: integer
+          readOnly: true
+        observed_at:
+          type: string
+          format: date-time
+          readOnly: true
+        source:
+          type: string
+          readOnly: true
+        temperature_c:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        humidity_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        power_usage_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - humidity_percent
+      - id
+      - observed_at
+      - power_usage_w
+      - room
+      - source
+      - temperature_c
+    RoomObservationCreateSerializersRoomObservationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/RoomObservation'
+      required:
+      - data
+    RoomObservationListSerializersRoomObservationPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/RoomObservationListSerializersRoomObservationPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomObservation'
+      required:
+      - data
+      - meta
+    RoomObservationListSerializersRoomObservationPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    RoomObservationListSerializersRoomObservationPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/RoomObservationListSerializersRoomObservationPagination'
+      required:
+      - pagination
+    RoomObservationWrite:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        observed_at:
+          type: string
+          format: date-time
+        source:
+          type: string
+          maxLength: 100
+        temperature_c:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        humidity_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+        power_usage_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+      required:
+      - observed_at
+      - source
+    RoomReplaceSerializersRoomDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Room'
+      required:
+      - data
+    RoomSlot:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        room:
+          type: integer
+          readOnly: true
+        row_index:
+          type: integer
+          readOnly: true
+        col_index:
+          type: integer
+          readOnly: true
+        slot_code:
+          type: string
+          readOnly: true
+        slot_type:
+          allOf:
+          - $ref: '#/components/schemas/SlotTypeEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        x_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        y_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        width_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        depth_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        orientation_degrees:
+          type: integer
+          readOnly: true
+        max_load_kg:
+          type: integer
+          readOnly: true
+          nullable: true
+        power_capacity_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        utilities:
+          readOnly: true
+        is_accessible:
+          type: boolean
+          readOnly: true
+        clearance_width_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - clearance_width_mm
+      - col_index
+      - created_at
+      - depth_mm
+      - id
+      - is_accessible
+      - max_load_kg
+      - orientation_degrees
+      - power_capacity_w
+      - room
+      - row_index
+      - slot_code
+      - slot_type
+      - status
+      - updated_at
+      - utilities
+      - width_mm
+      - x_mm
+      - y_mm
+    RoomSlotGenerateSerializersRoomSlotPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/RoomSlotGenerateSerializersRoomSlotPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomSlot'
+      required:
+      - data
+      - meta
+    RoomSlotGenerateSerializersRoomSlotPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    RoomSlotGenerateSerializersRoomSlotPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/RoomSlotGenerateSerializersRoomSlotPagination'
+      required:
+      - pagination
+    RoomSlotListSerializersRoomSlotPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/RoomSlotListSerializersRoomSlotPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomSlot'
+      required:
+      - data
+      - meta
+    RoomSlotListSerializersRoomSlotPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    RoomSlotListSerializersRoomSlotPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/RoomSlotListSerializersRoomSlotPagination'
+      required:
+      - pagination
+    RoomStatusChangeSerializersRoomDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Room'
+      required:
+      - data
+    RoomStatusEnum:
+      enum:
+      - available
+      - reserved
+      - issue
+      - restricted
+      - closed
+      - maintenance
+      - retired
+      type: string
+      description: '* `available` - Available
+
+        * `reserved` - Reserved
+
+        * `issue` - Issue
+
+        * `restricted` - Restricted
+
+        * `closed` - Closed
+
+        * `maintenance` - Maintenance
+
+        * `retired` - Retired'
+    RoomStatusRecord:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        room:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        metadata:
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - metadata
+      - room
+      - status
+    RoomStatusSummary:
+      type: object
+      description: Recorded lifecycle state, distinct from operational configuration.
+      properties:
+        total_count:
+          type: integer
+          minimum: 0
+        unknown_status_count:
+          type: integer
+          minimum: 0
+          description: Resources without a recorded status or with an unrecognized
+            status.
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/SummaryStatusCount'
+          description: All code-defined states, including zero counts. Values are
+            extensible.
+      required:
+      - statuses
+      - total_count
+      - unknown_status_count
+    RoomStatusSummaryDataSerializersRoomStatusSummaryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/RoomStatusSummary'
+      required:
+      - data
+    RoomStatusWrite:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        status:
+          $ref: '#/components/schemas/RoomStatusEnum'
+        metadata:
+          type: object
+          additionalProperties: {}
+      required:
+      - status
+    RoomUpdate:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        label:
+          type: string
+          nullable: true
+          description: Position within the parent location, e.g. R1C1 or U12.
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        map_url:
+          type: string
+          format: uri
+          maxLength: 500
+        length_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          nullable: true
+        width_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          nullable: true
+        country_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        city_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        building_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        floor:
+          type: string
+          maxLength: 50
+        layout_rows:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          nullable: true
+        layout_columns:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          nullable: true
+        usable_height_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,3})?$
+          nullable: true
+        floor_plan_revision:
+          type: string
+          maxLength: 64
+        floor_plan_url:
+          type: string
+          format: uri
+          maxLength: 500
+        max_occupancy:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        power_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        cooling_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        network_port_capacity:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        utilities:
+          type: object
+          additionalProperties: {}
+      required:
+      - sku
+    RoomUpdateSerializersRoomDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Room'
+      required:
+      - data
+    SlotTypeEnum:
+      enum:
+      - station
+      - storage
+      - aisle
+      - safety
+      - utility
+      - reserved
+      type: string
+      description: '* `station` - Station
+
+        * `storage` - Storage
+
+        * `aisle` - Aisle
+
+        * `safety` - Safety
+
+        * `utility` - Utility
+
+        * `reserved` - Reserved'
+    Station:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        department:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        group:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        owner:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        remark:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+          nullable: true
+          description: Position within the parent location, e.g. R1C1 or U12.
+        type:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        slot:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        position:
+          allOf:
+          - $ref: '#/components/schemas/LabsCoordinate3D'
+          nullable: true
+          readOnly: true
+        height_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        width_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        depth_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        orientation_degrees:
+          type: integer
+          readOnly: true
+        max_load_kg:
+          type: integer
+          readOnly: true
+          nullable: true
+        bench_capacity:
+          type: integer
+          readOnly: true
+          nullable: true
+        max_concurrent_users:
+          type: integer
+          readOnly: true
+          nullable: true
+        usable_surface_mm2:
+          type: integer
+          readOnly: true
+          nullable: true
+        power_capacity_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        power_reserved_w:
+          type: integer
+          readOnly: true
+        cooling_capacity_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        network_port_capacity:
+          type: integer
+          readOnly: true
+          nullable: true
+        utilities:
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          nullable: true
+          readOnly: true
+        operational_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          nullable: true
+          readOnly: true
+        safety_classification:
+          type: string
+          readOnly: true
+        image:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+        active_bench_count:
+          type: integer
+          readOnly: true
+        allocated_power_w:
+          type: integer
+          readOnly: true
+        available_power_w:
+          type: integer
+          nullable: true
+          readOnly: true
+        available_slot_count:
+          type: integer
+          readOnly: true
+        location_path:
+          type: string
+          readOnly: true
+        slot_count:
+          type: integer
+          readOnly: true
+        slots_url:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - active_bench_count
+      - allocated_power_w
+      - available_power_w
+      - available_slot_count
+      - bench_capacity
+      - cooling_capacity_w
+      - created_at
+      - department
+      - depth_mm
+      - group
+      - height_mm
+      - id
+      - image
+      - label
+      - location_path
+      - max_concurrent_users
+      - max_load_kg
+      - name
+      - network_port_capacity
+      - operational_status
+      - orientation_degrees
+      - owner
+      - position
+      - power_capacity_w
+      - power_reserved_w
+      - remark
+      - room
+      - safety_classification
+      - sku
+      - slot
+      - slot_count
+      - slots_url
+      - status
+      - type
+      - uid
+      - updated_at
+      - usable_surface_mm2
+      - utilities
+      - width_mm
+    StationCreate:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        label:
+          type: string
+          nullable: true
+          description: Position within the parent location, e.g. R1C1 or U12.
+          maxLength: 255
+        type_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        room_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        slot_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        position:
+          nullable: true
+        height_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        width_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        depth_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        orientation_degrees:
+          type: integer
+          maximum: 359
+          minimum: 0
+        max_load_kg:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        bench_capacity:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        max_concurrent_users:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        usable_surface_mm2:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        power_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        power_reserved_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        cooling_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        network_port_capacity:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        utilities:
+          type: object
+          additionalProperties: {}
+        safety_classification:
+          type: string
+          maxLength: 64
+      required:
+      - sku
+    StationCreateSerializersStationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Station'
+      required:
+      - data
+    StationDetailSerializersStationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Station'
+      required:
+      - data
+    StationFiltersFilteringFilterMetadataDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/FilterMetadata'
+      required:
+      - data
+    StationHistorySerializersStationStatusRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/StationHistorySerializersStationStatusRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StationStatusRecord'
+      required:
+      - data
+      - meta
+    StationHistorySerializersStationStatusRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    StationHistorySerializersStationStatusRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/StationHistorySerializersStationStatusRecordPagination'
+      required:
+      - pagination
+    StationListSerializersStationPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/StationListSerializersStationPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Station'
+      required:
+      - data
+      - meta
+    StationListSerializersStationPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    StationListSerializersStationPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/StationListSerializersStationPagination'
+      required:
+      - pagination
+    StationPlaceActionSerializersStationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Station'
+      required:
+      - data
+    StationPlacement:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        room_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        slot_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        power_reserved_w:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        position:
+          nullable: true
+        orientation_degrees:
+          type: integer
+          maximum: 359
+          minimum: 0
+    StationPlacementSerializersStationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Station'
+      required:
+      - data
+    StationReferenceData:
+      type: object
+      properties:
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/StationType'
+          readOnly: true
+        bench_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+        rooms:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsStationRoomReference'
+          readOnly: true
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        slot_statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+      required:
+      - bench_types
+      - rooms
+      - slot_statuses
+      - statuses
+      - types
+    StationReferenceDataSerializersStationReferenceDataDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationReferenceData'
+      required:
+      - data
+    StationReplaceSerializersStationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Station'
+      required:
+      - data
+    StationSlot:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        station:
+          type: integer
+          readOnly: true
+        position_index:
+          type: integer
+          readOnly: true
+        slot_code:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        width_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        depth_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        height_mm:
+          type: integer
+          readOnly: true
+          nullable: true
+        max_load_kg:
+          type: integer
+          readOnly: true
+          nullable: true
+        power_capacity_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        network_port_count:
+          type: integer
+          readOnly: true
+          nullable: true
+        utilities:
+          readOnly: true
+        compatible_bench_types:
+          type: array
+          items:
+            type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - compatible_bench_types
+      - created_at
+      - depth_mm
+      - height_mm
+      - id
+      - is_active
+      - label
+      - max_load_kg
+      - network_port_count
+      - position_index
+      - power_capacity_w
+      - slot_code
+      - station
+      - status
+      - updated_at
+      - utilities
+      - width_mm
+    StationSlotCreate:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        position_index:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        slot_code:
+          type: string
+          maxLength: 32
+        label:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/StationSlotStatusEnum'
+        width_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        depth_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        height_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        max_load_kg:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        power_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        network_port_count:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        utilities:
+          type: object
+          additionalProperties: {}
+        compatible_bench_types:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+      required:
+      - position_index
+      - slot_code
+    StationSlotCreateSerializersStationSlotDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationSlot'
+      required:
+      - data
+    StationSlotDetailSerializersStationSlotDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationSlot'
+      required:
+      - data
+    StationSlotListSerializersStationSlotPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/StationSlotListSerializersStationSlotPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StationSlot'
+      required:
+      - data
+      - meta
+    StationSlotListSerializersStationSlotPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    StationSlotListSerializersStationSlotPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/StationSlotListSerializersStationSlotPagination'
+      required:
+      - pagination
+    StationSlotReplaceSerializersStationSlotDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationSlot'
+      required:
+      - data
+    StationSlotStatusEnum:
+      enum:
+      - available
+      - occupied
+      - reserved
+      - maintenance
+      - out_of_service
+      - retired
+      type: string
+      description: '* `available` - Available
+
+        * `occupied` - Occupied
+
+        * `reserved` - Reserved
+
+        * `maintenance` - Maintenance
+
+        * `out_of_service` - Out of service
+
+        * `retired` - Retired'
+    StationSlotUpdate:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        position_index:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        slot_code:
+          type: string
+          maxLength: 32
+        label:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/StationSlotStatusEnum'
+        width_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        depth_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        height_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        max_load_kg:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        power_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        network_port_count:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        utilities:
+          type: object
+          additionalProperties: {}
+        compatible_bench_types:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+    StationSlotUpdateSerializersStationSlotDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationSlot'
+      required:
+      - data
+    StationStatusChangeSerializersStationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Station'
+      required:
+      - data
+    StationStatusRecord:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        station:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        metadata:
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - metadata
+      - station
+      - status
+    StationStatusSummary:
+      type: object
+      description: Recorded lifecycle state, distinct from operational configuration.
+      properties:
+        total_count:
+          type: integer
+          minimum: 0
+        unknown_status_count:
+          type: integer
+          minimum: 0
+          description: Resources without a recorded status or with an unrecognized
+            status.
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/SummaryStatusCount'
+          description: All code-defined states, including zero counts. Values are
+            extensible.
+      required:
+      - statuses
+      - total_count
+      - unknown_status_count
+    StationStatusSummaryDataSerializersStationStatusSummaryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationStatusSummary'
+      required:
+      - data
+    StationStatusWrite:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        status:
+          $ref: '#/components/schemas/RoomStatusEnum'
+        metadata:
+          type: object
+          additionalProperties: {}
+      required:
+      - status
+    StationType:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    StationTypeCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - name
+    StationTypeCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - id
+      - name
+    StationTypeCreateSerializersStationTypeDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationType'
+      required:
+      - data
+    StationTypeDetailSerializersStationTypeDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationType'
+      required:
+      - data
+    StationTypeListSerializersStationTypePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/StationTypeListSerializersStationTypePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StationType'
+      required:
+      - data
+      - meta
+    StationTypeListSerializersStationTypePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    StationTypeListSerializersStationTypePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/StationTypeListSerializersStationTypePagination'
+      required:
+      - pagination
+    StationTypeReferenceCreateSerializersStationTypeCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationTypeCatalogRecord'
+      required:
+      - data
+    StationTypeReferenceDetailSerializersStationTypeCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationTypeCatalogRecord'
+      required:
+      - data
+    StationTypeReferenceListSerializersStationTypeCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/StationTypeReferenceListSerializersStationTypeCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StationTypeCatalogRecord'
+      required:
+      - data
+      - meta
+    StationTypeReferenceListSerializersStationTypeCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    StationTypeReferenceListSerializersStationTypeCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/StationTypeReferenceListSerializersStationTypeCatalogRecordPagination'
+      required:
+      - pagination
+    StationTypeUpdateSerializersStationTypeDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationType'
+      required:
+      - data
+    StationTypeWrite:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - name
+    StationUpdate:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        label:
+          type: string
+          nullable: true
+          description: Position within the parent location, e.g. R1C1 or U12.
+          maxLength: 255
+        type_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        room_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        slot_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        position:
+          nullable: true
+        height_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        width_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        depth_mm:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        orientation_degrees:
+          type: integer
+          maximum: 359
+          minimum: 0
+        max_load_kg:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        bench_capacity:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        max_concurrent_users:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        usable_surface_mm2:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        power_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        power_reserved_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        cooling_capacity_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        network_port_capacity:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        utilities:
+          type: object
+          additionalProperties: {}
+        safety_classification:
+          type: string
+          maxLength: 64
+      required:
+      - sku
+    StationUpdateSerializersStationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Station'
+      required:
+      - data
+    SummaryStatus:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+      required:
+      - label
+      - value
+    SummaryStatusCount:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SummaryStatus'
+        resource_count:
+          type: integer
+          minimum: 0
+      required:
+      - resource_count
+      - status
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Locations
+  description: Locations endpoints
+- name: Rooms
+  description: Rooms endpoints
+- name: Stations
+  description: Stations endpoints

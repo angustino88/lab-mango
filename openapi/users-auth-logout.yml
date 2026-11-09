@@ -1,0 +1,66 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/logout:
+    post:
+      operationId: logout_create
+      description: 'Revoke the refresh cookie, when present, and invalidate the Django
+        session.
+
+
+        No DRF authenticator or Bearer token is required. A valid CSRF cookie/token
+
+        (normally the X-CSRFToken header) is required even without a refresh cookie.
+
+        Django CSRF origin/referer checks apply. Success deletes the refresh cookie.'
+      tags:
+      - User Authentication
+      responses:
+        '200':
+          description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      security: []
+      summary: Logout
+components:
+  schemas:
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: User Authentication
+  description: User Authentication endpoints

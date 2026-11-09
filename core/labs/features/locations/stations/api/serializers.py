@@ -1,0 +1,337 @@
+"""Explicit station read projections and write requests; serializers never save models."""
+
+import math
+
+from drf_spectacular.utils import extend_schema_field
+from rest_framework import serializers
+
+from core.common.api.options import OptionsQueryMixin
+from core.common.api.summary_serializers import StatusSummarySerializer
+from core.labs.features.base.serializers import (
+    AppModelSerializer,
+    ChoiceReferenceSerializer,
+    Coordinate3DSerializer,
+    NamedReferenceSerializer,
+    ResourceWriteSerializerMixin,
+    UIDNamedReferenceSerializer,
+    to_choice_reference,
+)
+from core.labs.models.resource.location.station import Station, StationStatus, StationStatusRecord, StationType
+from core.labs.models.resource.location.station_slot import StationSlot
+
+from .filters import STATION_FILTERS
+
+
+class StationStatusSummarySerializer(StatusSummarySerializer):
+    """Recorded lifecycle state, distinct from operational configuration."""
+
+
+class StationPlacementSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    room_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    slot_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    power_reserved_w = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0, required=False)
+    position = serializers.JSONField(required=False, allow_null=True)
+    orientation_degrees = serializers.IntegerField(min_value=0, max_value=359, required=False)
+
+    def validate_position(self, value):
+        if value is None:
+            return value
+        if isinstance(value, dict):
+            if set(value) != {"x", "y", "z"}:
+                raise serializers.ValidationError("Position must contain exactly x, y, and z.")
+            raw_coordinates = [value[axis] for axis in ("x", "y", "z")]
+        elif isinstance(value, list):
+            if len(value) != 3:
+                raise serializers.ValidationError("Position list must contain exactly 3 coordinates [x, y, z].")
+            raw_coordinates = value
+        else:
+            raise serializers.ValidationError("Position must be a coordinate object or 3-element list.")
+
+        coordinates = []
+        for coordinate in raw_coordinates:
+            if isinstance(coordinate, bool) or not isinstance(coordinate, (int, float)):
+                raise serializers.ValidationError("Coordinates must be JSON numbers.")
+            numeric_coordinate = float(coordinate)
+            if not math.isfinite(numeric_coordinate) or abs(numeric_coordinate) > 1_000_000:
+                raise serializers.ValidationError("Coordinates must be finite and within the supported range.")
+            coordinates.append(numeric_coordinate)
+        return coordinates
+
+    def validate(self, attrs):
+        if "room_id" in attrs and attrs["room_id"] is None and attrs.get("slot_id") is not None:
+            raise serializers.ValidationError({"slot_id": "A slot requires a room."})
+        if not attrs:
+            raise serializers.ValidationError("Provide at least one placement field.")
+        return attrs
+
+
+class StationCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
+    department_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    group_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    owner_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    type_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    room_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    slot_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    position = serializers.JSONField(required=False, allow_null=True)
+    orientation_degrees = serializers.IntegerField(min_value=0, max_value=359, required=False)
+    utilities = serializers.DictField(required=False)
+
+    validate_position = StationPlacementSerializer.validate_position
+
+    class Meta:
+        model = Station
+        fields = (
+            "sku",
+            "name",
+            "department_id",
+            "group_id",
+            "owner_id",
+            "remark",
+            "label",
+            "type_id",
+            "room_id",
+            "slot_id",
+            "position",
+            "height_mm",
+            "width_mm",
+            "depth_mm",
+            "orientation_degrees",
+            "max_load_kg",
+            "bench_capacity",
+            "max_concurrent_users",
+            "usable_surface_mm2",
+            "power_capacity_w",
+            "power_reserved_w",
+            "cooling_capacity_w",
+            "network_port_capacity",
+            "utilities",
+            "safety_classification",
+        )
+        validators = []
+        extra_kwargs = {"sku": {"validators": []}}
+
+    def validate(self, attrs):
+        capacity = attrs.get("power_capacity_w")
+        reserved = attrs.get("power_reserved_w", 0)
+        if capacity is not None and reserved > capacity:
+            raise serializers.ValidationError({"power_reserved_w": "Reserved power exceeds station capacity."})
+        if "room_id" in attrs and attrs["room_id"] is None and attrs.get("slot_id") is not None:
+            raise serializers.ValidationError({"slot_id": "A slot requires a room."})
+        return attrs
+
+
+class StationUpdateSerializer(StationCreateSerializer):
+    class Meta(StationCreateSerializer.Meta):
+        extra_kwargs = {}
+
+
+class StationSlotCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
+    compatible_bench_types = serializers.ListField(child=serializers.IntegerField(min_value=1), required=False)
+    utilities = serializers.DictField(required=False)
+
+    class Meta:
+        model = StationSlot
+        fields = (
+            "position_index",
+            "slot_code",
+            "label",
+            "is_active",
+            "status",
+            "width_mm",
+            "depth_mm",
+            "height_mm",
+            "max_load_kg",
+            "power_capacity_w",
+            "network_port_count",
+            "utilities",
+            "compatible_bench_types",
+        )
+        validators = []
+
+
+class StationSlotUpdateSerializer(StationSlotCreateSerializer):
+    class Meta(StationSlotCreateSerializer.Meta):
+        extra_kwargs = {"position_index": {"required": False}, "slot_code": {"required": False}}
+
+
+class StationTypeWriteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    name = serializers.CharField(max_length=255)
+
+
+class StationStatusWriteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    status = serializers.ChoiceField(choices=StationStatus.choices)
+    metadata = serializers.DictField(required=False, default=dict)
+
+
+StationListQuerySerializer = STATION_FILTERS.serializer("StationListQuerySerializer")
+
+
+class StationSlotSerializer(AppModelSerializer):
+    status = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = StationSlot
+        fields = (
+            "id",
+            "station",
+            *StationSlotCreateSerializer.Meta.fields,
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_status(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(getattr(obj, "status", None))
+
+
+class StationSerializer(AppModelSerializer):
+    group = NamedReferenceSerializer(read_only=True, allow_null=True)
+    department = NamedReferenceSerializer(read_only=True, allow_null=True)
+    owner = NamedReferenceSerializer(read_only=True, allow_null=True)
+    type = NamedReferenceSerializer(read_only=True, allow_null=True)
+    room = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
+    slot = NamedReferenceSerializer(read_only=True, allow_null=True)
+    status = serializers.SerializerMethodField(read_only=True)
+    operational_status = serializers.SerializerMethodField(read_only=True)
+    position = serializers.SerializerMethodField(read_only=True)
+    active_bench_count = serializers.IntegerField(read_only=True)
+    allocated_power_w = serializers.IntegerField(read_only=True)
+    available_slot_count = serializers.IntegerField(read_only=True)
+    slot_count = serializers.IntegerField(read_only=True, source="bench_slots.count")
+    slots_url = serializers.SerializerMethodField()
+    location_path = serializers.CharField(source="get_location_path", read_only=True)
+    available_power_w = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Station
+        fields = (
+            "id",
+            "uid",
+            "sku",
+            "name",
+            "department",
+            "group",
+            "owner",
+            "remark",
+            "label",
+            "type",
+            "room",
+            "slot",
+            "position",
+            "height_mm",
+            "width_mm",
+            "depth_mm",
+            "orientation_degrees",
+            "max_load_kg",
+            "bench_capacity",
+            "max_concurrent_users",
+            "usable_surface_mm2",
+            "power_capacity_w",
+            "power_reserved_w",
+            "cooling_capacity_w",
+            "network_port_capacity",
+            "utilities",
+            "status",
+            "operational_status",
+            "safety_classification",
+            "image",
+            "active_bench_count",
+            "allocated_power_w",
+            "available_power_w",
+            "available_slot_count",
+            "location_path",
+            "slot_count",
+            "slots_url",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
+    def get_status(self, obj) -> dict[str, str] | None:
+        raw = getattr(obj, "current_status", None)
+        return to_choice_reference(raw, StationStatus.choices)
+
+    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
+    def get_operational_status(self, obj) -> dict[str, str] | None:
+        raw = getattr(obj, "operational_status", None)
+        return to_choice_reference(raw)
+
+    @extend_schema_field(Coordinate3DSerializer(allow_null=True))
+    def get_position(self, obj) -> dict[str, float] | None:
+        pos = getattr(obj, "position", None)
+        if isinstance(pos, (list, tuple)) and len(pos) == 3:
+            return {"x": float(pos[0]), "y": float(pos[1]), "z": float(pos[2])}
+        if isinstance(pos, dict) and "x" in pos:
+            return pos
+        return None
+
+    def get_available_power_w(self, obj) -> int | None:
+        if obj.power_capacity_w is None:
+            return None
+        return obj.power_capacity_w - obj.power_reserved_w - obj.allocated_power_w
+
+    def get_slots_url(self, obj) -> str:
+        request = self.context.get("request")
+        path = f"/api/labs/stations/{obj.pk}/slots"
+        return request.build_absolute_uri(path) if request is not None else path
+
+
+class StationTypeSerializer(AppModelSerializer):
+    class Meta:
+        model = StationType
+        fields = ("id", "name", "created_at", "updated_at")
+        read_only_fields = fields
+
+
+class StationStatusRecordSerializer(AppModelSerializer):
+    status = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = StationStatusRecord
+        fields = ("id", "station", "status", "metadata", "created_at")
+        read_only_fields = fields
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_status(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(getattr(obj, "status", None), StationStatus.choices)
+
+
+class RoomReferenceSerializer(NamedReferenceSerializer):
+    sku = serializers.CharField(read_only=True)
+
+    class Meta:
+        ref_name = "LabsStationRoomReference"
+
+
+class StationReferenceDataSerializer(serializers.Serializer):
+    types = StationTypeSerializer(many=True, read_only=True)
+    bench_types = NamedReferenceSerializer(many=True, read_only=True)
+    rooms = RoomReferenceSerializer(many=True, read_only=True)
+    statuses = ChoiceReferenceSerializer(many=True, read_only=True)
+    slot_statuses = ChoiceReferenceSerializer(many=True, read_only=True)
+
+
+class StationOptionsQuerySerializer(OptionsQueryMixin):
+    room_id = serializers.IntegerField(required=False, min_value=1)
+    station_type_id = serializers.IntegerField(required=False, min_value=1)
+
+
+__all__ = [
+    "RoomReferenceSerializer",
+    "StationCreateSerializer",
+    "StationListQuerySerializer",
+    "StationOptionsQuerySerializer",
+    "StationPlacementSerializer",
+    "StationReferenceDataSerializer",
+    "StationSerializer",
+    "StationSlotCreateSerializer",
+    "StationSlotSerializer",
+    "StationSlotUpdateSerializer",
+    "StationStatusRecordSerializer",
+    "StationStatusWriteSerializer",
+    "StationTypeSerializer",
+    "StationTypeWriteSerializer",
+    "StationUpdateSerializer",
+]

@@ -1,0 +1,240 @@
+# Lab Mango API lint rules. Enforces the structural rules of docs/ai-team/api/response-standard.md.
+# Run locally:  npx @stoplight/spectral-cli lint openapi/openapi.yml --ruleset .spectral.yaml
+# Semantic rules (null handling, relation shapes, permissions, N+1) cannot be linted:
+# they are covered by contract tests and the agent's rule-ID review table.
+#
+# Severity policy: `error` fails CI. `warn` and `hint` report known gaps in the current
+# spec so they can be fixed in the generator, then promoted to `error`.
+
+extends:
+  - - spectral:oas
+    - recommended
+
+# Path items live in separate files ($ref), so rules use the resolved document by default.
+# Timestamp rules inspect source schemas in the lint bundle to preserve the exact exception path.
+
+rules:
+  # ---- Noise reduction on the built-in ruleset ---------------------------------------
+  info-contact: off
+  oas3-api-servers: off
+  operation-tag-defined: error
+  oas3-unused-component: off
+  path-keys-no-trailing-slash: off   # docs/conventions.md: existing slash variants stay supported
+
+  # ---- ENV: envelopes -----------------------------------------------------------------
+  lm-success-uses-data-envelope:
+    description: "ENV-1/ENV-2: JSON success bodies are wrapped in the project `data` envelope."
+    message: "{{path}}: success response object has no `data` property (ENV-2)."
+    severity: warn   # known gaps: Jira requests, notifications. Promote to `error` when they are fixed.
+    given:
+      - "$.paths[*][get,put,post,patch,delete].responses[?(@property.match(/^20[0-3]$/))].content['application/json'].schema.properties"
+      - "$.paths[*][get,put,post,patch,delete].responses[?(@property.match(/^20[0-3]$/))].content['application/json'].schema.oneOf[*].properties"
+    then:
+      field: data
+      function: truthy
+
+  lm-no-bare-array-response:
+    description: "ENV-1: a success body is never a bare JSON array."
+    message: "{{path}}: success schema is a bare array; wrap it in `data` (ENV-1)."
+    severity: error
+    given: "$.paths[*][get,put,post,patch,delete].responses[?(@property.match(/^20[0-3]$/))].content['application/json'].schema"
+    then:
+      field: type
+      function: pattern
+      functionOptions:
+        notMatch: "^array$"
+
+  # ---- ERR: nested error envelope -------------------------------------------------------
+  lm-error-media-type:
+    description: "ERR-1/ERR-11: project error envelopes are documented as application/json."
+    message: "{{path}}: error response must declare application/json (ERR-1/ERR-11)."
+    severity: warn
+    given: "$.paths[*][get,put,post,patch,delete].responses[?(@property.match(/^[45]/))]"
+    then:
+      field: content
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: ["application/json"]
+
+  lm-error-body-is-problem-detail:
+    description: "ERR-1/ENV-3: error bodies use the project's nested error envelope."
+    message: "{{path}}: error schema must define error.code, error.message, error.details and error.request_id."
+    severity: error
+    given: "$.paths[*][get,put,post,patch,delete].responses[?(@property.match(/^[45]/))].content[*].schema"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [properties]
+          properties:
+            properties:
+              type: object
+              required: [error]
+              properties:
+                error:
+                  type: object
+                  required: [properties, required]
+                  properties:
+                    properties:
+                      type: object
+                      required: [code, message, details, request_id]
+                    required:
+                      type: array
+                      allOf:
+                        - contains: {const: code}
+                        - contains: {const: message}
+                        - contains: {const: details}
+                        - contains: {const: request_id}
+
+  lm-allowed-status-codes:
+    description: "ERR-4: only the status codes of the project contract are documented."
+    message: "Status code {{property}} is not part of the project contract (ERR-4). Add an ADR before introducing it."
+    severity: warn
+    given: "$.paths[*][get,put,post,patch,delete].responses[*]~"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^(200|201|202|204|304|400|401|403|404|405|406|408|409|410|411|412|413|414|415|422|428|429|431|500|502|503|504|default)$"
+
+  # ---- FMT / NAM ------------------------------------------------------------------------
+  lm-money-is-decimal-string:
+    description: "FMT-2: money is a decimal string or an object requiring decimal-string amount and string currency."
+    message: "{{path}}: money field must be a decimal string or an object requiring string amount and currency (FMT-2)."
+    severity: error
+    given: "$..properties[?(@property.match(/(^|_)(amount|price)$/))]"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          oneOf:
+            - &lm-money-value
+              type: object
+              required: [type]
+              # Do not let composition hide numeric alternatives or invalid shapes.
+              not:
+                anyOf:
+                  - required: [allOf]
+                  - required: [oneOf]
+                  - required: [anyOf]
+              oneOf:
+                - properties:
+                    type: {const: string}
+                - required: [properties, required]
+                  properties:
+                    type: {const: object}
+                    properties:
+                      type: object
+                      required: [amount, currency]
+                      properties:
+                        amount:
+                          type: object
+                          required: [type]
+                          properties:
+                            type: {const: string}
+                        currency:
+                          type: object
+                          required: [type]
+                          properties:
+                            type: {const: string}
+                    required:
+                      type: array
+                      allOf:
+                        - contains: {const: amount}
+                        - contains: {const: currency}
+            # spectacular wraps a referenced schema in allOf to add nullable/readOnly.
+            # Spectral resolves the reference but preserves that wrapper. Validate its
+            # sole member with exactly the same scalar/object guard, not just its type.
+            - required: [allOf]
+              not:
+                anyOf:
+                  - required: [type]
+                  - required: [oneOf]
+                  - required: [anyOf]
+              properties:
+                allOf:
+                  type: array
+                  minItems: 1
+                  maxItems: 1
+                  items: *lm-money-value
+
+  lm-timestamps-are-date-time:
+    description: "FMT-1/NAM-3: fields ending in `_at` are ISO 8601 date-time."
+    message: "{{path}}: `_at` field must use format date-time (FMT-1)."
+    severity: error
+    # Existing DateField: only components.schemas.ExpensePayment.properties.paid_at
+    # is a calendar date, guarded separately below; every other _at keeps this rule.
+    # Source paths avoid re-linting the exception under dereferenced envelope aliases.
+    resolved: false
+    given: "$..properties[?(@property.match(/_at$/) && @path !== \"$['components']['schemas']['ExpensePayment']['properties']['paid_at']\")]"
+    then:
+      - field: format
+        function: defined
+      - field: format
+        function: enumeration
+        functionOptions:
+          values: [date-time]
+
+  lm-expense-payment-paid-at-is-date:
+    description: "Documented FMT-1/NAM-3 exception: ExpensePayment.paid_at is an existing DateField, not a timestamp."
+    message: "{{path}}: ExpensePayment.paid_at must remain a string with format date."
+    severity: error
+    resolved: false
+    given: "$.components.schemas.ExpensePayment.properties.paid_at"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [type, format]
+          properties:
+            type: {const: string}
+            format: {const: date}
+
+  lm-properties-snake-case:
+    description: "NAM-1: JSON property names are snake_case."
+    message: "Property `{{property}}` is not snake_case (NAM-1)."
+    severity: warn   # Jira passthrough keys (startAt, maxResults) mirror the upstream API: documented exception
+    given: "$..properties[*]~"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+
+  # ---- SEC / DOC ------------------------------------------------------------------------
+  lm-operation-declares-security:
+    description: "SEC-1: every operation declares its security requirement (use `security: []` for public ones)."
+    message: "{{path}}: operation does not declare `security` (SEC-1)."
+    severity: warn   # known gap: login, aad-login, logout, refresh-token; add `security: []` in the generator
+    given: "$.paths[*][get,put,post,patch,delete]"
+    then:
+      field: security
+      function: defined
+
+  lm-operation-documents-errors:
+    description: "DOC-2: every operation documents at least one 4xx problem response."
+    message: "{{path}}: operation documents no 4xx response (DOC-2)."
+    severity: warn
+    given: "$.paths[*][get,put,post,patch,delete].responses"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          # At least one key must be a concrete 4xx status, not default or 5xx.
+          not:
+            propertyNames:
+              not:
+                pattern: "^4[0-9]{2}$"
+
+  lm-operation-has-summary:
+    description: "DOC-2: every operation has a one-line summary."
+    message: "{{path}}: operation has no `summary` (DOC-2)."
+    severity: hint   # the generator does not emit summaries yet; informational
+    given: "$.paths[*][get,put,post,patch,delete]"
+    then:
+      field: summary
+      function: truthy

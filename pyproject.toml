@@ -1,0 +1,123 @@
+[project]
+name = "prj-labmango-backend-refactor"
+version = "0.1.0"
+description = "LabMango Backend — Django 5.2 LTS"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "drf-api-contracts",
+    # Core Django
+    "channels>=4.0.0",
+    "channels-redis>=4.0.0",
+    "django==5.2.13",
+    "django-environ>=0.11.2",
+    "django-model-utils>=4.5.0",
+    # ASGI server (replaces gunicorn + daphne)
+    "uvicorn[standard]>=0.34.0",
+    # Database
+    "psycopg[binary]>=3.2.0",
+    # Cache & message broker
+    "redis>=5.2.0",
+    "hiredis>=3.0.0",
+    "django-redis>=5.4.0",
+    # Celery
+    "celery>=5.4.0",
+    "django-celery-beat>=2.7.0",
+    # Auth
+    "argon2-cffi>=23.1.0",
+    "django-allauth>=0.67.0",
+    "djangorestframework-simplejwt>=5.4.0",
+    # REST Framework
+    "djangorestframework>=3.15.2",
+    "django-cors-headers>=4.7.0",
+    "drf-spectacular>=0.28.0",
+    "djangorestframework-api-key>=3.0.0",
+    "django-filter>=24.3",
+    # Utilities
+    "python-slugify>=8.0.4",
+    "Pillow>=11.0.0",
+    "openpyxl>=3.1.5",
+    # Auth
+    "PyJWT[crypto]>=2.9.0",
+    # HTTP client (URS API sync)
+    "requests>=2.32.0",
+    # Async DRF support
+    "adrf>=0.1.7",
+    "ldap3>=2.9.1",
+    # Storage 
+    "django-storages[s3]>=1.14.0",
+    "boto3>=1.28.0",
+]
+
+[tool.uv.sources]
+drf-api-contracts = { path = "packages/drf-api-contracts", editable = true }
+
+[dependency-groups]
+dev = [
+    "Werkzeug[watchdog]>=3.1.0",
+    "ipdb>=0.13.13",
+    "watchfiles>=0.24.0",
+
+    # Testing
+    "mypy>=1.13.0",
+    "django-stubs[compatible-mypy]>=5.1.0",
+    "djangorestframework-stubs[compatible-mypy]>=3.15.0",
+    "pytest>=8.0.0",
+    "pytest-sugar>=1.0.0",
+    "pytest-django>=4.9.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "factory-boy>=3.3.0",
+    "coverage>=7.6.0",
+    "django-coverage-plugin>=3.1.0",
+
+    # Code quality
+    "ruff>=0.8.0",
+    "pre-commit>=4.0.0",
+
+    # HTTP mock
+    "respx>=0.22.0",
+    "freezegun>=1.5.0",
+    "httpx>=0.28.0",
+
+    # Django dev extras
+    "django-debug-toolbar>=4.4.0",
+    "django-extensions>=3.2.3",
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--ds=config.settings.test -p no:warnings"
+testpaths = ["core", "tests"]
+norecursedirs = ["features_old_do_not_edit_only_ref", ".*", "build", "dist"]
+python_files = ["tests.py", "test_*.py"]
+asyncio_mode = "auto"
+markers = [
+    "integration: marks tests as live integration tests requiring both old+new backends (deselect with '-m not integration')",
+    "smoke: marks tests as live smoke tests requiring the new backend on port 8001",
+]
+
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+[tool.ruff]
+line-length = 119
+target-version = "py312"
+exclude = [".git", "*/migrations/*", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.coverage.run]
+source = ["."]
+omit = ["*/migrations/*", "*/tests/*", "conftest.py"]
+plugins = ["django_coverage_plugin"]

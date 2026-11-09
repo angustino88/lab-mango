@@ -1,0 +1,234 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/notifications:
+    get:
+      operationId: notifications_list
+      description: List visible, unexpired notifications in data with meta.pagination
+        (count, page, page_size, next, previous). Page size defaults to 25 and is
+        limited to 100. An invalid page_size returns 400; a nonexistent or invalid
+        page returns 404.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Websocket Notifications
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationSerializerNotificationPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: List Notifications
+    post:
+      operationId: notifications_create
+      description: List unread notifications or publish a real-time event notification.
+      tags:
+      - Websocket Notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Notification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Notification'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationSerializerNotificationDetailResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Notifications
+components:
+  schemas:
+    MessageTypeEnum:
+      enum:
+      - success
+      - error
+      - warning
+      - info
+      - announcement
+      type: string
+      description: '* `success` - Success
+
+        * `error` - Error
+
+        * `warning` - Warning
+
+        * `info` - Info
+
+        * `announcement` - Announcement'
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        message:
+          type: string
+          maxLength: 255
+        details:
+          type: string
+          nullable: true
+          maxLength: 255
+        message_type:
+          $ref: '#/components/schemas/MessageTypeEnum'
+        expiry_date:
+          type: string
+          format: date-time
+        target_user:
+          type: integer
+          readOnly: true
+          nullable: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created
+      - expiry_date
+      - id
+      - modified
+      - target_user
+    NotificationSerializerNotificationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Notification'
+      required:
+      - data
+    NotificationSerializerNotificationPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/NotificationSerializerNotificationPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+      required:
+      - data
+      - meta
+    NotificationSerializerNotificationPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    NotificationSerializerNotificationPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/NotificationSerializerNotificationPagination'
+      required:
+      - pagination
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Websocket Notifications
+  description: Websocket Notifications endpoints

@@ -1,0 +1,251 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/user-groups:
+    get:
+      operationId: user_groups_retrieve
+      description: List user authorization groups with membership counts.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - User Groups
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupListApiUserGroupPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get User Groups
+  /api/user-groups/{group_id}/users:
+    get:
+      operationId: user_groups_users_retrieve_by_group_id
+      description: List members belonging to a specific user group.
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - User Groups
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupMemberListApiUserGroupMemberPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get User Groups Users by Group ID
+components:
+  schemas:
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    UserGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        user_count:
+          type: integer
+          readOnly: true
+        users_url:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - user_count
+      - users_url
+    UserGroupListApiUserGroupPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/UserGroupListApiUserGroupPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroup'
+      required:
+      - data
+      - meta
+    UserGroupListApiUserGroupPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    UserGroupListApiUserGroupPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/UserGroupListApiUserGroupPagination'
+      required:
+      - pagination
+    UserGroupMember:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+    UserGroupMemberListApiUserGroupMemberPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/UserGroupMemberListApiUserGroupMemberPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupMember'
+      required:
+      - data
+      - meta
+    UserGroupMemberListApiUserGroupMemberPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    UserGroupMemberListApiUserGroupMemberPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/UserGroupMemberListApiUserGroupMemberPagination'
+      required:
+      - pagination
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: User Groups
+  description: User Groups endpoints

@@ -1,0 +1,76 @@
+{% load static %}<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block email_title %}{% endblock %}</title>
+    <style>
+        /* Email-specific styles */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #f9f9f9;
+            padding: 20px;
+        }
+        .header {
+            background-color: #005eb8;
+            padding: 15px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .list-details {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #005eb8;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 3px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        
+        <div class="content">
+            {% block email_content %}{% endblock %}
+        </div>
+        
+        <div class="footer">
+            {% block footer %}
+            <p>© {% now "Y" %} EDS-XC-Core. All rights reserved.</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

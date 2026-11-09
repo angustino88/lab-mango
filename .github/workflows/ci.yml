@@ -1,0 +1,66 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Lint, migrations, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: labmango
+          POSTGRES_PASSWORD: labmango
+          POSTGRES_DB: labmango_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U labmango"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://labmango:labmango@localhost:5432/labmango_ci
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: ci-only-not-a-secret-0123456789abcdef0123456789abcdef
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      # Scoped to the users domain until the repo-wide Ruff backlog is cleared.
+      - name: Ruff (users feature and architecture tests)
+        run: uv run ruff check core/users config/settings/base.py config/urls.py tests/architecture
+
+      - name: Migrations are in sync with models
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Tests
+        run: uv run pytest core/users tests/architecture -q
+
+      # Deploy check uses production settings; warnings are reported, errors fail the job.
+      - name: Production deploy check
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.production
+          DJANGO_DEBUG: "False"
+          REDIS_URL: redis://localhost:6379/1
+        run: uv run python manage.py check --deploy

@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/users/me:
+    get:
+      operationId: users_me_retrieve
+      description: Retrieve current authenticated user profile and permissions.
+      tags:
+      - User Profiles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserSerializersUserWithPermissionDetailResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Current User Profile
+components:
+  schemas:
+    CurrentUserSerializersUserWithPermissionDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/UserWithPermission'
+      required:
+      - data
+    EffectiveRoles:
+      type: object
+      properties:
+        labs:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - labs
+    GroupPermission:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+      required:
+      - id
+      - name
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    UserWithPermission:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        display_name:
+          type: string
+          maxLength: 255
+        avatar_url:
+          type: string
+          nullable: true
+          readOnly: true
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupPermission'
+          readOnly: true
+        effective_roles:
+          allOf:
+          - $ref: '#/components/schemas/EffectiveRoles'
+          readOnly: true
+      required:
+      - avatar_url
+      - effective_roles
+      - groups
+      - id
+      - username
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: User Profiles
+  description: User Profiles endpoints

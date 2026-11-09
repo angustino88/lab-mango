@@ -1,0 +1,668 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /agent/enrollments:
+    post:
+      operationId: enroll_agent
+      description: Redeem an enrollment grant with agent proof (POST /agent/enrollments).
+      summary: Redeem one-time grant with agent private key proof
+      tags:
+      - Agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollAgentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EnrollAgentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EnrollAgentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDetailResponse'
+          description: Agent successfully enrolled
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Invalid grant or proof
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Enrollment conflict
+  /agent/heartbeat:
+    post:
+      operationId: agent_heartbeat
+      description: Update agent liveness (POST /agent/heartbeat).
+      summary: Record agent heartbeat
+      tags:
+      - Agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentHeartbeatRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AgentHeartbeatRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AgentHeartbeatRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentHeartbeatResponse'
+          description: Heartbeat acknowledged
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Invalid request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Active agent not found
+  /agent/info:
+    get:
+      operationId: get_agent_info
+      description: Discover agent capabilities and backend metadata (GET /agent/info).
+      summary: Discover agent API capabilities and server identity
+      tags:
+      - Agents
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentInfoResponse'
+          description: Server agent metadata
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Supplied bearer credentials are invalid
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Anonymous or user request rate exceeded
+  /api/agents:
+    get:
+      operationId: list_agents
+      description: List agent identities or issue an initial enrollment grant.
+      summary: List enrolled and pending agents
+      tags:
+      - Agents (operator)
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentListResponse'
+          description: List of agents
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+    post:
+      operationId: create_agent_grant
+      description: List agent identities or issue an initial enrollment grant.
+      summary: Issue a one-time enrollment grant for computing equipment
+      tags:
+      - Agents (operator)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgentGrantRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateAgentGrantRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateAgentGrantRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentGrantIssuedResponse'
+          description: Enrollment grant issued
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Invalid request
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Equipment already has pending or active agent
+  /api/agents/{id}:
+    get:
+      operationId: get_agent_detail
+      description: Retrieve detail of an enrolled agent.
+      summary: Retrieve agent identity detail
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Agents (operator)
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDetailResponse'
+          description: Agent detail
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Agent not found
+  /api/agents/{id}/actions/decommission:
+    post:
+      operationId: decommission_agent
+      description: Decommission an active agent identity.
+      summary: Decommission an agent identity
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Agents (operator)
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+          application/x-www-form-urlencoded:
+            schema: {}
+          multipart/form-data:
+            schema: {}
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDetailResponse'
+          description: Agent decommissioned
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Agent not found
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Conflict
+  /api/agents/{id}/actions/revoke:
+    post:
+      operationId: revoke_agent
+      description: Revoke an active agent identity.
+      summary: Revoke an agent identity
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Agents (operator)
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+          application/x-www-form-urlencoded:
+            schema: {}
+          multipart/form-data:
+            schema: {}
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDetailResponse'
+          description: Agent revoked
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Agent not found
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Conflict
+  /api/agents/{id}/enrollment-grants:
+    post:
+      operationId: create_agent_recovery_grant
+      description: Issue a new or recovery enrollment grant for an existing agent.
+      summary: Issue a recovery enrollment grant for an agent's equipment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Agents (operator)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGrantForAgentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateGrantForAgentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateGrantForAgentRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentGrantIssuedResponse'
+          description: Grant issued
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Invalid request
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Agent not found
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Enrollment conflict
+components:
+  schemas:
+    AgentDetailResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentIdentity'
+      required:
+      - data
+    AgentHeartbeatRequest:
+      type: object
+      properties:
+        agent_uid:
+          type: string
+          format: uuid
+      required:
+      - agent_uid
+    AgentHeartbeatResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentHeartbeatResponseData'
+      required:
+      - data
+    AgentHeartbeatResponseData:
+      type: object
+      properties:
+        status:
+          type: string
+        last_seen_at:
+          type: string
+          format: date-time
+      required:
+      - last_seen_at
+      - status
+    AgentIdentity:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        agent_uid:
+          type: string
+          format: uuid
+          readOnly: true
+        equipment:
+          type: integer
+          readOnly: true
+        equipment_sku:
+          type: string
+          readOnly: true
+        equipment_name:
+          type: string
+          readOnly: true
+        state:
+          allOf:
+          - $ref: '#/components/schemas/StateEnum'
+          readOnly: true
+        key_algorithm:
+          allOf:
+          - $ref: '#/components/schemas/KeyAlgorithmEnum'
+          readOnly: true
+        key_storage:
+          allOf:
+          - $ref: '#/components/schemas/KeyStorageEnum'
+          readOnly: true
+        fingerprint:
+          type: string
+          readOnly: true
+        agent_version:
+          type: string
+          readOnly: true
+        last_seen_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        enrolled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - agent_uid
+      - agent_version
+      - created
+      - enrolled_at
+      - equipment
+      - equipment_name
+      - equipment_sku
+      - fingerprint
+      - id
+      - key_algorithm
+      - key_storage
+      - last_seen_at
+      - modified
+      - state
+    AgentInfoResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentInfoResponseData'
+      required:
+      - data
+    AgentInfoResponseData:
+      type: object
+      properties:
+        backend_id:
+          type: string
+        server_time:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+      required:
+      - backend_id
+      - capabilities
+      - server_time
+    AgentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentIdentity'
+      required:
+      - data
+    CreateAgentGrantRequest:
+      type: object
+      properties:
+        equipment_uid:
+          type: string
+          format: uuid
+        ttl_minutes:
+          type: integer
+          maximum: 60
+          minimum: 1
+          default: 15
+      required:
+      - equipment_uid
+    CreateGrantForAgentRequest:
+      type: object
+      properties:
+        ttl_minutes:
+          type: integer
+          maximum: 60
+          minimum: 1
+          default: 15
+    EnrollAgentRequest:
+      type: object
+      properties:
+        grant:
+          type: string
+        public_key:
+          type: string
+        key_storage:
+          $ref: '#/components/schemas/KeyStorageEnum'
+        fingerprint:
+          type: string
+          default: ''
+          maxLength: 128
+        agent_version:
+          type: string
+          maxLength: 64
+        proof:
+          type: string
+      required:
+      - agent_version
+      - grant
+      - key_storage
+      - proof
+      - public_key
+    EnrollmentGrantIssued:
+      type: object
+      properties:
+        agent_uid:
+          type: string
+          format: uuid
+        equipment_uid:
+          type: string
+          format: uuid
+        grant:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+      required:
+      - agent_uid
+      - equipment_uid
+      - expires_at
+      - grant
+    EnrollmentGrantIssuedResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/EnrollmentGrantIssued'
+      required:
+      - data
+    ErrorBody:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetailItem'
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ErrorDetailItem:
+      type: object
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      required:
+      - message
+    ErrorEnvelope:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+      required:
+      - error
+    KeyAlgorithmEnum:
+      enum:
+      - Ed25519
+      type: string
+      description: '* `Ed25519` - Ed25519'
+    KeyStorageEnum:
+      enum:
+      - tpm
+      - os_keystore
+      - software
+      type: string
+      description: '* `tpm` - TPM
+
+        * `os_keystore` - OS keystore
+
+        * `software` - Software key store'
+    StateEnum:
+      enum:
+      - pending
+      - active
+      - revoked
+      - decommissioned
+      type: string
+      description: '* `pending` - Pending
+
+        * `active` - Active
+
+        * `revoked` - Revoked
+
+        * `decommissioned` - Decommissioned'
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Agents
+  description: Agents endpoints
+- name: Agents (operator)
+  description: Agents (operator) endpoints

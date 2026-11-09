@@ -1,0 +1,87 @@
+name: api-lint
+
+on:
+  pull_request:
+    paths:
+      - "openapi/**"
+      - "core/**"
+      - "config/**"
+      - "packages/drf-api-contracts/**"
+      - "tests/unit/test_openapi*.py"
+      - "conftest.py"
+      - "manage.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".spectral.yaml"
+      - ".github/workflows/api-lint.yml"
+  push:
+    branches: [main]
+    paths:
+      - "openapi/**"
+      - "core/**"
+      - "config/**"
+      - "packages/drf-api-contracts/**"
+      - "tests/unit/test_openapi*.py"
+      - "conftest.py"
+      - "manage.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".spectral.yaml"
+      - ".github/workflows/api-lint.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  openapi:
+    name: OpenAPI tests, validation, and generated-file parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_READ_DOT_ENV_FILE: "False"
+      DJANGO_SECRET_KEY: ci-only-openapi-not-a-secret-0123456789abcdef
+      DATABASE_URL: postgres://dummy:dummy@localhost:5432/openapi_ci_unused
+      CELERY_BROKER_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install existing dependencies
+        run: uv sync --frozen
+
+      # These schema/tooling tests prohibit database access; no services or secrets required.
+      - name: OpenAPI tests
+        run: uv run pytest tests/unit/test_openapi*.py core/common/openapi/tests -q --ds=config.settings.test
+
+      - name: Verify generated OpenAPI files and schemas without writes
+        run: uv run python manage.py spectacular_modules --output-dir openapi --check --settings=config.settings.test
+
+  spectral:
+    name: Spectral (docs/ai-team/api/response-standard.md)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # openapi/openapi.yml references its parts with $ref (including the root
+      # `components`), which is not a valid OpenAPI document on its own.
+      # Bundle first, then lint the single resolved file.
+      - name: Bundle split OpenAPI files
+        run: npx --yes @redocly/cli@1.34.21 bundle openapi/openapi.yml -o build/openapi.bundled.yml
+
+      - name: Lint bundled spec
+        run: npx --yes @stoplight/spectral-cli@6.17.0 lint build/openapi.bundled.yml --ruleset .spectral.yaml --fail-severity=error

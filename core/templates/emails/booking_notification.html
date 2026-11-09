@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;background:#f3f4f6;color:#0f172a;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;">
+            <tr>
+              <td style="height:5px;background:#2563eb;border-radius:12px 12px 0 0;"></td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px 12px;">
+                <div style="font-size:13px;font-weight:700;color:#64748b;">Lab Mango</div>
+                <h1 style="margin:14px 0 8px;font-size:23px;line-height:1.3;color:#1e3a8a;">{{ heading }}</h1>
+                <p style="margin:0;color:#475569;font-size:14px;line-height:1.6;">
+                  There is an update regarding your bench booking.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 32px 28px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                  <tr>
+                    <td style="padding:18px 20px;">
+                      <p style="margin:0 0 12px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748b;">Booking details</p>
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.6;">
+                        <tr>
+                          <td style="padding:5px 12px 5px 0;color:#64748b;">Booking</td>
+                          <td style="padding:5px 0;font-weight:700;">{{ snapshot.booking_code }}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:5px 12px 5px 0;color:#64748b;">Bench</td>
+                          <td style="padding:5px 0;font-weight:700;">{{ snapshot.bench_id }}</td>
+                        </tr>
+                        {% if snapshot.equipment_id %}
+                        <tr>
+                          <td style="padding:5px 12px 5px 0;color:#64748b;">Computing resource</td>
+                          <td style="padding:5px 0;font-weight:700;">{{ snapshot.equipment_id }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                          <td style="padding:5px 12px 5px 0;color:#64748b;">Starts (UTC)</td>
+                          <td style="padding:5px 0;font-weight:700;">{{ snapshot.starts_at }}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:5px 12px 5px 0;color:#64748b;">Ends (UTC)</td>
+                          <td style="padding:5px 0;font-weight:700;">{{ snapshot.ends_at }}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:5px 12px 5px 0;color:#64748b;">Status</td>
+                          <td style="padding:5px 0;font-weight:700;">{{ snapshot.status }} / {{ snapshot.approval_status }}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:18px 0 0;color:#64748b;font-size:12px;line-height:1.5;">
+                  This is a resource booking notification. It does not indicate that a booking has been activated.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

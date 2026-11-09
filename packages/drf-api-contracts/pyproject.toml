@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "drf-api-contracts"
+version = "0.1.0"
+description = "Runtime and OpenAPI response contracts for Django REST Framework"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+    "djangorestframework>=3.15",
+    "drf-spectacular>=0.28",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/drf_api_contracts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,61 @@
+"""Public boundary export for the resource audit feature."""
+
+from core.labs.features.resource_audit.application import (
+    RecordAuditByIdInput,
+    RecordAuditBySkuInput,
+    RecordAuditByUidInput,
+    RecordResourceAuditInput,
+    UpdateResourceAuditInput,
+    delete_resource_audit,
+    record_audit_by_id,
+    record_audit_by_sku,
+    record_audit_by_uid,
+    record_resource_audit,
+    resolve_resource,
+    update_resource_audit,
+)
+from core.labs.features.resource_audit.exceptions import (
+    AuditPermissionDeniedError,
+    InvalidAuditResultError,
+    ResourceAuditError,
+    ResourceAuditNotFoundError,
+    ResourceNotFoundError,
+)
+from core.labs.features.resource_audit.queries import (
+    get_audit_result_options,
+    get_latest_audit_by_resource,
+    get_resource_audit,
+    list_all_resource_audits,
+    list_audits_by_id,
+    list_audits_by_sku,
+    list_audits_by_uid,
+    list_audits_for_resource,
+)
+
+__all__ = (
+    "AuditPermissionDeniedError",
+    "InvalidAuditResultError",
+    "RecordAuditByIdInput",
+    "RecordAuditBySkuInput",
+    "RecordAuditByUidInput",
+    "RecordResourceAuditInput",
+    "ResourceAuditError",
+    "ResourceAuditNotFoundError",
+    "ResourceNotFoundError",
+    "UpdateResourceAuditInput",
+    "delete_resource_audit",
+    "get_audit_result_options",
+    "get_latest_audit_by_resource",
+    "get_resource_audit",
+    "list_all_resource_audits",
+    "list_audits_by_id",
+    "list_audits_by_sku",
+    "list_audits_by_uid",
+    "list_audits_for_resource",
+    "record_audit_by_id",
+    "record_audit_by_sku",
+    "record_audit_by_uid",
+    "record_resource_audit",
+    "resolve_resource",
+    "update_resource_audit",
+)

@@ -1,0 +1,152 @@
+{% load static %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background:#f3f4f6;padding:28px 0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center" style="padding:0 12px;">
+      <table role="presentation" width="720" cellpadding="0" cellspacing="0" border="0"
+             style="max-width:720px;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(15,23,42,0.08);">
+
+        <!-- Top Accent Bar (Reminder = Amber) -->
+        <tr>
+          <td style="height:6px;background:#f59e0b;"></td>
+        </tr>
+
+        <!-- Header -->
+        <tr>
+          <td style="padding:28px 28px 18px 28px;border-bottom:1px solid #eef2f7;">
+            <!-- Brand Row -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="vertical-align:middle;">
+                  <div style="font-size:14px;color:#64748b;font-weight:700;letter-spacing:0.2px;">
+                    Lab Management System
+                  </div>
+                </td>
+                <td align="right" style="vertical-align:middle;">
+                  <div style="font-size:12px;color:#94a3b8;">
+                    {% now "F j, Y" %}
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <h1 style="margin:16px 0 8px 0;font-size:22px;line-height:1.25;font-weight:800;color:#92400e;">
+              License Expiry Notice
+            </h1>
+            <p style="margin:12px 0 8px 0;font-size:16px;font-weight:600;color:#0f172a;">
+              Hello Lab Management Team,
+            </p>
+            <p style="margin:0;font-size:14px;color:#475569;">
+              Your license is approaching its expiry date. Please renew it promptly to avoid disruption of services.
+            </p>
+
+            <!-- License SKU Pill -->
+            <div style="margin-top:14px;">
+              <span style="
+                display:inline-block;
+                font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+                font-size:13px;
+                font-weight:700;
+                letter-spacing:0.2px;
+                padding:8px 12px;
+                border-radius:10px;
+                background:#f1f5ff;
+                border:1px solid #dbeafe;
+                color:#1d4ed8;">
+                {{ license.sku }}
+              </span>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Details Card -->
+        <tr>
+          <td style="padding:18px 28px 0 28px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;">
+              <tr>
+                <td style="padding:18px;">
+                  <div style="font-size:12px;color:#64748b;font-weight:800;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:10px;">
+                    License details
+                  </div>
+
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;line-height:1.6;">
+                    <tr>
+                      <td style="padding:8px 0;color:#64748b;font-weight:600;width:32%;">License Name</td>
+                      <td style="padding:8px 0;color:#0f172a;font-weight:700;">
+                        {{ license.name }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;color:#64748b;font-weight:600;">License Type</td>
+                      <td style="padding:8px 0;color:#0f172a;font-weight:700;">
+                        {{ license.license_type }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;color:#64748b;font-weight:600;">Expiry Date</td>
+                      <td style="padding:8px 0;color:#0f172a;font-weight:700;">
+                        {{ license.expiry_date|date:"F j, Y" }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;color:#64748b;font-weight:600;">Days Remaining</td>
+                      <td style="padding:8px 0;color:#0f172a;font-weight:700;">
+                        {{ days_until_expiry }}
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Reminder Schedule Card -->
+        <tr>
+          <td style="padding:18px 28px 0 28px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="background:#fffbeb;border:1px solid #fde68a;border-radius:14px;">
+              <tr>
+                <td style="padding:16px;">
+                  <div style="font-size:13px;color:#92400e;font-weight:700;margin-bottom:8px;">
+                    Reminder schedule
+                  </div>
+                  <div style="font-size:14px;color:#854d0e;line-height:1.7;">
+                    • 30 days before expiry date<br>
+                    • 7 days before expiry date<br>
+                    • 1 day before expiry date<br>
+                    • On expiry date
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- CTA (Amber button, consistent style) -->
+        <tr>
+          <td style="padding:18px 28px 26px 28px;">
+            <a href="https://labmango.de.bosch.com:3001/lab-equipment/license"
+               style="display:inline-block;padding:12px 16px;border-radius:12px;background:#f59e0b;border:1px solid #f59e0b;color:#ffffff;text-decoration:none;font-weight:800;font-size:14px;">
+              View license details
+            </a>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:16px 28px 22px 28px;border-top:1px solid #eef2f7;">
+            <div style="font-size:12px;color:#64748b;line-height:1.6;">
+              Please ensure renewal before the expiry date to maintain uninterrupted access. Contact support if you need assistance.
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:#64748b;line-height:1.6;">
+              © {% now "Y" %} Lab Management System · This is an automated message. Please do not reply.
+            </div>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>

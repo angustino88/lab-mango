@@ -1,0 +1,1007 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/audits:
+    get:
+      operationId: labs_audits_retrieve
+      description: Query and filter audits across all lab resources.
+      parameters:
+      - in: query
+        name: auditor_id
+        schema:
+          type: integer
+      - in: query
+        name: page
+        schema:
+          type: integer
+          default: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          default: 20
+      - in: query
+        name: resource_type
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: result
+        schema:
+          enum:
+          - PASS
+          - FAIL
+          - NOT_ASSESSED
+          - OK
+          - NOK
+          type: string
+          minLength: 1
+        description: '* `PASS` - PASS
+
+          * `FAIL` - FAIL
+
+          * `NOT_ASSESSED` - NOT_ASSESSED
+
+          * `OK` - OK
+
+          * `NOK` - NOK'
+      - in: query
+        name: search
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Resource Audit
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllResourceAuditListSerializersResourceAuditItemPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Audits
+  /api/labs/audits/{audit_id}:
+    get:
+      operationId: labs_audits_retrieve_by_audit_id
+      description: Retrieve, update, or delete a single audit entry.
+      parameters:
+      - in: path
+        name: audit_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Resource Audit
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAuditDetailSerializersResourceAuditItemDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Audits by Audit ID
+    patch:
+      operationId: labs_audits_partial_update_by_audit_id
+      description: Retrieve, update, or delete a single audit entry.
+      parameters:
+      - in: path
+        name: audit_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Resource Audit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUpdateResourceAuditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUpdateResourceAuditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUpdateResourceAuditRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAuditDetailSerializersResourceAuditItemDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Audits by Audit ID
+    delete:
+      operationId: labs_audits_destroy_by_audit_id
+      description: Retrieve, update, or delete a single audit entry.
+      parameters:
+      - in: path
+        name: audit_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Resource Audit
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Audits by Audit ID
+  /api/labs/resources/{resource_type}/{resource_id}/audits:
+    get:
+      operationId: labs_resources_audits_retrieve_by_resource_type_resource_id
+      description: List or record audits for a typed resource.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: resource_type
+        schema:
+          type: string
+        required: true
+      tags:
+      - Resource Audit
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypedResourceAuditListSerializersResourceAuditItemPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Resources Audits by Resource Type Resource ID
+    post:
+      operationId: labs_resources_audits_create_by_resource_type_resource_id
+      description: List or record audits for a typed resource.
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: resource_type
+        schema:
+          type: string
+        required: true
+      tags:
+      - Resource Audit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypedResourceAuditItemSerializersResourceAuditItemDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Resources Audits by Resource Type Resource ID
+  /api/labs/resources/id/{resource_id}/audits:
+    get:
+      operationId: labs_resources_id_audits_retrieve_by_resource_id
+      description: List or record audits for a resource identified by integer ID.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: resource_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Resource Audit
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAuditListByIdSerializersResourceAuditItemPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Resources ID Audits by Resource ID
+    post:
+      operationId: labs_resources_id_audits_create_by_resource_id
+      description: List or record audits for a resource identified by integer ID.
+      parameters:
+      - in: path
+        name: resource_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Resource Audit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAuditItemByIdSerializersResourceAuditItemDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Resources ID Audits by Resource ID
+  /api/labs/resources/sku/{sku}/audits:
+    get:
+      operationId: labs_resources_sku_audits_retrieve_by_sku
+      description: List or record audits for a resource identified by business SKU.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: sku
+        schema:
+          type: string
+        required: true
+      tags:
+      - Resource Audit
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAuditListBySkuSerializersResourceAuditItemPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Resources SKU Audits by SKU
+    post:
+      operationId: labs_resources_sku_audits_create_by_sku
+      description: List or record audits for a resource identified by business SKU.
+      parameters:
+      - in: path
+        name: sku
+        schema:
+          type: string
+        required: true
+      tags:
+      - Resource Audit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAuditItemBySkuSerializersResourceAuditItemDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Resources SKU Audits by SKU
+  /api/labs/resources/uid/{uid}/audits:
+    get:
+      operationId: labs_resources_uid_audits_retrieve_by_uid
+      description: List or record audits for a resource identified by system UUID.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: uid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Resource Audit
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAuditListByUidSerializersResourceAuditItemPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Resources UID Audits by UID
+    post:
+      operationId: labs_resources_uid_audits_create_by_uid
+      description: List or record audits for a resource identified by system UUID.
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Resource Audit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecordResourceAuditRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAuditItemByUidSerializersResourceAuditItemDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Resources UID Audits by UID
+components:
+  schemas:
+    AllResourceAuditListSerializersResourceAuditItemPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/AllResourceAuditListSerializersResourceAuditItemPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAuditItem'
+      required:
+      - data
+      - meta
+    AllResourceAuditListSerializersResourceAuditItemPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    AllResourceAuditListSerializersResourceAuditItemPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/AllResourceAuditListSerializersResourceAuditItemPagination'
+      required:
+      - pagination
+    AuditResultInputEnum:
+      enum:
+      - PASS
+      - FAIL
+      - NOT_ASSESSED
+      - OK
+      - NOK
+      type: string
+      description: '* `PASS` - PASS
+
+        * `FAIL` - FAIL
+
+        * `NOT_ASSESSED` - NOT_ASSESSED
+
+        * `OK` - OK
+
+        * `NOK` - NOK'
+    PatchedUpdateResourceAuditRequest:
+      type: object
+      description: Payload to update an existing audit record.
+      properties:
+        result:
+          $ref: '#/components/schemas/AuditResultInputEnum'
+        remarks:
+          type: string
+          maxLength: 255
+        audited_at:
+          type: string
+          format: date-time
+          nullable: true
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    RecordResourceAuditRequest:
+      type: object
+      description: Payload to record an audit on a specific resource.
+      properties:
+        result:
+          $ref: '#/components/schemas/AuditResultInputEnum'
+        remarks:
+          type: string
+          default: ''
+          maxLength: 255
+        audited_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - result
+    ResourceAuditDetailSerializersResourceAuditItemDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceAuditItem'
+      required:
+      - data
+    ResourceAuditItem:
+      type: object
+      description: Full detail of a recorded resource audit.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        resource_type:
+          type: string
+          readOnly: true
+        resource_id:
+          type: string
+          readOnly: true
+        resource_name:
+          type: string
+          readOnly: true
+        resource_sku:
+          type: string
+          readOnly: true
+        auditor:
+          allOf:
+          - $ref: '#/components/schemas/ResourceAuditorUserSummary'
+          readOnly: true
+        result:
+          $ref: '#/components/schemas/ResourceAuditResultEnum'
+        remarks:
+          type: string
+          maxLength: 255
+        audited_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - audited_at
+      - auditor
+      - created_at
+      - id
+      - resource_id
+      - resource_name
+      - resource_sku
+      - resource_type
+      - result
+    ResourceAuditItemByIdSerializersResourceAuditItemDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceAuditItem'
+      required:
+      - data
+    ResourceAuditItemBySkuSerializersResourceAuditItemDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceAuditItem'
+      required:
+      - data
+    ResourceAuditItemByUidSerializersResourceAuditItemDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceAuditItem'
+      required:
+      - data
+    ResourceAuditListByIdSerializersResourceAuditItemPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/ResourceAuditListByIdSerializersResourceAuditItemPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAuditItem'
+      required:
+      - data
+      - meta
+    ResourceAuditListByIdSerializersResourceAuditItemPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    ResourceAuditListByIdSerializersResourceAuditItemPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/ResourceAuditListByIdSerializersResourceAuditItemPagination'
+      required:
+      - pagination
+    ResourceAuditListBySkuSerializersResourceAuditItemPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/ResourceAuditListBySkuSerializersResourceAuditItemPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAuditItem'
+      required:
+      - data
+      - meta
+    ResourceAuditListBySkuSerializersResourceAuditItemPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    ResourceAuditListBySkuSerializersResourceAuditItemPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/ResourceAuditListBySkuSerializersResourceAuditItemPagination'
+      required:
+      - pagination
+    ResourceAuditListByUidSerializersResourceAuditItemPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/ResourceAuditListByUidSerializersResourceAuditItemPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAuditItem'
+      required:
+      - data
+      - meta
+    ResourceAuditListByUidSerializersResourceAuditItemPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    ResourceAuditListByUidSerializersResourceAuditItemPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/ResourceAuditListByUidSerializersResourceAuditItemPagination'
+      required:
+      - pagination
+    ResourceAuditResultEnum:
+      enum:
+      - PASS
+      - FAIL
+      - NOT_ASSESSED
+      type: string
+      description: '* `PASS` - Pass
+
+        * `FAIL` - Fail
+
+        * `NOT_ASSESSED` - Not assessed'
+    ResourceAuditorUserSummary:
+      type: object
+      description: User summary for audit actor.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        display_name:
+          type: string
+          maxLength: 255
+      required:
+      - id
+      - username
+    TypedResourceAuditItemSerializersResourceAuditItemDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceAuditItem'
+      required:
+      - data
+    TypedResourceAuditListSerializersResourceAuditItemPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/TypedResourceAuditListSerializersResourceAuditItemPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAuditItem'
+      required:
+      - data
+      - meta
+    TypedResourceAuditListSerializersResourceAuditItemPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    TypedResourceAuditListSerializersResourceAuditItemPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/TypedResourceAuditListSerializersResourceAuditItemPagination'
+      required:
+      - pagination
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Resource Audit
+  description: Resource Audit endpoints

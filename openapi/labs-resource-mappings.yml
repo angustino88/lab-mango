@@ -1,0 +1,732 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/benches/{resource_id}/mapping:
+    get:
+      operationId: labs_benches_mapping_retrieve_by_resource_id
+      description: Returns flat graphic-only placement context for the selected bench.
+      summary: Get bench placement mapping
+      parameters:
+      - in: query
+        name: benches_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: equipment_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: license_assignments_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: licenses_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 25
+      - in: path
+        name: resource_id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: room_slots_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: rooms_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: station_slots_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: stations_cursor
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Resource Mappings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceMappingResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+  /api/labs/equipment/{resource_id}/mapping:
+    get:
+      operationId: labs_equipment_mapping_retrieve_by_resource_id
+      description: Returns flat graphic-only placement context for the selected equipment.
+      summary: Get equipment placement mapping
+      parameters:
+      - in: query
+        name: benches_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: equipment_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: license_assignments_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: licenses_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 25
+      - in: path
+        name: resource_id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: room_slots_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: rooms_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: station_slots_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: stations_cursor
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Resource Mappings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceMappingResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+  /api/labs/rooms/{resource_id}/mapping:
+    get:
+      operationId: labs_rooms_mapping_retrieve_by_resource_id
+      description: Returns flat graphic-only placement context for the selected room.
+      summary: Get room placement mapping
+      parameters:
+      - in: query
+        name: benches_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: equipment_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: license_assignments_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: licenses_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 25
+      - in: path
+        name: resource_id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: room_slots_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: rooms_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: station_slots_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: stations_cursor
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Resource Mappings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceMappingResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+  /api/labs/stations/{resource_id}/mapping:
+    get:
+      operationId: labs_stations_mapping_retrieve_by_resource_id
+      description: Returns flat graphic-only placement context for the selected station.
+      summary: Get station placement mapping
+      parameters:
+      - in: query
+        name: benches_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: equipment_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: license_assignments_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: licenses_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 25
+      - in: path
+        name: resource_id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: room_slots_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: rooms_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: station_slots_cursor
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: stations_cursor
+        schema:
+          type: string
+          minLength: 1
+      tags:
+      - Resource Mappings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceMappingResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+components:
+  schemas:
+    MappingBench:
+      type: object
+      properties:
+        id:
+          type: integer
+        uid:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        setup_location_id:
+          type: integer
+          nullable: true
+        station_slot_id:
+          type: integer
+          nullable: true
+      required:
+      - id
+      - name
+      - setup_location_id
+      - sku
+      - station_slot_id
+      - uid
+    MappingEquipment:
+      type: object
+      properties:
+        id:
+          type: integer
+        uid:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        category:
+          allOf:
+          - $ref: '#/components/schemas/MappingEquipmentCategory'
+          nullable: true
+        bench_id:
+          type: integer
+          nullable: true
+        bench_assignment:
+          allOf:
+          - $ref: '#/components/schemas/MappingEquipmentAssignment'
+          nullable: true
+      required:
+      - bench_assignment
+      - bench_id
+      - category
+      - id
+      - name
+      - sku
+      - uid
+    MappingEquipmentAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+        position:
+          type: integer
+        monitor:
+          type: boolean
+        assigned_at:
+          type: string
+          format: date-time
+      required:
+      - assigned_at
+      - id
+      - monitor
+      - position
+      - role
+    MappingEquipmentCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+      - id
+      - name
+    MappingLicense:
+      type: object
+      properties:
+        id:
+          type: integer
+        uid:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        category:
+          allOf:
+          - $ref: '#/components/schemas/MappingLicenseCategory'
+          nullable: true
+      required:
+      - category
+      - id
+      - name
+      - sku
+      - uid
+    MappingLicenseAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        equipment_id:
+          type: integer
+        license_id:
+          type: integer
+        assigned_at:
+          type: string
+          format: date-time
+      required:
+      - assigned_at
+      - equipment_id
+      - id
+      - license_id
+    MappingLicenseCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          nullable: true
+      required:
+      - id
+      - name
+    MappingPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page_size:
+          type: integer
+          minimum: 1
+        next_cursor:
+          type: string
+          nullable: true
+        previous_cursor:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next_cursor
+      - page_size
+      - previous_cursor
+    MappingRoom:
+      type: object
+      properties:
+        id:
+          type: integer
+        uid:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        layout_rows:
+          type: integer
+          nullable: true
+        layout_columns:
+          type: integer
+          nullable: true
+      required:
+      - id
+      - layout_columns
+      - layout_rows
+      - name
+      - sku
+      - uid
+    MappingRoomSlot:
+      type: object
+      properties:
+        id:
+          type: integer
+        room_id:
+          type: integer
+        row_index:
+          type: integer
+        col_index:
+          type: integer
+        slot_code:
+          type: string
+        x_mm:
+          type: integer
+          nullable: true
+        y_mm:
+          type: integer
+          nullable: true
+        width_mm:
+          type: integer
+          nullable: true
+        depth_mm:
+          type: integer
+          nullable: true
+        orientation_degrees:
+          type: integer
+      required:
+      - col_index
+      - depth_mm
+      - id
+      - orientation_degrees
+      - room_id
+      - row_index
+      - slot_code
+      - width_mm
+      - x_mm
+      - y_mm
+    MappingStation:
+      type: object
+      properties:
+        id:
+          type: integer
+        uid:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        room_id:
+          type: integer
+          nullable: true
+        slot_id:
+          type: integer
+          nullable: true
+      required:
+      - id
+      - name
+      - room_id
+      - sku
+      - slot_id
+      - uid
+    MappingStationSlot:
+      type: object
+      properties:
+        id:
+          type: integer
+        station_id:
+          type: integer
+        position_index:
+          type: integer
+        slot_code:
+          type: string
+        label:
+          type: string
+      required:
+      - id
+      - label
+      - position_index
+      - slot_code
+      - station_id
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    ResourceMappingData:
+      type: object
+      properties:
+        rooms:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingRoom'
+        room_slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingRoomSlot'
+        stations:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingStation'
+        station_slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingStationSlot'
+        benches:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingBench'
+        equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingEquipment'
+        licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingLicense'
+        license_assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingLicenseAssignment'
+      required:
+      - benches
+      - equipment
+      - license_assignments
+      - licenses
+      - room_slots
+      - rooms
+      - station_slots
+      - stations
+    ResourceMappingMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/ResourceMappingPagination'
+      required:
+      - pagination
+    ResourceMappingPagination:
+      type: object
+      properties:
+        rooms:
+          $ref: '#/components/schemas/MappingPagination'
+        room_slots:
+          $ref: '#/components/schemas/MappingPagination'
+        stations:
+          $ref: '#/components/schemas/MappingPagination'
+        station_slots:
+          $ref: '#/components/schemas/MappingPagination'
+        benches:
+          $ref: '#/components/schemas/MappingPagination'
+        equipment:
+          $ref: '#/components/schemas/MappingPagination'
+        licenses:
+          $ref: '#/components/schemas/MappingPagination'
+        license_assignments:
+          $ref: '#/components/schemas/MappingPagination'
+      required:
+      - benches
+      - equipment
+      - license_assignments
+      - licenses
+      - room_slots
+      - rooms
+      - station_slots
+      - stations
+    ResourceMappingResponse:
+      type: object
+      description: Response envelope with runtime reserved keys declared dynamically
+        for schema generation.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceMappingData'
+        meta:
+          $ref: '#/components/schemas/ResourceMappingMeta'
+      required:
+      - data
+      - meta
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Resource Mappings
+  description: Resource Mappings endpoints

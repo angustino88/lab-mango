@@ -1,0 +1,3033 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/bench-groups:
+    get:
+      operationId: labs_bench_groups_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchReferenceListSerializersBenchReferenceDataPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Bench Groups
+    post:
+      operationId: labs_bench_groups_create
+      description: HTTP mapping for domain commands and selector projections.
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchReferenceWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchReferenceWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchReferenceWrite'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchGroupCreateSerializersBenchGroupDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Bench Groups
+  /api/labs/bench-groups/{reference_id}:
+    get:
+      operationId: labs_bench_groups_retrieve_by_reference_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchGroupDetailSerializersBenchGroupDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Bench Groups by Reference ID
+    patch:
+      operationId: labs_bench_groups_partial_update_by_reference_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchReferenceWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchReferenceWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchReferenceWrite'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchGroupUpdateSerializersBenchGroupDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Bench Groups by Reference ID
+    delete:
+      operationId: labs_bench_groups_destroy_by_reference_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Bench Groups by Reference ID
+  /api/labs/bench-groups/options:
+    get:
+      operationId: labs_bench_groups_options_retrieve
+      description: Selector options for bench groups.
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: benches
+      summary: Get Bench Groups Options
+  /api/labs/bench-types:
+    get:
+      operationId: labs_bench_types_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchReferenceListSerializersBenchReferenceDataPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Bench Types
+    post:
+      operationId: labs_bench_types_create
+      description: HTTP mapping for domain commands and selector projections.
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchReferenceWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchReferenceWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchReferenceWrite'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchTypeCreateSerializersBenchTypeDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Bench Types
+  /api/labs/bench-types/{reference_id}:
+    get:
+      operationId: labs_bench_types_retrieve_by_reference_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchTypeDetailSerializersBenchTypeDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Bench Types by Reference ID
+    patch:
+      operationId: labs_bench_types_partial_update_by_reference_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchReferenceWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchReferenceWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchReferenceWrite'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchTypeUpdateSerializersBenchTypeDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Bench Types by Reference ID
+    delete:
+      operationId: labs_bench_types_destroy_by_reference_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Bench Types by Reference ID
+  /api/labs/bench-types/options:
+    get:
+      operationId: labs_bench_types_options_retrieve
+      description: Selector options for bench types.
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: benches
+      summary: Get Bench Types Options
+  /api/labs/benches:
+    get:
+      operationId: labs_benches_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: bench_group_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: created_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: favorite
+        schema:
+          type: boolean
+      - in: query
+        name: group_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: owner_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+      - in: query
+        name: setup_location_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: status
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: type_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchListSerializersBenchPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches
+    post:
+      operationId: labs_benches_create
+      description: HTTP mapping for domain commands and selector projections.
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchCreateSerializersBenchDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Benches
+  /api/labs/benches/{bench_id}:
+    get:
+      operationId: labs_benches_retrieve_by_bench_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchDetailSerializersBenchResourceDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches by Bench ID
+    put:
+      operationId: labs_benches_update_by_bench_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchReplaceSerializersBenchDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Benches by Bench ID
+    patch:
+      operationId: labs_benches_partial_update_by_bench_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchUpdateSerializersBenchDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Benches by Bench ID
+    delete:
+      operationId: labs_benches_destroy_by_bench_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Benches by Bench ID
+  /api/labs/benches/{bench_id}/actions/favorite:
+    post:
+      operationId: labs_benches_actions_favorite_create_by_bench_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchFavoriteSerializersBenchFavoriteDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Favorite Benches by Bench ID
+    delete:
+      operationId: labs_benches_actions_favorite_destroy_by_bench_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Favorite Benches by Bench ID
+  /api/labs/benches/{bench_id}/actions/place:
+    post:
+      operationId: labs_benches_actions_place_create_by_bench_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchPlacement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchPlacement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchPlacement'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchPlaceActionSerializersBenchDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Place Benches by Bench ID
+    patch:
+      operationId: labs_benches_actions_place_partial_update_by_bench_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchPlacement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchPlacement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBenchPlacement'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchPlacementSerializersBenchDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Place Benches by Bench ID
+  /api/labs/benches/{bench_id}/actions/unfavorite:
+    post:
+      operationId: labs_benches_actions_unfavorite_create_by_bench_id
+      description: Deprecated alias. Use DELETE /api/labs/benches/{bench_id}/actions/favorite
+        instead.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Unfavorite Benches by Bench ID
+  /api/labs/benches/{bench_id}/equipment:
+    get:
+      operationId: labs_benches_equipment_retrieve_by_bench_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchEquipmentListSerializersBenchSetupEquipmentPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Equipment by Bench ID
+  /api/labs/benches/filters:
+    get:
+      operationId: labs_benches_filters_retrieve
+      description: General metadata handler; concrete API bases own auth and responses.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchFiltersFilteringFilterMetadataDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Filters
+  /api/labs/benches/options:
+    get:
+      operationId: labs_benches_options_retrieve
+      description: 'Selector options for benches: unpaginated, allowlisted filters,
+        hard cap (OPT-1 to OPT-8).'
+      parameters:
+      - in: query
+        name: bench_group_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: favorite
+        schema:
+          type: boolean
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: lifecycle_status
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      - in: query
+        name: setup_location_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: type_id
+        schema:
+          type: integer
+          minimum: 1
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: benches
+      summary: Get Benches Options
+  /api/labs/benches/reference-data:
+    get:
+      operationId: labs_benches_reference_data_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchReferenceDataSerializersBenchReferenceDataDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Reference Data
+  /api/labs/benches/reference-data/groups:
+    get:
+      operationId: labs_benches_reference_data_groups_retrieve
+      description: List BenchGroup reference records in a paginated data envelope.
+        Validates the declared search, relation and pagination query parameters and
+        delegates filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+          nullable: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchGroupReferenceListSerializersBenchGroupCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Reference Data Groups
+    post:
+      operationId: labs_benches_reference_data_groups_create
+      description: 'Create a BenchGroup reference record from the declared writable
+        fields. Passes the validated values, authenticated user and Idempotency-Key
+        to the owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchGroupCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchGroupCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchGroupCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchGroupReferenceCreateSerializersBenchGroupCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Benches Reference Data Groups
+  /api/labs/benches/reference-data/groups/{reference_id}:
+    get:
+      operationId: labs_benches_reference_data_groups_retrieve_by_reference_id
+      description: Retrieve one BenchGroup reference record by reference_id in a data
+        envelope. Delegates lookup and access checks to the owner-provided retrieve
+        callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchGroupReferenceDetailSerializersBenchGroupCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Reference Data Groups by Reference ID
+  /api/labs/benches/reference-data/types:
+    get:
+      operationId: labs_benches_reference_data_types_retrieve
+      description: List BenchType reference records in a paginated data envelope.
+        Validates the declared search, relation and pagination query parameters and
+        delegates filtering and access checks to the owner-provided listing callback.
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+          nullable: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 255
+          minLength: 1
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchTypeReferenceListSerializersBenchTypeCatalogRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Reference Data Types
+    post:
+      operationId: labs_benches_reference_data_types_create
+      description: 'Create a BenchType reference record from the declared writable
+        fields. Passes the validated values, authenticated user and Idempotency-Key
+        to the owner-provided create callback. Returns a 201 data envelope with Location;
+        a replay reported by the callback also includes Idempotency-Replayed: true.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Required replay key (max 128 characters); receipts retained until
+          explicitly purged.
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchTypeCatalogCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchTypeCatalogCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchTypeCatalogCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchTypeReferenceCreateSerializersBenchTypeCatalogRecordDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Benches Reference Data Types
+  /api/labs/benches/reference-data/types/{reference_id}:
+    get:
+      operationId: labs_benches_reference_data_types_retrieve_by_reference_id
+      description: Retrieve one BenchType reference record by reference_id in a data
+        envelope. Delegates lookup and access checks to the owner-provided retrieve
+        callback; a missing or unavailable record is documented as 404.
+      parameters:
+      - in: path
+        name: reference_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchTypeReferenceDetailSerializersBenchTypeCatalogRecordDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Reference Data Types by Reference ID
+  /api/labs/benches/status-summary:
+    get:
+      operationId: labs_benches_status_summary_retrieve
+      description: Non-deleted benches by lifecycle state, not activity or bookings.
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchStatusSummaryDataSerializersBenchStatusSummaryDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Status Summary
+components:
+  schemas:
+    Bench:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        group:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        department:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        owner:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        remark:
+          type: string
+          readOnly: true
+        image:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        bench_group:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        description:
+          type: string
+          readOnly: true
+        documentation_url:
+          type: string
+          format: uri
+          readOnly: true
+        setup_location:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        station_slot:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          nullable: true
+          readOnly: true
+        criticality:
+          type: string
+          readOnly: true
+        requested_power_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        requested_load_kg:
+          type: integer
+          readOnly: true
+          nullable: true
+        requested_cooling_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        required_utilities:
+          readOnly: true
+        commissioning_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        last_inspected_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        next_inspection_due_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        setup_location_path:
+          type: string
+          readOnly: true
+        is_favorite:
+          type: boolean
+          readOnly: true
+        equipment_count:
+          type: integer
+          readOnly: true
+        equipment_url:
+          type: string
+          readOnly: true
+      required:
+      - bench_group
+      - commissioning_date
+      - created_at
+      - criticality
+      - department
+      - description
+      - documentation_url
+      - equipment_count
+      - equipment_url
+      - group
+      - id
+      - image
+      - is_favorite
+      - last_inspected_at
+      - name
+      - next_inspection_due_at
+      - owner
+      - remark
+      - requested_cooling_w
+      - requested_load_kg
+      - requested_power_w
+      - required_utilities
+      - setup_location
+      - setup_location_path
+      - sku
+      - station_slot
+      - status
+      - type
+      - uid
+      - updated_at
+    BenchCreate:
+      type: object
+      description: Preserve the benches module's established strict-write helper.
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        image:
+          type: string
+          format: uri
+          nullable: true
+        type_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        bench_group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        description:
+          type: string
+        documentation_url:
+          type: string
+          format: uri
+          maxLength: 500
+        setup_location_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        station_slot_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        criticality:
+          type: string
+          maxLength: 32
+        requested_power_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        requested_load_kg:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        requested_cooling_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        required_utilities:
+          type: object
+          additionalProperties: {}
+        commissioning_date:
+          type: string
+          format: date
+          nullable: true
+        last_inspected_at:
+          type: string
+          format: date-time
+          nullable: true
+        next_inspection_due_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - sku
+    BenchCreateSerializersBenchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Bench'
+      required:
+      - data
+    BenchDetailSerializersBenchResourceDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchResourceDetail'
+      required:
+      - data
+    BenchEquipmentListSerializersBenchSetupEquipmentPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BenchEquipmentListSerializersBenchSetupEquipmentPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchSetupEquipment'
+      required:
+      - data
+      - meta
+    BenchEquipmentListSerializersBenchSetupEquipmentPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchEquipmentListSerializersBenchSetupEquipmentPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchEquipmentListSerializersBenchSetupEquipmentPagination'
+      required:
+      - pagination
+    BenchEquipmentReference:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+      required:
+      - id
+      - kind
+      - name
+      - sku
+      - uid
+    BenchFavorite:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - bench
+      - created_at
+      - id
+    BenchFavoriteSerializersBenchFavoriteDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchFavorite'
+      required:
+      - data
+    BenchFiltersFilteringFilterMetadataDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/FilterMetadata'
+      required:
+      - data
+    BenchGroup:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - description
+      - id
+      - is_active
+      - name
+      - updated_at
+    BenchGroupCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        active:
+          type: boolean
+      required:
+      - name
+    BenchGroupCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        active:
+          type: boolean
+      required:
+      - id
+      - name
+    BenchGroupCreateSerializersBenchGroupDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchGroup'
+      required:
+      - data
+    BenchGroupDetailSerializersBenchGroupDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchGroup'
+      required:
+      - data
+    BenchGroupReferenceCreateSerializersBenchGroupCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchGroupCatalogRecord'
+      required:
+      - data
+    BenchGroupReferenceDetailSerializersBenchGroupCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchGroupCatalogRecord'
+      required:
+      - data
+    BenchGroupReferenceListSerializersBenchGroupCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BenchGroupReferenceListSerializersBenchGroupCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchGroupCatalogRecord'
+      required:
+      - data
+      - meta
+    BenchGroupReferenceListSerializersBenchGroupCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchGroupReferenceListSerializersBenchGroupCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchGroupReferenceListSerializersBenchGroupCatalogRecordPagination'
+      required:
+      - pagination
+    BenchGroupUpdateSerializersBenchGroupDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchGroup'
+      required:
+      - data
+    BenchListSerializersBenchPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BenchListSerializersBenchPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bench'
+      required:
+      - data
+      - meta
+    BenchListSerializersBenchPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchListSerializersBenchPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchListSerializersBenchPagination'
+      required:
+      - pagination
+    BenchPlaceActionSerializersBenchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Bench'
+      required:
+      - data
+    BenchPlacement:
+      type: object
+      description: Preserve the benches module's established strict-write helper.
+      properties:
+        setup_location_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        station_slot_id:
+          type: integer
+          minimum: 1
+          nullable: true
+    BenchPlacementSerializersBenchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Bench'
+      required:
+      - data
+    BenchReferenceData:
+      type: object
+      properties:
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchType'
+          readOnly: true
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchGroup'
+          readOnly: true
+        stations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchStationReference'
+          readOnly: true
+        lifecycle_statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+      required:
+      - groups
+      - lifecycle_statuses
+      - stations
+      - types
+    BenchReferenceDataSerializersBenchReferenceDataDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchReferenceData'
+      required:
+      - data
+    BenchReferenceListSerializersBenchReferenceDataPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BenchReferenceListSerializersBenchReferenceDataPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchReferenceData'
+      required:
+      - data
+      - meta
+    BenchReferenceListSerializersBenchReferenceDataPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchReferenceListSerializersBenchReferenceDataPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchReferenceListSerializersBenchReferenceDataPagination'
+      required:
+      - pagination
+    BenchReferenceWrite:
+      type: object
+      description: Preserve the benches module's established strict-write helper.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        is_active:
+          type: boolean
+      required:
+      - name
+    BenchReplaceSerializersBenchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Bench'
+      required:
+      - data
+    BenchResourceDetail:
+      type: object
+      description: Lean resource detail projection with a link matching the slashless
+        route.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        group:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        department:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        owner:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        remark:
+          type: string
+          readOnly: true
+        image:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        bench_group:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        description:
+          type: string
+          readOnly: true
+        documentation_url:
+          type: string
+          format: uri
+          readOnly: true
+        setup_location:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        station_slot:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          nullable: true
+          readOnly: true
+        criticality:
+          type: string
+          readOnly: true
+        requested_power_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        requested_load_kg:
+          type: integer
+          readOnly: true
+          nullable: true
+        requested_cooling_w:
+          type: integer
+          readOnly: true
+          nullable: true
+        required_utilities:
+          readOnly: true
+        commissioning_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        last_inspected_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        next_inspection_due_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        setup_location_path:
+          type: string
+          readOnly: true
+        is_favorite:
+          type: boolean
+          readOnly: true
+        equipment_count:
+          type: integer
+          readOnly: true
+        equipment_url:
+          type: string
+          readOnly: true
+      required:
+      - bench_group
+      - commissioning_date
+      - created_at
+      - criticality
+      - department
+      - description
+      - documentation_url
+      - equipment_count
+      - equipment_url
+      - group
+      - id
+      - image
+      - is_favorite
+      - last_inspected_at
+      - name
+      - next_inspection_due_at
+      - owner
+      - remark
+      - requested_cooling_w
+      - requested_load_kg
+      - requested_power_w
+      - required_utilities
+      - setup_location
+      - setup_location_path
+      - sku
+      - station_slot
+      - status
+      - type
+      - uid
+      - updated_at
+    BenchSetupEquipment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/BenchEquipmentReference'
+          readOnly: true
+        role:
+          type: string
+          readOnly: true
+        position:
+          type: integer
+          readOnly: true
+        is_monitored:
+          type: boolean
+          readOnly: true
+        assigned_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_at
+      - equipment
+      - id
+      - is_monitored
+      - position
+      - role
+    BenchStationReference:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - sku
+      - uid
+    BenchStatusSummary:
+      type: object
+      description: Lifecycle status, not booking status or live activity.
+      properties:
+        total_count:
+          type: integer
+          minimum: 0
+        unknown_status_count:
+          type: integer
+          minimum: 0
+          description: Resources without a recorded status or with an unrecognized
+            status.
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/SummaryStatusCount'
+          description: All code-defined states, including zero counts. Values are
+            extensible.
+      required:
+      - statuses
+      - total_count
+      - unknown_status_count
+    BenchStatusSummaryDataSerializersBenchStatusSummaryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchStatusSummary'
+      required:
+      - data
+    BenchType:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - description
+      - id
+      - is_active
+      - name
+      - updated_at
+    BenchTypeCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        active:
+          type: boolean
+      required:
+      - name
+    BenchTypeCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        active:
+          type: boolean
+      required:
+      - id
+      - name
+    BenchTypeCreateSerializersBenchTypeDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchType'
+      required:
+      - data
+    BenchTypeDetailSerializersBenchTypeDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchType'
+      required:
+      - data
+    BenchTypeReferenceCreateSerializersBenchTypeCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchTypeCatalogRecord'
+      required:
+      - data
+    BenchTypeReferenceDetailSerializersBenchTypeCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchTypeCatalogRecord'
+      required:
+      - data
+    BenchTypeReferenceListSerializersBenchTypeCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BenchTypeReferenceListSerializersBenchTypeCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchTypeCatalogRecord'
+      required:
+      - data
+      - meta
+    BenchTypeReferenceListSerializersBenchTypeCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchTypeReferenceListSerializersBenchTypeCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchTypeReferenceListSerializersBenchTypeCatalogRecordPagination'
+      required:
+      - pagination
+    BenchTypeUpdateSerializersBenchTypeDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchType'
+      required:
+      - data
+    BenchUpdate:
+      type: object
+      description: Preserve the benches module's established strict-write helper.
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        image:
+          type: string
+          format: uri
+          nullable: true
+        type_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        bench_group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        description:
+          type: string
+        documentation_url:
+          type: string
+          format: uri
+          maxLength: 500
+        setup_location_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        station_slot_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        criticality:
+          type: string
+          maxLength: 32
+        requested_power_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        requested_load_kg:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        requested_cooling_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        required_utilities:
+          type: object
+          additionalProperties: {}
+        commissioning_date:
+          type: string
+          format: date
+          nullable: true
+        last_inspected_at:
+          type: string
+          format: date-time
+          nullable: true
+        next_inspection_due_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - sku
+    BenchUpdateSerializersBenchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Bench'
+      required:
+      - data
+    CatalogOption:
+      type: object
+      description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
+        OPT-4).'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+          nullable: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - sku
+    CatalogOptionList:
+      type: object
+      description: Enveloped list of selector options.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogOption'
+          readOnly: true
+      required:
+      - data
+    FilterMetadata:
+      type: object
+      properties:
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        combination:
+          type: string
+        multi_value_combination:
+          type: string
+        separator:
+          type: string
+        search:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        ordering:
+          type: array
+          items:
+            type: string
+        default_ordering:
+          type: array
+          items:
+            type: string
+      required:
+      - combination
+      - default_ordering
+      - filters
+      - multi_value_combination
+      - ordering
+      - search
+      - separator
+    LabsChoiceReference:
+      type: object
+      description: Standard `{value, label}` representation for enum and lifecycle
+        choices.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+    LabsUIDNamedReference:
+      type: object
+      description: Compact `{id, uid, name}` object representation when target defines
+        a UUID.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - uid
+    PatchedBenchPlacement:
+      type: object
+      description: Preserve the benches module's established strict-write helper.
+      properties:
+        setup_location_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        station_slot_id:
+          type: integer
+          minimum: 1
+          nullable: true
+    PatchedBenchReferenceWrite:
+      type: object
+      description: Preserve the benches module's established strict-write helper.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        is_active:
+          type: boolean
+    PatchedBenchUpdate:
+      type: object
+      description: Preserve the benches module's established strict-write helper.
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        image:
+          type: string
+          format: uri
+          nullable: true
+        type_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        bench_group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        description:
+          type: string
+        documentation_url:
+          type: string
+          format: uri
+          maxLength: 500
+        setup_location_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        station_slot_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        criticality:
+          type: string
+          maxLength: 32
+        requested_power_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        requested_load_kg:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        requested_cooling_w:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        required_utilities:
+          type: object
+          additionalProperties: {}
+        commissioning_date:
+          type: string
+          format: date
+          nullable: true
+        last_inspected_at:
+          type: string
+          format: date-time
+          nullable: true
+        next_inspection_due_at:
+          type: string
+          format: date-time
+          nullable: true
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    SummaryStatus:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+      required:
+      - label
+      - value
+    SummaryStatusCount:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SummaryStatus'
+        resource_count:
+          type: integer
+          minimum: 0
+      required:
+      - resource_count
+      - status
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Benches
+  description: Benches endpoints

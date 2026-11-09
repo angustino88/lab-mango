@@ -1,0 +1,924 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/expenses/{expense_id}/payments:
+    get:
+      operationId: labs_expenses_payments_retrieve_by_expense_id
+      description: List and record payments or refunds against an expense.
+      parameters:
+      - in: path
+        name: expense_id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Expenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpensePaymentListSerializersExpensePaymentPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Expenses Payments by Expense ID
+    post:
+      operationId: labs_expenses_payments_create_by_expense_id
+      description: List and record payments or refunds against an expense.
+      parameters:
+      - in: path
+        name: expense_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpensePayment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExpensePayment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExpensePayment'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpensePaymentSerializersExpensePaymentDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Expenses Payments by Expense ID
+  /api/labs/expenses/report:
+    get:
+      operationId: labs_expenses_report_retrieve
+      description: Aggregate financial report and expenditure metrics across lab facilities.
+      parameters:
+      - in: query
+        name: billing_period
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: currency
+        schema:
+          type: string
+          default: EUR
+          minLength: 1
+      - in: query
+        name: expense_type
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: from_date
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: room_id
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: to_date
+        schema:
+          type: string
+          format: date
+      tags:
+      - Expenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialReportSerializersFinancialReportResponseDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Expenses Report
+  /api/labs/financial-report:
+    get:
+      operationId: labs_financial_report_retrieve
+      description: Deprecated alias for financial report. Use /api/labs/expenses/report
+        instead.
+      parameters:
+      - in: query
+        name: billing_period
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: currency
+        schema:
+          type: string
+          default: EUR
+          minLength: 1
+      - in: query
+        name: expense_type
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: from_date
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: room_id
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: to_date
+        schema:
+          type: string
+          format: date
+      tags:
+      - Expenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialReportSerializersFinancialReportResponseDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Financial Report
+  /api/labs/rooms/{room_id}/expenses:
+    get:
+      operationId: labs_rooms_expenses_retrieve_by_room_id
+      description: List and create expense obligations for a room.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Expenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomExpenseListSerializersExpensePaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Rooms Expenses by Room ID
+    post:
+      operationId: labs_rooms_expenses_create_by_room_id
+      description: List and create expense obligations for a room.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Expense'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Expense'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Expense'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomExpenseSerializersExpenseDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Rooms Expenses by Room ID
+  /api/labs/rooms/{room_id}/expenses/report:
+    get:
+      operationId: labs_rooms_expenses_report_retrieve_by_room_id
+      description: Aggregate financial report for a specific laboratory room.
+      parameters:
+      - in: query
+        name: billing_period
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: currency
+        schema:
+          type: string
+          default: EUR
+          minLength: 1
+      - in: query
+        name: expense_type
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: from_date
+        schema:
+          type: string
+          format: date
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: room_id
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          minLength: 1
+      - in: query
+        name: to_date
+        schema:
+          type: string
+          format: date
+      tags:
+      - Expenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomFinancialReportSerializersFinancialReportResponseDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Rooms Expenses Report by Room ID
+components:
+  schemas:
+    BillingPeriodEnum:
+      enum:
+      - one_time
+      - monthly
+      - quarterly
+      - annual
+      type: string
+      description: '* `one_time` - One-time
+
+        * `monthly` - Monthly
+
+        * `quarterly` - Quarterly
+
+        * `annual` - Annual'
+    Expense:
+      type: object
+      description: Read and write shape for expenses. The room is taken from the URL,
+        never the body.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        room:
+          type: object
+          additionalProperties:
+            oneOf:
+            - type: integer
+            - type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        expense_type:
+          $ref: '#/components/schemas/ExpenseTypeEnum'
+        supplier:
+          type: string
+          maxLength: 255
+        reference:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        currency:
+          type: string
+          maxLength: 3
+        amount_display:
+          type: object
+          additionalProperties:
+            type: string
+          readOnly: true
+        billing_period:
+          $ref: '#/components/schemas/BillingPeriodEnum'
+        valid_from:
+          type: string
+          format: date
+        valid_until:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - amount_display
+      - created_at
+      - expense_type
+      - id
+      - name
+      - room
+      - updated_at
+      - valid_from
+    ExpensePayment:
+      type: object
+      description: Read and write shape for payments. The expense is taken from the
+        URL, never the body.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        transaction_type:
+          $ref: '#/components/schemas/TransactionTypeEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        paid_at:
+          type: string
+          format: date
+        reference:
+          type: string
+          maxLength: 255
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - created_at
+      - id
+      - paid_at
+      - updated_at
+    ExpensePaymentListSerializersExpensePaymentPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/ExpensePaymentListSerializersExpensePaymentPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpensePayment'
+      required:
+      - data
+      - meta
+    ExpensePaymentListSerializersExpensePaymentPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    ExpensePaymentListSerializersExpensePaymentPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/ExpensePaymentListSerializersExpensePaymentPagination'
+      required:
+      - pagination
+    ExpensePaymentSerializersExpensePaymentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ExpensePayment'
+      required:
+      - data
+    ExpenseTypeEnum:
+      enum:
+      - rent
+      - utilities
+      - maintenance
+      - calibration
+      - repair
+      - service_contract
+      - license_fee
+      - insurance
+      - service
+      - other
+      type: string
+      description: '* `rent` - Rent
+
+        * `utilities` - Utilities
+
+        * `maintenance` - Maintenance
+
+        * `calibration` - Calibration
+
+        * `repair` - Repair
+
+        * `service_contract` - Service contract
+
+        * `license_fee` - License fee
+
+        * `insurance` - Insurance
+
+        * `service` - Service (legacy)
+
+        * `other` - Other'
+    FinancialReportItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        expense_type:
+          type: string
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        paid_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        pending_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        payment_status:
+          type: string
+        currency:
+          type: string
+        billing_period:
+          type: string
+        supplier:
+          type: string
+        reference:
+          type: string
+        valid_from:
+          type: string
+          format: date
+        valid_until:
+          type: string
+          format: date
+          nullable: true
+        room_id:
+          type: integer
+        room_name:
+          type: string
+      required:
+      - amount
+      - billing_period
+      - currency
+      - expense_type
+      - id
+      - name
+      - paid_amount
+      - payment_status
+      - pending_amount
+      - reference
+      - room_id
+      - room_name
+      - supplier
+      - valid_from
+      - valid_until
+    FinancialReportPeriodBreakdown:
+      type: object
+      properties:
+        billing_period:
+          type: string
+        count:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        paid_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+      required:
+      - amount
+      - billing_period
+      - count
+      - paid_amount
+    FinancialReportResponse:
+      type: object
+      properties:
+        currency:
+          type: string
+        summary:
+          $ref: '#/components/schemas/FinancialReportSummary'
+        by_expense_type:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinancialReportTypeBreakdown'
+        by_room:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinancialReportRoomBreakdown'
+        by_status:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinancialReportStatusBreakdown'
+        by_billing_period:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinancialReportPeriodBreakdown'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinancialReportItem'
+      required:
+      - by_billing_period
+      - by_expense_type
+      - by_room
+      - by_status
+      - currency
+      - items
+      - summary
+    FinancialReportRoomBreakdown:
+      type: object
+      properties:
+        room_id:
+          type: integer
+        room_name:
+          type: string
+        count:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        paid_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        pending_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+      required:
+      - amount
+      - count
+      - paid_amount
+      - pending_amount
+      - room_id
+      - room_name
+    FinancialReportSerializersFinancialReportResponseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/FinancialReportResponse'
+      required:
+      - data
+    FinancialReportStatusBreakdown:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+      required:
+      - amount
+      - count
+      - status
+    FinancialReportSummary:
+      type: object
+      properties:
+        total_budgeted:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        total_paid:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        total_pending:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        total_refunded:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        expense_count:
+          type: integer
+        payment_count:
+          type: integer
+      required:
+      - expense_count
+      - payment_count
+      - total_budgeted
+      - total_paid
+      - total_pending
+      - total_refunded
+    FinancialReportTypeBreakdown:
+      type: object
+      properties:
+        expense_type:
+          type: string
+        count:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        paid_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        pending_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+      required:
+      - amount
+      - count
+      - expense_type
+      - paid_amount
+      - pending_amount
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    RoomExpenseListSerializersExpensePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/RoomExpenseListSerializersExpensePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Expense'
+      required:
+      - data
+      - meta
+    RoomExpenseListSerializersExpensePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    RoomExpenseListSerializersExpensePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/RoomExpenseListSerializersExpensePagination'
+      required:
+      - pagination
+    RoomExpenseSerializersExpenseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Expense'
+      required:
+      - data
+    RoomFinancialReportSerializersFinancialReportResponseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/FinancialReportResponse'
+      required:
+      - data
+    TransactionTypeEnum:
+      enum:
+      - payment
+      - refund
+      type: string
+      description: '* `payment` - Payment
+
+        * `refund` - Refund'
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Expenses
+  description: Expenses endpoints

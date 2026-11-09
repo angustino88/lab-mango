@@ -1,0 +1,932 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /agent/enrollments:
+    $ref: ./agents.yml#/paths/~1agent~1enrollments
+  /agent/heartbeat:
+    $ref: ./agents.yml#/paths/~1agent~1heartbeat
+  /agent/info:
+    $ref: ./agents.yml#/paths/~1agent~1info
+  /api/agents:
+    $ref: ./agents.yml#/paths/~1api~1agents
+  /api/agents/{id}:
+    $ref: ./agents.yml#/paths/~1api~1agents~1{id}
+  /api/agents/{id}/actions/decommission:
+    $ref: ./agents.yml#/paths/~1api~1agents~1{id}~1actions~1decommission
+  /api/agents/{id}/actions/revoke:
+    $ref: ./agents.yml#/paths/~1api~1agents~1{id}~1actions~1revoke
+  /api/agents/{id}/enrollment-grants:
+    $ref: ./agents.yml#/paths/~1api~1agents~1{id}~1enrollment-grants
+  /api/aad-login:
+    $ref: ./users-auth-aad-login.yml#/paths/~1api~1aad-login
+  /api/aad-login/challenge:
+    $ref: ./users-auth-aad-login.yml#/paths/~1api~1aad-login~1challenge
+  /api/labs/analytics/bench-group:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1bench-group
+  /api/labs/analytics/booked-vs-used:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1booked-vs-used
+  /api/labs/analytics/booking:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1booking
+  /api/labs/analytics/dashboard-summary:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1dashboard-summary
+  /api/labs/analytics/equipment-availability:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1equipment-availability
+  /api/labs/analytics/finance/expense-type-breakdown:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1finance~1expense-type-breakdown
+  /api/labs/analytics/finance/monthly-trends:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1finance~1monthly-trends
+  /api/labs/analytics/finance/summary:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1finance~1summary
+  /api/labs/analytics/lab-count:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1lab-count
+  /api/labs/analytics/lab-efficiency:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1lab-efficiency
+  /api/labs/analytics/lab-equipment-status:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1lab-equipment-status
+  /api/labs/analytics/lab-group:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1lab-group
+  /api/labs/analytics/lab-usage-by-timeframe:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1lab-usage-by-timeframe
+  /api/labs/analytics/lab-visits:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1lab-visits
+  /api/labs/analytics/project-usage:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1project-usage
+  /api/labs/analytics/storage-quota:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1storage-quota
+  /api/labs/analytics/user-booking-efficiency:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1user-booking-efficiency
+  /api/labs/analytics/user-count:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1user-count
+  /api/labs/analytics/user-lab-usage:
+    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1user-lab-usage
+  /api/labs/audits:
+    $ref: ./labs-resource-audit.yml#/paths/~1api~1labs~1audits
+  /api/labs/audits/{audit_id}:
+    $ref: ./labs-resource-audit.yml#/paths/~1api~1labs~1audits~1{audit_id}
+  /api/labs/resources/{resource_type}/{resource_id}/audits:
+    $ref: ./labs-resource-audit.yml#/paths/~1api~1labs~1resources~1{resource_type}~1{resource_id}~1audits
+  /api/labs/resources/id/{resource_id}/audits:
+    $ref: ./labs-resource-audit.yml#/paths/~1api~1labs~1resources~1id~1{resource_id}~1audits
+  /api/labs/resources/sku/{sku}/audits:
+    $ref: ./labs-resource-audit.yml#/paths/~1api~1labs~1resources~1sku~1{sku}~1audits
+  /api/labs/resources/uid/{uid}/audits:
+    $ref: ./labs-resource-audit.yml#/paths/~1api~1labs~1resources~1uid~1{uid}~1audits
+  /api/labs/bench-bookings:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings
+  /api/labs/bench-bookings/{booking_id}:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}
+  /api/labs/bench-bookings/{booking_id}/actions/approve:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1approve
+  /api/labs/bench-bookings/{booking_id}/actions/cancel:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1cancel
+  /api/labs/bench-bookings/{booking_id}/actions/complete:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1complete
+  /api/labs/bench-bookings/{booking_id}/actions/reject:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1reject
+  /api/labs/bench-bookings/code/{booking_code}:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1code~1{booking_code}
+  /api/labs/bench-bookings/code/{booking_code}/actions/cancel:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1code~1{booking_code}~1actions~1cancel
+  /api/labs/bench-bookings/reference-data/projects:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1reference-data~1projects
+  /api/labs/bench-bookings/reference-data/projects/{reference_id}:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1reference-data~1projects~1{reference_id}
+  /api/labs/lab-projects:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1lab-projects
+  /api/labs/lab-projects/{project_id}:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1lab-projects~1{project_id}
+  /api/labs/lab-projects/options:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1lab-projects~1options
+  /api/labs/bench-groups:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1bench-groups
+  /api/labs/bench-groups/{reference_id}:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1bench-groups~1{reference_id}
+  /api/labs/bench-groups/options:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1bench-groups~1options
+  /api/labs/bench-types:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1bench-types
+  /api/labs/bench-types/{reference_id}:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1bench-types~1{reference_id}
+  /api/labs/bench-types/options:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1bench-types~1options
+  /api/labs/benches:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches
+  /api/labs/benches/{bench_id}:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}
+  /api/labs/benches/{bench_id}/actions/favorite:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1favorite
+  /api/labs/benches/{bench_id}/actions/place:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1place
+  /api/labs/benches/{bench_id}/actions/unfavorite:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1unfavorite
+  /api/labs/benches/{bench_id}/equipment:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1equipment
+  /api/labs/benches/filters:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1filters
+  /api/labs/benches/options:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1options
+  /api/labs/benches/reference-data:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1reference-data
+  /api/labs/benches/reference-data/groups:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1reference-data~1groups
+  /api/labs/benches/reference-data/groups/{reference_id}:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1reference-data~1groups~1{reference_id}
+  /api/labs/benches/reference-data/types:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1reference-data~1types
+  /api/labs/benches/reference-data/types/{reference_id}:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1reference-data~1types~1{reference_id}
+  /api/labs/benches/status-summary:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1status-summary
+  /api/labs/benches/{id}/profile:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1benches~1{id}~1profile
+  /api/labs/benches/{id}/weekly-usage:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1benches~1{id}~1weekly-usage
+  /api/labs/lab-dashboard:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1lab-dashboard
+  /api/labs/lab-dashboard/summary:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1lab-dashboard~1summary
+  /api/labs/leaderboard/export:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1export
+  /api/labs/leaderboard/lab:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1lab
+  /api/labs/leaderboard/persona:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1persona
+  /api/labs/leaderboard/users/{id}/profile:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1users~1{id}~1profile
+  /api/labs/leaderboard/users/{id}/weekly-usage:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1users~1{id}~1weekly-usage
+  /api/labs/profile/{id}:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1profile~1{id}
+  /api/labs/users/profile/{id}:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1users~1profile~1{id}
+  /api/labs/users/weekly-usage/{id}:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1users~1weekly-usage~1{id}
+  /api/labs/weekly-usage/{id}:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1weekly-usage~1{id}
+  /api/labs/benches/{resource_id}/mapping:
+    $ref: ./labs-resource-mappings.yml#/paths/~1api~1labs~1benches~1{resource_id}~1mapping
+  /api/labs/equipment/{resource_id}/mapping:
+    $ref: ./labs-resource-mappings.yml#/paths/~1api~1labs~1equipment~1{resource_id}~1mapping
+  /api/labs/rooms/{resource_id}/mapping:
+    $ref: ./labs-resource-mappings.yml#/paths/~1api~1labs~1rooms~1{resource_id}~1mapping
+  /api/labs/stations/{resource_id}/mapping:
+    $ref: ./labs-resource-mappings.yml#/paths/~1api~1labs~1stations~1{resource_id}~1mapping
+  /api/labs/buildings:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1buildings
+  /api/labs/buildings/{building_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1buildings~1{building_id}
+  /api/labs/buildings/options:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1buildings~1options
+  /api/labs/cities:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1cities
+  /api/labs/cities/{city_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1cities~1{city_id}
+  /api/labs/cities/options:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1cities~1options
+  /api/labs/countries:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1countries
+  /api/labs/countries/{country_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1countries~1{country_id}
+  /api/labs/countries/options:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1countries~1options
+  /api/labs/locations/reference-data/buildings:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1locations~1reference-data~1buildings
+  /api/labs/locations/reference-data/buildings/{reference_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1locations~1reference-data~1buildings~1{reference_id}
+  /api/labs/locations/reference-data/cities:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1locations~1reference-data~1cities
+  /api/labs/locations/reference-data/cities/{reference_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1locations~1reference-data~1cities~1{reference_id}
+  /api/labs/locations/reference-data/countries:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1locations~1reference-data~1countries
+  /api/labs/locations/reference-data/countries/{reference_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1locations~1reference-data~1countries~1{reference_id}
+  /api/labs/locations/reference-data/station-types:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1locations~1reference-data~1station-types
+  /api/labs/locations/reference-data/station-types/{reference_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1locations~1reference-data~1station-types~1{reference_id}
+  /api/labs/rooms:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms
+  /api/labs/rooms/{room_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}
+  /api/labs/rooms/{room_id}/actions/change-status:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1change-status
+  /api/labs/rooms/{room_id}/actions/generate-slots:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1generate-slots
+  /api/labs/rooms/{room_id}/history:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1history
+  /api/labs/rooms/{room_id}/observations:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1observations
+  /api/labs/rooms/{room_id}/slots:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1slots
+  /api/labs/rooms/filters:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1filters
+  /api/labs/rooms/options:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1options
+  /api/labs/rooms/status-summary:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1status-summary
+  /api/labs/station-types:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1station-types
+  /api/labs/station-types/{type_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1station-types~1{type_id}
+  /api/labs/station-types/options:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1station-types~1options
+  /api/labs/stations:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations
+  /api/labs/stations/{station_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}
+  /api/labs/stations/{station_id}/actions/change-status:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1change-status
+  /api/labs/stations/{station_id}/actions/place:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1place
+  /api/labs/stations/{station_id}/history:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1history
+  /api/labs/stations/{station_id}/slots:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1slots
+  /api/labs/stations/{station_id}/slots/{slot_id}:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1slots~1{slot_id}
+  /api/labs/stations/filters:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1filters
+  /api/labs/stations/options:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1options
+  /api/labs/stations/reference-data:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1reference-data
+  /api/labs/stations/status-summary:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1status-summary
+  /api/labs/dashboard:
+    $ref: ./labs-dashboard.yml#/paths/~1api~1labs~1dashboard
+  /api/labs/dashboard/benches/{bench_id}:
+    $ref: ./labs-dashboard.yml#/paths/~1api~1labs~1dashboard~1benches~1{bench_id}
+  /api/labs/dashboard/summary:
+    $ref: ./labs-dashboard.yml#/paths/~1api~1labs~1dashboard~1summary
+  /api/labs/departments:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1departments
+  /api/labs/departments/{department_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1departments~1{department_id}
+  /api/labs/departments/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1departments~1options
+  /api/labs/equipment:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment
+  /api/labs/equipment-categories:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-categories
+  /api/labs/equipment-categories/{category_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-categories~1{category_id}
+  /api/labs/equipment-categories/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-categories~1options
+  /api/labs/equipment-kinds:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-kinds
+  /api/labs/equipment-kinds/{kind_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-kinds~1{kind_id}
+  /api/labs/equipment-kinds/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-kinds~1options
+  /api/labs/equipment-manufacturers:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-manufacturers
+  /api/labs/equipment-manufacturers/{manufacturer_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-manufacturers~1{manufacturer_id}
+  /api/labs/equipment-manufacturers/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-manufacturers~1options
+  /api/labs/equipment-product-models:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-product-models
+  /api/labs/equipment-product-models/{model_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-product-models~1{model_id}
+  /api/labs/equipment-product-models/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-product-models~1options
+  /api/labs/equipment-types:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-types
+  /api/labs/equipment-types/{type_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-types~1{type_id}
+  /api/labs/equipment-types/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-types~1options
+  /api/labs/equipment/{equipment_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}
+  /api/labs/equipment/{equipment_id}/actions/assign:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1assign
+  /api/labs/equipment/{equipment_id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-status
+  /api/labs/equipment/{equipment_id}/assignment:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1assignment
+  /api/labs/equipment/accessory:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory
+  /api/labs/equipment/accessory/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1{id}
+  /api/labs/equipment/accessory/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1{id}~1actions~1change-status
+  /api/labs/equipment/accessory/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1facets
+  /api/labs/equipment/accessory/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1filters
+  /api/labs/equipment/accessory/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1options
+  /api/labs/equipment/accessory/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1reference-data
+  /api/labs/equipment/accessory/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1sku~1{sku}
+  /api/labs/equipment/accessory/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1summary
+  /api/labs/equipment/accessory/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1uid~1{uid}
+  /api/labs/equipment/computing:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing
+  /api/labs/equipment/computing/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1{id}
+  /api/labs/equipment/computing/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1{id}~1actions~1change-status
+  /api/labs/equipment/computing/activity-summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1activity-summary
+  /api/labs/equipment/computing/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1facets
+  /api/labs/equipment/computing/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1filters
+  /api/labs/equipment/computing/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1options
+  /api/labs/equipment/computing/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1reference-data
+  /api/labs/equipment/computing/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1sku~1{sku}
+  /api/labs/equipment/computing/sku/{sku}/activity:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1sku~1{sku}~1activity
+  /api/labs/equipment/computing/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1summary
+  /api/labs/equipment/computing/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1uid~1{uid}
+  /api/labs/equipment/debugging:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging
+  /api/labs/equipment/debugging/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1{id}
+  /api/labs/equipment/debugging/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1{id}~1actions~1change-status
+  /api/labs/equipment/debugging/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1facets
+  /api/labs/equipment/debugging/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1filters
+  /api/labs/equipment/debugging/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1options
+  /api/labs/equipment/debugging/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1reference-data
+  /api/labs/equipment/debugging/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1sku~1{sku}
+  /api/labs/equipment/debugging/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1summary
+  /api/labs/equipment/debugging/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1uid~1{uid}
+  /api/labs/equipment/display:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display
+  /api/labs/equipment/display/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1{id}
+  /api/labs/equipment/display/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1{id}~1actions~1change-status
+  /api/labs/equipment/display/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1facets
+  /api/labs/equipment/display/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1filters
+  /api/labs/equipment/display/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1options
+  /api/labs/equipment/display/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1reference-data
+  /api/labs/equipment/display/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1sku~1{sku}
+  /api/labs/equipment/display/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1summary
+  /api/labs/equipment/display/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1uid~1{uid}
+  /api/labs/equipment/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1facets
+  /api/labs/equipment/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1filters
+  /api/labs/equipment/furniture:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture
+  /api/labs/equipment/furniture/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1{id}
+  /api/labs/equipment/furniture/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1{id}~1actions~1change-status
+  /api/labs/equipment/furniture/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1facets
+  /api/labs/equipment/furniture/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1filters
+  /api/labs/equipment/furniture/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1options
+  /api/labs/equipment/furniture/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1reference-data
+  /api/labs/equipment/furniture/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1sku~1{sku}
+  /api/labs/equipment/furniture/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1summary
+  /api/labs/equipment/furniture/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1uid~1{uid}
+  /api/labs/equipment/instrument:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument
+  /api/labs/equipment/instrument/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1{id}
+  /api/labs/equipment/instrument/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1{id}~1actions~1change-status
+  /api/labs/equipment/instrument/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1facets
+  /api/labs/equipment/instrument/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1filters
+  /api/labs/equipment/instrument/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1options
+  /api/labs/equipment/instrument/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1reference-data
+  /api/labs/equipment/instrument/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1sku~1{sku}
+  /api/labs/equipment/instrument/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1summary
+  /api/labs/equipment/instrument/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1uid~1{uid}
+  /api/labs/equipment/laboratory:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory
+  /api/labs/equipment/laboratory/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1{id}
+  /api/labs/equipment/laboratory/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1{id}~1actions~1change-status
+  /api/labs/equipment/laboratory/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1facets
+  /api/labs/equipment/laboratory/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1filters
+  /api/labs/equipment/laboratory/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1options
+  /api/labs/equipment/laboratory/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1reference-data
+  /api/labs/equipment/laboratory/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1sku~1{sku}
+  /api/labs/equipment/laboratory/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1summary
+  /api/labs/equipment/laboratory/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1uid~1{uid}
+  /api/labs/equipment/mechanical:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical
+  /api/labs/equipment/mechanical/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1{id}
+  /api/labs/equipment/mechanical/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1{id}~1actions~1change-status
+  /api/labs/equipment/mechanical/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1facets
+  /api/labs/equipment/mechanical/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1filters
+  /api/labs/equipment/mechanical/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1options
+  /api/labs/equipment/mechanical/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1reference-data
+  /api/labs/equipment/mechanical/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1sku~1{sku}
+  /api/labs/equipment/mechanical/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1summary
+  /api/labs/equipment/mechanical/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1uid~1{uid}
+  /api/labs/equipment/networking:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking
+  /api/labs/equipment/networking/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1{id}
+  /api/labs/equipment/networking/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1{id}~1actions~1change-status
+  /api/labs/equipment/networking/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1facets
+  /api/labs/equipment/networking/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1filters
+  /api/labs/equipment/networking/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1options
+  /api/labs/equipment/networking/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1reference-data
+  /api/labs/equipment/networking/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1sku~1{sku}
+  /api/labs/equipment/networking/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1summary
+  /api/labs/equipment/networking/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1uid~1{uid}
+  /api/labs/equipment/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1options
+  /api/labs/equipment/other:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other
+  /api/labs/equipment/other/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1{id}
+  /api/labs/equipment/other/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1{id}~1actions~1change-status
+  /api/labs/equipment/other/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1facets
+  /api/labs/equipment/other/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1filters
+  /api/labs/equipment/other/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1options
+  /api/labs/equipment/other/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1reference-data
+  /api/labs/equipment/other/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1sku~1{sku}
+  /api/labs/equipment/other/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1summary
+  /api/labs/equipment/other/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1uid~1{uid}
+  /api/labs/equipment/power:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power
+  /api/labs/equipment/power/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1{id}
+  /api/labs/equipment/power/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1{id}~1actions~1change-status
+  /api/labs/equipment/power/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1facets
+  /api/labs/equipment/power/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1filters
+  /api/labs/equipment/power/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1options
+  /api/labs/equipment/power/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1reference-data
+  /api/labs/equipment/power/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1sku~1{sku}
+  /api/labs/equipment/power/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1summary
+  /api/labs/equipment/power/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1uid~1{uid}
+  /api/labs/equipment/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data
+  /api/labs/equipment/reference-data/categories:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1categories
+  /api/labs/equipment/reference-data/categories/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1categories~1{reference_id}
+  /api/labs/equipment/reference-data/departments:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1departments
+  /api/labs/equipment/reference-data/departments/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1departments~1{reference_id}
+  /api/labs/equipment/reference-data/display-resolutions:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1display-resolutions
+  /api/labs/equipment/reference-data/display-resolutions/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1display-resolutions~1{reference_id}
+  /api/labs/equipment/reference-data/display-sizes:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1display-sizes
+  /api/labs/equipment/reference-data/display-sizes/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1display-sizes~1{reference_id}
+  /api/labs/equipment/reference-data/interfaces:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1interfaces
+  /api/labs/equipment/reference-data/interfaces/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1interfaces~1{reference_id}
+  /api/labs/equipment/reference-data/kinds:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1kinds
+  /api/labs/equipment/reference-data/kinds/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1kinds~1{reference_id}
+  /api/labs/equipment/reference-data/manufacturers:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1manufacturers
+  /api/labs/equipment/reference-data/manufacturers/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1manufacturers~1{reference_id}
+  /api/labs/equipment/reference-data/materials:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1materials
+  /api/labs/equipment/reference-data/materials/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1materials~1{reference_id}
+  /api/labs/equipment/reference-data/networking-protocols:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1networking-protocols
+  /api/labs/equipment/reference-data/networking-protocols/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1networking-protocols~1{reference_id}
+  /api/labs/equipment/reference-data/product-model-specifications:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1product-model-specifications
+  /api/labs/equipment/reference-data/product-model-specifications/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1product-model-specifications~1{reference_id}
+  /api/labs/equipment/reference-data/product-models:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1product-models
+  /api/labs/equipment/reference-data/product-models/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1product-models~1{reference_id}
+  /api/labs/equipment/reference-data/resource-groups:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1resource-groups
+  /api/labs/equipment/reference-data/resource-groups/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1resource-groups~1{reference_id}
+  /api/labs/equipment/reference-data/sample-characteristics:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1sample-characteristics
+  /api/labs/equipment/reference-data/sample-characteristics/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1sample-characteristics~1{reference_id}
+  /api/labs/equipment/reference-data/sample-customers:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1sample-customers
+  /api/labs/equipment/reference-data/sample-customers/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1sample-customers~1{reference_id}
+  /api/labs/equipment/reference-data/specification-definitions:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1specification-definitions
+  /api/labs/equipment/reference-data/specification-definitions/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1specification-definitions~1{reference_id}
+  /api/labs/equipment/reference-data/technical-users:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1technical-users
+  /api/labs/equipment/reference-data/technical-users/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1technical-users~1{reference_id}
+  /api/labs/equipment/reference-data/types:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1types
+  /api/labs/equipment/reference-data/types/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1types~1{reference_id}
+  /api/labs/equipment/sample:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample
+  /api/labs/equipment/sample/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1{id}
+  /api/labs/equipment/sample/{id}/actions/change-status:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1{id}~1actions~1change-status
+  /api/labs/equipment/sample/facets:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1facets
+  /api/labs/equipment/sample/filters:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1filters
+  /api/labs/equipment/sample/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1options
+  /api/labs/equipment/sample/reference-data:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1reference-data
+  /api/labs/equipment/sample/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1sku~1{sku}
+  /api/labs/equipment/sample/summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1summary
+  /api/labs/equipment/sample/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1uid~1{uid}
+  /api/labs/equipment/status-summary:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1status-summary
+  /api/labs/resource-groups:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1resource-groups
+  /api/labs/resource-groups/{group_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1resource-groups~1{group_id}
+  /api/labs/resource-groups/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1resource-groups~1options
+  /api/labs/expenses/{expense_id}/payments:
+    $ref: ./labs-expense.yml#/paths/~1api~1labs~1expenses~1{expense_id}~1payments
+  /api/labs/expenses/report:
+    $ref: ./labs-expense.yml#/paths/~1api~1labs~1expenses~1report
+  /api/labs/financial-report:
+    $ref: ./labs-expense.yml#/paths/~1api~1labs~1financial-report
+  /api/labs/rooms/{room_id}/expenses:
+    $ref: ./labs-expense.yml#/paths/~1api~1labs~1rooms~1{room_id}~1expenses
+  /api/labs/rooms/{room_id}/expenses/report:
+    $ref: ./labs-expense.yml#/paths/~1api~1labs~1rooms~1{room_id}~1expenses~1report
+  /api/labs/lab-monitoring:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1lab-monitoring
+  /api/labs/lab-monitoring/export:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1lab-monitoring~1export
+  /api/labs/monitoring-events:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events
+  /api/labs/monitoring-events/{id}:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events~1{id}
+  /api/labs/monitoring-events/export:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events~1export
+  /api/labs/license-categories:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-categories
+  /api/labs/license-categories/{category_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-categories~1{category_id}
+  /api/labs/license-categories/options:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-categories~1options
+  /api/labs/license-products:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-products
+  /api/labs/license-products/{product_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-products~1{product_id}
+  /api/labs/license-products/options:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-products~1options
+  /api/labs/license-restrictions:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-restrictions
+  /api/labs/license-restrictions/{restriction_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-restrictions~1{restriction_id}
+  /api/labs/license-restrictions/options:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-restrictions~1options
+  /api/labs/license-types:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-types
+  /api/labs/license-types/{type_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-types~1{type_id}
+  /api/labs/license-types/options:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-types~1options
+  /api/labs/license-vendors:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-vendors
+  /api/labs/license-vendors/{vendor_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-vendors~1{vendor_id}
+  /api/labs/license-vendors/options:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-vendors~1options
+  /api/labs/licenses:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses
+  /api/labs/licenses/{license_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}
+  /api/labs/licenses/{license_id}/actions/assign:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1assign
+  /api/labs/licenses/{license_id}/actions/change-status:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1change-status
+  /api/labs/licenses/{license_id}/actions/unassign:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1unassign
+  /api/labs/licenses/{license_id}/agreements:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1agreements
+  /api/labs/licenses/categories/summary:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1categories~1summary
+  /api/labs/licenses/filters:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1filters
+  /api/labs/licenses/reference-data/categories:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1categories
+  /api/labs/licenses/reference-data/categories/{reference_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1categories~1{reference_id}
+  /api/labs/licenses/reference-data/products:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1products
+  /api/labs/licenses/reference-data/products/{reference_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1products~1{reference_id}
+  /api/labs/licenses/reference-data/restrictions:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1restrictions
+  /api/labs/licenses/reference-data/restrictions/{reference_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1restrictions~1{reference_id}
+  /api/labs/licenses/reference-data/types:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1types
+  /api/labs/licenses/reference-data/types/{reference_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1types~1{reference_id}
+  /api/labs/licenses/reference-data/vendors:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1vendors
+  /api/labs/licenses/reference-data/vendors/{reference_id}:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1vendors~1{reference_id}
+  /api/labs/licenses/status-summary:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1status-summary
+  /api/labs/purchase-items/{purchase_item_id}/resources:
+    $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchase-items~1{purchase_item_id}~1resources
+  /api/labs/purchase-priorities:
+    $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchase-priorities
+  /api/labs/purchases:
+    $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases
+  /api/labs/purchases/{purchase_id}:
+    $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}
+  /api/labs/purchases/{purchase_id}/draft:
+    $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1draft
+  /api/labs/purchases/{purchase_id}/items:
+    $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1items
+  /api/labs/purchases/{purchase_id}/items/{item_id}:
+    $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1items~1{item_id}
+  /api/labs/purchases/{purchase_id}/items/draft:
+    $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1items~1draft
+  /api/labs/purchases/{purchase_id}/transactions:
+    $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1transactions
+  /api/login:
+    $ref: ./users-auth-login.yml#/paths/~1api~1login
+  /api/logout:
+    $ref: ./users-auth-logout.yml#/paths/~1api~1logout
+  /api/notifications:
+    $ref: ./websocket-list-notifications.yml#/paths/~1api~1notifications
+  /api/refresh-token:
+    $ref: ./users-auth-refresh-token.yml#/paths/~1api~1refresh-token
+  /api/schema/:
+    $ref: ./features-schema.yml#/paths/~1api~1schema~1
+  /api/send-otp:
+    $ref: ./users-auth-send-otp.yml#/paths/~1api~1send-otp
+  /api/support/admin/canned-responses:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1admin~1canned-responses
+  /api/support/admin/canned-responses/{response_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1admin~1canned-responses~1{response_id}
+  /api/support/admin/settings:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1admin~1settings
+  /api/support/admin/transitions:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1admin~1transitions
+  /api/support/admin/transitions/{transition_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1admin~1transitions~1{transition_id}
+  /api/support/attachments/{attachment_id}/download:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1attachments~1{attachment_id}~1download
+  /api/support/canned-responses:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1canned-responses
+  /api/support/categories:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1categories
+  /api/support/categories/{category_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1categories~1{category_id}
+  /api/support/categories/options:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1categories~1options
+  /api/support/labels:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1labels
+  /api/support/labels/{label_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1labels~1{label_id}
+  /api/support/labels/options:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1labels~1options
+  /api/support/priorities:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1priorities
+  /api/support/priorities/{priority_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1priorities~1{priority_id}
+  /api/support/priorities/options:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1priorities~1options
+  /api/support/resources/{resource_type}/{resource_id}/tickets:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1resources~1{resource_type}~1{resource_id}~1tickets
+  /api/support/statuses:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1statuses
+  /api/support/statuses/{status_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1statuses~1{status_id}
+  /api/support/statuses/options:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1statuses~1options
+  /api/support/teams:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1teams
+  /api/support/teams/{team_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1teams~1{team_id}
+  /api/support/teams/options:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1teams~1options
+  /api/support/tickets:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets
+  /api/support/tickets/{key}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}
+  /api/support/tickets/{key}/activity:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1activity
+  /api/support/tickets/{key}/assign:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1assign
+  /api/support/tickets/{key}/attachments:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1attachments
+  /api/support/tickets/{key}/attachments/{attachment_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1attachments~1{attachment_id}
+  /api/support/tickets/{key}/comments:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1comments
+  /api/support/tickets/{key}/comments/{comment_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1comments~1{comment_id}
+  /api/support/tickets/{key}/csat:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1csat
+  /api/support/tickets/{key}/links:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1links
+  /api/support/tickets/{key}/links/{link_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1links~1{link_id}
+  /api/support/tickets/{key}/resources:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1resources
+  /api/support/tickets/{key}/transitions:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1transitions
+  /api/support/tickets/{key}/watchers:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1watchers
+  /api/support/tickets/stats:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1stats
+  /api/user-groups:
+    $ref: ./users-groups-list-groups.yml#/paths/~1api~1user-groups
+  /api/user-groups/{group_id}/users:
+    $ref: ./users-groups-list-groups.yml#/paths/~1api~1user-groups~1{group_id}~1users
+  /api/users:
+    $ref: ./users-profile-list-users.yml#/paths/~1api~1users
+  /api/users/{id}:
+    $ref: ./users-profile-list-users.yml#/paths/~1api~1users~1{id}
+  /api/users/avatar:
+    $ref: ./users-profile-avatar.yml#/paths/~1api~1users~1avatar
+  /api/users/me:
+    $ref: ./users-profile-get-me.yml#/paths/~1api~1users~1me
+  /internal/changes/{entity}:
+    $ref: ./routing-sync.yml#/paths/~1internal~1changes~1{entity}
+  /internal/digest/{entity}:
+    $ref: ./routing-sync.yml#/paths/~1internal~1digest~1{entity}
+  /internal/info:
+    $ref: ./routing-sync.yml#/paths/~1internal~1info
+  /internal/snapshot/{entity}:
+    $ref: ./routing-sync.yml#/paths/~1internal~1snapshot~1{entity}
+components:
+  $ref: ./components.yml#/components
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Accessory Equipment
+  description: Accessory Equipment endpoints
+- name: Agents
+  description: Agents endpoints
+- name: Agents (operator)
+  description: Agents (operator) endpoints
+- name: Analytics
+  description: Analytics endpoints
+- name: Bench Bookings
+  description: Bench Bookings endpoints
+- name: Benches
+  description: Benches endpoints
+- name: Computing Equipment
+  description: Computing Equipment endpoints
+- name: Dashboard
+  description: Dashboard endpoints
+- name: Debugging Equipment
+  description: Debugging Equipment endpoints
+- name: Display Equipment
+  description: Display Equipment endpoints
+- name: Equipment
+  description: Equipment endpoints
+- name: Expenses
+  description: Expenses endpoints
+- name: Furniture Equipment
+  description: Furniture Equipment endpoints
+- name: Instrument Equipment
+  description: Instrument Equipment endpoints
+- name: Laboratory Equipment
+  description: Laboratory Equipment endpoints
+- name: Leaderboard
+  description: Leaderboard endpoints
+- name: Licenses
+  description: Licenses endpoints
+- name: Locations
+  description: Locations endpoints
+- name: Mechanical Equipment
+  description: Mechanical Equipment endpoints
+- name: Monitoring
+  description: Monitoring endpoints
+- name: Networking Equipment
+  description: Networking Equipment endpoints
+- name: Other Equipment
+  description: Other Equipment endpoints
+- name: Power Equipment
+  description: Power Equipment endpoints
+- name: Procurement
+  description: Procurement endpoints
+- name: Resource Audit
+  description: Resource Audit endpoints
+- name: Resource Mappings
+  description: Resource Mappings endpoints
+- name: Rooms
+  description: Rooms endpoints
+- name: Routing Sync
+  description: Routing Sync endpoints
+- name: Sample Equipment
+  description: Sample Equipment endpoints
+- name: Schema
+  description: Schema endpoints
+- name: Stations
+  description: Stations endpoints
+- name: Support Desk
+  description: Support Desk endpoints
+- name: Support Desk Administration
+  description: Support Desk Administration endpoints
+- name: User Authentication
+  description: User Authentication endpoints
+- name: User Groups
+  description: User Groups endpoints
+- name: User Profiles
+  description: User Profiles endpoints
+- name: Websocket Notifications
+  description: Websocket Notifications endpoints

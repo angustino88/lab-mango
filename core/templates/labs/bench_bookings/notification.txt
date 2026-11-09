@@ -1,0 +1,9 @@
+{{ heading }}.
+Booking: {{ snapshot.booking_code }}
+{% if snapshot.bench_name %}Bench: {{ snapshot.bench_name }}{% endif %}
+{% if snapshot.equipment_name %}Equipment: {{ snapshot.equipment_name }}{% endif %}
+Scheduled window: {{ snapshot.starts_at }} to {{ snapshot.ends_at }} (UTC).
+Booking state: {{ snapshot.status }}; approval: {{ snapshot.approval_status }}.
+{% if snapshot.inactive_at %}Inactivity detected: {{ snapshot.inactive_at }} (UTC).{% endif %}
+{% if heading == "Equipment inactivity reminder (over 60 minutes)" %}No activity has been reported for the assigned equipment for more than 60 minutes.{% endif %}
+This is a booking reminder and does not change the booking or equipment status.

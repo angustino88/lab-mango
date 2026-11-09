@@ -1,0 +1,78 @@
+{% load static %}
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f7fb;padding:24px 0;">
+  <tr>
+    <td align="center">
+      <table width="800" cellpadding="0" cellspacing="0" border="0" style="max-width:800px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+        
+        <!-- Header -->
+        <tr>
+          <td style="padding:28px;border-bottom:1px solid #e5e7eb;">
+            <h1 style="margin:0;font-size:24px;font-weight:800;color:#2563eb;">
+              Weekly Storage Quota Report
+            </h1>
+            <p style="margin:12px 0 8px 0;font-size:16px;font-weight:600;color:#0f172a;">
+              Hello Lab Management Team,
+            </p>
+            <p style="margin:0;font-size:14px;color:#475569;">
+              This is the weekly summary of users who have exceeded storage quotas in labs. Please review the details below:
+            </p>
+          </td>
+        </tr>
+
+        <!-- Table -->
+        <tr>
+          <td style="padding:24px;overflow-x:auto;">
+            <table style="border-collapse: collapse; width: 100%; margin-top: 15px;">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px;">ID</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Lab Name</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Computer Name</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">User</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Display Name</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Used [GB]</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Quota [GB]</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Exceeded [GB]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lab_group, users in quotas %}
+                        {% for user_entry in users %}
+                            <tr>
+                                {% if forloop.first %}
+                                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;" rowspan="{{ users|length }}">
+                                        {{ forloop.parentloop.counter }}
+                                    </td>
+                                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;" rowspan="{{ users|length }}">
+                                        {{ lab_group.0 }}
+                                    </td>
+                                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;" rowspan="{{ users|length }}">
+                                        {{ lab_group.1 }}
+                                    </td>
+                                {% endif %}
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.username }}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.user_displayname }}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.used|floatformat:2 }}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.quota|floatformat:2 }}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.exceeded|floatformat:2 }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:18px 24px 24px;border-top:1px dashed #e5e7eb;font-size:13px;color:#475569;">
+            <p style="margin:0;">© {% now "Y" %} Lab Management System</p>
+            <p style="margin:12px 0 0 0;font-size:12px;">This is an automated message. Please do not reply.</p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>

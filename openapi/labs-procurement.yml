@@ -1,0 +1,1709 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/purchase-items/{purchase_item_id}/resources:
+    get:
+      operationId: labs_purchase_items_resources_retrieve_by_purchase_item_id
+      description: List and allocate physical resources to a purchase line.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: purchase_item_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseItemResourceListSerializersPurchaseItemResourcePaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Purchase Items Resources by Purchase Item ID
+    post:
+      operationId: labs_purchase_items_resources_create_by_purchase_item_id
+      description: List and allocate physical resources to a purchase line.
+      parameters:
+      - in: path
+        name: purchase_item_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemResourceCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemResourceCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemResourceCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseItemResourceSerializersPurchaseItemResourceDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Purchase Items Resources by Purchase Item ID
+  /api/labs/purchase-priorities:
+    get:
+      operationId: labs_purchase_priorities_retrieve
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: query
+        name: include_inactive
+        schema:
+          enum:
+          - 'true'
+          - 'false'
+          type: string
+          default: 'false'
+          minLength: 1
+        description: '* `true` - true
+
+          * `false` - false'
+      tags:
+      - Procurement
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchasePriorityOptionsSerializersPurchasePriorityOptionListResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Purchase Priorities
+  /api/labs/purchases:
+    get:
+      operationId: labs_purchases_retrieve
+      description: List and create procurement purchase orders.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Procurement
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseListSerializersPurchasePaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Purchases
+    post:
+      operationId: labs_purchases_create
+      description: List and create procurement purchase orders.
+      tags:
+      - Procurement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseSerializersPurchaseDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Purchases
+  /api/labs/purchases/{purchase_id}:
+    get:
+      operationId: labs_purchases_retrieve_by_purchase_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDetailSerializersPurchaseDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Purchases by Purchase ID
+  /api/labs/purchases/{purchase_id}/draft:
+    patch:
+      operationId: labs_purchases_draft_partial_update_by_purchase_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseDraftHeaderInput'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseDraftHeaderInput'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseDraftHeaderInput'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDraftHeaderSerializersPurchaseDraftHeaderOutputDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Purchases Draft by Purchase ID
+  /api/labs/purchases/{purchase_id}/items:
+    get:
+      operationId: labs_purchases_items_retrieve_by_purchase_id
+      description: List and create allocated purchase cost lines.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseItemListSerializersPurchaseItemReadPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Purchases Items by Purchase ID
+    post:
+      operationId: labs_purchases_items_create_by_purchase_id
+      description: List and create allocated purchase cost lines.
+      parameters:
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseItem'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseItemSerializersPurchaseItemReadDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Purchases Items by Purchase ID
+  /api/labs/purchases/{purchase_id}/items/{item_id}:
+    get:
+      operationId: labs_purchases_items_retrieve_by_purchase_id_item_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDraftLineSerializersPurchaseItemDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Purchases Items by Purchase ID Item ID
+    patch:
+      operationId: labs_purchases_items_partial_update_by_purchase_id_item_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDraftLinePatchInput'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDraftLinePatchInput'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDraftLinePatchInput'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDraftLineSerializersPurchaseItemDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Purchases Items by Purchase ID Item ID
+    delete:
+      operationId: labs_purchases_items_destroy_by_purchase_id_item_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDraftLineDeletedEmptyResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Purchases Items by Purchase ID Item ID
+  /api/labs/purchases/{purchase_id}/items/draft:
+    get:
+      operationId: labs_purchases_items_draft_retrieve_by_purchase_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDraftLineListSerializersPurchaseItemDetailListResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Purchases Items Draft by Purchase ID
+    post:
+      operationId: labs_purchases_items_draft_create_by_purchase_id
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftLineInput'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DraftLineInput'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DraftLineInput'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDraftLineSerializersPurchaseItemDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Purchases Items Draft by Purchase ID
+  /api/labs/purchases/{purchase_id}/transactions:
+    get:
+      operationId: labs_purchases_transactions_retrieve_by_purchase_id
+      description: List and create purchase payments or refunds.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseTransactionListSerializersPurchaseTransactionPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Purchases Transactions by Purchase ID
+    post:
+      operationId: labs_purchases_transactions_create_by_purchase_id
+      description: List and create purchase payments or refunds.
+      parameters:
+      - in: path
+        name: purchase_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Procurement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseTransaction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseTransaction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseTransaction'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseTransactionSerializersPurchaseTransactionDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Purchases Transactions by Purchase ID
+components:
+  schemas:
+    DraftLineInput:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 255
+        quantity:
+          type: integer
+          maximum: 1000000
+          minimum: 1
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        notes:
+          type: string
+          maxLength: 2000
+        purpose:
+          type: string
+          nullable: true
+          maxLength: 2000
+        priority_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+          maxLength: 32
+      required:
+      - description
+      - quantity
+      - unit_price
+    PatchedDraftLinePatchInput:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 255
+        quantity:
+          type: integer
+          maximum: 1000000
+          minimum: 1
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        notes:
+          type: string
+          maxLength: 2000
+        purpose:
+          type: string
+          nullable: true
+          maxLength: 2000
+        priority_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+          maxLength: 32
+    PatchedPurchaseDraftHeaderInput:
+      type: object
+      properties:
+        supplier:
+          type: string
+          maxLength: 255
+        purchase_date:
+          type: string
+          format: date
+        purchase_order_number:
+          type: string
+          maxLength: 100
+        currency:
+          type: string
+          maxLength: 3
+          minLength: 3
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        notes:
+          type: string
+          maxLength: 2000
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    Purchase:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        supplier:
+          type: string
+          maxLength: 255
+        purchase_order_number:
+          type: string
+          maxLength: 100
+        purchase_date:
+          type: string
+          format: date
+        currency:
+          type: string
+          description: ISO 4217 currency code.
+          maxLength: 3
+        status:
+          type: object
+          additionalProperties:
+            type: string
+          readOnly: true
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          description: Agreed total purchase amount.
+        total:
+          type: object
+          properties:
+            amount:
+              type: string
+              pattern: ^-?[0-9]+(\.[0-9]+)?$
+            currency:
+              type: string
+              description: Purchase currency code.
+          required:
+          - amount
+          - currency
+          additionalProperties: false
+          readOnly: true
+        item_count:
+          type: integer
+          readOnly: true
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItem'
+          writeOnly: true
+      required:
+      - created_at
+      - id
+      - item_count
+      - purchase_date
+      - status
+      - supplier
+      - total
+      - total_amount
+      - updated_at
+    PurchaseDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        supplier:
+          type: string
+          readOnly: true
+        purchase_order_number:
+          type: string
+          readOnly: true
+        purchase_date:
+          type: string
+          format: date
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+          description: ISO 4217 currency code.
+        total_amount:
+          type: object
+          properties:
+            amount:
+              type: string
+              pattern: ^-?[0-9]+(\.[0-9]+)?$
+            currency:
+              type: string
+              description: Purchase currency code.
+          required:
+          - amount
+          - currency
+          additionalProperties: false
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PurchaseStatusEnum'
+          readOnly: true
+        notes:
+          type: string
+          readOnly: true
+        version:
+          type: integer
+          readOnly: true
+        item_count:
+          type: integer
+          readOnly: true
+        lines_total:
+          type: object
+          properties:
+            amount:
+              type: string
+              pattern: ^-?[0-9]+(\.[0-9]+)?$
+            currency:
+              type: string
+              description: Purchase currency code.
+          required:
+          - amount
+          - currency
+          additionalProperties: false
+          readOnly: true
+        unpriced_line_count:
+          type: integer
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created
+      - currency
+      - id
+      - item_count
+      - lines_total
+      - modified
+      - notes
+      - purchase_date
+      - purchase_order_number
+      - status
+      - supplier
+      - total_amount
+      - unpriced_line_count
+      - version
+    PurchaseDetailSerializersPurchaseDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/PurchaseDetail'
+      required:
+      - data
+    PurchaseDraftHeaderOutput:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        supplier:
+          type: string
+          readOnly: true
+        purchase_order_number:
+          type: string
+          readOnly: true
+        purchase_date:
+          type: string
+          format: date
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+          description: ISO 4217 currency code.
+        total_amount:
+          type: object
+          properties:
+            amount:
+              type: string
+              pattern: ^-?[0-9]+(\.[0-9]+)?$
+            currency:
+              type: string
+              description: Purchase currency code.
+          required:
+          - amount
+          - currency
+          additionalProperties: false
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PurchaseStatusEnum'
+          readOnly: true
+        notes:
+          type: string
+          readOnly: true
+        version:
+          type: integer
+          readOnly: true
+      required:
+      - currency
+      - id
+      - notes
+      - purchase_date
+      - purchase_order_number
+      - status
+      - supplier
+      - total_amount
+      - version
+    PurchaseDraftHeaderSerializersPurchaseDraftHeaderOutputDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/PurchaseDraftHeaderOutput'
+      required:
+      - data
+    PurchaseDraftLineDeletedEmptyResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+      required:
+      - data
+    PurchaseDraftLineListSerializersPurchaseItemDetailListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemDetail'
+      required:
+      - data
+    PurchaseDraftLineSerializersPurchaseItemDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/PurchaseItemDetail'
+      required:
+      - data
+    PurchaseItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        description:
+          type: string
+          maxLength: 255
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          writeOnly: true
+        notes:
+          type: string
+        purpose:
+          type: string
+          nullable: true
+          maxLength: 2000
+        priority_id:
+          type: integer
+          minimum: 1
+          writeOnly: true
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+          maxLength: 32
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - description
+      - id
+      - unit_price
+    PurchaseItemDetail:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        purchase:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          readOnly: true
+        unit:
+          type: string
+          readOnly: true
+        unit_price:
+          type: object
+          properties:
+            amount:
+              type: string
+              pattern: ^-?[0-9]+(\.[0-9]+)?$
+            currency:
+              type: string
+              description: Purchase currency code.
+          required:
+          - amount
+          - currency
+          additionalProperties: false
+          readOnly: true
+        line_value:
+          type: object
+          properties:
+            amount:
+              type: string
+              pattern: ^-?[0-9]+(\.[0-9]+)?$
+            currency:
+              type: string
+              description: Purchase currency code.
+          required:
+          - amount
+          - currency
+          additionalProperties: false
+          readOnly: true
+        priority:
+          type: object
+          additionalProperties:
+            oneOf:
+            - type: integer
+            - type: string
+          nullable: true
+          readOnly: true
+        purpose:
+          type: string
+          readOnly: true
+        notes:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        version:
+          type: integer
+          readOnly: true
+      required:
+      - created_at
+      - description
+      - id
+      - line_value
+      - notes
+      - priority
+      - purchase
+      - purpose
+      - quantity
+      - unit
+      - unit_price
+      - version
+    PurchaseItemListSerializersPurchaseItemReadPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/PurchaseItemListSerializersPurchaseItemReadPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemRead'
+      required:
+      - data
+      - meta
+    PurchaseItemListSerializersPurchaseItemReadPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    PurchaseItemListSerializersPurchaseItemReadPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/PurchaseItemListSerializersPurchaseItemReadPagination'
+      required:
+      - pagination
+    PurchaseItemRead:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        purchase:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          readOnly: true
+        unit:
+          type: string
+          readOnly: true
+        unit_price:
+          type: object
+          properties:
+            amount:
+              type: string
+              pattern: ^-?[0-9]+(\.[0-9]+)?$
+            currency:
+              type: string
+              description: Purchase currency code.
+          required:
+          - amount
+          - currency
+          additionalProperties: false
+          readOnly: true
+        line_value:
+          type: object
+          properties:
+            amount:
+              type: string
+              pattern: ^-?[0-9]+(\.[0-9]+)?$
+            currency:
+              type: string
+              description: Purchase currency code.
+          required:
+          - amount
+          - currency
+          additionalProperties: false
+          readOnly: true
+        priority:
+          type: object
+          additionalProperties:
+            oneOf:
+            - type: integer
+            - type: string
+          nullable: true
+          readOnly: true
+        purpose:
+          type: string
+          readOnly: true
+        notes:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - description
+      - id
+      - line_value
+      - notes
+      - priority
+      - purchase
+      - purpose
+      - quantity
+      - unit
+      - unit_price
+    PurchaseItemResource:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        purchase_item:
+          type: object
+          additionalProperties:
+            oneOf:
+            - type: integer
+            - type: string
+          readOnly: true
+        resource:
+          type: object
+          additionalProperties:
+            oneOf:
+            - type: integer
+            - type: string
+          nullable: true
+          readOnly: true
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/ResourceKindEnum'
+          readOnly: true
+        acquisition_price:
+          type: object
+          properties:
+            amount:
+              type: string
+              pattern: ^-?[0-9]+(\.[0-9]+)?$
+            currency:
+              type: string
+              description: Purchase currency code.
+          required:
+          - amount
+          - currency
+          additionalProperties: false
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - acquisition_price
+      - created_at
+      - id
+      - purchase_item
+      - resource
+      - resource_kind
+    PurchaseItemResourceCreate:
+      type: object
+      description: Supply resource_kind, legacy resource_type_id, or both. At least
+        one is required. If both are supplied, they must identify the same resource
+        kind.
+      properties:
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/ResourceKindEnum'
+          writeOnly: true
+          description: 'Stable resource kind. Supply this or legacy resource_type_id;
+            if both are supplied, they must match.
+
+
+            * `bench` - bench
+
+            * `equipment` - equipment
+
+            * `license` - license
+
+            * `station` - station'
+        resource_type_id:
+          type: integer
+          minimum: 1
+          writeOnly: true
+          description: Legacy resource type ID.
+        resource_id:
+          type: integer
+          minimum: 1
+        acquisition_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          writeOnly: true
+      required:
+      - acquisition_price
+      - resource_id
+      anyOf:
+      - required:
+        - resource_kind
+      - required:
+        - resource_type_id
+    PurchaseItemResourceListSerializersPurchaseItemResourcePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/PurchaseItemResourceListSerializersPurchaseItemResourcePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemResource'
+      required:
+      - data
+      - meta
+    PurchaseItemResourceListSerializersPurchaseItemResourcePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    PurchaseItemResourceListSerializersPurchaseItemResourcePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/PurchaseItemResourceListSerializersPurchaseItemResourcePagination'
+      required:
+      - pagination
+    PurchaseItemResourceSerializersPurchaseItemResourceDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/PurchaseItemResource'
+      required:
+      - data
+    PurchaseItemSerializersPurchaseItemReadDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/PurchaseItemRead'
+      required:
+      - data
+    PurchaseListSerializersPurchasePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/PurchaseListSerializersPurchasePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Purchase'
+      required:
+      - data
+      - meta
+    PurchaseListSerializersPurchasePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    PurchaseListSerializersPurchasePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/PurchaseListSerializersPurchasePagination'
+      required:
+      - pagination
+    PurchasePriorityOption:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - code
+      - id
+      - name
+    PurchasePriorityOptionsSerializersPurchasePriorityOptionListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchasePriorityOption'
+      required:
+      - data
+    PurchaseSerializersPurchaseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Purchase'
+      required:
+      - data
+    PurchaseStatusEnum:
+      enum:
+      - draft
+      - ordered
+      - received
+      - cancelled
+      type: string
+      description: '* `draft` - Draft
+
+        * `ordered` - Ordered
+
+        * `received` - Received
+
+        * `cancelled` - Cancelled'
+    PurchaseTransaction:
+      type: object
+      description: 'Write payload uses ``transaction_type``, ``amount``, ``settled_at``,
+        ``reference``, ``notes``.
+
+
+        The purchase is taken from the URL, never from the body.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        purchase:
+          type: object
+          additionalProperties:
+            oneOf:
+            - type: integer
+            - type: string
+          readOnly: true
+        transaction_type:
+          $ref: '#/components/schemas/TransactionTypeEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        settled_at:
+          type: string
+          format: date-time
+        reference:
+          type: string
+          description: Invoice, receipt, bank transaction, or refund reference.
+          maxLength: 255
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - created_at
+      - id
+      - purchase
+      - settled_at
+      - transaction_type
+    PurchaseTransactionListSerializersPurchaseTransactionPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/PurchaseTransactionListSerializersPurchaseTransactionPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseTransaction'
+      required:
+      - data
+      - meta
+    PurchaseTransactionListSerializersPurchaseTransactionPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    PurchaseTransactionListSerializersPurchaseTransactionPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/PurchaseTransactionListSerializersPurchaseTransactionPagination'
+      required:
+      - pagination
+    PurchaseTransactionSerializersPurchaseTransactionDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/PurchaseTransaction'
+      required:
+      - data
+    ResourceKindEnum:
+      enum:
+      - bench
+      - equipment
+      - license
+      - station
+      type: string
+      description: '* `bench` - bench
+
+        * `equipment` - equipment
+
+        * `license` - license
+
+        * `station` - station'
+    TransactionTypeEnum:
+      enum:
+      - payment
+      - refund
+      type: string
+      description: '* `payment` - Payment
+
+        * `refund` - Refund'
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Procurement
+  description: Procurement endpoints

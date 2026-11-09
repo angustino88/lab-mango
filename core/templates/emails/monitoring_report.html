@@ -1,0 +1,78 @@
+{% load static %}
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f7fb;padding:24px 0;">
+  <tr>
+    <td align="center">
+      <table width="800" cellpadding="0" cellspacing="0" border="0" style="max-width:800px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+        
+        <!-- Header -->
+        <tr>
+          <td style="padding:28px;border-bottom:1px solid #e5e7eb;">
+            <h1 style="margin:0;font-size:24px;font-weight:800;color:#2563eb;">
+              Monitoring Event Report
+            </h1>
+            <p style="margin:12px 0 8px 0;font-size:16px;font-weight:600;color:#0f172a;">
+              Hello Lab Management Team,
+            </p>
+            <p style="margin:0;font-size:14px;color:#475569;">
+              The following event has been triggered and matches your selected event type filter.  
+              Please review the details below:
+            </p>
+          </td>
+        </tr>
+
+        <!-- Table -->
+        <tr>
+          <td style="padding:24px;overflow-x:auto;">
+            <table style="border-collapse: collapse; width: 100%; margin-top: 15px; font-size: 14px; line-height: 1.4;">
+              <thead>
+                <tr style="background-color:#f1f5f9;">
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">ID</th>
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">Timestamp</th>
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">Source</th>
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">Computer Name</th>
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">Technical User</th>
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">Remote User</th>
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">Event Type</th>
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">Category</th>
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">Object Name</th>
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">Object ID</th>
+                  <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;font-weight:600;color:#2563eb;">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in monitoring %}
+                <tr {% if forloop.counter0|divisibleby:2 %}style="background-color:#f9fafb;"{% endif %}>
+                  <td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">{{ forloop.counter }}</td>
+                  <td style="border:1px solid #e5e7eb;padding:8px;">{{ item.created|date:"Y-m-d H:i:s" }}</td>
+                  <td style="border:1px solid #e5e7eb;padding:8px;">{{ item.source }}</td>
+                  <td style="border:1px solid #e5e7eb;padding:8px;">{{ item.computer_name }}</td>
+                  <td style="border:1px solid #e5e7eb;padding:8px;">{{ item.technical_user }}</td>
+                  <td style="border:1px solid #e5e7eb;padding:8px;">{{ item.remote_user }}</td>
+                  <td style="border:1px solid #e5e7eb;padding:8px;">{{ item.event_type }}</td>
+                  <td style="border:1px solid #e5e7eb;padding:8px;">{{ item.category }}</td>
+                  <td style="border:1px solid #e5e7eb;padding:8px;">{{ item.object_name }}</td>
+                  <td style="border:1px solid #e5e7eb;padding:8px;">{{ item.object_id }}</td>
+                  <td style="border:1px solid #e5e7eb;padding:8px;">
+                    {% for detail in item.details %}
+                      {{ detail }}<br>
+                    {% endfor %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:18px 24px 24px;border-top:1px dashed #e5e7eb;font-size:13px;color:#475569;">
+            <p style="margin:0;">© {% now "Y" %} Lab Management System</p>
+            <p style="margin:12px 0 0 0;font-size:12px;">This is an automated message. Please do not reply.</p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>

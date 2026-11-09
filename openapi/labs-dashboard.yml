@@ -1,0 +1,767 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/dashboard:
+    get:
+      operationId: labs_dashboard_retrieve
+      description: Operational dashboard bench listing with real-time telemetry and
+        schedule data.
+      parameters:
+      - in: query
+        name: activity_status
+        schema:
+          enum:
+          - offline
+          - free
+          - active
+          - inactive
+          - maintaining
+          type: string
+          minLength: 1
+        description: 'Filter by computing activity status (free, active, inactive,
+          offline, maintaining).
+
+
+          * `offline` - Offline
+
+          * `free` - Free
+
+          * `active` - Active
+
+          * `inactive` - Inactive
+
+          * `maintaining` - Maintaining'
+      - in: query
+        name: bench_group
+        schema:
+          type: integer
+          minimum: 1
+        description: Filter benches by bench group identifier.
+      - in: query
+        name: has_computing
+        schema:
+          type: boolean
+          nullable: true
+        description: Filter by whether the bench has active computing equipment assigned.
+      - in: query
+        name: is_booked
+        schema:
+          type: boolean
+          nullable: true
+        description: Filter by whether the bench has an ongoing active booking.
+      - in: query
+        name: is_favorite
+        schema:
+          type: boolean
+          nullable: true
+        description: Filter by whether the authenticated user has bookmarked this
+          bench.
+      - in: query
+        name: is_mapped
+        schema:
+          type: boolean
+          nullable: true
+        description: Filter by whether the bench has a physical location or station
+          mapping.
+      - in: query
+        name: lifecycle_status
+        schema:
+          enum:
+          - planned
+          - available
+          - reserved
+          - active
+          - maintenance
+          - out_of_service
+          - retired
+          type: string
+          minLength: 1
+        description: 'Filter by lifecycle status (e.g. available, active, maintenance).
+
+
+          * `planned` - Planned
+
+          * `available` - Available
+
+          * `reserved` - Reserved
+
+          * `active` - Active
+
+          * `maintenance` - Maintenance
+
+          * `out_of_service` - Out of service
+
+          * `retired` - Retired'
+      - in: query
+        name: location
+        schema:
+          type: integer
+          minimum: 1
+        description: Filter by physical station or room identifier.
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Case-insensitive text search across bench name, SKU, location,
+          host, and remote user.
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardBenchListSerializersDashboardBenchPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Dashboard
+  /api/labs/dashboard/benches/{bench_id}:
+    get:
+      operationId: labs_dashboard_benches_retrieve_by_bench_id
+      description: Detailed operational view of an individual laboratory bench.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardBenchDetailDataSerializersDashboardBenchDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Dashboard Benches by Bench ID
+  /api/labs/dashboard/summary:
+    get:
+      operationId: labs_dashboard_summary_retrieve
+      description: Operational dashboard summary metrics and status distributions.
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardOperationalSummaryDataSerializersDashboardOperationalSummaryDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Dashboard Summary
+components:
+  schemas:
+    DashboardBench:
+      type: object
+      description: Comprehensive representation of a bench item on the operational
+        dashboard.
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+        name:
+          type: string
+        lifecycle_status:
+          type: string
+        bench_group:
+          allOf:
+          - $ref: '#/components/schemas/DashboardBenchGroup'
+          nullable: true
+        bench_type:
+          allOf:
+          - $ref: '#/components/schemas/DashboardBenchType'
+          nullable: true
+        location:
+          allOf:
+          - $ref: '#/components/schemas/DashboardLocation'
+          nullable: true
+        is_favorite:
+          type: boolean
+          default: false
+        current_booking:
+          allOf:
+          - $ref: '#/components/schemas/DashboardBooking'
+          nullable: true
+        computing:
+          allOf:
+          - $ref: '#/components/schemas/DashboardComputing'
+          nullable: true
+        samples:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardEquipmentReference'
+        licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardEquipmentReference'
+        assigned_equipment_count:
+          type: integer
+        image_url:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - assigned_equipment_count
+      - bench_group
+      - bench_type
+      - computing
+      - current_booking
+      - id
+      - image_url
+      - licenses
+      - lifecycle_status
+      - location
+      - name
+      - samples
+      - sku
+      - updated_at
+    DashboardBenchDetail:
+      type: object
+      description: Detailed operational bench representation including equipment and
+        upcoming schedule.
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+        name:
+          type: string
+        lifecycle_status:
+          type: string
+        bench_group:
+          allOf:
+          - $ref: '#/components/schemas/DashboardBenchGroup'
+          nullable: true
+        bench_type:
+          allOf:
+          - $ref: '#/components/schemas/DashboardBenchType'
+          nullable: true
+        location:
+          allOf:
+          - $ref: '#/components/schemas/DashboardLocation'
+          nullable: true
+        is_favorite:
+          type: boolean
+          default: false
+        current_booking:
+          allOf:
+          - $ref: '#/components/schemas/DashboardBookingDetail'
+          nullable: true
+        computing:
+          allOf:
+          - $ref: '#/components/schemas/DashboardComputingDetail'
+          nullable: true
+        samples:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardEquipmentReference'
+        licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardEquipmentReference'
+        assigned_equipment_count:
+          type: integer
+        image_url:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+        description:
+          type: string
+          default: ''
+        documentation_url:
+          type: string
+          default: ''
+        criticality:
+          type: string
+          default: ''
+        equipment_by_category:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardEquipmentCategoryGroup'
+        upcoming_bookings:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardBookingDetail'
+      required:
+      - assigned_equipment_count
+      - bench_group
+      - bench_type
+      - computing
+      - current_booking
+      - equipment_by_category
+      - id
+      - image_url
+      - licenses
+      - lifecycle_status
+      - location
+      - name
+      - samples
+      - sku
+      - upcoming_bookings
+      - updated_at
+    DashboardBenchDetailDataSerializersDashboardBenchDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/DashboardBenchDetail'
+      required:
+      - data
+    DashboardBenchGroup:
+      type: object
+      description: Logical bench group descriptor.
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          default: ''
+      required:
+      - id
+      - name
+    DashboardBenchListSerializersDashboardBenchPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/DashboardBenchListSerializersDashboardBenchPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardBench'
+      required:
+      - data
+      - meta
+    DashboardBenchListSerializersDashboardBenchPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    DashboardBenchListSerializersDashboardBenchPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/DashboardBenchListSerializersDashboardBenchPagination'
+      required:
+      - pagination
+    DashboardBenchType:
+      type: object
+      description: Bench specialization type descriptor.
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+      - id
+      - name
+    DashboardBooking:
+      type: object
+      description: Booking information descriptor.
+      properties:
+        id:
+          type: integer
+        booking_code:
+          type: string
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+        user:
+          allOf:
+          - $ref: '#/components/schemas/DashboardUser'
+          nullable: true
+      required:
+      - booking_code
+      - ends_at
+      - id
+      - starts_at
+      - status
+      - user
+    DashboardBookingDetail:
+      type: object
+      description: Dashboard detail schedule fields without booking-user identity.
+      properties:
+        id:
+          type: integer
+        booking_code:
+          type: string
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+      required:
+      - booking_code
+      - ends_at
+      - id
+      - starts_at
+      - status
+    DashboardComputing:
+      type: object
+      description: Attached computing equipment and real-time remote session state.
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+          default: ''
+        name:
+          type: string
+          default: ''
+        ip_address:
+          type: string
+          nullable: true
+        os_name:
+          type: string
+        rdp_file_url:
+          type: string
+          nullable: true
+        activity_status:
+          type: string
+        remote_user:
+          type: string
+        remote_user_display_name:
+          type: string
+        remote_ip:
+          type: string
+          nullable: true
+      required:
+      - activity_status
+      - id
+      - ip_address
+      - os_name
+      - rdp_file_url
+      - remote_ip
+      - remote_user
+      - remote_user_display_name
+    DashboardComputingDetail:
+      type: object
+      description: Dashboard detail computing summary without remote-access data.
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+          default: ''
+        name:
+          type: string
+          default: ''
+        activity_status:
+          type: string
+        last_agent_report_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_stale:
+          type: boolean
+          nullable: true
+      required:
+      - activity_status
+      - id
+      - is_stale
+      - last_agent_report_at
+    DashboardEquipmentActivity:
+      type: object
+      properties:
+        status:
+          type: string
+        last_agent_report_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_stale:
+          type: boolean
+          nullable: true
+      required:
+      - is_stale
+      - last_agent_report_at
+      - status
+    DashboardEquipmentCategoryGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+        equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardEquipmentItem'
+      required:
+      - equipment
+      - id
+      - name
+    DashboardEquipmentCategoryReference:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+      - id
+      - name
+    DashboardEquipmentItem:
+      type: object
+      description: Assigned equipment resource descriptor.
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+        name:
+          type: string
+        category:
+          allOf:
+          - $ref: '#/components/schemas/DashboardEquipmentCategoryReference'
+          nullable: true
+          readOnly: true
+        role:
+          type: string
+        position:
+          type: integer
+        assigned_at:
+          type: string
+          format: date-time
+        computing_activity:
+          allOf:
+          - $ref: '#/components/schemas/DashboardEquipmentActivity'
+          nullable: true
+          readOnly: true
+        licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardEquipmentReference'
+      required:
+      - assigned_at
+      - category
+      - computing_activity
+      - id
+      - licenses
+      - name
+      - position
+      - role
+      - sku
+    DashboardEquipmentReference:
+      type: object
+      description: Compact standard reference shape for attached equipment and licenses.
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+          default: ''
+        name:
+          type: string
+          default: ''
+      required:
+      - id
+    DashboardLocation:
+      type: object
+      description: Physical location placement details.
+      properties:
+        station_id:
+          type: integer
+          nullable: true
+        station_name:
+          type: string
+          nullable: true
+        room_id:
+          type: integer
+          nullable: true
+        room_name:
+          type: string
+          nullable: true
+        building_name:
+          type: string
+          nullable: true
+        slot_label:
+          type: string
+          nullable: true
+      required:
+      - building_name
+      - room_id
+      - room_name
+      - slot_label
+      - station_id
+      - station_name
+    DashboardOperationalSummary:
+      type: object
+      description: Aggregate metrics and status distributions for dashboard summary.
+      properties:
+        total_benches:
+          type: integer
+          description: Total number of active, non-deleted laboratory benches.
+        active_bookings_count:
+          type: integer
+          description: Total number of currently active bench bookings.
+        favorited_benches_count:
+          type: integer
+          description: Number of benches favorited by the current user.
+        lifecycle_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Breakdown of bench counts by lifecycle status.
+        activity_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Breakdown of computing equipment counts by operational activity
+            status.
+        utilization_rate:
+          type: number
+          format: double
+          description: Percentage of benches currently reserved or in-progress.
+      required:
+      - active_bookings_count
+      - activity_distribution
+      - favorited_benches_count
+      - lifecycle_distribution
+      - total_benches
+      - utilization_rate
+    DashboardOperationalSummaryDataSerializersDashboardOperationalSummaryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/DashboardOperationalSummary'
+      required:
+      - data
+    DashboardUser:
+      type: object
+      description: User summary descriptor for booking ownership and activity.
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        display_name:
+          type: string
+          default: ''
+      required:
+      - id
+      - username
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Dashboard
+  description: Dashboard endpoints
