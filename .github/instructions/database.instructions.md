@@ -4,7 +4,7 @@ applyTo: '**/models/**,**/models.py,**/migrations/**,**/queries*.py,**/queries/*
 # Database rules (PostgreSQL / Django ORM)
 
 Model placement, naming, base classes, field design, `on_delete` choice, and index naming are owned by
-`docs/django-model-conventions.md`. This file owns integrity enforcement, concurrency, migrations,
+`docs/conventions/django-models.md`. This file owns integrity enforcement, concurrency, migrations,
 and inheritance kind. Do not restate the conventions document; cite its section.
 
 ## Integrity
@@ -16,7 +16,7 @@ and inheritance kind. Do not restate the conventions document; cite its section.
 - Soft-deleted rows must not block reuse: unique constraints on soft-deletable models include
   `condition=Q(deleted_at__isnull=True)`.
 - Booking windows are half-open ranges; money is `DecimalField` plus a currency field.
-- `CASCADE` is forbidden on the record types listed in `docs/django-model-conventions.md` section 5.
+- `CASCADE` is forbidden on the record types listed in `docs/conventions/django-models.md` section 5.
 
 ## Concurrency and queries
 Race guards, locking, and idempotency: `write-safety.instructions.md`. N+1, query budgets, bounded reads, and

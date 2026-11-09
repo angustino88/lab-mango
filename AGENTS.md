@@ -12,16 +12,16 @@ repository before relying on it; when you cannot verify something, say "not veri
 ## Sources of truth (read the one your task touches)
 | Topic | Owner document |
 |---|---|
-| Feature layout, layers, imports, `public.py` / `contracts.py` / `exceptions.py` | `docs/feature-template.md` |
-| Model placement and persistence conventions | `docs/django-model-conventions.md` |
-| API responses and requests (rule IDs such as `ERR-1`) | `docs/ai-team/api/response-standard.md`, `docs/ai-team/api/request-standard.md` |
+| Feature layout, layers, imports, `public.py` / `contracts.py` / `exceptions.py` | `docs/architecture/feature-template.md` |
+| Model placement and persistence conventions | `docs/conventions/django-models.md` |
+| API responses and requests (rule IDs such as `ERR-1`) | `docs/api/response-standard.md`, `docs/api/request-standard.md` |
 | Where any document goes (model docs, feature docs, ADRs) | `docs/ai-team/documentation-map.md` |
 | Transactions, race conditions, idempotency | `.github/instructions/write-safety.instructions.md` |
 | N+1, query budgets, bounded reads, indexes | `.github/instructions/query-performance.instructions.md` |
 | Commands that verify a change | `docs/ai-team/quality-gates.md` |
 | Roles, routing, handoff, escalation | `docs/ai-team/team.md` |
 
-**Existing code is transitional** (`docs/feature-template.md`, first paragraph). When adjacent code
+**Existing code is transitional** (`docs/architecture/feature-template.md`, first paragraph). When adjacent code
 contradicts an owner document, write new code to the owner document and report the drift with `path:line`.
 Do not copy the deviation. Example: an existing view calling `Bench.objects.filter(...)` is not a pattern
 to repeat.

@@ -5,7 +5,7 @@
 - Decision owner: repository owner (approval pending)
 - Risk: T2 (public query contract and shared API boundary)
 - Scope of proposed implementation: neutral temporal parsing/validation and adoption by the bench-booking collection only. This ADR makes no runtime, schema, or API change.
-- Authority: [request standard](../../ai-team/api/request-standard.md) QRY-1–QRY-5, QRY-12, CMP-1–CMP-4; [response standard](../../ai-team/api/response-standard.md) COL-3–COL-6, ERR-1–ERR-3, VER-1–VER-3, PRF-1–PRF-3; [ADR 001](001-common-foundation.md) for the common foundation. Those documents own the rules; this record specifies the endpoint mapping and staged adoption.
+- Authority: [request standard](../../api/request-standard.md) QRY-1–QRY-5, QRY-12, CMP-1–CMP-4; [response standard](../../api/response-standard.md) COL-3–COL-6, ERR-1–ERR-3, VER-1–VER-3, PRF-1–PRF-3; [ADR 001](001-common-foundation.md) for the common foundation. Those documents own the rules; this record specifies the endpoint mapping and staged adoption.
 
 ## Context (verified current state; not a certification of deployed behavior)
 

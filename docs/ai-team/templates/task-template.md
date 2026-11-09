@@ -1,5 +1,7 @@
 # Task: <short title>
 
+<!-- Working artifact: return it in chat or the pull request; do not commit it to the repository (docs/ai-team/documentation-map.md). -->
+
 **Tier**: T0 / T1 / T2 — <why>
 **Assigned role**: <role>
 

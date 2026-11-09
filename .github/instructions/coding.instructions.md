@@ -15,5 +15,5 @@ Owns code-level rules that apply to every Python file. Layering is in
 - **Time.** Use `django.utils.timezone.now()`; never `datetime.now()` or `datetime.utcnow()`. Tests control
   time with `freezegun` or a fixture (e.g. `core/labs/features/bench_bookings/tests/conftest.py`), not sleeps.
 - **Names.** No new modules named `helpers`, `misc`, `shared`, or `utils`; name the capability
-  (`docs/feature-template.md` section 5).
+  (`docs/architecture/feature-template.md` section 5).
 - **Commits.** Never stage `.env*`, decrypted SOPS files, `media/`, `build/`, or real personal data.

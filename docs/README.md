@@ -1,55 +1,97 @@
-# Documentation Index
+# Documentation index
 
-## Architecture and conventions
+The single entry point for project documentation. Setup and development: the repository [README](../README.md).
+AI-agent rules: [AGENTS.md](../AGENTS.md). Where a new document goes: [documentation map](ai-team/documentation-map.md).
 
-- [Feature template specification](feature-template.md) — **canonical target standard** for feature structure, write/read/transport boundaries, public contracts, wiring, test ownership and adoption gates. All other docs follow it.
-- [Super-app core architecture](core-architecture-redesign.md) — app/kernel/infrastructure ownership, composition, production requirements and rebuild phases; feature boundaries defer to the template.
-- [Core architecture review and improvement backlog](core-architecture-redesign.md#14-core-architecture-review-and-improvement-backlog-2026-10-26) — sampled, read-only findings and proposed remediation/roadmap; not production certification.
-- [Naming and text conventions](conventions.md) — coding, route, schema, registry, and documentation rules for new work.
-- [Django model conventions](django-model-conventions.md) — project-wide model structure, naming, relationships, validation, migrations, and review rules.
+Documentation describes the **target**; existing code is transitional. Generated [OpenAPI](../openapi/openapi.yml)
+and mounted URLconfs determine the live API; proposed paths in prose are not callable endpoints.
 
-Precedence: feature template for feature architecture; core design for app/composition
-and rollout; model/API guides for specialist rules; feature references for behavior
-and compatibility. Historical examples are not instructions for new work. A target
-standard does not imply that current code, scaffolding or enforcement already conforms.
+## Layout
 
-## API contracts and schema
+| Folder | Holds |
+| --- | --- |
+| [`architecture/`](architecture/README.md) | System view, feature template, core architecture, reference data, [ADRs](architecture/decisions/) |
+| [`conventions/`](conventions/) | Naming/text conventions and Django model conventions |
+| [`api/`](api/) | Request/response standards, golden examples, runtime operation contracts |
+| [`agent-platform/`](agent-platform/) | Device agent, backend Agent API and routing-sync designs |
+| [`proposals/`](proposals/) | Designs not yet approved, or for features that do not exist yet |
+| [`ai-team/`](ai-team/README.md) | AI team roles, prompt formats, quality gates, templates |
+| `core/<app>/…/docs/` | Feature specs, feature architecture and feature designs, next to the code |
 
-- [API response contracts](api-response-contracts.md) — runtime response envelopes and operation-contract usage.
-- [Labs API response audit](labs-api-response-audit.md) — compliance audit of Labs features against the REST API Response Standard.
+## Standards (binding, in precedence order)
 
-## Agent platform: start here
+1. [Feature template](architecture/feature-template.md) — feature structure, layers, public contracts, wiring, tests.
+2. [Core architecture](architecture/core-architecture.md) — app/kernel/infrastructure ownership, composition, rebuild phases, review backlog.
+3. [Django model conventions](conventions/django-models.md) and [naming conventions](conventions/naming.md).
+4. [Response standard](api/response-standard.md) and [request standard](api/request-standard.md), with
+   [response](api/response-golden-examples.md) and [request](api/request-golden-examples.md) golden examples;
+   [operation contracts](api/contracts.md) for runtime/OpenAPI usage.
+5. Feature documents below for behavior and compatibility.
 
-Use these three working documents; do not implement from the older backend drafts.
-"Current design" means the selected working proposal, **not** implemented or deployment-approved behavior.
+## Architecture
 
-| Read order | Document | Owns | Status |
-| --- | --- | --- | --- |
-| 1 | [Agent production design](agent-design-spec.md) | Device service/UI/updater, bootstrap, local reliability, gate behavior, delivery gates | Current agent design proposal; external implementation not verified |
-| 2 | [Backend agent API proposal](backend-agent-api-spec.md) | Enrollment, authentication, telemetry and booking API proposals | Working backend proposal; routing sections superseded by the next document |
-| 3 | [Backend routing and sync](backend-routing-sync-spec.md) | Users/agents claims, publisher, internal sync, recovery and Edge consumption | Current routing design; R0 schema only, R1/R2 approval pending |
+- [System overview](architecture/README.md) — top-level packages and cross-domain rules.
+- [Labs cross-feature map](architecture/labs-features.md) — Labs feature ownership and dependencies.
+- [Labs model architecture](../core/labs/models/docs/labs-model-architecture.md) — authoritative Labs model inventory and constraints; [booking model conventions](../core/labs/models/docs/booking-model-conventions.md).
+- [Reference data framework](architecture/reference-data.md) — baseline rows and deletion policy.
+- [API resource summaries](api/resource-summary.md) — independent summary endpoints.
 
-Supporting references, not additional competing specifications:
+### Decisions
 
-- [ADR 004](architecture/decisions/004-agent-routing-sync.md) records identity constraints, the Agent booking capability boundary and approval limits; detailed mTLS, API and device behavior lives in the two working specs above.
-- [Labs model architecture](../core/labs/models/docs/labs-model-architecture.md) owns persistence documentation; source models/migrations determine actual schema.
-- [Generated OpenAPI](../openapi/openapi.yml) and mounted URLconfs determine existing API contracts. Proposed paths in prose are not callable endpoints.
-- Gateway/Edge runtime and wire contracts must be reviewed in their own repositories; they are not verified by this workspace.
+| ADR | Subject | Status |
+| --- | --- | --- |
+| [001](architecture/decisions/001-common-foundation.md) | Common foundation redesign | Accepted |
+| [002](architecture/decisions/002-catalog-and-selector-api.md) | Catalog and selector API standard | Accepted, implemented |
+| [003](architecture/decisions/003-temporal-query-convention.md) | Temporal query bounds | Proposed |
+| [004](architecture/decisions/004-agent-routing-sync.md) | Agent routing and backend sync | Approved constraints |
 
-**Historical drafts:** [backend 1.0](archive/agent-platform/agent-platform-backend-spec.v1.md) and [backend 2.0](archive/agent-platform/agent-platform-backend-spec.v2.md)
-are retained only for traceability. Their standalone/implementation claims, equipment routing and public-key
-sync examples are superseded. Do not add more version-suffixed copies: update the working documents in place,
-record accepted decisions in ADRs, and keep implementation history in version control. Current specs use
-unversioned, responsibility-based filenames; older drafts live under `archive/agent-platform/` and are not working specifications.
+## Agent platform
 
-Ownership: device behavior belongs in the agent design; server behavior in the backend proposal;
-routing behavior only in the routing spec. Summaries link to owners rather than redefining their contracts.
+Proposals, not deployed behavior. Each document owns one concern; the others link to it.
 
-## Feature-specific references
+| Document | Owns |
+| --- | --- |
+| [Device design](agent-platform/device-design.md) | Windows/Linux agent service, updater, bootstrap, local reliability |
+| [Backend Agent API](agent-platform/backend-api.md) | Enrollment, authentication, telemetry and booking API |
+| [Routing and sync](agent-platform/routing-sync.md) | Routing claims, publisher, internal sync API (sole routing authority) |
 
-- [Bench and station APIs](../core/labs/features/benches/docs/bench-station-apis.md) — current routes, fields, placement, favorites, capacity, errors, lock protocol, and fresh-schema rollout limitations.
-- [Equipment category APIs](../core/labs/features/equipment/docs/equipment-category-apis.md) — current category contracts and transitional API-base behavior, with target layer guidance.
-- [Booking model conventions](../core/labs/models/docs/booking-model-conventions.md) — persistence reference and target reservation/concurrency rules.
-- [Labs model architecture](../core/labs/models/docs/labs-model-architecture.md) — model inventory, principal relationships and constraints, ownership boundaries, integrity risks and open questions.
+Accepted constraints are recorded in [ADR 004](architecture/decisions/004-agent-routing-sync.md).
 
-For project setup and the development overview, start at the repository [README](../README.md).
+## Feature catalog
+
+### Labs (`core/labs`)
+
+| Feature | Package | Documents |
+| --- | --- | --- |
+| Equipment | `core/labs/features/equipment` | [spec](../core/labs/features/equipment/docs/spec.md) · [architecture](../core/labs/features/equipment/docs/architecture.md) · [category APIs](../core/labs/features/equipment/docs/equipment-category-apis.md) |
+| Benches | `core/labs/features/benches` | [spec](../core/labs/features/benches/docs/spec.md) · [architecture](../core/labs/features/benches/docs/architecture.md) · [bench & station APIs](../core/labs/features/benches/docs/bench-station-apis.md) |
+| Bench bookings | `core/labs/features/bench_bookings` | [spec](../core/labs/features/bench_bookings/docs/spec.md) · [architecture](../core/labs/features/bench_bookings/docs/architecture.md) · [notifications](../core/labs/features/bench_bookings/docs/notifications.md) |
+| Locations | `core/labs/features/locations` | [spec](../core/labs/features/locations/docs/spec.md) · [architecture](../core/labs/features/locations/docs/architecture.md) |
+| Licenses | `core/labs/features/licenses` | [spec](../core/labs/features/licenses/docs/spec.md) |
+| Procurement | `core/labs/features/procurement` | [spec](../core/labs/features/procurement/docs/spec.md) · [architecture](../core/labs/features/procurement/docs/architecture.md) · [purchase plan design](../core/labs/features/procurement/docs/purchase-plan-design.md) |
+| Expense | `core/labs/features/expense` | [spec](../core/labs/features/expense/docs/spec.md) · [architecture](../core/labs/features/expense/docs/architecture.md) |
+| Resource mappings | `core/labs/features/resource_mappings` | [spec](../core/labs/features/resource_mappings/docs/spec.md) · [architecture](../core/labs/features/resource_mappings/docs/architecture.md) |
+| Resource audit | `core/labs/features/resource_audit` | [spec](../core/labs/features/resource_audit/docs/spec.md) · [architecture](../core/labs/features/resource_audit/docs/architecture.md) |
+| Monitoring | `core/labs/features/monitoring` | [spec](../core/labs/features/monitoring/docs/spec.md) · [architecture](../core/labs/features/monitoring/docs/architecture.md) |
+| Analytics | `core/labs/features/analytics` | [spec](../core/labs/features/analytics/docs/spec.md) · [architecture](../core/labs/features/analytics/docs/architecture.md) |
+| Leaderboard | `core/labs/features/leaderboard` | [spec](../core/labs/features/leaderboard/docs/spec.md) · [architecture](../core/labs/features/leaderboard/docs/architecture.md) |
+| Dashboard | `core/labs/features/dashboard` | [spec](../core/labs/features/dashboard/docs/spec.md) · [architecture](../core/labs/features/dashboard/docs/architecture.md) |
+
+### Support Desk, Users, WebSocket
+
+| Feature | Package | Documents |
+| --- | --- | --- |
+| Support tickets | `core/support_desk/features/tickets` | [spec](../core/support_desk/features/tickets/docs/spec.md) |
+| Authentication | `core/users/features/auth` | [spec](../core/users/features/auth/docs/spec.md) |
+| Profile | `core/users/features/profile` | [spec](../core/users/features/profile/docs/spec.md) |
+| Groups | `core/users/features/groups` | [spec](../core/users/features/groups/docs/spec.md) |
+| URS sync | `core/users/features/urs_sync` | [spec](../core/users/features/urs_sync/docs/spec.md) |
+| WebSocket notifications | `core/websocket/features` | [spec](../core/websocket/features/docs/spec.md) |
+
+## Proposals
+
+| Proposal | Status |
+| --- | --- |
+| [Equipment booking](proposals/equipment-booking.md) | Draft; `equipment_bookings` feature not created |
+| [All-feature faceted filtering](proposals/faceted-filtering.md) | Proposed; Equipment facets pilot implemented |
+| [API error details audit](proposals/api-error-details-audit.md) | Not started |

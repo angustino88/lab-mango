@@ -3,9 +3,9 @@ applyTo: '**/api/**,**/serializers*.py,**/views*.py,**/urls*.py,**/permissions*.
 ---
 # API contract rules
 
-The rules are owned by `docs/ai-team/api/response-standard.md` (responses) and
-`docs/ai-team/api/request-standard.md` (requests); shapes are in `response-golden-examples.md` and
-`request-golden-examples.md` in the same folder. Runtime mechanics: `docs/api-response-contracts.md`.
+The rules are owned by `docs/api/response-standard.md` (responses) and
+`docs/api/request-standard.md` (requests); shapes are in `response-golden-examples.md` and
+`request-golden-examples.md` in the same folder. Runtime mechanics: `docs/api/contracts.md`.
 Do not restate those rules elsewhere; cite them by rule ID.
 
 ## Required for every endpoint or schema change

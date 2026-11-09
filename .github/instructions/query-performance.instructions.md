@@ -56,7 +56,7 @@ Repo patterns: `benches/queries/selectors.py::list_benches` (`select_related` + 
 
 ## 5. Indexes
 - A new filter, ordering, or join column used by a list endpoint needs an index on a large table; leading column
-  = the most selective filter (`docs/django-model-conventions.md` section 7).
+  = the most selective filter (`docs/conventions/django-models.md` section 7).
 - "This index helps" is a claim; back it with `EXPLAIN (ANALYZE, BUFFERS)` output, or label it
   "reasoned, not measured".
 - `icontains` search on large tables is a known full scan; flag it, do not silently add a trigram index

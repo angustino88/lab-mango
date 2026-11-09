@@ -3,8 +3,8 @@
 - Status: Accepted (owner decisions recorded 2026-10-21)
 - Scope: `core/common`, `core/infrastructure`, cross-feature conventions, CI guardrails
 - Tier: T2 overall; each phase below declares its own tier
-- Related owner documents: `docs/feature-template.md`, `docs/django-model-conventions.md`,
-  `docs/ai-team/api/response-standard.md`, `docs/ai-team/quality-gates.md`
+- Related owner documents: `docs/architecture/feature-template.md`, `docs/conventions/django-models.md`,
+  `docs/api/response-standard.md`, `docs/ai-team/quality-gates.md`
 
 Every finding cites `path:line`. Items marked **(not verified)** were not confirmed at runtime.
 

@@ -69,7 +69,7 @@ def agent_request_message(*, agent_uid: str, method: str, path: str, timestamp: 
 def authenticate_agent_request(evidence: SignedAgentRequest) -> AgentIdentity:
     """Verify a request signed with the identity's enrolled Ed25519 key.
 
-    Interim device authentication until installation mTLS (docs/backend-agent-api-spec.md section 3)
+    Interim device authentication until installation mTLS (docs/agent-platform/backend-api.md section 3)
     exists. Checks, all collapsed into one ``AgentRequestUnauthenticated``: canonical agent UID,
     timestamp within ``AGENT_REQUEST_MAX_SKEW_S``, nonce shape, an ACTIVE identity read from the
     database on every request (revocation applies to the next request), a valid signature, and a

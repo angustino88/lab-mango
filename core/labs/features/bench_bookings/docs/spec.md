@@ -38,7 +38,7 @@ Both decision actions require an RFC 9562 UUID `Idempotency-Key`, scoped to the 
 
 ---
 
-## 3. Options Standard Compliance (`GEMINI.md`)
+## 3. Options Standard Compliance (ADR 002)
 `GET /api/labs/bench-bookings/options` provides selector options `{id, sku, name}`.
 
 ---

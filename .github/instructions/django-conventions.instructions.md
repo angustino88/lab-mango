@@ -3,7 +3,7 @@ applyTo: 'core/**/*.py'
 ---
 # Django and DRF layering
 
-The layout and responsibilities are owned by `docs/feature-template.md` (sections 2 and 4). This file
+The layout and responsibilities are owned by `docs/architecture/feature-template.md` (sections 2 and 4). This file
 lists the checks agents most often get wrong. Existing code that breaks them is drift: report it, do not copy it.
 
 ## Layers (checkable)
@@ -24,7 +24,7 @@ Owned by `write-safety.instructions.md`.
 
 ## Errors
 - Commands and queries raise exceptions from the feature's `exceptions.py` (no HTTP status, no DRF imports).
-  The central handler maps them to the error envelope (`docs/ai-team/api/response-standard.md` ERR-1).
+  The central handler maps them to the error envelope (`docs/api/response-standard.md` ERR-1).
 - Each feature exception has a class attribute `code` in lowercase `snake_case` that becomes the API error `code`
   (ERR-2), e.g. `BenchConflict.code = "bench_conflict"`. A released code never changes (ERR-2).
 - Distinct business failures get distinct exception classes when the client must react differently

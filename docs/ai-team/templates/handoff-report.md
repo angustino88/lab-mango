@@ -1,5 +1,7 @@
 # Handoff: <task title>
 
+<!-- Working artifact: return it in chat or the pull request; do not commit it to the repository (docs/ai-team/documentation-map.md). -->
+
 **Role**: <role> · **Tier**: <T0/T1/T2> · **Status**: done / blocked / needs decision
 
 ## Summary

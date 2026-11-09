@@ -140,7 +140,7 @@ implementation code is out of scope unless explicitly requested.
 
 ## 3. Feature architecture standards
 
-The target feature structure and dependency rules are owned by `docs/feature-template.md`; the import table
+The target feature structure and dependency rules are owned by `docs/architecture/feature-template.md`; the import table
 agents check against is `.github/instructions/architecture.instructions.md`. Review and design against those;
 do not restate them. Existing features are transitional: report deviations as drift findings, never as the
 pattern to follow.
@@ -178,12 +178,12 @@ relationship without claiming ownership.
    nearest `docs/` folder beside the code) and update it instead of creating a second copy.
 4. The `docs/` folder next to the code being documented, grouped by domain (for example
    `core/<domain>/models/docs/<domain>-model-architecture.md`), following the naming of sibling documents.
-5. Only if none of the above applies, use the repo-level fallback: `docs/architecture.md` for the system
-   view, feature-level `docs/architecture.md`, and ADRs in `docs/architecture/decisions/`. Say it is a
+5. Only if none of the above applies, use the repo-level fallback: `docs/architecture/README.md` for the system
+   view, feature-level `docs/architecture/README.md`, and ADRs in `docs/architecture/decisions/`. Say it is a
    fallback and ask the owner to confirm the placement.
 
 Domain-specific model or feature documentation never goes in the repo-level `docs/` when a domain or
-feature docs folder exists. Repo-level `docs/architecture.md` holds cross-domain content only (system view,
+feature docs folder exists. Repo-level `docs/architecture/README.md` holds cross-domain content only (system view,
 domain map, links to domain docs). Keep one authoritative document per model group and link to it elsewhere.
 Markdown is the source format.
 

@@ -30,7 +30,7 @@ The Benches feature governs test bench entities, logical workbench groupings, us
 
 ---
 
-## 3. Options Standard Compliance (`GEMINI.md`)
+## 3. Options Standard Compliance (ADR 002)
 `GET /api/labs/benches/options` strictly returns flat:
 ```json
 {

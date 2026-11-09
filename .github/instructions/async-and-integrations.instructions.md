@@ -12,7 +12,7 @@ applyTo: '**/tasks*.py,**/tasks/**,**/handlers*.py,**/integrations/**,**/jira_in
   then mark them" in two steps without a lock.
 - **Bounded batches.** `query-performance.instructions.md` section 4.
 - **Durable vs best effort.** Use `transaction.on_commit` only for best-effort work. Work that must happen uses the
-  transactional outbox written in the command's transaction (`docs/feature-template.md` section 4, Events).
+  transactional outbox written in the command's transaction (`docs/architecture/feature-template.md` section 4, Events).
   Reference implementation: `core/labs/features/bench_bookings/` (outbox and notification delivery).
 - **Retries.** Bounded, exponential backoff with jitter, only for retryable errors.
   Permanent failures go to a visible dead-letter/failed state with an alert.
