@@ -122,6 +122,8 @@ ROUTING_SYNC_ENABLED_ENTITIES = ("users", "agents")
 ROUTING_SYNC_SNAPSHOT_MAX_LIMIT = 5000
 ROUTING_SYNC_CHANGES_MAX_LIMIT = 2000
 ROUTING_SYNC_LONGPOLL_MAX_WAIT_S = 30
+# Held long-polls re-read the stream head at this interval to see commits from other processes.
+ROUTING_SYNC_LONGPOLL_POLL_INTERVAL_S = env.float("ROUTING_SYNC_LONGPOLL_POLL_INTERVAL_S", default=1.0)
 LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "account_login"
 

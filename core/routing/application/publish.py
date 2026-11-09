@@ -31,27 +31,40 @@ _USER_KEY_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 )
 
-_STREAM_LISTENERS: dict[str, list[asyncio.Event]] = {"users": [], "agents": []}
+# Each asyncio waiter is stored with the loop it waits on: publications commit on worker threads,
+# and asyncio.Event is not thread-safe, so wake-ups are scheduled onto the owning loop.
+_STREAM_LISTENERS: dict[str, list[tuple[asyncio.AbstractEventLoop, asyncio.Event]]] = {"users": [], "agents": []}
 _THREAD_LISTENERS: dict[str, list[threading.Event]] = {"users": [], "agents": []}
+_LISTENER_LOCK = threading.Lock()
 
 
 def register_listener(entity_type: str, event: asyncio.Event) -> None:
-    """Register an in-memory event to wake up long-poll requests on change."""
-    _STREAM_LISTENERS.setdefault(entity_type, []).append(event)
+    """Register an in-memory event to wake up long-poll requests on change.
+
+    Must be called from the coroutine that awaits ``event``; the running loop is captured.
+    """
+    loop = asyncio.get_running_loop()
+    with _LISTENER_LOCK:
+        _STREAM_LISTENERS.setdefault(entity_type, []).append((loop, event))
 
 
 def unregister_listener(entity_type: str, event: asyncio.Event) -> None:
     """Unregister an in-memory event."""
-    listeners = _STREAM_LISTENERS.get(entity_type, [])
-    if event in listeners:
-        listeners.remove(event)
+    with _LISTENER_LOCK:
+        listeners = _STREAM_LISTENERS.get(entity_type, [])
+        listeners[:] = [entry for entry in listeners if entry[1] is not event]
 
 
 def notify_listeners(entity_type: str) -> None:
-    """Wake up all held in-memory long-poll waiters for the given entity."""
-    listeners = _STREAM_LISTENERS.get(entity_type, [])
-    for event in list(listeners):
-        event.set()
+    """Wake up all held in-memory long-poll waiters for the given entity (any thread)."""
+    with _LISTENER_LOCK:
+        listeners = list(_STREAM_LISTENERS.get(entity_type, []))
+    for loop, event in listeners:
+        try:
+            loop.call_soon_threadsafe(event.set)
+        except RuntimeError:
+            # The loop already closed; the waiter is gone and its own deadline cleans up.
+            continue
 
 
 def register_thread_listener(entity_type: str, event: threading.Event) -> None:

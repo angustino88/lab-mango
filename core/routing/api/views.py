@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
-import threading
 import uuid
 from typing import Any
 
+from adrf.views import APIView
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
@@ -18,7 +20,6 @@ from rest_framework.exceptions import (
 )
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from core.common.api.correlation import REQUEST_ID_HEADER, get_request_id
 from core.routing.api.authentication import (
@@ -36,8 +37,8 @@ from core.routing.api.serializers import (
     SyncInfoResponseSerializer,
 )
 from core.routing.application.publish import (
-    register_thread_listener,
-    unregister_thread_listener,
+    register_listener,
+    unregister_listener,
 )
 from core.routing.queries import (
     ChangesDelta,
@@ -316,8 +317,56 @@ class SyncSnapshotView(BaseSyncAPIView):
         return Response({"data": data}, status=status.HTTP_200_OK)
 
 
+def _is_idle(result: ChangesDelta | ChangesReset, since: int) -> bool:
+    return isinstance(result, ChangesDelta) and not result.changes and result.head_version == since
+
+
+async def _long_poll_changes(
+    entity: str,
+    *,
+    since: int,
+    epoch: uuid.UUID,
+    limit: int,
+    wait: int,
+) -> ChangesDelta | ChangesReset:
+    """Return changes, holding an idle request for up to ``wait`` seconds without blocking a thread.
+
+    Each read is a short call on Django's sync thread; the wait itself is an ``await`` on the event
+    loop. A waiter subscribes before re-reading the head (PUB-5: a wake-up cannot fall between the
+    check and the subscription) and re-reads every ``ROUTING_SYNC_LONGPOLL_POLL_INTERVAL_S`` so
+    commits made by other processes, which cannot reach this process's listeners, are seen within
+    that interval. In-process commits wake the waiter immediately.
+    """
+    read = sync_to_async(get_stream_changes)
+    result = await read(entity, since=since, requested_epoch=epoch, limit=limit)
+    if wait <= 0 or not _is_idle(result, since):
+        return result
+
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + wait
+    interval = float(getattr(settings, "ROUTING_SYNC_LONGPOLL_POLL_INTERVAL_S", 1.0))
+    event = asyncio.Event()
+    register_listener(entity, event)
+    try:
+        while True:
+            result = await read(entity, since=since, requested_epoch=epoch, limit=limit)
+            remaining = deadline - loop.time()
+            if not _is_idle(result, since) or remaining <= 0:
+                return result
+            event.clear()
+            try:
+                await asyncio.wait_for(event.wait(), timeout=min(interval, remaining))
+            except TimeoutError:
+                pass
+    finally:
+        unregister_listener(entity, event)
+
+
 class SyncChangesView(BaseSyncAPIView):
-    """GET /internal/changes/{entity} - bounded changes with optional long-poll."""
+    """GET /internal/changes/{entity} - bounded changes with optional long-poll.
+
+    The handler is async: a held long-poll must not occupy Django's shared sync thread (spec 8.8).
+    """
 
     @extend_schema(
         operation_id="get_internal_changes",
@@ -340,7 +389,7 @@ class SyncChangesView(BaseSyncAPIView):
         },
         tags=["Routing Sync"],
     )
-    def get(self, request: Request, entity: str) -> Response:
+    async def get(self, request: Request, entity: str) -> Response:
         req_id = getattr(request, "request_id", get_request_id(request))
         entity_err = self.validate_entity(entity, req_id)
         if entity_err is not None:
@@ -426,19 +475,7 @@ class SyncChangesView(BaseSyncAPIView):
                     request_id=req_id,
                 )
 
-        # Initial check
-        result = get_stream_changes(entity, since=since, requested_epoch=req_epoch, limit=limit)
-
-        # Long-poll if delta is empty and wait requested
-        if wait > 0 and isinstance(result, ChangesDelta) and not result.changes and since == result.head_version:
-            event = threading.Event()
-            register_thread_listener(entity, event)
-            try:
-                event.wait(timeout=wait)
-            finally:
-                unregister_thread_listener(entity, event)
-            # Recheck after wake-up or timeout
-            result = get_stream_changes(entity, since=since, requested_epoch=req_epoch, limit=limit)
+        result = await _long_poll_changes(entity, since=since, epoch=req_epoch, limit=limit, wait=wait)
 
         backend_id = getattr(settings, "BACKEND_ID", "dept_a")
         if isinstance(result, ChangesReset):
