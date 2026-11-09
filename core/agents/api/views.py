@@ -15,7 +15,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.agents.api.authentication import AgentSignatureAuthentication, IsAuthenticatedAgent
+from core.agents.api.authentication import AgentPrincipal, AgentSignatureAuthentication, IsAuthenticatedAgent
 from core.agents.application import (
     EnrollAgentInput,
     create_enrollment_grant,
@@ -354,7 +354,10 @@ class AgentHeartbeatAPIView(APIView):
         if not req_serializer.is_valid():
             return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", "Invalid heartbeat payload.", request)
 
-        identity = request.user.identity
+        principal = request.user
+        if not isinstance(principal, AgentPrincipal):  # guaranteed by IsAuthenticatedAgent
+            raise AuthenticationFailed("Agent request authentication failed.")
+        identity = principal.identity
         body_uid = req_serializer.validated_data.get("agent_uid")
         if body_uid is not None and body_uid != identity.agent_uid:
             return _error_response(

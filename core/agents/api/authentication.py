@@ -45,15 +45,21 @@ class AgentSignatureAuthentication(authentication.BaseAuthentication):
 
     def authenticate(self, request: Request) -> tuple[AgentPrincipal, None]:
         meta = request.META
-        values = [
-            meta.get("HTTP_X_AGENT_ID"),
-            meta.get("HTTP_X_AGENT_TIMESTAMP"),
-            meta.get("HTTP_X_AGENT_NONCE"),
-            meta.get("HTTP_X_AGENT_SIGNATURE"),
-        ]
-        if not all(isinstance(value, str) and value for value in values):
+        agent_uid = meta.get("HTTP_X_AGENT_ID")
+        timestamp = meta.get("HTTP_X_AGENT_TIMESTAMP")
+        nonce = meta.get("HTTP_X_AGENT_NONCE")
+        signature = meta.get("HTTP_X_AGENT_SIGNATURE")
+        if not (
+            isinstance(agent_uid, str)
+            and isinstance(timestamp, str)
+            and isinstance(nonce, str)
+            and isinstance(signature, str)
+            and agent_uid
+            and timestamp
+            and nonce
+            and signature
+        ):
             raise AuthenticationFailed(_FAILURE)
-        agent_uid, timestamp, nonce, signature = values
         evidence = SignedAgentRequest(
             agent_uid=agent_uid,
             timestamp=timestamp,
