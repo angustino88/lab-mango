@@ -5,15 +5,49 @@ from __future__ import annotations
 import hashlib
 import struct
 import uuid
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any
+from functools import wraps
+from typing import Any, ParamSpec, TypeVar
 
 from django.core.cache import cache
+from django.db import connection, transaction
 from django.db.models import Max, Subquery
 from django.utils import timezone
 
 from core.routing.models import RoutingChange, RoutingEntity, SyncState
+
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+
+
+@contextmanager
+def consistent_read() -> Iterator[None]:
+    """Run reads in one read-only REPEATABLE READ snapshot (SNAP-1, DIG-2, GET-2).
+
+    Under PostgreSQL's default READ COMMITTED each statement sees its own snapshot, so a head
+    version and the rows read afterwards could come from different moments. When the caller already
+    holds a transaction (tests, composed commands) the isolation level cannot be changed any more;
+    the reads then share the caller's transaction as before.
+    """
+    if connection.in_atomic_block:
+        yield
+        return
+    with transaction.atomic():
+        if connection.vendor == "postgresql":
+            with connection.cursor() as cursor:
+                cursor.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+        yield
+
+
+def _consistent(func: Callable[_P, _R]) -> Callable[_P, _R]:
+    @wraps(func)
+    def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+        with consistent_read():
+            return func(*args, **kwargs)
+
+    return wrapper
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,17 +92,23 @@ def compute_digest(rows: Iterable[tuple[str, str, str]]) -> str:
     return f"sha256:{hasher.hexdigest()}"
 
 
+def _digest_cache_key(entity_type: str, epoch: uuid.UUID, version: int) -> str:
+    # The epoch is part of the key: rotation keeps the version but must not serve the old epoch.
+    return f"routing:digest:v2:{entity_type}:{epoch}:{version}"
+
+
+@_consistent
 def get_stream_digest(entity_type: str) -> tuple[int, str, int, uuid.UUID]:
     """Return (count, checksum, version, epoch) from a consistent snapshot.
 
-    Results are cached per (entity_type, version) in accordance with DIG-3.
+    Results are cached per (entity_type, epoch, version) in accordance with DIG-3.
     """
     sync_state = SyncState.objects.filter(entity_type=entity_type).first()
     if sync_state is None:
         zero_epoch = uuid.UUID("00000000-0000-0000-0000-000000000000")
         return 0, compute_digest(()), 0, zero_epoch
 
-    cache_key = f"routing:digest:{entity_type}:{sync_state.version}"
+    cache_key = _digest_cache_key(entity_type, sync_state.epoch, sync_state.version)
     cached = cache.get(cache_key)
     if cached is not None:
         count, checksum, version, epoch_str = cached
@@ -122,6 +162,7 @@ def get_stream_info(
     }
 
 
+@_consistent
 def get_stream_snapshot(
     entity_type: str,
     *,
@@ -160,6 +201,7 @@ def get_stream_snapshot(
     return sync_state.version, sync_state.epoch, items, next_after
 
 
+@_consistent
 def get_stream_changes(
     entity_type: str,
     *,
@@ -212,7 +254,9 @@ def get_stream_changes(
     )
     oldest_retained_version = oldest_retained if oldest_retained is not None else sync_state.version
 
-    if oldest_retained is not None and oldest_retained > 1 and since < oldest_retained - 1:
+    # With no retained rows at all, any cursor behind the head has lost history too.
+    history_lost = oldest_retained is None and since < sync_state.version
+    if history_lost or (oldest_retained is not None and oldest_retained > 1 and since < oldest_retained - 1):
         return ChangesReset(
             mode="reset",
             reason="history_pruned",
