@@ -363,10 +363,9 @@ async def _long_poll_changes(
 
 
 class SyncChangesView(BaseSyncAPIView):
-    """GET /internal/changes/{entity} - bounded changes with optional long-poll.
+    """GET /internal/changes/{entity} - bounded changes with optional long-poll."""
 
-    The handler is async: a held long-poll must not occupy Django's shared sync thread (spec 8.8).
-    """
+    # The handler is async: a held long-poll must not occupy Django's shared sync thread (spec 8.8).
 
     @extend_schema(
         operation_id="get_internal_changes",
