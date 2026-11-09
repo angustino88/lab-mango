@@ -45,7 +45,9 @@ def enrolled(db):
     )
     kind = EquipmentKind.objects.create(category=category, name=f"Computer-{uuid.uuid4()}")
     equipment = ComputingEquipment.objects.create(sku=f"SIG-{uuid.uuid4()}", kind=kind, name="Signed host")
-    issued = create_enrollment_grant(CreateEnrollmentGrantInput(equipment_uid=equipment.uid, ttl_minutes=10), actor=actor)
+    issued = create_enrollment_grant(
+        CreateEnrollmentGrantInput(equipment_uid=equipment.uid, ttl_minutes=10), actor=actor
+    )
 
     private_key = Ed25519PrivateKey.generate()
     der = private_key.public_key().public_bytes(
@@ -113,7 +115,9 @@ def test_unsigned_heartbeat_naming_a_real_agent_is_rejected(enrolled):
 def test_signature_from_another_key_is_rejected(enrolled):
     identity, _key, _ = enrolled
     body = b"{}"
-    assert_unauthenticated(post_heartbeat(body, signed_headers(Ed25519PrivateKey.generate(), identity.agent_uid, body)))
+    assert_unauthenticated(
+        post_heartbeat(body, signed_headers(Ed25519PrivateKey.generate(), identity.agent_uid, body))
+    )
 
 
 @pytest.mark.parametrize(

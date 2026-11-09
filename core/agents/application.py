@@ -50,9 +50,7 @@ class SignedAgentRequest:
     body: bytes
 
 
-def agent_request_message(
-    *, agent_uid: str, method: str, path: str, timestamp: str, nonce: str, body: bytes
-) -> bytes:
+def agent_request_message(*, agent_uid: str, method: str, path: str, timestamp: str, nonce: str, body: bytes) -> bytes:
     """Bytes an agent signs for a device request; the device library must build the same bytes."""
     return b"\0".join(
         (
