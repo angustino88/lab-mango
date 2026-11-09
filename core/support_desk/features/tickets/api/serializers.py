@@ -21,8 +21,10 @@ from core.support_desk.contracts import (
 )
 from core.support_desk.features.tickets.application.adapters import compute_resource_badge, get_adapter
 from core.support_desk.features.tickets.application.policies import (
+    allowed_transitions,
     can_view_internal_notes,
     can_view_restricted_attachments,
+    is_support_agent,
 )
 from core.support_desk.features.tickets.application.sla import sla_summary
 from core.support_desk.models.activity import TicketActivity
@@ -72,12 +74,28 @@ class TeamSummarySerializer(serializers.ModelSerializer):
 
 
 class TeamSerializer(serializers.ModelSerializer):
-    lead = UserSummarySerializer(read_only=True)
-    members = UserSummarySerializer(many=True, read_only=True)
+    lead = UserSummarySerializer(
+        read_only=True, allow_null=True, help_text="Support agents only; null for other readers."
+    )
+    members = UserSummarySerializer(
+        many=True,
+        read_only=True,
+        allow_null=True,
+        help_text="Support agents only; null for other readers.",
+    )
 
     class Meta:
         model = SupportTeam
         fields = ("id", "name", "code", "description", "lead", "members", "is_active", "created_at")
+
+    def to_representation(self, instance: SupportTeam) -> dict[str, Any]:
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request is None or not is_support_agent(request.user):
+            # Team membership is staff directory data; requesters and API keys see the team, not its people.
+            data["lead"] = None
+            data["members"] = None
+        return data
 
 
 class LabelSerializer(serializers.ModelSerializer):
@@ -155,6 +173,36 @@ class StatusTransitionSerializer(serializers.ModelSerializer):
             "requires_resolution",
             "created_at",
         )
+
+
+class SupportPublicSettingsSerializer(serializers.ModelSerializer):
+    """Settings every ticket user needs to build forms and actions; operational tuning stays admin-only."""
+
+    class Meta:
+        model = SupportSettings
+        fields = (
+            "requesters_can_set_priority",
+            "default_ticket_type",
+            "reopen_window_days",
+            "comment_edit_window_minutes",
+            "max_attachment_size_bytes",
+            "allowed_attachment_extensions",
+            "max_attachments_per_ticket",
+            "csat_enabled",
+            "csat_window_days",
+        )
+        read_only_fields = fields
+
+
+class AvailableTransitionSerializer(serializers.ModelSerializer):
+    """A status change the current viewer may perform on the ticket right now."""
+
+    to_status = StatusSerializer(read_only=True)
+
+    class Meta:
+        model = SupportStatusTransition
+        fields = ("id", "to_status", "requires_reason", "requires_resolution")
+        read_only_fields = fields
 
 
 class SupportSettingsSerializer(serializers.ModelSerializer):
@@ -394,6 +442,7 @@ class TicketDetailSerializer(serializers.ModelSerializer):
     watchers = WatcherSerializer(many=True, read_only=True)
     is_watching = serializers.SerializerMethodField()
     sla = serializers.SerializerMethodField()
+    available_transitions = serializers.SerializerMethodField()
     resource_links = TicketResourceLinkSerializer(many=True, read_only=True)
     comments = serializers.SerializerMethodField()
     attachments = serializers.SerializerMethodField()
@@ -441,6 +490,7 @@ class TicketDetailSerializer(serializers.ModelSerializer):
             "csat_comment",
             "csat_submitted_at",
             "sla",
+            "available_transitions",
             "version",
             "resource_links",
             "comments",
@@ -454,6 +504,14 @@ class TicketDetailSerializer(serializers.ModelSerializer):
 
     def get_sla(self, obj: SupportTicket) -> dict[str, Any]:
         return sla_summary(obj)
+
+    @extend_schema_field(AvailableTransitionSerializer(many=True))
+    def get_available_transitions(self, obj: SupportTicket) -> list[dict[str, Any]]:
+        """Status changes the viewer may perform now; drives the ticket's action buttons."""
+        user = self._user()
+        if user is None:
+            return []
+        return list(AvailableTransitionSerializer(allowed_transitions(user, obj), many=True, context=self.context).data)
 
     def get_is_watching(self, obj: SupportTicket) -> bool:
         user = self._user()

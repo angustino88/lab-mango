@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 609,
+  "total_endpoints": 610,
   "generated_at": "2026-11-10",
   "endpoints": [
     {
@@ -176061,6 +176061,271 @@
       }
     },
     {
+      "endpoint": "/api/support/settings",
+      "method": "GET",
+      "operation_id": "support_settings_retrieve",
+      "summary": "Get Settings",
+      "description": "Client-facing subset of the Support Desk settings that drives ticket forms and actions.",
+      "tags": [
+        "Support Desk"
+      ],
+      "parameters": [],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Settings every ticket user needs to build forms and actions; operational tuning stays admin-only.",
+                "properties": {
+                  "requesters_can_set_priority": {
+                    "type": "boolean",
+                    "readOnly": true,
+                    "description": "If disabled, requesters describe impact/urgency and the priority is derived (agents still set it)."
+                  },
+                  "default_ticket_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "description": "Type applied when a ticket is created without one.\n\n* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+                  },
+                  "reopen_window_days": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "description": "Days after resolution during which a requester may reopen a ticket."
+                  },
+                  "comment_edit_window_minutes": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "description": "Minutes after creation during which an author may edit/delete their comment."
+                  },
+                  "max_attachment_size_bytes": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "description": "Maximum allowed attachment size in bytes (default 25 MB)."
+                  },
+                  "allowed_attachment_extensions": {
+                    "readOnly": true,
+                    "description": "List of permitted file extensions with dots, e.g. ['.png', '.pdf']."
+                  },
+                  "max_attachments_per_ticket": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "description": "Maximum number of attachments allowed on a single ticket."
+                  },
+                  "csat_enabled": {
+                    "type": "boolean",
+                    "readOnly": true,
+                    "description": "Allow requesters to rate resolved tickets (1-5)."
+                  },
+                  "csat_window_days": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "description": "Days after resolution during which the requester can submit a satisfaction rating."
+                  }
+                },
+                "required": [
+                  "allowed_attachment_extensions",
+                  "comment_edit_window_minutes",
+                  "csat_enabled",
+                  "csat_window_days",
+                  "default_ticket_type",
+                  "max_attachment_size_bytes",
+                  "max_attachments_per_ticket",
+                  "reopen_window_days",
+                  "requesters_can_set_priority"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "requesters_can_set_priority": true,
+              "default_ticket_type": {},
+              "reopen_window_days": 1,
+              "comment_edit_window_minutes": 1,
+              "max_attachment_size_bytes": 1,
+              "allowed_attachment_extensions": null,
+              "max_attachments_per_ticket": 1,
+              "csat_enabled": true,
+              "csat_window_days": 1
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "endpoint": "/api/support/statuses",
       "method": "GET",
       "operation_id": "support_statuses_retrieve",
@@ -177455,7 +177720,9 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true,
+                      "description": "Support agents only; null for other readers."
                     },
                     "members": {
                       "type": "array",
@@ -177463,7 +177730,9 @@
                         "type": "object",
                         "description": "(max nesting depth reached)"
                       },
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true,
+                      "description": "Support agents only; null for other readers."
                     },
                     "is_active": {
                       "type": "boolean",
@@ -177777,7 +178046,9 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Support agents only; null for other readers."
                   },
                   "members": {
                     "type": "array",
@@ -177785,7 +178056,9 @@
                       "type": "object",
                       "description": "(max nesting depth reached)"
                     },
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Support agents only; null for other readers."
                   },
                   "is_active": {
                     "type": "boolean",
@@ -178404,7 +178677,9 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Support agents only; null for other readers."
                   },
                   "members": {
                     "type": "array",
@@ -178412,7 +178687,9 @@
                       "type": "object",
                       "description": "(max nesting depth reached)"
                     },
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Support agents only; null for other readers."
                   },
                   "is_active": {
                     "type": "boolean",
@@ -180205,6 +180482,14 @@
                     "additionalProperties": {},
                     "readOnly": true
                   },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "version": {
                     "type": "integer",
                     "maximum": 2147483647,
@@ -180256,6 +180541,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -180335,6 +180621,9 @@
               "csat_comment": "string",
               "csat_submitted_at": "2026-10-20T12:00:00Z",
               "sla": {},
+              "available_transitions": [
+                {}
+              ],
               "version": 1,
               "resource_links": [
                 {}
@@ -181311,6 +181600,14 @@
                     "additionalProperties": {},
                     "readOnly": true
                   },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "version": {
                     "type": "integer",
                     "maximum": 2147483647,
@@ -181362,6 +181659,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -181441,6 +181739,9 @@
               "csat_comment": "string",
               "csat_submitted_at": "2026-10-20T12:00:00Z",
               "sla": {},
+              "available_transitions": [
+                {}
+              ],
               "version": 1,
               "resource_links": [
                 {}
@@ -182029,6 +182330,14 @@
                     "additionalProperties": {},
                     "readOnly": true
                   },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "version": {
                     "type": "integer",
                     "maximum": 2147483647,
@@ -182080,6 +182389,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -182159,6 +182469,9 @@
               "csat_comment": "string",
               "csat_submitted_at": "2026-10-20T12:00:00Z",
               "sla": {},
+              "available_transitions": [
+                {}
+              ],
               "version": 1,
               "resource_links": [
                 {}
@@ -183007,6 +183320,14 @@
                     "additionalProperties": {},
                     "readOnly": true
                   },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "version": {
                     "type": "integer",
                     "maximum": 2147483647,
@@ -183058,6 +183379,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -183137,6 +183459,9 @@
               "csat_comment": "string",
               "csat_submitted_at": "2026-10-20T12:00:00Z",
               "sla": {},
+              "available_transitions": [
+                {}
+              ],
               "version": 1,
               "resource_links": [
                 {}
@@ -185580,6 +185905,14 @@
                     "additionalProperties": {},
                     "readOnly": true
                   },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "version": {
                     "type": "integer",
                     "maximum": 2147483647,
@@ -185631,6 +185964,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -185710,6 +186044,9 @@
               "csat_comment": "string",
               "csat_submitted_at": "2026-10-20T12:00:00Z",
               "sla": {},
+              "available_transitions": [
+                {}
+              ],
               "version": 1,
               "resource_links": [
                 {}
@@ -187919,6 +188256,14 @@
                     "additionalProperties": {},
                     "readOnly": true
                   },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "version": {
                     "type": "integer",
                     "maximum": 2147483647,
@@ -187970,6 +188315,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -188049,6 +188395,9 @@
               "csat_comment": "string",
               "csat_submitted_at": "2026-10-20T12:00:00Z",
               "sla": {},
+              "available_transitions": [
+                {}
+              ],
               "version": 1,
               "resource_links": [
                 {}

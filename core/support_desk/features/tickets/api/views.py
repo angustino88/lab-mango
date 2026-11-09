@@ -7,7 +7,7 @@ from drf_api_contracts import ResponseContract
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_api_key.permissions import HasAPIKey
@@ -59,6 +59,7 @@ from core.support_desk.features.tickets.api.serializers import (
     StatusOptionsQuerySerializer,
     StatusSerializer,
     StatusTransitionSerializer,
+    SupportPublicSettingsSerializer,
     SupportSettingsSerializer,
     TeamSerializer,
     TicketActivitySerializer,
@@ -162,16 +163,16 @@ from core.support_desk.features.tickets.queries import (
     get_status_options,
     get_team_options,
     get_ticket_by_key,
+    list_categories,
+    list_labels,
+    list_priorities,
+    list_statuses,
+    list_teams,
     list_tickets,
 )
 from core.support_desk.models.attachment import TicketAttachment
 from core.support_desk.models.canned_response import CannedResponse
-from core.support_desk.models.category import SupportCategory
-from core.support_desk.models.label import SupportLabel
-from core.support_desk.models.priority import SupportPriority
 from core.support_desk.models.settings import SupportSettings
-from core.support_desk.models.status import SupportStatus
-from core.support_desk.models.team import SupportTeam
 from core.support_desk.models.transition import SupportStatusTransition
 
 
@@ -710,25 +711,35 @@ class CannedResponseListAPIView(SupportAPIView):
 
 
 class AdminSupportAPIView(SupportAPIView):
-    """Base class for administrative configuration endpoints."""
+    """Administrative configuration (workflow, canned responses, settings): admin-only for every method."""
 
     permission_classes = [IsSupportAdmin]
     schema_tags = ("Support Desk Administration",)
 
+
+class SupportCatalogAPIView(SupportAPIView):
+    """ADR 002 catalogs (categories, priorities, statuses, teams, labels).
+
+    Reads are open to any API key or authenticated user, writes require a support administrator.
+    Which rows and fields a reader sees is decided by the catalog queries and serializers.
+    """
+
+    schema_tags = ("Support Desk Administration",)
+
     def get_permissions(self):
-        if self.request.method in ("GET", "HEAD", "OPTIONS"):
-            return [permission() for permission in (HasAPIKey | IsAuthenticated,)]
-        return [permission() for permission in self.permission_classes]
+        if self.request.method in SAFE_METHODS:
+            return [(HasAPIKey | IsAuthenticated)()]
+        return [IsSupportAdmin()]
 
 
-class AdminCategoryListCreateAPIView(AdminSupportAPIView):
+class AdminCategoryListCreateAPIView(SupportCatalogAPIView):
     """List all categories or create a new category."""
 
     get_contract = operation("AdminCategoryList", CategorySerializer, many=True)
     post_contract = operation("AdminCategoryCreate", CategorySerializer, request=AdminCategoryCreateSerializer, created=True)
 
     def handle_get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        return self.respond(list(SupportCategory.objects.all().order_by("sort_order", "id")))
+        return self.respond(list(list_categories(viewer=request.user)))
 
     def handle_post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         serializer, error = self.validate_request()
@@ -738,7 +749,7 @@ class AdminCategoryListCreateAPIView(AdminSupportAPIView):
         return self._execute(lambda: create_category(cmd, actor=request.user))
 
 
-class AdminCategoryDetailAPIView(AdminSupportAPIView):
+class AdminCategoryDetailAPIView(SupportCatalogAPIView):
     """Update or delete a category."""
 
     patch_contract = operation("AdminCategoryUpdate", CategorySerializer, request=AdminCategoryUpdateSerializer)
@@ -755,14 +766,14 @@ class AdminCategoryDetailAPIView(AdminSupportAPIView):
         return self._execute(lambda: delete_category(category_id, actor=request.user), delete=True)
 
 
-class AdminPriorityListCreateAPIView(AdminSupportAPIView):
+class AdminPriorityListCreateAPIView(SupportCatalogAPIView):
     """List all priorities or create a new priority."""
 
     get_contract = operation("AdminPriorityList", PrioritySerializer, many=True)
     post_contract = operation("AdminPriorityCreate", PrioritySerializer, request=AdminPriorityCreateSerializer, created=True)
 
     def handle_get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        return self.respond(list(SupportPriority.objects.all().order_by("rank", "id")))
+        return self.respond(list(list_priorities(viewer=request.user)))
 
     def handle_post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         serializer, error = self.validate_request()
@@ -772,7 +783,7 @@ class AdminPriorityListCreateAPIView(AdminSupportAPIView):
         return self._execute(lambda: create_priority(cmd, actor=request.user))
 
 
-class AdminPriorityDetailAPIView(AdminSupportAPIView):
+class AdminPriorityDetailAPIView(SupportCatalogAPIView):
     """Update or delete a priority."""
 
     patch_contract = operation("AdminPriorityUpdate", PrioritySerializer, request=AdminPriorityUpdateSerializer)
@@ -789,14 +800,14 @@ class AdminPriorityDetailAPIView(AdminSupportAPIView):
         return self._execute(lambda: delete_priority(priority_id, actor=request.user), delete=True)
 
 
-class AdminStatusListCreateAPIView(AdminSupportAPIView):
+class AdminStatusListCreateAPIView(SupportCatalogAPIView):
     """List all workflow statuses or create a new status."""
 
     get_contract = operation("AdminStatusList", StatusSerializer, many=True)
     post_contract = operation("AdminStatusCreate", StatusSerializer, request=AdminStatusCreateSerializer, created=True)
 
     def handle_get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        return self.respond(list(SupportStatus.objects.all().order_by("sort_order", "id")))
+        return self.respond(list(list_statuses(viewer=request.user)))
 
     def handle_post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         serializer, error = self.validate_request()
@@ -806,7 +817,7 @@ class AdminStatusListCreateAPIView(AdminSupportAPIView):
         return self._execute(lambda: create_status(cmd, actor=request.user))
 
 
-class AdminStatusDetailAPIView(AdminSupportAPIView):
+class AdminStatusDetailAPIView(SupportCatalogAPIView):
     """Update a workflow status."""
 
     patch_contract = operation("AdminStatusUpdate", StatusSerializer, request=AdminStatusUpdateSerializer)
@@ -859,6 +870,15 @@ class AdminTransitionDetailAPIView(AdminSupportAPIView):
         return self._execute(lambda: delete_transition(transition_id, actor=request.user), delete=True)
 
 
+class SupportSettingsAPIView(SupportAPIView):
+    """Client-facing subset of the Support Desk settings that drives ticket forms and actions."""
+
+    get_contract = operation("SupportSettingsDetail", SupportPublicSettingsSerializer)
+
+    def handle_get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        return self.respond(SupportSettings.get_solo())
+
+
 class AdminSettingsAPIView(AdminSupportAPIView):
     """View and update global Support Desk configuration settings."""
 
@@ -876,14 +896,14 @@ class AdminSettingsAPIView(AdminSupportAPIView):
         return self._execute(lambda: update_settings(cmd, actor=request.user))
 
 
-class AdminTeamListCreateAPIView(AdminSupportAPIView):
+class AdminTeamListCreateAPIView(SupportCatalogAPIView):
     """List all support teams or create a new team."""
 
     get_contract = operation("AdminTeamList", TeamSerializer, many=True)
     post_contract = operation("AdminTeamCreate", TeamSerializer, request=AdminTeamCreateSerializer, created=True)
 
     def handle_get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        return self.respond(list(SupportTeam.objects.select_related("lead").prefetch_related("members")))
+        return self.respond(list(list_teams(viewer=request.user)))
 
     def handle_post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         serializer, error = self.validate_request()
@@ -893,7 +913,7 @@ class AdminTeamListCreateAPIView(AdminSupportAPIView):
         return self._execute(lambda: create_team(cmd, actor=request.user))
 
 
-class AdminTeamDetailAPIView(AdminSupportAPIView):
+class AdminTeamDetailAPIView(SupportCatalogAPIView):
     """Update or delete a support team."""
 
     patch_contract = operation("AdminTeamUpdate", TeamSerializer, request=AdminTeamUpdateSerializer)
@@ -910,14 +930,14 @@ class AdminTeamDetailAPIView(AdminSupportAPIView):
         return self._execute(lambda: delete_team(team_id, actor=request.user), delete=True)
 
 
-class AdminLabelListCreateAPIView(AdminSupportAPIView):
+class AdminLabelListCreateAPIView(SupportCatalogAPIView):
     """List all labels or create a new label."""
 
     get_contract = operation("AdminLabelList", LabelSerializer, many=True)
     post_contract = operation("AdminLabelCreate", LabelSerializer, request=AdminLabelCreateSerializer, created=True)
 
     def handle_get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        return self.respond(list(SupportLabel.objects.all()))
+        return self.respond(list(list_labels(viewer=request.user)))
 
     def handle_post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         serializer, error = self.validate_request()
@@ -927,7 +947,7 @@ class AdminLabelListCreateAPIView(AdminSupportAPIView):
         return self._execute(lambda: create_label(cmd, actor=request.user))
 
 
-class AdminLabelDetailAPIView(AdminSupportAPIView):
+class AdminLabelDetailAPIView(SupportCatalogAPIView):
     """Rename, recolour or delete a label."""
 
     patch_contract = operation("AdminLabelUpdate", LabelSerializer, request=AdminLabelUpdateSerializer)

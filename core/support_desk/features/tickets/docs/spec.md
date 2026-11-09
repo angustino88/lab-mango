@@ -1,6 +1,6 @@
 # Feature Specification: Support Desk & Ticket Management (`core/support_desk/features/tickets`)
 
-> Status: Implemented. Verified against `api/urls.py`, `api/views.py`, `application/policies.py` and migrations on 2026-11-09. This is the only ticket specification; it replaced the Jira-era draft (`docs/support-ticket-management-spec.md`, removed).
+> Status: Implemented. Verified against `api/urls.py`, `api/views.py`, `application/policies.py` and migrations on 2026-11-10. This is the only ticket specification; it replaced the Jira-era draft (`docs/support-ticket-management-spec.md`, removed).
 
 ## 1. Domain Overview & Purpose
 Internal incident / service-request desk with resource traceability (bench, equipment, license, station, room),
@@ -61,6 +61,19 @@ Recipients: requester, assignee, **watchers** (never for internal notes), **team
 ### 3.5 Attachments
 Type/size/count limits (from `SupportSettings`) and magic-byte checks. Scanning is pluggable: set `SUPPORT_DESK_ATTACHMENT_SCANNER` to a dotted callable `(attachment) -> AttachmentScanStatus`. Without it uploads are `clean` immediately and verified by SHA-256 integrity; with it uploads start `pending` and **cannot be downloaded** (409) until scanned clean.
 
+### 3.6 Configuration visibility
+Deny by default: everything under `admin/` (workflow transitions, all canned responses, full settings) is
+support-admin only, for reads as well as writes. Ticket users get what they need without it:
+- **Actions:** ticket detail carries `available_transitions` — `{id, to_status, requires_reason,
+  requires_resolution}` for each status change *this viewer* may perform now (same rules as the
+  transition command: role, active target, requester reopen window). Clients render action buttons from
+  it instead of reading the workflow.
+- **Forms:** `GET settings` returns only `requesters_can_set_priority`, `default_ticket_type`,
+  `reopen_window_days`, `comment_edit_window_minutes`, attachment limits, `csat_enabled` and
+  `csat_window_days`. SLA thresholds and auto-close tuning stay admin-only.
+- **Catalogs:** readable by any API key or authenticated user (ADR 002), active rows only; inactive rows
+  and team membership are staff data. Agents use `GET canned-responses` for active templates.
+
 ## 4. API
 Base `/api/support/`. All responses use the [standard envelope](../../../../../docs/api/response-standard.md). `{key}` is the ticket key. "any" means `HasAPIKey | IsAuthenticated`; "visible" applies §3.1. Generated contract: `openapi/support-desk-tickets.yml`.
 
@@ -68,7 +81,7 @@ Base `/api/support/`. All responses use the [standard envelope](../../../../../d
 |---|---|---|
 | `GET/POST tickets` | any / any | List (scoped, filterable) / create |
 | `GET tickets/stats?days=30` | agent | Workload, SLA health, throughput, CSAT |
-| `GET/PATCH tickets/{key}` | visible (requester may edit only while `open`) | Detail / partial update (`version` required); `labels`, `team_id`, `parent_key` are agent-only; `null` clears `team_id`, `due_date`; empty `parent_key` clears parent |
+| `GET/PATCH tickets/{key}` | visible (requester may edit only while `open`) | Detail (includes `available_transitions`, §3.6) / partial update (`version` required); `labels`, `team_id`, `parent_key` are agent-only; `null` clears `team_id`, `due_date`; empty `parent_key` clears parent |
 | `POST tickets/{key}/assign` | agent | Assign / reassign (`version` optional) |
 | `POST tickets/{key}/transitions` | per `SupportStatusTransition.allowed_roles` | Change status; accepts `reason`, `resolution_code` as the transition requires |
 | `POST/DELETE tickets/{key}/resources` | link: agent, or a requester who can view the resource; unlink: agent | Link / unlink lab resources |
@@ -80,11 +93,12 @@ Base `/api/support/`. All responses use the [standard envelope](../../../../../d
 | `GET tickets/{key}/activity` | visible | Audit trail (agent-only entries hidden from requesters) |
 | `GET resources/{type}/{id}/tickets` | any (scoped) | Resource incident history |
 | `GET {categories,priorities,statuses,teams,labels}/options` | any | Flat `{id, sku, name}` selectors ([ADR 002](../../../../../docs/architecture/decisions/002-catalog-and-selector-api.md)); category/team `sku` = `code`, priority `sku` = `code` or `null`, label/status `sku` = `null` |
-| `GET {categories,priorities,statuses,teams,labels}`, `GET …/{id}` | any | Catalog read |
+| `GET {categories,priorities,statuses,teams,labels}` | any | Catalog read: active rows only, inactive rows for admins; team `lead`/`members` are `null` unless the reader is an agent (§3.6) |
 | `POST {categories,…}`, `PATCH/DELETE …/{id}` | admin | Catalog configuration |
 | `GET canned-responses[?ticket=KEY]` | agent | Usable templates, optionally rendered for a ticket |
-| `GET/POST admin/{transitions,canned-responses}`, `PATCH/DELETE …/{id}` | read: any; write: admin | Workflow and canned-response configuration |
-| `GET/PATCH admin/settings` | read: any; write: admin | Singleton settings |
+| `GET settings` | authenticated | Client-facing settings subset (§3.6) |
+| `GET/POST admin/{transitions,canned-responses}`, `PATCH/DELETE …/{id}` | admin | Workflow and canned-response configuration |
+| `GET/PATCH admin/settings` | admin | All settings, including SLA and auto-close tuning |
 
 ### Ticket list filters
 `key, status, status_id, system_state, priority_id, category_id, requester_id, assignee_id, unassigned, team_id, no_team, ticket_type, source, impact, urgency, label, parent_key, watcher_id, resolution_code, external_reference, resource_type, resource_id, created_after/before, updated_after/before, resolution_due_after/before`; search over `key, subject, description, external_reference`; ordering by `priority, created_at, updated_at, last_activity_at, resolution_due_at, number, id`.

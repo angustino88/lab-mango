@@ -788,6 +788,8 @@ paths:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1priorities~1options
   /api/support/resources/{resource_type}/{resource_id}/tickets:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1resources~1{resource_type}~1{resource_id}~1tickets
+  /api/support/settings:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1settings
   /api/support/statuses:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1statuses
   /api/support/statuses/{status_id}:

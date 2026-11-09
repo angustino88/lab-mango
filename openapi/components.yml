@@ -1318,6 +1318,31 @@ components:
         * `OK` - OK
 
         * `NOK` - NOK'
+    AvailableTransition:
+      type: object
+      description: A status change the current viewer may perform on the ticket right
+        now.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        to_status:
+          allOf:
+          - $ref: '#/components/schemas/Status'
+          readOnly: true
+        requires_reason:
+          type: boolean
+          readOnly: true
+          description: Whether this transition requires a reason from the actor.
+        requires_resolution:
+          type: boolean
+          readOnly: true
+          description: Whether this transition requires a resolution summary.
+      required:
+      - id
+      - requires_reason
+      - requires_resolution
+      - to_status
     Bench:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -24640,6 +24665,73 @@ components:
       required:
       - resource_count
       - status
+    SupportPublicSettings:
+      type: object
+      description: Settings every ticket user needs to build forms and actions; operational
+        tuning stays admin-only.
+      properties:
+        requesters_can_set_priority:
+          type: boolean
+          readOnly: true
+          description: If disabled, requesters describe impact/urgency and the priority
+            is derived (agents still set it).
+        default_ticket_type:
+          allOf:
+          - $ref: '#/components/schemas/TicketTypeEnum'
+          readOnly: true
+          description: 'Type applied when a ticket is created without one.
+
+
+            * `incident` - Incident
+
+            * `service_request` - Service Request
+
+            * `problem` - Problem
+
+            * `change` - Change
+
+            * `question` - Question'
+        reopen_window_days:
+          type: integer
+          readOnly: true
+          description: Days after resolution during which a requester may reopen a
+            ticket.
+        comment_edit_window_minutes:
+          type: integer
+          readOnly: true
+          description: Minutes after creation during which an author may edit/delete
+            their comment.
+        max_attachment_size_bytes:
+          type: integer
+          readOnly: true
+          description: Maximum allowed attachment size in bytes (default 25 MB).
+        allowed_attachment_extensions:
+          readOnly: true
+          description: List of permitted file extensions with dots, e.g. ['.png',
+            '.pdf'].
+        max_attachments_per_ticket:
+          type: integer
+          readOnly: true
+          description: Maximum number of attachments allowed on a single ticket.
+        csat_enabled:
+          type: boolean
+          readOnly: true
+          description: Allow requesters to rate resolved tickets (1-5).
+        csat_window_days:
+          type: integer
+          readOnly: true
+          description: Days after resolution during which the requester can submit
+            a satisfaction rating.
+      required:
+      - allowed_attachment_extensions
+      - comment_edit_window_minutes
+      - csat_enabled
+      - csat_window_days
+      - default_ticket_type
+      - max_attachment_size_bytes
+      - max_attachments_per_ticket
+      - reopen_window_days
+      - requesters_can_set_priority
     SupportQueueStatsSerializersQueueStatsDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -24725,6 +24817,14 @@ components:
           readOnly: true
       required:
       - updated_at
+    SupportSettingsDetailSerializersSupportPublicSettingsDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/SupportPublicSettings'
+      required:
+      - data
     SyncInfoResponse:
       type: object
       properties:
@@ -24812,11 +24912,15 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserSummary'
           readOnly: true
+          nullable: true
+          description: Support agents only; null for other readers.
         members:
           type: array
           items:
             $ref: '#/components/schemas/UserSummary'
           readOnly: true
+          nullable: true
+          description: Support agents only; null for other readers.
         is_active:
           type: boolean
           default: true
@@ -25348,6 +25452,11 @@ components:
           type: object
           additionalProperties: {}
           readOnly: true
+        available_transitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailableTransition'
+          readOnly: true
         version:
           type: integer
           maximum: 2147483647
@@ -25379,6 +25488,7 @@ components:
       - activities
       - assignee
       - attachments
+      - available_transitions
       - category
       - children
       - comments

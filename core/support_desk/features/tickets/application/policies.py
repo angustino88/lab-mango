@@ -128,7 +128,32 @@ def can_transition_ticket(
     ticket: SupportTicket,
     transition: SupportStatusTransition,
 ) -> bool:
+    return _transition_allowed(resolve_support_role(user), user, ticket, transition)
+
+
+def allowed_transitions(user: Any, ticket: SupportTicket) -> list[SupportStatusTransition]:
+    """Transitions out of the ticket's current status that ``user`` may execute now.
+
+    Applies exactly the rules of :func:`can_transition_ticket` (and the active-target check of the
+    transition command), resolving the actor's role once for the whole list.
+    """
     role = resolve_support_role(user)
+    if not role:
+        return []
+    candidates = (
+        SupportStatusTransition.objects.filter(from_status_id=ticket.status_id, to_status__is_active=True)
+        .select_related("to_status")
+        .order_by("to_status__sort_order", "id")
+    )
+    return [transition for transition in candidates if _transition_allowed(role, user, ticket, transition)]
+
+
+def _transition_allowed(
+    role: SupportRole | None,
+    user: Any,
+    ticket: SupportTicket,
+    transition: SupportStatusTransition,
+) -> bool:
     if not role:
         return False
 
