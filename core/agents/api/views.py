@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -30,6 +30,7 @@ from core.agents.exceptions import (
 from core.agents.models import AgentIdentity
 from core.common.api.correlation import get_request_id
 from core.routing.api.serializers import ErrorEnvelopeSerializer
+from core.users.public import IsLabCoordinator
 
 from .serializers import (
     AgentDetailResponseSerializer,
@@ -65,7 +66,8 @@ def _error_response(status_code: int, code: str, message: str, request: Request,
 class AgentListCreateAPIView(APIView):
     """List agent identities or issue an initial enrollment grant."""
 
-    permission_classes = [IsAuthenticated]
+    # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
+    permission_classes = [IsLabCoordinator]
 
     @extend_schema(
         operation_id="list_agents",
@@ -89,6 +91,7 @@ class AgentListCreateAPIView(APIView):
             201: OpenApiResponse(response=EnrollmentGrantIssuedResponseSerializer, description="Enrollment grant issued"),
             400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Invalid request"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
+            403: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"),
             409: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Equipment already has pending or active agent"),
         },
         tags=["Agents (Operator)"],
@@ -132,7 +135,8 @@ class AgentListCreateAPIView(APIView):
 class AgentDetailAPIView(APIView):
     """Retrieve detail of an enrolled agent."""
 
-    permission_classes = [IsAuthenticated]
+    # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
+    permission_classes = [IsLabCoordinator]
 
     @extend_schema(
         operation_id="get_agent_detail",
@@ -152,7 +156,8 @@ class AgentDetailAPIView(APIView):
 class AgentGrantCreateAPIView(APIView):
     """Issue a new or recovery enrollment grant for an existing agent."""
 
-    permission_classes = [IsAuthenticated]
+    # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
+    permission_classes = [IsLabCoordinator]
 
     @extend_schema(
         operation_id="create_agent_recovery_grant",
@@ -162,6 +167,7 @@ class AgentGrantCreateAPIView(APIView):
             201: OpenApiResponse(response=EnrollmentGrantIssuedResponseSerializer, description="Grant issued"),
             400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Invalid request"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
+            403: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"),
             404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Agent not found"),
             409: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Enrollment conflict"),
         },
@@ -200,7 +206,8 @@ class AgentGrantCreateAPIView(APIView):
 class AgentRevokeActionAPIView(APIView):
     """Revoke an active agent identity."""
 
-    permission_classes = [IsAuthenticated]
+    # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
+    permission_classes = [IsLabCoordinator]
 
     @extend_schema(
         operation_id="revoke_agent",
@@ -208,6 +215,7 @@ class AgentRevokeActionAPIView(APIView):
         responses={
             200: OpenApiResponse(response=AgentDetailResponseSerializer, description="Agent revoked"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
+            403: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"),
             404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Agent not found"),
             409: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Conflict"),
         },
@@ -226,7 +234,8 @@ class AgentRevokeActionAPIView(APIView):
 class AgentDecommissionActionAPIView(APIView):
     """Decommission an active agent identity."""
 
-    permission_classes = [IsAuthenticated]
+    # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
+    permission_classes = [IsLabCoordinator]
 
     @extend_schema(
         operation_id="decommission_agent",
@@ -234,6 +243,7 @@ class AgentDecommissionActionAPIView(APIView):
         responses={
             200: OpenApiResponse(response=AgentDetailResponseSerializer, description="Agent decommissioned"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
+            403: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"),
             404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Agent not found"),
             409: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Conflict"),
         },

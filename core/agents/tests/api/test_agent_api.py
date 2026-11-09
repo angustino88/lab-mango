@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import itertools
 import uuid
 
 import pytest
@@ -7,11 +8,13 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from rest_framework.test import APIClient
 
 from core.agents.application import ENROLLMENT_CONTEXT
 from core.agents.models import AgentIdentity
 from core.labs.models import ComputingEquipment, EquipmentCategory, EquipmentKind
+from core.users.models import URSGroup
 
 
 def _b64(data: bytes) -> str:
@@ -23,10 +26,27 @@ def api_client():
     return APIClient()
 
 
+_URS_IDS = itertools.count(81000)
+
+
+def _user_with_labs_role(username: str, role: str | None):
+    user = get_user_model().objects.create_user(username=username, password="password")
+    if role is not None:
+        group, _ = Group.objects.get_or_create(name=f"agents-{role}-{username}")
+        URSGroup.objects.create(group=group, urs_group_id=next(_URS_IDS), labs_role=role)
+        user.groups.add(group)
+    return user
+
+
 @pytest.fixture
 def admin_user(db):
-    user_model = get_user_model()
-    return user_model.objects.create_user(username="agent-admin", password="password")
+    # Operator writes need the Labs coordinator role (or admin, which implies it).
+    return _user_with_labs_role("agent-admin", "coord")
+
+
+@pytest.fixture
+def plain_user(db):
+    return _user_with_labs_role("agent-viewer", "user")
 
 
 @pytest.fixture
@@ -48,6 +68,39 @@ def test_operator_routes_require_authentication(api_client, computing_equipment)
     # 2. Create grant
     resp = api_client.post("/api/agents", {"equipment_uid": str(computing_equipment.uid)})
     assert resp.status_code == 401
+
+
+@pytest.mark.django_db
+def test_operator_writes_require_lab_coordinator_role(api_client, admin_user, plain_user, computing_equipment):
+    api_client.force_authenticate(user=admin_user)
+    created = api_client.post("/api/agents", {"equipment_uid": str(computing_equipment.uid)}, format="json")
+    assert created.status_code == 201
+    agent = AgentIdentity.objects.get(agent_uid=created.data["data"]["agent_uid"])
+
+    api_client.force_authenticate(user=plain_user)
+    # Reads stay open to any authenticated user.
+    assert api_client.get("/api/agents").status_code == 200
+    assert api_client.get(f"/api/agents/{agent.pk}").status_code == 200
+    # Every write is denied without the coordinator role, and nothing changes.
+    for path, body in (
+        ("/api/agents", {"equipment_uid": str(computing_equipment.uid)}),
+        (f"/api/agents/{agent.pk}/enrollment-grants", {}),
+        (f"/api/agents/{agent.pk}/actions/revoke", {}),
+        (f"/api/agents/{agent.pk}/actions/decommission", {}),
+    ):
+        resp = api_client.post(path, body, format="json")
+        assert resp.status_code == 403, path
+    agent.refresh_from_db()
+    assert agent.state == AgentIdentity.State.PENDING
+    assert agent.enrollment_grants.count() == 1
+
+
+@pytest.mark.django_db
+def test_lab_admin_role_implies_operator_write_access(api_client, computing_equipment):
+    lab_admin = _user_with_labs_role("agent-lab-admin", "admin")
+    api_client.force_authenticate(user=lab_admin)
+    resp = api_client.post("/api/agents", {"equipment_uid": str(computing_equipment.uid)}, format="json")
+    assert resp.status_code == 201
 
 
 @pytest.mark.django_db
