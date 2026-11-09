@@ -3600,9 +3600,12 @@ components:
           type: string
           maxLength: 255
         map_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         length_m:
           type: string
           format: decimal
@@ -3647,9 +3650,12 @@ components:
           type: string
           maxLength: 64
         floor_plan_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         max_occupancy:
           type: integer
           maximum: 32767
@@ -3942,8 +3948,8 @@ components:
         image:
           type: string
           format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
         map_url:
           type: string
           format: uri
@@ -4119,9 +4125,12 @@ components:
           type: string
           maxLength: 255
         map_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         length_m:
           type: string
           format: decimal
@@ -4166,9 +4175,12 @@ components:
           type: string
           maxLength: 64
         floor_plan_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         max_occupancy:
           type: integer
           maximum: 32767
@@ -4754,9 +4766,12 @@ components:
           type: string
           maxLength: 255
         map_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         length_m:
           type: string
           format: decimal
@@ -4801,9 +4816,12 @@ components:
           type: string
           maxLength: 64
         floor_plan_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         max_occupancy:
           type: integer
           maximum: 32767
@@ -4982,8 +5000,8 @@ components:
         image:
           type: string
           format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
         active_bench_count:
           type: integer
           readOnly: true

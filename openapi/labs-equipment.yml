@@ -16329,9 +16329,12 @@ components:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
-          type: string
-          pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
-          maxLength: 17
+          oneOf:
+          - type: string
+            pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
+            maxLength: 17
+          - type: string
+            maxLength: 0
         kind_id:
           type: integer
         type_id:
@@ -16509,8 +16512,8 @@ components:
         rdp_file:
           type: string
           format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
         technical_user:
           allOf:
           - $ref: '#/components/schemas/ComputingTechnical_UserReference'
@@ -18977,12 +18980,15 @@ components:
           type: string
           maxLength: 120
         key:
-          type: string
           nullable: true
           description: Stable code used by the code base (e.g. 'computing'). Filled
             from the name when empty. Renaming the category never changes it.
-          maxLength: 32
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 32
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         definition:
           type: string
         active:
@@ -19000,12 +19006,15 @@ components:
           type: string
           maxLength: 120
         key:
-          type: string
           nullable: true
           description: Stable code used by the code base (e.g. 'computing'). Filled
             from the name when empty. Renaming the category never changes it.
-          maxLength: 32
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 32
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         definition:
           type: string
         active:
@@ -23619,9 +23628,12 @@ components:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
-          type: string
-          pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
-          maxLength: 17
+          oneOf:
+          - type: string
+            pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
+            maxLength: 17
+          - type: string
+            maxLength: 0
         kind_id:
           type: integer
         type_id:
@@ -24120,9 +24132,12 @@ components:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
-          type: string
-          pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
-          maxLength: 17
+          oneOf:
+          - type: string
+            pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
+            maxLength: 17
+          - type: string
+            maxLength: 0
         kind_id:
           type: integer
         type_id:
@@ -25632,9 +25647,12 @@ components:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
-          type: string
-          pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
-          maxLength: 17
+          oneOf:
+          - type: string
+            pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
+            maxLength: 17
+          - type: string
+            maxLength: 0
         kind_id:
           type: integer
         type_id:

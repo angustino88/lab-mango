@@ -739,10 +739,13 @@ components:
           type: string
           maxLength: 100
         code:
-          type: string
-          pattern: ^[-a-zA-Z0-9_]*$
-          maxLength: 50
-          default: ''
+          oneOf:
+          - type: string
+            pattern: ^[-a-zA-Z0-9_]*$
+            maxLength: 50
+            default: ''
+          - type: string
+            maxLength: 0
         default_team_id:
           type: integer
           nullable: true
@@ -790,9 +793,12 @@ components:
           type: string
           maxLength: 50
         color_hex:
-          type: string
-          default: ''
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
       required:
       - name
     AdminLabelCreateSerializersLabelDetailResponse:
@@ -831,14 +837,20 @@ components:
           type: integer
           minimum: 1
         code:
-          type: string
-          pattern: ^[-a-zA-Z0-9_]*$
-          maxLength: 50
-          default: ''
+          oneOf:
+          - type: string
+            pattern: ^[-a-zA-Z0-9_]*$
+            maxLength: 50
+            default: ''
+          - type: string
+            maxLength: 0
         color_hex:
-          type: string
-          default: ''
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
         response_target_minutes:
           type: integer
           minimum: 1
@@ -905,9 +917,12 @@ components:
           type: string
           maxLength: 50
         color_hex:
-          type: string
-          default: ''
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
         is_final:
           type: boolean
           default: false
@@ -961,10 +976,13 @@ components:
           type: string
           maxLength: 100
         code:
-          type: string
-          pattern: ^[-a-zA-Z0-9_]*$
-          maxLength: 50
-          default: ''
+          oneOf:
+          - type: string
+            pattern: ^[-a-zA-Z0-9_]*$
+            maxLength: 50
+            default: ''
+          - type: string
+            maxLength: 0
         description:
           type: string
           default: ''
@@ -1065,8 +1083,6 @@ components:
         agent_uid:
           type: string
           format: uuid
-      required:
-      - agent_uid
     AgentHeartbeatResponse:
       type: object
       properties:
@@ -1108,6 +1124,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/StateEnum'
           readOnly: true
+          default: pending
         key_algorithm:
           allOf:
           - $ref: '#/components/schemas/KeyAlgorithmEnum'
@@ -1177,6 +1194,13 @@ components:
       - backend_id
       - capabilities
       - server_time
+    AgentListMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/PaginationMeta'
+      required:
+      - pagination
     AgentListResponse:
       type: object
       properties:
@@ -1184,8 +1208,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AgentIdentity'
+        meta:
+          $ref: '#/components/schemas/AgentListMeta'
       required:
       - data
+      - meta
     AllResourceAuditListSerializersResourceAuditItemPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -1330,8 +1357,8 @@ components:
         image:
           type: string
           format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
         type:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -1713,9 +1740,12 @@ components:
         description:
           type: string
         documentation_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         setup_location_id:
           type: integer
           minimum: 1
@@ -2264,8 +2294,8 @@ components:
         image:
           type: string
           format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
         type:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -2642,9 +2672,12 @@ components:
         description:
           type: string
         documentation_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         setup_location_id:
           type: integer
           minimum: 1
@@ -3231,11 +3264,14 @@ components:
           type: string
           maxLength: 100
         code:
-          type: string
           description: Stable machine-readable identifier (exposed as 'sku' by the
             options API).
-          maxLength: 50
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 50
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         description:
           type: string
         default_team:
@@ -3248,6 +3284,7 @@ components:
           minimum: 0
         is_active:
           type: boolean
+          default: true
         created_at:
           type: string
           format: date-time
@@ -3666,9 +3703,12 @@ components:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
-          type: string
-          pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
-          maxLength: 17
+          oneOf:
+          - type: string
+            pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
+            maxLength: 17
+          - type: string
+            maxLength: 0
         kind_id:
           type: integer
         type_id:
@@ -3846,8 +3886,8 @@ components:
         rdp_file:
           type: string
           format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
         technical_user:
           allOf:
           - $ref: '#/components/schemas/ComputingTechnical_UserReference'
@@ -7325,12 +7365,15 @@ components:
           type: string
           maxLength: 120
         key:
-          type: string
           nullable: true
           description: Stable code used by the code base (e.g. 'computing'). Filled
             from the name when empty. Renaming the category never changes it.
-          maxLength: 32
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 32
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         definition:
           type: string
         active:
@@ -7348,12 +7391,15 @@ components:
           type: string
           maxLength: 120
         key:
-          type: string
           nullable: true
           description: Stable code used by the code base (e.g. 'computing'). Filled
             from the name when empty. Renaming the category never changes it.
-          maxLength: 32
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 32
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         definition:
           type: string
         active:
@@ -15185,9 +15231,12 @@ components:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
-          type: string
-          pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
-          maxLength: 17
+          oneOf:
+          - type: string
+            pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
+            maxLength: 17
+          - type: string
+            maxLength: 0
         kind_id:
           type: integer
         type_id:
@@ -15686,9 +15735,12 @@ components:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
-          type: string
-          pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
-          maxLength: 17
+          oneOf:
+          - type: string
+            pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
+            maxLength: 17
+          - type: string
+            maxLength: 0
         kind_id:
           type: integer
         type_id:
@@ -16586,6 +16638,29 @@ components:
           $ref: '#/components/schemas/OtherReferenceData'
       required:
       - data
+    PaginationMeta:
+      type: object
+      properties:
+        count:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
     PatchedAccessoryEquipmentUpdate:
       type: object
       description: Validate related references before model save, including partial
@@ -16682,9 +16757,12 @@ components:
           type: string
           maxLength: 100
         code:
-          type: string
-          maxLength: 50
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 50
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         default_team_id:
           type: integer
         clear_default_team:
@@ -16702,8 +16780,11 @@ components:
           type: string
           maxLength: 50
         color_hex:
-          type: string
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
     PatchedAdminPriorityUpdate:
       type: object
       properties:
@@ -16714,12 +16795,18 @@ components:
           type: integer
           minimum: 1
         code:
-          type: string
-          maxLength: 50
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 50
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         color_hex:
-          type: string
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
         response_target_minutes:
           type: integer
           minimum: 1
@@ -16773,8 +16860,11 @@ components:
           type: string
           maxLength: 50
         color_hex:
-          type: string
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
         is_final:
           type: boolean
         pauses_sla:
@@ -16906,9 +16996,12 @@ components:
         description:
           type: string
         documentation_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         setup_location_id:
           type: integer
           minimum: 1
@@ -17617,9 +17710,12 @@ components:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
-          type: string
-          pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
-          maxLength: 17
+          oneOf:
+          - type: string
+            pattern: ^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$
+            maxLength: 17
+          - type: string
+            maxLength: 0
         kind_id:
           type: integer
         type_id:
@@ -17868,9 +17964,12 @@ components:
           type: string
           maxLength: 255
         map_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         length_m:
           type: string
           format: decimal
@@ -17915,9 +18014,12 @@ components:
           type: string
           maxLength: 64
         floor_plan_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         max_occupancy:
           type: integer
           maximum: 32767
@@ -18997,10 +19099,13 @@ components:
           type: string
           maxLength: 50
         code:
-          type: string
           description: Stable machine-readable identifier.
-          maxLength: 50
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 50
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         rank:
           type: integer
           maximum: 2147483647
@@ -19028,6 +19133,7 @@ components:
           type: boolean
         is_active:
           type: boolean
+          default: true
         created_at:
           type: string
           format: date-time
@@ -21030,8 +21136,8 @@ components:
         image:
           type: string
           format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
         map_url:
           type: string
           format: uri
@@ -21207,9 +21313,12 @@ components:
           type: string
           maxLength: 255
         map_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         length_m:
           type: string
           format: decimal
@@ -21254,9 +21363,12 @@ components:
           type: string
           maxLength: 64
         floor_plan_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         max_occupancy:
           type: integer
           maximum: 32767
@@ -21902,9 +22014,12 @@ components:
           type: string
           maxLength: 255
         map_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         length_m:
           type: string
           format: decimal
@@ -21949,9 +22064,12 @@ components:
           type: string
           maxLength: 64
         floor_plan_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         max_occupancy:
           type: integer
           maximum: 32767
@@ -23268,8 +23386,8 @@ components:
         image:
           type: string
           format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
         active_bench_count:
           type: integer
           readOnly: true
@@ -24701,6 +24819,7 @@ components:
           readOnly: true
         is_active:
           type: boolean
+          default: true
         created_at:
           type: string
           format: date-time
@@ -26134,6 +26253,15 @@ components:
       - hour
       - usage
   securitySchemes:
+    agentSignatureAuth:
+      type: apiKey
+      in: header
+      name: X-Agent-Signature
+      description: 'Ed25519 signature (base64url, unpadded) by the enrolled agent
+        key over NUL-joined: ''labmango-agent-request-v1'', backend_id, agent_uid,
+        HTTP method, path, timestamp, nonce, hex SHA-256 of the raw body. Also required:
+        X-Agent-Id (agent_uid), X-Agent-Timestamp (unix seconds, within AGENT_REQUEST_MAX_SKEW_S)
+        and X-Agent-Nonce (base64url, at least 16 random bytes, single use).'
     cookieAuth:
       type: apiKey
       in: cookie

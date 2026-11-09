@@ -1641,8 +1641,8 @@ components:
         image:
           type: string
           format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
         type:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -1798,9 +1798,12 @@ components:
         description:
           type: string
         documentation_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         setup_location_id:
           type: integer
           minimum: 1
@@ -2319,8 +2322,8 @@ components:
         image:
           type: string
           format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
         type:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -2697,9 +2700,12 @@ components:
         description:
           type: string
         documentation_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         setup_location_id:
           type: integer
           minimum: 1
@@ -2924,9 +2930,12 @@ components:
         description:
           type: string
         documentation_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         setup_location_id:
           type: integer
           minimum: 1

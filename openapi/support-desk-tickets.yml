@@ -3265,10 +3265,13 @@ components:
           type: string
           maxLength: 100
         code:
-          type: string
-          pattern: ^[-a-zA-Z0-9_]*$
-          maxLength: 50
-          default: ''
+          oneOf:
+          - type: string
+            pattern: ^[-a-zA-Z0-9_]*$
+            maxLength: 50
+            default: ''
+          - type: string
+            maxLength: 0
         default_team_id:
           type: integer
           nullable: true
@@ -3316,9 +3319,12 @@ components:
           type: string
           maxLength: 50
         color_hex:
-          type: string
-          default: ''
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
       required:
       - name
     AdminLabelCreateSerializersLabelDetailResponse:
@@ -3357,14 +3363,20 @@ components:
           type: integer
           minimum: 1
         code:
-          type: string
-          pattern: ^[-a-zA-Z0-9_]*$
-          maxLength: 50
-          default: ''
+          oneOf:
+          - type: string
+            pattern: ^[-a-zA-Z0-9_]*$
+            maxLength: 50
+            default: ''
+          - type: string
+            maxLength: 0
         color_hex:
-          type: string
-          default: ''
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
         response_target_minutes:
           type: integer
           minimum: 1
@@ -3431,9 +3443,12 @@ components:
           type: string
           maxLength: 50
         color_hex:
-          type: string
-          default: ''
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
         is_final:
           type: boolean
           default: false
@@ -3487,10 +3502,13 @@ components:
           type: string
           maxLength: 100
         code:
-          type: string
-          pattern: ^[-a-zA-Z0-9_]*$
-          maxLength: 50
-          default: ''
+          oneOf:
+          - type: string
+            pattern: ^[-a-zA-Z0-9_]*$
+            maxLength: 50
+            default: ''
+          - type: string
+            maxLength: 0
         description:
           type: string
           default: ''
@@ -3678,11 +3696,14 @@ components:
           type: string
           maxLength: 100
         code:
-          type: string
           description: Stable machine-readable identifier (exposed as 'sku' by the
             options API).
-          maxLength: 50
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 50
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         description:
           type: string
         default_team:
@@ -3695,6 +3716,7 @@ components:
           minimum: 0
         is_active:
           type: boolean
+          default: true
         created_at:
           type: string
           format: date-time
@@ -3882,9 +3904,12 @@ components:
           type: string
           maxLength: 100
         code:
-          type: string
-          maxLength: 50
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 50
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         default_team_id:
           type: integer
         clear_default_team:
@@ -3902,8 +3927,11 @@ components:
           type: string
           maxLength: 50
         color_hex:
-          type: string
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
     PatchedAdminPriorityUpdate:
       type: object
       properties:
@@ -3914,12 +3942,18 @@ components:
           type: integer
           minimum: 1
         code:
-          type: string
-          maxLength: 50
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 50
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         color_hex:
-          type: string
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
         response_target_minutes:
           type: integer
           minimum: 1
@@ -3973,8 +4007,11 @@ components:
           type: string
           maxLength: 50
         color_hex:
-          type: string
-          pattern: ^(#[0-9A-Fa-f]{6})?$
+          oneOf:
+          - type: string
+            pattern: ^(#[0-9A-Fa-f]{6})?$
+          - type: string
+            maxLength: 0
         is_final:
           type: boolean
         pauses_sla:
@@ -4078,10 +4115,13 @@ components:
           type: string
           maxLength: 50
         code:
-          type: string
           description: Stable machine-readable identifier.
-          maxLength: 50
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 50
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         rank:
           type: integer
           maximum: 2147483647
@@ -4109,6 +4149,7 @@ components:
           type: boolean
         is_active:
           type: boolean
+          default: true
         created_at:
           type: string
           format: date-time
@@ -4640,6 +4681,7 @@ components:
           readOnly: true
         is_active:
           type: boolean
+          default: true
         created_at:
           type: string
           format: date-time

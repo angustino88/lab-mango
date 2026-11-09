@@ -49,7 +49,9 @@ paths:
   /agent/heartbeat:
     post:
       operationId: agent_heartbeat
-      description: Update agent liveness (POST /agent/heartbeat).
+      description: Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature
+        headers (see the agentSignatureAuth security scheme). The body may repeat
+        agent_uid; if present it must equal X-Agent-Id.
       summary: Record agent heartbeat
       tags:
       - Agents
@@ -64,11 +66,8 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AgentHeartbeatRequest'
-        required: true
       security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - {}
+      - agentSignatureAuth: []
       responses:
         '200':
           content:
@@ -82,12 +81,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Invalid request
-        '404':
+        '401':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
-          description: Active agent not found
+          description: Missing, invalid, stale or replayed signature, or agent not
+            active
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Request rate exceeded
   /agent/info:
     get:
       operationId: get_agent_info
@@ -123,6 +129,17 @@ paths:
       operationId: list_agents
       description: List agent identities or issue an initial enrollment grant.
       summary: List enrolled and pending agents
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: Page number (>= 1)
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: Page size (1..100, default 25)
       tags:
       - Agents (operator)
       security:
@@ -134,7 +151,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentListResponse'
-          description: List of agents
+          description: Page of agents
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Invalid page or page_size
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Page out of range
         '401':
           content:
             application/json:
@@ -181,6 +210,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Caller is not a lab coordinator or admin
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Computing equipment not found
         '409':
           content:
             application/json:
@@ -259,6 +300,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Caller is not a lab coordinator or admin
         '404':
           content:
             application/json:
@@ -308,6 +355,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Caller is not a lab coordinator or admin
         '404':
           content:
             application/json:
@@ -366,6 +419,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Caller is not a lab coordinator or admin
         '404':
           content:
             application/json:
@@ -393,8 +452,6 @@ components:
         agent_uid:
           type: string
           format: uuid
-      required:
-      - agent_uid
     AgentHeartbeatResponse:
       type: object
       properties:
@@ -436,6 +493,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/StateEnum'
           readOnly: true
+          default: pending
         key_algorithm:
           allOf:
           - $ref: '#/components/schemas/KeyAlgorithmEnum'
@@ -505,6 +563,13 @@ components:
       - backend_id
       - capabilities
       - server_time
+    AgentListMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/PaginationMeta'
+      required:
+      - pagination
     AgentListResponse:
       type: object
       properties:
@@ -512,8 +577,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AgentIdentity'
+        meta:
+          $ref: '#/components/schemas/AgentListMeta'
       required:
       - data
+      - meta
     CreateAgentGrantRequest:
       type: object
       properties:
@@ -635,6 +703,29 @@ components:
         * `os_keystore` - OS keystore
 
         * `software` - Software key store'
+    PaginationMeta:
+      type: object
+      properties:
+        count:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
     StateEnum:
       enum:
       - pending
@@ -650,6 +741,15 @@ components:
 
         * `decommissioned` - Decommissioned'
   securitySchemes:
+    agentSignatureAuth:
+      type: apiKey
+      in: header
+      name: X-Agent-Signature
+      description: 'Ed25519 signature (base64url, unpadded) by the enrolled agent
+        key over NUL-joined: ''labmango-agent-request-v1'', backend_id, agent_uid,
+        HTTP method, path, timestamp, nonce, hex SHA-256 of the raw body. Also required:
+        X-Agent-Id (agent_uid), X-Agent-Timestamp (unix seconds, within AGENT_REQUEST_MAX_SKEW_S)
+        and X-Agent-Nonce (base64url, at least 16 random bytes, single use).'
     cookieAuth:
       type: apiKey
       in: cookie
