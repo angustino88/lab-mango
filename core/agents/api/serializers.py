@@ -68,7 +68,8 @@ class EnrollAgentRequestSerializer(serializers.Serializer):
 
 
 class AgentHeartbeatRequestSerializer(serializers.Serializer):
-    agent_uid = serializers.UUIDField(required=True)
+    # Optional echo of X-Agent-Id kept for compatibility; the signed headers are authoritative.
+    agent_uid = serializers.UUIDField(required=False)
 
 
 class AgentHeartbeatResponseDataSerializer(serializers.Serializer):

@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import itertools
+import json
 import uuid
 
 import pytest
@@ -13,6 +14,7 @@ from rest_framework.test import APIClient
 
 from core.agents.application import ENROLLMENT_CONTEXT
 from core.agents.models import AgentIdentity
+from core.agents.tests.signing import signed_headers
 from core.labs.models import ComputingEquipment, EquipmentCategory, EquipmentKind
 from core.users.models import URSGroup
 
@@ -148,9 +150,9 @@ def test_agent_info_and_heartbeat(api_client, admin_user, computing_equipment):
     assert "capabilities" in info_resp.data["data"]
     assert info_resp.data["data"]["backend_id"] == getattr(settings, "BACKEND_ID", "dept_a")
 
-    # 2. Heartbeat on non-existent agent returns 404
+    # 2. Unsigned heartbeat, even for an unknown agent, is rejected without revealing existence
     hb_resp = api_client.post("/agent/heartbeat", {"agent_uid": str(uuid.uuid4())}, format="json")
-    assert hb_resp.status_code == 404
+    assert hb_resp.status_code == 401
 
 
 @pytest.mark.django_db
@@ -203,8 +205,14 @@ def test_agent_enrollment_and_heartbeat_flow(api_client, admin_user, computing_e
     assert enroll_resp.data["data"]["state"] == "active"
     assert enroll_resp.data["data"]["agent_version"] == "1.0.0"
 
-    # 4. Device sends heartbeat
-    hb_resp = api_client.post("/agent/heartbeat", {"agent_uid": agent_uid}, format="json")
+    # 4. Device sends a heartbeat signed with its enrolled key
+    hb_body = json.dumps({"agent_uid": agent_uid}).encode()
+    hb_resp = api_client.post(
+        "/agent/heartbeat",
+        data=hb_body,
+        content_type="application/json",
+        **signed_headers(private_key, agent_uid, hb_body),
+    )
     assert hb_resp.status_code == 200
     assert hb_resp.data["data"]["status"] == "ok"
     assert hb_resp.data["data"]["last_seen_at"] is not None
@@ -216,7 +224,12 @@ def test_agent_enrollment_and_heartbeat_flow(api_client, admin_user, computing_e
     assert revoke_resp.status_code == 200
     assert revoke_resp.data["data"]["state"] == "revoked"
 
-    # Subsequent heartbeat fails with 404 because agent is no longer active
+    # Subsequent signed heartbeat fails because the agent is no longer active
     api_client.force_authenticate(user=None)
-    hb_revoked = api_client.post("/agent/heartbeat", {"agent_uid": agent_uid}, format="json")
-    assert hb_revoked.status_code == 404
+    hb_revoked = api_client.post(
+        "/agent/heartbeat",
+        data=hb_body,
+        content_type="application/json",
+        **signed_headers(private_key, agent_uid, hb_body),
+    )
+    assert hb_revoked.status_code == 401

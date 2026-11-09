@@ -1,10 +1,11 @@
 """Agent enrollment provisioning and proof-of-possession commands."""
 
 import base64
+import binascii
 import hashlib
 import secrets
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -12,6 +13,7 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from django.conf import settings
+from django.core.cache import cache
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -19,6 +21,7 @@ from core.agents.contracts import CreateEnrollmentGrantInput, EnrollmentGrantIss
 from core.agents.exceptions import (
     AgentEnrollmentConflict,
     AgentProofInvalid,
+    AgentRequestUnauthenticated,
     EnrollmentGrantInvalid,
 )
 from core.agents.models import AgentIdentity, EnrollmentGrant
@@ -27,6 +30,108 @@ from core.routing.public import publish_agent_identity
 
 GRANT_PREFIX = "eg_"
 ENROLLMENT_CONTEXT = b"labmango-enroll-v1"
+REQUEST_SIGNATURE_CONTEXT = b"labmango-agent-request-v1"
+_NONCE_MIN_BYTES = 16
+_NONCE_MAX_CHARS = 64
+
+
+@dataclass(frozen=True, slots=True)
+class SignedAgentRequest:
+    """Evidence an agent presents on a device request (``X-Agent-*`` headers plus the request)."""
+
+    agent_uid: str
+    timestamp: str
+    nonce: str
+    signature: str
+    method: str
+    path: str
+    body: bytes
+
+
+def agent_request_message(
+    *, agent_uid: str, method: str, path: str, timestamp: str, nonce: str, body: bytes
+) -> bytes:
+    """Bytes an agent signs for a device request; the device library must build the same bytes."""
+    return b"\0".join(
+        (
+            REQUEST_SIGNATURE_CONTEXT,
+            settings.BACKEND_ID.encode("ascii"),
+            agent_uid.encode("ascii"),
+            method.upper().encode("ascii"),
+            path.encode("utf-8"),
+            timestamp.encode("ascii"),
+            nonce.encode("ascii"),
+            hashlib.sha256(body).hexdigest().encode("ascii"),
+        )
+    )
+
+
+def authenticate_agent_request(evidence: SignedAgentRequest) -> AgentIdentity:
+    """Verify a request signed with the identity's enrolled Ed25519 key.
+
+    Interim device authentication until installation mTLS (docs/backend-agent-api-spec.md section 3)
+    exists. Checks, all collapsed into one ``AgentRequestUnauthenticated``: canonical agent UID,
+    timestamp within ``AGENT_REQUEST_MAX_SKEW_S``, nonce shape, an ACTIVE identity read from the
+    database on every request (revocation applies to the next request), a valid signature, and a
+    nonce not seen within the replay window. The replay guard is ``cache.add`` on the shared cache;
+    the nonce is recorded only after the signature verifies, so forged requests cannot burn nonces.
+    """
+    denied = AgentRequestUnauthenticated("Agent request authentication failed.")
+    try:
+        agent_uid = UUID(evidence.agent_uid)
+        timestamp = int(evidence.timestamp)
+        nonce_bytes = _urlsafe_b64decode(evidence.nonce)
+        signature = _urlsafe_b64decode(evidence.signature)
+    except (ValueError, TypeError, binascii.Error) as error:
+        raise denied from error
+    if str(agent_uid) != evidence.agent_uid or not evidence.timestamp.isdigit():
+        raise denied
+    if len(nonce_bytes) < _NONCE_MIN_BYTES or len(evidence.nonce) > _NONCE_MAX_CHARS:
+        raise denied
+    max_skew = int(getattr(settings, "AGENT_REQUEST_MAX_SKEW_S", 300))
+    if abs(timezone.now().timestamp() - timestamp) > max_skew:
+        raise denied
+
+    identity = (
+        AgentIdentity.objects.select_related("equipment")
+        .filter(agent_uid=agent_uid, state=AgentIdentity.State.ACTIVE)
+        .first()
+    )
+    if identity is None:
+        raise denied
+    message = agent_request_message(
+        agent_uid=evidence.agent_uid,
+        method=evidence.method,
+        path=evidence.path,
+        timestamp=evidence.timestamp,
+        nonce=evidence.nonce,
+        body=evidence.body,
+    )
+    try:
+        key, _der = _public_key(identity.public_key)
+        key.verify(signature, message)
+    except (ValueError, TypeError, InvalidSignature, AgentProofInvalid, UnicodeEncodeError) as error:
+        raise denied from error
+
+    # Race guard: cache.add is atomic on the shared cache, so two concurrent replays cannot both win.
+    if not cache.add(f"agents:request-nonce:{agent_uid}:{evidence.nonce}", 1, timeout=2 * max_skew + 1):
+        raise denied
+    return identity
+
+
+def record_agent_heartbeat(identity: AgentIdentity) -> datetime:
+    """Record liveness for an authenticated identity; never revives a non-active identity.
+
+    Single conditional UPDATE: if the identity was revoked after authentication, nothing is written.
+    """
+    now = timezone.now()
+    updated = AgentIdentity.objects.filter(pk=identity.pk, state=AgentIdentity.State.ACTIVE).update(
+        last_seen_at=now,
+        modified=now,
+    )
+    if not updated:
+        raise AgentRequestUnauthenticated("Agent request authentication failed.")
+    return now
 
 
 @transaction.atomic

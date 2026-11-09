@@ -9,22 +9,26 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.agents.api.authentication import AgentSignatureAuthentication, IsAuthenticatedAgent
 from core.agents.application import (
     EnrollAgentInput,
     create_enrollment_grant,
     enroll_agent,
     issue_grant_for_agent,
+    record_agent_heartbeat,
     transition_agent_state,
 )
 from core.agents.contracts import CreateEnrollmentGrantInput
 from core.agents.exceptions import (
     AgentEnrollmentConflict,
     AgentProofInvalid,
+    AgentRequestUnauthenticated,
     EnrollmentGrantInvalid,
 )
 from core.agents.models import AgentIdentity
@@ -310,18 +314,28 @@ class AgentEnrollmentAPIView(APIView):
 
 
 class AgentHeartbeatAPIView(APIView):
-    """Update agent liveness (POST /agent/heartbeat)."""
+    """Update agent liveness (POST /agent/heartbeat) for a request signed by the agent's enrolled key."""
 
-    permission_classes = [AllowAny]
+    authentication_classes = [AgentSignatureAuthentication]
+    permission_classes = [IsAuthenticatedAgent]
 
     @extend_schema(
         operation_id="agent_heartbeat",
         summary="Record agent heartbeat",
+        description=(
+            "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers "
+            "(see the agentSignatureAuth security scheme). The body may repeat agent_uid; if present it "
+            "must equal X-Agent-Id."
+        ),
         request=AgentHeartbeatRequestSerializer,
         responses={
             200: OpenApiResponse(response=AgentHeartbeatResponseSerializer, description="Heartbeat acknowledged"),
             400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Invalid request"),
-            404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Active agent not found"),
+            401: OpenApiResponse(
+                response=ErrorEnvelopeSerializer,
+                description="Missing, invalid, stale or replayed signature, or agent not active",
+            ),
+            429: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Request rate exceeded"),
         },
         tags=["Agents"],
     )
@@ -330,15 +344,20 @@ class AgentHeartbeatAPIView(APIView):
         if not req_serializer.is_valid():
             return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", "Invalid heartbeat payload.", request)
 
-        agent_uid = req_serializer.validated_data["agent_uid"]
-        agent = AgentIdentity.objects.filter(agent_uid=agent_uid, state=AgentIdentity.State.ACTIVE).first()
-        if agent is None:
-            return _error_response(status.HTTP_404_NOT_FOUND, "agent_not_found", "Active agent not found.", request)
-
-        now = timezone.now()
-        agent.last_seen_at = now
-        agent.save(update_fields=("last_seen_at", "modified"))
-        return Response({"data": {"status": "ok", "last_seen_at": now}}, status=status.HTTP_200_OK)
+        identity = request.user.identity
+        body_uid = req_serializer.validated_data.get("agent_uid")
+        if body_uid is not None and body_uid != identity.agent_uid:
+            return _error_response(
+                status.HTTP_400_BAD_REQUEST,
+                "invalid_request",
+                "agent_uid does not match the authenticated agent.",
+                request,
+            )
+        try:
+            seen_at = record_agent_heartbeat(identity)
+        except AgentRequestUnauthenticated:
+            raise AuthenticationFailed("Agent request authentication failed.") from None
+        return Response({"data": {"status": "ok", "last_seen_at": seen_at}}, status=status.HTTP_200_OK)
 
 
 class AgentInfoAPIView(APIView):
@@ -367,7 +386,7 @@ class AgentInfoAPIView(APIView):
                 "data": {
                     "backend_id": backend_id,
                     "server_time": timezone.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "capabilities": ["enrollment", "heartbeat", "reporting"],
+                    "capabilities": ["enrollment", "heartbeat", "reporting", "request_signature_v1"],
                 }
             },
             status=status.HTTP_200_OK,

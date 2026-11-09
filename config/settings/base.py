@@ -113,6 +113,8 @@ ENTRA_FRONTEND_LOGIN_URL = env("ENTRA_FRONTEND_LOGIN_URL", default="/")
 
 AUTH_USER_MODEL = "users.User"
 BACKEND_ID = env("BACKEND_ID", default="dept_a")
+# Signed agent requests: accepted clock skew; nonces are remembered for twice this window.
+AGENT_REQUEST_MAX_SKEW_S = env.int("AGENT_REQUEST_MAX_SKEW_S", default=300)
 ROUTING_SYNC_AUDIENCE = env("ROUTING_SYNC_AUDIENCE", default=f"api://labmango-{BACKEND_ID}")
 ROUTING_SYNC_REQUIRED_ROLE = env("ROUTING_SYNC_REQUIRED_ROLE", default="Routing.Sync.Read")
 ROUTING_SYNC_ENTRA_TENANT_IDS = env.list("ROUTING_SYNC_ENTRA_TENANT_IDS", default=[AAD_TENANT_ID])
