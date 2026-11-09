@@ -7,7 +7,7 @@ import logging
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
@@ -27,12 +27,14 @@ from core.agents.application import (
 from core.agents.contracts import CreateEnrollmentGrantInput
 from core.agents.exceptions import (
     AgentEnrollmentConflict,
+    AgentEquipmentNotFound,
     AgentProofInvalid,
     AgentRequestUnauthenticated,
     EnrollmentGrantInvalid,
 )
 from core.agents.models import AgentIdentity
 from core.common.api.correlation import get_request_id
+from core.common.api.pagination import ResultsSetPagination
 from core.routing.api.serializers import ErrorEnvelopeSerializer
 from core.users.public import IsLabCoordinator
 
@@ -76,16 +78,24 @@ class AgentListCreateAPIView(APIView):
     @extend_schema(
         operation_id="list_agents",
         summary="List enrolled and pending agents",
+        parameters=[
+            OpenApiParameter("page", int, OpenApiParameter.QUERY, required=False, description="Page number (>= 1)"),
+            OpenApiParameter("page_size", int, OpenApiParameter.QUERY, required=False, description="Page size (1..100, default 25)"),
+        ],
         responses={
-            200: OpenApiResponse(response=AgentListResponseSerializer, description="List of agents"),
+            200: OpenApiResponse(response=AgentListResponseSerializer, description="Page of agents"),
+            400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Invalid page or page_size"),
+            404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Page out of range"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
         },
         tags=["Agents (Operator)"],
     )
     def get(self, request: Request) -> Response:
-        agents = AgentIdentity.objects.select_related("equipment").order_by("-created")
-        serializer = AgentIdentitySerializer(agents, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+        # COL-1: bounded page-number pagination; pk tie-breaker keeps pages stable.
+        agents = AgentIdentity.objects.select_related("equipment").order_by("-created", "-pk")
+        paginator = ResultsSetPagination()
+        page = paginator.paginate_queryset(agents, request, view=self)
+        return paginator.get_paginated_response(AgentIdentitySerializer(page, many=True).data)
 
     @extend_schema(
         operation_id="create_agent_grant",
@@ -96,6 +106,7 @@ class AgentListCreateAPIView(APIView):
             400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Invalid request"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
             403: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"),
+            404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Computing equipment not found"),
             409: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Equipment already has pending or active agent"),
         },
         tags=["Agents (Operator)"],
@@ -117,11 +128,10 @@ class AgentListCreateAPIView(APIView):
         )
         try:
             issued = create_enrollment_grant(cmd, actor=request.user)
+        except AgentEquipmentNotFound as exc:
+            return _error_response(status.HTTP_404_NOT_FOUND, "equipment_not_found", str(exc), request)
         except AgentEnrollmentConflict as exc:
             return _error_response(status.HTTP_409_CONFLICT, "enrollment_conflict", str(exc), request)
-        except Exception as exc:
-            logger.exception("Failed to create agent grant: %s", exc)
-            return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", str(exc), request)
 
         return Response(
             {
@@ -306,8 +316,8 @@ class AgentEnrollmentAPIView(APIView):
             return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_proof", str(exc), request)
         except AgentEnrollmentConflict as exc:
             return _error_response(status.HTTP_409_CONFLICT, "enrollment_conflict", str(exc), request)
-        except Exception as exc:
-            logger.exception("Unexpected error in agent enrollment: %s", exc)
+        except ValueError as exc:
+            # Raised only with fixed, client-safe messages by enroll_agent's metadata checks.
             return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", str(exc), request)
 
         return Response({"data": AgentIdentitySerializer(identity).data}, status=status.HTTP_201_CREATED)

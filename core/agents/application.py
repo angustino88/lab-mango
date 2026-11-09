@@ -15,11 +15,13 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from django.conf import settings
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 
 from core.agents.contracts import CreateEnrollmentGrantInput, EnrollmentGrantIssued
 from core.agents.exceptions import (
     AgentEnrollmentConflict,
+    AgentEquipmentNotFound,
     AgentProofInvalid,
     AgentRequestUnauthenticated,
     EnrollmentGrantInvalid,
@@ -189,15 +191,24 @@ def create_enrollment_grant(
     if command.ttl_minutes < 1 or command.ttl_minutes > 60:
         raise ValueError("Enrollment grant TTL must be between 1 and 60 minutes.")
 
-    equipment = ComputingEquipment.objects.select_for_update().get(uid=command.equipment_uid, deleted_at__isnull=True)
+    try:
+        equipment = ComputingEquipment.objects.select_for_update().get(
+            uid=command.equipment_uid, deleted_at__isnull=True
+        )
+    except ComputingEquipment.DoesNotExist as error:
+        raise AgentEquipmentNotFound("Computing equipment was not found.") from error
     # Expired bootstrap identities are never valid credentials and should not strand re-enrollment.
     now = timezone.now()
-    AgentIdentity.objects.filter(
-        equipment=equipment,
-        state=AgentIdentity.State.PENDING,
-        enrollment_grants__used_at__isnull=True,
-        enrollment_grants__revoked_at__isnull=True,
-        enrollment_grants__expires_at__lte=now,
+    # A pending identity is stranded only when it has no usable grant left. A join on "some grant
+    # expired" also matched identities that still held a fresh grant (e.g. after a recovery grant).
+    usable_grant = EnrollmentGrant.objects.filter(
+        agent=OuterRef("pk"),
+        used_at__isnull=True,
+        revoked_at__isnull=True,
+        expires_at__gt=now,
+    )
+    AgentIdentity.objects.filter(equipment=equipment, state=AgentIdentity.State.PENDING).exclude(
+        Exists(usable_grant)
     ).update(state=AgentIdentity.State.REVOKED, modified=now)
     if AgentIdentity.objects.filter(equipment=equipment, state=AgentIdentity.State.ACTIVE).exists():
         raise AgentEnrollmentConflict("Equipment already has an active agent.")
@@ -240,8 +251,11 @@ def issue_grant_for_agent(agent_id: int, ttl_minutes: int, *, actor: Any) -> Enr
         modified=now,
     )
     if agent.state != AgentIdentity.State.PENDING:
+        # Recovery of an ACTIVE agent denies the old key until re-enrollment, so routing must drop
+        # the live claim in the same transaction (lock order: identity -> SyncState -> projection).
         agent.state = AgentIdentity.State.PENDING
         agent.save(actor=actor, update_fields=("state", "modified"))
+        publish_agent_identity(agent)
 
     clear_grant = GRANT_PREFIX + secrets.token_urlsafe(32)
     expires_at = now + timedelta(minutes=ttl_minutes)
@@ -346,7 +360,8 @@ def enroll_agent(command: EnrollAgentInput) -> AgentIdentity:
         raise AgentProofInvalid("Enrollment proof is invalid.") from error
 
     digest = hashlib.sha256(der).hexdigest()
-    if AgentIdentity.objects.filter(public_key_sha256=digest).exists():
+    # The identity's own previous key is not a conflict: recovery may re-enroll the same device key.
+    if AgentIdentity.objects.filter(public_key_sha256=digest).exclude(pk=identity.pk).exists():
         raise AgentEnrollmentConflict("This public key is already enrolled.")
     if command.key_storage not in AgentIdentity.KeyStorage.values:
         raise ValueError("Unsupported key storage tier.")

@@ -34,8 +34,21 @@ class AgentDetailResponseSerializer(serializers.Serializer):
     data = AgentIdentitySerializer()
 
 
+class PaginationMetaSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    page = serializers.IntegerField()
+    page_size = serializers.IntegerField()
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+
+
+class AgentListMetaSerializer(serializers.Serializer):
+    pagination = PaginationMetaSerializer()
+
+
 class AgentListResponseSerializer(serializers.Serializer):
     data = serializers.ListField(child=AgentIdentitySerializer())
+    meta = AgentListMetaSerializer()
 
 
 class CreateAgentGrantRequestSerializer(serializers.Serializer):
