@@ -7,6 +7,7 @@ from django.core.cache import cache
 
 from core.websocket import pubsub
 from core.websocket.features.task_progress.handler import task_progress_handler
+from core.websocket.task_ownership import register_task_owner
 
 
 @pytest.fixture(autouse=True)
@@ -14,7 +15,7 @@ def task_owner():
     """The handler denies tasks without a registered owner (ARCH-001); register user 1."""
     task_ids = ("t-001", "t-002", "t-003")
     for task_id in task_ids:
-        cache.set(f"task_owner:{task_id}", 1)
+        register_task_owner(task_id, 1)
     yield
     cache.delete_many([f"task_owner:{task_id}" for task_id in task_ids])
 

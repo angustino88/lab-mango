@@ -24,15 +24,29 @@ Provides real-time event distribution, asynchronous channel broadcasting, agent 
 
 ## 3. Websocket Channels & Consumers
 
-| Channel / Topic | Consumer Class | Description & Protocol |
+All routes require a JWT (`?token=`) validated by `jwt_auth_middleware`; a missing or invalid
+token closes with `4001`. Each route is registered exactly once, by its feature's `handler.py`;
+`register_route` rejects a second handler for the same pattern, because the router dispatches
+to the first match. Object-level failures close with `4003`.
+
+| Route | Handler | Authorization and protocol |
 |---|---|---|
-| `ws/notifications/broadcast/` | `BroadcastNotificationConsumer` | System-wide announcements and operational banner alerts. |
-| `ws/notifications/user/` | `UserNotificationConsumer` | Authenticated user inbox notifications (booking updates, mentions). |
-| `ws/equipment/status/` | `EquipmentStatusConsumer` | Real-time broadcast of equipment state and bench assignment changes. |
-| `ws/computing/activity/` | `ComputingActivityConsumer` | Monitored compute telemetry streaming (CPU, memory, GPU). |
-| `ws/monitoring/dashboard/` | `MonitoringDashboardConsumer` | Live dashboard refresh signals. |
-| `ws/monitoring/command/` | `MonitoringCommandConsumer` | Hardware runner command execution and acknowledge signals. |
-| `ws/tasks/progress/` | `TaskProgressConsumer` | Long-running asynchronous Celery task status. |
+| `ws/notifications` | `broadcast_notifications.handler` | Any authenticated user; system-wide announcements. |
+| `ws/user` | `user_notifications.handler` | The connecting user's own channel plus broadcasts; replays up to 50 unexpired notifications for that user on connect. |
+| `ws/equipment/{bench_id}` | `equipment_status.handler` | Bench must exist and not be deleted; equipment state and assignment changes. |
+| `ws/computing/{computing_id}` | `computing_activity.handler` | Equipment must exist and not be deleted; computing activity changes. |
+| `ws/monitoring/dashboard` | `monitoring_dashboard.handler` | Any authenticated user; dashboard refresh signals. |
+| `ws/monitoring/{bench_id}` | `monitoring_dashboard.handler` | Bench must exist and not be deleted; bench monitoring events. |
+| `ws/tasks/{task_id}` | `task_progress.handler` | Only the task's registered owner (deny by default). Streams Celery state/progress and closes with `1000` after `SUCCESS`, `FAILURE` or `REVOKED`. |
+
+### Task progress ownership
+
+A user may watch a task only if it was enqueued for them. Enqueue user-visible tasks with
+`core.websocket.task_ownership.enqueue_user_task(task, actor=request.user, args=..., kwargs=...)`
+and return `result.id` to the client. The owner is written to the shared cache (Redis in
+production) before the task is published, so a client that connects immediately is not
+refused, and expires after 24 hours (`TASK_OWNER_TTL_SECONDS`). Tasks enqueued any other way
+have no owner and cannot be watched.
 
 ---
 
