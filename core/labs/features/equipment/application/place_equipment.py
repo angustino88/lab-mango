@@ -85,7 +85,7 @@ def remove_placement(command: RemovePlacementInput, *, actor):
         return None
     if current.bench_id is not None:
         return unassign_equipment(UnassignEquipmentInput(command.equipment_id), actor=actor)
-    close_placement(current, equipment=equipment, actor=actor)
+    close_placement(current, actor=actor)
     return current
 
 

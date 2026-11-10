@@ -160,8 +160,9 @@ def test_category_queryset_preloads_department_group_for_multiple_rows(equipment
     )
     queryset = list_view.queryset_provider()
 
-    # Relation access from the category queryset must not issue per-row queries.
-    with django_assert_num_queries(1):
+    # Relation access from the category queryset must not issue per-row queries
+    # (1 for the rows, 1 for the active placement prefetch).
+    with django_assert_num_queries(2):
         rows = list(queryset.filter(pk__in=(equipment.pk, another.pk)))
         [(row.department.name, row.group.name) for row in rows]
 

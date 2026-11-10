@@ -35,7 +35,7 @@ def delete_equipment(command: DeleteEquipmentInput, *, actor):
     # A unit resting at a station, in a room, or at an untracked place leaves it when deleted.
     resting = lock_active_placement(instance)
     if resting is not None:
-        close_placement(resting, equipment=instance, actor=actor)
+        close_placement(resting, actor=actor)
     instance.delete(actor=actor)
     return instance
 

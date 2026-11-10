@@ -108,7 +108,7 @@ currently applied by the route builder.
 
 Shared write fields: kind, type, manufacturer, product_model, sku, name,
 serial_number, log_label, details, metadata, replacement_date, owner, department,
-group, storage_room, firmware_version, power_draw_w, weight_kg, warranty_until,
+group, firmware_version, power_draw_w, weight_kg, warranty_until,
 calibration_required.
 
 Additional writable category fields:

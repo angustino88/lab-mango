@@ -7,10 +7,8 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from core.labs.models import Equipment, EquipmentKind, Room
+from core.labs.models import Equipment, EquipmentKind
 from core.labs.models.resource.base.resource import Department, ResourceGroup
-
-from ._placement import apply_storage_room
 
 
 def _resolve_reference(model, value, *, field_name: str):
@@ -26,16 +24,6 @@ def _resolve_reference(model, value, *, field_name: str):
     if not reference.active:
         raise ValidationError({field_name: "Select an active reference."})
     return reference
-
-
-def _resolve_room(value):
-    """``Room`` has no ``active`` flag; a soft-deleted room is not a valid storage place."""
-    if value is None or isinstance(value, Room):
-        return value
-    room = Room.objects.filter(pk=value, deleted_at__isnull=True).first()
-    if room is None:
-        raise ValidationError({"storage_room": "Select a valid reference."})
-    return room
 
 
 def _category_models() -> dict[str, type[Equipment]]:
@@ -67,7 +55,6 @@ SHARED_CREATE_FIELDS = frozenset(
         "owner",
         "department",
         "group",
-        "storage_room",
         "firmware_version",
         "power_draw_w",
         "weight_kg",
@@ -106,8 +93,6 @@ def create_equipment(command: CreateEquipmentInput, *, actor, model=Equipment, c
     for field_name, model_class in (("department", Department), ("group", ResourceGroup)):
         if field_name in values:
             values[field_name] = _resolve_reference(model_class, values[field_name], field_name=field_name)
-    # storage_room is a deprecated input: it becomes a room placement after the row exists.
-    storage_room = _resolve_room(values.pop("storage_room", None))
     from core.labs import models as labs_models  # Ensure models are imported
 
     for field_name, model_name in (
@@ -156,8 +141,6 @@ def create_equipment(command: CreateEquipmentInput, *, actor, model=Equipment, c
     equipment.save()
     for name, related in many_to_many.items():
         getattr(equipment, name).set(related)
-    if storage_room is not None:
-        apply_storage_room(equipment, storage_room, actor=actor)
     if expected_category == "computing":
         from core.labs.features.equipment.categories.computing.application import ensure_computing_activity
 

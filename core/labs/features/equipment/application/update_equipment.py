@@ -8,7 +8,6 @@ from django.db import transaction
 
 from core.labs.models import Equipment
 
-from ._placement import apply_storage_room
 from ._validation import validate_equipment_model
 
 
@@ -35,9 +34,6 @@ def update_equipment(command: UpdateEquipmentInput, *, actor):
     values = dict(command.fields)
     _validate_fields(command.model, values)
     many_to_many = _pop_many_to_many(command.model, values)
-    # storage_room is a deprecated input: it is translated into a placement after the save.
-    storage_room_given = "storage_room" in values
-    storage_room = values.pop("storage_room", None)
     for name, value in values.items():
         setattr(instance, name, value)
     kind = instance.kind
@@ -50,8 +46,6 @@ def update_equipment(command: UpdateEquipmentInput, *, actor):
     instance.full_clean()
     instance.save()
     _set_many_to_many(instance, many_to_many)
-    if storage_room_given:
-        apply_storage_room(instance, storage_room, actor=actor)
     return instance
 
 

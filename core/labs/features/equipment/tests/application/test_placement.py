@@ -12,11 +12,9 @@ from core.labs.features.equipment.application import (
     DeleteEquipmentInput,
     PlaceEquipmentInput,
     RemovePlacementInput,
-    UpdateEquipmentInput,
     delete_equipment,
     place_equipment,
     remove_placement,
-    update_equipment,
 )
 from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced
 from core.labs.features.equipment.public import get_active_placement, inactive_equipment_candidates
@@ -25,7 +23,6 @@ from core.labs.models import (
     Bench,
     ComputingActivity,
     ComputingEquipment,
-    Equipment,
     EquipmentAssignment,
     EquipmentCategory,
     EquipmentKind,
@@ -125,12 +122,10 @@ def test_assignment_manager_shows_bench_placements_only(unit, room):
 
 
 @pytest.mark.django_db
-def test_place_in_room_mirrors_storage_room_and_is_idempotent(unit, room):
+def test_place_in_room_is_idempotent(unit, room):
     first = _place(unit, room_id=room.pk, location_note="Shelf B")
     again = _place(unit, room_id=room.pk, location_note="Shelf B")
-    unit.refresh_from_db()
     assert first.pk == again.pk
-    assert unit.storage_room_id == room.pk
     assert get_active_placement(equipment_id=unit.pk).target_type == "room"
     assert _active(unit).count() == 1
 
@@ -142,10 +137,8 @@ def test_move_between_resting_places_closes_previous(unit, room, station):
     third = _place(unit, location_note="Borrowed cabinet, building 2")
     first.refresh_from_db()
     second.refresh_from_db()
-    unit.refresh_from_db()
     assert first.unassigned_at is not None and second.unassigned_at is not None
     assert third.target_type == "note"
-    assert unit.storage_room_id is None
     assert _active(unit).count() == 1
 
 
@@ -154,10 +147,8 @@ def test_room_to_bench_moves_and_records_in_use(unit, room, bench):
     resting = _place(unit, room_id=room.pk)
     placement = _place(unit, bench_id=bench.pk)
     resting.refresh_from_db()
-    unit.refresh_from_db()
     assert resting.unassigned_at is not None
     assert placement.bench_id == bench.pk
-    assert unit.storage_room_id is None
     assert EquipmentStatusRecord.objects.filter(equipment=unit).latest("created").status == "in_use"
 
 
@@ -189,45 +180,12 @@ def test_invalid_targets(unit, room, station):
 def test_remove_placement(unit, room, bench):
     _place(unit, room_id=room.pk)
     closed = remove_placement(RemovePlacementInput(unit.pk), actor=None)
-    unit.refresh_from_db()
-    assert closed.unassigned_at is not None and unit.storage_room_id is None
+    assert closed.unassigned_at is not None
     assert remove_placement(RemovePlacementInput(unit.pk), actor=None) is None
     _place(unit, bench_id=bench.pk)
     remove_placement(RemovePlacementInput(unit.pk), actor=None)
     assert not _active(unit).exists()
     assert EquipmentStatusRecord.objects.filter(equipment=unit).latest("created").status == "available"
-
-
-# Deprecated storage_room input ------------------------------------------------------------
-
-
-def _update(unit, **fields):
-    return update_equipment(
-        UpdateEquipmentInput(equipment_id=unit.pk, model=ComputingEquipment, fields=tuple(fields.items())),
-        actor=None,
-    )
-
-
-@pytest.mark.django_db
-def test_storage_room_update_becomes_a_room_placement(unit, room, other_room):
-    _update(unit, storage_room=room)
-    assert get_active_placement(equipment_id=unit.pk).room_id == room.pk
-    _update(unit, storage_room=other_room)
-    assert get_active_placement(equipment_id=unit.pk).room_id == other_room.pk
-    _update(unit, storage_room=None)
-    unit.refresh_from_db()
-    assert not _active(unit).exists() and unit.storage_room_id is None
-
-
-@pytest.mark.django_db
-def test_storage_room_on_bench_unit_unchanged_is_noop_changed_is_conflict(unit, room, other_room, bench):
-    _place(unit, bench_id=bench.pk)
-    Equipment.objects.filter(pk=unit.pk).update(storage_room=room)  # legacy value kept by the backfill
-    _update(unit, storage_room=room, name="Renamed")
-    unit.refresh_from_db()
-    assert unit.name == "Renamed"
-    with pytest.raises(EquipmentAlreadyPlaced):
-        _update(unit, storage_room=other_room)
 
 
 @pytest.mark.django_db
@@ -301,5 +259,3 @@ def test_concurrent_placements_leave_one_active(kind):
     assert errors == []
     active = list(EquipmentPlacement.objects.filter(equipment=unit, unassigned_at__isnull=True))
     assert len(active) == 1
-    unit.refresh_from_db()
-    assert unit.storage_room_id == active[0].room_id

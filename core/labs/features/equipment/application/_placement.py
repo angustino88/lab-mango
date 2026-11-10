@@ -3,8 +3,8 @@
 Callers hold the ``Equipment`` row lock. Lock order: ``Equipment``, then the target
 (``Bench``, ``Station`` or ``Room``), then placement rows.
 
-``Equipment.storage_room`` is a compatibility mirror of the active room placement: only these
-helpers write it. It is dropped in a later release.
+A unit's room is the room of its active room placement; ``Equipment.storage_room`` was removed
+(labs 0018).
 """
 
 from django.core.exceptions import ValidationError
@@ -45,19 +45,17 @@ def lock_room(room_id: int) -> Room:
     return room
 
 
-def close_placement(placement: EquipmentAssignment, *, equipment: Equipment, actor) -> None:
+def close_placement(placement: EquipmentAssignment, *, actor) -> None:
     placement.unassigned_at = timezone.now()
     placement.last_modified_by = actor
     placement.save(update_fields=("unassigned_at", "last_modified_by", "modified"))
-    if placement.room_id is not None and equipment.storage_room_id == placement.room_id:
-        _mirror_storage_room(equipment, None)
 
 
 def close_resting_placement(equipment: Equipment, *, actor) -> None:
     """Close an active station, room or untracked placement so the unit can move to a bench."""
     current = lock_active_placement(equipment)
     if current is not None and current.bench_id is None:
-        close_placement(current, equipment=equipment, actor=actor)
+        close_placement(current, actor=actor)
 
 
 def rest_equipment(
@@ -89,8 +87,8 @@ def rest_equipment(
                 current.last_modified_by = actor
                 current.save(update_fields=("location_note", "last_modified_by", "modified"))
             return current
-        close_placement(current, equipment=equipment, actor=actor)
-    placement = EquipmentAssignment.all_placements.create(
+        close_placement(current, actor=actor)
+    return EquipmentAssignment.all_placements.create(
         equipment=equipment,
         station=station,
         room=room,
@@ -99,34 +97,4 @@ def rest_equipment(
         creator=actor,
         last_modified_by=actor,
     )
-    if room is not None:
-        _mirror_storage_room(equipment, room)
-    return placement
 
-
-def apply_storage_room(equipment: Equipment, room_value, *, actor) -> None:
-    """Translate the deprecated ``storage_room`` write into a placement.
-
-    Unchanged values are a no-op (edit forms resend them). ``None`` closes an active room
-    placement and clears the mirror; a room places the unit there.
-    """
-    room_id = getattr(room_value, "pk", room_value)
-    if room_id == equipment.storage_room_id:
-        return
-    if room_id is None:
-        current = lock_active_placement(equipment)
-        if current is not None and current.room_id is not None:
-            close_placement(current, equipment=equipment, actor=actor)
-        else:
-            _mirror_storage_room(equipment, None)
-        return
-    room = lock_room(room_id)
-    try:
-        rest_equipment(equipment, room=room, actor=actor)
-    except ValidationError as error:
-        raise ValidationError({"storage_room": error.messages}) from error
-
-
-def _mirror_storage_room(equipment: Equipment, room: Room | None) -> None:
-    Equipment.objects.filter(pk=equipment.pk).update(storage_room=room)
-    equipment.storage_room = room

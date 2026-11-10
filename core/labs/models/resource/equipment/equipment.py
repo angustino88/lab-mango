@@ -83,14 +83,6 @@ class Equipment(ResourceModel):
         blank=True,
         validators=[MinValueValidator(0)],
     )
-    storage_room = models.ForeignKey(
-        "labs.Room",
-        related_name="stored_equipment",
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        help_text="Where the asset is kept while it is In-storage.",
-    )
     calibration_required = models.BooleanField(
         default=False,
         help_text="History and due dates are kept as ResourceServiceRecord (kind=calibration).",

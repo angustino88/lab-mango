@@ -187,8 +187,7 @@ def test_generic_create_for_runtime_category_keeps_base_row(coordinator):
 
 
 @pytest.mark.django_db
-def test_generic_create_accepts_declared_fields_and_storage_room(coordinator, computing_kind):
-    room = Room.objects.create(sku="S0-ROOM-1", name="Store")
+def test_generic_create_accepts_declared_fields(coordinator, computing_kind):
     response = _client(coordinator).post(
         ROOT + "equipment",
         {
@@ -200,7 +199,6 @@ def test_generic_create_accepts_declared_fields_and_storage_room(coordinator, co
             "weight_kg": "2.25",
             "warranty_until": "2028-01-31",
             "calibration_required": True,
-            "storage_room_id": room.pk,
         },
         format="json",
     )
@@ -210,32 +208,21 @@ def test_generic_create_accepts_declared_fields_and_storage_room(coordinator, co
     assert unit.power_draw_w == 45
     assert str(unit.weight_kg) == "2.25"
     assert unit.calibration_required is True
-    assert unit.storage_room_id == room.pk
+    assert response.data["data"]["placement"] is None
 
 
 @pytest.mark.django_db
-def test_category_create_accepts_storage_room(coordinator, computing_kind):
-    room = Room.objects.create(sku="S0-ROOM-2", name="Store 2")
+@pytest.mark.parametrize("path", ["equipment", "equipment/computing"])
+def test_create_rejects_removed_storage_room_field(coordinator, computing_kind, path):
+    """``storage_room`` was removed; where a unit is kept is its placement."""
+    room = Room.objects.create(sku=f"S0-ROOM-{path[-3:]}", name="Store")
     response = _client(coordinator).post(
-        ROOT + "equipment/computing",
-        {"kind_id": computing_kind.pk, "sku": "S0-CAT-ROOM", "name": "PC", "storage_room_id": room.pk},
-        format="json",
-    )
-    assert response.status_code == 201, response.data
-    assert ComputingEquipment.objects.get(sku="S0-CAT-ROOM").storage_room_id == room.pk
-
-
-@pytest.mark.django_db
-def test_create_rejects_deleted_storage_room(coordinator, computing_kind):
-    room = Room.objects.create(sku="S0-ROOM-3", name="Gone")
-    Room.objects.filter(pk=room.pk).update(deleted_at=timezone.now())
-    response = _client(coordinator).post(
-        ROOT + "equipment",
-        {"kind_id": computing_kind.pk, "sku": "S0-DEL-ROOM", "name": "PC", "storage_room_id": room.pk},
+        ROOT + path,
+        {"kind_id": computing_kind.pk, "sku": f"S0-SR-{path[-3:]}", "name": "PC", "storage_room_id": room.pk},
         format="json",
     )
     assert response.status_code == 422, response.data
-    assert not Equipment.objects.filter(sku="S0-DEL-ROOM").exists()
+    assert not Equipment.objects.filter(sku=f"S0-SR-{path[-3:]}").exists()
 
 
 # D4: delete refuses while live records point at the unit -----------------------------------

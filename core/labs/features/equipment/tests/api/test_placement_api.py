@@ -85,3 +85,20 @@ def test_plain_user_can_read_but_not_write_placement(unit):
     assert client.put(url, {"location_note": "Desk"}, format="json").status_code == 403
     assert client.delete(url).status_code == 403
     assert client.get(url).status_code == 404
+
+
+@pytest.mark.django_db
+def test_equipment_responses_include_placement(coordinator_client, unit):
+    room = Room.objects.create(sku="PL-API-R3", name="Store 3")
+    coordinator_client.put(f"{ROOT}{unit.pk}/placement", {"room_id": room.pk}, format="json")
+
+    detail = coordinator_client.get(f"{ROOT}{unit.pk}").data["data"]
+    assert detail["placement"]["target_type"] == "room"
+    assert detail["placement"]["room"]["id"] == room.pk
+    assert "storage_room" not in detail
+
+    rows = coordinator_client.get(f"{ROOT}computing", {"search": unit.sku}).data["data"]
+    assert [row["placement"]["room"]["id"] for row in rows] == [room.pk]
+
+    coordinator_client.delete(f"{ROOT}{unit.pk}/placement")
+    assert coordinator_client.get(f"{ROOT}{unit.pk}").data["data"]["placement"] is None

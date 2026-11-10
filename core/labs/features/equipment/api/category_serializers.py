@@ -28,7 +28,6 @@ EQUIPMENT_WRITE_FIELDS = (
     "owner",
     "department",
     "group",
-    "storage_room",
     "firmware_version",
     "power_draw_w",
     "weight_kg",

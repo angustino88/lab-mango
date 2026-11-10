@@ -4,7 +4,7 @@ from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import CharField, Exists, OuterRef, Q, QuerySet, Subquery
+from django.db.models import CharField, Exists, OuterRef, Prefetch, Q, QuerySet, Subquery
 from django.db.models.functions import Cast
 
 from core.labs.features.equipment.contracts import ActiveEquipmentBenchAssignment
@@ -61,6 +61,22 @@ def with_equipment_info(queryset):
     )
 
 
+ACTIVE_PLACEMENT_ATTR = "active_placements"
+
+
+def with_active_placement(queryset: QuerySet) -> QuerySet:
+    """Prefetch each unit's active placement (bench, station, room, or note) in one query per page."""
+    return queryset.prefetch_related(
+        Prefetch(
+            "bench_assignments",
+            queryset=EquipmentAssignment.all_placements.filter(unassigned_at__isnull=True).select_related(
+                "bench", "station", "room"
+            ),
+            to_attr=ACTIVE_PLACEMENT_ATTR,
+        )
+    )
+
+
 def list_equipment(
     *,
     category: str | None = None,
@@ -85,7 +101,7 @@ def list_equipment(
         )
         .order_by("kind__category__name", "kind__name", "name", "id")
     )
-    queryset = with_equipment_info(queryset)
+    queryset = with_active_placement(with_equipment_info(queryset))
 
     if category:
         queryset = queryset.filter(kind__category_id=category)
@@ -257,11 +273,13 @@ def category_queryset(model: type[models.Model], fields: tuple[str, ...], *, rel
             prefetches.append(name)
         elif field.many_to_one:
             joins.append(name)
-    return with_equipment_info(
-        model.objects.filter(deleted_at__isnull=True)
-        .select_related(*joins)
-        .prefetch_related(*prefetches)
-        .order_by("name", "sku", "pk")
+    return with_active_placement(
+        with_equipment_info(
+            model.objects.filter(deleted_at__isnull=True)
+            .select_related(*joins)
+            .prefetch_related(*prefetches)
+            .order_by("name", "sku", "pk")
+        )
     )
 
 

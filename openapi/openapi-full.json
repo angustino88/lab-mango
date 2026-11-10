@@ -50114,11 +50114,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         },
         "required": [
@@ -50227,14 +50222,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -50343,13 +50338,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -50544,14 +50539,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -50655,13 +50650,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -50768,11 +50763,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         },
         "required": [
@@ -55156,11 +55146,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         },
         "required": [
@@ -55269,14 +55254,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -55443,6 +55428,7 @@
           "next_calibration_due_at",
           "os_name",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "rdp_file",
@@ -55450,7 +55436,6 @@
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "system_info",
           "technical_user",
           "type",
@@ -55647,14 +55632,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -55774,13 +55759,13 @@
           "next_calibration_due_at",
           "os_name",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -55888,11 +55873,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "technical_user_id": {
             "type": "integer",
@@ -57283,11 +57263,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         },
         "required": [
@@ -57396,14 +57371,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -57512,13 +57487,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -57713,14 +57688,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -57824,13 +57799,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -57937,11 +57912,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         },
         "required": [
@@ -58379,11 +58349,6 @@
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
           },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
-          },
           "size_id": {
             "type": "integer",
             "nullable": true
@@ -58505,14 +58470,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -58647,6 +58612,7 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
@@ -58655,7 +58621,6 @@
           "size",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -58850,14 +58815,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -58987,6 +58952,7 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
@@ -58995,7 +58961,6 @@
           "size",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -59102,11 +59067,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "size_id": {
             "type": "integer",
@@ -59809,14 +59769,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -59920,13 +59880,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -60392,11 +60352,6 @@
             "nullable": true
           },
           "group_id": {
-            "type": "integer",
-            "minimum": 1,
-            "nullable": true
-          },
-          "storage_room_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
@@ -63148,11 +63103,6 @@
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
           },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
-          },
           "material_id": {
             "type": "integer",
             "nullable": true
@@ -63264,14 +63214,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -63395,13 +63345,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -63596,14 +63546,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -63722,13 +63672,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -63838,11 +63788,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "material_id": {
             "type": "integer",
@@ -64069,11 +64014,6 @@
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
           },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
-          },
           "interfaces_ids": {
             "type": "array",
             "items": {
@@ -64187,14 +64127,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -64311,13 +64251,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -64512,14 +64452,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -64631,13 +64571,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -64744,11 +64684,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "interfaces_ids": {
             "type": "array",
@@ -65486,11 +65421,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         },
         "required": [
@@ -65599,14 +65529,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -65715,13 +65645,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -65916,14 +65846,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -66027,13 +65957,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -66140,11 +66070,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         },
         "required": [
@@ -69849,11 +69774,6 @@
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
           },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
-          },
           "material_id": {
             "type": "integer",
             "nullable": true
@@ -69965,14 +69885,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -70096,13 +70016,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -70297,14 +70217,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -70423,13 +70343,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -70539,11 +70459,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "material_id": {
             "type": "integer",
@@ -71132,11 +71047,6 @@
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
           },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
-          },
           "protocol_id": {
             "type": "integer",
             "nullable": true
@@ -71248,14 +71158,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -71378,6 +71288,7 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "protocol",
@@ -71385,7 +71296,6 @@
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -71580,14 +71490,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -71705,6 +71615,7 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "protocol",
@@ -71712,7 +71623,6 @@
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -71832,11 +71742,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "protocol_id": {
             "type": "integer",
@@ -72303,11 +72208,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         },
         "required": [
@@ -72416,14 +72316,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -72532,13 +72432,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -72733,14 +72633,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -72844,13 +72744,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -72957,11 +72857,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         },
         "required": [
@@ -73154,11 +73049,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         }
       },
@@ -73747,11 +73637,6 @@
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
           },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
-          },
           "technical_user_id": {
             "type": "integer",
             "nullable": true
@@ -73845,11 +73730,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         }
       },
@@ -73940,11 +73820,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "size_id": {
             "type": "integer",
@@ -74091,11 +73966,6 @@
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
           },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
-          },
           "material_id": {
             "type": "integer",
             "nullable": true
@@ -74189,11 +74059,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "interfaces_ids": {
             "type": "array",
@@ -74290,11 +74155,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         }
       },
@@ -74388,11 +74248,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "material_id": {
             "type": "integer",
@@ -74501,11 +74356,6 @@
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
           },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
-          },
           "protocol_id": {
             "type": "integer",
             "nullable": true
@@ -74599,11 +74449,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           }
         }
       },
@@ -74707,11 +74552,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "interface_id": {
             "type": "integer",
@@ -74983,11 +74823,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "customer_id": {
             "type": "integer",
@@ -75460,11 +75295,6 @@
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
           },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
-          },
           "interface_id": {
             "type": "integer",
             "nullable": true
@@ -75576,14 +75406,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -75714,6 +75544,7 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "power_rating",
           "product_model",
@@ -75721,7 +75552,6 @@
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -75916,14 +75746,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -76049,6 +75879,7 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "power_rating",
           "product_model",
@@ -76056,7 +75887,6 @@
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -76176,11 +76006,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "interface_id": {
             "type": "integer",
@@ -80724,11 +80549,6 @@
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
           },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
-          },
           "customer_id": {
             "type": "integer",
             "nullable": true
@@ -80852,14 +80672,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -80994,13 +80814,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -81195,14 +81015,14 @@
             "readOnly": true,
             "nullable": true
           },
-          "storage_room": {
+          "placement": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/EquipmentPlacement"
               }
             ],
-            "readOnly": true,
-            "nullable": true
+            "nullable": true,
+            "readOnly": true
           },
           "firmware_version": {
             "type": "string",
@@ -81332,13 +81152,13 @@
           "name",
           "next_calibration_due_at",
           "owner",
+          "placement",
           "power_draw_w",
           "product_model",
           "replacement_date",
           "serial_number",
           "sku",
           "status",
-          "storage_room",
           "type",
           "uid",
           "updated_at",
@@ -81445,11 +81265,6 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
-          },
-          "storage_room_id": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Where the asset is kept while it is In-storage."
           },
           "customer_id": {
             "type": "integer",

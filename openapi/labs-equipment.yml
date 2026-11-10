@@ -15610,10 +15610,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
       required:
       - kind_id
       - sku
@@ -15681,11 +15677,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -15771,13 +15767,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -15907,11 +15903,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -15993,13 +15989,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -16084,10 +16080,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
       required:
       - kind_id
       - sku
@@ -16559,10 +16551,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
       required:
       - kind_id
       - sku
@@ -16630,11 +16618,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -16763,6 +16751,7 @@ components:
       - next_calibration_due_at
       - os_name
       - owner
+      - placement
       - power_draw_w
       - product_model
       - rdp_file
@@ -16770,7 +16759,6 @@ components:
       - serial_number
       - sku
       - status
-      - storage_room
       - system_info
       - technical_user
       - type
@@ -16902,11 +16890,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -17001,13 +16989,13 @@ components:
       - next_calibration_due_at
       - os_name
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -17093,10 +17081,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         technical_user_id:
           type: integer
           nullable: true
@@ -17253,10 +17237,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
       required:
       - kind_id
       - sku
@@ -17324,11 +17304,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -17414,13 +17394,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -17550,11 +17530,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -17636,13 +17616,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -17727,10 +17707,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
       required:
       - kind_id
       - sku
@@ -18019,10 +17995,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         size_id:
           type: integer
           nullable: true
@@ -18100,11 +18072,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -18206,6 +18178,7 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
@@ -18214,7 +18187,6 @@ components:
       - size
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -18344,11 +18316,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -18446,6 +18418,7 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
@@ -18454,7 +18427,6 @@ components:
       - size
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -18539,10 +18511,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         size_id:
           type: integer
           nullable: true
@@ -18946,11 +18914,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -19032,13 +19000,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -19314,10 +19282,6 @@ components:
           minimum: 1
           nullable: true
         group_id:
-          type: integer
-          minimum: 1
-          nullable: true
-        storage_room_id:
           type: integer
           minimum: 1
           nullable: true
@@ -20638,10 +20602,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         material_id:
           type: integer
           nullable: true
@@ -20712,11 +20672,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -20812,13 +20772,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -20948,11 +20908,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -21044,13 +21004,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -21137,10 +21097,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         material_id:
           type: integer
           nullable: true
@@ -21297,10 +21253,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         interfaces_ids:
           type: array
           items:
@@ -21372,11 +21324,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -21468,13 +21420,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -21604,11 +21556,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -21696,13 +21648,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -21787,10 +21739,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         interfaces_ids:
           type: array
           items:
@@ -21935,10 +21883,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
       required:
       - kind_id
       - sku
@@ -22006,11 +21950,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -22096,13 +22040,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -22232,11 +22176,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -22318,13 +22262,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -22409,10 +22353,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
       required:
       - kind_id
       - sku
@@ -23300,10 +23240,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         material_id:
           type: integer
           nullable: true
@@ -23374,11 +23310,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -23474,13 +23410,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -23610,11 +23546,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -23706,13 +23642,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -23799,10 +23735,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         material_id:
           type: integer
           nullable: true
@@ -23966,10 +23898,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         protocol_id:
           type: integer
           nullable: true
@@ -24040,11 +23968,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -24139,6 +24067,7 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - protocol
@@ -24146,7 +24075,6 @@ components:
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -24276,11 +24204,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -24371,6 +24299,7 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - protocol
@@ -24378,7 +24307,6 @@ components:
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -24470,10 +24398,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         protocol_id:
           type: integer
           nullable: true
@@ -24720,10 +24644,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
       required:
       - kind_id
       - sku
@@ -24791,11 +24711,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -24881,13 +24801,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -25017,11 +24937,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -25103,13 +25023,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -25194,10 +25114,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
       required:
       - kind_id
       - sku
@@ -25320,10 +25236,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
     PatchedComputingActivityUpdate:
       type: object
       description: Agent- or coordinator-reported state. Timestamps and counters are
@@ -25426,10 +25338,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         technical_user_id:
           type: integer
           nullable: true
@@ -25504,10 +25412,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
     PatchedDisplayEquipmentUpdate:
       type: object
       description: Validate related references before model save, including partial
@@ -25579,10 +25483,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         size_id:
           type: integer
           nullable: true
@@ -25666,10 +25566,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         material_id:
           type: integer
           nullable: true
@@ -25744,10 +25640,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         interfaces_ids:
           type: array
           items:
@@ -25823,10 +25715,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
     PatchedMechanicalEquipmentUpdate:
       type: object
       description: Validate related references before model save, including partial
@@ -25900,10 +25788,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         material_id:
           type: integer
           nullable: true
@@ -25985,10 +25869,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         protocol_id:
           type: integer
           nullable: true
@@ -26063,10 +25943,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
     PatchedPowerEquipmentUpdate:
       type: object
       description: Validate related references before model save, including partial
@@ -26149,10 +26025,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         interface_id:
           type: integer
           nullable: true
@@ -26227,10 +26099,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         customer_id:
           type: integer
           nullable: true
@@ -26324,10 +26192,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         interface_id:
           type: integer
           nullable: true
@@ -26398,11 +26262,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -26504,6 +26368,7 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - power_rating
       - product_model
@@ -26511,7 +26376,6 @@ components:
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -26641,11 +26505,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -26743,6 +26607,7 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - power_rating
       - product_model
@@ -26750,7 +26615,6 @@ components:
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -26846,10 +26710,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         interface_id:
           type: integer
           nullable: true
@@ -27647,10 +27507,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         customer_id:
           type: integer
           nullable: true
@@ -27729,11 +27585,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -27837,13 +27693,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -27973,11 +27829,11 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        storage_room:
+        placement:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
+          - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -28077,13 +27933,13 @@ components:
       - name
       - next_calibration_due_at
       - owner
+      - placement
       - power_draw_w
       - product_model
       - replacement_date
       - serial_number
       - sku
       - status
-      - storage_room
       - type
       - uid
       - updated_at
@@ -28168,10 +28024,6 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
-        storage_room_id:
-          type: integer
-          nullable: true
-          description: Where the asset is kept while it is In-storage.
         customer_id:
           type: integer
           nullable: true
