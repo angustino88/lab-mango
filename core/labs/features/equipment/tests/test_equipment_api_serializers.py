@@ -79,33 +79,16 @@ def test_equipment_status_record_serializer_canonical_fields():
     }
 
 
-def test_computing_equipment_serializer_supports_top_level_fields_and_fallback():
+def test_computing_create_accepts_manual_fields_and_excludes_agent_reported_ones():
     from django.urls import resolve
 
     urlconf = "core.labs.features.equipment.api.urls"
     create_serializer_class = resolve("/equipment/computing", urlconf=urlconf).func.view_class.create_serializer_class
 
-    # 1. Top-level keys are in fields
+    # Owner decision: hostname (RDP host) and MAC are entered manually at registration;
+    # ip_address, os_name and system_info are reported by the monitoring agent.
     create_serializer = create_serializer_class()
     assert "hostname" in create_serializer.fields
     assert "mac_address" in create_serializer.fields
-    assert "ip_address" in create_serializer.fields
-    assert "os_name" in create_serializer.fields
-
-    # 2. Fallback extracts from system_info if top-level keys are omitted
-    serializer_fallback = create_serializer_class(
-        data={
-            "sku": "COMP-FALLBACK-01",
-            "system_info": {
-                "hostname": "srv-fallback-01",
-                "mac_address": "AA:BB:CC:DD:EE:FF",
-                "ip_address": "192.168.1.100",
-                "os_name": "Ubuntu 24.04",
-            },
-        }
-    )
-    validated_data = serializer_fallback.validate(dict(serializer_fallback.initial_data))
-    assert validated_data["hostname"] == "srv-fallback-01"
-    assert validated_data["mac_address"] == "AA:BB:CC:DD:EE:FF"
-    assert validated_data["ip_address"] == "192.168.1.100"
-    assert validated_data["os_name"] == "Ubuntu 24.04"
+    for agent_owned in ("ip_address", "os_name", "system_info"):
+        assert agent_owned not in create_serializer.fields

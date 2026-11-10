@@ -243,6 +243,7 @@ def build_category_urlpatterns(definition: EquipmentCategoryAPIConfig, *, module
             "list_serializer_class": list_serializer,
             "create_response_serializer_class": detail_serializer,
             "create_serializer_class": create_serializer,
+            "category_create_fields": create_fields,
             "text_search_fields": list(definition.searchable_fields),
             "distinct_search": distinct_search,
         },

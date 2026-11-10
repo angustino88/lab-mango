@@ -270,12 +270,15 @@ def category_reference_data(
     lookups: tuple[tuple[str, type[models.Model], str], ...],
 ) -> dict[str, QuerySet]:
     """Return reference rows needed to create or edit category equipment."""
+    # Match the stable category key; rows not migrated to a key fall back to the name,
+    # mirroring EquipmentCategory.effective_key. Renaming a category must not hide its kinds.
+    by_key = Q(key=category_key) | Q(key__isnull=True, name__iexact=category_key)
     kinds = EquipmentKind.objects.filter(
+        Q(category__key=category_key) | Q(category__key__isnull=True, category__name__iexact=category_key),
         active=True,
-        category__name__iexact=category_key,
         category__active=True,
     ).select_related("category")
-    active_category = EquipmentCategory.objects.filter(active=True, name__iexact=category_key)
+    active_category = EquipmentCategory.objects.filter(by_key, active=True)
     types = EquipmentType.objects.filter(
         active=True,
         kind__active=True,
