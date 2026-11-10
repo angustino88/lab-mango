@@ -1,6 +1,6 @@
 # Design: Equipment booking
 
-- Tier: T2 · Status: Draft, owner decisions recorded below, not approved for implementation · Date: 2026-11-10
+- Tier: T2 · Status: Draft, revision 2 below awaits owner approval; not approved for implementation · Date: 2026-11-10
 - Domain: Labs (`core/labs/features/equipment_bookings`, a feature that does not exist yet)
 - Depends on: [equipment management redesign](equipment-management-redesign.md), which owns the
   definitions of equipment state, `EquipmentPlacement`, `EquipmentLoan`, and "available". This document
@@ -9,6 +9,129 @@
 This revision replaces the earlier draft, which set the equipment status to `BORROWED` with JSON metadata.
 The central rule now is: **a booking is a calendar entry; a loan is physical custody.** The booking
 feature never writes equipment state directly.
+
+## Revision 2 (2026-11-10): coordinator-only operation, borrowers without accounts, several items at once
+
+This section replaces the parts of the document below that it contradicts (operating model, permissions,
+routes, `requester` semantics). Equipment redesign steps 1 to 3 are implemented; `EquipmentLoan`,
+hand-over, return, and extend exist for one item at a time.
+
+### Owner answers recorded (2026-11-10)
+
+| # | Answer | Consequence |
+|---|---|---|
+| R1 | Engineers cannot see or read equipment. The coordinator records everything on their behalf (old flow: coordinator set status `borrowed` and named the borrower). | No engineer request or approval flow. Every route here is coordinator-only. Bookings are created `approved`. |
+| R2 | Not every borrower has a user account. | Borrower is a user **or** a name: `borrower` (FK, optional) and `borrower_name` (text), at least one; optional `borrower_contact` (email or phone, text). |
+| R3 | Record the purpose of a loan. | `purpose` text on the loan batch. |
+| R4 | Restrict equipment reads to coordinators and administrators (explicit authorization for this access-control change). | See "Read restriction". |
+| R5 | People sometimes borrow a list of devices at once. | One request hands over, reserves, or returns several items; see "Loan batch". |
+
+### Loan batch (one borrower, one or more items)
+
+New `EquipmentLoanBatch` (owned by the equipment feature) is the paper slip: who, why, until when.
+Loans and reservations are its lines.
+
+| Model | Fields |
+|---|---|
+| `EquipmentLoanBatch` | `borrower` (FK user, nullable), `borrower_name`, `borrower_contact`, `purpose`, `created_by`, timestamps. Check `equipment_loan_batch_has_borrower`: `borrower` set or `borrower_name` not blank. No code (OD1). |
+| `EquipmentLoan` (existing) | gains `batch` (FK, PROTECT, required). `borrower` moves to the batch; the loan keeps item facts: times, `due_at`, `condition_out`/`condition_in`, `close_reason`. |
+| `EquipmentBooking` (existing) | gains `batch` (FK, PROTECT, required for new rows). `requester` stays null for borrowers without an account. |
+
+A single-item hand-over is a batch with one line; the step 3 routes stay and create one implicitly.
+
+### Flows
+
+**Lend now (the old "set borrowed")**: `POST /api/labs/equipment-loans`
+
+```json
+{"equipment_ids": [12, 15, 31], "borrower_id": null, "borrower_name": "Anna Tran (Supplier X)",
+ "borrower_contact": "anna@example.com", "purpose": "EMC test week", "due_at": "2026-11-17T17:00:00+07:00",
+ "items": [{"equipment_id": 15, "condition_out": "Scratched lid"}]}
+```
+
+All or nothing: every item must be available (in service, operational, not on a bench, not on loan,
+calibration not overdue, no reservation by someone else overlapping now to `due_at`). If any is not, nothing
+is handed over and the response is 409 `equipment_not_available` with one entry per failing item and its
+reasons. Maximum 50 items per request.
+
+**Reserve for later**: `POST /api/labs/equipment-reservations`
+
+Same body with `starts_at` and `ends_at` instead of `due_at`. Creates one `EquipmentBooking` per item
+(`reserved`, `approved`) under one batch. PostgreSQL refuses a time overlap per item
+(`equipment_booking_no_overlap`); the response is 409 `booking_conflict` listing the items and the
+conflicting windows; nothing is reserved. A reservation shows on the item (`reservations` in the detail
+response) and blocks lending it to someone else across that window.
+
+| Reservation step | Route | Effect |
+|---|---|---|
+| Change window or items | `PATCH /equipment-reservations/{batch_id}` | reschedule, add or drop items while `reserved` |
+| Cancel | `POST .../{batch_id}/actions/cancel` (reason) | all or selected items `cancelled` |
+| Hand over | `POST .../{batch_id}/actions/hand-over` (optional `equipment_ids`, per-item `condition_out`) | bookings `in_progress`, loans open with `due_at = ends_at`; items not collected stay `reserved` |
+| Not collected | task | `expired` after the grace period (open question 1) |
+
+**Return**: `POST /api/labs/equipment-loans/actions/return`
+
+```json
+{"items": [{"equipment_id": 12, "condition_in": "ok", "room_id": 5},
+           {"equipment_id": 15, "condition_in": "Cracked screen", "condition": "out_of_service", "room_id": 5}]}
+```
+
+Partial returns are normal: return 2 of 3 now, the third later. Each returned line closes its loan and
+completes its booking; the batch is finished when no line is open. Items that are not on loan make the whole
+request fail with 409 and a per-item list.
+
+**Extend**: `POST /api/labs/equipment-loans/actions/extend` (`equipment_ids` or `batch_id`, `due_at`);
+booking-linked loans move the booking end too, refused on overlap with the next reservation.
+
+**Read**: `GET /api/labs/equipment-loans` (filters: `open`, `overdue`, `borrower_id`, `borrower_name`,
+`equipment`, `batch`), `GET /api/labs/equipment-loan-batches/{id}` (the slip with all its lines),
+`GET /api/labs/equipment-reservations` (calendar; filters by window and item).
+
+### Write safety
+
+| Write path | Race | Guard (constraint name / lock order) | Idempotency | Concurrency test |
+|---|---|---|---|---|
+| lend now (batch) | two batches sharing an item | lock all `Equipment` rows in one query ordered by pk; `one_active_loan_per_equipment`; reservation check under the locks | `Idempotency-Key` required (request standard RW-6) | two batches sharing one item: one 201, one 409, no partial loans |
+| reserve (batch) | overlapping windows | same ordered lock; `equipment_booking_no_overlap` | `Idempotency-Key` required | two reservations sharing an item and window: one wins |
+| hand over reservation | double hand-over; cancel racing hand-over | lock `Equipment` rows, then batch, then bookings; transition table | lines already `in_progress` are returned as they are | cancel and hand-over at once |
+| return (batch) | double return | lock `Equipment` rows, then loans | already returned lines are returned as they are | repeat call is a no-op |
+| expire uncollected (task) | task racing hand-over | `status = reserved` and grace passed; `skip locked` | re-run finds nothing | task racing hand-over |
+
+Lock order: `Equipment` rows by pk, then `EquipmentLoanBatch`, then booking rows, then loan rows.
+
+### Read restriction (R4)
+
+**Evidence:** every equipment route uses `HasAPIKey | IsLabCoordinator`, whose reads are open to any
+authenticated user (`core/users/access.py`).
+
+**Proposed:** a `IsLabCoordinatorOnly` permission (read and write need the coordinator role or admin) on:
+equipment lists, details, filters, facets, options, summaries, placement, loan, reservation, and category
+routes, and the equipment catalog (kinds, types, manufacturers, product models). API keys keep access
+(agents). **Kept open to authenticated users:** `departments` and `resource-groups` routes (served from
+the equipment feature but used by other screens) and the computing activity routes used by the dashboard.
+
+Not verified: which frontend screens used by engineers call equipment routes (the frontend is not in this
+repository). Bench dashboards read equipment through backend queries, not these routes, so they keep working.
+
+### Reminders
+
+Borrowers may have no account, so reminders go to the **coordinator** (in-app list `overdue=true`). When
+`borrower_contact` is an email address, or the borrower is a user, an email reminder is sent at the due
+time, one day later, then daily for a week (OD4), deduplicated per loan and slot. Email delivery depends on
+the existing notification delivery; if none is configured for email, only the list exists (to verify).
+
+### Phasing
+
+1. Read restriction (R4) and `purpose`, borrower name and contact, `EquipmentLoanBatch`, lend-now and return for several items.
+2. Reservations for several items, hand-over from a reservation, expiry task.
+3. Overdue reminders.
+
+### Open questions for the owner
+
+1. Grace period before an uncollected reservation expires: 15 minutes (OD5, copied from bench bookings) is short for a coordinator-entered, multi-day reservation. Suggested: end of the start day. Or never expire automatically.
+2. OD3 says a booking can be created only when the item is available at that moment, so an item on loan today cannot be reserved for next week. With reservations entered by the coordinator, should that rule be dropped (only overlapping windows are refused)?
+3. May one batch mix items of different departments?
+4. Confirm that `departments` and `resource-groups` stay readable by all authenticated users.
 
 ## Problem and acceptance criteria
 
