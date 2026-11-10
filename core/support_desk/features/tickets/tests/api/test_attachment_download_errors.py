@@ -128,7 +128,9 @@ def test_download_documented_errors_execute_actual_guards(attachment_boundary, d
 
 
 @pytest.mark.parametrize("role,restricted", [("requester", False), ("admin", True)])
-def test_clean_download_preserves_binary_response(attachment_boundary, download_schema, role, restricted):
+def test_clean_download_preserves_binary_response(
+    attachment_boundary, download_schema, role, restricted, django_db_blocker
+):
     attachment_boundary["attachment"].is_restricted = restricted
     response = call_download(role)
     try:
@@ -139,4 +141,7 @@ def test_clean_download_preserves_binary_response(attachment_boundary, download_
         success = download_schema["paths"]["/attachments/{attachment_id}/download"]["get"]["responses"]["200"]
         assert success["content"]["application/octet-stream"]["schema"] == {"type": "string", "format": "binary"}
     finally:
-        response.close()
+        # close() sends request_finished -> close_old_connections(), which inspects a DB
+        # connection left open by an earlier test; that is not this test's DB access.
+        with django_db_blocker.unblock():
+            response.close()

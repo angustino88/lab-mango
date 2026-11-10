@@ -493,7 +493,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/StateEnum'
           readOnly: true
-          default: pending
         key_algorithm:
           allOf:
           - $ref: '#/components/schemas/KeyAlgorithmEnum'

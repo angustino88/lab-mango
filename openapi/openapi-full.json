@@ -51215,8 +51215,7 @@
                 "$ref": "#/components/schemas/StateEnum"
               }
             ],
-            "readOnly": true,
-            "default": "pending"
+            "readOnly": true
           },
           "key_algorithm": {
             "allOf": [
@@ -54241,8 +54240,7 @@
             "minimum": 0
           },
           "is_active": {
-            "type": "boolean",
-            "default": true
+            "type": "boolean"
           },
           "created_at": {
             "type": "string",
@@ -54816,6 +54814,11 @@
                 "maxLength": 0
               }
             ]
+          },
+          "hostname": {
+            "type": "string",
+            "description": "DNS name used for remote access; falls back to the SKU when empty.",
+            "maxLength": 255
           },
           "kind_id": {
             "type": "integer"
@@ -75910,8 +75913,7 @@
             "type": "boolean"
           },
           "is_active": {
-            "type": "boolean",
-            "default": true
+            "type": "boolean"
           },
           "created_at": {
             "type": "string",
@@ -83526,8 +83528,7 @@
             "readOnly": true
           },
           "is_active": {
-            "type": "boolean",
-            "default": true
+            "type": "boolean"
           },
           "created_at": {
             "type": "string",
