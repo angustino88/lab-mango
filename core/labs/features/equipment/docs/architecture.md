@@ -48,13 +48,13 @@ flowchart LR
 
 ## 4. Main workflows
 
-### Create/update/status
+### Create/update/state
 
-**Verified.** Feature-local application modules include create, update, delete, and status-transition operations. **Proposed.** API, admin, tasks, and scripts delegate to a single owning application command for each write. Keep category-specific validation/mapping in the equipment feature and generic hardware identity rules in canonical Equipment ownership.
+**Verified.** Feature-local application modules include create, update, delete, placement, and lifecycle/condition (`change_state.py`) commands. **Proposed.** API, admin, tasks, and scripts delegate to a single owning application command for each write. Keep category-specific validation/mapping in the equipment feature and generic hardware identity rules in canonical Equipment ownership.
 
 ### Assignment
 
-**Verified.** Equipment assignment application handles assignment to a bench and equipment status updates. The model has an active-row uniqueness constraint and a time-order check.
+**Verified.** Equipment assignment application handles placement on a bench; it no longer writes status history (bench placement shows as `display_status = in_use`). The model has an active-row uniqueness constraint and a time-order check.
 
 **Proposed write path:**
 
@@ -106,13 +106,13 @@ Verification and remaining gate/review limitations are recorded in the task hand
 
 ## 5. Lifecycle and invariants
 
-- Equipment resource lifecycle remains distinct from equipment operational status history.
+- Lifecycle state, condition, placement, and (later) loans are separate facts with separate rules; `display_status` is computed from them. What each means in practice: `spec.md` section 2.0.
 - Assignment has an active period (`unassigned_at` null) and historical periods; it is not a status value.
 - **Verified:** the assignment model's conditional unique constraint allows at most one active bench assignment per equipment; a check constraint prevents an end time preceding its start time.
 - **Proposed:** all assignment mutations occur in atomic application commands. Use database constraints as the final concurrency guard and test simultaneous conflicting assignments on PostgreSQL.
 - Do not infer booking availability or a live computing activity from equipment assignment/status alone.
 
-No complete equipment state-transition table is specified here; confirm allowed lifecycle and status transitions before changing them.
+The lifecycle transition table is in `spec.md` section 2.0 (owner: `EquipmentLifecycleState` and `LIFECYCLE_TRANSITIONS` in `core/labs/models/resource/equipment/equipment.py`); change it only with an owner decision.
 
 ## 6. Security and failure behavior
 
