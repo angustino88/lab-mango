@@ -50,7 +50,7 @@ def get_loan_batch(*, batch_id: int) -> EquipmentLoanBatch:
     """One loan slip with its lines. 2 queries (batch, lines). Raises ``DoesNotExist``."""
     return (
         EquipmentLoanBatch.objects.select_related("borrower", "created_by")
-        .prefetch_related("loans__equipment")
+        .prefetch_related("loans__equipment", "reservations__equipment")
         .get(pk=batch_id)
     )
 

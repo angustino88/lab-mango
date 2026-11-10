@@ -26,10 +26,11 @@ from core.labs.features.equipment.exceptions import (
     EquipmentNotOnLoan,
     EquipmentOnLoan,
     LoanIdempotencyKeyReuse,
-    LoanManagedByBooking,
+    ReservationConflict,
 )
 from core.labs.models import (
     Booking,
+    BookingStatus,
     Equipment,
     EquipmentBooking,
     EquipmentCondition,
@@ -37,6 +38,7 @@ from core.labs.models import (
     EquipmentLoan,
     EquipmentLoanBatch,
     LoanCloseReason,
+    ensure_booking_status_transition,
 )
 from core.labs.models.resource.equipment.loan import (
     BORROWER_NAME_MAX_LENGTH,
@@ -340,6 +342,12 @@ def _return_one(equipment: Equipment, command: ReturnEquipmentInput, *, actor) -
     loan.condition_in = condition_in
     loan.close_reason = LoanCloseReason.RETURNED
     loan.save(update_fields=("returned_at", "received_by", "condition_in", "close_reason", "modified"))
+    if loan.booking_id is not None:
+        booking = EquipmentBooking.objects.select_for_update().get(pk=loan.booking_id)
+        if booking.status == BookingStatus.IN_PROGRESS:
+            ensure_booking_status_transition(current_status=booking.status, target_status=BookingStatus.COMPLETED)
+            booking.status = BookingStatus.COMPLETED
+            booking.save(update_fields=("status", "modified"))
     if command.condition is not None:
         change_condition(
             ChangeConditionInput(equipment_id=equipment.pk, condition=command.condition, reason="Recorded at return."),
@@ -368,12 +376,23 @@ def _extend_one(equipment: Equipment, due_at: datetime) -> EquipmentLoan:
     loan = lock_active_loan(equipment)
     if loan is None:
         raise EquipmentNotOnLoan(f"{equipment.sku or equipment.pk} is not on loan.")
-    if loan.booking_id is not None:
-        raise LoanManagedByBooking()
     if loan.due_at == due_at:
         return loan
     if due_at <= timezone.now() or due_at <= loan.handed_over_at:
         raise ValidationError({"due_at": "The due time must be in the future."})
+    if loan.booking_id is not None:
+        # The booking window and the loan due time move together; the exclusion constraint
+        # refuses an extension into the next reservation of the item.
+        booking = EquipmentBooking.objects.select_for_update().get(pk=loan.booking_id)
+        try:
+            with transaction.atomic():
+                EquipmentBooking.objects.filter(pk=booking.pk).update(ends_at=due_at, modified=timezone.now())
+        except IntegrityError as error:
+            if _constraint(error) != "equipment_booking_no_overlap":
+                raise
+            raise ReservationConflict(
+                details={"due_at": f"{equipment.sku or equipment.pk}: reserved by someone else before then"}
+            ) from error
     loan.due_at = due_at
     loan.save(update_fields=("due_at", "modified"))
     return loan

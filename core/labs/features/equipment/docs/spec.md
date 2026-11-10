@@ -71,6 +71,13 @@ Three separate facts describe a unit. They are stored and changed independently;
 - Hand-over needs an available item: `in_service`, `operational`, not on a bench, not on loan, calibration not overdue (otherwise 409 `equipment_not_available` with `details.reasons`). Its room, station or noted place is closed: an item with a person has no placement. An item resting in a room, at a station, at a noted place, or with no recorded place can be lent; an item on a bench cannot. An item reserved by someone else in the loan window cannot be lent either.
 - While on loan: placing it is refused (409 `equipment_on_loan`); its condition may change ("broken while on loan" shows `broken` with a `loan`); `transferred_out` and `retired` are refused; `lost` closes the loan with reason `lost`; delete is refused.
 - Return closes the loan (`condition_in`) and can record the new condition and place in the same request; several items at once through `POST /api/labs/equipment-loans/actions/return` (any subset of what is out). A repeated return is a no-op.
+**Reservations** (keep items for a borrower over a later window; coordinator-only, created approved). One `EquipmentBooking` per item, grouped on a loan slip with the borrower and purpose.
+- Reserve several items at once (`POST /api/labs/equipment-reservations`, `Idempotency-Key` required): all or nothing. Refused per item (409 `booking_conflict`) when the item is not in service, is on a bench, is on loan with a due time after the reservation starts, or overlaps another reservation (`equipment_booking_no_overlap`). An item on loan today can be reserved for after its due time. Condition is checked at hand-over, not at reservation.
+- While reserved: the window can move and items can be added or dropped (`PATCH`); lines can be cancelled with a reason (all or some). An item reserved by someone else cannot be lent across that window.
+- Hand over from a reservation (all or listed items, all or nothing; any time before the end): the booking becomes `in_progress` and a loan opens, due at the reservation end. Return completes the booking; extending the loan moves the booking end (refused into the next reservation); marking the item lost cancels the booking.
+- Not collected: the task `labs.equipment.expire_uncollected_reservations` marks reserved lines whose start day (local time) has ended as `expired`. It is not scheduled by code: an operator adds it in Django admin under Django Celery Beat > Periodic tasks (suggested hourly).
+- Equipment responses carry `reservations` (reserved windows that have not ended), prefetched once per page.
+
 - Overdue is computed (open and past `due_at`), never stored; list filters `on_loan` and `loan_overdue`. Reminders arrive with equipment bookings (redesign step 4).
 
 The full design and its rationale are in `docs/proposals/equipment-management-redesign.md`.
@@ -176,6 +183,11 @@ Append-only history of lifecycle and condition changes, written only by `change_
 | `POST /api/labs/equipment-loans` | `EquipmentLoanListCreateAPIView` | `EquipmentLendBatchSerializer`; `Idempotency-Key` header | Lend several items to one borrower; all or nothing. |
 | `POST /api/labs/equipment-loans/actions/return` | `EquipmentLoanReturnBatchAPIView` | `EquipmentReturnBatchSerializer` | Take several items back; all or nothing. |
 | `POST /api/labs/equipment-loans/actions/extend` | `EquipmentLoanExtendBatchAPIView` | `EquipmentExtendLoansSerializer` | Move `due_at` for listed items or every open line of a slip. |
+| `GET /api/labs/equipment-reservations` | `EquipmentReservationListCreateAPIView` | Query `status` (default `reserved`), `equipment_id`, `batch_id`, `starts_before`, `ends_after`, `borrower_name` | Reservation lines by start time. |
+| `POST /api/labs/equipment-reservations` | `EquipmentReservationListCreateAPIView` | `EquipmentReserveSerializer`; `Idempotency-Key` header | Reserve several items for one borrower and window; all or nothing. |
+| `GET` / `PATCH /api/labs/equipment-reservations/{batch_id}` | `EquipmentReservationDetailAPIView` | `EquipmentReservationUpdateSerializer` | The slip with its lines; move the window, add or drop items. |
+| `POST /api/labs/equipment-reservations/{batch_id}/actions/cancel` | `EquipmentReservationCancelAPIView` | `EquipmentReservationCancelSerializer` | Cancel all or listed reserved lines with a reason. |
+| `POST /api/labs/equipment-reservations/{batch_id}/actions/hand-over` | `EquipmentReservationHandOverAPIView` | `EquipmentReservationHandOverSerializer` | Hand over all or listed reserved items. |
 | `GET /api/labs/equipment-loan-batches/{batch_id}` | `EquipmentLoanBatchAPIView` | Path `{batch_id}` | One slip with all its lines. |
 | `POST /api/labs/equipment/{equipment_id}/actions/return` | `EquipmentReturnAPIView` | `EquipmentReturnSerializer` | Close the loan; optional `condition` and new place. |
 | `POST /api/labs/equipment/{equipment_id}/actions/extend-loan` | `EquipmentExtendLoanAPIView` | `EquipmentExtendLoanSerializer` | Move `due_at` of a loan without a booking. |

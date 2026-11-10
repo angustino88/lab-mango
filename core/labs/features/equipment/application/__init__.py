@@ -19,10 +19,30 @@ from .loans import (
     return_equipment_batch,
 )
 from .place_equipment import PlaceEquipmentInput, RemovePlacementInput, place_equipment, remove_placement
+from .reservations import (
+    CancelReservationInput,
+    HandOverReservationInput,
+    ReserveEquipmentBatchInput,
+    UpdateReservationInput,
+    cancel_reservation,
+    expire_uncollected_reservations,
+    hand_over_reservation,
+    reserve_equipment_batch,
+    update_reservation,
+)
 from .unassign_equipment import UnassignEquipmentInput, unassign_equipment
 from .update_equipment import UpdateEquipmentInput, update_equipment
 
 __all__ = (
+    "CancelReservationInput",
+    "HandOverReservationInput",
+    "ReserveEquipmentBatchInput",
+    "UpdateReservationInput",
+    "cancel_reservation",
+    "expire_uncollected_reservations",
+    "hand_over_reservation",
+    "reserve_equipment_batch",
+    "update_reservation",
     "AssignEquipmentInput",
     "ChangeConditionInput",
     "ChangeLifecycleInput",

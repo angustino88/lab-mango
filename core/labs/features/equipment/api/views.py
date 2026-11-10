@@ -22,31 +22,39 @@ from core.labs.features.equipment.api.serializers import (
 )
 from core.labs.features.equipment.application import (
     AssignEquipmentInput,
+    CancelReservationInput,
     ChangeConditionInput,
     ChangeLifecycleInput,
     CreateEquipmentInput,
     ExtendLoanInput,
     ExtendLoansInput,
     HandOverEquipmentInput,
+    HandOverReservationInput,
     LendEquipmentBatchInput,
     PlaceEquipmentInput,
     RemovePlacementInput,
+    ReserveEquipmentBatchInput,
     ReturnEquipmentBatchInput,
     ReturnEquipmentInput,
     UnassignEquipmentInput,
+    UpdateReservationInput,
     assign_equipment,
+    cancel_reservation,
     change_condition,
     change_lifecycle,
     create_equipment,
     extend_loan,
     extend_loans,
     hand_over_equipment,
+    hand_over_reservation,
     lend_equipment_batch,
     place_equipment,
     remove_placement,
+    reserve_equipment_batch,
     return_equipment,
     return_equipment_batch,
     unassign_equipment,
+    update_reservation,
 )
 from core.labs.features.equipment.exceptions import LoanIdempotencyKeyRequired
 from core.labs.features.equipment.queries import (
@@ -82,6 +90,7 @@ from core.labs.features.equipment.queries.reference_data import (
     list_resource_group_options,
     list_resource_groups,
 )
+from core.labs.features.equipment.queries.reservations import list_reservations
 from core.labs.models import Equipment
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
@@ -115,6 +124,12 @@ from .serializers import (
     EquipmentPlacementWriteSerializer,
     EquipmentProductModelOptionsQuerySerializer,
     EquipmentReferenceDataSerializer,
+    EquipmentReservationCancelSerializer,
+    EquipmentReservationHandOverSerializer,
+    EquipmentReservationListQuerySerializer,
+    EquipmentReservationSerializer,
+    EquipmentReservationUpdateSerializer,
+    EquipmentReserveSerializer,
     EquipmentReturnBatchSerializer,
     EquipmentReturnSerializer,
     EquipmentSerializer,
@@ -558,10 +573,158 @@ class EquipmentLoanExtendBatchAPIView(EquipmentAPIView):
             raise TypeError("Request validation returned no serializer.")
         data = serializer.validated_data
         loans = extend_loans(
-            ExtendLoansInput(due_at=data["due_at"], equipment_ids=tuple(data["equipment_ids"]), batch_id=data["batch_id"]),
+            ExtendLoansInput(
+                due_at=data["due_at"], equipment_ids=tuple(data["equipment_ids"]), batch_id=data["batch_id"]
+            ),
             actor=self.acting_user,
         )
         return self.respond(list(list_loans().filter(pk__in=[loan.pk for loan in loans])), many=True)
+
+
+class EquipmentReservationListCreateAPIView(AppListAPIView, EquipmentAPIView):
+    """List reservation lines, or reserve several items for one borrower and window (all or nothing)."""
+
+    pagination_class = ResultsSetPagination
+    get_contract = OperationContract(
+        query=EquipmentReservationListQuerySerializer,
+        success=ResponseContract.paginated("EquipmentReservationList", EquipmentReservationSerializer),
+        bad_request=ResponseContract.bad_request(),
+    )
+    post_contract = OperationContract(
+        request=EquipmentReserveSerializer,
+        success=ResponseContract.created("EquipmentReservationCreated", EquipmentLoanBatchSerializer),
+        bad_request=ResponseContract.bad_request(),
+        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
+        conflict=ResponseContract.conflict(),
+    )
+
+    def handle_get(self, request: Request, *args, **kwargs) -> Response:
+        filters, error = self.validate_query()
+        if error is not None:
+            return error
+        filters = {key: value for key, value in (filters or {}).items() if key not in {"page", "page_size"}}
+        return self.list_response_sync(list_reservations(**filters))
+
+    def handle_post(self, request: Request, *args, **kwargs) -> Response:
+        key = request.headers.get("Idempotency-Key", "").strip()
+        if not key:
+            raise LoanIdempotencyKeyRequired()
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        batch = reserve_equipment_batch(
+            ReserveEquipmentBatchInput(
+                equipment_ids=tuple(data["equipment_ids"]),
+                starts_at=data["starts_at"],
+                ends_at=data["ends_at"],
+                borrower_id=data["borrower_id"],
+                borrower_name=data["borrower_name"],
+                borrower_contact=data["borrower_contact"],
+                purpose=data["purpose"],
+                idempotency_key=key,
+            ),
+            actor=self.acting_user,
+        )
+        return self.respond(get_loan_batch(batch_id=batch.pk))
+
+
+class EquipmentReservationDetailAPIView(EquipmentAPIView):
+    """One reservation slip with its lines; PATCH moves the window, adds or drops items."""
+
+    get_contract = OperationContract(
+        success=ResponseContract.success("EquipmentReservationDetail", EquipmentLoanBatchSerializer),
+        not_found=ResponseContract.not_found(),
+    )
+    patch_contract = OperationContract(
+        request=EquipmentReservationUpdateSerializer,
+        success=ResponseContract.success("EquipmentReservationUpdated", EquipmentLoanBatchSerializer),
+        bad_request=ResponseContract.bad_request(),
+        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
+        not_found=ResponseContract.not_found(),
+        conflict=ResponseContract.conflict(),
+    )
+
+    def handle_get(self, request: Request, batch_id: int, *args, **kwargs) -> Response:
+        return self.respond(get_loan_batch(batch_id=batch_id))
+
+    def handle_patch(self, request: Request, batch_id: int, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        update_reservation(
+            UpdateReservationInput(
+                batch_id=batch_id,
+                starts_at=data["starts_at"],
+                ends_at=data["ends_at"],
+                add_equipment_ids=tuple(data["add_equipment_ids"]),
+                remove_equipment_ids=tuple(data["remove_equipment_ids"]),
+            ),
+            actor=self.acting_user,
+        )
+        return self.respond(get_loan_batch(batch_id=batch_id))
+
+
+def _reservation_action_contract(name: str, request: Any) -> OperationContract:
+    return OperationContract(
+        request=request,
+        success=ResponseContract.success(name, EquipmentLoanBatchSerializer),
+        bad_request=ResponseContract.bad_request(),
+        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
+        not_found=ResponseContract.not_found(),
+        conflict=ResponseContract.conflict(),
+    )
+
+
+class EquipmentReservationCancelAPIView(EquipmentAPIView):
+    """Cancel the reserved lines of a slip (all, or the listed items) with a reason."""
+
+    post_contract = _reservation_action_contract("EquipmentReservationCancelled", EquipmentReservationCancelSerializer)
+
+    def handle_post(self, request: Request, batch_id: int, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        cancel_reservation(
+            CancelReservationInput(
+                batch_id=batch_id, reason=data["reason"], equipment_ids=tuple(data["equipment_ids"])
+            ),
+            actor=self.acting_user,
+        )
+        return self.respond(get_loan_batch(batch_id=batch_id))
+
+
+class EquipmentReservationHandOverAPIView(EquipmentAPIView):
+    """Hand over reserved items (all, or the listed ones); each loan is due at the reservation end."""
+
+    post_contract = _reservation_action_contract(
+        "EquipmentReservationHandedOver", EquipmentReservationHandOverSerializer
+    )
+
+    def handle_post(self, request: Request, batch_id: int, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        hand_over_reservation(
+            HandOverReservationInput(
+                batch_id=batch_id,
+                equipment_ids=tuple(data["equipment_ids"]),
+                conditions_out=tuple((item["equipment_id"], item["condition_out"]) for item in data["items"]),
+            ),
+            actor=self.acting_user,
+        )
+        return self.respond(get_loan_batch(batch_id=batch_id))
 
 
 class EquipmentStateActionAPIView(EquipmentAPIView):
@@ -573,7 +736,9 @@ class EquipmentStateActionAPIView(EquipmentAPIView):
     action: ClassVar[str] = ""
     queryset_provider: Any = None
 
-    def handle_post(self, request: Request, equipment_id: int | None = None, pk: int | None = None, *args, **kwargs) -> Response:
+    def handle_post(
+        self, request: Request, equipment_id: int | None = None, pk: int | None = None, *args, **kwargs
+    ) -> Response:
         target_id = equipment_id if equipment_id is not None else pk
         provider = type(self).queryset_provider
         visible = provider() if provider is not None else list_equipment()

@@ -9319,6 +9319,547 @@
         "summary": "Get Equipment Product Models Options"
       }
     },
+    "/api/labs/equipment-reservations": {
+      "get": {
+        "operationId": "labs_equipment_reservations_retrieve",
+        "description": "List reservation lines, or reserve several items for one borrower and window (all or nothing).",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "batch_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "borrower_name",
+            "schema": {
+              "type": "string",
+              "maxLength": 255,
+              "minLength": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "ends_after",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "starts_before",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "enum": [
+                "reserved",
+                "in_progress",
+                "completed",
+                "cancelled",
+                "expired"
+              ],
+              "type": "string",
+              "default": "reserved",
+              "minLength": 1
+            },
+            "description": "Defaults to reserved (the calendar of what is still to come).\n\n* `reserved` - reserved\n* `in_progress` - in_progress\n* `completed` - completed\n* `cancelled` - cancelled\n* `expired` - expired"
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentReservationListSerializersEquipmentReservationPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Reservations"
+      },
+      "post": {
+        "operationId": "labs_equipment_reservations_create",
+        "description": "List reservation lines, or reserve several items for one borrower and window (all or nothing).",
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentReserve"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentReserve"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentReserve"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentReservationCreatedSerializersEquipmentLoanBatchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Equipment Reservations"
+      }
+    },
+    "/api/labs/equipment-reservations/{batch_id}": {
+      "get": {
+        "operationId": "labs_equipment_reservations_retrieve_by_batch_id",
+        "description": "One reservation slip with its lines; PATCH moves the window, adds or drops items.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentReservationDetailSerializersEquipmentLoanBatchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Reservations by Batch ID"
+      },
+      "patch": {
+        "operationId": "labs_equipment_reservations_partial_update_by_batch_id",
+        "description": "One reservation slip with its lines; PATCH moves the window, adds or drops items.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedEquipmentReservationUpdate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedEquipmentReservationUpdate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedEquipmentReservationUpdate"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentReservationUpdatedSerializersEquipmentLoanBatchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Equipment Reservations by Batch ID"
+      }
+    },
+    "/api/labs/equipment-reservations/{batch_id}/actions/cancel": {
+      "post": {
+        "operationId": "labs_equipment_reservations_actions_cancel_create_by_batch_id",
+        "description": "Cancel the reserved lines of a slip (all, or the listed items) with a reason.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentReservationCancel"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentReservationCancel"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentReservationCancel"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentReservationCancelledSerializersEquipmentLoanBatchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Cancel Equipment Reservations by Batch ID"
+      }
+    },
+    "/api/labs/equipment-reservations/{batch_id}/actions/hand-over": {
+      "post": {
+        "operationId": "labs_equipment_reservations_actions_hand_over_create_by_batch_id",
+        "description": "Hand over reserved items (all, or the listed ones); each loan is due at the reservation end.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentReservationHandOver"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentReservationHandOver"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentReservationHandOver"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentReservationHandedOverSerializersEquipmentLoanBatchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Hand Over Equipment Reservations by Batch ID"
+      }
+    },
     "/api/labs/equipment-types": {
       "get": {
         "operationId": "labs_equipment_types_retrieve",
@@ -53502,6 +54043,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -53633,6 +54181,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -53859,6 +54408,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -53985,6 +54541,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -58610,6 +59167,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -58800,6 +59364,7 @@
           "product_model",
           "rdp_file",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "system_info",
@@ -59028,6 +59593,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -59170,6 +59742,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -60803,6 +61376,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -60934,6 +61514,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -61160,6 +61741,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -61286,6 +61874,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -61978,6 +62567,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -62135,6 +62731,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "resolution",
           "serial_number",
           "size",
@@ -62363,6 +62960,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -62515,6 +63119,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "resolution",
           "serial_number",
           "size",
@@ -63345,6 +63950,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -63471,6 +64083,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -64926,6 +65539,13 @@
               "$ref": "#/components/schemas/EquipmentLoan"
             },
             "readOnly": true
+          },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
           }
         },
         "required": [
@@ -64936,7 +65556,8 @@
           "id",
           "loans",
           "open_count",
-          "purpose"
+          "purpose",
+          "reservations"
         ]
       },
       "EquipmentLoanBatchCreatedSerializersEquipmentLoanBatchDetailResponse": {
@@ -65837,6 +66458,281 @@
         },
         "required": [
           "data"
+        ]
+      },
+      "EquipmentReservation": {
+        "type": "object",
+        "description": "One reservation line: an item kept for a borrower over a window.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "booking_code": {
+            "type": "string",
+            "readOnly": true
+          },
+          "batch_id": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true
+          },
+          "equipment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "borrower_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "status": {
+            "type": "string",
+            "readOnly": true
+          },
+          "cancellation_reason": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "batch_id",
+          "booking_code",
+          "borrower_name",
+          "cancellation_reason",
+          "ends_at",
+          "equipment",
+          "id",
+          "starts_at",
+          "status"
+        ]
+      },
+      "EquipmentReservationCancel": {
+        "type": "object",
+        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "equipment_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Cancel only these items; all reserved items when empty.",
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "EquipmentReservationCancelledSerializersEquipmentLoanBatchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentLoanBatch"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EquipmentReservationCreatedSerializersEquipmentLoanBatchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentLoanBatch"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EquipmentReservationDetailSerializersEquipmentLoanBatchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentLoanBatch"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EquipmentReservationHandOver": {
+        "type": "object",
+        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+        "properties": {
+          "equipment_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Hand over only these items; every open line when empty.",
+            "maxItems": 50
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LoanItemOut"
+            },
+            "description": "Optional per-item condition notes."
+          }
+        }
+      },
+      "EquipmentReservationHandedOverSerializersEquipmentLoanBatchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentLoanBatch"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EquipmentReservationListSerializersEquipmentReservationPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/EquipmentReservationListSerializersEquipmentReservationPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "EquipmentReservationListSerializersEquipmentReservationPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "EquipmentReservationListSerializersEquipmentReservationPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/EquipmentReservationListSerializersEquipmentReservationPagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "EquipmentReservationUpdatedSerializersEquipmentLoanBatchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentLoanBatch"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EquipmentReserve": {
+        "type": "object",
+        "description": "Reserve several items for one borrower and window. All or nothing.",
+        "properties": {
+          "borrower_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "borrower_name": {
+            "type": "string",
+            "default": "",
+            "maxLength": 255
+          },
+          "borrower_contact": {
+            "type": "string",
+            "default": "",
+            "description": "Email or phone; for borrowers without an account.",
+            "maxLength": 255
+          },
+          "purpose": {
+            "type": "string",
+            "default": "",
+            "maxLength": 2000
+          },
+          "equipment_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 50,
+            "minItems": 1
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "ends_at",
+          "equipment_ids",
+          "starts_at"
         ]
       },
       "EquipmentReturn": {
@@ -67390,6 +68286,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -67536,6 +68439,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -67762,6 +68666,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -67903,6 +68814,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -68379,6 +69291,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -68518,6 +69437,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -68744,6 +69664,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -68878,6 +69805,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -69857,6 +70785,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -69988,6 +70923,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -70214,6 +71150,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -70340,6 +71283,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -74355,6 +75299,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -74501,6 +75452,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -74727,6 +75679,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -74868,6 +75827,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -75704,6 +76664,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -75850,6 +76817,7 @@
           "product_model",
           "protocol",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -76076,6 +77044,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -76217,6 +77192,7 @@
           "product_model",
           "protocol",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -76943,6 +77919,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -77074,6 +78057,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -77300,6 +78284,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -77426,6 +78417,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -78549,6 +79541,38 @@
             "type": "string",
             "nullable": true,
             "maxLength": 32
+          }
+        }
+      },
+      "PatchedEquipmentReservationUpdate": {
+        "type": "object",
+        "description": "Move the window of the reserved lines, add items, or drop items.",
+        "properties": {
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "add_equipment_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 50
+          },
+          "remove_equipment_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 50
           }
         }
       },
@@ -80109,6 +81133,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -80263,6 +81294,7 @@
           "power_rating",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -80489,6 +81521,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -80638,6 +81677,7 @@
           "power_rating",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -85451,6 +86491,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -85608,6 +86655,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",
@@ -85834,6 +86882,13 @@
             "nullable": true,
             "readOnly": true
           },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentReservation"
+            },
+            "readOnly": true
+          },
           "firmware_version": {
             "type": "string",
             "readOnly": true,
@@ -85986,6 +87041,7 @@
           "power_draw_w",
           "product_model",
           "replacement_date",
+          "reservations",
           "serial_number",
           "sku",
           "type",

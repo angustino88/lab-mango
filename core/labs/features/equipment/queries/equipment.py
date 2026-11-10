@@ -9,7 +9,9 @@ from django.db.models.functions import Cast, Now
 
 from core.labs.features.equipment.contracts import ActiveEquipmentBenchAssignment
 from core.labs.models import (
+    BookingStatus,
     Equipment,
+    EquipmentBooking,
     EquipmentCategory,
     EquipmentCondition,
     EquipmentDisplayStatus,
@@ -106,6 +108,7 @@ def with_equipment_info(queryset):
 
 ACTIVE_PLACEMENT_ATTR = "active_placements"
 ACTIVE_LOAN_ATTR = "active_loans"
+UPCOMING_RESERVATIONS_ATTR = "upcoming_reservations"
 
 
 def with_active_placement(queryset: QuerySet) -> QuerySet:
@@ -134,6 +137,19 @@ def with_active_loan(queryset: QuerySet) -> QuerySet:
     )
 
 
+def with_upcoming_reservations(queryset: QuerySet) -> QuerySet:
+    """Prefetch each item's reserved, not yet ended reservations in one query per page."""
+    return queryset.prefetch_related(
+        Prefetch(
+            "bookings",
+            queryset=EquipmentBooking.objects.filter(status=BookingStatus.RESERVED, ends_at__gt=Now())
+            .select_related("batch", "batch__borrower")
+            .order_by("starts_at", "pk"),
+            to_attr=UPCOMING_RESERVATIONS_ATTR,
+        )
+    )
+
+
 def list_equipment(
     *,
     category: str | None = None,
@@ -158,7 +174,7 @@ def list_equipment(
         )
         .order_by("kind__category__name", "kind__name", "name", "id")
     )
-    queryset = with_active_loan(with_active_placement(with_equipment_info(queryset)))
+    queryset = with_upcoming_reservations(with_active_loan(with_active_placement(with_equipment_info(queryset))))
 
     if category:
         queryset = queryset.filter(kind__category_id=category)
@@ -330,13 +346,15 @@ def category_queryset(model: type[models.Model], fields: tuple[str, ...], *, rel
             prefetches.append(name)
         elif field.many_to_one:
             joins.append(name)
-    return with_active_loan(
-        with_active_placement(
-            with_equipment_info(
-                model.objects.filter(deleted_at__isnull=True)
-                .select_related(*joins)
-                .prefetch_related(*prefetches)
-                .order_by("name", "sku", "pk")
+    return with_upcoming_reservations(
+        with_active_loan(
+            with_active_placement(
+                with_equipment_info(
+                    model.objects.filter(deleted_at__isnull=True)
+                    .select_related(*joins)
+                    .prefetch_related(*prefetches)
+                    .order_by("name", "sku", "pk")
+                )
             )
         )
     )

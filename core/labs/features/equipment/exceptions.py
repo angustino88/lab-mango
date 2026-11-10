@@ -53,11 +53,18 @@ class EquipmentNotOnLoan(Conflict):
     default_message = "The equipment is not on loan."
 
 
-class LoanManagedByBooking(Conflict):
-    """Raised when a booking-linked loan is changed directly instead of through its booking."""
+class ReservationConflict(Conflict):
+    """Raised when items cannot be reserved for a window; ``details`` names each item and why."""
 
-    code = "loan_managed_by_booking"
-    default_message = "This loan belongs to a booking; change it through the booking."
+    code = "booking_conflict"
+    default_message = "One or more items cannot be reserved for that period."
+
+
+class ReservationNotOpen(Conflict):
+    """Raised when a reservation change finds no reserved line to act on."""
+
+    code = "reservation_not_open"
+    default_message = "This reservation has no open (reserved) lines."
 
 
 class LoanIdempotencyKeyReuse(ValidationFailed):
@@ -89,6 +96,7 @@ __all__ = [
     "InvalidEquipmentStatus",
     "LoanIdempotencyKeyRequired",
     "LoanIdempotencyKeyReuse",
-    "LoanManagedByBooking",
+    "ReservationConflict",
+    "ReservationNotOpen",
     "SkuAlreadyExists",
 ]

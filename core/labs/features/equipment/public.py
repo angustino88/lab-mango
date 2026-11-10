@@ -24,6 +24,17 @@ from .application.place_equipment import (
     place_equipment,
     remove_placement,
 )
+from .application.reservations import (
+    CancelReservationInput,
+    HandOverReservationInput,
+    ReserveEquipmentBatchInput,
+    UpdateReservationInput,
+    cancel_reservation,
+    expire_uncollected_reservations,
+    hand_over_reservation,
+    reserve_equipment_batch,
+    update_reservation,
+)
 from .application.unassign_equipment import UnassignEquipmentInput, unassign_equipment
 from .application.update_equipment import UpdateEquipmentInput, update_equipment
 from .categories.computing.queries import computing_activity_projection
@@ -36,7 +47,8 @@ from .exceptions import (
     EquipmentNotOnLoan,
     EquipmentOnLoan,
     InvalidEquipmentStatus,
-    LoanManagedByBooking,
+    ReservationConflict,
+    ReservationNotOpen,
 )
 from .queries.equipment import (
     active_bench_assignment_mapping_rows,
@@ -50,6 +62,7 @@ from .queries.equipment import (
 from .queries.inactivity_notifications import inactive_equipment_candidates
 from .queries.loans import get_active_loan, get_loan_batch, list_loans
 from .queries.placements import get_active_placement, has_active_placements
+from .queries.reservations import list_reservations
 from .queries.state_history import equipment_state_timelines
 from .queries.summaries import (
     get_computing_activity_summary,
@@ -58,6 +71,15 @@ from .queries.summaries import (
 )
 
 __all__ = (
+    "CancelReservationInput",
+    "HandOverReservationInput",
+    "ReserveEquipmentBatchInput",
+    "UpdateReservationInput",
+    "cancel_reservation",
+    "expire_uncollected_reservations",
+    "hand_over_reservation",
+    "reserve_equipment_batch",
+    "update_reservation",
     "ActiveEquipmentBenchAssignment",
     "get_computing_activity_summary",
     "get_equipment_status_summary",
@@ -80,7 +102,8 @@ __all__ = (
     "lend_equipment_batch",
     "return_equipment_batch",
     "HandOverEquipmentInput",
-    "LoanManagedByBooking",
+    "ReservationConflict",
+    "ReservationNotOpen",
     "ReturnEquipmentInput",
     "extend_loan",
     "hand_over_equipment",
@@ -93,6 +116,7 @@ __all__ = (
     "get_active_loan",
     "get_loan_batch",
     "list_loans",
+    "list_reservations",
     "get_active_placement",
     "has_active_placements",
     "place_equipment",

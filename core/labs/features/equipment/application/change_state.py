@@ -167,7 +167,7 @@ def _record(equipment: Equipment, axis: str, value: str, *, reason: str, details
 def _cancel_reserved_bookings(equipment: Equipment, *, reason: str) -> list[int]:
     bookings = list(
         EquipmentBooking.objects.select_for_update()
-        .filter(equipment=equipment, status=BookingStatus.RESERVED)
+        .filter(equipment=equipment, status__in=(BookingStatus.RESERVED, BookingStatus.IN_PROGRESS))
         .order_by("pk")
     )
     for booking in bookings:

@@ -30,7 +30,6 @@ from core.labs.features.equipment.exceptions import (
     EquipmentNotAvailable,
     EquipmentNotOnLoan,
     EquipmentOnLoan,
-    LoanManagedByBooking,
 )
 from core.labs.features.equipment.public import list_equipment
 from core.labs.models import (
@@ -211,8 +210,10 @@ def test_extend_loan(unit, borrower):
             equipment=unit, booking_code="LN-BK-2", starts_at=timezone.now(), ends_at=later
         )
     )
-    with pytest.raises(LoanManagedByBooking):
-        extend_loan(ExtendLoanInput(equipment_id=unit.pk, due_at=_due(96)), actor=None)
+    # A booking-linked loan moves its booking end too.
+    further = _due(96)
+    extend_loan(ExtendLoanInput(equipment_id=unit.pk, due_at=further), actor=None)
+    assert EquipmentBooking.objects.get(loan__pk=loan.pk).ends_at == further
 
 
 @pytest.mark.django_db

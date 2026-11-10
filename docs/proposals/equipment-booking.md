@@ -123,7 +123,12 @@ the existing notification delivery; if none is configured for email, only the li
 ### Phasing
 
 1. Read restriction (R4) and `purpose`, borrower name and contact, `EquipmentLoanBatch`, lend-now and return for several items. **Implemented.**
-2. Reservations for several items, hand-over from a reservation, expiry task.
+2. Reservations for several items, hand-over from a reservation, expiry task. **Implemented**, with these decisions:
+   - Reservations live in the equipment feature next to loans (coordinator-only; hand-over and return already run through the loan commands), not a separate `equipment_bookings` package.
+   - One `EquipmentBooking` per item, linked to the slip (`EquipmentBooking.batch`, nullable for rows made outside these commands); created `reserved` and `approved` by the coordinator; `requester` is the borrower's account when there is one; `reason` holds the purpose.
+   - Reserving is refused per item (409 `booking_conflict`, nothing reserved) when the item is not in service, is on a bench, is on loan with a due time after the reservation starts, or overlaps another reservation. Condition is checked at hand-over, not at reservation (an item in maintenance today may be fixed by then).
+   - Hand-over from a reservation: selected or all lines, all or nothing, `due_at` = the reservation end; allowed any time before the end. Return completes the booking. Extending a booking-linked loan moves the booking end too (refused on overlap). Marking an item lost cancels its in-progress booking.
+   - Expiry: `labs.equipment.expire_uncollected_reservations` marks `reserved` lines whose start day (local time) has ended as `expired`; an operator schedules it in Django Celery Beat (suggested hourly).
 3. Overdue reminders.
 
 ### Owner decisions on the open questions (2026-11-10, "use your suggestions")

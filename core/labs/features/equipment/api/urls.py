@@ -52,6 +52,26 @@ urlpatterns = [
         views.EquipmentLoanBatchAPIView.as_view(),
         name="equipment-loan-batch-detail",
     ),
+    path(
+        "equipment-reservations",
+        views.EquipmentReservationListCreateAPIView.as_view(),
+        name="equipment-reservation-list-create",
+    ),
+    path(
+        "equipment-reservations/<int:batch_id>",
+        views.EquipmentReservationDetailAPIView.as_view(),
+        name="equipment-reservation-detail",
+    ),
+    path(
+        "equipment-reservations/<int:batch_id>/actions/cancel",
+        views.EquipmentReservationCancelAPIView.as_view(),
+        name="equipment-reservation-action-cancel",
+    ),
+    path(
+        "equipment-reservations/<int:batch_id>/actions/hand-over",
+        views.EquipmentReservationHandOverAPIView.as_view(),
+        name="equipment-reservation-action-hand-over",
+    ),
     path("equipment/<int:equipment_id>/loan", views.EquipmentLoanAPIView.as_view(), name="equipment-loan-detail"),
     path(
         "equipment/<int:equipment_id>/actions/hand-over",

@@ -19,6 +19,7 @@ from core.labs.features.base.serializers import (
 from core.labs.features.equipment.api.capabilities import EQUIPMENT_CAPABILITIES
 from core.labs.models import (
     Equipment,
+    EquipmentBooking,
     EquipmentCategory,
     EquipmentCondition,
     EquipmentDisplayStatus,
@@ -91,6 +92,26 @@ class EquipmentLoanSerializer(serializers.Serializer):
         return obj.returned_at is None and obj.due_at < timezone.now()
 
 
+class EquipmentReservationSerializer(serializers.Serializer):
+    """One reservation line: an item kept for a borrower over a window."""
+
+    id = serializers.IntegerField(read_only=True)
+    booking_code = serializers.CharField(read_only=True)
+    batch_id = serializers.IntegerField(read_only=True, allow_null=True)
+    equipment = UIDNamedReferenceSerializer(read_only=True)
+    borrower_name = serializers.SerializerMethodField()
+    starts_at = serializers.DateTimeField(read_only=True)
+    ends_at = serializers.DateTimeField(read_only=True)
+    status = serializers.CharField(read_only=True)
+    cancellation_reason = serializers.CharField(read_only=True)
+
+    class Meta:
+        ref_name = "EquipmentReservation"
+
+    def get_borrower_name(self, obj) -> str:
+        return obj.batch.borrower_label if obj.batch_id else ""
+
+
 class EquipmentLoanBatchSerializer(serializers.Serializer):
     """The loan slip: one borrower and purpose, with every item handed over on it."""
 
@@ -102,6 +123,7 @@ class EquipmentLoanBatchSerializer(serializers.Serializer):
     created_at = serializers.DateTimeField(source="created", read_only=True)
     open_count = serializers.SerializerMethodField()
     loans = serializers.SerializerMethodField()
+    reservations = serializers.SerializerMethodField()
 
     class Meta:
         ref_name = "EquipmentLoanBatch"
@@ -117,6 +139,14 @@ class EquipmentLoanBatchSerializer(serializers.Serializer):
             lines.append(EquipmentLoanSerializer(loan, context=self.context).data)
         return lines
 
+    @extend_schema_field(EquipmentReservationSerializer(many=True))
+    def get_reservations(self, obj) -> list:
+        lines = []
+        for booking in obj.reservations.all():
+            booking.batch = obj
+            lines.append(EquipmentReservationSerializer(booking, context=self.context).data)
+        return lines
+
 
 class BorrowerInputMixin(serializers.Serializer):
     """The borrower is a user account or, without one, a name; plus why the equipment is needed."""
@@ -124,7 +154,11 @@ class BorrowerInputMixin(serializers.Serializer):
     borrower_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
     borrower_name = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
     borrower_contact = serializers.CharField(
-        max_length=255, required=False, allow_blank=True, default="", help_text="Email or phone; for borrowers without an account."
+        max_length=255,
+        required=False,
+        allow_blank=True,
+        default="",
+        help_text="Email or phone; for borrowers without an account.",
     )
     purpose = serializers.CharField(max_length=2000, required=False, allow_blank=True, default="")
 
@@ -150,18 +184,24 @@ class EquipmentLendBatchSerializer(ResourceWriteSerializerMixin, BorrowerInputMi
 
     equipment_ids = serializers.ListField(child=serializers.IntegerField(min_value=1), min_length=1, max_length=50)
     due_at = serializers.DateTimeField(help_text="When the equipment must be back; in the future.")
-    items = LoanItemOutSerializer(many=True, required=False, default=list, help_text="Optional per-item condition notes.")
+    items = LoanItemOutSerializer(
+        many=True, required=False, default=list, help_text="Optional per-item condition notes."
+    )
 
 
 class EquipmentReturnSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
     """Close the loan; optionally record the condition and where the equipment now is."""
 
     condition_in = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
-    condition = serializers.ChoiceField(choices=EquipmentCondition.choices, required=False, allow_null=True, default=None)
+    condition = serializers.ChoiceField(
+        choices=EquipmentCondition.choices, required=False, allow_null=True, default=None
+    )
     bench_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
     station_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
     room_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
-    location_note = serializers.CharField(max_length=LOCATION_NOTE_MAX_LENGTH, required=False, allow_blank=True, default="")
+    location_note = serializers.CharField(
+        max_length=LOCATION_NOTE_MAX_LENGTH, required=False, allow_blank=True, default=""
+    )
 
 
 class LoanItemInSerializer(EquipmentReturnSerializer):
@@ -172,6 +212,71 @@ class EquipmentReturnBatchSerializer(ResourceWriteSerializerMixin, serializers.S
     """Take several items back; any subset of what is out. All or nothing."""
 
     items = serializers.ListField(child=LoanItemInSerializer(), min_length=1, max_length=50)
+
+
+class EquipmentReserveSerializer(ResourceWriteSerializerMixin, BorrowerInputMixin):
+    """Reserve several items for one borrower and window. All or nothing."""
+
+    equipment_ids = serializers.ListField(child=serializers.IntegerField(min_value=1), min_length=1, max_length=50)
+    starts_at = serializers.DateTimeField()
+    ends_at = serializers.DateTimeField()
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs["ends_at"] <= attrs["starts_at"]:
+            raise serializers.ValidationError({"ends_at": "The end must be after the start."})
+        return attrs
+
+
+class EquipmentReservationUpdateSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    """Move the window of the reserved lines, add items, or drop items."""
+
+    starts_at = serializers.DateTimeField(required=False, allow_null=True, default=None)
+    ends_at = serializers.DateTimeField(required=False, allow_null=True, default=None)
+    add_equipment_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1), required=False, max_length=50, default=list
+    )
+    remove_equipment_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1), required=False, max_length=50, default=list
+    )
+
+
+class EquipmentReservationCancelSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    reason = serializers.CharField(max_length=2000)
+    equipment_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        max_length=50,
+        default=list,
+        help_text="Cancel only these items; all reserved items when empty.",
+    )
+
+
+class EquipmentReservationHandOverSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    equipment_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        max_length=50,
+        default=list,
+        help_text="Hand over only these items; every open line when empty.",
+    )
+    items = LoanItemOutSerializer(
+        many=True, required=False, default=list, help_text="Optional per-item condition notes."
+    )
+
+
+class EquipmentReservationListQuerySerializer(PageNumberQuerySerializer):
+    status = serializers.ChoiceField(
+        choices=("reserved", "in_progress", "completed", "cancelled", "expired"),
+        required=False,
+        default="reserved",
+        help_text="Defaults to reserved (the calendar of what is still to come).",
+    )
+    equipment_id = serializers.IntegerField(required=False, min_value=1)
+    batch_id = serializers.IntegerField(required=False, min_value=1)
+    starts_before = serializers.DateTimeField(required=False)
+    ends_after = serializers.DateTimeField(required=False)
+    borrower_name = serializers.CharField(required=False, max_length=255)
 
 
 class EquipmentExtendLoanSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
@@ -215,6 +320,7 @@ class EquipmentSerializer(AppModelSerializer):
     acquisition_price = serializers.SerializerMethodField(read_only=True)
     placement = serializers.SerializerMethodField(read_only=True)
     loan = serializers.SerializerMethodField(read_only=True)
+    reservations = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Equipment
@@ -235,6 +341,7 @@ class EquipmentSerializer(AppModelSerializer):
             "group",
             "placement",
             "loan",
+            "reservations",
             "firmware_version",
             "power_draw_w",
             "weight_kg",
@@ -266,11 +373,23 @@ class EquipmentSerializer(AppModelSerializer):
         placements = getattr(obj, "active_placements", None)
         if placements is None:  # instance not built by an equipment projection
             placements = list(
-                EquipmentAssignment.all_placements.filter(equipment_id=obj.pk, unassigned_at__isnull=True).select_related(
-                    "bench", "station", "room"
-                )
+                EquipmentAssignment.all_placements.filter(
+                    equipment_id=obj.pk, unassigned_at__isnull=True
+                ).select_related("bench", "station", "room")
             )
         return EquipmentPlacementSerializer(placements[0], context=self.context).data if placements else None
+
+    @extend_schema_field(EquipmentReservationSerializer(many=True))
+    def get_reservations(self, obj) -> list:
+        """Reserved windows that have not ended yet, from the projection's prefetch."""
+        rows = getattr(obj, "upcoming_reservations", None)
+        if rows is None:  # instance not built by an equipment projection
+            rows = list(
+                EquipmentBooking.objects.filter(equipment_id=obj.pk, status="reserved", ends_at__gt=timezone.now())
+                .select_related("batch", "batch__borrower")
+                .order_by("starts_at", "pk")
+            )
+        return [EquipmentReservationSerializer(row, context=self.context).data for row in rows]
 
     @extend_schema_field(EquipmentLoanSerializer(allow_null=True))
     def get_loan(self, obj) -> dict | None:

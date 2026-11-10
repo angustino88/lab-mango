@@ -302,6 +302,14 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-product-models~1{model_id}
   /api/labs/equipment-product-models/options:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-product-models~1options
+  /api/labs/equipment-reservations:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-reservations
+  /api/labs/equipment-reservations/{batch_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-reservations~1{batch_id}
+  /api/labs/equipment-reservations/{batch_id}/actions/cancel:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-reservations~1{batch_id}~1actions~1cancel
+  /api/labs/equipment-reservations/{batch_id}/actions/hand-over:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-reservations~1{batch_id}~1actions~1hand-over
   /api/labs/equipment-types:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-types
   /api/labs/equipment-types/{type_id}:

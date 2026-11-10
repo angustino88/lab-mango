@@ -193,8 +193,8 @@ def test_generic_list_count_page_annotation_parity(cardinality_inventory, filter
             assert not field.one_to_many and not field.many_to_many
     legacy = rows.distinct()
     assert rows.count() == legacy.count()
-    # 1 for the page, plus the active-placement and active-loan prefetches when the page has rows.
-    with django_assert_max_num_queries(3):
+    # 1 for the page, plus the placement, loan and upcoming-reservation prefetches when the page has rows.
+    with django_assert_max_num_queries(4):
         page = list(rows[:25])
     old_page = list(legacy[:25])
     assert [row.pk for row in page] == [row.pk for row in old_page]
