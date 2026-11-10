@@ -142,6 +142,19 @@ def test_catalog_writes_are_admin_only(coordinator, lab_admin):
     assert created.status_code == 201, created.data
 
 
+@pytest.mark.django_db
+def test_equipment_lookup_references_are_admin_only(coordinator, lab_admin):
+    """Lookups equipment points at by foreign key (owner decision 2026-11-10)."""
+    permission = Permission.objects.get(content_type__app_label="labs", codename="add_department")
+    coordinator.user_permissions.add(permission)
+    lab_admin.user_permissions.add(permission)
+    url = ROOT + "equipment/reference-data/departments"
+    denied = _client(coordinator).post(url, {"name": "S0 dept"}, format="json", HTTP_IDEMPOTENCY_KEY="s0-d1")
+    assert denied.status_code == 403
+    created = _client(lab_admin).post(url, {"name": "S0 dept"}, format="json", HTTP_IDEMPOTENCY_KEY="s0-d2")
+    assert created.status_code == 201, created.data
+
+
 # D2: generic create builds the category subtype ------------------------------------------
 
 
