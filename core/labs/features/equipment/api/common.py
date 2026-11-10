@@ -1,6 +1,13 @@
 """Equipment-specific API foundation and persistence helpers."""
 
+from rest_framework_api_key.permissions import HasAPIKey
+
 from core.labs.features.base import FeatureAPIView
+from core.users.public import IsLabCoordinator
+
+# Reads: any authenticated user or API key. Writes: lab coordinators and administrators, or an API
+# key (agents). Department scope (redesign OD9) is a later stage; this is the global role.
+EQUIPMENT_PERMISSIONS = [HasAPIKey | IsLabCoordinator]
 
 
 def sku_exists(sku: str, *, exclude_model=None, exclude_pk: int | None = None) -> bool:
@@ -22,4 +29,5 @@ def is_active_sku_unique_error(error) -> bool:
 class EquipmentAPIView(FeatureAPIView):
     """Equipment specialization of the shared feature API foundation."""
 
+    permission_classes = EQUIPMENT_PERMISSIONS
     schema_tags = ("Equipment",)

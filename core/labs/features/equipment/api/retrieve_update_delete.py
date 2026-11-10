@@ -12,12 +12,13 @@ from core.labs.features.equipment.application import (
 )
 from core.labs.features.equipment.exceptions import SkuAlreadyExists
 
-from .common import is_active_sku_unique_error
+from .common import EQUIPMENT_PERMISSIONS, is_active_sku_unique_error
 
 
 class EquipmentRetrieveUpdateDeleteAPIView(ResourceChangeLogMixin, RetrieveUpdateDeleteAPIView):
     """Adds equipment validation and change logging to single-object endpoints."""
 
+    permission_classes = EQUIPMENT_PERMISSIONS
     lock_on_write = True
 
     def get_save_kwargs(self, request):

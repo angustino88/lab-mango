@@ -8,11 +8,10 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from django.db.models import Count, DurationField, ExpressionWrapper, F, Max, Sum
 
+from core.labs.features.equipment.public import get_equipment_status_summary
 from core.labs.models import (
     Bench,
     BenchBooking,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     LabSessionLog,
 )
 
@@ -267,17 +266,14 @@ def get_user_weekly_usage(pk: int) -> list[dict[str, Any]]:
 
 
 def get_dashboard_summary() -> dict[str, Any]:
-    """Return dashboard summary with total equipment and current status counts."""
-    status_counts: dict[str, int] = defaultdict(int)
-    for choice, _ in EquipmentStatus.choices:
-        status_counts[choice] = 0
+    """Return dashboard summary with total equipment and current status counts.
 
-    records = EquipmentStatusRecord.objects.values("status").annotate(total=Count("id"))
-    for row in records:
-        status_counts[row["status"]] += row["total"]
-
-    total = sum(status_counts.values())
-    return {"total": total, "status": dict(status_counts)}
+    Each non-deleted unit is counted once, under its latest recorded status (equipment owns
+    that rule). ``total`` is the number of non-deleted units, including units with no status yet.
+    """
+    summary = get_equipment_status_summary()
+    status_counts = {row["status"]["value"]: row["resource_count"] for row in summary["statuses"]}
+    return {"total": summary["total_count"], "status": status_counts}
 
 
 def get_dashboard_labs() -> list[dict[str, Any]]:

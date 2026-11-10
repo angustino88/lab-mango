@@ -1633,6 +1633,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
       summary: Delete Equipment Accessory by ID
   /api/labs/equipment/accessory/{id}/actions/change-status:
     post:
@@ -2554,6 +2560,12 @@ paths:
         '204':
           description: No response body
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
           content:
             application/json:
               schema:
@@ -3591,6 +3603,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
       summary: Delete Equipment Debugging by ID
   /api/labs/equipment/debugging/{id}/actions/change-status:
     post:
@@ -4519,6 +4537,12 @@ paths:
         '204':
           description: No response body
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
           content:
             application/json:
               schema:
@@ -5650,6 +5674,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
       summary: Delete Equipment Furniture by ID
   /api/labs/equipment/furniture/{id}/actions/change-status:
     post:
@@ -6576,6 +6606,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
       summary: Delete Equipment Instrument by ID
   /api/labs/equipment/instrument/{id}/actions/change-status:
     post:
@@ -7490,6 +7526,12 @@ paths:
         '204':
           description: No response body
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
           content:
             application/json:
               schema:
@@ -8416,6 +8458,12 @@ paths:
         '204':
           description: No response body
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
           content:
             application/json:
               schema:
@@ -9349,6 +9397,12 @@ paths:
         '204':
           description: No response body
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
           content:
             application/json:
               schema:
@@ -10380,6 +10434,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
       summary: Delete Equipment Other by ID
   /api/labs/equipment/other/{id}/actions/change-status:
     post:
@@ -11301,6 +11361,12 @@ paths:
         '204':
           description: No response body
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
           content:
             application/json:
               schema:
@@ -14568,6 +14634,12 @@ paths:
         '204':
           description: No response body
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
           content:
             application/json:
               schema:

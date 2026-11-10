@@ -344,7 +344,7 @@ Each step is its own T2 change with its own plan and approval. Order matters bec
 
 | Step | Change | Data migration | Rollback |
 |---|---|---|---|
-| 0 | Fix D1 to D5 on the current model | none | revert |
+| 0 | Fix D1 to D5 on the current model (**implemented**, see `features/equipment/docs/architecture.md` section 6) | none | revert |
 | 1 | `EquipmentPlacement` | rename and extend `EquipmentAssignment` (state-only rename where possible); `storage_room` becomes a room placement for units with no active assignment; drop the column in a later release | keep the column until step 1 is verified |
 | 2 | `lifecycle_state`, `condition`, `EquipmentEvent` | backfill from the latest `EquipmentStatusRecord` using the table below; keep the old table read-only | columns are additive; adapter keeps old route working |
 | 3 | `EquipmentLoan` | none (legacy `borrowed` rows have no borrower FK; see table) | additive |

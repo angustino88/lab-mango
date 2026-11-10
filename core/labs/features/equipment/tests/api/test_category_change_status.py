@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from core.labs.features.equipment.tests.roles import grant_labs_role
 from core.labs.models import Bench
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 from core.labs.models.resource.equipment.computing import ComputingEquipment
@@ -22,7 +23,8 @@ def api_client():
 @pytest.fixture()
 def actor(db):
     User = get_user_model()
-    return User.objects.create_user(username="equipment_status_actor", email="status_actor@example.com")
+    user = User.objects.create_user(username="equipment_status_actor", email="status_actor@example.com")
+    return grant_labs_role(user, "coord")
 
 
 @pytest.fixture()

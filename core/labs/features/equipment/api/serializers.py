@@ -109,7 +109,7 @@ class EquipmentCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelS
     owner_id = serializers.IntegerField(source="owner", min_value=1, allow_null=True, required=False)
     department_id = serializers.IntegerField(source="department", min_value=1, allow_null=True, required=False)
     group_id = serializers.IntegerField(source="group", min_value=1, allow_null=True, required=False)
-    storage_room_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    storage_room_id = serializers.IntegerField(source="storage_room", min_value=1, allow_null=True, required=False)
 
     class Meta:
         model = Equipment

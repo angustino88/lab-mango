@@ -110,6 +110,8 @@ No complete equipment state-transition table is specified here; confirm allowed 
 
 **Proposed.** Authenticate and authorize every equipment command server-side. Scope detail and list queries to permitted resources. Passing a bench or equipment ID is not proof of access. Background processes use explicit, narrowly scoped actors. Keep permission logic independent of DRF and test denied object access.
 
+**Implemented (redesign Step 0).** Every equipment HTTP adapter (`EquipmentAPIView` and `EquipmentRetrieveUpdateDeleteAPIView`) uses `HasAPIKey | IsLabCoordinator`: reads stay open to authenticated users and API keys; writes need the coordinator role (or admin), or an API key. Equipment catalog reference creates (categories, kinds, types, manufacturers, product models, specification definitions, product-model specifications) additionally require the Labs admin role in `application/reference_data.py`; other lookups served under `equipment/reference-data/` keep the shared Django-model-permission policy. `delete_equipment` locks the `Equipment` row and refuses with `equipment_in_use` (409, `details.blockers`) while the unit has an active bench assignment, an active license seat, or a reserving equipment booking. Department scope is not implemented yet.
+
 Translate expected not-found, invalid-transition, and assignment-conflict cases into stable feature errors at the API boundary. Do not turn broad `IntegrityError` exceptions into a generic conflict.
 
 **Not verified:** exhaustive endpoint permission coverage and object-level query scoping.

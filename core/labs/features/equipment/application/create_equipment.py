@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
@@ -25,21 +26,31 @@ def _resolve_reference(model, value, *, field_name: str):
     return reference
 
 
-@dataclass(frozen=True, slots=True)
-class CreateEquipmentInput:
-    fields: tuple[tuple[str, Any], ...]
+def _resolve_room(value):
+    """``Room`` has no ``active`` flag; a soft-deleted room is not a valid storage place."""
+    if value is None or isinstance(value, Room):
+        return value
+    room = Room.objects.filter(pk=value, deleted_at__isnull=True).first()
+    if room is None:
+        raise ValidationError({"storage_room": "Select a valid reference."})
+    return room
 
 
-@transaction.atomic
-def create_equipment(command: CreateEquipmentInput, *, actor, model=Equipment, category_fields=frozenset()):
-    """Create equipment; ``category_fields`` are the category's declared create fields.
+def _category_models() -> dict[str, type[Equipment]]:
+    """Map each concrete equipment subtype's category key to its model."""
+    found: dict[str, type[Equipment]] = {}
+    pending = list(Equipment.__subclasses__())
+    while pending:
+        subtype = pending.pop()
+        pending.extend(subtype.__subclasses__())
+        if not subtype._meta.abstract and not subtype._meta.proxy:
+            found.setdefault(subtype.EQUIPMENT_CATEGORY_KEY, subtype)
+    return found
 
-    Shared fields are always allowed. A category endpoint passes its own create fields
-    (e.g. computing ``mac_address``/``hostname``); before, they were advertised by the API
-    but rejected here. Many-to-many values are set after the row is saved.
-    """
-    values = dict(command.fields)
-    allowed_fields = set(category_fields) | {
+
+# Shared ``Equipment`` columns every create route accepts (the create serializers' field set).
+SHARED_CREATE_FIELDS = frozenset(
+    {
         "kind",
         "type",
         "manufacturer",
@@ -55,7 +66,35 @@ def create_equipment(command: CreateEquipmentInput, *, actor, model=Equipment, c
         "department",
         "group",
         "storage_room",
+        "firmware_version",
+        "power_draw_w",
+        "weight_kg",
+        "warranty_until",
+        "calibration_required",
     }
+)
+
+
+@dataclass(frozen=True, slots=True)
+class CreateEquipmentInput:
+    fields: tuple[tuple[str, Any], ...]
+
+
+@transaction.atomic
+def create_equipment(command: CreateEquipmentInput, *, actor, model=Equipment, category_fields=frozenset()):
+    """Create equipment; ``category_fields`` are the category's declared create fields.
+
+    Shared fields are always allowed. A category endpoint passes its own create fields
+    (e.g. computing ``mac_address``/``hostname``); before, they were advertised by the API
+    but rejected here. Many-to-many values are set after the row is saved.
+
+    The generic route passes the base ``Equipment`` model. The row is then created as the
+    subtype registered for the kind's category, so it is visible to that category's endpoints
+    (and a computing unit gets its activity record). A category with no subtype, such as one
+    created at runtime, keeps a base ``Equipment`` row.
+    """
+    values = dict(command.fields)
+    allowed_fields = set(category_fields) | SHARED_CREATE_FIELDS
     unexpected = values.keys() - allowed_fields
     if unexpected:
         raise ValidationError({name: "Unknown or read-only field." for name in sorted(unexpected)})
@@ -66,7 +105,7 @@ def create_equipment(command: CreateEquipmentInput, *, actor, model=Equipment, c
         if field_name in values:
             values[field_name] = _resolve_reference(model_class, values[field_name], field_name=field_name)
     if "storage_room" in values:
-        values["storage_room"] = _resolve_reference(Room, values["storage_room"], field_name="storage_room")
+        values["storage_room"] = _resolve_room(values["storage_room"])
     from core.labs import models as labs_models  # Ensure models are imported
 
     for field_name, model_name in (
@@ -88,10 +127,18 @@ def create_equipment(command: CreateEquipmentInput, *, actor, model=Equipment, c
     if product_model and (not manufacturer or product_model.manufacturer_id != manufacturer.pk):
         raise ValidationError({"product_model": "The product model must belong to the selected manufacturer."})
     owner = values.get("owner")
+    if owner is not None and not isinstance(owner, get_user_model()):
+        # The generic route sends ids; category routes send instances.
+        owner = values["owner"] = get_user_model().objects.filter(pk=owner).first()
+        if owner is None:
+            raise ValidationError({"owner": "Select a valid reference."})
     if owner and not owner.is_active:
         raise ValidationError({"owner": "Select an active owner."})
+    values["kind"] = kind
     if not issubclass(model, Equipment):
         raise TypeError("Equipment creation requires an Equipment model subtype.")
+    if model is Equipment:
+        model = _category_models().get(kind.category.effective_key, Equipment)
     expected_category = getattr(model, "EQUIPMENT_CATEGORY_KEY", "equipment")
     # effective_key is the stable category code; the display name may be renamed.
     if expected_category != "equipment" and kind.category.effective_key != expected_category:
