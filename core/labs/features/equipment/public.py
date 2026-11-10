@@ -4,11 +4,17 @@ from .application.assign_equipment import AssignEquipmentInput, assign_equipment
 from .application.change_equipment_status import ChangeEquipmentStatusInput, change_equipment_status
 from .application.create_equipment import CreateEquipmentInput, create_equipment
 from .application.delete_equipment import DeleteEquipmentInput, delete_equipment
+from .application.place_equipment import (
+    PlaceEquipmentInput,
+    RemovePlacementInput,
+    place_equipment,
+    remove_placement,
+)
 from .application.unassign_equipment import UnassignEquipmentInput, unassign_equipment
 from .application.update_equipment import UpdateEquipmentInput, update_equipment
 from .categories.computing.queries import computing_activity_projection
 from .contracts import ActiveEquipmentBenchAssignment
-from .exceptions import EquipmentAlreadyAssigned, EquipmentInUse, InvalidEquipmentStatus
+from .exceptions import EquipmentAlreadyAssigned, EquipmentAlreadyPlaced, EquipmentInUse, InvalidEquipmentStatus
 from .queries.equipment import (
     active_bench_assignment_mapping_rows,
     active_equipment_bench_assignment,
@@ -19,6 +25,7 @@ from .queries.equipment import (
     with_equipment_info,
 )
 from .queries.inactivity_notifications import inactive_equipment_candidates
+from .queries.placements import get_active_placement, has_active_placements
 from .queries.summaries import (
     get_computing_activity_summary,
     get_equipment_category_status_summary,
@@ -35,8 +42,15 @@ __all__ = (
     "CreateEquipmentInput",
     "DeleteEquipmentInput",
     "EquipmentAlreadyAssigned",
+    "EquipmentAlreadyPlaced",
     "EquipmentInUse",
     "InvalidEquipmentStatus",
+    "PlaceEquipmentInput",
+    "RemovePlacementInput",
+    "get_active_placement",
+    "has_active_placements",
+    "place_equipment",
+    "remove_placement",
     "inactive_equipment_candidates",
     "UnassignEquipmentInput",
     "UpdateEquipmentInput",

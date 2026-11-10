@@ -345,7 +345,7 @@ Each step is its own T2 change with its own plan and approval. Order matters bec
 | Step | Change | Data migration | Rollback |
 |---|---|---|---|
 | 0 | Fix D1 to D5 on the current model (**implemented**, see `features/equipment/docs/architecture.md` section 6) | none | revert |
-| 1 | `EquipmentPlacement` | rename and extend `EquipmentAssignment` (state-only rename where possible); `storage_room` becomes a room placement for units with no active assignment; drop the column in a later release | keep the column until step 1 is verified |
+| 1 | `EquipmentPlacement` (**implemented**, see the step 1 plan below) | rename and extend `EquipmentAssignment` (state-only rename where possible); `storage_room` becomes a room placement for units with no active assignment; drop the column in a later release | keep the column until step 1 is verified |
 | 2 | `lifecycle_state`, `condition`, `EquipmentEvent` | backfill from the latest `EquipmentStatusRecord` using the table below; keep the old table read-only | columns are additive; adapter keeps old route working |
 | 3 | `EquipmentLoan` | none (legacy `borrowed` rows have no borrower FK; see table) | additive |
 | 4 | Equipment bookings feature | none | feature routes removable |
@@ -366,6 +366,22 @@ Backfill from the latest legacy status:
 | `lost` | `lost` | `operational` | |
 | `borrowed` | `in_service` | `operational` | no loan row can be built from text; `location_note` "On loan to <borrower>" and list for coordinator review |
 | `transferred` | `transferred_out` | `operational` | receiving organisation from `metadata.destination`, date from `metadata.transfer_date`, on the backfilled event |
+
+### Step 1 implementation plan (approved to start by the owner, 2026-11-10)
+
+Decisions that refine the step 1 row above:
+
+| Topic | Decision | Why |
+|---|---|---|
+| Table | Extend `labs_equipmentassignment` in place: `bench` becomes nullable; add `station`, `room` (PROTECT) and `location_note` (max 255). No table, field, or constraint rename. | AGENTS rule 1: model imports, query paths (`bench_assignments__...`) and permission codenames stay valid. One table keeps "one active placement per unit" a PostgreSQL guard (`one_active_bench_per_equipment` now covers every placement). |
+| Names | `EquipmentAssignment.objects` returns bench placements only, so every existing reader keeps its meaning. `EquipmentAssignment.all_placements` and the proxy model `EquipmentPlacement` see every placement. The class rename is deferred. | A rename changes content types and permission codenames; it is cosmetic and can follow as a state-only change. |
+| Readers | Join-based readers that start from equipment (`computing__bench_assignments__...`) do not use the manager; the two that can match a non-bench row (inactivity notifications, dashboard computing filter) add `bench__isnull=False`. | Verified by grep of every `bench_assignments__` lookup. |
+| Constraints | `equipment_placement_one_target`, `equipment_placement_bench_fields` (check). Existing rows all have a bench, so both validate on add. | AC2, AC5. |
+| Commands | `place_equipment` (bench target delegates to `assign_equipment`, keeping its status records), `remove_placement` (bench delegates to `unassign_equipment`). A unit resting in a room, station, or untracked place moves on placement; a unit on a bench must be removed from the bench first (`equipment_already_placed`, 409). Lock order: `Equipment`, then `Bench`, `Station`, or `Room`, then placement rows. | Bench removal has side effects (status, bookings); an implicit move off a bench would hide them. |
+| `storage_room` | Kept as a mirror for compatibility: written only by placement commands (room placement sets it, closing a room placement clears it). `storage_room_id` on create and update becomes "place in this room" (`null` removes a room placement). Column drop is a later release. Units that are on a bench and also have `storage_room` keep the column value and are not migrated. | OD1 without breaking readers in this release. |
+| Backfill | One data migration: every non-deleted unit with `storage_room` and no active assignment gets a room placement (`assigned_at` = migration time). Reverse deletes placements without a bench. | Migration table, step 1. |
+| Locations | `delete_room` and `delete_station` refuse while a unit is placed there (asked through equipment `public.py`); both already lock the row that `place_equipment` locks. | "Benches, locations ask equipment" (module ownership table). |
+| API | New `GET`/`PUT`/`DELETE /api/labs/equipment/{id}/placement`. `/assignment` is unchanged and keeps showing bench placements only (404 when the unit rests in a room). Adding `placement` to equipment list responses is deferred to a later step with its query budget. | Additive contract change. |
 
 ## Observability
 

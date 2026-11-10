@@ -8128,6 +8128,114 @@ components:
       required:
       - id
       - username
+    EquipmentPlacement:
+      type: object
+      description: 'Where a unit is now: exactly one of bench, station, room, or only
+        ``location_note``.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        target_type:
+          allOf:
+          - $ref: '#/components/schemas/TargetTypeEnum'
+          readOnly: true
+          description: 'Which target is set; ``note`` means an untracked place described
+            by location_note.
+
+
+            * `bench` - bench
+
+            * `station` - station
+
+            * `room` - room
+
+            * `note` - note'
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        station:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        location_note:
+          type: string
+          readOnly: true
+        role:
+          type: string
+          readOnly: true
+        position:
+          type: integer
+          readOnly: true
+        placed_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - bench
+      - id
+      - location_note
+      - placed_at
+      - position
+      - role
+      - room
+      - station
+      - target_type
+    EquipmentPlacementDetailSerializersEquipmentPlacementDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentPlacement'
+      required:
+      - data
+    EquipmentPlacementUpdatedSerializersEquipmentPlacementDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentPlacement'
+      required:
+      - data
+    EquipmentPlacementWrite:
+      type: object
+      description: Set one target, or none with a location note. Role and position
+        apply to benches only.
+      properties:
+        bench_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        station_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        room_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        location_note:
+          type: string
+          default: ''
+          description: Required when no target is set; otherwise an optional detail
+            such as a shelf. Trimmed.
+          maxLength: 255
+        role:
+          type: string
+          default: default
+          maxLength: 64
+        position:
+          type: integer
+          minimum: 0
+          default: 0
     EquipmentProductModel:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -24794,6 +24902,20 @@ components:
         * `waiting` - Waiting
 
         * `done` - Done'
+    TargetTypeEnum:
+      enum:
+      - bench
+      - station
+      - room
+      - note
+      type: string
+      description: '* `bench` - bench
+
+        * `station` - station
+
+        * `room` - room
+
+        * `note` - note'
     Team:
       type: object
       properties:

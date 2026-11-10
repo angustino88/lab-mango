@@ -27,6 +27,7 @@ from core.labs.models import (
     SpecificationDefinition,
 )
 from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.equipment.assignment import LOCATION_NOTE_MAX_LENGTH
 
 
 @extend_schema_serializer(component_name="EquipmentInventoryStatusSummary")
@@ -342,6 +343,57 @@ class EquipmentAssignmentResultSerializer(serializers.Serializer):
     bench = UIDNamedReferenceSerializer(read_only=True)
     role = serializers.CharField(read_only=True)
     position = serializers.IntegerField(read_only=True)
+
+
+class EquipmentPlacementSerializer(serializers.Serializer):
+    """Where a unit is now: exactly one of bench, station, room, or only ``location_note``."""
+
+    id = serializers.IntegerField(read_only=True)
+    target_type = serializers.ChoiceField(
+        choices=("bench", "station", "room", "note"),
+        read_only=True,
+        help_text="Which target is set; ``note`` means an untracked place described by location_note.",
+    )
+    bench = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
+    station = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
+    room = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
+    location_note = serializers.CharField(read_only=True)
+    role = serializers.CharField(read_only=True)
+    position = serializers.IntegerField(read_only=True)
+    placed_at = serializers.DateTimeField(source="assigned_at", read_only=True)
+
+    class Meta:
+        ref_name = "EquipmentPlacement"
+
+
+class EquipmentPlacementWriteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    """Set one target, or none with a location note. Role and position apply to benches only."""
+
+    bench_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
+    station_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
+    room_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
+    location_note = serializers.CharField(
+        max_length=LOCATION_NOTE_MAX_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+        help_text="Required when no target is set; otherwise an optional detail such as a shelf. Trimmed.",
+    )
+    role = serializers.CharField(max_length=64, required=False, default="default")
+    position = serializers.IntegerField(min_value=0, required=False, default=0)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        targets = [name for name in ("bench_id", "station_id", "room_id") if attrs.get(name) is not None]
+        if len(targets) > 1:
+            raise serializers.ValidationError(
+                {"non_field_errors": "Choose one target: bench, station, room, or a location note."}
+            )
+        if not targets and not attrs.get("location_note", "").strip():
+            raise serializers.ValidationError(
+                {"location_note": "Describe where the equipment is when no target is chosen."}
+            )
+        return attrs
 
 
 class EquipmentStatusRecordSerializer(AppModelSerializer):

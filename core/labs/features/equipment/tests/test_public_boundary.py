@@ -44,6 +44,7 @@ def test_business_errors_are_separate_from_neutral_contracts():
     exceptions = FEATURE_ROOT / "exceptions.py"
     assert _exports(exceptions) == [
         "EquipmentAlreadyAssigned",
+        "EquipmentAlreadyPlaced",
         "EquipmentInUse",
         "InvalidEquipmentStatus",
         "SkuAlreadyExists",
@@ -61,8 +62,15 @@ def test_public_module_exports_supported_queries_and_commands():
         "UpdateEquipmentInput",
         "UnassignEquipmentInput",
         "EquipmentAlreadyAssigned",
+        "EquipmentAlreadyPlaced",
         "EquipmentInUse",
         "InvalidEquipmentStatus",
+        "PlaceEquipmentInput",
+        "RemovePlacementInput",
+        "place_equipment",
+        "remove_placement",
+        "get_active_placement",
+        "has_active_placements",
         "assign_equipment",
         "change_equipment_status",
         "create_equipment",
@@ -112,7 +120,7 @@ def test_commands_have_atomic_transactions_and_no_transport_imports():
     for source_file in application.glob("*.py"):
         imports = _absolute_imports(source_file)
         assert not any("rest_framework" in name or "equipment.api" in name for name in imports)
-        if source_file.name not in {"__init__.py", "_status_transition.py", "_validation.py"}:
+        if source_file.name not in {"__init__.py", "_placement.py", "_status_transition.py", "_validation.py"}:
             tree = _module(source_file)
             command_functions = [
                 node

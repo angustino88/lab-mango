@@ -308,6 +308,8 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-status
   /api/labs/equipment/{equipment_id}/assignment:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1assignment
+  /api/labs/equipment/{equipment_id}/placement:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1placement
   /api/labs/equipment/accessory:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory
   /api/labs/equipment/accessory/{id}:

@@ -24,10 +24,14 @@ from core.labs.features.equipment.application import (
     AssignEquipmentInput,
     ChangeEquipmentStatusInput,
     CreateEquipmentInput,
+    PlaceEquipmentInput,
+    RemovePlacementInput,
     UnassignEquipmentInput,
     assign_equipment,
     change_equipment_status,
     create_equipment,
+    place_equipment,
+    remove_placement,
     unassign_equipment,
 )
 from core.labs.features.equipment.queries import (
@@ -38,6 +42,7 @@ from core.labs.features.equipment.queries import (
     list_equipment,
     list_equipment_options,
 )
+from core.labs.features.equipment.queries.placements import get_active_placement
 from core.labs.features.equipment.queries.reference_data import (
     get_department,
     get_equipment_category,
@@ -81,6 +86,8 @@ from .serializers import (
     EquipmentKindOptionsQuerySerializer,
     EquipmentManufacturerOptionsQuerySerializer,
     EquipmentOptionsQuerySerializer,
+    EquipmentPlacementSerializer,
+    EquipmentPlacementWriteSerializer,
     EquipmentProductModelOptionsQuerySerializer,
     EquipmentReferenceDataSerializer,
     EquipmentSerializer,
@@ -254,6 +261,58 @@ class EquipmentAssignmentAPIView(EquipmentAPIView):
             await sync_to_async(unassign_equipment)(UnassignEquipmentInput(equipment_id), actor=request.user)
         except Equipment.DoesNotExist:
             return self.respond_problem("not_found")
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class EquipmentPlacementAPIView(EquipmentAPIView):
+    """Where a unit is: on a bench, at a station, in a room, or at an untracked place.
+
+    ``/assignment`` keeps showing bench placements only; this route shows every kind.
+    """
+
+    get_contract = OperationContract(
+        success=ResponseContract.success("EquipmentPlacementDetail", EquipmentPlacementSerializer),
+        not_found=ResponseContract.not_found(),
+    )
+    put_contract = OperationContract(
+        request=EquipmentPlacementWriteSerializer,
+        success=ResponseContract.success("EquipmentPlacementUpdated", EquipmentPlacementSerializer),
+        bad_request=ResponseContract.bad_request(),
+        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
+        not_found=ResponseContract.not_found(),
+        conflict=ResponseContract.conflict(),
+    )
+    delete_contract = OperationContract(
+        success=ResponseContract.no_content(),
+        not_found=ResponseContract.not_found(),
+    )
+
+    def handle_get(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        return self.respond(get_active_placement(equipment_id=equipment_id))
+
+    def handle_put(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        place_equipment(
+            PlaceEquipmentInput(
+                equipment_id=equipment_id,
+                bench_id=data["bench_id"],
+                station_id=data["station_id"],
+                room_id=data["room_id"],
+                location_note=data["location_note"],
+                role=data["role"],
+                position=data["position"],
+            ),
+            actor=self.acting_user,
+        )
+        return self.respond(get_active_placement(equipment_id=equipment_id))
+
+    def handle_delete(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        remove_placement(RemovePlacementInput(equipment_id=equipment_id), actor=self.acting_user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

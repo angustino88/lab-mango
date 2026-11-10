@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from core.labs.features.equipment.application._placement import close_resting_placement
 from core.labs.features.equipment.application._status_transition import record_equipment_status
 from core.labs.features.equipment.exceptions import EquipmentAlreadyAssigned
 from core.labs.models import Bench, Equipment, EquipmentStatus
@@ -36,6 +37,8 @@ def assign_equipment(command: AssignEquipmentInput, *, actor):
         return current
     if current:
         raise EquipmentAlreadyAssigned()
+    # A unit resting at a station, in a room, or at an untracked place moves onto the bench.
+    close_resting_placement(equipment, actor=actor)
     try:
         with transaction.atomic():
             assignment = EquipmentAssignment.objects.create(

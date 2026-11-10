@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 609,
+  "total_endpoints": 612,
   "generated_at": "2026-11-10",
   "endpoints": [
     {
@@ -124571,6 +124571,664 @@
       "operation_id": "labs_equipment_assignment_destroy_by_equipment_id",
       "summary": "Delete Equipment Assignment by Equipment ID",
       "description": "Assign equipment to a bench, or release its current assignment.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "equipment_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/{equipment_id}/placement",
+      "method": "GET",
+      "operation_id": "labs_equipment_placement_retrieve_by_equipment_id",
+      "summary": "Get Equipment Placement by Equipment ID",
+      "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "equipment_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Where a unit is now: exactly one of bench, station, room, or only ``location_note``.",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "target_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "description": "Which target is set; ``note`` means an untracked place described by location_note.\n\n* `bench` - bench\n* `station` - station\n* `room` - room\n* `note` - note"
+                  },
+                  "bench": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "station": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "room": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "location_note": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "role": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "position": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "placed_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "bench",
+                  "id",
+                  "location_note",
+                  "placed_at",
+                  "position",
+                  "role",
+                  "room",
+                  "station",
+                  "target_type"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "target_type": {},
+              "bench": {},
+              "station": {},
+              "room": {},
+              "location_note": "string",
+              "role": "string",
+              "position": 1,
+              "placed_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/{equipment_id}/placement",
+      "method": "PUT",
+      "operation_id": "labs_equipment_placement_update_by_equipment_id",
+      "summary": "Update Equipment Placement by Equipment ID",
+      "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "equipment_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": false,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Set one target, or none with a location note. Role and position apply to benches only.",
+          "properties": {
+            "bench_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "station_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "room_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "location_note": {
+              "type": "string",
+              "default": "",
+              "description": "Required when no target is set; otherwise an optional detail such as a shelf. Trimmed.",
+              "maxLength": 255
+            },
+            "role": {
+              "type": "string",
+              "default": "default",
+              "maxLength": 64
+            },
+            "position": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        },
+        "example_payload": {
+          "bench_id": 1,
+          "station_id": 1,
+          "room_id": 1,
+          "location_note": "",
+          "role": "default",
+          "position": 0
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Where a unit is now: exactly one of bench, station, room, or only ``location_note``.",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "target_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "description": "Which target is set; ``note`` means an untracked place described by location_note.\n\n* `bench` - bench\n* `station` - station\n* `room` - room\n* `note` - note"
+                  },
+                  "bench": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "station": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "room": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "location_note": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "role": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "position": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "placed_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "bench",
+                  "id",
+                  "location_note",
+                  "placed_at",
+                  "position",
+                  "role",
+                  "room",
+                  "station",
+                  "target_type"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "target_type": {},
+              "bench": {},
+              "station": {},
+              "room": {},
+              "location_note": "string",
+              "role": "string",
+              "position": 1,
+              "placed_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/{equipment_id}/placement",
+      "method": "DELETE",
+      "operation_id": "labs_equipment_placement_destroy_by_equipment_id",
+      "summary": "Delete Equipment Placement by Equipment ID",
+      "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
       "tags": [
         "Equipment"
       ],

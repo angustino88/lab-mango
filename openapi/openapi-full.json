@@ -9654,6 +9654,194 @@
         "summary": "Delete Equipment Assignment by Equipment ID"
       }
     },
+    "/api/labs/equipment/{equipment_id}/placement": {
+      "get": {
+        "operationId": "labs_equipment_placement_retrieve_by_equipment_id",
+        "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentPlacementDetailSerializersEquipmentPlacementDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Placement by Equipment ID"
+      },
+      "put": {
+        "operationId": "labs_equipment_placement_update_by_equipment_id",
+        "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentPlacementWrite"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentPlacementWrite"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentPlacementWrite"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentPlacementUpdatedSerializersEquipmentPlacementDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Equipment Placement by Equipment ID"
+      },
+      "delete": {
+        "operationId": "labs_equipment_placement_destroy_by_equipment_id",
+        "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Delete Equipment Placement by Equipment ID"
+      }
+    },
     "/api/labs/equipment/{resource_id}/mapping": {
       "get": {
         "operationId": "labs_equipment_mapping_retrieve_by_resource_id",
@@ -61085,6 +61273,141 @@
           "username"
         ]
       },
+      "EquipmentPlacement": {
+        "type": "object",
+        "description": "Where a unit is now: exactly one of bench, station, room, or only ``location_note``.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "target_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TargetTypeEnum"
+              }
+            ],
+            "readOnly": true,
+            "description": "Which target is set; ``note`` means an untracked place described by location_note.\n\n* `bench` - bench\n* `station` - station\n* `room` - room\n* `note` - note"
+          },
+          "bench": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "station": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "room": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "location_note": {
+            "type": "string",
+            "readOnly": true
+          },
+          "role": {
+            "type": "string",
+            "readOnly": true
+          },
+          "position": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "placed_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "bench",
+          "id",
+          "location_note",
+          "placed_at",
+          "position",
+          "role",
+          "room",
+          "station",
+          "target_type"
+        ]
+      },
+      "EquipmentPlacementDetailSerializersEquipmentPlacementDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentPlacement"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EquipmentPlacementUpdatedSerializersEquipmentPlacementDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentPlacement"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EquipmentPlacementWrite": {
+        "type": "object",
+        "description": "Set one target, or none with a location note. Role and position apply to benches only.",
+        "properties": {
+          "bench_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "station_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "room_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "location_note": {
+            "type": "string",
+            "default": "",
+            "description": "Required when no target is set; otherwise an optional detail such as a shelf. Trimmed.",
+            "maxLength": 255
+          },
+          "role": {
+            "type": "string",
+            "default": "default",
+            "maxLength": 64
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          }
+        }
+      },
       "EquipmentProductModel": {
         "type": "object",
         "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
@@ -83611,6 +83934,16 @@
         ],
         "type": "string",
         "description": "* `open` - Open\n* `active` - Active\n* `waiting` - Waiting\n* `done` - Done"
+      },
+      "TargetTypeEnum": {
+        "enum": [
+          "bench",
+          "station",
+          "room",
+          "note"
+        ],
+        "type": "string",
+        "description": "* `bench` - bench\n* `station` - station\n* `room` - room\n* `note` - note"
       },
       "Team": {
         "type": "object",

@@ -5,6 +5,7 @@ from typing import Any
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from core.labs.features.equipment.application._placement import close_resting_placement
 from core.labs.features.equipment.exceptions import InvalidEquipmentStatus
 from core.labs.models import Bench, Equipment, EquipmentStatus, EquipmentStatusRecord
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
@@ -25,6 +26,7 @@ def record_equipment_status(*, equipment: Equipment, status: str, details: dict[
         bench = Bench.objects.select_for_update().get(id=bench_id, deleted_at__isnull=True)
         metadata = {**metadata, "bench": bench.pk, "bench_id": bench.pk}
         if active_assignment is None:
+            close_resting_placement(equipment, actor=actor)
             try:
                 with transaction.atomic():
                     EquipmentAssignment.objects.create(

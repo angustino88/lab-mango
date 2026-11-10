@@ -238,6 +238,7 @@ def get_dashboard_summary(actor: Any = None) -> dict[str, Any]:
     activity_rows = (
         ComputingActivity.objects.filter(
             computing__bench_assignments__unassigned_at__isnull=True,
+            computing__bench_assignments__bench__isnull=False,
             computing__bench_assignments__bench__deleted_at__isnull=True,
         )
         .values("status")

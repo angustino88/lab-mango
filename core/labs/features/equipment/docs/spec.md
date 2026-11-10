@@ -83,6 +83,9 @@ The Equipment feature manages the physical and logical lifecycle of hardware dev
 | `GET /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | Path `{equipment_id}` | Active bench assignment detail. |
 | `POST /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | `EquipmentAssignmentSerializer` | Assign equipment to bench. |
 | `DELETE /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | Path `{equipment_id}` | Unassign equipment from current bench. |
+| `GET /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | Path `{equipment_id}` | Active placement of any kind (bench, station, room, untracked place); 404 when the location is unknown. |
+| `PUT /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | `EquipmentPlacementWriteSerializer` | Set where the unit is; 409 `equipment_already_placed` when it is on a bench and the target differs. |
+| `DELETE /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | Path `{equipment_id}` | Remove the active placement; 204 also when there is none. |
 | `POST /api/labs/equipment/{id}/actions/change-status` | `EquipmentStatusAPIView` | `EquipmentStatusSerializer` | Transition lifecycle state. |
 | `GET /api/labs/equipment/computing/activity-summary` | `ComputingActivitySummaryAPIView` | None | Summary of monitored computing units. |
 | `GET /api/labs/equipment/computing/sku/{sku}/activity` | `ComputingActivityAPIView` | Path `{sku}` | Telemetry logs for computing unit. |

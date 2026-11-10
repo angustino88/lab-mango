@@ -72,6 +72,10 @@ sequenceDiagram
 
 The service/API should translate only the known active-assignment constraint into the stable equipment conflict; unrelated integrity failures must propagate. Race correctness relies on the database constraint, not only a pre-check.
 
+### Placement (redesign step 1)
+
+**Implemented.** `EquipmentAssignment` rows now record every placement: a bench, a station, a room, or only a `location_note` (check constraints `equipment_placement_one_target`, `equipment_placement_bench_fields`; `one_active_bench_per_equipment` is one active placement per unit). `EquipmentAssignment.objects` returns bench placements only, so pre-existing readers keep their meaning; `EquipmentAssignment.all_placements` and the proxy `EquipmentPlacement` return every placement. Join-based readers starting from equipment must add `bench__isnull=False` when they mean a bench. `place_equipment` and `remove_placement` (`application/place_equipment.py`) lock `Equipment`, then the target, then placement rows; bench targets delegate to `assign_equipment` / `unassign_equipment`. A resting unit moves; a unit on a bench must leave it first. `Equipment.storage_room` is a compatibility mirror written only by `_placement.py`; `storage_room_id` on create and update is translated into a room placement. `delete_room` and `delete_station` refuse while equipment rests there (`public.has_active_placements`). Plan and decisions: `docs/proposals/equipment-management-redesign.md`, "Step 1 implementation plan".
+
 ### Queries
 
 **Verified.** Equipment selectors filter deleted resources, support search/reference/status/assignment filters, and build category projections. **Proposed.** Queries remain read-only and apply caller visibility where policy requires it. Querysets remain internal to the Labs app; external feature boundaries should prefer bounded projections/DTOs.

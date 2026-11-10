@@ -18,6 +18,13 @@ class InvalidEquipmentStatus(Conflict):
     default_message = "The requested equipment status is not allowed."
 
 
+class EquipmentAlreadyPlaced(Conflict):
+    """Raised when a unit on a bench is asked to move somewhere else without leaving the bench first."""
+
+    code = "equipment_already_placed"
+    default_message = "The equipment is on a bench. Remove it from the bench first."
+
+
 class EquipmentInUse(Conflict):
     """Raised when equipment cannot be deleted because live records still point at it."""
 
@@ -32,4 +39,10 @@ class SkuAlreadyExists(Conflict):
     default_message = "SKU already exists."
 
 
-__all__ = ["EquipmentAlreadyAssigned", "EquipmentInUse", "InvalidEquipmentStatus", "SkuAlreadyExists"]
+__all__ = [
+    "EquipmentAlreadyAssigned",
+    "EquipmentAlreadyPlaced",
+    "EquipmentInUse",
+    "InvalidEquipmentStatus",
+    "SkuAlreadyExists",
+]

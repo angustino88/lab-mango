@@ -66,7 +66,7 @@ from .resource.equipment import (
     ProductModelSpecification,
     SpecificationDefinition,
 )
-from .resource.equipment.assignment import EquipmentAssignment
+from .resource.equipment.assignment import EquipmentAssignment, EquipmentPlacement
 from .resource.equipment.computing import ComputingEquipment, TechnicalUser
 from .resource.license.agreement import LicenseAgreement
 from .resource.license.assignment import LicenseAssignment
@@ -117,6 +117,7 @@ __all__ = [
     "Department",
     "Equipment",
     "EquipmentAssignment",
+    "EquipmentPlacement",
     "EquipmentCategory",
     "EquipmentBooking",
     "EquipmentInterface",

@@ -7,6 +7,7 @@ from django.db import transaction
 from core.labs.models import Booking, Equipment, EquipmentAssignment, EquipmentBooking, LicenseAssignment
 
 from ..exceptions import EquipmentInUse
+from ._placement import close_placement, lock_active_placement
 from ._validation import validate_equipment_model
 
 
@@ -31,6 +32,10 @@ def delete_equipment(command: DeleteEquipmentInput, *, actor):
         pk=command.equipment_id, deleted_at__isnull=True,
     )
     _ensure_no_live_dependents(instance.pk)
+    # A unit resting at a station, in a room, or at an untracked place leaves it when deleted.
+    resting = lock_active_placement(instance)
+    if resting is not None:
+        close_placement(resting, equipment=instance, actor=actor)
     instance.delete(actor=actor)
     return instance
 

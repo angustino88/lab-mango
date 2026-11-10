@@ -20,6 +20,8 @@ def inactive_equipment_candidates(
         last_agent_report_at__lte=now,
         inactive_at__lt=now - timedelta(minutes=60),
         computing__bench_assignments__unassigned_at__isnull=True,
+        # Join-based lookups bypass the bench-only manager; rooms and stations are not benches.
+        computing__bench_assignments__bench__isnull=False,
         computing__bench_assignments__assigned_at__lte=F("inactive_at"),
     ).exclude(booking_code="")
     if equipment_id is not None:
