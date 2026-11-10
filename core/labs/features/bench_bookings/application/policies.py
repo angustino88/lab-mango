@@ -58,6 +58,8 @@ def approval_status_for_schedule_change(*, duration: timedelta, current_status: 
 def ensure_bench_accepts_bookings(bench) -> None:
     if bench.deleted_at is not None:
         raise ValidationError({"bench": "Select an active bench."})
+    if bench.lifecycle_status != "in_service":
+        raise ValidationError({"bench": "This bench is not in service."})
 
 
 def ensure_project_exists(*, exists: bool) -> None:

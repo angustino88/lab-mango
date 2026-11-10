@@ -14,7 +14,7 @@ The Benches feature governs test bench entities, logical workbench groupings, us
   - `type` (FK `BenchType`, PROTECT, optional).
   - `setup_location` (FK `Station`, PROTECT, optional).
   - `station_slot` (OneToOneField `StationSlot`, PROTECT, optional).
-  - `lifecycle_status`: Enum (`planned`, `available`, `reserved`, `active`, `maintenance`, `out_of_service`, `retired`). Default: `planned`.
+  - `lifecycle_status`: Enum (`planned`, `in_service`, `out_of_service`, `retired`). Default: `in_service`. Only an `in_service` bench accepts bookings; "reserved" and "active" are computed, not stored.
   - `criticality` (CharField(32), default="").
   - `requested_power_w`, `requested_load_kg`, `requested_cooling_w` (PositiveIntegerField, optional).
   - `required_utilities` (JSONField, default=dict).

@@ -80,10 +80,10 @@ class TestListDashboardBenches:
         assert bench_2.id not in ids
 
     def test_filter_by_lifecycle_status(self):
-        bench_avail = BenchFactory(lifecycle_status="available")
-        bench_maint = BenchFactory(lifecycle_status="maintenance")
+        bench_avail = BenchFactory(lifecycle_status="in_service")
+        bench_maint = BenchFactory(lifecycle_status="out_of_service")
 
-        results = list(list_dashboard_benches(lifecycle_status="available"))
+        results = list(list_dashboard_benches(lifecycle_status="in_service"))
         ids = [b.id for b in results]
 
         assert bench_avail.id in ids
@@ -192,9 +192,9 @@ class TestGetDashboardSummary:
         now = timezone.now()
         user = UserFactory()
 
-        bench_1 = BenchFactory(lifecycle_status="available")
-        bench_2 = BenchFactory(lifecycle_status="active")
-        BenchFactory(lifecycle_status="maintenance")
+        bench_1 = BenchFactory(lifecycle_status="in_service")
+        bench_2 = BenchFactory(lifecycle_status="in_service")
+        BenchFactory(lifecycle_status="out_of_service")
 
         BenchFavorite.objects.create(user=user, bench=bench_1)
 
@@ -227,9 +227,8 @@ class TestGetDashboardSummary:
         assert summary["total_benches"] == 3
         assert summary["active_bookings_count"] == 1
         assert summary["favorited_benches_count"] == 1
-        assert summary["lifecycle_distribution"]["available"] == 1
-        assert summary["lifecycle_distribution"]["active"] == 1
-        assert summary["lifecycle_distribution"]["maintenance"] == 1
+        # Four stored values (redesign step 5); "active" is computed from bookings, not stored.
+        assert summary["lifecycle_distribution"] == {"planned": 0, "in_service": 2, "out_of_service": 1, "retired": 0}
         assert summary["activity_distribution"][ComputingActivityStatus.ACTIVE] == 1
         assert summary["utilization_rate"] == round((1 / 3) * 100.0, 2)
 

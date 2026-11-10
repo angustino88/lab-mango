@@ -29,7 +29,7 @@ class DashboardQueryFilterSerializer(PageNumberQuerySerializer):
     lifecycle_status = serializers.ChoiceField(
         choices=Bench.LIFECYCLE_STATUSES,
         required=False,
-        help_text="Filter by lifecycle status (e.g. available, active, maintenance).",
+        help_text="Filter by lifecycle status (planned, in_service, out_of_service, retired).",
     )
     activity_status = serializers.ChoiceField(
         choices=ComputingActivityStatus.choices,

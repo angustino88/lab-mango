@@ -7414,17 +7414,14 @@
             "schema": {
               "enum": [
                 "planned",
-                "available",
-                "reserved",
-                "active",
-                "maintenance",
+                "in_service",
                 "out_of_service",
                 "retired"
               ],
               "type": "string",
               "minLength": 1
             },
-            "description": "Filter by lifecycle status (e.g. available, active, maintenance).\n\n* `planned` - Planned\n* `available` - Available\n* `reserved` - Reserved\n* `active` - Active\n* `maintenance` - Maintenance\n* `out_of_service` - Out of service\n* `retired` - Retired"
+            "description": "Filter by lifecycle status (planned, in_service, out_of_service, retired).\n\n* `planned` - Planned\n* `in_service` - In service\n* `out_of_service` - Out of service\n* `retired` - Retired"
           },
           {
             "in": "query",

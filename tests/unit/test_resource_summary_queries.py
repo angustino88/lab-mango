@@ -53,7 +53,7 @@ def test_computing_category_summary_counts_only_computing_equipment(django_asser
 
 @pytest.mark.django_db
 def test_bench_lifecycle_is_not_activity_or_booking(django_assert_num_queries):
-    BenchFactory(lifecycle_status="available")
+    BenchFactory(lifecycle_status="in_service")
     with django_assert_num_queries(1):
         summary = get_bench_status_summary()
     assert summary["total_count"] == 1

@@ -349,7 +349,7 @@ Each step is its own T2 change with its own plan and approval. Order matters bec
 | 2 | `lifecycle_state`, `condition`, `EquipmentEvent` (**implemented**, see the step 2 plan below) | backfill from the latest `EquipmentStatusRecord` using the table below; keep the old table read-only | columns are additive; adapter keeps old route working |
 | 3 | `EquipmentLoan` (**implemented**, see the step 3 plan below) | none (legacy `borrowed` rows have no borrower FK; see table) | additive |
 | 4 | Equipment bookings feature | none | feature routes removable |
-| 5 | Bench state reduction | map `reserved`, `active` to `in_service`; `maintenance` to `out_of_service`; `available` to `in_service` | value map is reversible only for unchanged rows |
+| 5 | Bench state reduction (**implemented** 2026-11-10: four values with check `bench_lifecycle_valid`; new benches default to `in_service`; bench bookings refused unless `in_service`) | map `reserved`, `active` to `in_service`; `maintenance` to `out_of_service`; `available` to `in_service` | value map is reversible only for unchanged rows |
 | 6 | Single-table equipment and `ComputingProfile` | copy subclass columns into profile, product-model specifications, or `attributes`; largest step, plan separately | separate plan |
 
 Backfill from the latest legacy status:

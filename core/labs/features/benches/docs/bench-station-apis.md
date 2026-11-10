@@ -130,7 +130,7 @@ The [explicit serializers](../api/serializers.py) accept:
 | `image` | Image upload, not an arbitrary nested resource |
 | `description`, `documentation_url`, `criticality` | Workspace text, validated URL, free-form classification; criticality is not a fixed enum |
 | `setup_location`, `station_slot` | Nullable positive IDs; station slot requires a matching station |
-| `lifecycle_status` | `planned` (default), `available`, `reserved`, `active`, `maintenance`, `out_of_service`, `retired` |
+| `lifecycle_status` | `planned`, `in_service` (default), `out_of_service`, `retired`; only `in_service` accepts bookings |
 | `requested_power_w`, `requested_load_kg`, `requested_cooling_w` | Nullable nonnegative integers; zero is valid; null contributes zero to station aggregates |
 | `required_utilities` | JSON object describing requirements, not a list |
 | `commissioning_date` | Nullable date |
