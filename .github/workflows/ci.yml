@@ -35,6 +35,9 @@ jobs:
       DATABASE_URL: postgres://labmango:labmango@localhost:5432/labmango_ci
       DJANGO_SETTINGS_MODULE: config.settings.test
       DJANGO_SECRET_KEY: ci-only-not-a-secret-0123456789abcdef0123456789abcdef
+      # config/settings/base.py requires a broker URL at import time. Synthetic value, as in
+      # api-lint.yml: no step here connects to a broker (tests run Celery eagerly).
+      CELERY_BROKER_URL: redis://localhost:6379/0
     steps:
       - uses: actions/checkout@v4
 
