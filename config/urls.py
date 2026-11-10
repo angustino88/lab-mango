@@ -1,12 +1,13 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import include, path
 from django.views.generic import TemplateView
-from django.http import HttpResponse
 from drf_spectacular.views import SpectacularSwaggerView
 
 from core.users.features.auth.admin_login.api import DjangoAdminSiteCustomLoginView
+
 
 def healthz(request):
     return HttpResponse("OK", status=200)
