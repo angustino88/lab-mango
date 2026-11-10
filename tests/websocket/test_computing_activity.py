@@ -18,8 +18,8 @@ async def test_handler_rejects_non_numeric_id(asgi_send, asgi_receive):
     assert asgi_send.closed_with(4003)
 
 
-async def test_handler_accepts_connection(asgi_send, asgi_receive):
-    scope = {"type": "websocket", "user_id": 1, "url_params": {"computing_id": "7"}}
+async def test_handler_accepts_connection(asgi_send, asgi_receive, ws_computing_id):
+    scope = {"type": "websocket", "user_id": 1, "url_params": {"computing_id": ws_computing_id}}
 
     task = asyncio.create_task(computing_activity_handler(scope, asgi_receive, asgi_send))
     await asyncio.sleep(0.1)
@@ -29,13 +29,13 @@ async def test_handler_accepts_connection(asgi_send, asgi_receive):
     assert asgi_send.accepted()
 
 
-async def test_handler_receives_activity_event(asgi_send, asgi_receive):
-    scope = {"type": "websocket", "user_id": 1, "url_params": {"computing_id": "7"}}
+async def test_handler_receives_activity_event(asgi_send, asgi_receive, ws_computing_id):
+    scope = {"type": "websocket", "user_id": 1, "url_params": {"computing_id": ws_computing_id}}
 
     task = asyncio.create_task(computing_activity_handler(scope, asgi_receive, asgi_send))
     await asyncio.sleep(0.2)
     await pubsub.publish(
-        "ws:computing:7",
+        f"ws:computing:{ws_computing_id}",
         {"type": "computing_activity", "event_type": "computer_status_change", "data": {"status": "active"}},
     )
     await asyncio.sleep(0.2)

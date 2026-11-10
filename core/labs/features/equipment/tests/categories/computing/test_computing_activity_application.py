@@ -312,11 +312,11 @@ def test_missing_or_deleted_computer_raises_does_not_exist(computing):
 def test_status_change_notifies_after_commit(computing, monkeypatch, django_capture_on_commit_callbacks):
     published = []
     monkeypatch.setattr(
-        "core.labs.signals.publish_computing_activity_update",
+        "core.websocket.publish_service.publish_computing_activity_update",
         lambda computing_id, data: published.append((computing_id, data)),
     )
-    monkeypatch.setattr("core.labs.signals.publish_monitoring_update", lambda *a, **k: None)
-    monkeypatch.setattr("core.labs.signals.publish_dashboard_status_update", lambda *a, **k: None)
+    monkeypatch.setattr("core.websocket.publish_service.publish_monitoring_update", lambda *a, **k: None)
+    monkeypatch.setattr("core.websocket.publish_service.publish_dashboard_status_update", lambda *a, **k: None)
     _sync(computing, status="free")
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
@@ -333,11 +333,11 @@ def test_repeating_offline_status_does_not_emit_another_status_notification(
 ):
     published = []
     monkeypatch.setattr(
-        "core.labs.signals.publish_computing_activity_update",
+        "core.websocket.publish_service.publish_computing_activity_update",
         lambda computing_id, data: published.append((computing_id, data)),
     )
-    monkeypatch.setattr("core.labs.signals.publish_monitoring_update", lambda *a, **k: None)
-    monkeypatch.setattr("core.labs.signals.publish_dashboard_status_update", lambda *a, **k: None)
+    monkeypatch.setattr("core.websocket.publish_service.publish_monitoring_update", lambda *a, **k: None)
+    monkeypatch.setattr("core.websocket.publish_service.publish_dashboard_status_update", lambda *a, **k: None)
     with django_capture_on_commit_callbacks(execute=True):
         first = _sync(computing, status="active")
         offline = _sync(computing, status="offline")

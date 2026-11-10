@@ -25,7 +25,9 @@ async def reset_redis_pool():
 
 
 @pytest.fixture
-def valid_token(db):
+def valid_token(transactional_db):
+    # transactional: the middleware validates on a worker thread with its own
+    # connection, which cannot see rows from an uncommitted test transaction.
     """Create a user and return (token_str, user_id)."""
     from core.users.models import User
 
@@ -111,3 +113,19 @@ async def redis_client():
     r = aioredis.from_url(settings.CELERY_BROKER_URL, decode_responses=True)
     yield r
     await r.aclose()
+
+
+@pytest.fixture
+def ws_bench_id(transactional_db):
+    """A committed bench: handlers authorize the bench on a worker-thread connection."""
+    from tests.factories import BenchFactory
+
+    return str(BenchFactory().pk)
+
+
+@pytest.fixture
+def ws_computing_id(transactional_db):
+    """A committed computing equipment row for computing_activity handler tests."""
+    from tests.factories import ComputingEquipmentFactory
+
+    return str(ComputingEquipmentFactory().pk)

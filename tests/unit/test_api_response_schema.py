@@ -13,6 +13,7 @@ from drf_api_contracts import (
     ResponseSet,
     api_schema,
 )
+from drf_api_contracts.serializers import ProblemResponseEnvelopeSerializer
 from drf_spectacular.utils import PolymorphicProxySerializer
 from rest_framework import serializers, status
 
@@ -248,7 +249,7 @@ def test_app_api_view_responds_with_a_named_problem_contract():
 
     assert contracts.document("bad_request") == {
         200: contracts.success.schema,
-        400: ProblemDetailSerializer,
+        400: ProblemResponseEnvelopeSerializer,
     }
     assert response.status_code == 400
     assert response.data["error"] == {
@@ -298,7 +299,7 @@ def test_operation_contract_accepts_a_schema_and_named_problems_directly():
 
     assert operation.responses.document_configured() == {
         status.HTTP_200_OK: schema,
-        status.HTTP_400_BAD_REQUEST: ProblemDetailSerializer,
+        status.HTTP_400_BAD_REQUEST: ProblemResponseEnvelopeSerializer,
     }
 
 
@@ -377,7 +378,7 @@ def test_problem_contract_owns_status_schema_and_runtime_response():
         errors={"id": ["This field is required."]},
     )
 
-    assert bad_request.document() == {400: ProblemDetailSerializer}
+    assert bad_request.document() == {400: ProblemResponseEnvelopeSerializer}
     assert response.status_code == 400
     assert response.data["error"]["code"] == "validation_failed"
     assert response.data["error"]["request_id"] == "unknown"
@@ -392,7 +393,7 @@ def test_response_contracts_compose_without_repeating_status_codes():
 
     assert ResponseContract.document_many(success, bad_request) == {
         200: success.schema,
-        400: ProblemDetailSerializer,
+        400: ProblemResponseEnvelopeSerializer,
     }
 
     with pytest.raises(ValueError, match="duplicate response status code"):

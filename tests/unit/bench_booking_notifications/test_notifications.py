@@ -413,6 +413,7 @@ def test_claim_exhausted_never_sends():
 def test_database_constraints_present():
     assert BookingNotification._meta.get_field("dedupe_key").unique
     assert {constraint.name for constraint in BookingNotification._meta.constraints} == {
+        "booking_notice_one_booking",
         "booking_notice_channel",
         "booking_notice_kind",
         "booking_notice_state",

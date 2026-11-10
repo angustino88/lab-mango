@@ -141,7 +141,9 @@ def test_money_schema_matches_existing_getter(serializer_class, field, method):
 )
 def test_optional_slug_schema_preserves_defaults_and_validation(serializer_class, payload):
     _, schema = serializer_schema(serializer_class, "request")
-    code = schema["properties"]["code"]
+    # Documented as oneOf(slug with default "", empty string); check the slug branch.
+    documented = schema["properties"]["code"]
+    code = next(branch for branch in documented.get("oneOf", [documented]) if "pattern" in branch)
     assert code["default"] == ""
     assert code["maxLength"] == 50
     assert "code" not in schema.get("required", [])

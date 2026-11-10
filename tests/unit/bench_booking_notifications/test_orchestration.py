@@ -184,9 +184,28 @@ def test_additive_migration_matches_current_model_without_connection():
     state = ProjectState()
     for operation in migration.operations:
         operation.state_forwards("labs", state)
+    assert ("labs", "bookingnotification") in state.models
+    # Later migrations (0006 added equipment_booking and booking_notice_one_booking) evolve
+    # the model, so compare against the state projected from the whole migration graph.
+    from django.db.migrations.loader import MigrationLoader
+
+    projected = MigrationLoader(None, ignore_no_migrations=True).project_state()
     expected = ModelState.from_model(BookingNotification)
-    actual = state.models[("labs", "bookingnotification")]
-    assert expected == actual
+    actual = projected.models[("labs", "bookingnotification")]
+
+    # Compare by meaning: AddField/AddConstraint append, so declaration order differs harmlessly.
+    def fields(state):
+        return {name: field.deconstruct()[1:] for name, field in state.fields.items()}
+
+    def constraints(state):
+        return {constraint.name: constraint.deconstruct() for constraint in state.options.get("constraints", [])}
+
+    def other_options(state):
+        return {key: value for key, value in state.options.items() if key != "constraints"}
+
+    assert fields(expected) == fields(actual)
+    assert constraints(expected) == constraints(actual)
+    assert other_options(expected) == other_options(actual)
     assert migration.dependencies[0] == ("labs", "0004_computing_activity_agent_heartbeat_and_offline_constraint")
 
 

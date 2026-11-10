@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+from django.test import override_settings
+
 from core.labs.features.analytics.application.notifications import generate_storage_quota_ical as generate_ical
 from core.labs.features.analytics.application.tasks import (
     send_storage_quota_alerts as email_user_exceed_storage_quota,
@@ -63,8 +65,12 @@ class TestGenerateIcal:
         assert "\r\n" in content
 
     def test_no_hardcoded_domain(self):
-        content = generate_ical("testuser", "example.com").decode("utf-8")
+        # The organizer comes from DEFAULT_FROM_EMAIL (environment-specific); pin it so the
+        # test checks only that no domain is hard-coded in the generator itself.
+        with override_settings(DEFAULT_FROM_EMAIL="noreply@example.org"):
+            content = generate_ical("testuser", "example.com").decode("utf-8")
         assert "@bosch.com" not in content
+        assert "ATTENDEE:mailto:testuser@example.com" in content
 
 
 # ---------------------------------------------------------------------------

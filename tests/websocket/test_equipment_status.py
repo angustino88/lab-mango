@@ -8,8 +8,8 @@ from core.websocket.features.equipment_status.handler import (
 )
 
 
-async def test_handler_accepts_connection(asgi_send, asgi_receive):
-    scope = {"type": "websocket", "user_id": 1, "url_params": {"bench_id": "10"}}
+async def test_handler_accepts_connection(asgi_send, asgi_receive, ws_bench_id):
+    scope = {"type": "websocket", "user_id": 1, "url_params": {"bench_id": ws_bench_id}}
 
     task = asyncio.create_task(
         equipment_status_handler(scope, asgi_receive, asgi_send)
@@ -21,8 +21,8 @@ async def test_handler_accepts_connection(asgi_send, asgi_receive):
     assert asgi_send.accepted()
 
 
-async def test_handler_receives_lab_scoped_message(asgi_send, asgi_receive):
-    bench_id = "10"
+async def test_handler_receives_lab_scoped_message(asgi_send, asgi_receive, ws_bench_id):
+    bench_id = ws_bench_id
     scope = {"type": "websocket", "user_id": 1, "url_params": {"bench_id": bench_id}}
 
     task = asyncio.create_task(

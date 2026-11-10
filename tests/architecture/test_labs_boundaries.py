@@ -48,13 +48,13 @@ def test_queries_do_not_import_application():
 
 def test_features_do_not_import_config():
     allowlist = {
-        "core\\labs\\features\\analytics\\api\\finance\\schema.py",
+        "core/labs/features/analytics/api/finance/schema.py",
     }
     violations = []
     for path in _production_python_files(CORE_ROOT / "labs"):
         for imp in _imported_modules(path):
             if imp.startswith("config.") or imp == "config":
-                rel = str(path.relative_to(PROJECT_ROOT))
+                rel = path.relative_to(PROJECT_ROOT).as_posix()  # separator-independent allowlist match
                 if rel not in allowlist:
                     violations.append(rel + " imports " + imp)
 

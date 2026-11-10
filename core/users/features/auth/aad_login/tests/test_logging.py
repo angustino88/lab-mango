@@ -102,7 +102,9 @@ def test_real_jwks_client_wraps_tunnel_failure_and_logs_at_warning(
 ) -> None:
     caplog.set_level(logging.WARNING, logger=service.logger.name)
     tunnel_error = URLError(OSError(TUNNEL_ERROR))
-    monkeypatch.setattr("jwt.jwks_client.urllib.request.urlopen", Mock(side_effect=tunnel_error))
+    # Patch the opener all urllib fetches go through: older PyJWT calls urlopen(), newer
+    # releases call build_opener().open(); both land in OpenerDirector.open.
+    monkeypatch.setattr("urllib.request.OpenerDirector.open", Mock(side_effect=tunnel_error))
     client = jwt.PyJWKClient("https://identity.example.invalid/jwks")
     monkeypatch.setattr(service, "_jwks_client", Mock(return_value=client))
     token = jwt.encode({"sub": SUBJECT}, key="", algorithm="none", headers={"kid": "synthetic-key"})

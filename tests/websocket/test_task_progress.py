@@ -2,8 +2,21 @@
 
 import asyncio
 
+import pytest
+from django.core.cache import cache
+
 from core.websocket import pubsub
 from core.websocket.features.task_progress.handler import task_progress_handler
+
+
+@pytest.fixture(autouse=True)
+def task_owner():
+    """The handler denies tasks without a registered owner (ARCH-001); register user 1."""
+    task_ids = ("t-001", "t-002", "t-003")
+    for task_id in task_ids:
+        cache.set(f"task_owner:{task_id}", 1)
+    yield
+    cache.delete_many([f"task_owner:{task_id}" for task_id in task_ids])
 
 
 async def test_handler_accepts_connection(asgi_send, asgi_receive):
@@ -62,3 +75,21 @@ async def test_handler_closes_on_terminal_state(asgi_send, asgi_receive):
 
     messages = asgi_send.sent_messages()
     assert any(m.get("state") == "SUCCESS" for m in messages)
+
+
+async def test_handler_denies_task_without_registered_owner(asgi_send, asgi_receive):
+    scope = {"type": "websocket", "user_id": 1, "url_params": {"task_id": "t-unregistered"}}
+
+    await task_progress_handler(scope, asgi_receive, asgi_send)
+
+    assert not asgi_send.accepted()
+    assert asgi_send.closed_with(4003)
+
+
+async def test_handler_denies_task_owned_by_another_user(asgi_send, asgi_receive):
+    scope = {"type": "websocket", "user_id": 2, "url_params": {"task_id": "t-001"}}
+
+    await task_progress_handler(scope, asgi_receive, asgi_send)
+
+    assert not asgi_send.accepted()
+    assert asgi_send.closed_with(4003)
