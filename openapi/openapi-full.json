@@ -65546,6 +65546,13 @@
               "$ref": "#/components/schemas/EquipmentReservation"
             },
             "readOnly": true
+          },
+          "reminders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentLoanReminder"
+            },
+            "readOnly": true
           }
         },
         "required": [
@@ -65557,6 +65564,7 @@
           "loans",
           "open_count",
           "purpose",
+          "reminders",
           "reservations"
         ]
       },
@@ -65692,6 +65700,43 @@
         },
         "required": [
           "data"
+        ]
+      },
+      "EquipmentLoanReminder": {
+        "type": "object",
+        "description": "One overdue reminder email of a slip: slot 0 at the due time, then daily up to slot 7.",
+        "properties": {
+          "slot": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "state": {
+            "type": "string",
+            "readOnly": true
+          },
+          "recipient_email": {
+            "type": "string",
+            "format": "email",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "finished_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          }
+        },
+        "required": [
+          "created_at",
+          "finished_at",
+          "recipient_email",
+          "slot",
+          "state"
         ]
       },
       "EquipmentLoansExtendedSerializersEquipmentLoanListResponse": {

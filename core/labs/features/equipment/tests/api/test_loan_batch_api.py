@@ -61,6 +61,7 @@ def test_lend_list_slip_return_extend(coord, items):
         and slip["purpose"] == "EMC test week"
     )
     assert slip["open_count"] == 3 and len(slip["loans"]) == 3
+    assert slip["reminders"] == [] and slip["reservations"] == []
 
     replay = coord.post(ROOT + "equipment-loans", _body(items), format="json", HTTP_IDEMPOTENCY_KEY="slip-api-1")
     assert replay.status_code == 422  # same key, different body (no per-item notes)

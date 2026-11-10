@@ -8,6 +8,7 @@ by the equipment commands under the ``Equipment`` row lock). Overdue is computed
 from django.conf import settings
 from django.db import models
 from django.db.models import F, Q
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 
@@ -142,3 +143,51 @@ class EquipmentLoan(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"Loan {self.pk} of {self.equipment_id} (batch {self.batch_id})"
+
+
+REMINDER_LAST_SLOT = 7
+
+
+class EquipmentLoanReminder(models.Model):
+    """Outbox row for one overdue reminder email about a loan slip (redesign booking phase 3).
+
+    Slot 0 is sent at the due time, slot ``n`` ``n`` days later, up to ``REMINDER_LAST_SLOT`` (a week);
+    ``(batch, slot)`` is unique, so a reminder is sent at most once. Delivery follows the shared lease
+    protocol in ``core.common.notifications``.
+    """
+
+    batch = models.ForeignKey(EquipmentLoanBatch, related_name="reminders", on_delete=models.PROTECT)
+    slot = models.PositiveSmallIntegerField()
+    recipient_email = models.EmailField()
+    created_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()
+    available_at = models.DateTimeField(default=timezone.now)
+    state = models.CharField(max_length=12, default="pending")
+    attempts = models.PositiveSmallIntegerField(default=0)
+    lease_token = models.UUIDField(null=True, blank=True)
+    lease_until = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    outcome = models.CharField(max_length=32, blank=True, default="")
+
+    class Meta:
+        app_label = "labs"
+        ordering = ("batch", "slot")
+        constraints = [
+            models.UniqueConstraint(fields=("batch", "slot"), name="equipment_loan_reminder_once_per_slot"),
+            models.CheckConstraint(condition=Q(slot__lte=REMINDER_LAST_SLOT), name="equipment_loan_reminder_slot_range"),
+            models.CheckConstraint(
+                condition=Q(state__in=("pending", "leased", "sent", "failed", "skipped", "expired")),
+                name="equipment_loan_reminder_state",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(state="leased", lease_token__isnull=False, lease_until__isnull=False)
+                    | (~Q(state="leased") & Q(lease_token__isnull=True, lease_until__isnull=True))
+                ),
+                name="equipment_loan_reminder_lease",
+            ),
+        ]
+        indexes = [models.Index(fields=("state", "available_at"), name="equipment_reminder_ready_idx")]
+
+    def __str__(self) -> str:
+        return f"Reminder {self.slot} for loan batch {self.batch_id}"

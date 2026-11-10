@@ -78,7 +78,9 @@ Three separate facts describe a unit. They are stored and changed independently;
 - Not collected: the task `labs.equipment.expire_uncollected_reservations` marks reserved lines whose start day (local time) has ended as `expired`. It is not scheduled by code: an operator adds it in Django admin under Django Celery Beat > Periodic tasks (suggested hourly).
 - Equipment responses carry `reservations` (reserved windows that have not ended), prefetched once per page.
 
-- Overdue is computed (open and past `due_at`), never stored; list filters `on_loan` and `loan_overdue`. Reminders arrive with equipment bookings (redesign step 4).
+- Overdue is computed (open and past `due_at`), never stored; list filters `on_loan` and `loan_overdue`; the coordinator's overdue list is `GET /api/labs/equipment-loans?overdue=true`.
+- **Overdue reminder emails** (one per slip, listing every overdue item): at the due time, one day later, then daily, capped at one week (slots 0 to 7; `equipment_loan_reminder_once_per_slot` makes each slot at most one email). A missed slot is not sent late. Recipient: the borrower's account email, else `borrower_contact` when it is an email address; otherwise no email (coordinator list only). A slip whose items are back is skipped. Failed sends are retried with backoff, up to 5 attempts. Each slip shows its `reminders` (slot, state, recipient).
+- Reminder jobs are not scheduled by code; an operator adds them in Django admin under Django Celery Beat > Periodic tasks: `labs.equipment.collect_overdue_reminders` (suggested hourly) and `labs.equipment.deliver_overdue_reminders` (suggested every 5 minutes). Email uses the SMTP settings (`EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `DEFAULT_FROM_EMAIL`); without them, sends fail and are retried, then marked failed.
 
 The full design and its rationale are in `docs/proposals/equipment-management-redesign.md`.
 

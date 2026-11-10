@@ -112,6 +112,19 @@ class EquipmentReservationSerializer(serializers.Serializer):
         return obj.batch.borrower_label if obj.batch_id else ""
 
 
+class EquipmentLoanReminderSerializer(serializers.Serializer):
+    """One overdue reminder email of a slip: slot 0 at the due time, then daily up to slot 7."""
+
+    slot = serializers.IntegerField(read_only=True)
+    state = serializers.CharField(read_only=True)
+    recipient_email = serializers.EmailField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    finished_at = serializers.DateTimeField(read_only=True, allow_null=True)
+
+    class Meta:
+        ref_name = "EquipmentLoanReminder"
+
+
 class EquipmentLoanBatchSerializer(serializers.Serializer):
     """The loan slip: one borrower and purpose, with every item handed over on it."""
 
@@ -124,6 +137,7 @@ class EquipmentLoanBatchSerializer(serializers.Serializer):
     open_count = serializers.SerializerMethodField()
     loans = serializers.SerializerMethodField()
     reservations = serializers.SerializerMethodField()
+    reminders = EquipmentLoanReminderSerializer(many=True, read_only=True)
 
     class Meta:
         ref_name = "EquipmentLoanBatch"

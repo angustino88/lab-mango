@@ -1,0 +1,47 @@
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background:#f3f4f6;padding:28px 0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center" style="padding:0 12px;">
+      <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0"
+             style="max-width:640px;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;">
+        <tr><td style="height:6px;background:{% if final_reminder %}#dc2626{% else %}#f59e0b{% endif %};"></td></tr>
+        <tr>
+          <td style="padding:24px 28px 8px 28px;">
+            <div style="font-size:13px;color:#64748b;font-weight:700;">Lab Management System</div>
+            <h1 style="margin:12px 0 8px 0;font-size:21px;color:#92400e;">
+              {% if final_reminder %}Final reminder: equipment overdue{% else %}Equipment overdue{% endif %}
+            </h1>
+            <p style="margin:0 0 8px 0;font-size:15px;color:#0f172a;">Hello {{ borrower_name }},</p>
+            <p style="margin:0;font-size:14px;color:#475569;">
+              The equipment below was due back and has not been returned yet. Please bring it to the lab coordinator.
+            </p>
+            {% if purpose %}<p style="margin:8px 0 0 0;font-size:13px;color:#64748b;">Purpose: {{ purpose }}</p>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 28px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="font-size:14px;border:1px solid #e5e7eb;border-radius:12px;">
+              <tr style="background:#f8fafc;color:#64748b;">
+                <td style="padding:8px 12px;">Item</td><td style="padding:8px 12px;">Due</td><td style="padding:8px 12px;">Days overdue</td>
+              </tr>
+              {% for item in items %}
+              <tr>
+                <td style="padding:8px 12px;color:#0f172a;font-weight:600;">{{ item.name }} <span style="color:#64748b;font-weight:400;">({{ item.sku }})</span></td>
+                <td style="padding:8px 12px;">{{ item.due_at|date:"Y-m-d H:i" }}</td>
+                <td style="padding:8px 12px;">{{ item.days_overdue }}</td>
+              </tr>
+              {% endfor %}
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 28px 22px 28px;border-top:1px solid #eef2f7;font-size:12px;color:#64748b;">
+            {% if final_reminder %}This is the last automatic reminder; the lab coordinator will follow up.{% else %}You will be reminded daily for up to a week.{% endif %}
+            This is an automated message. Please do not reply.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

@@ -16,7 +16,7 @@ from .equipment import (
 from .furniture import FurnitureEquipment
 from .instrument import InstrumentEquipment
 from .laboratory import LaboratoryEquipment
-from .loan import EquipmentLoan, EquipmentLoanBatch, LoanCloseReason
+from .loan import EquipmentLoan, EquipmentLoanBatch, EquipmentLoanReminder, LoanCloseReason
 from .lookups import EquipmentInterface, Material
 from .mechanical import MechanicalEquipment
 from .networking import NetworkingEquipment, NetworkingProtocol
@@ -53,6 +53,7 @@ __all__ = [
     "EquipmentLifecycleState",
     "EquipmentLoan",
     "EquipmentLoanBatch",
+    "EquipmentLoanReminder",
     "LoanCloseReason",
     "GONE_LIFECYCLE_STATES",
     "LIFECYCLE_TRANSITIONS",

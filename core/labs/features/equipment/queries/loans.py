@@ -47,10 +47,10 @@ def list_loans(
 
 
 def get_loan_batch(*, batch_id: int) -> EquipmentLoanBatch:
-    """One loan slip with its lines. 2 queries (batch, lines). Raises ``DoesNotExist``."""
+    """One loan slip with its loan lines, reservation lines and reminders. 4 queries. Raises ``DoesNotExist``."""
     return (
         EquipmentLoanBatch.objects.select_related("borrower", "created_by")
-        .prefetch_related("loans__equipment", "reservations__equipment")
+        .prefetch_related("loans__equipment", "reservations__equipment", "reminders")
         .get(pk=batch_id)
     )
 

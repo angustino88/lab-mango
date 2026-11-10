@@ -129,7 +129,11 @@ the existing notification delivery; if none is configured for email, only the li
    - Reserving is refused per item (409 `booking_conflict`, nothing reserved) when the item is not in service, is on a bench, is on loan with a due time after the reservation starts, or overlaps another reservation. Condition is checked at hand-over, not at reservation (an item in maintenance today may be fixed by then).
    - Hand-over from a reservation: selected or all lines, all or nothing, `due_at` = the reservation end; allowed any time before the end. Return completes the booking. Extending a booking-linked loan moves the booking end too (refused on overlap). Marking an item lost cancels its in-progress booking.
    - Expiry: `labs.equipment.expire_uncollected_reservations` marks `reserved` lines whose start day (local time) has ended as `expired`; an operator schedules it in Django Celery Beat (suggested hourly).
-3. Overdue reminders.
+3. Overdue reminders. **Implemented**, with these decisions:
+   - Equipment-owned outbox `EquipmentLoanReminder` (one row per slip and slot 0 to 7, unique), because `BookingNotification` requires a booking, a user recipient and bench-specific kinds. Delivery reuses the shared lease protocol (`core.common.notifications`); email is sent outside any transaction.
+   - One email per slip lists every overdue item; the slot follows the earliest due time on the slip. Only the current slot is created, so missed slots are not sent late.
+   - Recipient: account email, else `borrower_contact` when it is an email address; otherwise no email (coordinator list only).
+   - Not implemented: warning the next requester when an overdue item has a reservation starting soon (open question 1 of the first revision); no coordinator email.
 
 ### Owner decisions on the open questions (2026-11-10, "use your suggestions")
 

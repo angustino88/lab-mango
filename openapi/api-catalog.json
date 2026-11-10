@@ -2,7 +2,7 @@
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
   "total_endpoints": 640,
-  "generated_at": "2026-11-10",
+  "generated_at": "2026-11-11",
   "endpoints": [
     {
       "endpoint": "/agent/enrollments",
@@ -27938,6 +27938,14 @@
                       "description": "(max nesting depth reached)"
                     },
                     "readOnly": true
+                  },
+                  "reminders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
                   }
                 },
                 "required": [
@@ -27949,6 +27957,7 @@
                   "loans",
                   "open_count",
                   "purpose",
+                  "reminders",
                   "reservations"
                 ]
               }
@@ -27970,6 +27979,9 @@
                 {}
               ],
               "reservations": [
+                {}
+              ],
+              "reminders": [
                 {}
               ]
             }
@@ -28507,6 +28519,14 @@
                       "description": "(max nesting depth reached)"
                     },
                     "readOnly": true
+                  },
+                  "reminders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
                   }
                 },
                 "required": [
@@ -28518,6 +28538,7 @@
                   "loans",
                   "open_count",
                   "purpose",
+                  "reminders",
                   "reservations"
                 ]
               }
@@ -28539,6 +28560,9 @@
                 {}
               ],
               "reservations": [
+                {}
+              ],
+              "reminders": [
                 {}
               ]
             }
@@ -30956,6 +30980,14 @@
                       "description": "(max nesting depth reached)"
                     },
                     "readOnly": true
+                  },
+                  "reminders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
                   }
                 },
                 "required": [
@@ -30967,6 +30999,7 @@
                   "loans",
                   "open_count",
                   "purpose",
+                  "reminders",
                   "reservations"
                 ]
               }
@@ -30988,6 +31021,9 @@
                 {}
               ],
               "reservations": [
+                {}
+              ],
+              "reminders": [
                 {}
               ]
             }
@@ -31237,6 +31273,14 @@
                       "description": "(max nesting depth reached)"
                     },
                     "readOnly": true
+                  },
+                  "reminders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
                   }
                 },
                 "required": [
@@ -31248,6 +31292,7 @@
                   "loans",
                   "open_count",
                   "purpose",
+                  "reminders",
                   "reservations"
                 ]
               }
@@ -31269,6 +31314,9 @@
                 {}
               ],
               "reservations": [
+                {}
+              ],
+              "reminders": [
                 {}
               ]
             }
@@ -31463,6 +31511,14 @@
                       "description": "(max nesting depth reached)"
                     },
                     "readOnly": true
+                  },
+                  "reminders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
                   }
                 },
                 "required": [
@@ -31474,6 +31530,7 @@
                   "loans",
                   "open_count",
                   "purpose",
+                  "reminders",
                   "reservations"
                 ]
               }
@@ -31495,6 +31552,9 @@
                 {}
               ],
               "reservations": [
+                {}
+              ],
+              "reminders": [
                 {}
               ]
             }
@@ -31834,6 +31894,14 @@
                       "description": "(max nesting depth reached)"
                     },
                     "readOnly": true
+                  },
+                  "reminders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
                   }
                 },
                 "required": [
@@ -31845,6 +31913,7 @@
                   "loans",
                   "open_count",
                   "purpose",
+                  "reminders",
                   "reservations"
                 ]
               }
@@ -31866,6 +31935,9 @@
                 {}
               ],
               "reservations": [
+                {}
+              ],
+              "reminders": [
                 {}
               ]
             }
@@ -32224,6 +32296,14 @@
                       "description": "(max nesting depth reached)"
                     },
                     "readOnly": true
+                  },
+                  "reminders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
                   }
                 },
                 "required": [
@@ -32235,6 +32315,7 @@
                   "loans",
                   "open_count",
                   "purpose",
+                  "reminders",
                   "reservations"
                 ]
               }
@@ -32256,6 +32337,9 @@
                 {}
               ],
               "reservations": [
+                {}
+              ],
+              "reminders": [
                 {}
               ]
             }
