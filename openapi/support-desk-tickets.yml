@@ -3716,7 +3716,6 @@ components:
           minimum: 0
         is_active:
           type: boolean
-          default: true
         created_at:
           type: string
           format: date-time
@@ -4149,7 +4148,6 @@ components:
           type: boolean
         is_active:
           type: boolean
-          default: true
         created_at:
           type: string
           format: date-time
@@ -4681,7 +4679,6 @@ components:
           readOnly: true
         is_active:
           type: boolean
-          default: true
         created_at:
           type: string
           format: date-time

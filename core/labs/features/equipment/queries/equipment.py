@@ -3,8 +3,9 @@
 from typing import Any
 
 from django.contrib.auth import get_user_model
-from django.db import models, transaction
-from django.db.models import Exists, OuterRef, Q, QuerySet, Subquery
+from django.db import models
+from django.db.models import CharField, Exists, OuterRef, Q, QuerySet, Subquery
+from django.db.models.functions import Cast
 
 from core.labs.features.equipment.contracts import ActiveEquipmentBenchAssignment
 from core.labs.models import (
@@ -17,7 +18,9 @@ from core.labs.models import (
     EquipmentStatusRecord,
     EquipmentType,
     PurchaseItemResource,
+    ResourceServiceRecord,
 )
+from core.labs.models.resource.base.generic_links import resource_root_model
 from core.labs.models.resource.base.resource import ResourceGroup
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
@@ -31,7 +34,20 @@ def with_equipment_info(queryset):
         resource_type__model=Equipment._meta.model_name,
         resource_id=OuterRef("pk"),
     )
+    # Latest calibration, matched exactly like ResourceModel.service_records (root and own
+    # content types). Read by Equipment.last_calibrated_at / next_calibration_due_at /
+    # calibration_overdue, which otherwise run a query each per serialized row.
+    # Filter by app_label/model (joined in SQL) so building the queryset needs no DB access.
+    linked_models = {resource_root_model(queryset.model), queryset.model._meta.concrete_model}
+    calibration = ResourceServiceRecord.objects.filter(
+        resource_content_type__app_label=Equipment._meta.app_label,
+        resource_content_type__model__in=sorted(model._meta.model_name for model in linked_models),
+        resource_object_id=Cast(OuterRef("pk"), CharField()),
+        kind=ResourceServiceRecord.Kind.CALIBRATION,
+    ).order_by("-performed_at", "-id")
     return queryset.annotate(
+        latest_calibration_at=Subquery(calibration.values("performed_at")[:1]),
+        latest_calibration_due_at=Subquery(calibration.values("next_due_at")[:1]),
         current_status=Subquery(LATEST_STATUS.values("status")[:1]),
         current_status_metadata=Subquery(LATEST_STATUS.values("metadata")[:1]),
         acquisition_price=Subquery(acquisition.values("acquisition_price")[:1]),
@@ -254,12 +270,15 @@ def category_reference_data(
     lookups: tuple[tuple[str, type[models.Model], str], ...],
 ) -> dict[str, QuerySet]:
     """Return reference rows needed to create or edit category equipment."""
+    # Match the stable category key; rows not migrated to a key fall back to the name,
+    # mirroring EquipmentCategory.effective_key. Renaming a category must not hide its kinds.
+    by_key = Q(key=category_key) | Q(key__isnull=True, name__iexact=category_key)
     kinds = EquipmentKind.objects.filter(
+        Q(category__key=category_key) | Q(category__key__isnull=True, category__name__iexact=category_key),
         active=True,
-        category__name__iexact=category_key,
         category__active=True,
     ).select_related("category")
-    active_category = EquipmentCategory.objects.filter(active=True, name__iexact=category_key)
+    active_category = EquipmentCategory.objects.filter(by_key, active=True)
     types = EquipmentType.objects.filter(
         active=True,
         kind__active=True,
@@ -498,13 +517,15 @@ def active_equipment_bench_assignment(*, equipment_id: int) -> ActiveEquipmentBe
     return ActiveEquipmentBenchAssignment(equipment_id=row["equipment_id"], bench_id=row["bench_id"])
 
 
-@transaction.atomic
 def lock_active_equipment_bench_assignment(*, equipment_id: int) -> ActiveEquipmentBenchAssignment | None:
     """Lock the equipment row and project its current active bench assignment.
 
     All equipment assignment writers lock Equipment before changing EquipmentAssignment. Holding
     this owner-row lock through the caller's transaction therefore prevents the binding changing
     between authorization and the caller's write.
+
+    Must run inside the caller's transaction: opening one here would commit and release the
+    lock on return. ``select_for_update`` raises TransactionManagementError in autocommit mode.
     """
     equipment = Equipment.objects.select_for_update().filter(pk=equipment_id, deleted_at__isnull=True).first()
     if equipment is None:

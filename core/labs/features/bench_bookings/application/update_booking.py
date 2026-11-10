@@ -18,7 +18,11 @@ from . import policies
 from .locks import lock_benches
 from .notification_intents import material_values, record_notification
 
-WRITABLE_FIELDS = frozenset({"bench_id", "starts_at", "ends_at", "reason", "project_id", "status"})
+WRITABLE_FIELDS = frozenset(
+    {"bench_id", "starts_at", "ends_at", "reason", "project_id", "status", "cancellation_reason"}
+)
+TERMINAL_STATUSES = frozenset({BookingStatus.COMPLETED, BookingStatus.CANCELLED, BookingStatus.EXPIRED})
+DEFAULT_CANCELLATION_REASON = "Cancelled by user"
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,9 +54,20 @@ def update_bench_booking(*, actor, data: UpdateBenchBookingInput) -> BenchBookin
         if booking.bench_id != current_bench_id:
             raise BenchBookingConflict("The booking moved concurrently; reload it and retry.")
         _ensure_can_modify(actor, booking)
-        cancelling_reserved_booking = (
-            booking.status == BookingStatus.RESERVED and data.fields.get("status") == BookingStatus.CANCELLED
-        )
+        cancelling = data.fields.get("status") == BookingStatus.CANCELLED
+        if (
+            cancelling
+            and booking.status == BookingStatus.CANCELLED
+            and set(data.fields) <= {"status", "cancellation_reason"}
+        ):
+            # A retried cancel is a no-op; the first cancellation reason is kept.
+            return booking
+        if booking.approval_status == BookingApprovalStatus.REJECTED and not cancelling:
+            # A rejection is a coordinator decision; editing must not re-queue the booking.
+            raise BenchBookingConflict("A rejected booking can only be cancelled.")
+        if "cancellation_reason" in data.fields and not cancelling:
+            raise ValidationError({"cancellation_reason": "A cancellation reason is accepted only when cancelling."})
+        cancelling_reserved_booking = booking.status == BookingStatus.RESERVED and cancelling
         if (
             booking.status == BookingStatus.RESERVED
             and not cancelling_reserved_booking
@@ -78,15 +93,23 @@ def update_bench_booking(*, actor, data: UpdateBenchBookingInput) -> BenchBookin
                 current_status=booking.status,
                 target_status=data.fields["status"],
             )
+        if booking.status in TERMINAL_STATUSES:
+            # History is immutable: a finished, cancelled or expired booking keeps its schedule.
+            raise BenchBookingConflict(
+                f"A {BookingStatus(booking.status).label.lower()} booking cannot be changed."
+            )
         if bench_changed:
             policies.ensure_bench_accepts_bookings(benches[target_bench_id])
 
         for name, value in data.fields.items():
             setattr(booking, name, value)
+        if status_changed and booking.status == BookingStatus.CANCELLED:
+            booking.cancellation_reason = booking.cancellation_reason.strip() or DEFAULT_CANCELLATION_REASON
 
         policies.ensure_valid_period(booking.starts_at, booking.ends_at)
         policies.ensure_minimum_duration(booking.starts_at, booking.ends_at)
-        if ends_changed:
+        if starts_changed or ends_changed:
+            # Either edge can lengthen the booking past the approval threshold.
             updated_approval_status = policies.approval_status_for_schedule_change(
                 duration=booking.ends_at - booking.starts_at,
                 current_status=booking.approval_status,

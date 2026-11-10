@@ -53,9 +53,8 @@ def list_bench_bookings(
         if not any(path.lstrip("-") == "pk" for path in ordering_paths):
             ordering_paths.append("pk")
         bookings = bookings.order_by(*ordering_paths)
-    if not getattr(actor, "is_authenticated", False):
-        return bookings.none()
-    if view_side == "my_booking" or not has_labs_role(actor, LabsRole.COORDINATOR):
+    bookings = visible_to(bookings, actor=actor)
+    if view_side == "my_booking" and getattr(actor, "is_authenticated", False):
         bookings = bookings.filter(creator_id=actor.pk)
 
     if creator_id is not None:
@@ -90,6 +89,32 @@ def list_bench_bookings(
         )
 
     return bookings
+
+
+def visible_to(bookings: QuerySet[BenchBooking], *, actor: Any) -> QuerySet[BenchBooking]:
+    """Object scope for booking reads: coordinators/admins see all, users only what they created.
+
+    Callers without a user (anonymous or API-key-only) see nothing.
+    """
+    if not getattr(actor, "is_authenticated", False):
+        return bookings.none()
+    if has_labs_role(actor, LabsRole.COORDINATOR):
+        return bookings
+    return bookings.filter(creator_id=actor.pk)
+
+
+def get_visible_bench_booking(*, actor: Any, booking_id: int) -> BenchBooking:
+    """Booking detail for ``actor``; raises DoesNotExist (404) outside the actor's scope."""
+    return visible_to(_booking_detail_queryset(), actor=actor).get(pk=booking_id)
+
+
+def get_visible_bench_booking_by_code(*, actor: Any, booking_code: str) -> BenchBooking:
+    """Booking detail by code for ``actor``; raises DoesNotExist (404) outside the actor's scope."""
+    return visible_to(_booking_detail_queryset(), actor=actor).get(booking_code=booking_code)
+
+
+def _booking_detail_queryset() -> QuerySet[BenchBooking]:
+    return BenchBooking.objects.select_related("bench", "project", "creator", "approved_by")
 
 
 def get_bench_booking(*, booking_id):

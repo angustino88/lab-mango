@@ -1,5 +1,6 @@
 """Command tests for bench booking create and update rules."""
 
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
@@ -256,7 +257,11 @@ class TestBookingApprovalDecisions:
             ),
             project_response=_decision_response,
         )
-        booking.decision_receipts.update(expires_at=timezone.now() - timedelta(seconds=1))
+        # Age the receipt as a whole: the expiry_valid check requires expires_at > created_at.
+        booking.decision_receipts.update(
+            created_at=timezone.now() - timedelta(hours=25),
+            expires_at=timezone.now() - timedelta(seconds=1),
+        )
         booking.approval_status = BookingApprovalStatus.PENDING
         booking.save(actor=coordinator)
 
@@ -373,6 +378,7 @@ class TestBookingApprovalDecisions:
                     decision=BookingApprovalStatus.APPROVED,
                     idempotency_key=str(uuid.uuid4()),
                 ),
+                project_response=_decision_response,
             )
 
 
@@ -804,16 +810,26 @@ class TestAgentEndTimeUpdate:
             try:
                 assert owner_lock_held.wait(timeout=10)
                 assert unassignment_started.wait(timeout=10)
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT EXISTS ("
-                        "SELECT 1 FROM pg_stat_activity "
-                        "WHERE datname = current_database() "
-                        "AND wait_event_type = 'Lock' "
-                        "AND query ILIKE '%FOR UPDATE%'"
-                        ")"
-                    )
-                    assert cursor.fetchone()[0]
+                # The unassigning thread sends its FOR UPDATE shortly after signalling;
+                # poll instead of sampling once. Match on lock blocking, not query text:
+                # pg_stat_activity truncates long SQL (track_activity_query_size), which
+                # cuts the trailing FOR UPDATE off this wide SELECT.
+                deadline = time.monotonic() + 5
+                waiting = False
+                while not waiting and time.monotonic() < deadline:
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            "SELECT EXISTS ("
+                            "SELECT 1 FROM pg_stat_activity "
+                            "WHERE datname = current_database() "
+                            "AND wait_event_type = 'Lock' "
+                            "AND cardinality(pg_blocking_pids(pid)) > 0"
+                            ")"
+                        )
+                        waiting = cursor.fetchone()[0]
+                    if not waiting:
+                        time.sleep(0.05)
+                assert waiting
                 release_booking.set()
                 booking_result = booking_future.result(timeout=15)
                 unassign_result = unassign_future.result(timeout=15)
@@ -870,7 +886,8 @@ class TestAgentEndTimeUpdate:
 
         equipment = self._linked_equipment(bench)
         identity = AgentIdentity.objects.get(equipment=equipment)
-        assignment = lock_active_equipment_bench_assignment(equipment_id=equipment.pk)
+        with transaction.atomic():  # the helper only locks inside a caller transaction
+            assignment = lock_active_equipment_bench_assignment(equipment_id=equipment.pk)
 
         assert assignment is not None
         assert assignment.bench_id == bench.pk
@@ -1048,3 +1065,127 @@ class TestAgentEndTimeUpdate:
             )
         booking.refresh_from_db()
         assert booking.ends_at == now + timedelta(hours=2)
+
+
+@pytest.mark.django_db
+class TestUpdateLifecycleIntegrity:
+    """Regression tests for audit findings on the bench booking update command."""
+
+    def test_moving_start_earlier_past_threshold_requires_new_approval(self, actor, make_booking, now):
+        # Previously only an ends_at change re-evaluated approval, so moving the start
+        # earlier silently produced an approved booking longer than four hours.
+        booking = make_booking(starts_at=now + timedelta(hours=3), ends_at=now + timedelta(hours=6))
+        booking.approved_by = actor
+        booking.approved_at = now
+        booking.save(update_fields=("approved_by", "approved_at"))
+
+        updated = update_bench_booking(
+            actor=actor,
+            data=UpdateBenchBookingInput(booking_id=booking.pk, fields={"starts_at": now + timedelta(hours=1)}),
+        )
+
+        assert updated.approval_status == BookingApprovalStatus.PENDING
+        assert updated.approved_by_id is None
+        assert updated.approved_at is None
+
+    def test_cancel_records_cancellation_reason_and_keeps_booking_purpose(self, actor, make_booking, now):
+        booking = make_booking(starts_at=now + timedelta(hours=2), ends_at=now + timedelta(hours=3))
+        BenchBooking.objects.filter(pk=booking.pk).update(reason="Radar regression run")
+
+        updated = update_bench_booking(
+            actor=actor,
+            data=UpdateBenchBookingInput(
+                booking_id=booking.pk,
+                fields={"status": BookingStatus.CANCELLED, "cancellation_reason": "  Hardware broke  "},
+            ),
+        )
+
+        stored = BenchBooking.objects.get(pk=booking.pk)
+        assert updated.status == BookingStatus.CANCELLED
+        assert stored.reason == "Radar regression run"
+        assert stored.cancellation_reason == "Hardware broke"
+        stored.full_clean()  # the model invariant "cancelled requires a reason" holds
+
+    def test_cancel_without_reason_gets_default_reason(self, actor, make_booking, now):
+        booking = make_booking(starts_at=now + timedelta(hours=2), ends_at=now + timedelta(hours=3))
+
+        update_bench_booking(
+            actor=actor,
+            data=UpdateBenchBookingInput(booking_id=booking.pk, fields={"status": BookingStatus.CANCELLED}),
+        )
+
+        assert BenchBooking.objects.get(pk=booking.pk).cancellation_reason == "Cancelled by user"
+
+    def test_repeated_cancel_is_a_no_op(self, actor, make_booking, now):
+        booking = make_booking(starts_at=now + timedelta(hours=2), ends_at=now + timedelta(hours=3))
+        cancel = {"status": BookingStatus.CANCELLED, "cancellation_reason": "first"}
+        update_bench_booking(actor=actor, data=UpdateBenchBookingInput(booking_id=booking.pk, fields=cancel))
+
+        again = update_bench_booking(
+            actor=actor,
+            data=UpdateBenchBookingInput(
+                booking_id=booking.pk, fields={**cancel, "cancellation_reason": "second"}
+            ),
+        )
+
+        assert again.status == BookingStatus.CANCELLED
+        assert BenchBooking.objects.get(pk=booking.pk).cancellation_reason == "first"
+
+    def test_cancellation_reason_only_accepted_when_cancelling(self, actor, make_booking, now):
+        booking = make_booking(starts_at=now + timedelta(hours=2), ends_at=now + timedelta(hours=3))
+
+        with pytest.raises(ValidationError):
+            update_bench_booking(
+                actor=actor,
+                data=UpdateBenchBookingInput(booking_id=booking.pk, fields={"cancellation_reason": "x"}),
+            )
+
+    @pytest.mark.parametrize(
+        "terminal_status", [BookingStatus.CANCELLED, BookingStatus.COMPLETED, BookingStatus.EXPIRED]
+    )
+    def test_terminal_booking_schedule_is_immutable(self, actor, make_booking, now, terminal_status):
+        booking = make_booking(starts_at=now + timedelta(hours=2), ends_at=now + timedelta(hours=3))
+        BenchBooking.objects.filter(pk=booking.pk).update(status=terminal_status, cancellation_reason="x")
+
+        with pytest.raises(BenchBookingConflict):
+            update_bench_booking(
+                actor=actor,
+                data=UpdateBenchBookingInput(booking_id=booking.pk, fields={"ends_at": now + timedelta(hours=4)}),
+            )
+
+        assert BenchBooking.objects.get(pk=booking.pk).ends_at == now + timedelta(hours=3)
+
+    def test_rejected_booking_cannot_be_requeued_by_editing(self, actor, make_booking, now):
+        # Extending a rejected booking past the threshold used to flip it back to
+        # PENDING, re-entering the approval queue and the no-overlap constraint.
+        booking = make_booking(starts_at=now + timedelta(hours=1), ends_at=now + timedelta(hours=6))
+        BenchBooking.objects.filter(pk=booking.pk).update(
+            approval_status=BookingApprovalStatus.REJECTED,
+            approved_by=actor,
+            approved_at=now,
+            rejection_reason="Lab closed",
+        )
+
+        with pytest.raises(BenchBookingConflict):
+            update_bench_booking(
+                actor=actor,
+                data=UpdateBenchBookingInput(booking_id=booking.pk, fields={"ends_at": now + timedelta(hours=7)}),
+            )
+
+        assert BenchBooking.objects.get(pk=booking.pk).approval_status == BookingApprovalStatus.REJECTED
+
+    def test_rejected_booking_can_still_be_cancelled(self, actor, make_booking, now):
+        booking = make_booking(starts_at=now + timedelta(hours=1), ends_at=now + timedelta(hours=6))
+        BenchBooking.objects.filter(pk=booking.pk).update(
+            approval_status=BookingApprovalStatus.REJECTED,
+            approved_by=actor,
+            approved_at=now,
+            rejection_reason="Lab closed",
+        )
+
+        updated = update_bench_booking(
+            actor=actor,
+            data=UpdateBenchBookingInput(booking_id=booking.pk, fields={"status": BookingStatus.CANCELLED}),
+        )
+
+        assert updated.status == BookingStatus.CANCELLED

@@ -43,12 +43,46 @@ reference data and should not be moved into the equipment package.
 2. Resource-specific foreign keys belong on the concrete booking model.
 3. Shared workflow fields belong on `Booking`.
 4. `starts_at` must be earlier than `ends_at`.
-5. A cancellation requires `cancellation_reason`.
-6. A rejected booking requires `approved_by` for auditability.
-7. Resource deletion uses `PROTECT` so booking history is not orphaned.
-8. Schedule indexes must start with the resource foreign key, followed by time.
-9. Status and approval values use `TextChoices`; do not add free-form strings.
-10. Model `clean()` validates invariants, but it does not perform overlap queries.
+5. A cancellation requires a non-blank `cancellation_reason` (database-enforced).
+6. A rejected booking requires `approved_by` for auditability and a non-blank `rejection_reason`
+   (the reason is database-enforced; `approved_by` is not, because it is `SET_NULL` and deleting
+   the approving user must not be blocked).
+7. A `pending` booking has no `approved_by` (database-enforced). Any change that returns a
+   booking to approval must clear `approved_by` and `approved_at`.
+8. Resource deletion uses `PROTECT` so booking history is not orphaned.
+9. Schedule indexes must start with the resource foreign key, followed by time.
+10. Status and approval values use `TextChoices`; do not add free-form strings.
+11. Model `clean()` validates invariants, but it does not perform overlap queries.
+
+## Database Enforcement
+
+`Booking.Meta.constraints` mirrors rules 4–7 as PostgreSQL `CHECK` constraints named
+`labs_<model>_rejection_has_reason`, `labs_<model>_pending_has_no_approver` and
+`labs_<model>_cancellation_has_reason` (for `benchbooking` and `equipmentbooking`), plus the
+period check and the `*_no_overlap` exclusion constraints. They reject a violating write even
+when it bypasses `clean()` (queryset `update()`, admin, scripts).
+
+Migration `0015` adds the three approval/cancellation constraints `NOT VALID`: every new or
+updated row is checked, but historical rows are neither scanned nor rejected, so the deploy
+cannot fail on old data. Cancellations recorded before `cancellation_reason` was written are
+expected to be blank. A historical violating row can no longer be updated until it is
+corrected. Before validating, an owner checks for violations:
+
+```sql
+SELECT 'bench' AS kind, count(*) FILTER (WHERE status = 'cancelled' AND cancellation_reason ~ '^\s*$') AS blank_cancellation,
+       count(*) FILTER (WHERE approval_status = 'rejected' AND rejection_reason ~ '^\s*$') AS blank_rejection,
+       count(*) FILTER (WHERE approval_status = 'pending' AND approved_by_id IS NOT NULL) AS pending_with_approver
+FROM labs_benchbooking
+UNION ALL
+SELECT 'equipment', count(*) FILTER (WHERE status = 'cancelled' AND cancellation_reason ~ '^\s*$'),
+       count(*) FILTER (WHERE approval_status = 'rejected' AND rejection_reason ~ '^\s*$'),
+       count(*) FILTER (WHERE approval_status = 'pending' AND approved_by_id IS NOT NULL)
+FROM labs_equipmentbooking;
+```
+
+Correcting historical rows is a production-data change and needs explicit authorization. Once a
+count is zero, `ALTER TABLE ... VALIDATE CONSTRAINT <name>` (which takes only a
+`SHARE UPDATE EXCLUSIVE` lock) marks that constraint as fully validated.
 
 ## Naming
 
@@ -90,7 +124,8 @@ the concrete model's resource foreign key.
   `tests/application` (or the small-layout equivalents).
 - Explicitly invoke and test booking validation: Django `save()` does not call
   `full_clean()`, and the booking base does not override that behavior. The period
-  check is database-backed; cancellation/approval checks also require validation.
+  check and the cancellation/approval rules (see Database Enforcement) are database-backed;
+  `clean()` still gives field-level messages and covers `approved_by` on rejection.
 - Keep best-effort notifications after commit with `transaction.on_commit`;
   required delivery needs an outbox row persisted in the command transaction,
   retryable dispatch and idempotent consumers. A callback alone is not durable.

@@ -145,3 +145,27 @@ def test_search_distinct_only_for_nonempty_search(values, expected):
     queryset.distinct.return_value = queryset
     spec.apply(queryset, values)
     assert queryset.distinct.call_count == int(expected)
+
+
+class _PlainBooleanQuery(serializers.Serializer):
+    """Hosts StrictBooleanField in a plain Serializer (not FilterQuerySerializer)."""
+
+    flag = StrictBooleanField(required=False)
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [("", {}), ("flag=true", {"flag": True}), ("flag=false", {"flag": False})],
+)
+def test_strict_boolean_absent_query_param_stays_absent(raw, expected):
+    # Regression: an absent boolean in a QueryDict became False and was rejected,
+    # which made GET /api/support/tickets fail with 400 when called without filters.
+    serializer = _PlainBooleanQuery(data=QueryDict(raw))
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data == expected
+
+
+def test_strict_boolean_still_rejects_non_canonical_values():
+    serializer = _PlainBooleanQuery(data=QueryDict("flag=1"))
+    assert not serializer.is_valid()
+    assert serializer.errors["flag"][0].code == "invalid_choice"

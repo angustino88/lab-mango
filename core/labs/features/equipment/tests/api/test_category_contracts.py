@@ -9,6 +9,7 @@ from unittest.mock import Mock
 import pytest
 from django.urls import resolve
 from rest_framework import serializers
+from rest_framework.test import APIClient
 
 from core.common.api.options import CatalogOptionSerializer
 from core.labs.features.base.list_create import ListCreateAPIView
@@ -30,6 +31,13 @@ from core.labs.features.equipment.api.views import (
     EquipmentCategoryStatusAPIView,
     EquipmentOptionsAPIView,
     EquipmentStatusAPIView,
+)
+from core.labs.models import ComputingEquipment, EquipmentCategory, EquipmentKind
+from core.labs.models.resource.equipment import (
+    DisplayEquipment,
+    DisplayResolution,
+    DisplaySize,
+    EquipmentInterface,
 )
 
 URLCONF = "core.labs.features.equipment.api.urls"
@@ -214,7 +222,7 @@ def test_equipment_opts_into_domain_hooks():
 @pytest.mark.parametrize("key", CATEGORY_DEFINITIONS)
 def test_partial_update_validates_existing_kind_category(key):
     view = resolve(f"/equipment/{key}/42", urlconf=URLCONF).func.view_class
-    wrong_kind = SimpleNamespace(pk=1, category_id=0, active=True, category=SimpleNamespace(name="Wrong", active=True))
+    wrong_kind = SimpleNamespace(pk=1, category_id=0, active=True, category=SimpleNamespace(name="Wrong", effective_key="wrong", active=True))
     obj = SimpleNamespace(kind=wrong_kind, type=None, manufacturer=None, product_model=None, owner=None)
     serializer = view.update_serializer_class(instance=obj, data={}, partial=True)
     with pytest.raises(serializers.ValidationError) as error:
@@ -339,7 +347,8 @@ def test_computing_shared_defaults_preserve_existing_api_contract():
     assert definition.update_fields == ("monitored_devices", "technical_user")
     assert definition.detail_fields is None
     assert definition.fields_for("list") == ("ip_address", "os_name", "mac_address")
-    assert definition.fields_for("create") == ("mac_address",)
+    # hostname is entered manually at registration (RDP host); agent-reported fields are not.
+    assert definition.fields_for("create") == ("mac_address", "hostname")
 
     list_view = resolve("/equipment/computing", urlconf=URLCONF).func.view_class
     detail_view = resolve("/equipment/computing/42", urlconf=URLCONF).func.view_class
@@ -357,6 +366,7 @@ def test_computing_shared_defaults_preserve_existing_api_contract():
     assert agent_owned_fields.isdisjoint(update_fields)
     assert server_managed_fields.isdisjoint(update_fields)
     assert "mac_address" in create_fields and "mac_address" not in update_fields
+    assert "hostname" in create_fields and "hostname" not in update_fields
     assert "hostname" not in list_fields
     assert detailed_write_fields <= update_fields.keys()
     assert detailed_fields <= detail_fields.keys()
@@ -377,7 +387,6 @@ def test_computing_agent_snapshot_fields_are_read_only_in_response_schema():
     [
         ("create", {"ip_address": "192.0.2.4"}),
         ("create", {"os_name": "Linux"}),
-        ("create", {"hostname": "lab-pc"}),
         ("create", {"system_info": {"hostname": "lab-pc"}}),
         ("update", {"ip_address": "192.0.2.4"}),
         ("update", {"os_name": "Linux"}),
@@ -404,13 +413,15 @@ def test_computing_category_serializer_rejects_agent_owned_and_server_managed_fi
     ("field", "value"),
     [
         ("os_name", "Linux"),
-        ("hostname", "lab-pc"),
+        ("ip_address", "10.0.0.5"),
         ("system_info", {"hostname": "lab-pc"}),
     ],
 )
-def test_computing_category_create_request_rejects_agent_owned_and_server_managed_fields(admin_client, field, value):
+def test_computing_category_create_request_rejects_agent_owned_and_server_managed_fields(
+    json_admin_client, field, value
+):
     payload = {"kind_id": 1, "sku": "EQ-COMP-NEW", field: value}
-    response = admin_client.post("/api/labs/equipment/computing", payload, format="json")
+    response = json_admin_client.post("/api/labs/equipment/computing", payload, format="json")
 
     assert response.status_code == 422
     assert response.data["error"]["code"] == "validation_failed"
@@ -419,6 +430,67 @@ def test_computing_category_create_request_rejects_agent_owned_and_server_manage
         detail["field"] == field and detail["code"] in {"unknown_field", "read_only_field"}
         for detail in response.data["error"]["details"]
     )
+
+
+@pytest.fixture
+def json_admin_client(admin_user):
+    """DRF client: pytest-django's admin_client is a Django Client that form-encodes payloads."""
+    client = APIClient()
+    client.force_authenticate(user=admin_user)
+    return client
+
+
+@pytest.mark.django_db
+def test_computing_category_create_accepts_manual_hostname_for_rdp(json_admin_client):
+    category = EquipmentCategory.objects.create(name="Computing", key="computing", definition="Computing")
+    kind = EquipmentKind.objects.create(category=category, name="Workstation")
+    payload = {"kind_id": kind.pk, "sku": "EQ-COMP-HOST", "hostname": "lab-pc-01", "mac_address": "AA:BB:CC:DD:EE:FF"}
+
+    response = json_admin_client.post("/api/labs/equipment/computing", payload, format="json")
+
+    assert response.status_code == 201, response.content
+    computing = ComputingEquipment.objects.get(sku="EQ-COMP-HOST")
+    assert computing.hostname == "lab-pc-01"
+    assert b"full address:s:lab-pc-01" in computing.rdp_file.read()
+
+
+@pytest.mark.django_db
+def test_category_create_persists_declared_fk_and_m2m_fields(json_admin_client):
+    # Regression: create_equipment's allowlist only had shared fields, so every category's
+    # declared create fields (here display size/resolution/interfaces) were rejected with 422.
+    category = EquipmentCategory.objects.create(name="Display", key="display", definition="Displays")
+    kind = EquipmentKind.objects.create(category=category, name="Monitor")
+    size = DisplaySize.objects.create(size='27"')
+    resolution = DisplayResolution.objects.create(resolution="QHD")
+    interfaces = [EquipmentInterface.objects.create(name=name) for name in ("HDMI", "DisplayPort")]
+    payload = {
+        "kind_id": kind.pk,
+        "sku": "EQ-DISP-01",
+        "size_id": size.pk,
+        "resolution_id": resolution.pk,
+        "interfaces_ids": [interface.pk for interface in interfaces],
+    }
+
+    response = json_admin_client.post("/api/labs/equipment/display", payload, format="json")
+
+    assert response.status_code == 201, response.content
+    display = DisplayEquipment.objects.get(sku="EQ-DISP-01")
+    assert (display.size_id, display.resolution_id) == (size.pk, resolution.pk)
+    assert set(display.interfaces.values_list("pk", flat=True)) == {interface.pk for interface in interfaces}
+
+
+@pytest.mark.django_db
+def test_category_create_matches_stable_key_after_category_rename(json_admin_client):
+    # Regression: the category check compared the display name, so renaming "Computing"
+    # broke every create; the stable key is what identifies the category.
+    category = EquipmentCategory.objects.create(name="Computers & Laptops", key="computing", definition="PCs")
+    kind = EquipmentKind.objects.create(category=category, name="Laptop")
+
+    response = json_admin_client.post(
+        "/api/labs/equipment/computing", {"kind_id": kind.pk, "sku": "EQ-COMP-RENAMED"}, format="json"
+    )
+
+    assert response.status_code == 201, response.content
 
 
 @pytest.mark.parametrize("key", CATEGORY_DEFINITIONS)

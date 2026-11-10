@@ -7,7 +7,7 @@ import uuid
 import pytest
 from rest_framework.test import APIClient
 
-from core.labs.models import BookingApprovalStatus
+from core.labs.models import BenchBooking, BookingApprovalStatus
 from core.users.public import LabsRole
 from core.users.models import URSGroup
 from core.users.tests.factories import UserFactory
@@ -182,6 +182,43 @@ class TestGetAndUpdateEndpoints:
         assert response.status_code == 200
         assert response.json()["data"]["id"] == booking.pk
 
+    @pytest.mark.parametrize("route", ["id", "code"])
+    def test_other_user_cannot_read_booking_detail(self, make_booking, future_window, route):
+        # Regression: detail returned any booking to any authenticated user while the list
+        # was scoped to the creator; ids are sequential, so bookings were enumerable.
+        starts_at, ends_at = future_window
+        booking = make_booking(starts_at=starts_at, ends_at=ends_at, code="BOOKING-PRIVATE01")
+        client = APIClient()
+        client.force_authenticate(user=UserFactory(username="booking-detail-outsider"))
+        url = _detail(booking.pk) if route == "id" else _detail_by_code(booking.booking_code)
+
+        response = client.get(url)
+
+        assert response.status_code == 404  # no existence oracle
+
+    @pytest.mark.parametrize("route", ["id", "code"])
+    def test_api_key_only_caller_cannot_read_booking_detail(self, make_booking, future_window, route):
+        starts_at, ends_at = future_window
+        booking = make_booking(starts_at=starts_at, ends_at=ends_at, code="BOOKING-PRIVATE02")
+        url = _detail(booking.pk) if route == "id" else _detail_by_code(booking.booking_code)
+
+        with patch(_PATCH_APIKEY, return_value=True):
+            response = APIClient().get(url)
+
+        assert response.status_code == 404  # same scope as the list: no user, no rows
+
+    def test_coordinator_can_read_any_booking_detail(self, make_booking, future_window):
+        starts_at, ends_at = future_window
+        booking = make_booking(starts_at=starts_at, ends_at=ends_at)
+        coordinator = _grant_role(UserFactory(username="booking-detail-coordinator"), LabsRole.COORDINATOR)
+        client = APIClient()
+        client.force_authenticate(user=coordinator)
+
+        response = client.get(_detail(booking.pk))
+
+        assert response.status_code == 200
+        assert response.json()["data"]["id"] == booking.pk
+
     def test_patch_by_code_updates_booking(self, api_client, bench, make_booking, future_window):
         starts_at, ends_at = future_window
         booking = make_booking(starts_at=starts_at, ends_at=ends_at, code="BOOKING-UPDATECODE")
@@ -220,6 +257,9 @@ class TestGetAndUpdateEndpoints:
             )
         assert response.status_code == 200
         assert response.json()["data"]["status"] == {"value": "cancelled", "label": "Cancelled"}
+        stored = BenchBooking.objects.get(pk=booking.pk)
+        assert stored.cancellation_reason == "User cancelled"
+        assert stored.reason != "User cancelled"  # the booking purpose is not overwritten
 
     def test_patch_rejects_expired_status(self, api_client, make_booking, future_window):
         starts_at, ends_at = future_window

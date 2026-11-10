@@ -62,6 +62,9 @@ def reserve(bench, index, *, start=-1, end=1, status="reserved", approval="appro
         status=status,
         approval_status=approval,
         project=project,
+        # The database requires reasons for cancelled and rejected bookings.
+        cancellation_reason="Cancelled in test setup" if status == "cancelled" else "",
+        rejection_reason="Rejected in test setup" if approval == "rejected" else "",
     )
 
 

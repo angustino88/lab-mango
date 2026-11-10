@@ -31,9 +31,15 @@ class CreateEquipmentInput:
 
 
 @transaction.atomic
-def create_equipment(command: CreateEquipmentInput, *, actor, model: type[Equipment] = Equipment):
+def create_equipment(command: CreateEquipmentInput, *, actor, model=Equipment, category_fields=frozenset()):
+    """Create equipment; ``category_fields`` are the category's declared create fields.
+
+    Shared fields are always allowed. A category endpoint passes its own create fields
+    (e.g. computing ``mac_address``/``hostname``); before, they were advertised by the API
+    but rejected here. Many-to-many values are set after the row is saved.
+    """
     values = dict(command.fields)
-    allowed_fields = {
+    allowed_fields = set(category_fields) | {
         "kind",
         "type",
         "manufacturer",
@@ -87,12 +93,20 @@ def create_equipment(command: CreateEquipmentInput, *, actor, model: type[Equipm
     if not issubclass(model, Equipment):
         raise TypeError("Equipment creation requires an Equipment model subtype.")
     expected_category = getattr(model, "EQUIPMENT_CATEGORY_KEY", "equipment")
-    if expected_category != "equipment" and kind.category.name.lower() != expected_category:
+    # effective_key is the stable category code; the display name may be renamed.
+    if expected_category != "equipment" and kind.category.effective_key != expected_category:
         raise ValidationError({"kind": "The equipment kind must match the equipment category."})
+    many_to_many = {
+        name: values.pop(name)
+        for name in list(values)
+        if name in category_fields and model._meta.get_field(name).many_to_many
+    }
     equipment = model(**values, creator=actor, last_modified_by=actor)
     equipment.kind = kind
     equipment.full_clean()
     equipment.save()
+    for name, related in many_to_many.items():
+        getattr(equipment, name).set(related)
     if expected_category == "computing":
         from core.labs.features.equipment.categories.computing.application import ensure_computing_activity
 

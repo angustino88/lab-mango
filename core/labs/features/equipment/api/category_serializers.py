@@ -69,7 +69,7 @@ class EquipmentWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSe
         product_model = value("product_model")
         errors = {}
         expected_category = self.Meta.model.EQUIPMENT_CATEGORY_KEY
-        if kind and expected_category != "equipment" and kind.category.name.lower() != expected_category:
+        if kind and expected_category != "equipment" and kind.category.effective_key != expected_category:
             errors["kind"] = "The equipment kind must belong to the selected category."
         if kind and (not kind.active or not kind.category.active):
             errors["kind"] = "Select an active equipment kind and category."

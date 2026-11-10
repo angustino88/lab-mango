@@ -137,11 +137,16 @@ class Equipment(ResourceModel):
 
     @property
     def last_calibrated_at(self):
+        # Equipment selectors annotate the latest calibration; None is a valid annotated value.
+        if "latest_calibration_at" in self.__dict__:
+            return self.__dict__["latest_calibration_at"]
         record = self.latest_service_record("calibration")
         return record.performed_at if record else None
 
     @property
     def next_calibration_due_at(self):
+        if "latest_calibration_due_at" in self.__dict__:
+            return self.__dict__["latest_calibration_due_at"]
         record = self.latest_service_record("calibration")
         return record.next_due_at if record else None
 

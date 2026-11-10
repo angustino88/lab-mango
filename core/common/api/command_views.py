@@ -84,6 +84,10 @@ class CommandAPIView(FeatureAPIView):
                 result = self.project_result(result)
             elif project is not None:
                 result = project(result)
+            if isinstance(result, Response):
+                # The projection already produced the HTTP response (status, headers);
+                # serializing it again would emit the Response object as the payload.
+                return result
             if self.operation().responses.success.is_paginated:
                 return self.list_response_sync(result)
             return self.respond(result)

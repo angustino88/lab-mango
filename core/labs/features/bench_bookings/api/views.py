@@ -27,6 +27,8 @@ from core.labs.features.bench_bookings.queries import (
     get_bench_booking,
     get_bench_booking_by_code,
     get_lab_project,
+    get_visible_bench_booking,
+    get_visible_bench_booking_by_code,
     list_bench_bookings,
     list_lab_projects,
 )
@@ -52,6 +54,17 @@ class BenchBookingAPIView(CommandAPIView):
 
     def project_result(self, result):
         return get_bench_booking(booking_id=result.pk)
+
+    def decision_body(self, booking: Any) -> dict[str, Any]:
+        """Full success envelope, stored on the receipt so a replay returns identical JSON."""
+        envelope = self.success_contract().respond(BenchBookingSerializer(booking).data).data
+        return json.loads(json.dumps(envelope, cls=DjangoJSONEncoder))
+
+    def decision_response(self, result: DecideBenchBookingApprovalResult) -> Response:
+        response = Response(result.response_body, status=result.status_code)
+        if result.replayed:
+            response["Idempotency-Replayed"] = "true"
+        return response
 
 
 class BenchBookingCreateAPIView(AppListAPIView, BenchBookingAPIView):
@@ -109,7 +122,7 @@ class BenchBookingDetailAPIView(BenchBookingAPIView):
     )
 
     def handle_get(self, request, booking_id, **kwargs):
-        return self._execute(lambda: get_bench_booking(booking_id=booking_id))
+        return self._execute(lambda: get_visible_bench_booking(actor=request.user, booking_id=booking_id))
 
     def handle_patch(self, request, booking_id, **kwargs):
         serializer, error = self.validate_request(partial=True)
@@ -137,7 +150,12 @@ class BenchBookingCancelActionAPIView(BenchBookingAPIView):
             return error
         command_input = UpdateBenchBookingInput(
             booking_id=booking_id,
-            fields={"status": BookingStatus.CANCELLED, "reason": serializer.validated_data.get("reason", "")},
+            fields={
+                "status": BookingStatus.CANCELLED,
+                # The payload's "reason" explains the cancellation; the booking's own
+                # purpose (BenchBooking.reason) must not be overwritten.
+                "cancellation_reason": serializer.validated_data.get("reason", ""),
+            },
         )
         return self._execute(
             lambda: update_bench_booking(actor=request.user, data=command_input),
@@ -177,9 +195,9 @@ class BenchBookingApproveActionAPIView(BenchBookingAPIView):
             lambda: decide_bench_booking_approval(
                 actor=request.user,
                 data=command_input,
-                project_response=_project_decision_response,
+                project_response=self.decision_body,
             ),
-            project=_decision_response,
+            project=self.decision_response,
         )
 
 
@@ -222,9 +240,9 @@ class BenchBookingRejectActionAPIView(BenchBookingAPIView):
             lambda: decide_bench_booking_approval(
                 actor=request.user,
                 data=command_input,
-                project_response=_project_decision_response,
+                project_response=self.decision_body,
             ),
-            project=_decision_response,
+            project=self.decision_response,
         )
 
 
@@ -252,19 +270,6 @@ def _action_error(request: Request, status_code: int, code: str, message: str) -
     )
 
 
-def _decision_response(result: DecideBenchBookingApprovalResult) -> Response:
-    response = Response(result.response_body, status=result.status_code)
-    if result.replayed:
-        response["Idempotency-Replayed"] = "true"
-    return response
-
-
-def _project_decision_response(booking: Any) -> dict[str, Any]:
-    """Serialize the established booking envelope in the API boundary."""
-    serialized = BenchBookingSerializer(booking).data
-    return json.loads(json.dumps(serialized, cls=DjangoJSONEncoder))
-
-
 class BenchBookingCodeDetailAPIView(BenchBookingAPIView):
     get_contract = operation("BenchBookingDetailByCode", BenchBookingSerializer)
     patch_contract = operation(
@@ -276,7 +281,9 @@ class BenchBookingCodeDetailAPIView(BenchBookingAPIView):
     )
 
     def handle_get(self, request, booking_code, **kwargs):
-        return self._execute(lambda: get_bench_booking_by_code(booking_code=booking_code))
+        return self._execute(
+            lambda: get_visible_bench_booking_by_code(actor=request.user, booking_code=booking_code)
+        )
 
     def handle_patch(self, request, booking_code, **kwargs):
         serializer, error = self.validate_request(partial=True)
@@ -306,7 +313,12 @@ class BenchBookingCancelByCodeActionAPIView(BenchBookingAPIView):
         booking = get_bench_booking_by_code(booking_code=booking_code)
         command_input = UpdateBenchBookingInput(
             booking_id=booking.pk,
-            fields={"status": BookingStatus.CANCELLED, "reason": serializer.validated_data.get("reason", "")},
+            fields={
+                "status": BookingStatus.CANCELLED,
+                # The payload's "reason" explains the cancellation; the booking's own
+                # purpose (BenchBooking.reason) must not be overwritten.
+                "cancellation_reason": serializer.validated_data.get("reason", ""),
+            },
         )
         return self._execute(
             lambda: update_bench_booking(actor=request.user, data=command_input),

@@ -5,10 +5,10 @@ import json
 import logging
 
 from asgiref.sync import sync_to_async
-from django.core.cache import cache
 
 from core.websocket import pubsub
 from core.websocket.router import register_route
+from core.websocket.task_ownership import is_task_owner
 
 logger = logging.getLogger(__name__)
 
@@ -18,14 +18,11 @@ TERMINAL_STATES = {"SUCCESS", "FAILURE", "REVOKED"}
 
 @sync_to_async
 def _can_view_task(user_id: int, task_id: str) -> bool:
-    """ARCH-001: Bind task IDs to their initiating actor.
-    If the task owner was set in cache when enqueued, verify it.
-    If not explicitly tracked, we default to deny to enforce the new secure boundary.
+    """ARCH-001: only the user recorded at enqueue time may watch a task (deny by default).
+
+    Owners are registered by core.websocket.task_ownership.enqueue_user_task.
     """
-    owner_id = cache.get(f"task_owner:{task_id}")
-    # If the task owner is known and matches, allow.
-    # If None, the task wasn't securely enqueued with an owner -> deny.
-    return str(owner_id) == str(user_id)
+    return is_task_owner(task_id, user_id)
 
 
 async def task_progress_handler(scope: dict, receive, send) -> None:

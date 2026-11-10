@@ -11,8 +11,14 @@ from core.common.api.options import OptionsAPIView, OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer
 from core.labs.features.base import CommandAPIView, operation
 from core.labs.features.benches.application import services
-from core.labs.features.benches.queries import reference_data as bench_reference_data
 from core.labs.features.benches.queries import selectors
+
+# Import the functions, not the submodule: the package re-exports a selector
+# function also named ``reference_data`` that shadows the submodule attribute.
+from core.labs.features.benches.queries.reference_data import (
+    list_bench_group_options,
+    list_bench_type_options,
+)
 from core.labs.features.benches.queries.summaries import get_bench_status_summary
 
 from .filters import BENCH_FILTERS
@@ -197,7 +203,7 @@ class BenchGroupOptionsAPIView(OptionsAPIView):
     schema_tags = ("Benches",)
 
     def select(self, *, actor, filters):
-        return bench_reference_data.list_bench_group_options(actor=actor, **filters)
+        return list_bench_group_options(actor=actor, **filters)
 
 
 class BenchTypeOptionsAPIView(OptionsAPIView):
@@ -209,7 +215,7 @@ class BenchTypeOptionsAPIView(OptionsAPIView):
     schema_tags = ("Benches",)
 
     def select(self, *, actor, filters):
-        return bench_reference_data.list_bench_type_options(actor=actor, **filters)
+        return list_bench_type_options(actor=actor, **filters)
 
 
 class BenchReferenceDataAPIView(BenchAPIView):

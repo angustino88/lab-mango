@@ -1,6 +1,7 @@
 """Read queries for license inventory and acquisition information."""
 
-from django.db.models import OuterRef, Q, QuerySet, Subquery
+from django.db.models import Count, IntegerField, OuterRef, Q, QuerySet, Subquery
+from django.db.models.functions import Coalesce
 
 from core.labs.models import License, LicenseAgreement, LicenseStatusRecord, PurchaseItemResource
 from core.labs.models.resource.license.assignment import LicenseAssignment
@@ -76,10 +77,19 @@ def list_licenses(*, search: str | None = None) -> QuerySet[License]:
         resource_type__model=License._meta.model_name,
         resource_id=OuterRef("pk"),
     )
+    active_seats = (
+        LicenseAssignment.objects.filter(license_id=OuterRef("pk"), unassigned_at__isnull=True)
+        .order_by()
+        .values("license_id")
+        .annotate(total=Count("pk"))
+        .values("total")
+    )
     queryset = (
         License.objects.filter(deleted_at__isnull=True)
         .select_related("product", "vendor", "type", "category", "restriction", "owner")
         .annotate(
+            # Read by License.seats_in_use; one correlated subquery instead of a COUNT per row.
+            active_seat_count=Coalesce(Subquery(active_seats, output_field=IntegerField()), 0),
             current_status=Subquery(latest_status.values("status")[:1]),
             acquisition_price=Subquery(acquisition.values("acquisition_price")[:1]),
             acquisition_currency=Subquery(acquisition.values("purchase_item__purchase__currency")[:1]),

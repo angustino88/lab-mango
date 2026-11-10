@@ -35,11 +35,26 @@ def schema():
     return document
 
 
+def _json_schema(node):
+    """Translate OpenAPI 3.0 ``nullable: true`` into JSON Schema 2020-12 (``type: [T, "null"]``)."""
+    if isinstance(node, list):
+        return [_json_schema(item) for item in node]
+    if not isinstance(node, dict):
+        return node
+    node = {key: _json_schema(value) for key, value in node.items()}
+    if node.pop("nullable", False):
+        if "type" in node:
+            node["type"] = [node["type"], "null"]
+        else:
+            node = {"anyOf": [node, {"type": "null"}]}
+    return node
+
+
 def response_validator(schema, endpoint, method="get", status_code=200):
     response_schema = schema["paths"][endpoint][method]["responses"][str(status_code)]["content"]["application/json"][
         "schema"
     ]
-    return Draft202012Validator({**response_schema, "components": schema["components"]})
+    return Draft202012Validator(_json_schema({**response_schema, "components": schema["components"]}))
 
 
 @pytest.mark.parametrize("name,view_class,query,component", CASES)
@@ -171,8 +186,10 @@ def test_websocket_get_pagination_audit_and_precise_candidate(schema, rows, page
     }
     get_schema = schema["paths"][endpoint]["get"]["responses"]["200"]["content"]["application/json"]["schema"]
     actual_component = schema["components"]["schemas"][get_schema["$ref"].rsplit("/", 1)[-1]]
-    assert set(actual_component["properties"]) == {"count", "next", "previous", "results"}
-    assert not response_validator(schema, endpoint).is_valid(response.data)
+    # The documented GET schema now matches the runtime envelope (it used to advertise
+    # DRF's count/next/previous/results); keep runtime and documentation aligned.
+    assert set(actual_component["properties"]) == {"data", "meta"}
+    assert response_validator(schema, endpoint).is_valid(response.data)
     # Prove a local, GET-only annotation candidate, without changing production or POST.
     candidate = ResponseSchemaFactory.paginated("NotificationListCreateView", NotificationSerializer)
     extend_schema_serializer(many=False)(candidate)

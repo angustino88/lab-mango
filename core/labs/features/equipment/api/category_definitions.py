@@ -36,7 +36,9 @@ CATEGORY_DEFINITIONS = {
         ),
         lookups=(("technical_users", TechnicalUser, "username"),),
         list_fields=("ip_address", "os_name", "mac_address"),
-        create_fields=("mac_address",),
+        # hostname is entered manually at registration (it names the RDP host); ip_address,
+        # os_name and system_info stay agent-reported and are rejected on create.
+        create_fields=("mac_address", "hostname"),
         update_fields=("monitored_devices", "technical_user"),
         searchable_fields=COMMON_EQUIPMENT_SEARCH_FIELDS + ("ip_address", "os_name", "hostname", "mac_address"),
         list_filters=(

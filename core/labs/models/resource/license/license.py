@@ -125,6 +125,10 @@ class License(ResourceModel):
 
     @property
     def seats_in_use(self) -> int:
+        # List selectors annotate ``active_seat_count`` to avoid one COUNT per row.
+        annotated = self.__dict__.get("active_seat_count")
+        if annotated is not None:
+            return annotated
         return self.equipment_assignments.filter(unassigned_at__isnull=True).count()
 
     class Meta:

@@ -40,7 +40,7 @@ def update_equipment(command: UpdateEquipmentInput, *, actor):
     if not kind.active or not kind.category.active:
         raise ValidationError({"kind": "Select an active equipment kind and category."})
     expected_category = getattr(command.model, "EQUIPMENT_CATEGORY_KEY", "equipment")
-    if expected_category != "equipment" and kind.category.name.lower() != expected_category:
+    if expected_category != "equipment" and kind.category.effective_key != expected_category:
         raise ValidationError({"kind": "The equipment kind must match the equipment category."})
     instance.last_modified_by = actor
     instance.full_clean()

@@ -1,0 +1,1 @@
+"""Isolated booking notification tests."""

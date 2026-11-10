@@ -15,7 +15,15 @@ _routes: list[tuple[re.Pattern, Callable[..., Coroutine[Any, Any, None]]]] = []
 def register_route(pattern: str, handler: Callable[..., Coroutine[Any, Any, None]]) -> None:
     """Register a WS handler for a URL pattern. Patterns use {name} for params."""
     regex = re.sub(r"\{(\w+)\}", r"(?P<\1>[^/]+)", pattern)
-    _routes.append((re.compile(f"^{regex}$"), handler))
+    compiled = re.compile(f"^{regex}$")
+    for existing, existing_handler in _routes:
+        if existing.pattern == compiled.pattern and existing_handler is not handler:
+            # The router dispatches to the first match, so a duplicate would silently
+            # shadow one handler (a stale copy once bypassed object authorization).
+            raise ValueError(f"WebSocket route {pattern!r} is already registered by {existing_handler.__module__}.")
+        if existing.pattern == compiled.pattern:
+            return
+    _routes.append((compiled, handler))
 
 
 async def ws_router(scope: dict, receive, send) -> None:

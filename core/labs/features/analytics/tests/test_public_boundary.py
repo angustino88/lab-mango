@@ -40,9 +40,11 @@ def test_public_surface_exports_application_queries_and_exception():
 
 
 def test_api_adapters_use_public_and_have_no_direct_model_workflows():
-    views = FEATURE_ROOT / "api" / "views.py"
-    imports = _imports(views)
-    source = views.read_text(encoding="utf-8-sig")
-    assert "core.labs.models" not in imports
+    # The API was split into per-area packages (api/<area>/views.py); check every adapter module.
+    api_modules = sorted((FEATURE_ROOT / "api").rglob("*.py"))
+    assert api_modules
+    for module in api_modules:
+        assert "core.labs.models" not in _imports(module), module
+    source = "\n".join(module.read_text(encoding="utf-8-sig") for module in api_modules)
     assert "BookingCountAPIView" in source
     assert "StorageQuotaAPIView" in source

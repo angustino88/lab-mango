@@ -3,6 +3,8 @@
 from datetime import datetime
 
 from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
 
 from core.labs.models import BenchBooking, BookingStatus, ComputingActivityStatus, EquipmentAssignment
 from core.labs.models.booking import ensure_booking_status_transition
@@ -52,35 +54,56 @@ def activate_bench_booking_for_computing_activity(*, computing_id: int, now: dat
     )
 
 
-def reconcile_bench_booking_statuses(*, now: datetime) -> dict[str, int]:
-    """Expire unattended reservations and complete finished active bookings."""
-    with transaction.atomic():
-        expired = _transition_all(
-            BenchBooking.objects.select_for_update().filter(
-                status=BookingStatus.RESERVED,
-                starts_at__lte=now - ACTIVATION_WINDOW,
-            ),
-            BookingStatus.EXPIRED,
-        )
-        completed = _transition_all(
-            BenchBooking.objects.select_for_update().filter(
-                status=BookingStatus.IN_PROGRESS,
-                ends_at__lte=now,
-            ),
-            BookingStatus.COMPLETED,
-        )
-    return {"expired": expired, "completed": completed}
+RECONCILE_BATCH_SIZE = 500
+
+# Each reconciliation move is a valid edge of BOOKING_STATUS_TRANSITIONS; the
+# filters below select only rows whose current status is the source state.
+_RECONCILE_MOVES = (
+    ("expired", BookingStatus.RESERVED, BookingStatus.EXPIRED),
+    ("completed", BookingStatus.IN_PROGRESS, BookingStatus.COMPLETED),
+)
+
+
+def reconcile_bench_booking_statuses(*, now: datetime, batch_size: int = RECONCILE_BATCH_SIZE) -> dict[str, int]:
+    """Expire unattended reservations and complete finished active bookings.
+
+    Race guard: each batch locks its rows with ``SKIP LOCKED`` and re-checks the
+    source status in the UPDATE, so rows held by a concurrent user command are
+    left for the next run instead of blocking it. Each batch commits on its own,
+    keeping lock time bounded however large the backlog. Safe to run repeatedly.
+    """
+    for _, source, target in _RECONCILE_MOVES:
+        ensure_booking_status_transition(current_status=source, target_status=target)
+    due = {
+        "expired": Q(status=BookingStatus.RESERVED, starts_at__lte=now - ACTIVATION_WINDOW),
+        "completed": Q(status=BookingStatus.IN_PROGRESS, ends_at__lte=now),
+    }
+    result = {}
+    for key, source, target in _RECONCILE_MOVES:
+        result[key] = _transition_in_batches(due[key], source=source, target=target, batch_size=batch_size)
+    return result
+
+
+def _transition_in_batches(condition: Q, *, source: BookingStatus, target: BookingStatus, batch_size: int) -> int:
+    total = 0
+    while True:
+        with transaction.atomic():
+            ids = list(
+                BenchBooking.objects.select_for_update(skip_locked=True)
+                .filter(condition)
+                .order_by("pk")
+                .values_list("pk", flat=True)[:batch_size]
+            )
+            if not ids:
+                return total
+            total += BenchBooking.objects.filter(pk__in=ids, status=source).update(
+                status=target, modified=timezone.now()
+            )
+        if len(ids) < batch_size:
+            return total
 
 
 def _transition(booking: BenchBooking, target_status: BookingStatus) -> None:
     ensure_booking_status_transition(current_status=booking.status, target_status=target_status)
     booking.status = target_status
     booking.save(update_fields=("status", "modified"))
-
-
-def _transition_all(bookings, target_status: BookingStatus) -> int:
-    count = 0
-    for booking in bookings:
-        _transition(booking, target_status)
-        count += 1
-    return count

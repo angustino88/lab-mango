@@ -1124,7 +1124,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/StateEnum'
           readOnly: true
-          default: pending
         key_algorithm:
           allOf:
           - $ref: '#/components/schemas/KeyAlgorithmEnum'
@@ -3284,7 +3283,6 @@ components:
           minimum: 0
         is_active:
           type: boolean
-          default: true
         created_at:
           type: string
           format: date-time
@@ -3709,6 +3707,11 @@ components:
             maxLength: 17
           - type: string
             maxLength: 0
+        hostname:
+          type: string
+          description: DNS name used for remote access; falls back to the SKU when
+            empty.
+          maxLength: 255
         kind_id:
           type: integer
         type_id:
@@ -19133,7 +19136,6 @@ components:
           type: boolean
         is_active:
           type: boolean
-          default: true
         created_at:
           type: string
           format: date-time
@@ -24819,7 +24821,6 @@ components:
           readOnly: true
         is_active:
           type: boolean
-          default: true
         created_at:
           type: string
           format: date-time

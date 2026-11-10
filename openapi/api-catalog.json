@@ -109,8 +109,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true,
-                    "default": "pending"
+                    "readOnly": true
                   },
                   "key_algorithm": {
                     "allOf": [
@@ -1244,8 +1243,7 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true,
-                      "default": "pending"
+                      "readOnly": true
                     },
                     "key_algorithm": {
                       "allOf": [
@@ -1910,8 +1908,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true,
-                    "default": "pending"
+                    "readOnly": true
                   },
                   "key_algorithm": {
                     "allOf": [
@@ -2173,8 +2170,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true,
-                    "default": "pending"
+                    "readOnly": true
                   },
                   "key_algorithm": {
                     "allOf": [
@@ -2534,8 +2530,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true,
-                    "default": "pending"
+                    "readOnly": true
                   },
                   "key_algorithm": {
                     "allOf": [
@@ -36495,6 +36490,11 @@
                 }
               ]
             },
+            "hostname": {
+              "type": "string",
+              "description": "DNS name used for remote access; falls back to the SKU when empty.",
+              "maxLength": 255
+            },
             "kind_id": {
               "type": "integer"
             },
@@ -36549,6 +36549,7 @@
           "warranty_until": "2026-10-20",
           "calibration_required": true,
           "mac_address": "string",
+          "hostname": "string",
           "kind_id": 1,
           "type_id": 1,
           "manufacturer_id": 1,
@@ -171459,8 +171460,7 @@
                       "minimum": 0
                     },
                     "is_active": {
-                      "type": "boolean",
-                      "default": true
+                      "type": "boolean"
                     },
                     "created_at": {
                       "type": "string",
@@ -171778,8 +171778,7 @@
                     "minimum": 0
                   },
                   "is_active": {
-                    "type": "boolean",
-                    "default": true
+                    "type": "boolean"
                   },
                   "created_at": {
                     "type": "string",
@@ -172409,8 +172408,7 @@
                     "minimum": 0
                   },
                   "is_active": {
-                    "type": "boolean",
-                    "default": true
+                    "type": "boolean"
                   },
                   "created_at": {
                     "type": "string",
@@ -174309,8 +174307,7 @@
                       "type": "boolean"
                     },
                     "is_active": {
-                      "type": "boolean",
-                      "default": true
+                      "type": "boolean"
                     },
                     "created_at": {
                       "type": "string",
@@ -174663,8 +174660,7 @@
                     "type": "boolean"
                   },
                   "is_active": {
-                    "type": "boolean",
-                    "default": true
+                    "type": "boolean"
                   },
                   "created_at": {
                     "type": "string",
@@ -175331,8 +175327,7 @@
                     "type": "boolean"
                   },
                   "is_active": {
-                    "type": "boolean",
-                    "default": true
+                    "type": "boolean"
                   },
                   "created_at": {
                     "type": "string",
@@ -177466,8 +177461,7 @@
                       "readOnly": true
                     },
                     "is_active": {
-                      "type": "boolean",
-                      "default": true
+                      "type": "boolean"
                     },
                     "created_at": {
                       "type": "string",
@@ -177788,8 +177782,7 @@
                     "readOnly": true
                   },
                   "is_active": {
-                    "type": "boolean",
-                    "default": true
+                    "type": "boolean"
                   },
                   "created_at": {
                     "type": "string",
@@ -178415,8 +178408,7 @@
                     "readOnly": true
                   },
                   "is_active": {
-                    "type": "boolean",
-                    "default": true
+                    "type": "boolean"
                   },
                   "created_at": {
                     "type": "string",

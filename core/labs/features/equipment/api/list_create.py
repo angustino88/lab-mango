@@ -30,6 +30,8 @@ class EquipmentListCreateAPIView(ResourceChangeLogMixin, AppListAPIView, Equipme
     list_serializer_class = None
     create_response_serializer_class = None
     create_serializer_class = None
+    # Category-specific create fields (model field names) the command may accept.
+    category_create_fields: tuple[str, ...] = ()
     entity_name = None
 
     text_search_fields: ClassVar[list[str]] = []
@@ -111,6 +113,7 @@ class EquipmentListCreateAPIView(ResourceChangeLogMixin, AppListAPIView, Equipme
             CreateEquipmentInput(fields=tuple(serializer.validated_data.items())),
             actor=actor,
             model=self.model,
+            category_fields=frozenset(self.category_create_fields),
         )
 
     def after_create(self, instance, serializer, request: Request) -> None:

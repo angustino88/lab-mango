@@ -198,7 +198,8 @@ class StationSerializer(AppModelSerializer):
     active_bench_count = serializers.IntegerField(read_only=True)
     allocated_power_w = serializers.IntegerField(read_only=True)
     available_slot_count = serializers.IntegerField(read_only=True)
-    slot_count = serializers.IntegerField(read_only=True, source="bench_slots.count")
+    # Annotated by stations selectors; reading bench_slots.count() here issued one COUNT per row.
+    slot_count = serializers.IntegerField(read_only=True)
     slots_url = serializers.SerializerMethodField()
     location_path = serializers.CharField(source="get_location_path", read_only=True)
     available_power_w = serializers.SerializerMethodField()

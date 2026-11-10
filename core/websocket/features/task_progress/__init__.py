@@ -1,62 +1,6 @@
-"""WS handler: Celery task progress — ws/tasks/{task_id}/"""
+"""Celery task progress WebSocket feature (ws/tasks/{task_id}).
 
-import asyncio
-import json
-import logging
-
-from core.websocket import pubsub
-from core.websocket.router import register_route
-
-logger = logging.getLogger(__name__)
-
-CHANNEL_PREFIX = "ws:tasks:"
-TERMINAL_STATES = {"SUCCESS", "FAILURE", "REVOKED"}
-
-
-async def task_progress_handler(scope: dict, receive, send) -> None:
-    """Push Celery task progress/state updates to connected client."""
-    task_id = scope.get("url_params", {}).get("task_id")
-    if not task_id:
-        await send({"type": "websocket.close", "code": 4003})
-        return
-
-    await send({"type": "websocket.accept"})
-    channel = f"{CHANNEL_PREFIX}{task_id}"
-
-    done_event = asyncio.Event()
-    listen_task = asyncio.create_task(_listen_redis(send, channel, done_event))
-
-    try:
-        while not done_event.is_set():
-            msg = await receive()
-            if msg["type"] == "websocket.disconnect":
-                break
-    except Exception:
-        logger.debug("Task WS disconnected (task=%s)", task_id, exc_info=True)
-    finally:
-        listen_task.cancel()
-        try:
-            await listen_task
-        except asyncio.CancelledError:
-            pass
-        # Send server-initiated close after terminal state
-        if done_event.is_set():
-            await send({"type": "websocket.close", "code": 1000})
-
-
-async def _listen_redis(send, channel: str, done_event: asyncio.Event) -> None:
-    """Subscribe to Redis and forward task updates to WS client."""
-    try:
-        async for data in pubsub.subscribe(channel):
-            await send({"type": "websocket.send", "text": json.dumps(data)})
-            # Auto-signal close after terminal state
-            if data.get("state") in TERMINAL_STATES:
-                done_event.set()
-                return
-    except asyncio.CancelledError:
-        raise
-    except Exception:
-        logger.error("Redis subscription error (%s)", channel, exc_info=True)
-
-
-register_route("ws/tasks/{task_id}", task_progress_handler)
+Package marker only. The route is registered by ``handler.py`` (imported by
+``core.websocket.features``). Do not register routes here: the first registration
+wins, so a second handler here would shadow the maintained one.
+"""

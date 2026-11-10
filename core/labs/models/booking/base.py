@@ -159,4 +159,24 @@ class Booking(TimeStampedModel, UserStampedModel):
                 condition=models.Q(ends_at__gt=models.F("starts_at")),
                 name="%(app_label)s_%(class)s_valid_booking_period",
             ),
+            # Database guards for the approval/cancellation invariants in clean(); every
+            # application write path already satisfies them. Added NOT VALID (see migration),
+            # so historical rows are not rechecked until an owner runs VALIDATE CONSTRAINT.
+            # "Rejected requires an approver" is deliberately not a constraint: approved_by
+            # is SET_NULL, so deleting the approving user must not be blocked.
+            models.CheckConstraint(
+                condition=~models.Q(approval_status=BookingApprovalStatus.REJECTED)
+                | ~models.Q(rejection_reason__regex=r"^\s*$"),
+                name="%(app_label)s_%(class)s_rejection_has_reason",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(approval_status=BookingApprovalStatus.PENDING)
+                | models.Q(approved_by__isnull=True),
+                name="%(app_label)s_%(class)s_pending_has_no_approver",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(status=BookingStatus.CANCELLED)
+                | ~models.Q(cancellation_reason__regex=r"^\s*$"),
+                name="%(app_label)s_%(class)s_cancellation_has_reason",
+            ),
         ]
