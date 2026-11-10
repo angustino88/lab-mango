@@ -36,6 +36,22 @@ urlpatterns = [
         views.EquipmentPlacementAPIView.as_view(),
         name="equipment-placement-detail",
     ),
+    path("equipment/<int:equipment_id>/loan", views.EquipmentLoanAPIView.as_view(), name="equipment-loan-detail"),
+    path(
+        "equipment/<int:equipment_id>/actions/hand-over",
+        views.EquipmentHandOverAPIView.as_view(),
+        name="equipment-action-hand-over",
+    ),
+    path(
+        "equipment/<int:equipment_id>/actions/return",
+        views.EquipmentReturnAPIView.as_view(),
+        name="equipment-action-return",
+    ),
+    path(
+        "equipment/<int:equipment_id>/actions/extend-loan",
+        views.EquipmentExtendLoanAPIView.as_view(),
+        name="equipment-action-extend-loan",
+    ),
     path(
         "equipment/<int:equipment_id>/actions/change-condition",
         views.EquipmentChangeConditionAPIView.as_view(),

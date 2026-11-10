@@ -25,15 +25,21 @@ from core.labs.features.equipment.application import (
     ChangeConditionInput,
     ChangeLifecycleInput,
     CreateEquipmentInput,
+    ExtendLoanInput,
+    HandOverEquipmentInput,
     PlaceEquipmentInput,
     RemovePlacementInput,
+    ReturnEquipmentInput,
     UnassignEquipmentInput,
     assign_equipment,
     change_condition,
     change_lifecycle,
     create_equipment,
+    extend_loan,
+    hand_over_equipment,
     place_equipment,
     remove_placement,
+    return_equipment,
     unassign_equipment,
 )
 from core.labs.features.equipment.queries import (
@@ -44,6 +50,7 @@ from core.labs.features.equipment.queries import (
     list_equipment,
     list_equipment_options,
 )
+from core.labs.features.equipment.queries.loans import get_active_loan
 from core.labs.features.equipment.queries.placements import get_active_placement
 from core.labs.features.equipment.queries.reference_data import (
     get_department,
@@ -87,13 +94,17 @@ from .serializers import (
     EquipmentChangeConditionSerializer,
     EquipmentChangeLifecycleSerializer,
     EquipmentCreateSerializer,
+    EquipmentExtendLoanSerializer,
+    EquipmentHandOverSerializer,
     EquipmentKindOptionsQuerySerializer,
+    EquipmentLoanSerializer,
     EquipmentManufacturerOptionsQuerySerializer,
     EquipmentOptionsQuerySerializer,
     EquipmentPlacementSerializer,
     EquipmentPlacementWriteSerializer,
     EquipmentProductModelOptionsQuerySerializer,
     EquipmentReferenceDataSerializer,
+    EquipmentReturnSerializer,
     EquipmentSerializer,
     EquipmentStatusSummarySerializer,
     EquipmentTypeOptionsQuerySerializer,
@@ -347,6 +358,87 @@ class DeprecatedEquipmentAssignmentActionAPIView(EquipmentAssignmentAPIView):
         if equipment_id:
             response["Link"] = f'</api/labs/equipment/{equipment_id}/assignment>; rel="successor-version"'
         return response
+
+
+class EquipmentLoanAPIView(EquipmentAPIView):
+    """The unit's open loan; 404 when nobody holds it."""
+
+    get_contract = OperationContract(
+        success=ResponseContract.success("EquipmentLoanDetail", EquipmentLoanSerializer),
+        not_found=ResponseContract.not_found(),
+    )
+
+    def handle_get(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        return self.respond(get_active_loan(equipment_id=equipment_id))
+
+
+def _loan_contract(name: str, request: Any) -> OperationContract:
+    return OperationContract(
+        request=request,
+        success=ResponseContract.success(name, EquipmentLoanSerializer),
+        bad_request=ResponseContract.bad_request(),
+        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
+        not_found=ResponseContract.not_found(),
+        conflict=ResponseContract.conflict(),
+    )
+
+
+class EquipmentHandOverAPIView(EquipmentAPIView):
+    """Hand an available unit to a person until ``due_at``; it leaves its resting place."""
+
+    post_contract = _loan_contract("EquipmentLoanOpened", EquipmentHandOverSerializer)
+
+    def handle_post(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        loan = hand_over_equipment(
+            HandOverEquipmentInput(
+                equipment_id=equipment_id,
+                borrower_id=data["borrower_id"],
+                due_at=data["due_at"],
+                condition_out=data["condition_out"],
+            ),
+            actor=self.acting_user,
+        )
+        return self.respond(loan)
+
+
+class EquipmentReturnAPIView(EquipmentAPIView):
+    """Take a unit back; optionally record its condition and where it now is."""
+
+    post_contract = _loan_contract("EquipmentLoanClosed", EquipmentReturnSerializer)
+
+    def handle_post(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        loan = return_equipment(ReturnEquipmentInput(equipment_id=equipment_id, **data), actor=self.acting_user)
+        return self.respond(loan)
+
+
+class EquipmentExtendLoanAPIView(EquipmentAPIView):
+    """Move the due time of a loan that is not tied to a booking."""
+
+    post_contract = _loan_contract("EquipmentLoanExtended", EquipmentExtendLoanSerializer)
+
+    def handle_post(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        loan = extend_loan(
+            ExtendLoanInput(equipment_id=equipment_id, due_at=serializer.validated_data["due_at"]),
+            actor=self.acting_user,
+        )
+        return self.respond(loan)
 
 
 class EquipmentStateActionAPIView(EquipmentAPIView):

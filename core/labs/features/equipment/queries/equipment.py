@@ -15,6 +15,7 @@ from core.labs.models import (
     EquipmentDisplayStatus,
     EquipmentKind,
     EquipmentLifecycleState,
+    EquipmentLoan,
     EquipmentManufacturer,
     EquipmentProductModel,
     EquipmentType,
@@ -29,8 +30,9 @@ from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 def display_status_expression() -> Case:
     """``display_status`` from the stored facts; first matching row wins (redesign, display status).
 
-    Needs ``latest_calibration_due_at`` on the queryset. ``borrowed`` arrives with loans (step 3).
+    Needs ``latest_calibration_due_at`` on the queryset.
     """
+    on_loan = Exists(EquipmentLoan.objects.filter(equipment_id=OuterRef("pk"), returned_at__isnull=True))
     on_bench = Exists(EquipmentAssignment.objects.filter(equipment_id=OuterRef("pk"), unassigned_at__isnull=True))
     calibration_overdue = Q(calibration_required=True) & (
         Q(latest_calibration_due_at__isnull=True) | Q(latest_calibration_due_at__lt=Now())
@@ -44,6 +46,7 @@ def display_status_expression() -> Case:
         When(lifecycle_state=EquipmentLifecycleState.LOST, then=Value(status.LOST)),
         When(Q(condition=EquipmentCondition.OUT_OF_SERVICE), then=Value(status.BROKEN)),
         When(Q(condition=EquipmentCondition.IN_MAINTENANCE), then=Value(status.MAINTENANCE)),
+        When(on_loan, then=Value(status.BORROWED)),
         When(on_bench, then=Value(status.IN_USE)),
         When(calibration_overdue, then=Value(status.CALIBRATION_OVERDUE)),
         default=Value(status.AVAILABLE),
@@ -93,11 +96,16 @@ def with_equipment_info(queryset):
                 unassigned_at__isnull=True,
             )
         ),
+        on_loan=Exists(EquipmentLoan.objects.filter(equipment_id=OuterRef("pk"), returned_at__isnull=True)),
+        loan_overdue=Exists(
+            EquipmentLoan.objects.filter(equipment_id=OuterRef("pk"), returned_at__isnull=True, due_at__lt=Now())
+        ),
     )
     return with_display_status(queryset)
 
 
 ACTIVE_PLACEMENT_ATTR = "active_placements"
+ACTIVE_LOAN_ATTR = "active_loans"
 
 
 def with_active_placement(queryset: QuerySet) -> QuerySet:
@@ -109,6 +117,17 @@ def with_active_placement(queryset: QuerySet) -> QuerySet:
                 "bench", "station", "room"
             ),
             to_attr=ACTIVE_PLACEMENT_ATTR,
+        )
+    )
+
+
+def with_active_loan(queryset: QuerySet) -> QuerySet:
+    """Prefetch each unit's open loan with its borrower in one query per page."""
+    return queryset.prefetch_related(
+        Prefetch(
+            "loans",
+            queryset=EquipmentLoan.objects.filter(returned_at__isnull=True).select_related("borrower"),
+            to_attr=ACTIVE_LOAN_ATTR,
         )
     )
 
@@ -137,7 +156,7 @@ def list_equipment(
         )
         .order_by("kind__category__name", "kind__name", "name", "id")
     )
-    queryset = with_active_placement(with_equipment_info(queryset))
+    queryset = with_active_loan(with_active_placement(with_equipment_info(queryset)))
 
     if category:
         queryset = queryset.filter(kind__category_id=category)
@@ -309,12 +328,14 @@ def category_queryset(model: type[models.Model], fields: tuple[str, ...], *, rel
             prefetches.append(name)
         elif field.many_to_one:
             joins.append(name)
-    return with_active_placement(
-        with_equipment_info(
-            model.objects.filter(deleted_at__isnull=True)
-            .select_related(*joins)
-            .prefetch_related(*prefetches)
-            .order_by("name", "sku", "pk")
+    return with_active_loan(
+        with_active_placement(
+            with_equipment_info(
+                model.objects.filter(deleted_at__isnull=True)
+                .select_related(*joins)
+                .prefetch_related(*prefetches)
+                .order_by("name", "sku", "pk")
+            )
         )
     )
 

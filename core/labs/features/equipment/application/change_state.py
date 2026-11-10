@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced, InvalidEquipmentStatus
+from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced, EquipmentOnLoan, InvalidEquipmentStatus
 from core.labs.models import (
     BookingStatus,
     Equipment,
@@ -27,7 +27,7 @@ from core.labs.models import (
 )
 from core.labs.models.resource.equipment.equipment import GONE_LIFECYCLE_STATES, LIFECYCLE_TRANSITIONS
 
-from ._placement import close_placement, lock_active_placement
+from ._placement import close_loan_as_lost, close_placement, lock_active_loan, lock_active_placement
 
 REASON_MAX_LENGTH = 500
 ORGANISATION_MAX_LENGTH = 255
@@ -94,6 +94,12 @@ def change_lifecycle(command: ChangeLifecycleInput, *, actor) -> Equipment:
             "transfer_date": (command.transfer_date or timezone.localdate()).isoformat(),
         }
     if target in GONE_LIFECYCLE_STATES:
+        if target == EquipmentLifecycleState.LOST:
+            lost_loan = close_loan_as_lost(equipment, actor=actor)
+            if lost_loan is not None:
+                details["closed_loan_id"] = lost_loan.pk
+        elif lock_active_loan(equipment) is not None:
+            raise EquipmentOnLoan("Take the equipment back before changing its lifecycle state.")
         placement = lock_active_placement(equipment)
         if placement is not None and placement.bench_id is not None:
             raise EquipmentAlreadyPlaced("Remove the equipment from its bench before changing its lifecycle state.")

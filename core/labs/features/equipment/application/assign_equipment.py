@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from core.labs.features.equipment.application._placement import close_resting_placement
+from core.labs.features.equipment.application._placement import close_resting_placement, ensure_not_on_loan
 from core.labs.features.equipment.exceptions import EquipmentAlreadyAssigned, InvalidEquipmentStatus
 from core.labs.models import Bench, Equipment, EquipmentLifecycleState
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
@@ -30,6 +30,7 @@ def assign_equipment(command: AssignEquipmentInput, *, actor):
         return current
     if equipment.lifecycle_state != EquipmentLifecycleState.IN_SERVICE:
         raise InvalidEquipmentStatus("Only equipment in service can be placed on a bench.")
+    ensure_not_on_loan(equipment)
     if current:
         raise EquipmentAlreadyAssigned()
     # A unit resting at a station, in a room, or at an untracked place moves onto the bench.

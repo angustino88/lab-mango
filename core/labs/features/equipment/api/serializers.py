@@ -1,3 +1,4 @@
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
 from rest_framework import serializers
 
@@ -8,6 +9,7 @@ from core.labs.features.base.serializers import (
     ChoiceReferenceSerializer,
     MoneySerializer,
     NamedReferenceSerializer,
+    ResourceOwnerSerializer,
     ResourceWriteSerializerMixin,
     UIDNamedReferenceSerializer,
     to_choice_reference,
@@ -21,6 +23,7 @@ from core.labs.models import (
     EquipmentDisplayStatus,
     EquipmentKind,
     EquipmentLifecycleState,
+    EquipmentLoan,
     EquipmentManufacturer,
     EquipmentProductModel,
     EquipmentType,
@@ -61,6 +64,48 @@ class EquipmentPlacementSerializer(serializers.Serializer):
         ref_name = "EquipmentPlacement"
 
 
+class EquipmentLoanSerializer(serializers.Serializer):
+    """Who holds a unit and until when. ``overdue`` is computed: open and past ``due_at``."""
+
+    id = serializers.IntegerField(read_only=True)
+    borrower = ResourceOwnerSerializer(read_only=True)
+    booking_id = serializers.IntegerField(read_only=True, allow_null=True)
+    handed_over_at = serializers.DateTimeField(read_only=True)
+    due_at = serializers.DateTimeField(read_only=True)
+    overdue = serializers.SerializerMethodField()
+    condition_out = serializers.CharField(read_only=True)
+    returned_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    condition_in = serializers.CharField(read_only=True)
+    close_reason = serializers.CharField(read_only=True, allow_null=True)
+
+    class Meta:
+        ref_name = "EquipmentLoan"
+
+    def get_overdue(self, obj) -> bool:
+        return obj.returned_at is None and obj.due_at < timezone.now()
+
+
+class EquipmentHandOverSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    borrower_id = serializers.IntegerField(min_value=1)
+    due_at = serializers.DateTimeField(help_text="When the equipment must be back; in the future.")
+    condition_out = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+
+
+class EquipmentReturnSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    """Close the loan; optionally record the condition and where the equipment now is."""
+
+    condition_in = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+    condition = serializers.ChoiceField(choices=EquipmentCondition.choices, required=False, allow_null=True, default=None)
+    bench_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
+    station_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
+    room_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
+    location_note = serializers.CharField(max_length=LOCATION_NOTE_MAX_LENGTH, required=False, allow_blank=True, default="")
+
+
+class EquipmentExtendLoanSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    due_at = serializers.DateTimeField()
+
+
 class EquipmentSerializer(AppModelSerializer):
     category = NamedReferenceSerializer(source="kind.category", read_only=True)
     kind = NamedReferenceSerializer(read_only=True)
@@ -78,6 +123,7 @@ class EquipmentSerializer(AppModelSerializer):
     condition = serializers.SerializerMethodField(read_only=True)
     acquisition_price = serializers.SerializerMethodField(read_only=True)
     placement = serializers.SerializerMethodField(read_only=True)
+    loan = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Equipment
@@ -97,6 +143,7 @@ class EquipmentSerializer(AppModelSerializer):
             "department",
             "group",
             "placement",
+            "loan",
             "firmware_version",
             "power_draw_w",
             "weight_kg",
@@ -133,6 +180,14 @@ class EquipmentSerializer(AppModelSerializer):
                 )
             )
         return EquipmentPlacementSerializer(placements[0], context=self.context).data if placements else None
+
+    @extend_schema_field(EquipmentLoanSerializer(allow_null=True))
+    def get_loan(self, obj) -> dict | None:
+        """Open loan from the projection's prefetch; ``null`` when nobody holds the unit."""
+        loans = getattr(obj, "active_loans", None)
+        if loans is None:  # instance not built by an equipment projection
+            loans = list(EquipmentLoan.objects.filter(equipment_id=obj.pk, returned_at__isnull=True).select_related("borrower"))
+        return EquipmentLoanSerializer(loans[0], context=self.context).data if loans else None
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
     def get_display_status(self, obj) -> dict[str, str] | None:

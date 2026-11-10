@@ -347,7 +347,7 @@ Each step is its own T2 change with its own plan and approval. Order matters bec
 | 0 | Fix D1 to D5 on the current model (**implemented**, see `features/equipment/docs/architecture.md` section 6) | none | revert |
 | 1 | `EquipmentPlacement` (**implemented**, see the step 1 plan below) | rename and extend `EquipmentAssignment` (state-only rename where possible); `storage_room` becomes a room placement for units with no active assignment; drop the column in a later release | keep the column until step 1 is verified |
 | 2 | `lifecycle_state`, `condition`, `EquipmentEvent` (**implemented**, see the step 2 plan below) | backfill from the latest `EquipmentStatusRecord` using the table below; keep the old table read-only | columns are additive; adapter keeps old route working |
-| 3 | `EquipmentLoan` | none (legacy `borrowed` rows have no borrower FK; see table) | additive |
+| 3 | `EquipmentLoan` (**implemented**, see the step 3 plan below) | none (legacy `borrowed` rows have no borrower FK; see table) | additive |
 | 4 | Equipment bookings feature | none | feature routes removable |
 | 5 | Bench state reduction | map `reserved`, `active` to `in_service`; `maintenance` to `out_of_service`; `available` to `in_service` | value map is reversible only for unchanged rows |
 | 6 | Single-table equipment and `ComputingProfile` | copy subclass columns into profile, product-model specifications, or `attributes`; largest step, plan separately | separate plan |
@@ -394,6 +394,19 @@ Decisions that refine the step 1 row above:
 | Display | `display_status` is a SQL `CASE` annotation on every equipment projection (priority table above). Values keep the familiar labels where they exist: `on_order` (planned), `transferred`, `lost`, `retired`, `broken`, `maintenance`, `in_use`, `calibration_overdue`, `available`. `borrowed` is added with loans (step 3). `in_storage` is not produced (open question 2). |
 | API | Responses: `status` is replaced by `display_status`, `lifecycle_state`, `condition`. `POST .../actions/change-status` (generic and category routes) is replaced by `.../actions/change-condition` and `.../actions/change-lifecycle`. Filters: `status` filters `display_status`; new `lifecycle_state` and `condition` filters. Option selectors: `status` filters `display_status`, `lifecycle_status` is renamed `lifecycle_state`, `assignable` means `display_status = available`. Creation accepts `lifecycle_state` (`planned` or `in_service`, default `in_service`). |
 | Readers | Status summaries count `display_status`. Analytics reads equipment state through `public.py` (`get_equipment_status_summary`, `equipment_state_timelines`) instead of querying equipment tables. |
+
+
+### Step 3 implementation plan (owner: "go to step 3", 2026-11-10; development)
+
+| Topic | Decision |
+|---|---|
+| Storage | `EquipmentLoan` as in section 3: `equipment`, `borrower` (user, PROTECT), optional one-to-one `booking`, `handed_over_at`/`handed_over_by`, `due_at`, `returned_at`/`received_by`, `condition_out`/`condition_in` (text, 255), `close_reason` (`returned`, `lost`). Checks `one_active_loan_per_equipment`, `equipment_loan_closed_has_reason`, `equipment_loan_due_after_handover`, `equipment_loan_returned_after_handover`. `written_off` is not added until a path needs it. No code (OD4). |
+| Hand over | `hand_over_equipment` locks `Equipment`; the unit must be available (in service, operational, not on a bench, no active loan, calibration not overdue), otherwise `equipment_not_available` (409). A resting placement (room, station, note) is closed in the same transaction. The borrower must be an active user; `due_at` must be in the future. Idempotent: an active loan for the same booking is returned. The booking feature (step 4) passes `booking_id`; the equipment API does not. |
+| Return | `return_equipment` closes the active loan (`returned`, `received_by`, `condition_in`), then optionally places the unit (bench, station, room, or note) and optionally sets its condition, all in one transaction. Repeating it returns the loan already closed. |
+| Extend | `extend_loan` moves `due_at` of an active loan without a booking; a booking-linked loan is extended through the booking (step 4). |
+| Other rules | Placement is refused while on loan (`equipment_on_loan`). `transferred_out` and `retired` are refused while on loan; `lost` closes the loan with reason `lost`. Delete refuses on an active loan (blocker `loan`). Condition may change while on loan ("broken while on loan"). |
+| Read side | `display_status = borrowed` at priority 4. Responses add `loan` (active loan or `null`: borrower, handed over, due, `overdue`), prefetched once per page. List filters `on_loan`, `loan_overdue`. |
+| API | `GET /equipment/{id}/loan`; `POST /equipment/{id}/actions/hand-over`, `.../actions/return`, `.../actions/extend-loan` (coordinator). Overdue reminders belong to step 4 (bookings). |
 
 ## Observability
 

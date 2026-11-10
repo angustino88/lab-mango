@@ -80,6 +80,10 @@ The service/API should translate only the known active-assignment constraint int
 
 **Implemented.** `Equipment.lifecycle_state` (`planned`, `in_service`, `transferred_out`, `retired`, `lost`) and `Equipment.condition` (`operational`, `in_maintenance`, `out_of_service`) are stored columns, changed only by `change_lifecycle` / `change_condition` (`application/change_state.py`), each change recorded in append-only `EquipmentEvent`. `display_status` is a SQL `CASE` on every projection (`queries/equipment.py::display_status_expression`), so it filters and counts without per-row queries. Analytics reads history through `public.equipment_state_timelines`. Plan: `docs/proposals/equipment-management-redesign.md`, "Step 2 implementation plan".
 
+### Loans (redesign step 3)
+
+**Implemented.** `EquipmentLoan` records custody (borrower, due time, condition out and in). `hand_over_equipment`, `return_equipment`, `extend_loan` (`application/loans.py`) lock `Equipment`, then the booking, placement and loan rows; `one_active_loan_per_equipment` backs them. Placement, lifecycle and delete commands refuse or close loans as described in `spec.md` section 2.0. Responses carry `loan`, prefetched once per page (`with_active_loan`).
+
 ### Queries
 
 **Verified.** Equipment selectors filter deleted resources, support search/reference/status/assignment filters, and build category projections. **Proposed.** Queries remain read-only and apply caller visibility where policy requires it. Querysets remain internal to the Labs app; external feature boundaries should prefer bounded projections/DTOs.

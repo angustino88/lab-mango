@@ -4,6 +4,14 @@ from .application.assign_equipment import AssignEquipmentInput, assign_equipment
 from .application.change_state import ChangeConditionInput, ChangeLifecycleInput, change_condition, change_lifecycle
 from .application.create_equipment import CreateEquipmentInput, create_equipment
 from .application.delete_equipment import DeleteEquipmentInput, delete_equipment
+from .application.loans import (
+    ExtendLoanInput,
+    HandOverEquipmentInput,
+    ReturnEquipmentInput,
+    extend_loan,
+    hand_over_equipment,
+    return_equipment,
+)
 from .application.place_equipment import (
     PlaceEquipmentInput,
     RemovePlacementInput,
@@ -14,7 +22,16 @@ from .application.unassign_equipment import UnassignEquipmentInput, unassign_equ
 from .application.update_equipment import UpdateEquipmentInput, update_equipment
 from .categories.computing.queries import computing_activity_projection
 from .contracts import ActiveEquipmentBenchAssignment
-from .exceptions import EquipmentAlreadyAssigned, EquipmentAlreadyPlaced, EquipmentInUse, InvalidEquipmentStatus
+from .exceptions import (
+    EquipmentAlreadyAssigned,
+    EquipmentAlreadyPlaced,
+    EquipmentInUse,
+    EquipmentNotAvailable,
+    EquipmentNotOnLoan,
+    EquipmentOnLoan,
+    InvalidEquipmentStatus,
+    LoanManagedByBooking,
+)
 from .queries.equipment import (
     active_bench_assignment_mapping_rows,
     active_equipment_bench_assignment,
@@ -25,6 +42,7 @@ from .queries.equipment import (
     with_equipment_info,
 )
 from .queries.inactivity_notifications import inactive_equipment_candidates
+from .queries.loans import get_active_loan
 from .queries.placements import get_active_placement, has_active_placements
 from .queries.state_history import equipment_state_timelines
 from .queries.summaries import (
@@ -45,11 +63,22 @@ __all__ = (
     "DeleteEquipmentInput",
     "EquipmentAlreadyAssigned",
     "EquipmentAlreadyPlaced",
+    "EquipmentNotAvailable",
+    "EquipmentNotOnLoan",
+    "EquipmentOnLoan",
+    "ExtendLoanInput",
+    "HandOverEquipmentInput",
+    "LoanManagedByBooking",
+    "ReturnEquipmentInput",
+    "extend_loan",
+    "hand_over_equipment",
+    "return_equipment",
     "EquipmentInUse",
     "InvalidEquipmentStatus",
     "PlaceEquipmentInput",
     "RemovePlacementInput",
     "equipment_state_timelines",
+    "get_active_loan",
     "get_active_placement",
     "has_active_placements",
     "place_equipment",

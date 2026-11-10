@@ -209,6 +209,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -299,6 +304,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -453,6 +459,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -539,6 +550,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -3858,6 +3870,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -3988,6 +4005,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - mac_address
       - manufacturer
@@ -4148,6 +4166,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -4245,6 +4268,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - mac_address
       - manufacturer
@@ -5420,6 +5444,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -5510,6 +5539,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -5664,6 +5694,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -5750,6 +5785,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -6261,6 +6297,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -6367,6 +6408,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -6523,6 +6565,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -6625,6 +6672,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -7224,6 +7272,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -7310,6 +7363,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -7799,6 +7853,16 @@ components:
           $ref: '#/components/schemas/Equipment'
       required:
       - data
+    EquipmentExtendLoan:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        due_at:
+          type: string
+          format: date-time
+      required:
+      - due_at
     EquipmentFacet:
       type: object
       properties:
@@ -7866,6 +7930,25 @@ components:
           $ref: '#/components/schemas/FilterMetadata'
       required:
       - data
+    EquipmentHandOver:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        borrower_id:
+          type: integer
+          minimum: 1
+        due_at:
+          type: string
+          format: date-time
+          description: When the equipment must be back; in the future.
+        condition_out:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - borrower_id
+      - due_at
     EquipmentInterfaceCatalogCreate:
       type: object
       properties:
@@ -8190,6 +8273,91 @@ components:
           $ref: '#/components/schemas/EquipmentListSerializersEquipmentPagination'
       required:
       - pagination
+    EquipmentLoan:
+      type: object
+      description: 'Who holds a unit and until when. ``overdue`` is computed: open
+        and past ``due_at``.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        borrower:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+        booking_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        handed_over_at:
+          type: string
+          format: date-time
+          readOnly: true
+        due_at:
+          type: string
+          format: date-time
+          readOnly: true
+        overdue:
+          type: boolean
+          readOnly: true
+        condition_out:
+          type: string
+          readOnly: true
+        returned_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        condition_in:
+          type: string
+          readOnly: true
+        close_reason:
+          type: string
+          readOnly: true
+          nullable: true
+      required:
+      - booking_id
+      - borrower
+      - close_reason
+      - condition_in
+      - condition_out
+      - due_at
+      - handed_over_at
+      - id
+      - overdue
+      - returned_at
+    EquipmentLoanClosedSerializersEquipmentLoanDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
+    EquipmentLoanDetailSerializersEquipmentLoanDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
+    EquipmentLoanExtendedSerializersEquipmentLoanDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
+    EquipmentLoanOpenedSerializersEquipmentLoanDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
     EquipmentManufacturer:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -8733,6 +8901,36 @@ components:
           $ref: '#/components/schemas/EquipmentReferenceData'
       required:
       - data
+    EquipmentReturn:
+      type: object
+      description: Close the loan; optionally record the condition and where the equipment
+        now is.
+      properties:
+        condition_in:
+          type: string
+          default: ''
+          maxLength: 255
+        condition:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/EquipmentConditionEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        bench_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        station_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        room_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        location_note:
+          type: string
+          default: ''
+          maxLength: 255
     EquipmentStatusSummary:
       type: object
       properties:
@@ -9883,6 +10081,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -9982,6 +10185,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - material
@@ -10137,6 +10341,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -10232,6 +10441,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - material
@@ -10591,6 +10801,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -10687,6 +10902,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -10841,6 +11057,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -10933,6 +11154,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -11645,6 +11867,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -11735,6 +11962,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -11889,6 +12117,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -11975,6 +12208,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -14819,6 +15053,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -14918,6 +15157,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - material
@@ -15073,6 +15313,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -15168,6 +15413,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - material
@@ -15802,6 +16048,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -15900,6 +16151,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - mac_address
       - manufacturer
@@ -16056,6 +16308,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -16150,6 +16407,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - mac_address
       - manufacturer
@@ -16518,6 +16776,9 @@ components:
           $ref: '#/components/schemas/NotificationSerializerNotificationPagination'
       required:
       - pagination
+    NullEnum:
+      enum:
+      - null
     OpEnum:
       enum:
       - upsert
@@ -16685,6 +16946,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -16775,6 +17041,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -16929,6 +17196,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -17015,6 +17287,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -19045,6 +19318,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -19151,6 +19429,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -19306,6 +19585,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -19408,6 +19692,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -22981,6 +23266,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -23089,6 +23379,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -23243,6 +23534,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -23347,6 +23643,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata

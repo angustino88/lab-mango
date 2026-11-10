@@ -308,8 +308,16 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-condition
   /api/labs/equipment/{equipment_id}/actions/change-lifecycle:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-lifecycle
+  /api/labs/equipment/{equipment_id}/actions/extend-loan:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1extend-loan
+  /api/labs/equipment/{equipment_id}/actions/hand-over:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1hand-over
+  /api/labs/equipment/{equipment_id}/actions/return:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1return
   /api/labs/equipment/{equipment_id}/assignment:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1assignment
+  /api/labs/equipment/{equipment_id}/loan:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1loan
   /api/labs/equipment/{equipment_id}/placement:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1placement
   /api/labs/equipment/accessory:

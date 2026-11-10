@@ -16,6 +16,7 @@ Three separate facts describe a unit. They are stored and changed independently;
 | `lifecycle_state` | Does the lab still have it? | `planned`, `in_service`, `transferred_out`, `retired`, `lost` | `POST .../actions/change-lifecycle` only |
 | `condition` | Does it work? | `operational`, `in_maintenance`, `out_of_service` | `POST .../actions/change-condition` only (while `in_service`) |
 | placement | Where is it? | a bench, a station, a room, only a `location_note`, or none (unknown) | `PUT` / `DELETE .../placement` (and the bench `/assignment` routes) |
+| loan | Who holds it, until when? | an open loan (borrower, due time) or none | `POST .../actions/hand-over`, `.../actions/return`, `.../actions/extend-loan` |
 | `display_status` (computed) | One label for lists and counts | see below | never written |
 
 **`in_service` does not mean "on a bench".** It means the lab owns the unit and it is part of the active inventory, wherever it is. Being on a bench is a placement and shows as `display_status = in_use`.
@@ -29,6 +30,7 @@ Three separate facts describe a unit. They are stored and changed independently;
 | On bench B-12 but broken | `in_service` | bench B-12 | `broken` |
 | Ordered, not delivered | `planned` | none, or a room while waiting | `on_order` |
 | Given to a partner lab | `transferred_out` | none | `transferred` |
+| Handed to Ada until Friday | `in_service` | none (an open loan instead) | `borrowed` |
 
 **Removing a unit from a bench** (`DELETE .../placement` or `.../assignment`) closes only the bench placement. `lifecycle_state` stays `in_service` and `condition` is unchanged, so `display_status` goes from `in_use` to `available` (or `maintenance`, `broken`, `calibration_overdue` if one applies). The unit's location is unknown until it is placed again. Only `change-lifecycle` moves a unit to another lifecycle state (for example `retired` when scrapped, `lost` when it cannot be found).
 
@@ -57,11 +59,18 @@ Three separate facts describe a unit. They are stored and changed independently;
 | 1 | `lifecycle_state` is not `in_service` | `on_order` (planned), `transferred`, `retired`, `lost` |
 | 2 | `condition = out_of_service` | `broken` |
 | 3 | `condition = in_maintenance` | `maintenance` |
-| 4 | active bench placement | `in_use` |
-| 5 | calibration required and overdue | `calibration_overdue` |
-| 6 | otherwise | `available` |
+| 4 | open loan | `borrowed` (the `loan` object carries `overdue`) |
+| 5 | active bench placement | `in_use` |
+| 6 | calibration required and overdue | `calibration_overdue` |
+| 7 | otherwise | `available` |
 
-`borrowed` is added with loans (redesign step 3). The full design and its rationale are in `docs/proposals/equipment-management-redesign.md`.
+**Loans** (custody, not a booking):
+- Hand-over needs an available item: `in_service`, `operational`, not on a bench, not on loan, calibration not overdue (otherwise 409 `equipment_not_available` with `details.reasons`). Its room, station or noted place is closed: an item with a person has no placement.
+- While on loan: placing it is refused (409 `equipment_on_loan`); its condition may change ("broken while on loan" shows `broken` with a `loan`); `transferred_out` and `retired` are refused; `lost` closes the loan with reason `lost`; delete is refused.
+- Return closes the loan (`condition_in`) and can record the new condition and place in the same request. A repeated return is a no-op.
+- Overdue is computed (open and past `due_at`), never stored; list filters `on_loan` and `loan_overdue`. Reminders arrive with equipment bookings (redesign step 4).
+
+The full design and its rationale are in `docs/proposals/equipment-management-redesign.md`.
 
 ### 2.1 `core.labs.models.Equipment`
 - **Inheritance:** `ResourceModel` (`uid`, `sku`, `name`, `group`, `owner`, `remark`, `image`, `created`, `modified`, `deleted_at`).
@@ -104,7 +113,11 @@ One table records every placement. `EquipmentAssignment.objects` returns bench p
   - `assignment_end_after_start`: `CheckConstraint(unassigned_at IS NULL OR unassigned_at >= assigned_at)`.
   - Partial index on `(bench, position)` where `unassigned_at IS NULL`.
 
-### 2.4 `core.labs.models.EquipmentEvent`
+### 2.4 `core.labs.models.EquipmentLoan`
+- **Fields:** `equipment` (FK, PROTECT), `borrower` (FK user, PROTECT), `booking` (one-to-one `EquipmentBooking`, nullable), `handed_over_at`, `handed_over_by`, `due_at`, `returned_at` (null while open), `received_by`, `condition_out`, `condition_in` (CharField(255)), `close_reason` (`returned`, `lost`; null while open). No code (OD4).
+- **PostgreSQL Invariants:** `one_active_loan_per_equipment` (unique `equipment` where `returned_at IS NULL`), `equipment_loan_closed_has_reason`, `equipment_loan_close_reason_valid`, `equipment_loan_due_after_handover`, `equipment_loan_returned_after_handover`.
+
+### 2.5 `core.labs.models.EquipmentEvent`
 Append-only history of lifecycle and condition changes, written only by `change_lifecycle`, `change_condition`, and creation.
 - **Fields:** `equipment` (FK, PROTECT), `axis` (`lifecycle` or `condition`), `from_value` (empty for the initial state), `to_value`, `reason` (CharField(500)), `details` (JSON, for example `receiving_organisation`, `transfer_date`, `cancelled_booking_ids`), `actor` (FK user, nullable), `occurred_at`.
 - **PostgreSQL Invariants:** `equipment_event_changes` (`from_value <> to_value`), `equipment_event_value_valid` (`to_value` belongs to the axis's enumeration).
@@ -153,6 +166,10 @@ Append-only history of lifecycle and condition changes, written only by `change_
 | `DELETE /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | Path `{equipment_id}` | Unassign equipment from current bench. |
 | `GET /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | Path `{equipment_id}` | Active placement of any kind (bench, station, room, untracked place); 404 when the location is unknown. |
 | `PUT /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | `EquipmentPlacementWriteSerializer` | Set where the unit is; 409 `equipment_already_placed` when it is on a bench and the target differs. |
+| `GET /api/labs/equipment/{equipment_id}/loan` | `EquipmentLoanAPIView` | Path `{equipment_id}` | Open loan; 404 when nobody holds the item. |
+| `POST /api/labs/equipment/{equipment_id}/actions/hand-over` | `EquipmentHandOverAPIView` | `EquipmentHandOverSerializer` | Open a loan (`borrower_id`, `due_at`, `condition_out`). |
+| `POST /api/labs/equipment/{equipment_id}/actions/return` | `EquipmentReturnAPIView` | `EquipmentReturnSerializer` | Close the loan; optional `condition` and new place. |
+| `POST /api/labs/equipment/{equipment_id}/actions/extend-loan` | `EquipmentExtendLoanAPIView` | `EquipmentExtendLoanSerializer` | Move `due_at` of a loan without a booking. |
 | `DELETE /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | Path `{equipment_id}` | Remove the active placement; 204 also when there is none. |
 | `POST /api/labs/equipment/{id}/actions/change-condition` | `EquipmentChangeConditionAPIView` | `EquipmentChangeConditionSerializer` | Set operational / in maintenance / out of service (in service only). |
 | `POST /api/labs/equipment/{id}/actions/change-lifecycle` | `EquipmentChangeLifecycleAPIView` | `EquipmentChangeLifecycleSerializer` | Move along the lifecycle transition table. |

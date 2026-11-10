@@ -192,11 +192,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -1268,6 +1276,184 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Change Lifecycle Equipment by Equipment ID
+  /api/labs/equipment/{equipment_id}/actions/extend-loan:
+    post:
+      operationId: labs_equipment_actions_extend_loan_create_by_equipment_id
+      description: Move the due time of a loan that is not tied to a booking.
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentExtendLoan'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentExtendLoan'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentExtendLoan'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentLoanExtendedSerializersEquipmentLoanDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Extend Loan Equipment by Equipment ID
+  /api/labs/equipment/{equipment_id}/actions/hand-over:
+    post:
+      operationId: labs_equipment_actions_hand_over_create_by_equipment_id
+      description: Hand an available unit to a person until ``due_at``; it leaves
+        its resting place.
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentHandOver'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentHandOver'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentHandOver'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentLoanOpenedSerializersEquipmentLoanDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Hand Over Equipment by Equipment ID
+  /api/labs/equipment/{equipment_id}/actions/return:
+    post:
+      operationId: labs_equipment_actions_return_create_by_equipment_id
+      description: Take a unit back; optionally record its condition and where it
+        now is.
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentReturn'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentReturn'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentReturn'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentLoanClosedSerializersEquipmentLoanDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Return Equipment by Equipment ID
   /api/labs/equipment/{equipment_id}/assignment:
     get:
       operationId: labs_equipment_assignment_retrieve_by_equipment_id
@@ -1379,6 +1565,35 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Assignment by Equipment ID
+  /api/labs/equipment/{equipment_id}/loan:
+    get:
+      operationId: labs_equipment_loan_retrieve_by_equipment_id
+      description: The unit's open loan; 404 when nobody holds it.
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentLoanDetailSerializersEquipmentLoanDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Equipment Loan by Equipment ID
   /api/labs/equipment/{equipment_id}/placement:
     get:
       operationId: labs_equipment_placement_retrieve_by_equipment_id
@@ -1566,11 +1781,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -2068,11 +2291,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -2637,11 +2868,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -3170,11 +3409,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -3828,11 +4075,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -4330,11 +4585,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -4899,11 +5162,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -5415,11 +5686,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -6026,11 +6305,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -6196,6 +6483,10 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
@@ -6208,6 +6499,10 @@ paths:
           maximum: 9007199254740991
           minimum: 1
           format: int64
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -6705,6 +7000,10 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
@@ -6717,6 +7016,10 @@ paths:
           maximum: 9007199254740991
           minimum: 1
           format: int64
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -7281,11 +7584,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -7783,11 +8094,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -8352,11 +8671,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -8854,11 +9181,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -9423,6 +9758,10 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
@@ -9435,6 +9774,10 @@ paths:
           maximum: 9007199254740991
           minimum: 1
           format: int64
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -9932,6 +10275,10 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
@@ -9944,6 +10291,10 @@ paths:
           maximum: 9007199254740991
           minimum: 1
           format: int64
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -10508,11 +10859,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -11017,11 +11376,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -11746,11 +12113,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -12248,11 +12623,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -12824,11 +13207,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -13333,11 +13724,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -16243,11 +16642,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: ordering
         schema:
@@ -16752,11 +17159,19 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: loan_overdue
+        schema:
+          type: boolean
+      - in: query
         name: manufacturer
         schema:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: on_loan
+        schema:
+          type: boolean
       - in: query
         name: owner_id
         schema:
@@ -17588,6 +18003,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -17678,6 +18098,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -17832,6 +18253,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -17918,6 +18344,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -18573,6 +19000,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -18703,6 +19135,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - mac_address
       - manufacturer
@@ -18863,6 +19296,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -18960,6 +19398,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - mac_address
       - manufacturer
@@ -19303,6 +19742,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -19393,6 +19837,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -19547,6 +19992,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -19633,6 +20083,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -20115,6 +20566,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -20221,6 +20677,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -20377,6 +20834,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -20479,6 +20941,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -20985,6 +21448,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -21071,6 +21539,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -21503,6 +21972,16 @@ components:
           $ref: '#/components/schemas/Equipment'
       required:
       - data
+    EquipmentExtendLoan:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        due_at:
+          type: string
+          format: date-time
+      required:
+      - due_at
     EquipmentFacet:
       type: object
       properties:
@@ -21570,6 +22049,25 @@ components:
           $ref: '#/components/schemas/FilterMetadata'
       required:
       - data
+    EquipmentHandOver:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        borrower_id:
+          type: integer
+          minimum: 1
+        due_at:
+          type: string
+          format: date-time
+          description: When the equipment must be back; in the future.
+        condition_out:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - borrower_id
+      - due_at
     EquipmentInterfaceCatalogCreate:
       type: object
       properties:
@@ -21894,6 +22392,91 @@ components:
           $ref: '#/components/schemas/EquipmentListSerializersEquipmentPagination'
       required:
       - pagination
+    EquipmentLoan:
+      type: object
+      description: 'Who holds a unit and until when. ``overdue`` is computed: open
+        and past ``due_at``.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        borrower:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+        booking_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        handed_over_at:
+          type: string
+          format: date-time
+          readOnly: true
+        due_at:
+          type: string
+          format: date-time
+          readOnly: true
+        overdue:
+          type: boolean
+          readOnly: true
+        condition_out:
+          type: string
+          readOnly: true
+        returned_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        condition_in:
+          type: string
+          readOnly: true
+        close_reason:
+          type: string
+          readOnly: true
+          nullable: true
+      required:
+      - booking_id
+      - borrower
+      - close_reason
+      - condition_in
+      - condition_out
+      - due_at
+      - handed_over_at
+      - id
+      - overdue
+      - returned_at
+    EquipmentLoanClosedSerializersEquipmentLoanDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
+    EquipmentLoanDetailSerializersEquipmentLoanDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
+    EquipmentLoanExtendedSerializersEquipmentLoanDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
+    EquipmentLoanOpenedSerializersEquipmentLoanDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
     EquipmentManufacturer:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -22437,6 +23020,36 @@ components:
           $ref: '#/components/schemas/EquipmentReferenceData'
       required:
       - data
+    EquipmentReturn:
+      type: object
+      description: Close the loan; optionally record the condition and where the equipment
+        now is.
+      properties:
+        condition_in:
+          type: string
+          default: ''
+          maxLength: 255
+        condition:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/EquipmentConditionEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        bench_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        station_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        room_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        location_note:
+          type: string
+          default: ''
+          maxLength: 255
     EquipmentStatusSummaryDataSerializersEquipmentStatusSummaryDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -22816,6 +23429,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -22915,6 +23533,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - material
@@ -23070,6 +23689,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -23165,6 +23789,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - material
@@ -23512,6 +24137,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -23608,6 +24238,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -23762,6 +24393,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -23854,6 +24490,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -24182,6 +24819,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -24272,6 +24914,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -24426,6 +25069,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -24512,6 +25160,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -24699,6 +25348,26 @@ components:
       required:
       - id
       - name
+    LabsResourceOwner:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        display_name:
+          type: string
+          maxLength: 255
+      required:
+      - id
+      - username
     LabsUIDNamedReference:
       type: object
       description: Compact `{id, uid, name}` object representation when target defines
@@ -25586,6 +26255,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -25685,6 +26359,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - material
@@ -25840,6 +26515,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -25935,6 +26615,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - material
@@ -26288,6 +26969,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -26386,6 +27072,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - mac_address
       - manufacturer
@@ -26542,6 +27229,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -26636,6 +27328,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - mac_address
       - manufacturer
@@ -26916,6 +27609,9 @@ components:
           readOnly: true
       required:
       - data
+    NullEnum:
+      enum:
+      - null
     OtherEquipmentCreate:
       type: object
       description: Validate related references before model save, including partial
@@ -27075,6 +27771,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -27165,6 +27866,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -27319,6 +28021,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -27405,6 +28112,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -28670,6 +29378,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -28776,6 +29489,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -28931,6 +29645,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -29033,6 +29752,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -30037,6 +30757,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -30145,6 +30870,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata
@@ -30299,6 +31025,11 @@ components:
           - $ref: '#/components/schemas/EquipmentPlacement'
           nullable: true
           readOnly: true
+        loan:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLoan'
+          nullable: true
+          readOnly: true
         firmware_version:
           type: string
           readOnly: true
@@ -30403,6 +31134,7 @@ components:
       - kind
       - last_calibrated_at
       - lifecycle_state
+      - loan
       - log_label
       - manufacturer
       - metadata

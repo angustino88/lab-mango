@@ -24,6 +24,8 @@ def equipment_filter_spec(
             Filter("product_model_id", PositiveIDField(), "product_model_id", "reference", multiple=True),
             Filter("department_id", PositiveIDField(), "department_id", "reference", multiple=True),
             Filter("assigned", StrictBooleanField(required=False), "has_active_assignment", "boolean"),
+            Filter("on_loan", StrictBooleanField(required=False), "on_loan", "boolean"),
+            Filter("loan_overdue", StrictBooleanField(required=False), "loan_overdue", "boolean"),
             Filter(
                 "lifecycle_state",
                 serializers.ChoiceField(choices=EquipmentLifecycleState.choices),

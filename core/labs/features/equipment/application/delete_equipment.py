@@ -4,7 +4,14 @@ from dataclasses import dataclass
 
 from django.db import transaction
 
-from core.labs.models import Booking, Equipment, EquipmentAssignment, EquipmentBooking, LicenseAssignment
+from core.labs.models import (
+    Booking,
+    Equipment,
+    EquipmentAssignment,
+    EquipmentBooking,
+    EquipmentLoan,
+    LicenseAssignment,
+)
 
 from ..exceptions import EquipmentInUse
 from ._placement import close_placement, lock_active_placement
@@ -44,6 +51,8 @@ def _ensure_no_live_dependents(equipment_id: int) -> None:
     blockers = []
     if EquipmentAssignment.objects.filter(equipment_id=equipment_id, unassigned_at__isnull=True).exists():
         blockers.append("bench_assignment")
+    if EquipmentLoan.objects.filter(equipment_id=equipment_id, returned_at__isnull=True).exists():
+        blockers.append("loan")
     if LicenseAssignment.objects.filter(equipment_id=equipment_id, unassigned_at__isnull=True).exists():
         blockers.append("license_assignment")
     if EquipmentBooking.objects.filter(
@@ -54,7 +63,7 @@ def _ensure_no_live_dependents(equipment_id: int) -> None:
         blockers.append("booking")
     if blockers:
         raise EquipmentInUse(
-            "Unassign the bench, release license seats, and cancel active bookings before deleting.",
+            "Unassign the bench, take back a loan, release license seats, and cancel active bookings before deleting.",
             details={"blockers": blockers},
         )
 

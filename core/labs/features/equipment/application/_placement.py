@@ -10,8 +10,8 @@ A unit's room is the room of its active room placement; ``Equipment.storage_room
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced, InvalidEquipmentStatus
-from core.labs.models import Equipment, Room, Station
+from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced, EquipmentOnLoan, InvalidEquipmentStatus
+from core.labs.models import Equipment, EquipmentLoan, LoanCloseReason, Room, Station
 from core.labs.models.resource.equipment.assignment import LOCATION_NOTE_MAX_LENGTH, EquipmentAssignment
 from core.labs.models.resource.equipment.equipment import GONE_LIFECYCLE_STATES
 
@@ -23,6 +23,29 @@ def lock_active_placement(equipment: Equipment) -> EquipmentAssignment | None:
         .filter(equipment=equipment, unassigned_at__isnull=True)
         .first()
     )
+
+
+def lock_active_loan(equipment: Equipment) -> EquipmentLoan | None:
+    """The unit's open loan, row-locked (after the ``Equipment`` lock)."""
+    return EquipmentLoan.objects.select_for_update().filter(equipment=equipment, returned_at__isnull=True).first()
+
+
+def close_loan_as_lost(equipment: Equipment, *, actor) -> EquipmentLoan | None:
+    """Called by ``change_lifecycle`` under the ``Equipment`` lock when a unit is marked lost."""
+    loan = lock_active_loan(equipment)
+    if loan is None:
+        return None
+    loan.returned_at = timezone.now()
+    loan.received_by = None
+    loan.close_reason = LoanCloseReason.LOST
+    loan.save(update_fields=("returned_at", "received_by", "close_reason", "modified"))
+    return loan
+
+
+def ensure_not_on_loan(equipment: Equipment) -> None:
+    """A unit with a person has no placement: refuse placing it until it is returned."""
+    if EquipmentLoan.objects.filter(equipment=equipment, returned_at__isnull=True).exists():
+        raise EquipmentOnLoan("Return the equipment before placing it.")
 
 
 def clean_location_note(value: str | None) -> str:
@@ -77,6 +100,7 @@ def rest_equipment(
         raise ValidationError({"location_note": "Describe where the equipment is when no target is chosen."})
     if equipment.lifecycle_state in GONE_LIFECYCLE_STATES:
         raise InvalidEquipmentStatus("Equipment that is transferred out, retired or lost cannot be placed.")
+    ensure_not_on_loan(equipment)
     current = lock_active_placement(equipment)
     if current is not None:
         if current.bench_id is not None:
