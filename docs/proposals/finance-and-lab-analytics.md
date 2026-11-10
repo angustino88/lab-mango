@@ -1,6 +1,6 @@
 # Design: Finance, Procurement, Expense and Lab Analytics — Review and Implementation Plan
 
-- **Tier:** T2 · **Status:** Draft, not approved · **Date:** 2026-11-10
+- **Tier:** T2 · **Status:** Draft; session-log decisions and finance direction recorded, not approved for implementation · **Date:** 2026-11-10
 - **Domain:** Labs (`procurement`, `expense`, `analytics`, session log, agent session ingestion)
 - **Scope of this change:** documentation only. No code, schema, API or permission was changed.
 - **Verification:** findings come from reading the code. No test or endpoint was run. Items marked
@@ -34,8 +34,13 @@ session links → operating calendar → analytics rebuild, with the finance fix
 | O5 | `booking_code` stays the reference between a session and a booking. One booking can have many sessions. |
 | O6 | Holidays are entered manually. No holiday library is added. |
 | O7 | The operating calendar is staged: timezone and weekly hours first, closed dates second. |
-
-No decision has been made yet on the finance items (§4, §8).
+| O8 | The backend provides the URL the agent pushes session logs to. There is no existing receiver to migrate; A1 is a new endpoint. |
+| O9 | The agent sends exactly: login time, logout time, active time, remote user, remote IP, remote host, booking code. It does not send a display name or host name. |
+| O10 | One computer allows one remote user with one booking code at a time, so sessions on one computer do not overlap. Used time is the sum of session active times. |
+| O11 | The session log list and per-user usage reports are visible to lab coordinators and lab admins only. |
+| O12 | Before accepting a booking code, the agent checks that the booking's start and end time cover the login and that the booking belongs to this computer. A code the agent sends is therefore valid at login. |
+| O13 | Each session is pushed once, after logout, and is final. There is no update or correction endpoint. |
+| O14 | The finance direction in §8 is accepted (2026-11-10). Each work package still needs its own design note and approval before merge (T2). |
 
 ## 3. Current state: lab analytics
 
@@ -49,7 +54,8 @@ No decision has been made yet on the finance items (§4, §8).
 - Nothing outside tests and the Django admin creates `LabSessionLog` rows.
 - `docs/agent-platform/backend-api.md:47` records raw-session ingestion as deferred until mapping,
   minimisation, retention and corrections are approved.
-- *Not verified:* where the agent sends session logs today, if anywhere.
+- The agent pushes to a URL the backend provides (O8). Because no receiver exists, no session log
+  reaches this backend today.
 
 Reports affected: bench efficiency, user usage, user booking efficiency, usage by timeslot,
 booked-versus-used, and the leaderboard.
@@ -158,11 +164,29 @@ renewals.
 ### 5.1 Ingestion (agent → backend)
 
 - One request per completed session, sent after logout (O1). No request is sent at login.
-- Payload: login time, logout time, active duration, booking code (empty for temp login), remote user
-  fields as approved, and the agent's event id.
-- The computer is taken from the authenticated agent identity, not from a host name in the payload.
-- Retry-safe: the existing rule `unique_session_report_per_agent` (computer, agent, event id) is the
-  race guard. A repeated push returns the original result.
+- The backend publishes the push URL to the agent (O8). *Proposed:* return it from `agent/info` so the
+  agent does not hard-code it.
+- Payload (O9), mapped to existing `LabSessionLog` fields:
+
+  | Sent by agent | Field |
+  | --- | --- |
+  | Login time | `login_time` |
+  | Logout time | `logout_time` |
+  | Active time | `active_duration_seconds` |
+  | Remote user | `remote_user` |
+  | Remote IP | `remote_ip` |
+  | Remote host | `remote_host` |
+  | Booking code | `booking_code` (empty for temp login) |
+  | Event id (envelope) | `event_id`, with `agent_id`, `agent_version`, `reported_at` |
+
+- `remote_user_display_name` and `host_name` are not sent and stay empty. Reports that show a display
+  name fall back to `remote_user`.
+- Login and logout are both required, and logout must be after login (existing check
+  `labsess_valid_period`). Active time must not exceed logout minus login.
+- The computer is taken from the authenticated agent identity, not from the payload.
+- Create-only and final (O13). The existing rule `unique_session_report_per_agent` (computer, agent,
+  event id) is the race guard. A repeated push with the same event id returns the original result; the
+  same event id with a different body is rejected.
 - Sessions lost through network failure are not recovered (O2). Reports carry a note that used time is a
   lower bound.
 - A session still in progress is not visible. "In use now" continues to come from heartbeat activity,
@@ -182,16 +206,18 @@ Session kind, stored on the row:
 | --- | --- |
 | `booked` | Booking code present and matches a booking |
 | `temp_login` | No booking code (O3, O4) |
-| `unmatched` | Booking code present but matches no booking |
+| `unmatched` | Booking code present but matches no booking for this computer |
 
 The backend holds no temp-login time rule (O3).
 
+The agent already validates the booking before login (O12). The backend still resolves the code itself
+rather than trusting the client, but `unmatched` is not an expected case: it means the booking was
+cancelled or moved after login, or the agent check failed. It is reported as a data-quality alert.
+
 ### 5.3 Used time for a booking
 
-- Used time is the sum of the booking's sessions, using the agent's active duration.
-- **Open decision:** when sessions of one booking overlap (several computers on a bench, or a reconnect),
-  report machine-hours (add) or bench-occupied time (merge overlaps). Booked-versus-used should use the
-  merged figure.
+- Used time is the sum of the booking's sessions, using the agent's active time (O10). No overlap
+  merging is needed for sessions on one computer.
 
 ### 5.4 Session log list (for a frontend table)
 
@@ -201,7 +227,8 @@ No list endpoint exists today. Proposed:
 - Views: flat (one row per session) and grouped by booking (session count, first login, last logout,
   total used time). Temp logins group by user and computer.
 - Filters: date range (required), computer, bench, user, booking code, session kind.
-- Access: restricted role, because the table shows who used which machine and when.
+- Access: lab coordinators and lab admins only (O11), for reads as well as writes. The existing
+  `IsLabCoordinator` allows any authenticated user to read, so this endpoint needs `read_roles` set.
 
 ## 6. Proposed design: operating calendar
 
@@ -270,15 +297,15 @@ Track A (lab analytics) is strictly ordered. Track B (finance) can run in parall
 
 | WP | Deliverable | Depends on | Done when |
 | --- | --- | --- | --- |
-| A0 | Decisions: fields the agent may send, retention period, correction path, overlap rule (§5.3), roles for the session list and per-user reports | none | Recorded in this document |
-| A1 | Agent session-log ingestion endpoint (§5.1) | A0 | A completed session posted twice creates one row; computer comes from agent identity |
+| A0 | Decisions: fields the agent may send, retention period, correction path, overlap rule (§5.3), roles for the session list and per-user reports | none | Done (O8–O13), except retention (§11) |
+| A1 | New agent session-log ingestion endpoint and its URL published to the agent (§5.1) | A0 | A completed session posted twice creates one row; computer comes from agent identity; only the O9 fields are accepted |
 | A2 | Session links and session kind (§5.2), resolved at ingestion; backfill for existing rows | A1 | Each session has a kind; bench resolves from assignment at login time; unmatched codes are countable |
 | A3 | Operating calendar stage 1: timezone and weekly hours, inherited (§6) | none | Available hours for a room and day come from the calendar, in the lab's timezone |
 | A4 | Fact tables and backfillable job (§7) | A2, A3 | Re-running a day is idempotent; a missed day can be backfilled |
 | A5 | Rebuilt reports and new endpoints; legacy endpoints deprecated with a sunset date | A4 | Three-way booked/used split and calendar-based utilisation match hand-checked samples |
 | A6 | Session log list endpoint (§5.4) | A2 | Stable ordering across pages; date range required; role enforced |
 | A7 | Operating calendar stage 2: manual closed dates (§6) | A3 | A closed date removes that day's available hours; unconfigured countries are flagged |
-| A8 | Analytics write and read access; storage alert fix | none | Plain users cannot post measurements; an overage alerts once |
+| A8 | Analytics write and read access; per-user reports limited to lab coordinators and admins (O11); storage alert fix | none | Plain users cannot post measurements or read per-user reports; an overage alerts once |
 | A9 | Remove unused observation models and retired endpoints | A5 | No reader or writer remains; OpenAPI regenerated |
 
 ### Track B: finance
@@ -303,17 +330,28 @@ passed, failed or not run, with the exact command.
 
 ## 11. Open questions for the owner
 
-1. Where does the agent send session logs today (URL or system)? This decides whether A1 is a new
-   endpoint or a migration.
-2. Which personal fields may the agent send (remote user, display name, IP address), and for how long are
-   session logs kept?
-3. Overlapping sessions for one booking: machine-hours or bench-occupied time (§5.3)?
-4. Who may see the session log list and the per-user usage reports?
-5. Does the agent always send the booking code when a booking was used? (O4 accepts the miscount, but the
-   size of it should be known.)
-6. Finance: approve, change or defer each row of §8, starting with the read role (B1) and the expense
-   split (B2).
-7. Is a correction path needed for a wrong session log, or is the record final once pushed?
+### Resolved (2026-11-10)
+
+| # | Question | Answer |
+| --- | --- | --- |
+| 1 | Where does the agent send session logs? | To a URL the backend provides (O8) |
+| 2 | Which fields may the agent send? | Login, logout, active time, remote user, remote IP, remote host, booking code (O9) |
+| 3 | How are overlapping sessions counted? | They do not overlap on one computer; sum active time (O10) |
+| 4 | Who sees the session list and per-user reports? | Lab coordinators and lab admins (O11) |
+| 5 | Is the booking code always correct? | The agent validates time window and computer before login (O12) |
+| 6 | Finance design | Direction accepted; per-package approval still required (O14) |
+| 7 | Correction path for session logs | None; each record is pushed once and is final (O13) |
+
+### Still open
+
+1. **Retention:** how long are session logs kept? They hold remote user and remote IP, which are personal
+   data. The answer belongs in the agent-platform ingestion approval
+   (`docs/agent-platform/backend-api.md:47`).
+2. **Benches with more than one computer:** O10 covers one computer. If one bench booking can be used on
+   two computers at the same time, used time for that booking is machine-hours and can exceed booked
+   time. Confirm whether this can happen.
+3. **Wrong record:** with no correction endpoint (O13), is removing a wrong session log through the Django
+   admin acceptable, and must that removal be audited?
 
 ## 12. Facts, assumptions and residual risks
 
@@ -321,7 +359,11 @@ passed, failed or not run, with the exact command.
 
 **Assumptions**
 
-- The agent can include a stable event id and the booking code in the logout push.
+- The agent can include a stable event id in the logout push, so a retry is recognised as the same
+  session.
+- The agent's booking check (O12) uses the same booking data the backend holds, through
+  `GET /agent/bookings/code/{booking_code}` or an equivalent route. *Not verified:* that route is
+  designed in `docs/agent-platform/backend-api.md` but not mounted.
 - A computer's bench can be resolved from its equipment assignment history at login time.
 - Manual holiday entry will be kept current each year by an admin.
 
@@ -329,5 +371,6 @@ passed, failed or not run, with the exact command.
 
 - Used time is understated by sessions lost to network failure or crash (accepted, O2).
 - Booked sessions without a code are counted as temp logins (accepted, O4).
+- A wrong session log cannot be corrected through the API (O13).
 - Until A7, utilisation is understated in holiday periods.
 - Until A1 ships, all session-based reports have no production data source.
