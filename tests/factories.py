@@ -125,6 +125,13 @@ class BenchBookingFactory(factory.django.DjangoModelFactory):
     booking_code = factory.Sequence(lambda n: f"BOOKING-{n:014d}")
     status = BookingStatus.RESERVED
     approval_status = BookingApprovalStatus.APPROVED
+    # The database requires reasons for cancelled and rejected bookings.
+    cancellation_reason = factory.LazyAttribute(
+        lambda o: "Cancelled in test setup" if o.status == BookingStatus.CANCELLED else ""
+    )
+    rejection_reason = factory.LazyAttribute(
+        lambda o: "Rejected in test setup" if o.approval_status == BookingApprovalStatus.REJECTED else ""
+    )
 
 
 class LabSessionLogFactory(factory.django.DjangoModelFactory):
