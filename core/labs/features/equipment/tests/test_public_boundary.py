@@ -42,7 +42,12 @@ def test_contracts_are_a_neutral_type_only_boundary():
 
 def test_business_errors_are_separate_from_neutral_contracts():
     exceptions = FEATURE_ROOT / "exceptions.py"
-    assert _exports(exceptions) == ["EquipmentAlreadyAssigned", "InvalidEquipmentStatus", "SkuAlreadyExists"]
+    assert _exports(exceptions) == [
+        "EquipmentAlreadyAssigned",
+        "EquipmentInUse",
+        "InvalidEquipmentStatus",
+        "SkuAlreadyExists",
+    ]
 
 
 def test_public_module_exports_supported_queries_and_commands():
@@ -56,6 +61,7 @@ def test_public_module_exports_supported_queries_and_commands():
         "UpdateEquipmentInput",
         "UnassignEquipmentInput",
         "EquipmentAlreadyAssigned",
+        "EquipmentInUse",
         "InvalidEquipmentStatus",
         "assign_equipment",
         "change_equipment_status",

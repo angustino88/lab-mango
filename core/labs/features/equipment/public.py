@@ -8,7 +8,7 @@ from .application.unassign_equipment import UnassignEquipmentInput, unassign_equ
 from .application.update_equipment import UpdateEquipmentInput, update_equipment
 from .categories.computing.queries import computing_activity_projection
 from .contracts import ActiveEquipmentBenchAssignment
-from .exceptions import EquipmentAlreadyAssigned, InvalidEquipmentStatus
+from .exceptions import EquipmentAlreadyAssigned, EquipmentInUse, InvalidEquipmentStatus
 from .queries.equipment import (
     active_bench_assignment_mapping_rows,
     active_equipment_bench_assignment,
@@ -35,6 +35,7 @@ __all__ = (
     "CreateEquipmentInput",
     "DeleteEquipmentInput",
     "EquipmentAlreadyAssigned",
+    "EquipmentInUse",
     "InvalidEquipmentStatus",
     "inactive_equipment_candidates",
     "UnassignEquipmentInput",
