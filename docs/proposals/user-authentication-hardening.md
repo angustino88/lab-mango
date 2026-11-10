@@ -119,6 +119,8 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 #### M3. Refresh cookie is sent on every API request
 
 - **Evidence:** cookie path is `/api` (`cookies.py:13`), `SameSite=Lax`.
+- **Deployment (owner, 2026-11-10):** the browser talks to one host; Nginx forwards `/api` to the
+  backend. Frontend and API are therefore same-origin, so `Strict` does not break the app's own calls.
 - **Proposal:** [ ] move auth routes under `/api/auth/`, scope the cookie to that path, use
   `SameSite=Strict` and a `__Secure-` name prefix. Contract change; regenerate OpenAPI.
 
@@ -222,7 +224,10 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 - [ ] **L8. Browser hardening.** No Content-Security-Policy is configured; the access token lives in page
   memory, so script injection exposes it.
 - [ ] **L9. CORS with credentials.** `CORS_ALLOW_CREDENTIALS` is on and origins come from environment
-  variables, including regexes (`production.py:55`). Add a check that rejects wildcard-like patterns.
+  variables, including regexes (`production.py:55`). Because frontend and API share one origin behind
+  Nginx, production needs no CORS: leave the allowed origins empty, turn credentials off, and add a
+  startup check that fails if any origin or regex is configured. Set `CSRF_TRUSTED_ORIGINS` to that one
+  origin only.
 
 ## Longer-term option
 
@@ -254,10 +259,9 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 | Can URS provide Entra object IDs | No, usernames only | H1: keep name binding, add the safeguards listed |
 | Who uses API keys | API testing only | M11: disable the key path in production |
 | Location of this document | `docs/proposals/` confirmed | — |
+| Frontend and API addresses | Browser sees one host; Nginx routes `/api` to the backend, backend URL not exposed | M3: `SameSite=Strict` is possible; L9: CORS can be off in production |
 
 ## Open questions for the owner
 
-1. **Frontend and API addresses (M3).** Which URLs does the browser open for the web app and for the
-   API? Example: `https://labmango.example.com` and `https://labmango.example.com/api` are the same site;
-   `https://labmango.example.com` and `https://api.other-domain.com` are not. If they are the same site,
-   the refresh cookie can use the stricter `SameSite=Strict`; otherwise it must stay `Lax` (or `None`).
+None. *Not verified:* the Nginx configuration (not in this repository) — confirm it once during
+implementation of H4, M3 and L9.
