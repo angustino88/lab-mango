@@ -16,7 +16,6 @@ from core.labs.features.equipment.application import (
     place_equipment,
     remove_placement,
 )
-from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced
 from core.labs.features.equipment.public import get_active_placement, inactive_equipment_candidates, list_equipment
 from core.labs.features.locations.public import LocationConflict, RoomConflict, delete_room, delete_station
 from core.labs.models import (
@@ -152,11 +151,17 @@ def test_room_to_bench_moves_and_shows_in_use(unit, room, bench):
 
 
 @pytest.mark.django_db
-def test_bench_to_room_requires_leaving_the_bench(unit, room, bench):
+def test_bench_to_room_and_bench_to_bench_are_one_call_moves(unit, room, bench):
     on_bench = _place(unit, bench_id=bench.pk)
-    with pytest.raises(EquipmentAlreadyPlaced):
-        _place(unit, room_id=room.pk)
-    assert list(_active(unit)) == [on_bench]
+    in_room = _place(unit, room_id=room.pk)
+    on_bench.refresh_from_db()
+    assert on_bench.unassigned_at is not None and in_room.room_id == room.pk
+    first = _place(unit, bench_id=bench.pk)
+    other = Bench.objects.create(sku="PL-BENCH-2", name="Bench 2")
+    second = _place(unit, bench_id=other.pk)
+    first.refresh_from_db()
+    assert first.unassigned_at is not None and second.bench_id == other.pk
+    assert list(_active(unit)) == [second]
 
 
 @pytest.mark.django_db

@@ -10,7 +10,7 @@ A unit's room is the room of its active room placement; ``Equipment.storage_room
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced, EquipmentOnLoan, InvalidEquipmentStatus
+from core.labs.features.equipment.exceptions import EquipmentOnLoan, InvalidEquipmentStatus
 from core.labs.models import Equipment, EquipmentLoan, LoanCloseReason, Room, Station
 from core.labs.models.resource.equipment.assignment import LOCATION_NOTE_MAX_LENGTH, EquipmentAssignment
 from core.labs.models.resource.equipment.equipment import GONE_LIFECYCLE_STATES
@@ -92,7 +92,7 @@ def rest_equipment(
 ) -> EquipmentAssignment:
     """Place a unit somewhere other than a bench. Idempotent for the same target and note.
 
-    A unit resting elsewhere moves; a unit on a bench must be removed from it first.
+    Its current placement, including a bench, is closed in the same transaction (a one-call move).
     """
     if station is not None and room is not None:
         raise ValidationError({"non_field_errors": "Choose one target: bench, station, room, or a location note."})
@@ -103,10 +103,10 @@ def rest_equipment(
     ensure_not_on_loan(equipment)
     current = lock_active_placement(equipment)
     if current is not None:
-        if current.bench_id is not None:
-            raise EquipmentAlreadyPlaced()
-        same_target = current.station_id == getattr(station, "pk", None) and current.room_id == getattr(
-            room, "pk", None
+        same_target = (
+            current.bench_id is None
+            and current.station_id == getattr(station, "pk", None)
+            and current.room_id == getattr(room, "pk", None)
         )
         if same_target:
             if current.location_note != location_note:

@@ -50,7 +50,7 @@ Three separate facts describe a unit. They are stored and changed independently;
 - Entering `transferred_out`, `retired`, or `lost` is refused while the unit is on a bench (409 `equipment_already_placed`); any other placement is closed and reserved equipment bookings are cancelled with the given reason. `transferred_out` requires `receiving_organisation`.
 - Marking a unit `lost` is always a manual action; no timer sets it.
 
-**Placement rules:** only an `in_service` unit can be placed on a bench; `transferred_out`, `retired`, and `lost` units cannot be placed anywhere. A unit resting in a room, at a station, or at a noted place moves directly to a new place; a unit on a bench must be removed from the bench first (409 `equipment_already_placed`). Changing `condition` never moves a unit.
+**Placement rules:** only an `in_service` unit can be placed on a bench; `transferred_out`, `retired`, and `lost` units cannot be placed anywhere. `PUT .../placement` moves an item in one call from wherever it is (a bench included) to the new place or bench. The legacy `/assignment` route still refuses a different bench (409 `equipment_already_assigned`). Removing an item from a bench without a destination is allowed; its location is then unknown (owner decision, 2026-11-10). Changing `condition` never moves a unit.
 
 **`display_status`** is computed in SQL; the first matching row wins:
 
@@ -178,7 +178,7 @@ Append-only history of lifecycle and condition changes, written only by `change_
 | `POST /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | `EquipmentAssignmentSerializer` | Assign equipment to bench. |
 | `DELETE /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | Path `{equipment_id}` | Unassign equipment from current bench. |
 | `GET /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | Path `{equipment_id}` | Active placement of any kind (bench, station, room, untracked place); 404 when the location is unknown. |
-| `PUT /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | `EquipmentPlacementWriteSerializer` | Set where the unit is; 409 `equipment_already_placed` when it is on a bench and the target differs. |
+| `PUT /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | `EquipmentPlacementWriteSerializer` | Set where the item is; moves it in one call from its current place or bench. |
 | `GET /api/labs/equipment/{equipment_id}/loan` | `EquipmentLoanAPIView` | Path `{equipment_id}` | Open loan; 404 when nobody holds the item. |
 | `POST /api/labs/equipment/{equipment_id}/actions/hand-over` | `EquipmentHandOverAPIView` | `EquipmentHandOverSerializer` | Open a one-line slip (`borrower_id` or `borrower_name`, `borrower_contact`, `purpose`, `due_at`, `condition_out`). |
 | `GET /api/labs/equipment-loans` | `EquipmentLoanListCreateAPIView` | Query `open`, `overdue`, `borrower_id`, `borrower_name`, `equipment_id`, `batch_id` | Loan lines, newest first. |

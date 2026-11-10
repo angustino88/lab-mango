@@ -51,7 +51,7 @@ def test_put_get_delete_room_placement(coordinator_client, unit):
 
 
 @pytest.mark.django_db
-def test_put_bench_then_room_conflicts(coordinator_client, unit):
+def test_put_moves_off_a_bench_in_one_call(coordinator_client, unit):
     bench = Bench.objects.create(sku="PL-API-B", name="Bench")
     room = Room.objects.create(sku="PL-API-R2", name="Store 2")
     url = f"{ROOT}{unit.pk}/placement"
@@ -59,9 +59,10 @@ def test_put_bench_then_room_conflicts(coordinator_client, unit):
     assert on_bench.status_code == 200, on_bench.data
     assert on_bench.data["data"]["target_type"] == "bench"
     assert coordinator_client.get(f"{ROOT}{unit.pk}/assignment").status_code == 200
-    conflict = coordinator_client.put(url, {"room_id": room.pk}, format="json")
-    assert conflict.status_code == 409
-    assert conflict.data["error"]["code"] == "equipment_already_placed"
+    moved = coordinator_client.put(url, {"room_id": room.pk}, format="json")
+    assert moved.status_code == 200, moved.data
+    assert moved.data["data"]["target_type"] == "room"
+    assert coordinator_client.get(f"{ROOT}{unit.pk}/assignment").status_code == 404
 
 
 @pytest.mark.django_db

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from core.labs.models import Equipment
+from core.labs.models import Bench, Equipment
 
 from ._placement import (
     clean_location_note,
@@ -40,10 +40,9 @@ def place_equipment(command: PlaceEquipmentInput, *, actor):
     """Set where a unit is.
 
     Race guard: the ``Equipment`` row lock, then the target row lock, backed by
-    ``one_active_bench_per_equipment`` (one active placement per unit). A unit resting at a
-    station, in a room, or at an untracked place moves; a unit on a bench raises
-    ``EquipmentAlreadyPlaced`` unless the bench is the target. Idempotent: the same target
-    returns the active placement.
+    ``one_active_bench_per_equipment`` (one active placement per unit). The current placement,
+    a bench included, is closed in the same transaction, so any move is one call. Idempotent: the
+    same target returns the active placement.
     """
     targets = [name for name in ("bench_id", "station_id", "room_id") if getattr(command, name) is not None]
     if len(targets) > 1:
@@ -52,6 +51,11 @@ def place_equipment(command: PlaceEquipmentInput, *, actor):
     if command.bench_id is None and (command.role != "default" or command.position != 0):
         raise ValidationError({"role": "Role and position apply to bench placements only."})
     if command.bench_id is not None:
+        equipment = Equipment.objects.select_for_update().get(pk=command.equipment_id, deleted_at__isnull=True)
+        Bench.objects.select_for_update().get(pk=command.bench_id, deleted_at__isnull=True)
+        current = lock_active_placement(equipment)
+        if current is not None and current.bench_id is not None and current.bench_id != command.bench_id:
+            close_placement(current, actor=actor)  # bench to bench in one call
         placement = assign_equipment(
             AssignEquipmentInput(
                 equipment_id=command.equipment_id,
