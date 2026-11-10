@@ -98,6 +98,13 @@ class IsLabCoordinator(LabsRolePermission):
     write_roles = (LabsRole.COORDINATOR,)
 
 
+class IsLabCoordinatorOnly(LabsRolePermission):
+    """Reads and writes: lab coordinators and administrators only (for example equipment)."""
+
+    read_roles = (LabsRole.COORDINATOR,)
+    write_roles = (LabsRole.COORDINATOR,)
+
+
 class IsLabMember(LabsRolePermission):
     """Reads: any authenticated user. Writes: any Labs role. Ownership is enforced per object."""
 
@@ -108,6 +115,7 @@ __all__ = [
     "LABS_ROLE_HIERARCHY",
     "IsLabAdmin",
     "IsLabCoordinator",
+    "IsLabCoordinatorOnly",
     "IsLabMember",
     "LabsRole",
     "LabsRolePermission",

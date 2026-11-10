@@ -282,6 +282,14 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-kinds~1{kind_id}
   /api/labs/equipment-kinds/options:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-kinds~1options
+  /api/labs/equipment-loan-batches/{batch_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-loan-batches~1{batch_id}
+  /api/labs/equipment-loans:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-loans
+  /api/labs/equipment-loans/actions/extend:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-loans~1actions~1extend
+  /api/labs/equipment-loans/actions/return:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-loans~1actions~1return
   /api/labs/equipment-manufacturers:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-manufacturers
   /api/labs/equipment-manufacturers/{manufacturer_id}:

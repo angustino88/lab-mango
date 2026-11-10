@@ -26,9 +26,12 @@ from core.labs.features.equipment.application import (
     ChangeLifecycleInput,
     CreateEquipmentInput,
     ExtendLoanInput,
+    ExtendLoansInput,
     HandOverEquipmentInput,
+    LendEquipmentBatchInput,
     PlaceEquipmentInput,
     RemovePlacementInput,
+    ReturnEquipmentBatchInput,
     ReturnEquipmentInput,
     UnassignEquipmentInput,
     assign_equipment,
@@ -36,12 +39,16 @@ from core.labs.features.equipment.application import (
     change_lifecycle,
     create_equipment,
     extend_loan,
+    extend_loans,
     hand_over_equipment,
+    lend_equipment_batch,
     place_equipment,
     remove_placement,
     return_equipment,
+    return_equipment_batch,
     unassign_equipment,
 )
+from core.labs.features.equipment.exceptions import LoanIdempotencyKeyRequired
 from core.labs.features.equipment.queries import (
     category_options_queryset,
     equipment_reference_data,
@@ -50,7 +57,7 @@ from core.labs.features.equipment.queries import (
     list_equipment,
     list_equipment_options,
 )
-from core.labs.features.equipment.queries.loans import get_active_loan
+from core.labs.features.equipment.queries.loans import get_active_loan, get_loan_batch, list_loans
 from core.labs.features.equipment.queries.placements import get_active_placement
 from core.labs.features.equipment.queries.reference_data import (
     get_department,
@@ -83,7 +90,7 @@ from ..queries.summaries import (
     get_equipment_category_status_summary,
     get_equipment_status_summary,
 )
-from .common import EquipmentAPIView
+from .common import EQUIPMENT_PERMISSIONS, ORGANIZATION_PERMISSIONS, EquipmentAPIView
 from .resource_filters import EQUIPMENT_FILTERS
 from .serializers import (
     CategoryOptionsQuerySerializer,
@@ -95,8 +102,12 @@ from .serializers import (
     EquipmentChangeLifecycleSerializer,
     EquipmentCreateSerializer,
     EquipmentExtendLoanSerializer,
+    EquipmentExtendLoansSerializer,
     EquipmentHandOverSerializer,
     EquipmentKindOptionsQuerySerializer,
+    EquipmentLendBatchSerializer,
+    EquipmentLoanBatchSerializer,
+    EquipmentLoanListQuerySerializer,
     EquipmentLoanSerializer,
     EquipmentManufacturerOptionsQuerySerializer,
     EquipmentOptionsQuerySerializer,
@@ -104,6 +115,7 @@ from .serializers import (
     EquipmentPlacementWriteSerializer,
     EquipmentProductModelOptionsQuerySerializer,
     EquipmentReferenceDataSerializer,
+    EquipmentReturnBatchSerializer,
     EquipmentReturnSerializer,
     EquipmentSerializer,
     EquipmentStatusSummarySerializer,
@@ -134,6 +146,7 @@ class EquipmentStatusSummaryAPIView(EquipmentAPIView):
 class ComputingActivitySummaryAPIView(EquipmentAPIView):
     """All non-deleted computing assets by stored activity; missing telemetry is unknown."""
 
+    permission_classes = ORGANIZATION_PERMISSIONS
     get_contract = OperationContract(
         success=ResponseContract.success("ComputingActivitySummaryData", ComputingActivitySummarySerializer),
         bad_request=ResponseContract.bad_request(),
@@ -399,12 +412,15 @@ class EquipmentHandOverAPIView(EquipmentAPIView):
             HandOverEquipmentInput(
                 equipment_id=equipment_id,
                 borrower_id=data["borrower_id"],
+                borrower_name=data["borrower_name"],
+                borrower_contact=data["borrower_contact"],
+                purpose=data["purpose"],
                 due_at=data["due_at"],
                 condition_out=data["condition_out"],
             ),
             actor=self.acting_user,
         )
-        return self.respond(loan)
+        return self.respond(get_active_loan(equipment_id=loan.equipment_id))
 
 
 class EquipmentReturnAPIView(EquipmentAPIView):
@@ -420,7 +436,7 @@ class EquipmentReturnAPIView(EquipmentAPIView):
             raise TypeError("Request validation returned no serializer.")
         data = serializer.validated_data
         loan = return_equipment(ReturnEquipmentInput(equipment_id=equipment_id, **data), actor=self.acting_user)
-        return self.respond(loan)
+        return self.respond(list_loans().get(pk=loan.pk))
 
 
 class EquipmentExtendLoanAPIView(EquipmentAPIView):
@@ -438,7 +454,114 @@ class EquipmentExtendLoanAPIView(EquipmentAPIView):
             ExtendLoanInput(equipment_id=equipment_id, due_at=serializer.validated_data["due_at"]),
             actor=self.acting_user,
         )
-        return self.respond(loan)
+        return self.respond(list_loans().get(pk=loan.pk))
+
+
+class EquipmentLoanListCreateAPIView(AppListAPIView, EquipmentAPIView):
+    """List loan lines, or hand several items to one borrower in one all-or-nothing request."""
+
+    pagination_class = ResultsSetPagination
+    get_contract = OperationContract(
+        query=EquipmentLoanListQuerySerializer,
+        success=ResponseContract.paginated("EquipmentLoanList", EquipmentLoanSerializer),
+        bad_request=ResponseContract.bad_request(),
+    )
+    post_contract = OperationContract(
+        request=EquipmentLendBatchSerializer,
+        success=ResponseContract.created("EquipmentLoanBatchCreated", EquipmentLoanBatchSerializer),
+        bad_request=ResponseContract.bad_request(),
+        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
+        conflict=ResponseContract.conflict(),
+    )
+
+    def handle_get(self, request: Request, *args, **kwargs) -> Response:
+        filters, error = self.validate_query()
+        if error is not None:
+            return error
+        filters = {key: value for key, value in (filters or {}).items() if key not in {"page", "page_size"}}
+        return self.list_response_sync(list_loans(**filters))
+
+    def handle_post(self, request: Request, *args, **kwargs) -> Response:
+        key = request.headers.get("Idempotency-Key", "").strip()
+        if not key:
+            raise LoanIdempotencyKeyRequired()
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        batch = lend_equipment_batch(
+            LendEquipmentBatchInput(
+                equipment_ids=tuple(data["equipment_ids"]),
+                due_at=data["due_at"],
+                borrower_id=data["borrower_id"],
+                borrower_name=data["borrower_name"],
+                borrower_contact=data["borrower_contact"],
+                purpose=data["purpose"],
+                conditions_out=tuple((item["equipment_id"], item["condition_out"]) for item in data["items"]),
+                idempotency_key=key,
+            ),
+            actor=self.acting_user,
+        )
+        return self.respond(get_loan_batch(batch_id=batch.pk))
+
+
+class EquipmentLoanBatchAPIView(EquipmentAPIView):
+    """One loan slip with all its lines."""
+
+    get_contract = OperationContract(
+        success=ResponseContract.success("EquipmentLoanBatchDetail", EquipmentLoanBatchSerializer),
+        not_found=ResponseContract.not_found(),
+    )
+
+    def handle_get(self, request: Request, batch_id: int, *args, **kwargs) -> Response:
+        return self.respond(get_loan_batch(batch_id=batch_id))
+
+
+def _loan_lines_contract(name: str, request: Any) -> OperationContract:
+    return OperationContract(
+        request=request,
+        success=ResponseContract.success(name, EquipmentLoanSerializer, many=True),
+        bad_request=ResponseContract.bad_request(),
+        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
+        conflict=ResponseContract.conflict(),
+    )
+
+
+class EquipmentLoanReturnBatchAPIView(EquipmentAPIView):
+    """Take several items back (any subset of what is out); all or nothing."""
+
+    post_contract = _loan_lines_contract("EquipmentLoansReturned", EquipmentReturnBatchSerializer)
+
+    def handle_post(self, request: Request, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        items = tuple(ReturnEquipmentInput(**item) for item in serializer.validated_data["items"])
+        loans = return_equipment_batch(ReturnEquipmentBatchInput(items=items), actor=self.acting_user)
+        return self.respond(list(list_loans().filter(pk__in=[loan.pk for loan in loans])), many=True)
+
+
+class EquipmentLoanExtendBatchAPIView(EquipmentAPIView):
+    """Move the due time of several open loans: listed items, or every open line of a slip."""
+
+    post_contract = _loan_lines_contract("EquipmentLoansExtended", EquipmentExtendLoansSerializer)
+
+    def handle_post(self, request: Request, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        loans = extend_loans(
+            ExtendLoansInput(due_at=data["due_at"], equipment_ids=tuple(data["equipment_ids"]), batch_id=data["batch_id"]),
+            actor=self.acting_user,
+        )
+        return self.respond(list(list_loans().filter(pk__in=[loan.pk for loan in loans])), many=True)
 
 
 class EquipmentStateActionAPIView(EquipmentAPIView):
@@ -533,6 +656,7 @@ class EquipmentReferenceDataAPIView(EquipmentAPIView):
 class EquipmentOptionsAPIView(OptionsAPIView):
     """List equipment as compact options, optionally filtering for assignable items (ADR 002)."""
 
+    permission_classes = EQUIPMENT_PERMISSIONS
     schema_description = (
         "Large Equipment selectors require q or at least one declared parent filter: category_id, kind_id, "
         "type_id, or manufacturer_id. include_ids, lifecycle_status, assigned, and assignable do not satisfy "
@@ -557,6 +681,7 @@ class EquipmentOptionsAPIView(OptionsAPIView):
 class EquipmentCategoryOptionsAPIView(OptionsAPIView):
     """List category equipment as compact options, optionally filtering for assignable items (ADR 002)."""
 
+    permission_classes = EQUIPMENT_PERMISSIONS
     schema_description = (
         "Large category Equipment selectors require q or at least one declared parent filter: kind_id, type_id, "
         "or manufacturer_id. include_ids, lifecycle_status, assigned, and assignable do not satisfy this requirement."
@@ -605,6 +730,7 @@ class EquipmentCategoriesDetailAPIView(EquipmentAPIView):
 
 
 class EquipmentCategoriesOptionsAPIView(OptionsAPIView):
+    permission_classes = EQUIPMENT_PERMISSIONS
     query_serializer = OptionsQueryMixin
     size_class = SizeClass.SMALL
     owner = "equipment"
@@ -642,6 +768,7 @@ class EquipmentKindDetailAPIView(EquipmentAPIView):
 
 
 class EquipmentKindOptionsAPIView(OptionsAPIView):
+    permission_classes = EQUIPMENT_PERMISSIONS
     query_serializer = EquipmentKindOptionsQuerySerializer
     size_class = SizeClass.SMALL
     owner = "equipment"
@@ -681,6 +808,7 @@ class EquipmentTypeDetailAPIView(EquipmentAPIView):
 
 
 class EquipmentTypeOptionsAPIView(OptionsAPIView):
+    permission_classes = EQUIPMENT_PERMISSIONS
     query_serializer = EquipmentTypeOptionsQuerySerializer
     size_class = SizeClass.LARGE
     required_any = ("q", "kind_id", "category_id")
@@ -722,6 +850,7 @@ class EquipmentManufacturerDetailAPIView(EquipmentAPIView):
 
 
 class EquipmentManufacturerOptionsAPIView(OptionsAPIView):
+    permission_classes = EQUIPMENT_PERMISSIONS
     query_serializer = EquipmentManufacturerOptionsQuerySerializer
     size_class = SizeClass.LARGE
     required_any = ("q", "category_id")
@@ -763,6 +892,7 @@ class EquipmentProductModelDetailAPIView(EquipmentAPIView):
 
 
 class EquipmentProductModelOptionsAPIView(OptionsAPIView):
+    permission_classes = EQUIPMENT_PERMISSIONS
     query_serializer = EquipmentProductModelOptionsQuerySerializer
     size_class = SizeClass.LARGE
     required_any = ("q", "manufacturer_id", "type_id")
@@ -776,6 +906,7 @@ class EquipmentProductModelOptionsAPIView(OptionsAPIView):
 
 # 6. Departments
 class DepartmentListAPIView(AppListAPIView, EquipmentAPIView):
+    permission_classes = ORGANIZATION_PERMISSIONS
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
         query=PageNumberQuerySerializer,
@@ -791,6 +922,7 @@ class DepartmentListAPIView(AppListAPIView, EquipmentAPIView):
 
 
 class DepartmentDetailAPIView(EquipmentAPIView):
+    permission_classes = ORGANIZATION_PERMISSIONS
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
         success=ResponseContract.success("DepartmentCatalogDetail", DepartmentSerializer),
@@ -813,6 +945,7 @@ class DepartmentOptionsAPIView(OptionsAPIView):
 
 # 7. Resource Groups
 class ResourceGroupListAPIView(AppListAPIView, EquipmentAPIView):
+    permission_classes = ORGANIZATION_PERMISSIONS
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
         query=ResourceGroupOptionsQuerySerializer,
@@ -829,6 +962,7 @@ class ResourceGroupListAPIView(AppListAPIView, EquipmentAPIView):
 
 
 class ResourceGroupDetailAPIView(EquipmentAPIView):
+    permission_classes = ORGANIZATION_PERMISSIONS
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
         success=ResponseContract.success("ResourceGroupCatalogDetail", ResourceGroupCatalogSerializer),

@@ -6,11 +6,17 @@ from .create_equipment import CreateEquipmentInput, create_equipment
 from .delete_equipment import DeleteEquipmentInput, delete_equipment
 from .loans import (
     ExtendLoanInput,
+    ExtendLoansInput,
     HandOverEquipmentInput,
+    LendEquipmentBatchInput,
+    ReturnEquipmentBatchInput,
     ReturnEquipmentInput,
     extend_loan,
+    extend_loans,
     hand_over_equipment,
+    lend_equipment_batch,
     return_equipment,
+    return_equipment_batch,
 )
 from .place_equipment import PlaceEquipmentInput, RemovePlacementInput, place_equipment, remove_placement
 from .unassign_equipment import UnassignEquipmentInput, unassign_equipment
@@ -23,6 +29,12 @@ __all__ = (
     "CreateEquipmentInput",
     "DeleteEquipmentInput",
     "ExtendLoanInput",
+    "ExtendLoansInput",
+    "LendEquipmentBatchInput",
+    "ReturnEquipmentBatchInput",
+    "extend_loans",
+    "lend_equipment_batch",
+    "return_equipment_batch",
     "HandOverEquipmentInput",
     "ReturnEquipmentInput",
     "PlaceEquipmentInput",

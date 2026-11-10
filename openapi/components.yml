@@ -7863,6 +7863,26 @@ components:
           format: date-time
       required:
       - due_at
+    EquipmentExtendLoans:
+      type: object
+      description: Give ``equipment_ids`` or ``batch_id`` (every open line of that
+        slip).
+      properties:
+        due_at:
+          type: string
+          format: date-time
+        equipment_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+        batch_id:
+          type: integer
+          minimum: 1
+          nullable: true
+      required:
+      - due_at
     EquipmentFacet:
       type: object
       properties:
@@ -7938,6 +7958,20 @@ components:
         borrower_id:
           type: integer
           minimum: 1
+          nullable: true
+        borrower_name:
+          type: string
+          default: ''
+          maxLength: 255
+        borrower_contact:
+          type: string
+          default: ''
+          description: Email or phone; for borrowers without an account.
+          maxLength: 255
+        purpose:
+          type: string
+          default: ''
+          maxLength: 2000
         due_at:
           type: string
           format: date-time
@@ -7947,7 +7981,6 @@ components:
           default: ''
           maxLength: 255
       required:
-      - borrower_id
       - due_at
     EquipmentInterfaceCatalogCreate:
       type: object
@@ -8212,6 +8245,46 @@ components:
           $ref: '#/components/schemas/EquipmentKindReferenceListSerializersEquipmentKindCatalogRecordPagination'
       required:
       - pagination
+    EquipmentLendBatch:
+      type: object
+      description: Hand several items to one borrower. All or nothing.
+      properties:
+        borrower_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        borrower_name:
+          type: string
+          default: ''
+          maxLength: 255
+        borrower_contact:
+          type: string
+          default: ''
+          description: Email or phone; for borrowers without an account.
+          maxLength: 255
+        purpose:
+          type: string
+          default: ''
+          maxLength: 2000
+        equipment_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          minItems: 1
+        due_at:
+          type: string
+          format: date-time
+          description: When the equipment must be back; in the future.
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoanItemOut'
+          description: Optional per-item condition notes.
+      required:
+      - due_at
+      - equipment_ids
     EquipmentLifecycleStateEnum:
       enum:
       - planned
@@ -8275,15 +8348,32 @@ components:
       - pagination
     EquipmentLoan:
       type: object
-      description: 'Who holds a unit and until when. ``overdue`` is computed: open
-        and past ``due_at``.'
+      description: 'One loan line: who holds an item and until when. ``overdue`` is
+        computed (open and past ``due_at``).'
       properties:
         id:
           type: integer
           readOnly: true
+        batch_id:
+          type: integer
+          readOnly: true
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
         borrower:
           allOf:
           - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
+        borrower_name:
+          type: string
+          readOnly: true
+        borrower_contact:
+          type: string
+          readOnly: true
+        purpose:
+          type: string
           readOnly: true
         booking_id:
           type: integer
@@ -8316,16 +8406,80 @@ components:
           readOnly: true
           nullable: true
       required:
+      - batch_id
       - booking_id
       - borrower
+      - borrower_contact
+      - borrower_name
       - close_reason
       - condition_in
       - condition_out
       - due_at
+      - equipment
       - handed_over_at
       - id
       - overdue
+      - purpose
       - returned_at
+    EquipmentLoanBatch:
+      type: object
+      description: 'The loan slip: one borrower and purpose, with every item handed
+        over on it.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        borrower:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
+        borrower_name:
+          type: string
+          readOnly: true
+        borrower_contact:
+          type: string
+          readOnly: true
+        purpose:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        open_count:
+          type: integer
+          readOnly: true
+        loans:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentLoan'
+          readOnly: true
+      required:
+      - borrower
+      - borrower_contact
+      - borrower_name
+      - created_at
+      - id
+      - loans
+      - open_count
+      - purpose
+    EquipmentLoanBatchCreatedSerializersEquipmentLoanBatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentLoanBatch'
+      required:
+      - data
+    EquipmentLoanBatchDetailSerializersEquipmentLoanBatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentLoanBatch'
+      required:
+      - data
     EquipmentLoanClosedSerializersEquipmentLoanDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -8350,12 +8504,76 @@ components:
           $ref: '#/components/schemas/EquipmentLoan'
       required:
       - data
+    EquipmentLoanListSerializersEquipmentLoanPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/EquipmentLoanListSerializersEquipmentLoanPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
+      - meta
+    EquipmentLoanListSerializersEquipmentLoanPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    EquipmentLoanListSerializersEquipmentLoanPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/EquipmentLoanListSerializersEquipmentLoanPagination'
+      required:
+      - pagination
     EquipmentLoanOpenedSerializersEquipmentLoanDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
         data:
           $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
+    EquipmentLoansExtendedSerializersEquipmentLoanListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentLoan'
+      required:
+      - data
+    EquipmentLoansReturnedSerializersEquipmentLoanListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentLoan'
       required:
       - data
     EquipmentManufacturer:
@@ -8931,6 +9149,18 @@ components:
           type: string
           default: ''
           maxLength: 255
+    EquipmentReturnBatch:
+      type: object
+      description: Take several items back; any subset of what is out. All or nothing.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoanItemIn'
+          maxItems: 50
+          minItems: 1
+      required:
+      - items
     EquipmentStatusSummary:
       type: object
       properties:
@@ -14512,6 +14742,53 @@ components:
           $ref: '#/components/schemas/ListCreateSampleEquipmentAPIViewUrlsSampleEquipmentListPagination'
       required:
       - pagination
+    LoanItemIn:
+      type: object
+      description: Close the loan; optionally record the condition and where the equipment
+        now is.
+      properties:
+        condition_in:
+          type: string
+          default: ''
+          maxLength: 255
+        condition:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/EquipmentConditionEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        bench_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        station_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        room_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        location_note:
+          type: string
+          default: ''
+          maxLength: 255
+        equipment_id:
+          type: integer
+          minimum: 1
+      required:
+      - equipment_id
+    LoanItemOut:
+      type: object
+      properties:
+        equipment_id:
+          type: integer
+          minimum: 1
+        condition_out:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - equipment_id
     Login:
       type: object
       properties:

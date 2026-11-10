@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from core.labs.features.equipment.tests.roles import grant_labs_role
 from core.labs.models import Bench
 from core.labs.models.resource.base.resource import Department, ResourceGroup
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
@@ -19,6 +20,7 @@ from core.labs.models.resource.equipment.reference_data import (
     EquipmentProductModel,
     EquipmentType,
 )
+from core.users.public import effective_labs_roles
 
 
 @pytest.fixture()
@@ -29,7 +31,8 @@ def api_client():
 @pytest.fixture()
 def actor(db):
     User = get_user_model()
-    return User.objects.create_user(username="options_actor", email="options@example.com")
+    user = User.objects.create_user(username="options_actor", email="options@example.com")
+    return grant_labs_role(user, "coord")  # equipment is visible to coordinators only (R4)
 
 
 @pytest.fixture()
@@ -472,6 +475,9 @@ def test_category_reference_data_query_count_is_bounded(
     api_client, actor, computing_category, django_assert_num_queries
 ):
     api_client.force_authenticate(user=actor)
+    # Reads are role-checked; resolve the actor's roles first (cached on the user) so the count
+    # below measures only the endpoint's own queries.
+    effective_labs_roles(actor)
     category, kind = computing_category
     equipment_type = EquipmentType.objects.create(kind=kind, name="Query Budget Type")
     manufacturer = EquipmentManufacturer.objects.create(name="Query Budget Manufacturer")
@@ -601,6 +607,9 @@ def test_equipment_options_query_count_is_bounded_as_results_grow(
     api_client, actor, computing_category, django_assert_num_queries
 ):
     api_client.force_authenticate(user=actor)
+    # Reads are role-checked; resolve the actor's roles first (cached on the user) so the count
+    # below measures only the endpoint's own queries.
+    effective_labs_roles(actor)
     _, kind = computing_category
     ComputingEquipment.objects.create(sku="EQ-QUERY-1", name="Query Item 1", kind=kind)
 

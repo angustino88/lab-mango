@@ -36,6 +36,22 @@ urlpatterns = [
         views.EquipmentPlacementAPIView.as_view(),
         name="equipment-placement-detail",
     ),
+    path("equipment-loans", views.EquipmentLoanListCreateAPIView.as_view(), name="equipment-loan-list-create"),
+    path(
+        "equipment-loans/actions/return",
+        views.EquipmentLoanReturnBatchAPIView.as_view(),
+        name="equipment-loan-action-return",
+    ),
+    path(
+        "equipment-loans/actions/extend",
+        views.EquipmentLoanExtendBatchAPIView.as_view(),
+        name="equipment-loan-action-extend",
+    ),
+    path(
+        "equipment-loan-batches/<int:batch_id>",
+        views.EquipmentLoanBatchAPIView.as_view(),
+        name="equipment-loan-batch-detail",
+    ),
     path("equipment/<int:equipment_id>/loan", views.EquipmentLoanAPIView.as_view(), name="equipment-loan-detail"),
     path(
         "equipment/<int:equipment_id>/actions/hand-over",

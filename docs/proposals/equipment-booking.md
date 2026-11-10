@@ -122,16 +122,19 @@ the existing notification delivery; if none is configured for email, only the li
 
 ### Phasing
 
-1. Read restriction (R4) and `purpose`, borrower name and contact, `EquipmentLoanBatch`, lend-now and return for several items.
+1. Read restriction (R4) and `purpose`, borrower name and contact, `EquipmentLoanBatch`, lend-now and return for several items. **Implemented.**
 2. Reservations for several items, hand-over from a reservation, expiry task.
 3. Overdue reminders.
 
-### Open questions for the owner
+### Owner decisions on the open questions (2026-11-10, "use your suggestions")
 
-1. Grace period before an uncollected reservation expires: 15 minutes (OD5, copied from bench bookings) is short for a coordinator-entered, multi-day reservation. Suggested: end of the start day. Or never expire automatically.
-2. OD3 says a booking can be created only when the item is available at that moment, so an item on loan today cannot be reserved for next week. With reservations entered by the coordinator, should that rule be dropped (only overlapping windows are refused)?
-3. May one batch mix items of different departments?
-4. Confirm that `departments` and `resource-groups` stay readable by all authenticated users.
+| # | Decision |
+|---|---|
+| R6 | An uncollected reservation expires at the end of its start day (replaces the 15 minutes of OD5). |
+| R7 | OD3 is dropped: an item on loan today may be reserved for a later window; only overlapping windows are refused. |
+| R8 | One batch may mix items of different departments (until department scope exists). |
+| R9 | `departments` and `resource-groups` stay readable by all authenticated users. |
+| R10 | Build phase 1 is approved to start. Placement rule to verify by test: an item can be lent from a room, a station, a noted place, or with no place recorded; never while on a bench. |
 
 ## Problem and acceptance criteria
 

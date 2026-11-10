@@ -126,7 +126,9 @@ def with_active_loan(queryset: QuerySet) -> QuerySet:
     return queryset.prefetch_related(
         Prefetch(
             "loans",
-            queryset=EquipmentLoan.objects.filter(returned_at__isnull=True).select_related("borrower"),
+            queryset=EquipmentLoan.objects.filter(returned_at__isnull=True).select_related(
+                "batch", "batch__borrower", "equipment"
+            ),
             to_attr=ACTIVE_LOAN_ATTR,
         )
     )

@@ -78,13 +78,13 @@ def test_put_unknown_room_is_422(coordinator_client, unit):
 
 
 @pytest.mark.django_db
-def test_plain_user_can_read_but_not_write_placement(unit):
+def test_plain_user_can_neither_read_nor_write_placement(unit):
     client = APIClient()
     client.force_authenticate(User.objects.create_user(username="pl-plain"))
     url = f"{ROOT}{unit.pk}/placement"
     assert client.put(url, {"location_note": "Desk"}, format="json").status_code == 403
     assert client.delete(url).status_code == 403
-    assert client.get(url).status_code == 404
+    assert client.get(url).status_code == 403
 
 
 @pytest.mark.django_db

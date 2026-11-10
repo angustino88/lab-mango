@@ -33,7 +33,8 @@ def summary_contract_settings(settings):
 @pytest.fixture()
 def summary_client(summary_contract_settings):
     client = APIClient()
-    client.force_authenticate(user=SimpleNamespace(is_authenticated=True, pk=1))
+    # Superuser stub: equipment reads are role-checked (coordinators only); no database needed.
+    client.force_authenticate(user=SimpleNamespace(is_authenticated=True, is_superuser=True, pk=1))
     return client
 
 

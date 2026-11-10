@@ -6,11 +6,17 @@ from .application.create_equipment import CreateEquipmentInput, create_equipment
 from .application.delete_equipment import DeleteEquipmentInput, delete_equipment
 from .application.loans import (
     ExtendLoanInput,
+    ExtendLoansInput,
     HandOverEquipmentInput,
+    LendEquipmentBatchInput,
+    ReturnEquipmentBatchInput,
     ReturnEquipmentInput,
     extend_loan,
+    extend_loans,
     hand_over_equipment,
+    lend_equipment_batch,
     return_equipment,
+    return_equipment_batch,
 )
 from .application.place_equipment import (
     PlaceEquipmentInput,
@@ -42,7 +48,7 @@ from .queries.equipment import (
     with_equipment_info,
 )
 from .queries.inactivity_notifications import inactive_equipment_candidates
-from .queries.loans import get_active_loan
+from .queries.loans import get_active_loan, get_loan_batch, list_loans
 from .queries.placements import get_active_placement, has_active_placements
 from .queries.state_history import equipment_state_timelines
 from .queries.summaries import (
@@ -67,6 +73,12 @@ __all__ = (
     "EquipmentNotOnLoan",
     "EquipmentOnLoan",
     "ExtendLoanInput",
+    "ExtendLoansInput",
+    "LendEquipmentBatchInput",
+    "ReturnEquipmentBatchInput",
+    "extend_loans",
+    "lend_equipment_batch",
+    "return_equipment_batch",
     "HandOverEquipmentInput",
     "LoanManagedByBooking",
     "ReturnEquipmentInput",
@@ -79,6 +91,8 @@ __all__ = (
     "RemovePlacementInput",
     "equipment_state_timelines",
     "get_active_loan",
+    "get_loan_batch",
+    "list_loans",
     "get_active_placement",
     "has_active_placements",
     "place_equipment",

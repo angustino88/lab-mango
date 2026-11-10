@@ -1,7 +1,7 @@
 """Stable business errors for equipment commands."""
 
 
-from core.common.domain.errors import Conflict
+from core.common.domain.errors import BadRequest, Conflict, ValidationFailed
 
 
 class EquipmentAlreadyAssigned(Conflict):
@@ -60,6 +60,18 @@ class LoanManagedByBooking(Conflict):
     default_message = "This loan belongs to a booking; change it through the booking."
 
 
+class LoanIdempotencyKeyReuse(ValidationFailed):
+    """Raised when an Idempotency-Key is replayed with a different request body."""
+
+    code = "idempotency_key_reuse"
+    default_message = "This Idempotency-Key was already used with a different request."
+
+
+class LoanIdempotencyKeyRequired(BadRequest):
+    code = "idempotency_key_required"
+    default_message = "Send an Idempotency-Key header with this request."
+
+
 class SkuAlreadyExists(Conflict):
     """Raised when an active equipment record already uses the requested SKU."""
 
@@ -75,6 +87,8 @@ __all__ = [
     "EquipmentNotOnLoan",
     "EquipmentOnLoan",
     "InvalidEquipmentStatus",
+    "LoanIdempotencyKeyRequired",
+    "LoanIdempotencyKeyReuse",
     "LoanManagedByBooking",
     "SkuAlreadyExists",
 ]

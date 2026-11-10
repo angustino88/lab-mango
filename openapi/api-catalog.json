@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 629,
+  "total_endpoints": 634,
   "generated_at": "2026-11-10",
   "endpoints": [
     {
@@ -27777,6 +27777,1581 @@
           }
         },
         "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment-loan-batches/{batch_id}",
+      "method": "GET",
+      "operation_id": "labs_equipment_loan_batches_retrieve_by_batch_id",
+      "summary": "Get Equipment Loan Batches by Batch ID",
+      "description": "One loan slip with all its lines.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "batch_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "The loan slip: one borrower and purpose, with every item handed over on it.",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "borrower": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "borrower_name": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "borrower_contact": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "open_count": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "loans": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "borrower",
+                  "borrower_contact",
+                  "borrower_name",
+                  "created_at",
+                  "id",
+                  "loans",
+                  "open_count",
+                  "purpose"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "borrower": {},
+              "borrower_name": "string",
+              "borrower_contact": "string",
+              "purpose": "string",
+              "created_at": "2026-10-20T12:00:00Z",
+              "open_count": 1,
+              "loans": [
+                {}
+              ]
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment-loans",
+      "method": "GET",
+      "operation_id": "labs_equipment_loans_retrieve",
+      "summary": "Get Equipment Loans",
+      "description": "List loan lines, or hand several items to one borrower in one all-or-nothing request.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "batch_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "borrower_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "borrower_name",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1
+          }
+        },
+        {
+          "name": "equipment_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "open",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        {
+          "name": "overdue",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "batch_id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "equipment": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "borrower": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "borrower_name": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "borrower_contact": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "purpose": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "booking_id": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "handed_over_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "due_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "overdue": {
+                      "type": "boolean",
+                      "readOnly": true
+                    },
+                    "condition_out": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "returned_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "condition_in": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "close_reason": {
+                      "type": "string",
+                      "readOnly": true,
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "batch_id",
+                    "booking_id",
+                    "borrower",
+                    "borrower_contact",
+                    "borrower_name",
+                    "close_reason",
+                    "condition_in",
+                    "condition_out",
+                    "due_at",
+                    "equipment",
+                    "handed_over_at",
+                    "id",
+                    "overdue",
+                    "purpose",
+                    "returned_at"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "batch_id": 1,
+                "equipment": {},
+                "borrower": {},
+                "borrower_name": "string",
+                "borrower_contact": "string",
+                "purpose": "string",
+                "booking_id": 1,
+                "handed_over_at": "2026-10-20T12:00:00Z",
+                "due_at": "2026-10-20T12:00:00Z",
+                "overdue": true,
+                "condition_out": "string",
+                "returned_at": "2026-10-20T12:00:00Z",
+                "condition_in": "string",
+                "close_reason": "string"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment-loans",
+      "method": "POST",
+      "operation_id": "labs_equipment_loans_create",
+      "summary": "Create Equipment Loans",
+      "description": "List loan lines, or hand several items to one borrower in one all-or-nothing request.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Hand several items to one borrower. All or nothing.",
+          "properties": {
+            "borrower_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "borrower_name": {
+              "type": "string",
+              "default": "",
+              "maxLength": 255
+            },
+            "borrower_contact": {
+              "type": "string",
+              "default": "",
+              "description": "Email or phone; for borrowers without an account.",
+              "maxLength": 255
+            },
+            "purpose": {
+              "type": "string",
+              "default": "",
+              "maxLength": 2000
+            },
+            "equipment_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxItems": 50,
+              "minItems": 1
+            },
+            "due_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "When the equipment must be back; in the future."
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "equipment_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "condition_out": {
+                    "type": "string",
+                    "default": "",
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "equipment_id"
+                ]
+              },
+              "description": "Optional per-item condition notes."
+            }
+          },
+          "required": [
+            "due_at",
+            "equipment_ids"
+          ]
+        },
+        "example_payload": {
+          "borrower_id": 1,
+          "borrower_name": "",
+          "borrower_contact": "",
+          "purpose": "",
+          "equipment_ids": [
+            1
+          ],
+          "due_at": "2026-10-20T12:00:00Z",
+          "items": [
+            {
+              "equipment_id": 1,
+              "condition_out": ""
+            }
+          ]
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "The loan slip: one borrower and purpose, with every item handed over on it.",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "borrower": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "borrower_name": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "borrower_contact": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "open_count": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "loans": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "borrower",
+                  "borrower_contact",
+                  "borrower_name",
+                  "created_at",
+                  "id",
+                  "loans",
+                  "open_count",
+                  "purpose"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "borrower": {},
+              "borrower_name": "string",
+              "borrower_contact": "string",
+              "purpose": "string",
+              "created_at": "2026-10-20T12:00:00Z",
+              "open_count": 1,
+              "loans": [
+                {}
+              ]
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment-loans/actions/extend",
+      "method": "POST",
+      "operation_id": "labs_equipment_loans_actions_extend_create",
+      "summary": "Extend Equipment Loans",
+      "description": "Move the due time of several open loans: listed items, or every open line of a slip.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Give ``equipment_ids`` or ``batch_id`` (every open line of that slip).",
+          "properties": {
+            "due_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "equipment_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxItems": 50
+            },
+            "batch_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            }
+          },
+          "required": [
+            "due_at"
+          ]
+        },
+        "example_payload": {
+          "due_at": "2026-10-20T12:00:00Z",
+          "equipment_ids": [
+            1
+          ],
+          "batch_id": 1
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "batch_id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "equipment": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "borrower": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "borrower_name": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "borrower_contact": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "purpose": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "booking_id": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "handed_over_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "due_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "overdue": {
+                      "type": "boolean",
+                      "readOnly": true
+                    },
+                    "condition_out": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "returned_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "condition_in": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "close_reason": {
+                      "type": "string",
+                      "readOnly": true,
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "batch_id",
+                    "booking_id",
+                    "borrower",
+                    "borrower_contact",
+                    "borrower_name",
+                    "close_reason",
+                    "condition_in",
+                    "condition_out",
+                    "due_at",
+                    "equipment",
+                    "handed_over_at",
+                    "id",
+                    "overdue",
+                    "purpose",
+                    "returned_at"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": [
+              {
+                "id": 1,
+                "batch_id": 1,
+                "equipment": {},
+                "borrower": {},
+                "borrower_name": "string",
+                "borrower_contact": "string",
+                "purpose": "string",
+                "booking_id": 1,
+                "handed_over_at": "2026-10-20T12:00:00Z",
+                "due_at": "2026-10-20T12:00:00Z",
+                "overdue": true,
+                "condition_out": "string",
+                "returned_at": "2026-10-20T12:00:00Z",
+                "condition_in": "string",
+                "close_reason": "string"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment-loans/actions/return",
+      "method": "POST",
+      "operation_id": "labs_equipment_loans_actions_return_create",
+      "summary": "Return Equipment Loans",
+      "description": "Take several items back (any subset of what is out); all or nothing.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Take several items back; any subset of what is out. All or nothing.",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "description": "Close the loan; optionally record the condition and where the equipment now is.",
+                "properties": {
+                  "condition_in": {
+                    "type": "string",
+                    "default": "",
+                    "maxLength": 255
+                  },
+                  "condition": {
+                    "nullable": true,
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
+                  },
+                  "bench_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true
+                  },
+                  "station_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true
+                  },
+                  "room_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true
+                  },
+                  "location_note": {
+                    "type": "string",
+                    "default": "",
+                    "maxLength": 255
+                  },
+                  "equipment_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "equipment_id"
+                ]
+              },
+              "maxItems": 50,
+              "minItems": 1
+            }
+          },
+          "required": [
+            "items"
+          ]
+        },
+        "example_payload": {
+          "items": [
+            {
+              "condition_in": "",
+              "condition": {},
+              "bench_id": 1,
+              "station_id": 1,
+              "room_id": 1,
+              "location_note": "",
+              "equipment_id": 1
+            }
+          ]
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "batch_id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "equipment": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "borrower": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "borrower_name": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "borrower_contact": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "purpose": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "booking_id": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "handed_over_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "due_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "overdue": {
+                      "type": "boolean",
+                      "readOnly": true
+                    },
+                    "condition_out": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "returned_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "condition_in": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "close_reason": {
+                      "type": "string",
+                      "readOnly": true,
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "batch_id",
+                    "booking_id",
+                    "borrower",
+                    "borrower_contact",
+                    "borrower_name",
+                    "close_reason",
+                    "condition_in",
+                    "condition_out",
+                    "due_at",
+                    "equipment",
+                    "handed_over_at",
+                    "id",
+                    "overdue",
+                    "purpose",
+                    "returned_at"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": [
+              {
+                "id": 1,
+                "batch_id": 1,
+                "equipment": {},
+                "borrower": {},
+                "borrower_name": "string",
+                "borrower_contact": "string",
+                "purpose": "string",
+                "booking_id": 1,
+                "handed_over_at": "2026-10-20T12:00:00Z",
+                "due_at": "2026-10-20T12:00:00Z",
+                "overdue": true,
+                "condition_out": "string",
+                "returned_at": "2026-10-20T12:00:00Z",
+                "condition_in": "string",
+                "close_reason": "string"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -137685,10 +139260,23 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Who holds a unit and until when. ``overdue`` is computed: open and past ``due_at``.",
+                "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
                 "properties": {
                   "id": {
                     "type": "integer",
+                    "readOnly": true
+                  },
+                  "batch_id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "equipment": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "borrower": {
@@ -137698,6 +139286,19 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "borrower_name": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "borrower_contact": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "purpose": {
+                    "type": "string",
                     "readOnly": true
                   },
                   "booking_id": {
@@ -137740,15 +139341,20 @@
                   }
                 },
                 "required": [
+                  "batch_id",
                   "booking_id",
                   "borrower",
+                  "borrower_contact",
+                  "borrower_name",
                   "close_reason",
                   "condition_in",
                   "condition_out",
                   "due_at",
+                  "equipment",
                   "handed_over_at",
                   "id",
                   "overdue",
+                  "purpose",
                   "returned_at"
                 ]
               }
@@ -137760,7 +139366,12 @@
           "example_payload": {
             "data": {
               "id": 1,
+              "batch_id": 1,
+              "equipment": {},
               "borrower": {},
+              "borrower_name": "string",
+              "borrower_contact": "string",
+              "purpose": "string",
               "booking_id": 1,
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
@@ -138021,7 +139632,24 @@
           "properties": {
             "borrower_id": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "nullable": true
+            },
+            "borrower_name": {
+              "type": "string",
+              "default": "",
+              "maxLength": 255
+            },
+            "borrower_contact": {
+              "type": "string",
+              "default": "",
+              "description": "Email or phone; for borrowers without an account.",
+              "maxLength": 255
+            },
+            "purpose": {
+              "type": "string",
+              "default": "",
+              "maxLength": 2000
             },
             "due_at": {
               "type": "string",
@@ -138035,12 +139663,14 @@
             }
           },
           "required": [
-            "borrower_id",
             "due_at"
           ]
         },
         "example_payload": {
           "borrower_id": 1,
+          "borrower_name": "",
+          "borrower_contact": "",
+          "purpose": "",
           "due_at": "2026-10-20T12:00:00Z",
           "condition_out": ""
         }
@@ -138055,10 +139685,23 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Who holds a unit and until when. ``overdue`` is computed: open and past ``due_at``.",
+                "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
                 "properties": {
                   "id": {
                     "type": "integer",
+                    "readOnly": true
+                  },
+                  "batch_id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "equipment": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "borrower": {
@@ -138068,6 +139711,19 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "borrower_name": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "borrower_contact": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "purpose": {
+                    "type": "string",
                     "readOnly": true
                   },
                   "booking_id": {
@@ -138110,15 +139766,20 @@
                   }
                 },
                 "required": [
+                  "batch_id",
                   "booking_id",
                   "borrower",
+                  "borrower_contact",
+                  "borrower_name",
                   "close_reason",
                   "condition_in",
                   "condition_out",
                   "due_at",
+                  "equipment",
                   "handed_over_at",
                   "id",
                   "overdue",
+                  "purpose",
                   "returned_at"
                 ]
               }
@@ -138130,7 +139791,12 @@
           "example_payload": {
             "data": {
               "id": 1,
+              "batch_id": 1,
+              "equipment": {},
               "borrower": {},
+              "borrower_name": "string",
+              "borrower_contact": "string",
+              "purpose": "string",
               "booking_id": 1,
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
@@ -138454,10 +140120,23 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Who holds a unit and until when. ``overdue`` is computed: open and past ``due_at``.",
+                "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
                 "properties": {
                   "id": {
                     "type": "integer",
+                    "readOnly": true
+                  },
+                  "batch_id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "equipment": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "borrower": {
@@ -138467,6 +140146,19 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "borrower_name": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "borrower_contact": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "purpose": {
+                    "type": "string",
                     "readOnly": true
                   },
                   "booking_id": {
@@ -138509,15 +140201,20 @@
                   }
                 },
                 "required": [
+                  "batch_id",
                   "booking_id",
                   "borrower",
+                  "borrower_contact",
+                  "borrower_name",
                   "close_reason",
                   "condition_in",
                   "condition_out",
                   "due_at",
+                  "equipment",
                   "handed_over_at",
                   "id",
                   "overdue",
+                  "purpose",
                   "returned_at"
                 ]
               }
@@ -138529,7 +140226,12 @@
           "example_payload": {
             "data": {
               "id": 1,
+              "batch_id": 1,
+              "equipment": {},
               "borrower": {},
+              "borrower_name": "string",
+              "borrower_contact": "string",
+              "purpose": "string",
               "booking_id": 1,
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
@@ -139347,10 +141049,23 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Who holds a unit and until when. ``overdue`` is computed: open and past ``due_at``.",
+                "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
                 "properties": {
                   "id": {
                     "type": "integer",
+                    "readOnly": true
+                  },
+                  "batch_id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "equipment": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "borrower": {
@@ -139360,6 +141075,19 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "borrower_name": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "borrower_contact": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "purpose": {
+                    "type": "string",
                     "readOnly": true
                   },
                   "booking_id": {
@@ -139402,15 +141130,20 @@
                   }
                 },
                 "required": [
+                  "batch_id",
                   "booking_id",
                   "borrower",
+                  "borrower_contact",
+                  "borrower_name",
                   "close_reason",
                   "condition_in",
                   "condition_out",
                   "due_at",
+                  "equipment",
                   "handed_over_at",
                   "id",
                   "overdue",
+                  "purpose",
                   "returned_at"
                 ]
               }
@@ -139422,7 +141155,12 @@
           "example_payload": {
             "data": {
               "id": 1,
+              "batch_id": 1,
+              "equipment": {},
               "borrower": {},
+              "borrower_name": "string",
+              "borrower_contact": "string",
+              "purpose": "string",
               "booking_id": 1,
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",

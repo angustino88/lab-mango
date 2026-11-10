@@ -17,6 +17,7 @@ from rest_framework_api_key.models import APIKey
 from core.labs.features.equipment.api.category_definitions import CATEGORY_DEFINITIONS
 from core.labs.features.equipment.api.facets import EquipmentFacetsAPIView
 from core.labs.features.equipment.api.registry import EQUIPMENT_REGISTRY
+from core.labs.features.equipment.tests.roles import grant_labs_role
 from core.labs.models import (
     Bench,
     Equipment,
@@ -37,6 +38,7 @@ DIMENSIONS = ("category", "kind", "type", "manufacturer", "product_model_id", "d
 @pytest.fixture
 def inventory(db):
     actor = get_user_model().objects.create_user(username="facets_actor", email="facets@example.invalid")
+    grant_labs_role(actor, "coord")  # equipment is visible to coordinators only (R4)
     client = APIClient()
     client.force_authenticate(actor)
     categories = [
@@ -277,6 +279,9 @@ def test_bounded_queries(inventory, django_assert_num_queries, path):
 def test_oversized_decimal_pagination_is_400_before_inventory_sql(
     inventory, django_assert_num_queries, path, parameter
 ):
+    # Reads are role-checked; resolve the actor's roles first (cached on the user) so the count
+    # below measures only the endpoint's own queries.
+    inventory[0].get(f"{path}/facets", {"dimension": "kind"})  # warm
     with django_assert_num_queries(0):
         response = inventory[0].get(f"{path}/facets", {"dimension": "kind", parameter: "9" * 5000})
     assert response.status_code == 400

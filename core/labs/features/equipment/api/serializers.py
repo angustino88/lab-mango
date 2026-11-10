@@ -3,6 +3,7 @@ from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
 from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
+from core.common.api.pagination import PageNumberQuerySerializer
 from core.common.api.summary_serializers import StatusSummarySerializer
 from core.labs.features.base.serializers import (
     AppModelSerializer,
@@ -65,10 +66,15 @@ class EquipmentPlacementSerializer(serializers.Serializer):
 
 
 class EquipmentLoanSerializer(serializers.Serializer):
-    """Who holds a unit and until when. ``overdue`` is computed: open and past ``due_at``."""
+    """One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``)."""
 
     id = serializers.IntegerField(read_only=True)
-    borrower = ResourceOwnerSerializer(read_only=True)
+    batch_id = serializers.IntegerField(read_only=True)
+    equipment = UIDNamedReferenceSerializer(read_only=True)
+    borrower = ResourceOwnerSerializer(source="batch.borrower", read_only=True, allow_null=True)
+    borrower_name = serializers.CharField(source="batch.borrower_label", read_only=True)
+    borrower_contact = serializers.CharField(source="batch.borrower_contact", read_only=True)
+    purpose = serializers.CharField(source="batch.purpose", read_only=True)
     booking_id = serializers.IntegerField(read_only=True, allow_null=True)
     handed_over_at = serializers.DateTimeField(read_only=True)
     due_at = serializers.DateTimeField(read_only=True)
@@ -85,10 +91,66 @@ class EquipmentLoanSerializer(serializers.Serializer):
         return obj.returned_at is None and obj.due_at < timezone.now()
 
 
-class EquipmentHandOverSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
-    borrower_id = serializers.IntegerField(min_value=1)
+class EquipmentLoanBatchSerializer(serializers.Serializer):
+    """The loan slip: one borrower and purpose, with every item handed over on it."""
+
+    id = serializers.IntegerField(read_only=True)
+    borrower = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    borrower_name = serializers.CharField(source="borrower_label", read_only=True)
+    borrower_contact = serializers.CharField(read_only=True)
+    purpose = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(source="created", read_only=True)
+    open_count = serializers.SerializerMethodField()
+    loans = serializers.SerializerMethodField()
+
+    class Meta:
+        ref_name = "EquipmentLoanBatch"
+
+    def get_open_count(self, obj) -> int:
+        return sum(1 for loan in obj.loans.all() if loan.returned_at is None)
+
+    @extend_schema_field(EquipmentLoanSerializer(many=True))
+    def get_loans(self, obj) -> list:
+        lines = []
+        for loan in obj.loans.all():
+            loan.batch = obj  # reuse the loaded slip; no query per line
+            lines.append(EquipmentLoanSerializer(loan, context=self.context).data)
+        return lines
+
+
+class BorrowerInputMixin(serializers.Serializer):
+    """The borrower is a user account or, without one, a name; plus why the equipment is needed."""
+
+    borrower_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
+    borrower_name = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+    borrower_contact = serializers.CharField(
+        max_length=255, required=False, allow_blank=True, default="", help_text="Email or phone; for borrowers without an account."
+    )
+    purpose = serializers.CharField(max_length=2000, required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs.get("borrower_id") is None and not attrs.get("borrower_name", "").strip():
+            raise serializers.ValidationError({"borrower_name": "Give a borrower: borrower_id or borrower_name."})
+        return attrs
+
+
+class EquipmentHandOverSerializer(ResourceWriteSerializerMixin, BorrowerInputMixin):
     due_at = serializers.DateTimeField(help_text="When the equipment must be back; in the future.")
     condition_out = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+
+
+class LoanItemOutSerializer(serializers.Serializer):
+    equipment_id = serializers.IntegerField(min_value=1)
+    condition_out = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+
+
+class EquipmentLendBatchSerializer(ResourceWriteSerializerMixin, BorrowerInputMixin):
+    """Hand several items to one borrower. All or nothing."""
+
+    equipment_ids = serializers.ListField(child=serializers.IntegerField(min_value=1), min_length=1, max_length=50)
+    due_at = serializers.DateTimeField(help_text="When the equipment must be back; in the future.")
+    items = LoanItemOutSerializer(many=True, required=False, default=list, help_text="Optional per-item condition notes.")
 
 
 class EquipmentReturnSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
@@ -102,8 +164,37 @@ class EquipmentReturnSerializer(ResourceWriteSerializerMixin, serializers.Serial
     location_note = serializers.CharField(max_length=LOCATION_NOTE_MAX_LENGTH, required=False, allow_blank=True, default="")
 
 
+class LoanItemInSerializer(EquipmentReturnSerializer):
+    equipment_id = serializers.IntegerField(min_value=1)
+
+
+class EquipmentReturnBatchSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    """Take several items back; any subset of what is out. All or nothing."""
+
+    items = serializers.ListField(child=LoanItemInSerializer(), min_length=1, max_length=50)
+
+
 class EquipmentExtendLoanSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
     due_at = serializers.DateTimeField()
+
+
+class EquipmentExtendLoansSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    """Give ``equipment_ids`` or ``batch_id`` (every open line of that slip)."""
+
+    due_at = serializers.DateTimeField()
+    equipment_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1), required=False, max_length=50, default=list
+    )
+    batch_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
+
+
+class EquipmentLoanListQuerySerializer(PageNumberQuerySerializer):
+    open = serializers.BooleanField(required=False, allow_null=True, default=None)
+    overdue = serializers.BooleanField(required=False, allow_null=True, default=None)
+    borrower_id = serializers.IntegerField(required=False, min_value=1)
+    borrower_name = serializers.CharField(required=False, max_length=255)
+    equipment_id = serializers.IntegerField(required=False, min_value=1)
+    batch_id = serializers.IntegerField(required=False, min_value=1)
 
 
 class EquipmentSerializer(AppModelSerializer):
@@ -186,7 +277,11 @@ class EquipmentSerializer(AppModelSerializer):
         """Open loan from the projection's prefetch; ``null`` when nobody holds the unit."""
         loans = getattr(obj, "active_loans", None)
         if loans is None:  # instance not built by an equipment projection
-            loans = list(EquipmentLoan.objects.filter(equipment_id=obj.pk, returned_at__isnull=True).select_related("borrower"))
+            loans = list(
+                EquipmentLoan.objects.filter(equipment_id=obj.pk, returned_at__isnull=True).select_related(
+                    "batch", "batch__borrower", "equipment"
+                )
+            )
         return EquipmentLoanSerializer(loans[0], context=self.context).data if loans else None
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))

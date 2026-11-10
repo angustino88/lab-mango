@@ -77,7 +77,7 @@ def computing_unit(computing_kind):
 
 
 @pytest.mark.django_db
-def test_plain_user_cannot_write_equipment_but_can_read(plain_user, computing_kind, computing_unit):
+def test_plain_user_cannot_read_or_write_equipment(plain_user, computing_kind, computing_unit):
     client = _client(plain_user)
     bench = Bench.objects.create(name="S0 bench", sku="S0-BENCH-1")
     pk = computing_unit.pk
@@ -97,8 +97,12 @@ def test_plain_user_cannot_write_equipment_but_can_read(plain_user, computing_ki
         assert response.status_code == 403, (method, path, response.status_code)
     computing_unit.refresh_from_db()
     assert computing_unit.name == "Step0 PC" and computing_unit.deleted_at is None
-    assert client.get(ROOT + "equipment").status_code == 200
-    assert client.get(ROOT + f"equipment/computing/{pk}").status_code == 200
+    # Equipment is visible to coordinators and administrators only (owner decision R4).
+    for path in ("equipment", f"equipment/computing/{pk}", "equipment/options?q=x", "equipment/facets", "equipment-kinds"):
+        assert client.get(ROOT + path).status_code == 403, path
+    # Organisation lookups stay readable (R9).
+    assert client.get(ROOT + "departments").status_code == 200
+    assert client.get(ROOT + "resource-groups").status_code == 200
 
 
 @pytest.mark.django_db

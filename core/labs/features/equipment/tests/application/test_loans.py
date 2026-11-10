@@ -41,6 +41,7 @@ from core.labs.models import (
     EquipmentCategory,
     EquipmentKind,
     EquipmentLoan,
+    EquipmentLoanBatch,
     EquipmentPlacement,
     Room,
 )
@@ -95,7 +96,7 @@ def test_hand_over_opens_loan_and_leaves_the_resting_place(unit, borrower):
     room = Room.objects.create(sku="LN-R1", name="Store")
     place_equipment(PlaceEquipmentInput(equipment_id=unit.pk, room_id=room.pk), actor=None)
     loan = _hand_over(unit, borrower, condition_out="Scratched lid")
-    assert loan.borrower == borrower and loan.returned_at is None and loan.condition_out == "Scratched lid"
+    assert loan.batch.borrower == borrower and loan.returned_at is None and loan.condition_out == "Scratched lid"
     assert not EquipmentPlacement.objects.filter(equipment=unit, unassigned_at__isnull=True).exists()
     assert _row(unit).display_status == "borrowed"
 
@@ -230,9 +231,10 @@ def test_overdue_is_computed(unit, borrower):
 @pytest.mark.django_db
 def test_loan_constraints(unit, borrower):
     now = timezone.now()
-    EquipmentLoan.objects.create(equipment=unit, borrower=borrower, handed_over_at=now, due_at=_due())
+    batch = EquipmentLoanBatch.objects.create(borrower=borrower)
+    EquipmentLoan.objects.create(equipment=unit, batch=batch, handed_over_at=now, due_at=_due())
     with pytest.raises(IntegrityError) as error, transaction.atomic():
-        EquipmentLoan.objects.create(equipment=unit, borrower=borrower, handed_over_at=now, due_at=_due())
+        EquipmentLoan.objects.create(equipment=unit, batch=batch, handed_over_at=now, due_at=_due())
     assert "one_active_loan_per_equipment" in str(error.value)
     with pytest.raises(IntegrityError) as error, transaction.atomic():
         EquipmentLoan.objects.filter(equipment=unit).update(returned_at=now)

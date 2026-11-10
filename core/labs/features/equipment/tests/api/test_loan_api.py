@@ -48,6 +48,7 @@ def test_hand_over_get_extend_return(client, unit, borrower):
     )
     assert opened.status_code == 200, opened.data
     assert opened.data["data"]["borrower"]["username"] == "ln-api-borrower"
+    assert opened.data["data"]["borrower_name"] == "Ada"
     assert opened.data["data"]["overdue"] is False
 
     detail = client.get(f"{ROOT}/{unit.pk}").data["data"]
@@ -101,4 +102,5 @@ def test_loan_actions_need_coordinator(unit, borrower):
         f"{ROOT}/{unit.pk}/actions/hand-over", {"borrower_id": borrower.pk, "due_at": _due()}, format="json"
     )
     assert response.status_code == 403
-    assert plain.get(f"{ROOT}/{unit.pk}/loan").status_code == 404
+    assert plain.get(f"{ROOT}/{unit.pk}/loan").status_code == 403
+    assert plain.get("/api/labs/equipment-loans").status_code == 403

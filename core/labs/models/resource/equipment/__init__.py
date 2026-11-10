@@ -16,7 +16,7 @@ from .equipment import (
 from .furniture import FurnitureEquipment
 from .instrument import InstrumentEquipment
 from .laboratory import LaboratoryEquipment
-from .loan import EquipmentLoan, LoanCloseReason
+from .loan import EquipmentLoan, EquipmentLoanBatch, LoanCloseReason
 from .lookups import EquipmentInterface, Material
 from .mechanical import MechanicalEquipment
 from .networking import NetworkingEquipment, NetworkingProtocol
@@ -52,6 +52,7 @@ __all__ = [
     "EquipmentEventAxis",
     "EquipmentLifecycleState",
     "EquipmentLoan",
+    "EquipmentLoanBatch",
     "LoanCloseReason",
     "GONE_LIFECYCLE_STATES",
     "LIFECYCLE_TRANSITIONS",

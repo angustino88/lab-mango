@@ -64,10 +64,13 @@ Three separate facts describe a unit. They are stored and changed independently;
 | 6 | calibration required and overdue | `calibration_overdue` |
 | 7 | otherwise | `available` |
 
-**Loans** (custody, not a booking):
-- Hand-over needs an available item: `in_service`, `operational`, not on a bench, not on loan, calibration not overdue (otherwise 409 `equipment_not_available` with `details.reasons`). Its room, station or noted place is closed: an item with a person has no placement.
+**Who sees equipment:** only lab coordinators and administrators (and API keys) can read or change equipment, its catalog, placements and loans. Engineers cannot see equipment at all; the coordinator records everything for them. Departments and resource groups stay readable by every signed-in user.
+
+**Loans** (custody, not a booking). A **loan slip** (`EquipmentLoanBatch`) holds the borrower and purpose for one or more items handed over together; each item is its own loan line, so items can come back at different times. The borrower is a user account **or**, for people without one, a name with an optional contact (email or phone).
+- Lend several items in one request (`POST /api/labs/equipment-loans`, `Idempotency-Key` required): all or nothing; the 409 lists each unavailable item with its reasons.
+- Hand-over needs an available item: `in_service`, `operational`, not on a bench, not on loan, calibration not overdue (otherwise 409 `equipment_not_available` with `details.reasons`). Its room, station or noted place is closed: an item with a person has no placement. An item resting in a room, at a station, at a noted place, or with no recorded place can be lent; an item on a bench cannot. An item reserved by someone else in the loan window cannot be lent either.
 - While on loan: placing it is refused (409 `equipment_on_loan`); its condition may change ("broken while on loan" shows `broken` with a `loan`); `transferred_out` and `retired` are refused; `lost` closes the loan with reason `lost`; delete is refused.
-- Return closes the loan (`condition_in`) and can record the new condition and place in the same request. A repeated return is a no-op.
+- Return closes the loan (`condition_in`) and can record the new condition and place in the same request; several items at once through `POST /api/labs/equipment-loans/actions/return` (any subset of what is out). A repeated return is a no-op.
 - Overdue is computed (open and past `due_at`), never stored; list filters `on_loan` and `loan_overdue`. Reminders arrive with equipment bookings (redesign step 4).
 
 The full design and its rationale are in `docs/proposals/equipment-management-redesign.md`.
@@ -114,7 +117,8 @@ One table records every placement. `EquipmentAssignment.objects` returns bench p
   - Partial index on `(bench, position)` where `unassigned_at IS NULL`.
 
 ### 2.4 `core.labs.models.EquipmentLoan`
-- **Fields:** `equipment` (FK, PROTECT), `borrower` (FK user, PROTECT), `booking` (one-to-one `EquipmentBooking`, nullable), `handed_over_at`, `handed_over_by`, `due_at`, `returned_at` (null while open), `received_by`, `condition_out`, `condition_in` (CharField(255)), `close_reason` (`returned`, `lost`; null while open). No code (OD4).
+- **`EquipmentLoanBatch` (loan slip):** `borrower` (FK user, nullable), `borrower_name`, `borrower_contact`, `purpose`, `created_by`, idempotency key. Check `equipment_loan_batch_has_borrower` (user or name); unique (`created_by`, `idempotency_key`).
+- **Fields:** `equipment` (FK, PROTECT), `batch` (FK `EquipmentLoanBatch`, PROTECT), `booking` (one-to-one `EquipmentBooking`, nullable), `handed_over_at`, `handed_over_by`, `due_at`, `returned_at` (null while open), `received_by`, `condition_out`, `condition_in` (CharField(255)), `close_reason` (`returned`, `lost`; null while open). No code (OD4).
 - **PostgreSQL Invariants:** `one_active_loan_per_equipment` (unique `equipment` where `returned_at IS NULL`), `equipment_loan_closed_has_reason`, `equipment_loan_close_reason_valid`, `equipment_loan_due_after_handover`, `equipment_loan_returned_after_handover`.
 
 ### 2.5 `core.labs.models.EquipmentEvent`
@@ -167,7 +171,12 @@ Append-only history of lifecycle and condition changes, written only by `change_
 | `GET /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | Path `{equipment_id}` | Active placement of any kind (bench, station, room, untracked place); 404 when the location is unknown. |
 | `PUT /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | `EquipmentPlacementWriteSerializer` | Set where the unit is; 409 `equipment_already_placed` when it is on a bench and the target differs. |
 | `GET /api/labs/equipment/{equipment_id}/loan` | `EquipmentLoanAPIView` | Path `{equipment_id}` | Open loan; 404 when nobody holds the item. |
-| `POST /api/labs/equipment/{equipment_id}/actions/hand-over` | `EquipmentHandOverAPIView` | `EquipmentHandOverSerializer` | Open a loan (`borrower_id`, `due_at`, `condition_out`). |
+| `POST /api/labs/equipment/{equipment_id}/actions/hand-over` | `EquipmentHandOverAPIView` | `EquipmentHandOverSerializer` | Open a one-line slip (`borrower_id` or `borrower_name`, `borrower_contact`, `purpose`, `due_at`, `condition_out`). |
+| `GET /api/labs/equipment-loans` | `EquipmentLoanListCreateAPIView` | Query `open`, `overdue`, `borrower_id`, `borrower_name`, `equipment_id`, `batch_id` | Loan lines, newest first. |
+| `POST /api/labs/equipment-loans` | `EquipmentLoanListCreateAPIView` | `EquipmentLendBatchSerializer`; `Idempotency-Key` header | Lend several items to one borrower; all or nothing. |
+| `POST /api/labs/equipment-loans/actions/return` | `EquipmentLoanReturnBatchAPIView` | `EquipmentReturnBatchSerializer` | Take several items back; all or nothing. |
+| `POST /api/labs/equipment-loans/actions/extend` | `EquipmentLoanExtendBatchAPIView` | `EquipmentExtendLoansSerializer` | Move `due_at` for listed items or every open line of a slip. |
+| `GET /api/labs/equipment-loan-batches/{batch_id}` | `EquipmentLoanBatchAPIView` | Path `{batch_id}` | One slip with all its lines. |
 | `POST /api/labs/equipment/{equipment_id}/actions/return` | `EquipmentReturnAPIView` | `EquipmentReturnSerializer` | Close the loan; optional `condition` and new place. |
 | `POST /api/labs/equipment/{equipment_id}/actions/extend-loan` | `EquipmentExtendLoanAPIView` | `EquipmentExtendLoanSerializer` | Move `due_at` of a loan without a booking. |
 | `DELETE /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | Path `{equipment_id}` | Remove the active placement; 204 also when there is none. |

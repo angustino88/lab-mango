@@ -12,6 +12,9 @@ from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 CONDITION_NOTE_MAX_LENGTH = 255
+BORROWER_NAME_MAX_LENGTH = 255
+PURPOSE_MAX_LENGTH = 2000
+IDEMPOTENCY_KEY_MAX_LENGTH = 128
 
 
 class LoanCloseReason(models.TextChoices):
@@ -19,9 +22,65 @@ class LoanCloseReason(models.TextChoices):
     LOST = "lost", _("Lost")
 
 
+class EquipmentLoanBatch(TimeStampedModel):
+    """The loan slip: one borrower and purpose for one or more items handed over together.
+
+    The borrower is a user account or, for people without one, a name (at least one of the two).
+    """
+
+    borrower = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="equipment_loan_batches",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    borrower_name = models.CharField(max_length=BORROWER_NAME_MAX_LENGTH, blank=True, default="")
+    borrower_contact = models.CharField(
+        max_length=255, blank=True, default="", help_text="Email or phone of a borrower without an account."
+    )
+    purpose = models.CharField(max_length=PURPOSE_MAX_LENGTH, blank=True, default="")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="equipment_loan_batches_created",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    idempotency_key = models.CharField(max_length=IDEMPOTENCY_KEY_MAX_LENGTH, blank=True, default="")
+    request_hash = models.CharField(max_length=64, blank=True, default="")
+
+    class Meta:
+        app_label = "labs"
+        ordering = ("-created", "-id")
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(borrower__isnull=False) | ~Q(borrower_name=""),
+                name="equipment_loan_batch_has_borrower",
+            ),
+            models.UniqueConstraint(
+                fields=("created_by", "idempotency_key"),
+                condition=~Q(idempotency_key=""),
+                nulls_distinct=False,
+                name="equipment_loan_batch_idempotency_uniq",
+            ),
+        ]
+        indexes = [models.Index(fields=("borrower", "-created"), name="equipment_loan_batch_borr_idx")]
+
+    @property
+    def borrower_label(self) -> str:
+        if self.borrower_name:
+            return self.borrower_name
+        user = self.borrower
+        return (user.display_name or user.username) if user else ""
+
+    def __str__(self) -> str:
+        return f"Loan batch {self.pk} for {self.borrower_label}"
+
+
 class EquipmentLoan(TimeStampedModel):
     equipment = models.ForeignKey("labs.Equipment", related_name="loans", on_delete=models.PROTECT)
-    borrower = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="equipment_loans", on_delete=models.PROTECT)
+    batch = models.ForeignKey(EquipmentLoanBatch, related_name="loans", on_delete=models.PROTECT)
     booking = models.OneToOneField(
         "labs.EquipmentBooking",
         related_name="loan",
@@ -79,8 +138,7 @@ class EquipmentLoan(TimeStampedModel):
             models.Index(
                 fields=("due_at",), condition=Q(returned_at__isnull=True), name="equipment_loan_open_due_idx"
             ),
-            models.Index(fields=("borrower", "-handed_over_at"), name="equipment_loan_borrower_idx"),
         ]
 
     def __str__(self) -> str:
-        return f"Loan {self.pk} of {self.equipment_id} to {self.borrower_id}"
+        return f"Loan {self.pk} of {self.equipment_id} (batch {self.batch_id})"
