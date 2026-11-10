@@ -28,13 +28,17 @@ def _imports(path: Path) -> set[str]:
 
 
 def test_public_surface_exports_application_queries_and_exception():
+    # Surface approved by the owner, including the purchase-draft workflow.
     assert _exports(FEATURE_ROOT / "public.py") == {
         "ProcurementCashFlowAggregate", "aggregate_procurement_cash_flow",
-        "CreatePurchaseInput", "CreatePurchaseItemInput", "CreatePurchaseItemResourceInput",
-        "CreatePurchaseTransactionInput", "PurchaseLineInput", "PurchaseAllocationConflict",
-        "create_purchase", "create_purchase_item", "create_purchase_item_resource",
-        "create_purchase_transaction", "list_purchase_item_resources", "list_purchase_items",
-        "list_purchase_transactions", "list_purchases",
+        "CreateDraftLineInput", "CreatePurchaseInput", "CreatePurchaseItemInput", "CreatePurchaseItemResourceInput",
+        "CreatePurchaseTransactionInput", "DeleteDraftLineInput", "DraftLineInput", "PurchaseLineInput",
+        "UpdateDraftLineInput", "UpdatePurchaseDraftInput",
+        "create_draft_line", "create_purchase", "create_purchase_item", "create_purchase_item_resource",
+        "create_purchase_transaction", "delete_draft_line", "item_etag", "purchase_etag", "update_draft_line",
+        "update_purchase_draft",
+        "get_purchase", "get_purchase_item", "list_purchase_item_resources", "list_purchase_items",
+        "list_purchase_priorities", "list_purchase_transactions", "list_purchases",
     }
 
 
@@ -44,7 +48,7 @@ def test_api_adapters_use_public_and_have_no_direct_model_workflows():
     source = views.read_text(encoding="utf-8-sig")
     assert "core.labs.features.procurement" in imports
     assert "core.labs.features.procurement.public" in imports
-    assert "core.labs.features.procurement.exceptions" not in imports
+    # feature-template.md: any layer may import the feature's business exceptions.
     assert "core.labs.models" not in imports
     assert "public." in source
     assert "transaction.atomic" not in source
@@ -54,27 +58,33 @@ def test_api_adapters_use_public_and_have_no_direct_model_workflows():
 
 
 def test_layer_packages_have_explicit_exports():
-    assert _exports(FEATURE_ROOT / "application" / "__init__.py") == {
-        "CreatePurchaseInput", "CreatePurchaseItemInput", "CreatePurchaseItemResourceInput",
-        "CreatePurchaseTransactionInput", "PurchaseLineInput", "create_purchase",
-        "create_purchase_item", "create_purchase_item_resource", "create_purchase_transaction",
+    application = {
+        "CreateDraftLineInput", "CreatePurchaseInput", "CreatePurchaseItemInput", "CreatePurchaseItemResourceInput",
+        "CreatePurchaseTransactionInput", "DeleteDraftLineInput", "DraftLineInput", "PurchaseLineInput",
+        "UpdateDraftLineInput", "UpdatePurchaseDraftInput",
+        "create_draft_line", "create_purchase", "create_purchase_item", "create_purchase_item_resource",
+        "create_purchase_transaction", "delete_draft_line", "item_etag", "purchase_etag", "update_draft_line",
+        "update_purchase_draft",
     }
-    assert _exports(FEATURE_ROOT / "queries" / "__init__.py") == {
-        "list_purchase_item_resources", "list_purchase_items", "list_purchase_transactions", "list_purchases",
+    assert _exports(FEATURE_ROOT / "application" / "__init__.py") == application
+    # The facade may only re-export what commands.py declares.
+    assert set(_exports(FEATURE_ROOT / "application" / "commands.py")) == application
+    selectors = {
+        "get_purchase", "get_purchase_item", "list_purchase_item_resources", "list_purchase_items",
+        "list_purchase_priorities", "list_purchase_transactions", "list_purchases",
     }
-    assert set(_exports(FEATURE_ROOT / "application" / "commands.py")) == {
-        "CreatePurchaseInput", "CreatePurchaseItemInput", "CreatePurchaseItemResourceInput",
-        "CreatePurchaseTransactionInput", "PurchaseLineInput", "create_purchase", "create_purchase_item",
-        "create_purchase_item_resource", "create_purchase_transaction",
-    }
-    assert set(_exports(FEATURE_ROOT / "queries" / "selectors.py")) == {
-        "list_purchase_item_resources", "list_purchase_items", "list_purchase_transactions", "list_purchases",
+    assert set(_exports(FEATURE_ROOT / "queries" / "selectors.py")) == selectors
+    assert _exports(FEATURE_ROOT / "queries" / "__init__.py") == selectors | {
+        "ProcurementCashFlowAggregate", "aggregate_procurement_cash_flow",
     }
 
 
 def test_exception_contract_is_stable_and_implementation_free():
     exceptions = FEATURE_ROOT / "exceptions.py"
-    assert _exports(exceptions) == {"PurchaseAllocationConflict"}
+    assert _exports(exceptions) == {
+        "PurchaseAllocationConflict", "PurchaseDraftConflict", "PurchaseDraftValidationFailed",
+        "PurchaseETagRequired", "PurchaseMachineWriteForbidden", "PurchaseNotFound", "PurchasePreconditionFailed",
+    }
     assert not any(".application" in module or ".queries" in module for module in _imports(exceptions))
 
 
@@ -82,8 +92,9 @@ def test_commands_have_frozen_inputs_and_keyword_only_actor():
     commands = _module(FEATURE_ROOT / "application" / "commands.py")
     classes = [node for node in commands.body if isinstance(node, ast.ClassDef)]
     assert {node.name for node in classes} == {
-        "CreatePurchaseInput", "CreatePurchaseItemInput", "CreatePurchaseItemResourceInput",
-        "CreatePurchaseTransactionInput", "PurchaseLineInput",
+        "CreateDraftLineInput", "CreatePurchaseInput", "CreatePurchaseItemInput", "CreatePurchaseItemResourceInput",
+        "CreatePurchaseTransactionInput", "DeleteDraftLineInput", "DraftLineInput", "PurchaseLineInput",
+        "UpdateDraftLineInput", "UpdatePurchaseDraftInput",
     }
     for cls in classes:
         assert any(
@@ -102,5 +113,5 @@ def test_commands_have_frozen_inputs_and_keyword_only_actor():
         "create_purchase", "create_purchase_item", "create_purchase_item_resource", "create_purchase_transaction",
     }
     for function in functions:
-        if function.name.startswith("create_"):
+        if function.name.startswith(("create_", "update_", "delete_")):
             assert "actor" in [argument.arg for argument in function.args.kwonlyargs]

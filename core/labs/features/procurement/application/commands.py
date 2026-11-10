@@ -588,7 +588,9 @@ def create_purchase_transaction(
 
 
 __all__ = [
-    "CreatePurchaseInput", "CreatePurchaseItemInput", "CreatePurchaseItemResourceInput",
-    "CreatePurchaseTransactionInput", "PurchaseLineInput", "create_purchase", "create_purchase_item",
-    "create_purchase_item_resource", "create_purchase_transaction",
+    "CreateDraftLineInput", "CreatePurchaseInput", "CreatePurchaseItemInput", "CreatePurchaseItemResourceInput",
+    "CreatePurchaseTransactionInput", "DeleteDraftLineInput", "DraftLineInput", "PurchaseLineInput",
+    "UpdateDraftLineInput", "UpdatePurchaseDraftInput", "create_draft_line", "create_purchase",
+    "create_purchase_item", "create_purchase_item_resource", "create_purchase_transaction", "delete_draft_line",
+    "item_etag", "purchase_etag", "update_draft_line", "update_purchase_draft",
 ]
