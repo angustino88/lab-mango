@@ -7,7 +7,7 @@ import uuid
 import pytest
 from rest_framework.test import APIClient
 
-from core.labs.models import BookingApprovalStatus
+from core.labs.models import BenchBooking, BookingApprovalStatus
 from core.users.public import LabsRole
 from core.users.models import URSGroup
 from core.users.tests.factories import UserFactory
@@ -220,6 +220,9 @@ class TestGetAndUpdateEndpoints:
             )
         assert response.status_code == 200
         assert response.json()["data"]["status"] == {"value": "cancelled", "label": "Cancelled"}
+        stored = BenchBooking.objects.get(pk=booking.pk)
+        assert stored.cancellation_reason == "User cancelled"
+        assert stored.reason != "User cancelled"  # the booking purpose is not overwritten
 
     def test_patch_rejects_expired_status(self, api_client, make_booking, future_window):
         starts_at, ends_at = future_window

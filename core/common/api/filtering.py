@@ -49,6 +49,11 @@ class PositiveIDField(serializers.IntegerField):
 
 
 class StrictBooleanField(serializers.BooleanField):
+    # DRF treats a QueryDict as HTML form input and turns an absent boolean into
+    # False (BooleanField.default_empty_html). Query filters must keep "absent"
+    # distinct from "false", whichever serializer class hosts this field.
+    default_empty_html = serializers.empty
+
     def to_internal_value(self, data: Any) -> bool:
         if data not in ("true", "false"):
             raise serializers.ValidationError("Use true or false.", code="invalid_choice")

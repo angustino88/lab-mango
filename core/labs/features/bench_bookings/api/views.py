@@ -137,7 +137,12 @@ class BenchBookingCancelActionAPIView(BenchBookingAPIView):
             return error
         command_input = UpdateBenchBookingInput(
             booking_id=booking_id,
-            fields={"status": BookingStatus.CANCELLED, "reason": serializer.validated_data.get("reason", "")},
+            fields={
+                "status": BookingStatus.CANCELLED,
+                # The payload's "reason" explains the cancellation; the booking's own
+                # purpose (BenchBooking.reason) must not be overwritten.
+                "cancellation_reason": serializer.validated_data.get("reason", ""),
+            },
         )
         return self._execute(
             lambda: update_bench_booking(actor=request.user, data=command_input),
@@ -306,7 +311,12 @@ class BenchBookingCancelByCodeActionAPIView(BenchBookingAPIView):
         booking = get_bench_booking_by_code(booking_code=booking_code)
         command_input = UpdateBenchBookingInput(
             booking_id=booking.pk,
-            fields={"status": BookingStatus.CANCELLED, "reason": serializer.validated_data.get("reason", "")},
+            fields={
+                "status": BookingStatus.CANCELLED,
+                # The payload's "reason" explains the cancellation; the booking's own
+                # purpose (BenchBooking.reason) must not be overwritten.
+                "cancellation_reason": serializer.validated_data.get("reason", ""),
+            },
         )
         return self._execute(
             lambda: update_bench_booking(actor=request.user, data=command_input),
