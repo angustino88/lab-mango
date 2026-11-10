@@ -44,13 +44,17 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 - **Failure cases:** a guest account or a second verified domain with the same local part; a UPN reassigned
   to a new employee before the previous owner ever logged in. Whoever logs in first owns the account.
 - **Also:** contradicts the model docstring "No email-based linking" (`models/entra_identity.py:1`).
+- **Constraint (owner, 2026-11-10):** URS provides usernames only, not Entra object IDs. Binding by name
+  therefore stays, and the safeguards below must make it safe.
 - **Proposal:**
-  - [ ] Match the full UPN only, against an allow-list of tenant domains; drop the local-part match.
+  - [ ] Accept the local-part match only when the UPN domain is on an explicit allow-list of corporate
+    domains (setting, empty by default, startup check in production). Reject every other domain.
   - [ ] Reject guest accounts (request the optional `acct` claim, or equivalent).
-  - [ ] Default the switch off in production; require an explicit opt-in.
-  - [ ] Preferred end state: URS sync (or an operator import) supplies the Entra object ID, so binding
-    never relies on a name.
-  - [ ] Emit an audit event for every automatic bind.
+  - [ ] Bind only accounts that never had a binding before; if a previously bound account is unlinked,
+    require the operator command to bind it again (no automatic re-bind).
+  - [ ] Emit an audit event for every automatic bind, and alert on binds of accounts older than a
+    threshold (a long-dormant account claimed by a new person is the risky case).
+  - [ ] Keep `ENTRA_BIND_BY_USERNAME` as the kill switch and document when to turn it off.
 
 #### H2. No absolute session lifetime; Entra offboarding is not propagated
 
@@ -79,9 +83,14 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 
 - **Evidence:** throttles use `ScopedRateThrottle` keyed by client address; `NUM_PROXIES` is not set in any
   settings module. DRF then keys on the whole `X-Forwarded-For` value, which the client controls.
-  *Not verified:* the reverse-proxy configuration.
+- **Deployment (owner, 2026-11-10):** a single Nginx reverse proxy sits in front of the app. *Not
+  verified:* the Nginx configuration itself, which is not in this repository.
 - **Proposal:**
-  - [ ] Set `NUM_PROXIES` to the real proxy depth and add a test.
+  - [ ] Set `NUM_PROXIES = 1` in production so DRF uses the address Nginx appended, not the client's value.
+  - [ ] In Nginx, set `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` (or `$remote_addr`
+    to discard client-supplied values) and `X-Forwarded-Proto $scheme`; ensure the app port is reachable
+    only from Nginx. Add the Nginx snippet to the deployment docs.
+  - [ ] Add a test that two requests with different spoofed `X-Forwarded-For` prefixes share one counter.
   - [ ] Add a per-username throttle on the non-production password login path.
 
 #### H5. URS sync, the source of roles and account activation, defaults to unverified TLS
@@ -163,7 +172,7 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 - **Evidence:** the caller supplies the code and the server never verifies it
   (`send_otp/serializer.py`, `send_otp/service.py:15-32`). Any authenticated user or API-key holder can send
   arbitrary text to any mailbox in the corporate domain (`send_otp/api.py:17`). The spec calls this
-  "multi-factor OTP delivery".
+  "multi-factor OTP delivery". Not mounted in production; risk is limited to non-production environments.
 - **Proposal:** [ ] remove it from the auth feature, or redesign with server-generated, hashed, expiring,
   attempt-limited codes and a verify endpoint.
 
@@ -173,8 +182,13 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
   (`core/common/api/command_views.py:37`, `core/common/api/options.py:97`) and on `GetMeView`
   (`profile/get_me/api.py:17`). A key bypasses Entra, carries no user, and cannot be object-scoped
   (AGENTS.md rule 5). `GetMeView` then looks up `request.user.pk` for an anonymous user (`:27`).
-- **Proposal:** [ ] inventory which callers need keys, restrict keys to those endpoints, and bind each key
-  to a service identity with explicit scope. Remove the key path from user-centric endpoints.
+- **Usage (owner, 2026-11-10):** API keys are used only for API testing.
+- **Proposal:**
+  - [ ] Disable the API-key path in production: make `HasAPIKey` a no-op (always deny) when
+    `ENTRA_SSO_ONLY` is on, or remove it from the production permission set, and add a startup check.
+  - [ ] Remove it from user-centric endpoints such as `GetMeView`, where a key has no user to return.
+  - [ ] For testing, prefer real test users with tokens over keys, so tests exercise the same
+    authorization path as production.
 
 #### M12. Token signing shares Django's secret key
 
@@ -232,11 +246,18 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 - [ ] Regenerate OpenAPI and update `auth/docs/spec.md` in the same change when the contract moves.
 - [ ] When an item is approved and implemented, fold its rule into the feature spec and remove it here.
 
+## Owner decisions (2026-11-10)
+
+| Question | Answer | Effect |
+| --- | --- | --- |
+| Reverse-proxy chain | Single Nginx | H4: `NUM_PROXIES = 1` plus Nginx header settings |
+| Can URS provide Entra object IDs | No, usernames only | H1: keep name binding, add the safeguards listed |
+| Who uses API keys | API testing only | M11: disable the key path in production |
+| Location of this document | `docs/proposals/` confirmed | — |
+
 ## Open questions for the owner
 
-1. Is the frontend served from the same site as the API? M3's `SameSite=Strict` assumes yes.
-2. What is the reverse-proxy chain in production (H4)?
-3. Can URS provide Entra object IDs (H1)?
-4. Which callers use API keys today (M10, M11)?
-5. Is this path (`docs/proposals/`) the right home for this document? It was chosen per
-   `docs/ai-team/documentation-map.md`, "Proposal not yet approved".
+1. **Frontend and API addresses (M3).** Which URLs does the browser open for the web app and for the
+   API? Example: `https://labmango.example.com` and `https://labmango.example.com/api` are the same site;
+   `https://labmango.example.com` and `https://api.other-domain.com` are not. If they are the same site,
+   the refresh cookie can use the stricter `SameSite=Strict`; otherwise it must stay `Lax` (or `None`).
