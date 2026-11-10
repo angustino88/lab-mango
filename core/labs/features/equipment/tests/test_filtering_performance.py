@@ -189,7 +189,7 @@ def test_m2m_filter_and_separate_reverse_filter_calls(cardinality_inventory):
         {"kind": 0},
     ],
 )
-def test_generic_list_count_page_annotation_parity(cardinality_inventory, filters, django_assert_num_queries):
+def test_generic_list_count_page_annotation_parity(cardinality_inventory, filters, django_assert_max_num_queries):
     if "kind" in filters:
         filters = {"kind": cardinality_inventory[0].kind_id}
     rows = list_equipment(**filters)
@@ -201,7 +201,8 @@ def test_generic_list_count_page_annotation_parity(cardinality_inventory, filter
             assert not field.one_to_many and not field.many_to_many
     legacy = rows.distinct()
     assert rows.count() == legacy.count()
-    with django_assert_num_queries(1):
+    # 1 for the page, plus 1 for the active-placement prefetch when the page has rows.
+    with django_assert_max_num_queries(2):
         page = list(rows[:25])
     old_page = list(legacy[:25])
     assert [row.pk for row in page] == [row.pk for row in old_page]

@@ -102,3 +102,31 @@ def test_equipment_responses_include_placement(coordinator_client, unit):
 
     coordinator_client.delete(f"{ROOT}{unit.pk}/placement")
     assert coordinator_client.get(f"{ROOT}{unit.pk}").data["data"]["placement"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("path", ["", "computing"])
+def test_list_placement_query_count_does_not_grow_with_rows(coordinator_client, unit, path):
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    room = Room.objects.create(sku="PL-API-QR", name="Store Q")
+
+    def seed(index):
+        extra = ComputingEquipment.objects.create(sku=f"PL-API-Q{path}{index}", name="Q", kind=unit.kind)
+        coordinator_client.put(f"{ROOT}{extra.pk}/placement", {"room_id": room.pk}, format="json")
+
+    def count():
+        with CaptureQueriesContext(connection) as context:
+            response = coordinator_client.get(f"{ROOT}{path}".rstrip("/"), {"page_size": 50})
+        assert response.status_code == 200
+        assert all(row["placement"] is not None for row in response.data["data"] if row["sku"].startswith("PL-API-Q"))
+        return len(context.captured_queries)
+
+    for index in range(2):
+        seed(index)
+    count()  # warm per-process caches
+    small = count()
+    for index in range(2, 8):
+        seed(index)
+    assert count() == small
