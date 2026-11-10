@@ -37,6 +37,7 @@ someone's hands.
 | OD4 | Reminder cadence as in AC6. |
 | OD5 | An uncollected reservation expires 15 minutes after its start, matching bench bookings. |
 | OD6 | Coordinators are scoped per department: a booking is handled by a coordinator of the unit's department. |
+| OD7 | The first version is coordinator-operated. Engineer requests may be added later. |
 
 Consequence of OD3, accepted unless the owner says otherwise: a unit that is on loan today cannot be
 booked for next week, even if it is due back tomorrow.
@@ -169,7 +170,7 @@ loan, under the equipment row lock.
 
 ## Authorization and threat notes
 
-- First version is coordinator-operated (operating model 1 of the earlier draft; **owner to confirm**).
+- First version is coordinator-operated (OD7; operating model 1 of the earlier draft).
   Engineers see only their own bookings. The existing `approval_status` fields allow adding an
   engineer-request flow later without a schema change.
 - Object scope follows equipment scope: the unit's department (OD6). Until the coordinator-to-department
@@ -227,7 +228,6 @@ bookings created, expired, overdue loans, reminders sent, reminder delivery fail
 
 ## Open questions / decisions needed from the owner
 
-1. Confirm the first version is coordinator-operated, with engineer requests added later.
-2. How close a booking must be to an overdue loan before its requester is warned (suggested: 24 hours).
-3. Whether any booking length requires approval, or all coordinator-entered bookings are approved on creation.
-4. Whether bookings may be built before the equipment state split, accepting the temporary bridge.
+1. How close a booking must be to an overdue loan before its requester is warned (suggested: 24 hours).
+2. Whether any booking length requires approval, or all coordinator-entered bookings are approved on creation.
+3. Whether bookings may be built before the equipment state split, accepting the temporary bridge.

@@ -46,6 +46,8 @@ Acceptance criteria for the redesign:
 | OD8 | Legacy `transferred` means handed to another organisation. It gets its own lifecycle value, separate from `retired`. |
 | OD9 | Coordinators are scoped per department. |
 | OD10 | Step 0 (defect fixes D1 to D5) may proceed now, independently of the redesign. |
+| OD11 | Administrators assign coordinators to departments. One coordinator may hold several departments. |
+| OD12 | Catalog reference data (categories, kinds, types, manufacturers, product models, specifications) is writable by administrators only. |
 
 ## Current state (from repository evidence)
 
@@ -280,13 +282,14 @@ representative-volume query plans are not verified.
 - Department scope (OD9) is a second stage, because the link it needs does not exist yet. **Evidence:**
   Labs roles are global, granted through a URS group (`core/users/models/urs_group.py:17`), and
   `User.department` is free text (`core/users/models/user.py:41`), not a reference to `labs.Department`.
-  **Proposed:** an explicit coordinator-to-department assignment table; never match on the text field.
+  **Proposed:** an explicit coordinator-to-department assignment table (many-to-many, written by
+  administrators only, OD11); never match on the text field.
   A coordinator may write equipment whose `department` is one of theirs. Lab administrators keep
   lab-wide write access. Reads stay open to authenticated users.
 - Consequences of department scope to design for: units with no department are writable by
   administrators only, so backfill `department` before enforcing; moving a unit between departments needs
   rights on both, or an administrator; a booking is handled by a coordinator of the unit's department,
-  whoever the requester is; catalog reference data stays lab-wide (administrator or any coordinator, to confirm).
+  whoever the requester is; catalog reference data is lab-wide and administrator-only (OD12).
 - Hand-over and return are coordinator-only.
 - `location_note`, `condition_out`, `condition_in` are free text shown to other users: length-capped and
   never rendered as HTML.
@@ -379,5 +382,3 @@ Found while reviewing; each is outside the core redesign and can be scheduled se
 1. Is a three-level taxonomy (category, kind, type) needed, or can one level go?
 2. Should a flag on `Room` mark storage rooms for reporting?
 3. Sunset period for the deprecated `change-status` and `assignment` routes.
-4. Who assigns coordinators to departments, and may one coordinator hold several departments?
-5. Who may write catalog reference data once department scope is enforced: administrators only, or any coordinator?
