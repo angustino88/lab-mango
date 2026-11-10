@@ -408,6 +408,27 @@ Decisions that refine the step 1 row above:
 | Read side | `display_status = borrowed` at priority 4. Responses add `loan` (active loan or `null`: borrower, handed over, due, `overdue`), prefetched once per page. List filters `on_loan`, `loan_overdue`. |
 | API | `GET /equipment/{id}/loan`; `POST /equipment/{id}/actions/hand-over`, `.../actions/return`, `.../actions/extend-loan` (coordinator). Overdue reminders belong to step 4 (bookings). |
 
+
+### Step 6 implementation plan (draft, decisions pending; 2026-11-10)
+
+**Evidence (2026-11-10):** 12 subclasses of `Equipment` by multi-table inheritance. Laboratory, accessory,
+debugging and other add no columns. Typed columns: computing (hostname, MAC, IP, OS, disks, system info,
+monitored devices, RDP file, technical user), display (size, resolution, interfaces), networking (protocol,
+MAC), power (interface, power rating), mechanical and furniture (dimensions, material), instrument
+(interfaces), sample (customer, interfaces, characteristics). Four models point at `ComputingEquipment`:
+`ComputingActivity`, `LabSessionLog`, `MonitoringEvent`, `AgentIdentity`. 134 of 183 equipment paths are the
+12 generated category route sets.
+
+| Topic | Proposal |
+|---|---|
+| Table | One `Equipment` table; the category comes only from `kind.category`, so a category created at runtime works with no migration or route (AC7). |
+| Computing | `ComputingProfile`, one-to-one with `Equipment` and sharing its primary key, holds the computing columns. `ComputingActivity`, `LabSessionLog`, `MonitoringEvent` and `AgentIdentity` point at `Equipment` (same ids, so data keeps its links). RDP generation moves from `save()` into the computing command. |
+| Other typed fields | Decision A below. |
+| Capabilities | `EquipmentCategory` gains `bookable`, `placeable_on_bench`, `calibratable`, `monitored`; commands check them (bench placement, reservation, loan); `api/capabilities.py` reads them. |
+| API | Decision B below. |
+| Data | Decision C below. |
+| Order | 1. profile and capability flags; 2. move computing references; 3. typed fields per decision A; 4. drop subclasses; 5. routes per decision B; 6. tests, OpenAPI, docs. Each part is committed separately with the full suite green. |
+
 ## Observability
 
 Log command name, equipment id, target, actor id, and outcome for every placement, loan, and state
