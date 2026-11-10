@@ -38,11 +38,14 @@ Acceptance criteria for the redesign:
 |---|---|
 | OD1 | Remove `Equipment.storage_room`; use a location (placement) model instead. |
 | OD2 | A storage place may be outside the tracked rooms and stations. It is recorded as text. |
-| OD3 | Bench is virtual; its seven-value `lifecycle_status` is more than is needed. (Proposal below keeps a reduced state; owner to confirm.) |
+| OD3 | Bench is virtual; its seven-value `lifecycle_status` is reduced to four values: `planned`, `in_service`, `out_of_service`, `retired`. |
 | OD4 | A loan has no code of its own. Nothing in the system reads one. |
 | OD5 | Marking equipment lost is always a manual coordinator action. No timer does it or prompts for it. |
 | OD6 | A booking can be created only when the equipment is available at that moment. |
 | OD7 | Overdue reminders: at the due time, one day later, then daily, capped at one week. |
+| OD8 | Legacy `transferred` means handed to another organisation. It gets its own lifecycle value, separate from `retired`. |
+| OD9 | Coordinators are scoped per department. |
+| OD10 | Step 0 (defect fixes D1 to D5) may proceed now, independently of the redesign. |
 
 ## Current state (from repository evidence)
 
@@ -95,7 +98,7 @@ Acceptance criteria for the redesign:
 
 | Axis | Values | Replaces |
 |---|---|---|
-| `lifecycle_state` | `planned`, `in_service`, `retired`, `lost` | `on_order`, `lost`, and soft delete as the only "gone" signal |
+| `lifecycle_state` | `planned`, `in_service`, `transferred_out`, `retired`, `lost` | `on_order`, `transferred`, `lost`, and soft delete as the only "gone" signal |
 | `condition` | `operational`, `in_maintenance`, `out_of_service` | `maintenance`, `broken` |
 
 Both are columns on `Equipment`, set at creation (`planned` or `in_service`, `operational`). History moves
@@ -106,16 +109,19 @@ Allowed transitions:
 | Axis | From | To |
 |---|---|---|
 | lifecycle | `planned` | `in_service`, `retired` |
-| lifecycle | `in_service` | `retired`, `lost` |
+| lifecycle | `in_service` | `transferred_out`, `retired`, `lost` |
 | lifecycle | `lost` | `in_service` (found), `retired` |
+| lifecycle | `transferred_out` | `in_service` (handed back) |
 | lifecycle | `retired` | none (terminal) |
 | condition | any | any other, only while `in_service` |
 
 Rules:
-- Entering `retired` or `lost` requires no active placement on a bench and closes any other active
-  placement. `lost` closes the active loan with reason `lost` and cancels future bookings (OD5: manual only).
+- `transferred_out` means the unit was handed to another organisation (OD8); `retired` means disposed of
+  or scrapped. A transfer records the receiving organisation and date on its `EquipmentEvent`.
+- Entering `transferred_out`, `retired`, or `lost` requires no active placement on a bench and closes any
+  other active placement. `transferred_out` and `retired` also require no active loan. `lost` closes the active loan with reason `lost` and cancels future bookings (OD5: manual only).
 - A condition change never opens or closes a placement (AC4).
-- `in_use`, `available`, `in_storage`, `borrowed`, and `transferred` are no longer statuses. They are read from
+- `in_use`, `available`, `in_storage`, and `borrowed` are no longer statuses. They are read from
   placement and loan.
 
 **Available** (computed, AC3): `lifecycle_state = in_service` and `condition = operational` and no active
@@ -162,7 +168,7 @@ No code field (OD4). Overdue is computed: `returned_at IS NULL AND due_at < now(
 
 ### 4. Bench state
 
-Reduce `Bench.lifecycle_status` to `planned`, `in_service`, `out_of_service`, `retired` (OD3, to confirm).
+Reduce `Bench.lifecycle_status` to `planned`, `in_service`, `out_of_service`, `retired` (OD3).
 Remove `reserved` and `active`; the dashboard computes them from bookings and computing activity. Bench
 booking creation refuses a bench that is not `in_service`. `maintenance` maps to `out_of_service`.
 
@@ -269,9 +275,18 @@ representative-volume query plans are not verified.
 
 ## Authorization and threat notes
 
-- D1 is fixed first and independently: coordinator role for all equipment and catalog writes, deny by default.
-- Object scope: the owning department or group is the natural scope. Whether coordinators are scoped per
-  department or lab-wide is an open question.
+- D1 is fixed first and independently (OD10): coordinator role for all equipment and catalog writes, deny
+  by default. This stage uses the existing global role (`IsLabCoordinator`, `core/users/access.py:95`).
+- Department scope (OD9) is a second stage, because the link it needs does not exist yet. **Evidence:**
+  Labs roles are global, granted through a URS group (`core/users/models/urs_group.py:17`), and
+  `User.department` is free text (`core/users/models/user.py:41`), not a reference to `labs.Department`.
+  **Proposed:** an explicit coordinator-to-department assignment table; never match on the text field.
+  A coordinator may write equipment whose `department` is one of theirs. Lab administrators keep
+  lab-wide write access. Reads stay open to authenticated users.
+- Consequences of department scope to design for: units with no department are writable by
+  administrators only, so backfill `department` before enforcing; moving a unit between departments needs
+  rights on both, or an administrator; a booking is handled by a coordinator of the unit's department,
+  whoever the requester is; catalog reference data stays lab-wide (administrator or any coordinator, to confirm).
 - Hand-over and return are coordinator-only.
 - `location_note`, `condition_out`, `condition_in` are free text shown to other users: length-capped and
   never rendered as HTML.
@@ -309,7 +324,7 @@ Backfill from the latest legacy status:
 | `broken` | `in_service` | `out_of_service` | |
 | `lost` | `lost` | `operational` | |
 | `borrowed` | `in_service` | `operational` | no loan row can be built from text; `location_note` "On loan to <borrower>" and list for coordinator review |
-| `transferred` | open question | | `location_note` from `metadata.destination` |
+| `transferred` | `transferred_out` | `operational` | receiving organisation from `metadata.destination`, date from `metadata.transfer_date`, on the backfilled event |
 
 ## Observability
 
@@ -361,11 +376,8 @@ Found while reviewing; each is outside the core redesign and can be scheduled se
 
 ## Open questions / decisions needed from the owner
 
-1. Confirm the reduced bench state (four values) rather than removing bench status entirely.
-2. What does legacy `transferred` mean: moved to another site but still ours (placement with a note), or
-   handed to another organisation (`retired`)?
-3. Are coordinators scoped per department, or lab-wide?
-4. Is a three-level taxonomy (category, kind, type) needed, or can one level go?
-5. Should a flag on `Room` mark storage rooms for reporting?
-6. Sunset period for the deprecated `change-status` and `assignment` routes.
-7. Approve step 0 (defect fixes) independently of the redesign.
+1. Is a three-level taxonomy (category, kind, type) needed, or can one level go?
+2. Should a flag on `Room` mark storage rooms for reporting?
+3. Sunset period for the deprecated `change-status` and `assignment` routes.
+4. Who assigns coordinators to departments, and may one coordinator hold several departments?
+5. Who may write catalog reference data once department scope is enforced: administrators only, or any coordinator?

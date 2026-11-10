@@ -35,6 +35,8 @@ someone's hands.
 | OD2 | Lost is manual only. |
 | OD3 | Create is allowed only when the equipment is available. |
 | OD4 | Reminder cadence as in AC6. |
+| OD5 | An uncollected reservation expires 15 minutes after its start, matching bench bookings. |
+| OD6 | Coordinators are scoped per department: a booking is handled by a coordinator of the unit's department. |
 
 Consequence of OD3, accepted unless the owner says otherwise: a unit that is on loan today cannot be
 booked for next week, even if it is due back tomorrow.
@@ -60,7 +62,7 @@ booked for next week, even if it is due back tomorrow.
 | Step | Who | Booking | Equipment side (through equipment `public.py`) |
 |---|---|---|---|
 | Create | coordinator | `reserved` | nothing changes |
-| Not collected within the grace period | task | `expired` | nothing changes |
+| Not collected within 15 minutes of the start | task | `expired` | nothing changes |
 | Cancel | coordinator | `cancelled` (reason required) | nothing changes if not handed over |
 | Hand over | coordinator | `in_progress` | `hand_over_equipment`: loan opens, current placement closes |
 | End time passes, not returned | none | stays `in_progress`; shown as overdue | loan stays open; reminders |
@@ -81,7 +83,7 @@ active loan, and calibration not overdue where required.
 | Equipment state | Create | Hand over | Existing future bookings |
 |---|---|---|---|
 | Category not bookable | blocked | n/a | n/a |
-| Not in service (planned, retired, lost) | blocked | blocked | cancelled with notice |
+| Not in service (planned, transferred out, retired, lost) | blocked | blocked | cancelled with notice |
 | In maintenance or out of service | blocked | blocked | flagged for the coordinator |
 | Calibration overdue (when required) | blocked | blocked | flagged for the coordinator |
 | Placed on a bench | blocked (reserved through the bench booking) | n/a | n/a |
@@ -170,7 +172,8 @@ loan, under the equipment row lock.
 - First version is coordinator-operated (operating model 1 of the earlier draft; **owner to confirm**).
   Engineers see only their own bookings. The existing `approval_status` fields allow adding an
   engineer-request flow later without a schema change.
-- Object scope follows equipment scope (department or lab-wide), an open question in the redesign.
+- Object scope follows equipment scope: the unit's department (OD6). Until the coordinator-to-department
+  assignment exists (see the redesign), the global coordinator role applies.
 - `requester` is who the booking is for; `creator` is the coordinator who entered it. Reminders go to the requester.
 - Free-text fields (`reason`, conditions, notes) are length-capped and treated as untrusted on output.
 
@@ -225,7 +228,6 @@ bookings created, expired, overdue loans, reminders sent, reminder delivery fail
 ## Open questions / decisions needed from the owner
 
 1. Confirm the first version is coordinator-operated, with engineer requests added later.
-2. Grace period before an uncollected reservation expires (15 minutes, matching bench bookings?).
-3. How close a booking must be to an overdue loan before its requester is warned (suggested: 24 hours).
-4. Whether any booking length requires approval, or all coordinator-entered bookings are approved on creation.
-5. Whether bookings may be built before the equipment state split, accepting the temporary bridge.
+2. How close a booking must be to an overdue loan before its requester is warned (suggested: 24 hours).
+3. Whether any booking length requires approval, or all coordinator-entered bookings are approved on creation.
+4. Whether bookings may be built before the equipment state split, accepting the temporary bridge.
