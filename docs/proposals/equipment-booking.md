@@ -1,260 +1,231 @@
-# Design: Equipment Booking & Equipment Lifecycle Architecture
+# Design: Equipment booking
 
-- **Tier:** T2 · **Status:** Draft / Investigation Complete · **Date:** 2026-10-25
-- **Domain:** Labs (`core/labs/features/equipment_bookings`)
-- **Related Features:** `equipment`, `bench_bookings`, `users`
+- Tier: T2 · Status: Draft, owner decisions recorded below, not approved for implementation · Date: 2026-11-10
+- Domain: Labs (`core/labs/features/equipment_bookings`, a feature that does not exist yet)
+- Depends on: [equipment management redesign](equipment-management-redesign.md), which owns the
+  definitions of equipment state, `EquipmentPlacement`, `EquipmentLoan`, and "available". This document
+  does not repeat them.
 
----
+This revision replaces the earlier draft, which set the equipment status to `BORROWED` with JSON metadata.
+The central rule now is: **a booking is a calendar entry; a loan is physical custody.** The booking
+feature never writes equipment state directly.
 
-## 1. Executive Summary & Problem Statement
+## Problem and acceptance criteria
 
-This document details the architectural investigation and design for the **Equipment Booking** feature in Lab Mango, focusing specifically on:
-1. The interaction and invariants between **Equipment Booking Schedule** and **Equipment Operational Lifecycle Status**.
-2. An evaluation of the **`BORROWED`** operational status, its metadata requirements, and whether a new status is needed.
-3. The real-world **physical custody problem** (avoiding "phantom availability" caused by automated completion).
-4. The **authorization and persona boundary**: how booking operates when regular engineers do not directly manage or view individual equipment devices, and only Lab Coordinators hold inventory permissions.
+Engineers need portable equipment (oscilloscopes, cameras, debuggers) for a period. The lab needs to
+prevent double allocation, know who holds each unit, and never show a unit as free while it is still in
+someone's hands.
 
----
+| # | Criterion |
+|---|---|
+| AC1 | A unit cannot have two reserving bookings that overlap in time. |
+| AC2 | A booking can be created only when the unit is available at that moment (owner decision). |
+| AC3 | Handing over a unit opens exactly one loan and closes its current placement. |
+| AC4 | A booking never completes automatically; only a recorded return completes it. |
+| AC5 | An uncollected reservation expires after a grace period and frees the calendar. |
+| AC6 | Overdue loans trigger reminders at the due time, one day later, then daily, capped at one week. |
+| AC7 | Marking a unit lost is a manual coordinator action; it closes the loan and cancels future bookings. |
+| AC8 | A walk-up loan uses the same path: a booking that starts now with immediate hand-over. |
 
-## 2. Current State (Repository Evidence)
+## Owner decisions recorded (2026-11-10)
 
-### 2.1 Concrete Persistence Models
-* **`labs.EquipmentBooking`** (`core/labs/models/booking/equipment_booking.py`):
-  * Inherits from abstract `Booking` (`booking_code`, `starts_at`, `ends_at`, `status`, `approval_status`, `project`, `approved_by`, `reason`, `cancellation_reason`).
-  * Foreign key: `equipment = ForeignKey("labs.Equipment", related_name="bookings", on_delete=models.PROTECT)`.
-  * Indexes:
-    * `equipment_booking_schedule_idx`: `(equipment, starts_at, ends_at)`.
-    * `equipment_booking_state_idx`: `(equipment, status, approval_status)`.
-  * Check Constraint: `ends_at > starts_at`.
-* **`labs.EquipmentStatusRecord`** (`core/labs/models/resource/equipment/equipment.py`):
-  * Append-only status log with `equipment`, `status`, `metadata: JSONField`, `creator`, `created`.
-  * Indexed by `(equipment, -created, -id)` for deterministic tiebreakers.
-* **`labs.EquipmentAssignment`** (`core/labs/models/resource/equipment/assignment.py`):
-  * Links equipment to a `Bench`.
-  * DB Constraint: `one_active_bench_per_equipment` (`UniqueConstraint(equipment, condition=unassigned_at IS NULL)`).
+| # | Decision |
+|---|---|
+| OD1 | No booking code or other code on the loan; nothing in the system reads one. |
+| OD2 | Lost is manual only. |
+| OD3 | Create is allowed only when the equipment is available. |
+| OD4 | Reminder cadence as in AC6. |
 
-### 2.2 Operational Status Persistence & Validation
-* **`_status_transition.py`** (`core/labs/features/equipment/application/_status_transition.py`):
-  * `record_equipment_status(equipment, status, details, actor)`:
-    * Validates status against `EquipmentStatus.values`.
-    * If `status == IN_USE`: requires `bench_id`, manages `EquipmentAssignment`.
-    * If `status != IN_USE`: closes any open `EquipmentAssignment` (`unassigned_at = now()`).
-    * Appends `EquipmentStatusRecord` with metadata.
-* **`BorrowedStatusDetailsSerializer`** (`core/labs/features/equipment/api/serializers.py`):
-  * Requires explicit metadata fields: `borrower`, `borrow_date`, `expected_return_date`, `purpose`, `condition`, `responsible_person`, `notes`.
+Consequence of OD3, accepted unless the owner says otherwise: a unit that is on loan today cannot be
+booked for next week, even if it is due back tomorrow.
 
-### 2.3 User Permissions & Roles
-* **`IsLabCoordinator`** (`core/users/access.py` / `core/users/features/groups/docs/spec.md`):
-  * Role hierarchy: `Admin` > `Coordinator` > `User`.
-  * Specifically designated for: *"Equipment lifecycle management, booking approvals, status changes."*
-  * Regular engineers/lab members do not have write access to equipment inventory or status transitions.
+## Current state (from repository evidence)
 
----
+- `labs.EquipmentBooking` exists (`core/labs/models/booking/equipment_booking.py`). It inherits the
+  abstract `Booking` (`booking_code`, `starts_at`, `ends_at`, `status`, `approval_status`, `project`,
+  `requester`, approval and cancellation fields) and carries the exclusion constraint
+  `equipment_booking_no_overlap` over reserving bookings, plus schedule and state indexes.
+- `BOOKING_STATUS_TRANSITIONS` (`core/labs/models/booking/base.py`) defines
+  `reserved → in_progress | cancelled | expired` and `in_progress → completed | cancelled`.
+- `BookingNotification` (`core/labs/models/booking_notification.py`) already has an `equipment_booking`
+  foreign key and a unique `dedupe_key`.
+- No feature package, routes, commands, or tasks for equipment booking exist. `bookable` is advertised
+  for every category (`core/labs/features/equipment/api/capabilities.py`).
+- Roles: `IsLabCoordinator` is used by bench booking approval and by computing activity writes.
 
-## 3. Relationship: Equipment Lifecycle vs. Booking Workflow
+## Proposed behavior and invariants
 
-In Lab Mango, **Resource Lifecycle Status**, **Booking Workflow**, and **Bench Assignment** are three orthogonal, decoupled state tracks:
+### Flow
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│ TRACK 1: Equipment Lifecycle / Operational Status                      │
-│ (Owner: core/labs/features/equipment, Model: EquipmentStatusRecord)    │
-│ Values: available | in_use | in_storage | transferred | borrowed |     │
-│         maintenance | broken | lost | on_order                         │
-└────────────────────────────────────┬───────────────────────────────────┘
-                                     │ Validates eligibility at booking time
-                                     ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│ TRACK 2: Equipment Booking Schedule State Machine                      │
-│ (Owner: Equipment Bookings, Model: EquipmentBooking -> Booking)        │
-│ Values: reserved ──> in_progress ──> completed                         │
-│             │              │                                           │
-│             └──> cancelled └──> cancelled                              │
-│             │                                                          │
-│             └──> expired                                               │
-└────────────────────────────────────────────────────────────────────────┘
-```
+| Step | Who | Booking | Equipment side (through equipment `public.py`) |
+|---|---|---|---|
+| Create | coordinator | `reserved` | nothing changes |
+| Not collected within the grace period | task | `expired` | nothing changes |
+| Cancel | coordinator | `cancelled` (reason required) | nothing changes if not handed over |
+| Hand over | coordinator | `in_progress` | `hand_over_equipment`: loan opens, current placement closes |
+| End time passes, not returned | none | stays `in_progress`; shown as overdue | loan stays open; reminders |
+| Extend | coordinator | `ends_at` moves | loan `due_at` moves in the same transaction |
+| Return | coordinator | `completed` | `return_equipment`: loan closes with condition; coordinator records the new placement |
+| Marked lost | coordinator, on the equipment | `cancelled` with reason | loan closes with reason `lost`; future bookings cancelled with notice |
 
-### 3.1 Evaluation of the 9 Operational Statuses
+Overdue is computed (`status = in_progress` and `ends_at < now`), not a stored state.
 
-| Status | Operational Meaning | Standalone Equipment Booking Behavior |
-|---|---|---|
-| **`AVAILABLE`** | On the shelf, operational, unassigned. | **Primary bookable status.** Eligible for reservations. |
-| **`BORROWED`** | Checked out by a user (active booking or manual loan). | **Active booking state.** Non-bookable. Reverts to `AVAILABLE` on check-out/return. |
-| **`IN_USE`** | Mounted to a `Bench` via `EquipmentAssignment`. | **Ineligible for standalone booking.** Reserved via `BenchBooking`. |
-| **`IN_STORAGE`** | In warehouse/cabinet. | **Non-bookable.** Must be moved to `AVAILABLE` before booking. |
-| **`MAINTENANCE`** | In calibration or repair. | **Non-bookable.** Any overlapping reservations are blocked. |
-| **`BROKEN`** | Inoperative / hardware failure. | **Non-bookable.** Future reservations cancelled with notice. |
-| **`LOST`** | Missing physical asset. | **Non-bookable.** Future reservations cancelled. |
-| **`TRANSFERRED`** | Relocated to another site. | **Non-bookable.** |
-| **`ON_ORDER`** | Procured, not yet delivered. | **Non-bookable.** |
+The actions are named `hand-over` and `return`. The earlier draft called them "checkin" and "checkout",
+which is the reverse of common usage.
 
-### 3.2 Invariants Across Domains
-1. **Unassigned Only:** Only equipment with **no active bench assignment** (`unassigned_at IS NOT NULL` or never assigned) is eligible for standalone `EquipmentBooking`. Bench-attached equipment is reserved as part of the workspace through `BenchBooking`.
-2. **Deny-by-Default Terminal States:** Once a booking enters `completed`, `cancelled`, or `expired`, it can never transition back to an active state (`BOOKING_STATUS_TRANSITIONS` in `core/labs/models/booking/base.py`).
-3. **Half-Open Interval Overlap Rule:** A reservation conflicts with an existing booking if:
-   $$\text{existing.starts\_at} < \text{requested.ends\_at} \quad\land\quad \text{existing.ends\_at} > \text{requested.starts\_at}$$
-   where existing booking is in an active reserving state (`is_reserving = status IN ('reserved', 'in_progress') AND approval_status IN ('pending', 'approved')`).
+### How equipment state gates booking
 
----
+"Available" is defined in the redesign document: in service, operational, not placed on a bench, no
+active loan, and calibration not overdue where required.
 
-## 4. Evaluation of the `BORROWED` Status
+| Equipment state | Create | Hand over | Existing future bookings |
+|---|---|---|---|
+| Category not bookable | blocked | n/a | n/a |
+| Not in service (planned, retired, lost) | blocked | blocked | cancelled with notice |
+| In maintenance or out of service | blocked | blocked | flagged for the coordinator |
+| Calibration overdue (when required) | blocked | blocked | flagged for the coordinator |
+| Placed on a bench | blocked (reserved through the bench booking) | n/a | n/a |
+| On loan, including overdue | blocked | blocked by the one-active-loan rule | flagged when the next booking is near |
+| Available | allowed, subject to the overlap rule | allowed | n/a |
 
-### 4.1 Do We Need a New Status (e.g., `BOOKED`)?
-**No. We should use `EquipmentStatus.BORROWED` directly.**
+Related rule on the equipment side: placing a unit on a bench is refused while it has reserving future bookings.
 
-* **Domain Semantics:** When a portable device (oscilloscope, multimeter, camera) is handed to an engineer for an active booking, the physical reality is that the item is **borrowed** and off the shelf. "Booked" refers to a calendar reservation (which may be for next week), not physical custody today.
-* **Database Stability:** `EquipmentStatus.BORROWED` is already a fully migrated PostgreSQL enum choice (`core/labs/migrations/0001_initial.py`). Adding a new status requires database schema migrations.
-* **API & Serialization Parity:** `BorrowedStatusDetailsSerializer` is already implemented and tested in `core/labs/features/equipment/api/serializers.py`.
-* **Analytics Compatibility:** Analytics modules (`core/labs/features/analytics/queries/utilization.py`) already count `BORROWED` as in-circulation equipment.
+### Invariants
 
-### 4.2 Metadata Construction on Check-In
-When an equipment booking is checked in (activated), the command supplies all required fields to `record_equipment_status`:
+1. Overlap: `equipment_booking_no_overlap` (existing exclusion constraint, half-open interval).
+2. Terminal booking states never revive (existing transition table).
+3. At most one active loan per unit (`one_active_loan_per_equipment`, defined in the redesign).
+4. A booking in `in_progress` has exactly one loan; a loan linked to a booking is closed before the booking completes.
+5. The booking feature changes equipment only through equipment's public commands.
 
-```python
-details = {
-    "source": "booking",
-    "booking_id": booking.pk,
-    "booking_code": booking.booking_code,
-    "borrower": booking.creator.get_full_name() or booking.creator.username,
-    "responsible_person": actor.get_full_name() or actor.username,
-    "borrow_date": timezone.now().date().isoformat(),
-    "expected_return_date": booking.ends_at.date().isoformat(),
-    "purpose": booking.reason or (f"Project: {booking.project.name}" if booking.project else "Equipment Booking"),
-    "condition": command_input.condition or "Good",
-    "notes": f"Checked out via booking {booking.booking_code}. {command_input.notes or ''}".strip(),
-}
-```
-
-### 4.3 Coexistence of Manual Loans and Automated Bookings
-Manual status changes and automated booking check-ins can safely coexist:
-1. **Provenance Tracking:** `EquipmentStatusRecord.metadata["source"]` distinguishes `"manual"` vs. `"booking"`.
-2. **Safe Reversion Guard:** On booking completion, before moving the equipment back to `AVAILABLE`, the system verifies that the current status record was generated by that specific booking (`metadata.booking_id == booking.id`). If an operator manually set the item to `MAINTENANCE` or `BROKEN` during the booking, the booking system **will not** overwrite the operator's decision.
-
----
-
-## 5. Physical Custody & The Role of the Lab Coordinator
-
-### 5.1 The Phantom Availability Risk
-Unlike a bench (which is fixed/virtual and can automatically terminate sessions when time expires), equipment is **physical hardware**:
-* If Celery automatically completes an `in_progress` booking when `ends_at` passes and sets equipment back to `AVAILABLE`, but the engineer hasn't physically brought the device back, the system creates **phantom availability**.
-* A second engineer will see the item as `AVAILABLE`, attempt to reserve or retrieve it, and find an empty shelf.
-
-### 5.2 Automation Rules for Equipment
-* **Auto-Expire (Unclaimed Reservations): YES.** If an engineer does not pick up the equipment within a grace period (e.g. 15 minutes after `starts_at`), the reservation moves to `EXPIRED`. Because the device was never handed out, it remained `AVAILABLE` on the shelf. The calendar window is freed.
-* **Auto-Complete (Scheduled End Reached): NO.** When `ends_at` arrives, the booking moves to an **Overdue** sub-state (still `status=in_progress`, but flagged `is_overdue=True`). The equipment **remains `BORROWED`** until a human coordinator confirms physical return.
-* **Overdue Reminders: YES.** Celery periodic tasks email the borrower and coordinator when a device is overdue.
-
----
-
-## 6. Three Operating Models (For Product Owner Confirmation)
-
-Because regular engineers do not have permission to view individual equipment inventory directly, the equipment booking feature can be deployed under one of three operating models:
-
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ MODEL 1: Coordinator-Only Planning & Allocation Tool                                   │
-│                                                                                        │
-│ • Audience: Lab Coordinators and Lab Admins only.                                      │
-│ • Flow: Coordinators enter bookings on behalf of project teams to reserve critical     │
-│   hardware in advance and prevent scheduling collisions across projects.               │
-│ • Custody: Coordinator clicks "Issue" (check-in) and "Return" (check-out).             │
-└────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ MODEL 2: Engineer Request ──> Coordinator Allocation & Approval Flow                   │
-│                                                                                        │
-│ • Audience: Engineers request category/project needs; Coordinators approve & allocate. │
-│ • Flow:                                                                                │
-│   1. Engineer requests: "Need 1x Oscilloscope for Project X from 10:00 to 14:00".       │
-│   2. Coordinator reviews request, selects specific device SKU (e.g. EQ-OSC-02), and    │
-│      approves the booking.                                                             │
-│   3. Coordinator hands over physical device at counter and activates check-in.         │
-│   4. Coordinator receives returned device, inspects condition, and checks out.         │
-└────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ MODEL 3: Status-Only Management (No New Booking Feature Needed)                        │
-│                                                                                        │
-│ • If the lab only does immediate counter checkout without advance scheduling:          │
-│ • The existing POST /api/labs/equipment/{id}/actions/change-status with status="borrowed"│
-│   and BorrowedStatusDetailsSerializer already satisfies this completely.              │
-│ • No equipment booking feature or booking codes are required.                          │
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 7. Technical Architecture & Specification (For Models 1 & 2)
-
-### 7.1 Package Layout
-Following the project's strict layering rules ([feature template](../architecture/feature-template.md)):
+## Module ownership and allowed dependencies
 
 ```text
 core/labs/features/equipment_bookings/
-├── __init__.py
-├── urls.py
-├── contracts.py
-├── exceptions.py
-├── public.py
-├── tasks.py
-├── api/
-│   ├── __init__.py
-│   ├── views.py
-│   ├── serializers.py
-│   └── urls.py
-├── application/
-│   ├── __init__.py
-│   ├── locks.py                  # select_for_update() row lock on Equipment
-│   ├── policies.py               # Pure duration, grace period, and status checks
-│   ├── booking_codes.py          # Opaque SHA-256 unique code generation
-│   ├── create_booking.py         # Atomic creation command
-│   ├── update_booking.py         # Atomic reschedule / update command
-│   └── state_transitions.py      # Check-in, check-out, cancel, and reconciliation
-├── queries/
-│   ├── __init__.py
-│   └── equipment_bookings.py     # Filtered list, detail, code lookup, overlap checks, options
+├── public.py, contracts.py, exceptions.py, urls.py, tasks.py
+├── api/            views, serializers, urls
+├── application/    create_booking, update_booking, cancel_booking,
+│                   hand_over, return_booking, expire_uncollected, policies
+├── queries/        equipment_bookings (list, detail, overdue, affected-by-state-change)
 └── tests/
-    ├── api/
-    ├── application/
-    └── queries/
 ```
 
-### 7.2 Concurrency & Race Protection
-* **Pessimistic Locking:** `lock_equipment((equipment_id,))` issues `Equipment.objects.select_for_update().filter(id=equipment_id)`.
-* **Atomic Boundary:** All booking creations and status transitions execute within an atomic transaction:
-  ```python
-  with transaction.atomic():
-      equipment = lock_equipment(data.equipment_id)
-      policies.ensure_equipment_accepts_bookings(equipment)
-      conflicts = conflicting_equipment_bookings(
-          equipment_id=data.equipment_id,
-          starts_at=data.starts_at,
-          ends_at=data.ends_at,
-      )
-      policies.ensure_no_conflicting_bookings(has_conflicts=conflicts.exists())
-      ...
-  ```
+Allowed imports: `equipment.public` and `equipment.contracts` (availability, custody commands, lock
+helper), `users` public, `core.common`. Not allowed: equipment models for behaviour, `bench_bookings`
+internals. Shared booking code that both booking features need (code generation, notification delivery)
+is extracted to a common Labs module, not imported across features.
 
-### 7.3 API Transport Contracts
+## API contract (endpoints, errors, breaking?)
 
-| Method & Path | View Class | Permission | Purpose |
-|---|---|---|---|
-| `GET /api/labs/equipment-bookings` | `EquipmentBookingListCreateAPIView` | `IsAuthenticated` | Filtered list by equipment, user, project, status. |
-| `POST /api/labs/equipment-bookings` | `EquipmentBookingListCreateAPIView` | `IsAuthenticated` / `IsLabCoordinator` | Create booking under row-level lock. |
-| `GET /api/labs/equipment-bookings/{id}` | `EquipmentBookingDetailAPIView` | `IsAuthenticated` | Retrieve booking details. |
-| `PATCH /api/labs/equipment-bookings/{id}` | `EquipmentBookingDetailAPIView` | `IsAuthenticated` | Reschedule booking window or update reason. |
-| `POST /api/labs/equipment-bookings/{id}/actions/cancel` | `EquipmentBookingCancelActionAPIView` | `IsAuthenticated` | Cancel booking (`reserved`/`in_progress` $\to$ `cancelled`). |
-| `POST /api/labs/equipment-bookings/{id}/actions/checkin` | `EquipmentBookingCheckinActionAPIView` | `IsLabCoordinator` | Issue hardware (`reserved` $\to$ `in_progress`, equipment $\to$ `BORROWED`). |
-| `POST /api/labs/equipment-bookings/{id}/actions/checkout` | `EquipmentBookingCheckoutActionAPIView` | `IsLabCoordinator` | Return hardware (`in_progress` $\to$ `completed`, equipment $\to$ `AVAILABLE`). |
-| `GET /api/labs/equipment-bookings/code/{booking_code}` | `EquipmentBookingCodeDetailAPIView` | `IsAuthenticated` | Public booking code lookup for kiosk/counter scan. |
-| `GET /api/labs/equipment-bookings/options` | `EquipmentBookingOptionsAPIView` | `IsAuthenticated` | Flat `{id, sku, name}` selector standard ([ADR 002](../architecture/decisions/002-catalog-and-selector-api.md)). |
-| `GET /api/labs/equipment-bookings/summary` | `EquipmentBookingSummaryAPIView` | `IsAuthenticated` | Status aggregate counts (`reserved`, `in_progress`, etc.). |
+New routes only; nothing existing changes. Shapes follow `docs/api/response-standard.md`.
 
----
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/labs/equipment-bookings` | coordinator; requester sees own | list, filter by equipment, requester, project, status, `overdue` |
+| `POST /api/labs/equipment-bookings` | coordinator | create; `hand_over_now=true` for a walk-up loan |
+| `GET /api/labs/equipment-bookings/{id}` | coordinator; requester for own | detail including loan |
+| `PATCH /api/labs/equipment-bookings/{id}` | coordinator | reschedule while `reserved`; extend while `in_progress` |
+| `POST .../{id}/actions/cancel` | coordinator | cancel with reason |
+| `POST .../{id}/actions/hand-over` | coordinator | open loan; body: `condition_out`, notes |
+| `POST .../{id}/actions/return` | coordinator | close loan; body: `condition_in`, new placement, optional condition change |
+| `GET /api/labs/equipment-bookings/summary` | coordinator | counts by status and overdue |
 
-## 8. Summary of Open Decisions for the Owner
+Dropped from the earlier draft: `GET /equipment-bookings/code/{booking_code}` (OD1; no kiosk or agent
+reads it). `booking_code` is still generated, because the shared `Booking` base requires it, and is used
+only as a human reference in notifications.
 
-1. **Select Operating Model:** Does the lab intend to use **Model 1** (Coordinator-only advance scheduling), **Model 2** (User request $\to$ Coordinator approval), or **Model 3** (Status-only loans via existing `change-status` without bookings)?
-2. **Grace Period for Unclaimed Reservations:** Confirm if the auto-expire threshold should be 15 minutes after `starts_at` (matching bench bookings).
-3. **Approval Threshold:** Confirm if bookings exceeding 4 hours require coordinator approval (`approval_status=PENDING`).
+Errors: `equipment_not_available` (409), `booking_conflict` (409), `invalid_state_transition` (409),
+`equipment_on_loan` (409), validation (422), not found (404), permission denied (403).
+
+## Data model, constraints, concurrency
+
+No change to `EquipmentBooking` columns. `EquipmentLoan` is defined in the redesign document and owned by
+the equipment feature.
+
+| Write path | Race | Guard (constraint name / lock order) | Idempotency (key or natural target state) | Concurrency test |
+|---|---|---|---|---|
+| create | two bookings for one window; availability changes during the check | lock `Equipment` first, check availability under the lock; `equipment_booking_no_overlap` | client idempotency key per request standard, or none for a first version (state which) | two simultaneous creates for one window: one 201, one 409 |
+| reschedule / extend | overlap with a later booking | lock `Equipment`, then booking row; exclusion constraint; loan `due_at` updated in the same transaction | same window is a no-op | extend into a neighbouring booking is refused |
+| hand over | double hand-over; hand-over while another loan is open | lock `Equipment`, then booking; `one_active_loan_per_equipment`; transition table | already `in_progress` with its loan returns it | two bookings handed over at once: one wins |
+| return | double return | lock `Equipment`, then booking, then loan | already `completed` returns it | repeat call is a no-op |
+| cancel | cancel racing hand-over | lock `Equipment`, then booking; transition table | already `cancelled` returns it | cancel and hand-over at once |
+| expire uncollected (task) | task racing hand-over | filter `status = reserved` and start plus grace passed; lock rows `skip locked`; transition table | re-run finds nothing | task racing hand-over leaves one consistent state |
+| lost (equipment command) | lost racing return | lock `Equipment`; closes loan and cancels bookings in one transaction | already lost is a no-op | lost and return at once |
+
+Known gap, closed by OD3: the exclusion constraint covers only scheduled windows, so the database alone
+would allow a booking right after an overdue one. The create command refuses any unit with an active
+loan, under the equipment row lock.
+
+## Read paths and query budget
+
+| Endpoint | Query function | `select_related` / `prefetch_related` / annotations | Budget (N queries) | Page cap |
+|---|---|---|---|---|
+| list | `list_equipment_bookings` | equipment, requester, project, loan | 2 (page + count) | 100 |
+| detail | `get_equipment_booking` | same | 1 | n/a |
+| summary | `equipment_booking_summary` | one aggregate | 1 | n/a |
+| overdue sweep (task) | `overdue_loans` | keyset by id | 1 per batch | 100 per batch |
+
+## Authorization and threat notes
+
+- First version is coordinator-operated (operating model 1 of the earlier draft; **owner to confirm**).
+  Engineers see only their own bookings. The existing `approval_status` fields allow adding an
+  engineer-request flow later without a schema change.
+- Object scope follows equipment scope (department or lab-wide), an open question in the redesign.
+- `requester` is who the booking is for; `creator` is the coordinator who entered it. Reminders go to the requester.
+- Free-text fields (`reason`, conditions, notes) are length-capped and treated as untrusted on output.
+
+## Async/integration behavior
+
+- Celery tasks, scheduled by an operator in Django Celery Beat as the computing offline sweep is today:
+  expire uncollected reservations; overdue reminders; warn the coordinator and the next requester when
+  an overdue unit has a booking starting soon.
+- Reminders are written to `BookingNotification` with a `dedupe_key` derived from booking id and reminder
+  slot (due, +1 day, +2 … +7), so a re-run cannot send twice. After the cap, the loan stays on the
+  coordinator's overdue list; nothing escalates automatically.
+- Notifications are created in the same transaction as the state change and delivered after commit.
+
+## Migration, rollout, rollback
+
+- Prerequisites, in order: placement, equipment state split, `EquipmentLoan` (redesign steps 1 to 3).
+- If bookings are wanted before the state split, hand-over can also set legacy status `borrowed` and
+  return can set `available` as a temporary bridge. That bridge is removed when the split lands; this
+  costs throwaway code and is not the recommended order.
+- The feature adds routes and tasks only. Rollback is removing the routes and disabling the tasks; open
+  loans would then be closed by hand.
+
+## Observability
+
+Log booking id, equipment id, actor id, action, and outcome for every command and task run. Counters:
+bookings created, expired, overdue loans, reminders sent, reminder delivery failures.
+
+## Test plan (criterion → test)
+
+| Criterion | Test |
+|---|---|
+| AC1 | overlapping create returns 409 from the constraint, including under concurrency |
+| AC2 | create matrix over each row of the gating table |
+| AC3 | hand-over opens one loan, closes the placement; second hand-over is refused |
+| AC4 | no task moves `in_progress` to `completed` |
+| AC5 | reservation past the grace period expires; one handed over in time does not |
+| AC6 | reminder slots produce one notification each across repeated task runs; none after the cap |
+| AC7 | lost closes the loan with reason `lost` and cancels future bookings; no task sets lost |
+| AC8 | `hand_over_now` creates the booking and loan in one transaction |
+| permissions | denied-access tests per endpoint; requester sees only own bookings |
+
+## Alternatives considered
+
+| Alternative | Why not |
+|---|---|
+| Set equipment status `BORROWED` with JSON metadata and compare `metadata.booking_id` before reverting (earlier draft) | custody as free text; fragile guard; cannot express "broken while on loan" |
+| Auto-complete at the end time | shows a unit as free while it is still out |
+| Status-only loans with no booking | no advance scheduling; a second path beside bookings |
+| Allow booking a unit that is on loan if windows do not overlap | rejected by OD3; simpler to reason about, at the cost of no back-to-back advance booking |
+| Auto-mark lost after N days overdue | rejected by OD2 |
+
+## Open questions / decisions needed from the owner
+
+1. Confirm the first version is coordinator-operated, with engineer requests added later.
+2. Grace period before an uncollected reservation expires (15 minutes, matching bench bookings?).
+3. How close a booking must be to an overdue loan before its requester is warned (suggested: 24 hours).
+4. Whether any booking length requires approval, or all coordinator-entered bookings are approved on creation.
+5. Whether bookings may be built before the equipment state split, accepting the temporary bridge.
