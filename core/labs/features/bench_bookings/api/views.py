@@ -27,6 +27,8 @@ from core.labs.features.bench_bookings.queries import (
     get_bench_booking,
     get_bench_booking_by_code,
     get_lab_project,
+    get_visible_bench_booking,
+    get_visible_bench_booking_by_code,
     list_bench_bookings,
     list_lab_projects,
 )
@@ -120,7 +122,7 @@ class BenchBookingDetailAPIView(BenchBookingAPIView):
     )
 
     def handle_get(self, request, booking_id, **kwargs):
-        return self._execute(lambda: get_bench_booking(booking_id=booking_id))
+        return self._execute(lambda: get_visible_bench_booking(actor=request.user, booking_id=booking_id))
 
     def handle_patch(self, request, booking_id, **kwargs):
         serializer, error = self.validate_request(partial=True)
@@ -279,7 +281,9 @@ class BenchBookingCodeDetailAPIView(BenchBookingAPIView):
     )
 
     def handle_get(self, request, booking_code, **kwargs):
-        return self._execute(lambda: get_bench_booking_by_code(booking_code=booking_code))
+        return self._execute(
+            lambda: get_visible_bench_booking_by_code(actor=request.user, booking_code=booking_code)
+        )
 
     def handle_patch(self, request, booking_code, **kwargs):
         serializer, error = self.validate_request(partial=True)
