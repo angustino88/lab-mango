@@ -1,8 +1,10 @@
 """Integration tests for bench booking lifecycle transitions."""
 
 from datetime import timedelta
+from threading import Event, Thread
 
 import pytest
+from django.db import connection, transaction
 
 from core.labs.features.bench_bookings.application import (
     UpdateBenchBookingInput,
@@ -11,7 +13,7 @@ from core.labs.features.bench_bookings.application import (
     update_bench_booking,
 )
 from core.labs.features.bench_bookings.exceptions import BenchBookingConflict
-from core.labs.models import BookingStatus
+from core.labs.models import BenchBooking, BookingStatus
 
 
 @pytest.mark.django_db
@@ -144,3 +146,70 @@ class TestExpiredBookingUpdates:
         )
 
         assert updated.status == BookingStatus.CANCELLED
+
+
+@pytest.mark.django_db
+class TestBatchedReconciliation:
+    def _overdue_reserved(self, make_booking, now, count):
+        return [
+            make_booking(
+                starts_at=now - timedelta(hours=10 - index, minutes=30),
+                ends_at=now - timedelta(hours=10 - index),
+            )
+            for index in range(count)
+        ]
+
+    def test_backlog_larger_than_one_batch_is_drained(self, make_booking, now):
+        bookings = self._overdue_reserved(make_booking, now, 5)
+
+        result = reconcile_bench_booking_statuses(now=now, batch_size=2)
+
+        assert result == {"expired": 5, "completed": 0}
+        assert set(BenchBooking.objects.filter(pk__in=[b.pk for b in bookings]).values_list("status", flat=True)) == {
+            BookingStatus.EXPIRED
+        }
+
+    def test_query_count_does_not_grow_per_row(self, make_booking, now, django_assert_max_num_queries):
+        self._overdue_reserved(make_booking, now, 6)
+
+        # Per move: savepoint + select ids + update + release, plus one empty probe per move.
+        with django_assert_max_num_queries(12):
+            reconcile_bench_booking_statuses(now=now)
+
+    def test_rerun_is_a_no_op(self, make_booking, now):
+        self._overdue_reserved(make_booking, now, 2)
+        reconcile_bench_booking_statuses(now=now)
+
+        assert reconcile_bench_booking_statuses(now=now) == {"expired": 0, "completed": 0}
+
+
+@pytest.mark.django_db(transaction=True)
+def test_reconciliation_skips_rows_locked_by_a_concurrent_command(make_booking, now):
+    locked, free = (
+        make_booking(starts_at=now - timedelta(hours=2), ends_at=now - timedelta(hours=1)),
+        make_booking(starts_at=now - timedelta(hours=4), ends_at=now - timedelta(hours=3)),
+    )
+    acquired, release = Event(), Event()
+
+    def hold_lock():
+        try:
+            with transaction.atomic():
+                BenchBooking.objects.select_for_update().get(pk=locked.pk)
+                acquired.set()
+                release.wait(timeout=10)
+        finally:
+            connection.close()
+
+    holder = Thread(target=hold_lock)
+    holder.start()
+    try:
+        assert acquired.wait(timeout=10)
+        result = reconcile_bench_booking_statuses(now=now)  # must not block on the held row
+    finally:
+        release.set()
+        holder.join(timeout=10)
+
+    assert result == {"expired": 1, "completed": 0}
+    assert BenchBooking.objects.get(pk=free.pk).status == BookingStatus.EXPIRED
+    assert BenchBooking.objects.get(pk=locked.pk).status == BookingStatus.RESERVED
+    assert reconcile_bench_booking_statuses(now=now) == {"expired": 1, "completed": 0}

@@ -16,6 +16,11 @@ from core.labs.features.base.serializers import (
 )
 from core.labs.models import BenchBooking, BookingStatus, LabProject
 
+_ORDERING_HELP = (
+    "Use unique comma-separated fields from starts_at, ends_at, created_at, id; "
+    "prefix a field with '-' for descending."
+)
+
 
 class BenchBookingCreateSerializer(serializers.Serializer):
     bench_id = serializers.IntegerField(min_value=1)
@@ -135,6 +140,12 @@ class BenchBookingListQuerySerializer(TemporalRangeQueryMixin, PageNumberQuerySe
                         for key in duplicate_keys
                     }
                 )
+            # DRF drops blank optional values from form-style input, which would make
+            # ``?ordering=`` silently fall back to the default order.
+            if data.get("ordering") == "":
+                raise serializers.ValidationError(
+                    {"ordering": serializers.ErrorDetail(_ORDERING_HELP, code="invalid_query")}
+                )
         return super().to_internal_value(data)
 
     def validate_ordering(self, value):
@@ -144,11 +155,7 @@ class BenchBookingListQuerySerializer(TemporalRangeQueryMixin, PageNumberQuerySe
         if any(not field or field != field.strip() or field not in allowed for field in normalized) or len(
             set(normalized)
         ) != len(normalized):
-            raise serializers.ValidationError(
-                "Use unique comma-separated fields from starts_at, ends_at, created_at, id; "
-                "prefix a field with '-' for descending.",
-                code="invalid_query",
-            )
+            raise serializers.ValidationError(_ORDERING_HELP, code="invalid_query")
         return fields
 
 

@@ -10,6 +10,7 @@ from django.test import override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from core.labs.models import Bench
 from core.users.models import URSGroup
 from core.users.public import clear_labs_roles_cache
 from core.users.tests.factories import UserFactory
@@ -21,6 +22,10 @@ def _client(user):
     client = APIClient()
     client.force_authenticate(user=user)
     return client
+
+
+def _bench(index):
+    return Bench.objects.create(sku=f"BB-LIST-{index:02d}", name=f"List Bench {index}")
 
 
 def _role(user, role, role_id):
@@ -136,9 +141,14 @@ class TestBenchBookingList:
     ):
         _role(actor, "coord", 80111)
         starts_at, _ = future_window
+        # One bench per booking: the no-overlap constraint forbids overlapping periods on one bench.
         bookings = [
-            make_booking(starts_at=starts_at + timedelta(hours=index), ends_at=starts_at + timedelta(hours=end_hour))
-            for index, end_hour in enumerate((4, 2, 2))
+            make_booking(
+                starts_at=starts_at,
+                ends_at=starts_at + timedelta(hours=end_hour),
+                bench_obj=_bench(index),
+            )
+            for index, end_hour in enumerate((4, 2, 3))
         ]
 
         response = _client(actor).get(URL, {"ordering": ordering, "page_size": 10})
@@ -149,8 +159,10 @@ class TestBenchBookingList:
     def test_ordering_has_stable_id_tiebreaker_across_pages(self, actor, make_booking, future_window):
         _role(actor, "coord", 80112)
         starts_at, _ = future_window
-        first = make_booking(starts_at=starts_at, ends_at=starts_at + timedelta(hours=3))
-        second = make_booking(starts_at=starts_at + timedelta(hours=1), ends_at=first.ends_at)
+        first = make_booking(starts_at=starts_at, ends_at=starts_at + timedelta(hours=3), bench_obj=_bench(0))
+        second = make_booking(
+            starts_at=starts_at + timedelta(hours=1), ends_at=first.ends_at, bench_obj=_bench(1)
+        )
 
         page_one = _client(actor).get(URL, {"ordering": "ends_at", "page": 1, "page_size": 1})
         page_two = _client(actor).get(URL, {"ordering": "ends_at", "page": 2, "page_size": 1})
@@ -186,7 +198,11 @@ class TestBenchBookingList:
         _role(actor, "coord", 80115)
         starts_at, _ = future_window
         bookings = [
-            make_booking(starts_at=starts_at + timedelta(hours=index), ends_at=starts_at + timedelta(hours=2))
+            make_booking(
+                starts_at=starts_at + timedelta(hours=index),
+                ends_at=starts_at + timedelta(hours=3),
+                bench_obj=_bench(index),
+            )
             for index in range(3)
         ]
 

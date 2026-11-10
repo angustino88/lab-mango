@@ -53,6 +53,17 @@ class BenchBookingAPIView(CommandAPIView):
     def project_result(self, result):
         return get_bench_booking(booking_id=result.pk)
 
+    def decision_body(self, booking: Any) -> dict[str, Any]:
+        """Full success envelope, stored on the receipt so a replay returns identical JSON."""
+        envelope = self.success_contract().respond(BenchBookingSerializer(booking).data).data
+        return json.loads(json.dumps(envelope, cls=DjangoJSONEncoder))
+
+    def decision_response(self, result: DecideBenchBookingApprovalResult) -> Response:
+        response = Response(result.response_body, status=result.status_code)
+        if result.replayed:
+            response["Idempotency-Replayed"] = "true"
+        return response
+
 
 class BenchBookingCreateAPIView(AppListAPIView, BenchBookingAPIView):
     get_contract = OperationContract(
@@ -182,9 +193,9 @@ class BenchBookingApproveActionAPIView(BenchBookingAPIView):
             lambda: decide_bench_booking_approval(
                 actor=request.user,
                 data=command_input,
-                project_response=_project_decision_response,
+                project_response=self.decision_body,
             ),
-            project=_decision_response,
+            project=self.decision_response,
         )
 
 
@@ -227,9 +238,9 @@ class BenchBookingRejectActionAPIView(BenchBookingAPIView):
             lambda: decide_bench_booking_approval(
                 actor=request.user,
                 data=command_input,
-                project_response=_project_decision_response,
+                project_response=self.decision_body,
             ),
-            project=_decision_response,
+            project=self.decision_response,
         )
 
 
@@ -255,19 +266,6 @@ def _action_error(request: Request, status_code: int, code: str, message: str) -
         status=status_code,
         headers={"X-Request-ID": request_id},
     )
-
-
-def _decision_response(result: DecideBenchBookingApprovalResult) -> Response:
-    response = Response(result.response_body, status=result.status_code)
-    if result.replayed:
-        response["Idempotency-Replayed"] = "true"
-    return response
-
-
-def _project_decision_response(booking: Any) -> dict[str, Any]:
-    """Serialize the established booking envelope in the API boundary."""
-    serialized = BenchBookingSerializer(booking).data
-    return json.loads(json.dumps(serialized, cls=DjangoJSONEncoder))
 
 
 class BenchBookingCodeDetailAPIView(BenchBookingAPIView):

@@ -3,7 +3,7 @@
 from typing import Any
 
 from django.contrib.auth import get_user_model
-from django.db import models, transaction
+from django.db import models
 from django.db.models import Exists, OuterRef, Q, QuerySet, Subquery
 
 from core.labs.features.equipment.contracts import ActiveEquipmentBenchAssignment
@@ -498,13 +498,15 @@ def active_equipment_bench_assignment(*, equipment_id: int) -> ActiveEquipmentBe
     return ActiveEquipmentBenchAssignment(equipment_id=row["equipment_id"], bench_id=row["bench_id"])
 
 
-@transaction.atomic
 def lock_active_equipment_bench_assignment(*, equipment_id: int) -> ActiveEquipmentBenchAssignment | None:
     """Lock the equipment row and project its current active bench assignment.
 
     All equipment assignment writers lock Equipment before changing EquipmentAssignment. Holding
     this owner-row lock through the caller's transaction therefore prevents the binding changing
     between authorization and the caller's write.
+
+    Must run inside the caller's transaction: opening one here would commit and release the
+    lock on return. ``select_for_update`` raises TransactionManagementError in autocommit mode.
     """
     equipment = Equipment.objects.select_for_update().filter(pk=equipment_id, deleted_at__isnull=True).first()
     if equipment is None:

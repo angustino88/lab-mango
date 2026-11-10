@@ -1,5 +1,6 @@
 """Command tests for bench booking create and update rules."""
 
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
@@ -256,7 +257,11 @@ class TestBookingApprovalDecisions:
             ),
             project_response=_decision_response,
         )
-        booking.decision_receipts.update(expires_at=timezone.now() - timedelta(seconds=1))
+        # Age the receipt as a whole: the expiry_valid check requires expires_at > created_at.
+        booking.decision_receipts.update(
+            created_at=timezone.now() - timedelta(hours=25),
+            expires_at=timezone.now() - timedelta(seconds=1),
+        )
         booking.approval_status = BookingApprovalStatus.PENDING
         booking.save(actor=coordinator)
 
@@ -373,6 +378,7 @@ class TestBookingApprovalDecisions:
                     decision=BookingApprovalStatus.APPROVED,
                     idempotency_key=str(uuid.uuid4()),
                 ),
+                project_response=_decision_response,
             )
 
 
@@ -804,16 +810,26 @@ class TestAgentEndTimeUpdate:
             try:
                 assert owner_lock_held.wait(timeout=10)
                 assert unassignment_started.wait(timeout=10)
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT EXISTS ("
-                        "SELECT 1 FROM pg_stat_activity "
-                        "WHERE datname = current_database() "
-                        "AND wait_event_type = 'Lock' "
-                        "AND query ILIKE '%FOR UPDATE%'"
-                        ")"
-                    )
-                    assert cursor.fetchone()[0]
+                # The unassigning thread sends its FOR UPDATE shortly after signalling;
+                # poll instead of sampling once. Match on lock blocking, not query text:
+                # pg_stat_activity truncates long SQL (track_activity_query_size), which
+                # cuts the trailing FOR UPDATE off this wide SELECT.
+                deadline = time.monotonic() + 5
+                waiting = False
+                while not waiting and time.monotonic() < deadline:
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            "SELECT EXISTS ("
+                            "SELECT 1 FROM pg_stat_activity "
+                            "WHERE datname = current_database() "
+                            "AND wait_event_type = 'Lock' "
+                            "AND cardinality(pg_blocking_pids(pid)) > 0"
+                            ")"
+                        )
+                        waiting = cursor.fetchone()[0]
+                    if not waiting:
+                        time.sleep(0.05)
+                assert waiting
                 release_booking.set()
                 booking_result = booking_future.result(timeout=15)
                 unassign_result = unassign_future.result(timeout=15)
@@ -870,7 +886,8 @@ class TestAgentEndTimeUpdate:
 
         equipment = self._linked_equipment(bench)
         identity = AgentIdentity.objects.get(equipment=equipment)
-        assignment = lock_active_equipment_bench_assignment(equipment_id=equipment.pk)
+        with transaction.atomic():  # the helper only locks inside a caller transaction
+            assignment = lock_active_equipment_bench_assignment(equipment_id=equipment.pk)
 
         assert assignment is not None
         assert assignment.bench_id == bench.pk
