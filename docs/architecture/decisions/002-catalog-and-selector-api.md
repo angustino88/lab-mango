@@ -1,11 +1,11 @@
 # ADR 002 — Catalog and selector API standard
 
-- Status: **Accepted** (repository owner, 2026-11-01; Phase 0 decisions 2026-11-02, section 20). Implementation not started.
+- Status: **Accepted** (repository owner, 2026-11-01; Phase 0 decisions 2026-11-02, section 20). Implemented 2026-11-02 (see section 21).
 - Date: 2026-11-01, amended 2026-11-02
 - Decision owner: repository owner
 - Scope: every lookup, catalog and selector endpoint under `/api/` (Labs and Support Desk today, every future domain)
-- Binding rules: [response standard](../../ai-team/api/response-standard.md) section 26 (OPT-1 to OPT-13) and REL-5. This ADR records the decisions, the route ledger and the rollout; the standard holds the rules.
-- Related: [ADR 001](001-common-foundation.md), [request standard](../../ai-team/api/request-standard.md), [reference import inventory](../../reference-data-defaults.md)
+- Binding rules: [response standard](../../api/response-standard.md) section 26 (OPT-1 to OPT-13) and REL-5. This ADR records the decisions, the route ledger and the rollout; the standard holds the rules.
+- Related: [ADR 001](001-common-foundation.md), [request standard](../../api/request-standard.md), [reference import inventory](../reference-data.md)
 
 ## 1. Context (verified)
 
@@ -285,7 +285,7 @@ class ManufacturerOptionsAPIView(OptionsAPIView):
 
 ## 13. Enforcement
 
-`tests/architecture/test_options_contract.py` (new; same pattern as [test_import_boundaries.py](../../../tests/architecture/test_import_boundaries.py)) walks the resolved URL patterns and the generated OpenAPI. Existing violations (section 17) go into an allowlist in the test that may only shrink.
+`tests/architecture/test_options_contract.py` (new; same pattern as test_import_boundaries.py (`tests/architecture/test_import_boundaries.py`)) walks the resolved URL patterns and the generated OpenAPI. Existing violations (section 17) go into an allowlist in the test that may only shrink.
 
 - Every path ending in `/options` is `GET`-only, has a sibling collection route, declares `x-owner`, and its 200 response `$ref`s `CatalogOptionList`.
 - No `options/<resource>` path, no `select-list` path, no path ending in `/`.
@@ -496,3 +496,23 @@ Not verified: whether catalog list routes already exist for `rooms`, `stations`,
 - No new `code` columns. `sku` comes only from existing fields (20.3).
 - One reversible migration adds `pg_trgm` GIN indexes on the search column of large-class resources that lack one: `EquipmentType.name`, `EquipmentManufacturer.name`, `EquipmentProductModel.name`, `LabProject.project_name`, `City.name`, `Building.name`, `SupportLabel.name`. License lookups already have them ([license.py](../../../core/labs/models/resource/license/license.py#L36)). Primary resources reuse their existing list-search indexes.
 - Use `AddIndexConcurrently` (non-atomic migration) so production tables are not locked. The `pg_trgm` extension is already in use.
+
+## 21. Implementation status (2026-11-02)
+
+All three phases landed in one breaking backend/frontend release with no aliases (D 0.2).
+
+- **Shared base:** `core/common/api/options.py` provides `CatalogOptionSerializer` (`id`, `sku`, `name`),
+  `OptionsQueryMixin` (`q`, `include_ids`), `SizeClass` with `OPTIONS_MAX_RESULTS = 1000`, and
+  `OptionsAPIView` (cap + 1 → `400 too_many_results`, ETag/`304`, `HasAPIKey | IsAuthenticated` reads).
+- **Search indexes:** `core/labs/migrations/0007_trigram_search_indexes.py` and
+  `core/support_desk/migrations/0005_support_label_trigram_index.py` (`pg_trgm` GIN).
+- **Selectors and catalogs:** equipment (categories, kinds, types, manufacturers, product models,
+  departments, resource groups), lab projects, benches (groups, types), licenses (vendors, products,
+  types, categories, restrictions), locations (rooms, stations, station types, countries, cities,
+  buildings) and Support Desk (categories, priorities, statuses, teams, labels) follow section 20.3.
+- **Removed:** trailing-slash and reverse `options/<resource>` routes, `<category>/filters`,
+  `audits/options` (OPT-12), Support Desk `admin/` prefixes, and the duplicate option serializers.
+
+Open follow-up: the Equipment large-selector narrowing (`required_any`, `include_ids` scope) is a
+tighter, breaking request contract awaiting owner decision; see the
+[equipment architecture open questions](../../../core/labs/features/equipment/docs/architecture.md#9-open-questions).

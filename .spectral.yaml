@@ -1,4 +1,4 @@
-# Lab Mango API lint rules. Enforces the structural rules of docs/ai-team/api/response-standard.md.
+# Lab Mango API lint rules. Enforces the structural rules of docs/api/response-standard.md.
 # Run locally:  npx @stoplight/spectral-cli lint openapi/openapi.yml --ruleset .spectral.yaml
 # Semantic rules (null handling, relation shapes, permissions, N+1) cannot be linted:
 # they are covered by contract tests and the agent's rule-ID review table.
@@ -19,7 +19,7 @@ rules:
   oas3-api-servers: off
   operation-tag-defined: error
   oas3-unused-component: off
-  path-keys-no-trailing-slash: off   # docs/conventions.md: existing slash variants stay supported
+  path-keys-no-trailing-slash: off   # docs/conventions/naming.md: existing slash variants stay supported
 
   # ---- ENV: envelopes -----------------------------------------------------------------
   lm-success-uses-data-envelope:

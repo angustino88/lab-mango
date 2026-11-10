@@ -3,7 +3,7 @@ applyTo: '**/tests/**,**/test_*.py,**/conftest.py'
 ---
 # Test rules
 
-Test placement is owned by `docs/feature-template.md` section 6: feature tests live in
+Test placement is owned by `docs/architecture/feature-template.md` section 6: feature tests live in
 `core/<domain>/features/<feature>/tests/` mirroring the source; cross-feature, architecture, and deployment
 suites live in top-level `tests/`. Do not add feature tests under top-level `tests/`.
 

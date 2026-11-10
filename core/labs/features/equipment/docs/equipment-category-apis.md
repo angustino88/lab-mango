@@ -5,9 +5,9 @@
 Status: current source-level category API compatibility reference with transitional
 implementation details, not a reusable target feature template or runtime
 certification. Scope: category routes, fields, response compatibility and existing
-API-base hooks. The [Feature Template Specification](../../../../../docs/feature-template.md) owns
+API-base hooks. The [Feature Template Specification](../../../../../docs/architecture/feature-template.md) owns
 layout, layer boundaries, commands/queries, public interfaces and test ownership;
-[API response contracts](../../../../../docs/api-response-contracts.md) specialize HTTP/schema behavior.
+[API response contracts](../../../../../docs/api/contracts.md) specialize HTTP/schema behavior.
 
 ## Current layering (transitional, not guidance for new writes)
 

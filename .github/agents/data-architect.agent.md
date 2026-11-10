@@ -27,7 +27,7 @@ invariants, or deletion/retention questions. Not for endpoint design or service 
 6. Specify tests: invalid data rejected by the DB, concurrent writers, migration on populated data.
 
 Integrity, concurrency, migration, and inheritance rules: `.github/instructions/database.instructions.md`.
-Placement, naming, base classes, `on_delete`, index naming: `docs/django-model-conventions.md`.
+Placement, naming, base classes, `on_delete`, index naming: `docs/conventions/django-models.md`.
 
 ## Lab Mango modeling cautions (domain-specific; not covered elsewhere)
 - Purchase orders, purchase items, owned resources, license agreements, and actual payments are distinct

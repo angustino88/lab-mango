@@ -13,7 +13,7 @@ precondition semantics: response standard RW-5, RW-6, ACT-3. Tests: `testing.ins
   Example: `create_bench_booking` calls `policies.ensure_valid_period` before `atomic()`.
 - No network call, email, or `task.delay()` inside the transaction or while a row lock is held. Inside: write an
   outbox row. After commit: dispatch. Best-effort only (cache refresh, UI ping): `transaction.on_commit`.
-  `on_commit` alone is not durable (`docs/feature-template.md` section 4, Events).
+  `on_commit` alone is not durable (`docs/architecture/feature-template.md` section 4, Events).
 - An expected `IntegrityError` is caught around a nested `transaction.atomic()` savepoint that wraps only the
   single write, so the outer transaction stays usable (pattern: `bench_bookings/application/create_booking.py`).
 

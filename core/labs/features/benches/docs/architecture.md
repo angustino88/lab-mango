@@ -28,8 +28,7 @@ detail GET composed centralized assignment reads with equipment activity and
 booking facades. The approved current contract makes ordinary bench detail lean;
 the dashboard clicked-bench endpoint owns operational details. The earlier
 projection remains internal pending usage cleanup, not the ordinary GET contract.
-See the current [bench and station API guide](bench-station-apis.md) and the
-[superseding decision](enriched-detail-design.md). Resource graphic mappings are
+See the current [bench and station API guide](bench-station-apis.md). Resource graphic mappings are
 provided separately by the resource-mappings feature.
 
 **Verified.** The feature exposes commands and queries through `public.py`; API code uses feature-local application and query modules directly. `list_benches()` reads bench, station, favorite, and active equipment assignment data.

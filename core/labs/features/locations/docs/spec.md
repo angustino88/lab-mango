@@ -32,7 +32,7 @@ The Locations feature represents geographic and facility real-estate topology: c
 
 ---
 
-## 3. Options Standard Compliance (`GEMINI.md`)
+## 3. Options Standard Compliance (ADR 002)
 - `GET /api/labs/rooms/options`: Flat `{id, sku, name}` room dropdown selector.
 - `GET /api/labs/stations/options`: Flat `{id, sku, name}` station dropdown selector.
 - `GET /api/labs/station-slots/options`: Flat `{id, sku, name}` slot dropdown selector.

@@ -1,6 +1,6 @@
 """Generate a feature skeleton from the standard feature template.
 
-See docs/feature-template.md for the scope of every folder and file.
+See docs/architecture/feature-template.md for the scope of every folder and file.
 
 Run from the repository root (the folder that contains `core/`):
 

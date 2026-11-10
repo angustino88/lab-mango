@@ -4,7 +4,7 @@
 
 Status: current source-level API compatibility reference, not canonical layout or
 runtime certification. Scope: bench/station routes, payloads, placement and locks.
-The [Feature Template Specification](../../../../../docs/feature-template.md) owns feature structure,
+The [Feature Template Specification](../../../../../docs/architecture/feature-template.md) owns feature structure,
 command/query boundaries, public interfaces and test ownership. Existing layouts
 and imports described here are transitional; documentation does not migrate them.
 
@@ -15,7 +15,7 @@ URLconfs use **no trailing slash**. Root bench/station routing is now enabled vi
 the [labs URL aggregator](../../../api_urls.py). Generated OpenAPI artifacts
 and database-backed rollout validation remain separate gates.
 
-See also the [response contract guide](../../../../../docs/api-response-contracts.md).
+See also the [response contract guide](../../../../../docs/api/contracts.md).
 
 ## Bench resource and dashboard detail split (2026-10-20)
 
@@ -310,8 +310,8 @@ do not establish a deployable schema or PostgreSQL certification.
   Legacy fixtures, old routes and generated schemas may also require integration
   work; successful OpenAPI generation alone does not certify those integrations.
 4. **PostgreSQL tests pending, not concurrency certification:**
-  Existing [bench feature tests](../../../../../tests/unit/test_bench_feature.py) and
-  [station feature tests](../../../../../tests/unit/test_station_feature.py) exercise local routes,
+  Existing bench feature tests (`tests/unit/test_bench_feature.py`) and
+  station feature tests (`tests/unit/test_station_feature.py`) exercise local routes,
    serializers, policies, SQL structure and every real async bench/location handler
   with only boundary I/O mocked. Marked direct-model database cases cover
    idempotency, isolation, deletion/slot release, capacity and transactional
@@ -319,7 +319,7 @@ do not establish a deployable schema or PostgreSQL certification.
   PostgreSQL test schema. No PostgreSQL execution is claimed by this update;
    simultaneous-transaction/deadlock tests remain a rollout requirement.
 
-Target test ownership follows the [template's test scope](../../../../../docs/feature-template.md#45-tests):
+Target test ownership follows the [template's test scope](../../../../../docs/architecture/feature-template.md#45-tests):
 private feature API/application/query tests stay with the owning feature; model
 integrity and app registration tests live under `core/labs/tests/`. Existing
 top-level feature-only suites are transitional, not the location for new tests;

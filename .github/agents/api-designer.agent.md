@@ -16,7 +16,7 @@ Use before implementing any endpoint or changing a response/request shape. Not f
 internal service signatures or database design.
 
 ## Method
-1. Read the applicable sections of `docs/ai-team/api/response-standard.md`, `request-standard.md`, and their
+1. Read the applicable sections of `docs/api/response-standard.md`, `request-standard.md`, and their
    golden examples. Inspect existing endpoints and serializers. Where existing code contradicts the standard,
    design to the standard and list the drift (AGENTS.md "Existing code is transitional").
 2. Model resources and actions from the domain, not from tables. Use sub-resources or
@@ -30,7 +30,7 @@ internal service signatures or database design.
 6. Hand the frontend owner the exact schema diff.
 
 ## Rules
-- Every contract rule comes from `docs/ai-team/api/response-standard.md` and `request-standard.md`; cite rule
+- Every contract rule comes from `docs/api/response-standard.md` and `request-standard.md`; cite rule
   IDs, do not paraphrase them. `.github/instructions/api-design.instructions.md` lists the checks and commands.
 - Choosing cursor pagination (COL-9), `Idempotency-Key` (RW-6), or `ETag`/`If-Match` (RW-5) for an endpoint is
   your decision; record it per endpoint with the reason.

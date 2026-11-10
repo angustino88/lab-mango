@@ -2,7 +2,7 @@
 
 > **Status:** Active feature specification under `core/labs/features/dashboard/`.
 > **Owner:** Labs Engineering
-> **Standard:** Aligns strictly with [Feature Template Specification](../../../../docs/feature-template.md) and [Super-App Core Architecture](../../../../docs/core-architecture-redesign.md).
+> **Standard:** Aligns strictly with [Feature Template Specification](../../../../../docs/architecture/feature-template.md) and [Super-App Core Architecture](../../../../../docs/architecture/core-architecture.md).
 
 ---
 

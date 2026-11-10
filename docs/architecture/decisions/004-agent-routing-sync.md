@@ -3,7 +3,7 @@
 - **Status:** Approved constraints; implementation phases authorized separately in sync design review; architecture/security/operations review and runtime gates remain pending
 - **Date:** 2026-11-07
 - **Scope:** Lab Mango backend routing projection and Edge-facing sync contract
-- **Related specs:** [Backend Routing and Sync Spec](../../backend-routing-sync-spec.md), [Backend Agent API Design](../../backend-agent-api-spec.md)
+- **Related specs:** [Backend Routing and Sync Spec](../../agent-platform/routing-sync.md), [Backend Agent API Design](../../agent-platform/backend-api.md)
 
 ## Context
 
@@ -33,7 +33,7 @@ The owner-approved Agent capability direction is that an Agent may, after body-b
 
 The booking code is a booking-scoped credential, not proof of the named user's identity. Agent mTLS proves device identity; it does not grant user or general booking authority. The backend rechecks Agent, session, assignment and booking eligibility on each write. Session end, OS logoff, timeout, Agent deactivation or an ingested event must not implicitly complete a booking. The Agent cannot otherwise create, approve, cancel, reassign, change ownership or start time, rewrite the code, or arbitrarily set booking status.
 
-This records the capability boundary and does **not** approve endpoint exposure, schema, mTLS deployment, or implementation. On 2026-11-09 the owner confirmed booking belongs in the eventual full Agent target, requested a design package before PKI/TLS implementation, and selected `GET /agent/bookings/code/{booking_code}` for read-only eligible-booking lookup, separate from body-based check-in. This backend is responsible for booking authorization/session actions only; it does not claim to enforce workstation or desktop access. The credential-in-URL endpoint remains a T2 security/API release gate; it requires an explicit reviewed exception and verified redaction/throttling/no-store/no-echo controls. Booking API/session work requires the design, security/QA reviews and implementation approval. See [Section 7 of the Backend Agent API Design](../../backend-agent-api-spec.md#7-booking-reads-and-additional-session-gates) for the current proposed contract and gates.
+This records the capability boundary and does **not** approve endpoint exposure, schema, mTLS deployment, or implementation. On 2026-11-09 the owner confirmed booking belongs in the eventual full Agent target, requested a design package before PKI/TLS implementation, and selected `GET /agent/bookings/code/{booking_code}` for read-only eligible-booking lookup, separate from body-based check-in. This backend is responsible for booking authorization/session actions only; it does not claim to enforce workstation or desktop access. The credential-in-URL endpoint remains a T2 security/API release gate; it requires an explicit reviewed exception and verified redaction/throttling/no-store/no-echo controls. Booking API/session work requires the design, security/QA reviews and implementation approval. See [Section 7 of the Backend Agent API Design](../../agent-platform/backend-api.md#7-booking-reads-and-additional-session-gates) for the current proposed contract and gates.
 
 ## Consequences
 

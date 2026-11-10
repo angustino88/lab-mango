@@ -11,7 +11,8 @@ Everything is plain files read by Copilot. Edit them directly; there is nothing 
 | `.github/prompts/*.prompt.md` | Slash commands: `/feature` `/bug-fix` `/api-change` `/db-migration` `/model-design` `/model-implement` `/integration` `/refactor` `/performance` `/ops-change` `/test-plan` `/adr` `/architecture-review` `/architecture-design` `/architecture-update` `/security-review` `/release-check` `/review` |
 | `docs/ai-team/team.md` | Roster, routing by change type, handoff protocol, decision rights |
 | `docs/ai-team/quality-gates.md` | Gates to run and how to report them |
-| `docs/ai-team/templates/` | Task brief, design doc, ADR, handoff, review report, feature architecture doc, model group doc, model catalog doc, import-linter example |
+| `docs/ai-team/prompt-formats.md` | Fill-in prompt format per kind of work, mapped to slash commands and agents |
+| `docs/ai-team/templates/` | Task brief, design doc, ADR, handoff, review report, feature architecture doc, model group doc, model catalog doc |
 | `docs/ai-team/documentation-map.md` | Where architecture docs live, by domain, and which model-doc layout each domain uses (with Adopted/Proposed status). The architecture agent follows it; fill in your domains |
 | `docs/ai-team/domain-glossary.md` | Domain terms; owner must complete |
 

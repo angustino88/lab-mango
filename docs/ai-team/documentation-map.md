@@ -21,11 +21,17 @@ is only for cross-domain content (system view, domain map, links to the domain d
 | Domain model architecture (single document) | `core/<domain>/models/docs/` | `<domain>-model-architecture.md` | Adopted for `labs` (owner example); CONFIRM for other domains |
 | Domain model catalog | `core/<domain>/models/docs/` | `README.md` | Proposed |
 | Domain model group | `core/<domain>/models/docs/` | `<group>.md` | Proposed |
-| Feature architecture | `<feature package>/docs/` | `architecture.md` | CONFIRM |
-| Cross-domain / system architecture | `docs/architecture.md` | | CONFIRM |
-| Architecture Decision Records | `docs/architecture/decisions/` | `NNN-short-title.md` | CONFIRM |
-| API response standard and golden examples | `docs/ai-team/api/` | `response-standard.md`, `response-golden-examples.md` | CONFIRM |
-| OpenAPI contract (generated from code) | `openapi/` | `openapi.yml` | CONFIRM |
+| Feature behavior and contract | `<feature package>/docs/` | `spec.md` | Adopted |
+| Feature architecture | `<feature package>/docs/` | `architecture.md` | Adopted |
+| Feature design for an approved change, feature API guide | `<feature package>/docs/` | `<topic>.md` (no `-task`, `-handoff`, dates or versions) | Adopted |
+| Cross-domain / system architecture, feature template, core architecture | `docs/architecture/` | `README.md`, `<topic>.md` | Adopted |
+| Architecture Decision Records | `docs/architecture/decisions/` | `NNN-short-title.md` | Adopted |
+| Project-wide coding and model conventions | `docs/conventions/` | `<topic>.md` | Adopted |
+| API request/response standards, golden examples, runtime contracts | `docs/api/` | `<topic>.md` | Adopted |
+| Agent platform (device, backend API, routing) | `docs/agent-platform/` | `<topic>.md` | Adopted |
+| Proposal not yet approved, or for a feature that does not exist yet | `docs/proposals/` | `<topic>.md` | Adopted |
+| AI team process, templates, quality gates | `docs/ai-team/` | | Adopted |
+| OpenAPI contract (generated from code) | `openapi/` | `openapi.yml` | Adopted |
 
 ## Domain index
 
@@ -80,9 +86,15 @@ fix every link that pointed at the old document, and pass the model coverage che
   "Inheritance and hierarchy"). Subclasses in other groups or domains link to it and do not redefine the base.
 - Inheritance (is-a) and relationships (has-a) are shown in separate diagrams: `classDiagram` and `erDiagram`.
 - Every subclass in code appears in its hierarchy documentation, with its inheritance kind.
-- Update an existing document instead of creating a second one on the same subject.
-- API response rules live in `docs/ai-team/api/response-standard.md`. Other documents link to it and to
-  `docs/api-response-contracts.md`; they do not copy the rules.
+- Update an existing document instead of creating a second one on the same subject. No version-suffixed
+  copies (`-v2`, `(revises …)`); history lives in git.
+- Task briefs, handoff reports, review reports and point-in-time audits are working artifacts: put them in
+  the pull request or issue, not in the repository. Copy any lasting decision or open question into the
+  owning spec, architecture document or ADR before the work closes.
+- When a proposal is approved and its feature exists, move it next to the feature code and fold accepted
+  rules into the owning document; delete superseded drafts.
+- API response rules live in `docs/api/response-standard.md`. Other documents link to it and to
+  `docs/api/contracts.md`; they do not copy the rules.
 - `openapi/` is generated from code. Change the code and regenerate; do not edit the schema by hand.
-- Repo-level `docs/architecture.md` links to domain docs; it does not duplicate them.
+- `docs/architecture/README.md` links to domain docs; it does not duplicate them.
 - If a domain is not in the index, derive the path from the placement rules, state it, and ask the owner to confirm.

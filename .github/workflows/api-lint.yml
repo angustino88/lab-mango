@@ -67,7 +67,7 @@ jobs:
         run: uv run python manage.py spectacular_modules --output-dir openapi --check --settings=config.settings.test
 
   spectral:
-    name: Spectral (docs/ai-team/api/response-standard.md)
+    name: Spectral (docs/api/response-standard.md)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

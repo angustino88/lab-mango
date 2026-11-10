@@ -18,7 +18,7 @@ DATA_HASH = "43f154ed4a9512251f4b2bf1e0588c167a2ac83c224de4f4bcc28adf2d720fd5"
 
 
 def test_compute_digest_appendix_e_vectors():
-    """Verify test vectors from Appendix E of backend-routing-sync-spec.md."""
+    """Verify test vectors from Appendix E of docs/agent-platform/routing-sync.md."""
     # Empty
     assert compute_digest([]) == "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 

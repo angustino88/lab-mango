@@ -1,5 +1,7 @@
 # Review: <task title>
 
+<!-- Working artifact: return it in chat or the pull request; do not commit it to the repository (docs/ai-team/documentation-map.md). -->
+
 **Verdict**: Approve / Approve with notes / Request changes
 
 ## Blocking findings (by severity)

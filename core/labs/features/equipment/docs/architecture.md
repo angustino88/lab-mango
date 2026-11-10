@@ -21,7 +21,7 @@
 
 **Verified model locations:** [equipment models](../../../models/resource/equipment/) and [equipment assignment model](../../../models/resource/equipment/assignment.py). The feature's queries also read supported purchase allocation data for equipment projections; such read use does not transfer procurement ownership.
 
-**Reference-data provisioning:** See [reference data defaults and deletion policy](../../../../../docs/reference-data-defaults.md) for the proposed reusable pattern, current equipment-category setup, and protection/recovery scope. Baseline seeding does not imply a default value for every foreign key.
+**Reference-data provisioning:** See [reference data defaults and deletion policy](../../../../../docs/architecture/reference-data.md) for the proposed reusable pattern, current equipment-category setup, and protection/recovery scope. Baseline seeding does not imply a default value for every foreign key.
 
 ## 3. Public interface and dependencies
 
@@ -78,7 +78,7 @@ The service/API should translate only the known active-assignment constraint int
 
 ### Relationship-based inventory facets
 
-**Implemented equipment pilot.** The authorized [task brief and design](inventory-facets-task.md) adds GET `/api/labs/equipment/facets` and `/api/labs/equipment/{existing-category}/facets`. The generic adapter and generated category adapters reuse their respective list providers and membership/search FilterSpecs, removing only client ordering. Optional CSV `department_id` and `product_model_id` are equipment-local additions; shared resource filters and catalog options are unchanged.
+**Implemented equipment pilot.** The owner-authorized pilot adds GET `/api/labs/equipment/facets` and `/api/labs/equipment/{existing-category}/facets`. The generic adapter and generated category adapters reuse their respective list providers and membership/search FilterSpecs, removing only client ordering. Optional CSV `department_id` and `product_model_id` are equipment-local additions; shared resource filters and catalog options are unchanged.
 
 `queries/facets.py` owns immutable explicit relationship dimensions and dependency descriptions: category → kind → type, category → manufacturer, (manufacturer, type) → product model, department → group. These paths are server configuration, never automatically discovered or exposed to clients. The owner query isolates matching IDs in a subquery, groups canonical inventory relationships in SQL, and counts distinct equipment IDs. No per-bucket queries or catalog-active predicates are used. Retired references and unset/null buckets remain represented when matching inventory exists.
 
@@ -139,3 +139,9 @@ Enforce the public/contracts-only cross-feature dependency rule with a Labs feat
 2. What exact lifecycle and status transition tables are contractually supported?
 3. Which callers need cross-feature equipment projections, and can each use an explicit bounded public query result?
 4. What authorization actor/context is the target for commands, and what is the approved policy for system/agent submissions?
+5. **Selector narrowing (breaking, awaiting owner).** Large Equipment selectors currently require `q` or a
+   declared parent filter (`required_any`); `include_ids` alone no longer qualifies and never returns
+   soft-deleted rows. Decide: whether lifecycle status/assignability count as narrowing; approval of this
+   VER-2 breaking change and the frontend release plan; the actor-scoped read-visibility rule for users and
+   API keys (add unreadable-ID and query-budget tests); how the conditional requirement appears in OpenAPI;
+   and whether the existing full-schema Spectral errors block this change.

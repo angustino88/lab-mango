@@ -184,7 +184,7 @@ existence in source does not establish that the migration was applied in any dat
 - `RoutingChange` must retain immutable upsert payload/hash so compacted deltas do not accidentally serialize a newer
   projection value for an older event. Per-stream `SyncState` locking serializes version assignment before projection
   row lookup/insertion. Detailed hash, pagination, retention, and security gates are in
-  [the routing-sync spec](../../../../docs/backend-routing-sync-spec.md).
+  [the routing-sync spec](../../../../docs/agent-platform/routing-sync.md).
 - Migration `0011` creates these tables but does not seed `SyncState` rows; the forward migration changes allowed
   stream labels but likewise does not seed state rows. Stream initialization/seeding, immutable
   snapshot generation, retention, and consistent snapshot paging remain

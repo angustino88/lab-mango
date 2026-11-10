@@ -4,9 +4,9 @@
 
 Status: current booking persistence reference with target workflow guidance; not
 runtime or migration certification. Scope: resource ownership, schedule invariants
-and booking model naming. The [Feature Template Specification](../../../../docs/feature-template.md)
+and booking model naming. The [Feature Template Specification](../../../../docs/architecture/feature-template.md)
 owns feature layout, command/query boundaries, public interfaces and test ownership;
-[Django Model Conventions](../../../../docs/django-model-conventions.md) specialize persistence rules.
+[Django Model Conventions](../../../../docs/conventions/django-models.md) specialize persistence rules.
 The existing singular `models/booking/` path is a transitional model mapping, not
 an alternative feature template.
 

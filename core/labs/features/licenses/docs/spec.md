@@ -28,7 +28,7 @@ The Licenses feature tracks commercial software and firmware entitlements, seat 
 
 ---
 
-## 3. Options Standard Compliance (`GEMINI.md`)
+## 3. Options Standard Compliance (ADR 002)
 `GET /api/labs/licenses/options` provides selector options `{id, sku, name}`.
 
 ---

@@ -43,7 +43,7 @@ The Equipment feature manages the physical and logical lifecycle of hardware dev
 
 ---
 
-## 3. Options Standard Compliance (`GEMINI.md`)
+## 3. Options Standard Compliance (ADR 002)
 `GET /api/labs/equipment/options` strictly returns flat:
 ```json
 {
@@ -61,7 +61,7 @@ The Equipment feature manages the physical and logical lifecycle of hardware dev
 
 ### Computing field ownership
 - `ip_address`, `os_name`, `system_info`, and `disk_usage` are agent-owned snapshot fields. `hostname` is agent-reported inventory data. They are returned where configured for reading, but category create/update requests reject them as unknown or read-only.
-- The authenticated agent snapshot endpoint described in `docs/backend-agent-api-spec.md` is not implemented yet. Until it is available, these values cannot be changed through the category API.
+- The authenticated agent snapshot endpoint described in `docs/agent-platform/backend-api.md` is not implemented yet. Until it is available, these values cannot be changed through the category API.
 - `rdp_file` is server-generated and is also rejected on category create/update. `mac_address` remains user-editable on create; `monitored_devices` and `technical_user` remain editable on update. Agent writes to `technical_user` are prohibited by the agent contract.
 - The computing agent snapshot endpoint is not implemented. Agent-owned fields remain readable through category detail responses, but this API currently offers no agent ingestion path.
 - `hostname` is excluded from computing list responses until the agent snapshot endpoint exists; detail retains its read-only projection.
