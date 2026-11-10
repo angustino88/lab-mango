@@ -346,7 +346,7 @@ Each step is its own T2 change with its own plan and approval. Order matters bec
 |---|---|---|---|
 | 0 | Fix D1 to D5 on the current model (**implemented**, see `features/equipment/docs/architecture.md` section 6) | none | revert |
 | 1 | `EquipmentPlacement` (**implemented**, see the step 1 plan below) | rename and extend `EquipmentAssignment` (state-only rename where possible); `storage_room` becomes a room placement for units with no active assignment; drop the column in a later release | keep the column until step 1 is verified |
-| 2 | `lifecycle_state`, `condition`, `EquipmentEvent` | backfill from the latest `EquipmentStatusRecord` using the table below; keep the old table read-only | columns are additive; adapter keeps old route working |
+| 2 | `lifecycle_state`, `condition`, `EquipmentEvent` (**implemented**, see the step 2 plan below) | backfill from the latest `EquipmentStatusRecord` using the table below; keep the old table read-only | columns are additive; adapter keeps old route working |
 | 3 | `EquipmentLoan` | none (legacy `borrowed` rows have no borrower FK; see table) | additive |
 | 4 | Equipment bookings feature | none | feature routes removable |
 | 5 | Bench state reduction | map `reserved`, `active` to `in_service`; `maintenance` to `out_of_service`; `available` to `in_service` | value map is reversible only for unchanged rows |
@@ -382,6 +382,18 @@ Decisions that refine the step 1 row above:
 | Backfill | None: migrations were reset to a fresh initial set (ADR 005); development databases are recreated. | Owner decision, 2026-11-10. |
 | Locations | `delete_room` and `delete_station` refuse while a unit is placed there (asked through equipment `public.py`); both already lock the row that `place_equipment` locks. | "Benches, locations ask equipment" (module ownership table). |
 | API | New `GET`/`PUT`/`DELETE /api/labs/equipment/{id}/placement`. `/assignment` is unchanged and keeps showing bench placements only (404 when the unit rests in a room). Equipment list and detail responses (generic and category routes) include `placement`. | Additive contract change. |
+
+
+### Step 2 implementation plan (owner: "continue", 2026-11-10; development, no compatibility window)
+
+| Topic | Decision |
+|---|---|
+| Storage | `Equipment.lifecycle_state` and `Equipment.condition` columns (indexed), checks `equipment_lifecycle_valid`, `equipment_condition_valid`, `equipment_condition_only_in_service`. Append-only `EquipmentEvent` (axis, from, to, reason, details, actor, time). `EquipmentStatusRecord` and `EquipmentStatus` are removed (no data to keep; ADR 005). |
+| Commands | `change_condition`, `change_lifecycle` (`application/change_state.py`), transition table above, `invalid_state_transition` (409). Same target is a no-op without an event. Leaving `in_service` resets condition to `operational` (with its own event). Entering `transferred_out`, `retired`, or `lost` refuses a bench placement (`equipment_already_placed`), closes any other placement, and cancels reserved equipment bookings with the event reason. `transferred_out` requires `receiving_organisation` (stored on the event). |
+| Placement gating | A bench placement needs `lifecycle_state = in_service`; any other placement is refused for `transferred_out`, `retired`, `lost`. Condition never gates or moves a placement (AC4). Bench and placement commands no longer write status history. |
+| Display | `display_status` is a SQL `CASE` annotation on every equipment projection (priority table above). Values keep the familiar labels where they exist: `on_order` (planned), `transferred`, `lost`, `retired`, `broken`, `maintenance`, `in_use`, `calibration_overdue`, `available`. `borrowed` is added with loans (step 3). `in_storage` is not produced (open question 2). |
+| API | Responses: `status` is replaced by `display_status`, `lifecycle_state`, `condition`. `POST .../actions/change-status` (generic and category routes) is replaced by `.../actions/change-condition` and `.../actions/change-lifecycle`. Filters: `status` filters `display_status`; new `lifecycle_state` and `condition` filters. Option selectors: `status` filters `display_status`, `lifecycle_status` is renamed `lifecycle_state`, `assignable` means `display_status = available`. Creation accepts `lifecycle_state` (`planned` or `in_service`, default `in_service`). |
+| Readers | Status summaries count `display_status`. Analytics reads equipment state through `public.py` (`get_equipment_status_summary`, `equipment_state_timelines`) instead of querying equipment tables. |
 
 ## Observability
 

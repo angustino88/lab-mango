@@ -11,7 +11,7 @@ from core.labs.models.resource.base.resource import Department, ResourceGroup
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 from core.labs.models.resource.equipment.computing import ComputingEquipment, TechnicalUser
 from core.labs.models.resource.equipment.display import DisplayEquipment
-from core.labs.models.resource.equipment.equipment import EquipmentStatus, EquipmentStatusRecord
+from core.labs.models.resource.equipment.equipment import Equipment
 from core.labs.models.resource.equipment.reference_data import (
     EquipmentCategory,
     EquipmentKind,
@@ -51,14 +51,9 @@ def bench(db):
     return Bench.objects.create(name="Bench 1", sku="BENCH-OPT-01")
 
 
-def _set_status(equipment, status_value, actor):
-    return EquipmentStatusRecord.objects.create(
-        equipment=equipment,
-        status=status_value,
-        metadata={"note": "Test status"},
-        creator=actor,
-        last_modified_by=actor,
-    )
+def _set_state(equipment, **fields):
+    """Set stored lifecycle_state / condition directly; display_status is computed from them."""
+    Equipment.objects.filter(pk=equipment.pk).update(**fields)
 
 
 @pytest.mark.django_db
@@ -140,8 +135,6 @@ def test_large_equipment_options_require_adr_declared_narrowing(
         manufacturer=unrelated_manufacturer,
         product_model=unrelated_product_model,
     )
-    _set_status(equipment, EquipmentStatus.AVAILABLE, actor)
-    _set_status(display_equipment, EquipmentStatus.AVAILABLE, actor)
 
     filter_values = {
         "category_id": computing.pk,
@@ -218,11 +211,9 @@ def test_equipment_options_assignable_true_ignores_bench_assigned_and_unavailabl
 
     # 1. Available and unassigned -> INCLUDED
     available_eq = ComputingEquipment.objects.create(sku="EQ-AVAIL", name="Available Laptop", kind=kind)
-    _set_status(available_eq, EquipmentStatus.AVAILABLE, actor)
 
     # 2. Available status BUT actively assigned to a bench -> IGNORED (already assigned)
     assigned_eq = ComputingEquipment.objects.create(sku="EQ-ASSIGNED", name="Assigned Laptop", kind=kind)
-    _set_status(assigned_eq, EquipmentStatus.AVAILABLE, actor)
     EquipmentAssignment.objects.create(
         equipment=assigned_eq,
         bench=bench,
@@ -231,23 +222,22 @@ def test_equipment_options_assignable_true_ignores_bench_assigned_and_unavailabl
         last_modified_by=actor,
     )
 
-    # 3. In-use unassigned -> IGNORED (not available)
+    # 3. Planned (on order), unassigned -> IGNORED (not available)
     in_use_eq = ComputingEquipment.objects.create(sku="EQ-INUSE", name="In Use Laptop", kind=kind)
-    _set_status(in_use_eq, EquipmentStatus.IN_USE, actor)
+    _set_state(in_use_eq, lifecycle_state="planned")
 
     # 4. Maintenance unassigned -> IGNORED (not available)
     maint_eq = ComputingEquipment.objects.create(sku="EQ-MAINT", name="Maintenance Laptop", kind=kind)
-    _set_status(maint_eq, EquipmentStatus.MAINTENANCE, actor)
+    _set_state(maint_eq, condition="in_maintenance")
 
     # 5. Broken unassigned -> IGNORED (not available)
     broken_eq = ComputingEquipment.objects.create(sku="EQ-BROKEN", name="Broken Laptop", kind=kind)
-    _set_status(broken_eq, EquipmentStatus.BROKEN, actor)
+    _set_state(broken_eq, condition="out_of_service")
 
     # 6. Soft-deleted -> IGNORED
     deleted_eq = ComputingEquipment.objects.create(
         sku="EQ-DELETED", name="Deleted Laptop", kind=kind, deleted_at=timezone.now()
     )
-    _set_status(deleted_eq, EquipmentStatus.AVAILABLE, actor)
 
     # Query with pattern options?assignable=true
     response = api_client.get("/api/labs/equipment/options", {"assignable": "true", "q": "Laptop"})
@@ -277,8 +267,7 @@ def test_equipment_options_assignable_true_ignores_bench_assigned_and_unavailabl
 def test_slashless_options_route_standard(api_client, actor, computing_category):
     api_client.force_authenticate(user=actor)
     _, kind = computing_category
-    eq = ComputingEquipment.objects.create(sku="EQ-SLASH", name="Slash Test", kind=kind)
-    _set_status(eq, EquipmentStatus.AVAILABLE, actor)
+    ComputingEquipment.objects.create(sku="EQ-SLASH", name="Slash Test", kind=kind)
 
     resp_slashless = api_client.get("/api/labs/equipment/options", {"q": "Slash"})
     assert resp_slashless.status_code == status.HTTP_200_OK
@@ -506,12 +495,9 @@ def test_options_ordering_is_stable_by_name(api_client, actor, computing_categor
     api_client.force_authenticate(user=actor)
     _, kind = computing_category
 
-    eq_z = ComputingEquipment.objects.create(sku="EQ-Z", name="Zebra Machine", kind=kind)
-    _set_status(eq_z, EquipmentStatus.AVAILABLE, actor)
-    eq_a = ComputingEquipment.objects.create(sku="EQ-A", name="Apple Machine", kind=kind)
-    _set_status(eq_a, EquipmentStatus.AVAILABLE, actor)
-    eq_m = ComputingEquipment.objects.create(sku="EQ-M", name="Mango Machine", kind=kind)
-    _set_status(eq_m, EquipmentStatus.AVAILABLE, actor)
+    ComputingEquipment.objects.create(sku="EQ-Z", name="Zebra Machine", kind=kind)
+    ComputingEquipment.objects.create(sku="EQ-A", name="Apple Machine", kind=kind)
+    ComputingEquipment.objects.create(sku="EQ-M", name="Mango Machine", kind=kind)
 
     resp = api_client.get("/api/labs/equipment/options", {"q": "Machine"})
     assert resp.status_code == status.HTTP_200_OK
@@ -525,13 +511,11 @@ def test_options_status_and_assigned_filters(api_client, actor, computing_catego
     _, kind = computing_category
 
     eq1 = ComputingEquipment.objects.create(sku="EQ-F1", name="Eq Available", kind=kind)
-    _set_status(eq1, EquipmentStatus.AVAILABLE, actor)
 
     eq2 = ComputingEquipment.objects.create(sku="EQ-F2", name="Eq In Use", kind=kind)
-    _set_status(eq2, EquipmentStatus.IN_USE, actor)
+    _set_state(eq2, lifecycle_state="planned")
 
     eq3 = ComputingEquipment.objects.create(sku="EQ-F3", name="Eq Assigned", kind=kind)
-    _set_status(eq3, EquipmentStatus.AVAILABLE, actor)
     EquipmentAssignment.objects.create(
         equipment=eq3,
         bench=bench,
@@ -540,13 +524,19 @@ def test_options_status_and_assigned_filters(api_client, actor, computing_catego
         last_modified_by=actor,
     )
 
-    # Filter by lifecycle_status
-    resp = api_client.get("/api/labs/equipment/options", {"lifecycle_status": "available", "q": "Eq"})
+    # Filter by computed display status: a unit on a bench is in use, not available.
+    resp = api_client.get("/api/labs/equipment/options", {"status": "available", "q": "Eq"})
     assert resp.status_code == status.HTTP_200_OK
     ids = [i["id"] for i in resp.data["data"]]
     assert eq1.pk in ids
-    assert eq3.pk in ids
+    assert eq3.pk not in ids
     assert eq2.pk not in ids
+    in_use = api_client.get("/api/labs/equipment/options", {"status": "in_use", "q": "Eq"})
+    assert [i["id"] for i in in_use.data["data"]] == [eq3.pk]
+
+    # Filter by stored lifecycle state
+    planned = api_client.get("/api/labs/equipment/options", {"lifecycle_state": "planned", "q": "Eq"})
+    assert [i["id"] for i in planned.data["data"]] == [eq2.pk]
 
     # Filter by assigned=true
     resp_assigned = api_client.get("/api/labs/equipment/options", {"assigned": "true", "q": "Eq"})
@@ -639,8 +629,6 @@ def test_category_options_isolates_by_category(api_client, actor, computing_cate
     _, display_kind = display_category
     comp_eq = ComputingEquipment.objects.create(sku="OPT-COMPUTING", name="PC", kind=computing_kind)
     disp_eq = DisplayEquipment.objects.create(sku="OPT-DISPLAY", name="Monitor", kind=display_kind)
-    _set_status(comp_eq, EquipmentStatus.AVAILABLE, actor)
-    _set_status(disp_eq, EquipmentStatus.AVAILABLE, actor)
 
     # Category computing options?assignable=true
     comp_resp = api_client.get("/api/labs/equipment/computing/options", {"assignable": "true", "q": "PC"})
@@ -658,10 +646,8 @@ def test_options_q_filter(api_client, actor, computing_category):
     _, kind = computing_category
 
     eq1 = ComputingEquipment.objects.create(sku="SRCH-ALPHA", name="Alpha Station", kind=kind)
-    _set_status(eq1, EquipmentStatus.AVAILABLE, actor)
 
     eq2 = ComputingEquipment.objects.create(sku="SRCH-BETA", name="Beta Station", kind=kind)
-    _set_status(eq2, EquipmentStatus.AVAILABLE, actor)
 
     resp = api_client.get("/api/labs/equipment/options", {"q": "Alpha", "assignable": "true"})
     assert resp.status_code == status.HTTP_200_OK

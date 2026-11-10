@@ -12,7 +12,7 @@
 
 | Concept | Owner | Boundary |
 | --- | --- | --- |
-| `Equipment`, equipment reference rows, equipment status records | Equipment | Authoritative equipment data; model code remains centralized under `core/labs/models/` |
+| `Equipment`, equipment reference rows, `EquipmentEvent` (lifecycle and condition history) | Equipment | Authoritative equipment data; model code remains centralized under `core/labs/models/` |
 | Equipment category behavior and category-specific API mapping | Equipment | Variants remain inside the equipment feature; avoid sibling feature packages per category |
 | `EquipmentAssignment` | Equipment | Owns assignment/unassignment commands and assignment history |
 | Bench lifecycle / station-slot placement | Benches | Equipment may read a bench identifier; it does not position benches |
@@ -75,6 +75,10 @@ The service/API should translate only the known active-assignment constraint int
 ### Placement (redesign step 1)
 
 **Implemented.** `EquipmentAssignment` rows now record every placement: a bench, a station, a room, or only a `location_note` (check constraints `equipment_placement_one_target`, `equipment_placement_bench_fields`; `one_active_bench_per_equipment` is one active placement per unit). `EquipmentAssignment.objects` returns bench placements only, so pre-existing readers keep their meaning; `EquipmentAssignment.all_placements` and the proxy `EquipmentPlacement` return every placement. Join-based readers starting from equipment must add `bench__isnull=False` when they mean a bench. `place_equipment` and `remove_placement` (`application/place_equipment.py`) lock `Equipment`, then the target, then placement rows; bench targets delegate to `assign_equipment` / `unassign_equipment`. A resting unit moves; a unit on a bench must leave it first. `Equipment.storage_room` was removed; equipment list and detail responses carry `placement` (prefetched once per page by `with_active_placement`). `delete_room` and `delete_station` refuse while equipment rests there (`public.has_active_placements`). Plan and decisions: `docs/proposals/equipment-management-redesign.md`, "Step 1 implementation plan".
+
+### Lifecycle state and condition (redesign step 2)
+
+**Implemented.** `Equipment.lifecycle_state` (`planned`, `in_service`, `transferred_out`, `retired`, `lost`) and `Equipment.condition` (`operational`, `in_maintenance`, `out_of_service`) are stored columns, changed only by `change_lifecycle` / `change_condition` (`application/change_state.py`), each change recorded in append-only `EquipmentEvent`. `display_status` is a SQL `CASE` on every projection (`queries/equipment.py::display_status_expression`), so it filters and counts without per-row queries. Analytics reads history through `public.equipment_state_timelines`. Plan: `docs/proposals/equipment-management-redesign.md`, "Step 2 implementation plan".
 
 ### Queries
 

@@ -2,7 +2,17 @@ from .accessory import AccessoryEquipment
 from .computing import ComputingEquipment, TechnicalUser
 from .debugging import DebuggingEquipment
 from .display import DisplayEquipment, DisplayResolution, DisplaySize
-from .equipment import MAC_ADDRESS_VALIDATOR, Equipment, EquipmentStatus, EquipmentStatusRecord
+from .equipment import (
+    GONE_LIFECYCLE_STATES,
+    LIFECYCLE_TRANSITIONS,
+    MAC_ADDRESS_VALIDATOR,
+    Equipment,
+    EquipmentCondition,
+    EquipmentDisplayStatus,
+    EquipmentEvent,
+    EquipmentEventAxis,
+    EquipmentLifecycleState,
+)
 from .furniture import FurnitureEquipment
 from .instrument import InstrumentEquipment
 from .laboratory import LaboratoryEquipment
@@ -35,7 +45,12 @@ __all__ = [
     "EquipmentKind",
     "EquipmentManufacturer",
     "EquipmentProductModel",
-    "EquipmentStatus",
-    "EquipmentStatusRecord",
+    "EquipmentCondition",
+    "EquipmentDisplayStatus",
+    "EquipmentEvent",
+    "EquipmentEventAxis",
+    "EquipmentLifecycleState",
+    "GONE_LIFECYCLE_STATES",
+    "LIFECYCLE_TRANSITIONS",
     "EquipmentType",
 ]

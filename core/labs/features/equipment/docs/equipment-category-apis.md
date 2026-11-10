@@ -65,7 +65,8 @@ For each category below (no trailing slash):
 | GET / POST | `/api/labs/equipment/{category}` |
 | GET / PUT / PATCH / DELETE | `/api/labs/equipment/{category}/{id}` |
 | GET | `/api/labs/equipment/{category}/reference-data` |
-| POST | `/api/labs/equipment/{category}/{id}/actions/change-status` |
+| POST | `/api/labs/equipment/{category}/{id}/actions/change-condition` |
+| POST | `/api/labs/equipment/{category}/{id}/actions/change-lifecycle` |
 | GET | `/api/labs/equipment/{category}/options` |
 
 Categories: accessory, computing, debugging, display, furniture, instrument,
@@ -73,13 +74,13 @@ laboratory, mechanical, networking, other, power, sample.
 
 Category equipment options `GET /api/labs/equipment/{category}/options`
 returns compact choices (`id`, `uid`, `sku`, `name`, `category`, `kind`).
-Passing `?assignable=true` filters for unassigned equipment in the category whose
-lifecycle status is `available` (any equipment actively assigned to a bench is excluded).
+Passing `?assignable=true` filters for equipment in the category whose computed
+`display_status` is `available` (in service, operational, not on a bench, calibration not overdue).
 
-Category equipment status action `POST /api/labs/equipment/{category}/{id}/actions/change-status`
-operates on the category equipment record, validating category membership and status
-details, invoking the equipment application command to record the status transition, and
-returning the full updated category detail representation.
+Category state actions `POST /api/labs/equipment/{category}/{id}/actions/change-condition` and
+`.../actions/change-lifecycle` operate on the category equipment record (404 for a unit of
+another category), call `change_condition` / `change_lifecycle`, and return the full updated
+category detail representation.
 
 Existing generic equipment assignment endpoints operate on the canonical
 equipment ID for every category. Do not create parallel category assignment tables.
@@ -133,7 +134,8 @@ category-specific lookup lists. Department and
 group are writable references; a group can determine its department when department
 is omitted, while mismatched department/group pairs are rejected.
 
-Responses include category and reference labels, metadata, current_status,
+Responses include category and reference labels, metadata, display_status, lifecycle_state,
+condition, placement,
 acquisition_price, and acquisition_currency. Detail responses add details and all
 category fields. Acquisition price is read-only from PurchaseItemResource, currency
 from its Purchase. Missing allocations return null, not zero/EUR. Allocate using
@@ -149,7 +151,8 @@ the proposed agent snapshot endpoint is not yet implemented. `hostname` is omitt
 from list responses but retained in detail responses. `rdp_file` is generated
 by the server and is likewise not writable through category CRUD. Audit result and
 remarks are managed through the resource-audit API, not category payloads. Lifecycle
-status changes use the separate change-status action.
+state and condition change only through the change-lifecycle and change-condition actions
+(`lifecycle_state` may be set once at creation: `planned` or `in_service`).
 
 ## Compatibility and validation
 

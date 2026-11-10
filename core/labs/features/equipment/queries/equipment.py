@@ -4,18 +4,19 @@ from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import CharField, Exists, OuterRef, Prefetch, Q, QuerySet, Subquery
-from django.db.models.functions import Cast
+from django.db.models import Case, CharField, Exists, OuterRef, Prefetch, Q, QuerySet, Subquery, Value, When
+from django.db.models.functions import Cast, Now
 
 from core.labs.features.equipment.contracts import ActiveEquipmentBenchAssignment
 from core.labs.models import (
     Equipment,
     EquipmentCategory,
+    EquipmentCondition,
+    EquipmentDisplayStatus,
     EquipmentKind,
+    EquipmentLifecycleState,
     EquipmentManufacturer,
     EquipmentProductModel,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     EquipmentType,
     PurchaseItemResource,
     ResourceServiceRecord,
@@ -24,7 +25,51 @@ from core.labs.models.resource.base.generic_links import resource_root_model
 from core.labs.models.resource.base.resource import ResourceGroup
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
-LATEST_STATUS = EquipmentStatusRecord.objects.filter(equipment_id=OuterRef("pk")).order_by("-created", "-id")
+
+def display_status_expression() -> Case:
+    """``display_status`` from the stored facts; first matching row wins (redesign, display status).
+
+    Needs ``latest_calibration_due_at`` on the queryset. ``borrowed`` arrives with loans (step 3).
+    """
+    on_bench = Exists(EquipmentAssignment.objects.filter(equipment_id=OuterRef("pk"), unassigned_at__isnull=True))
+    calibration_overdue = Q(calibration_required=True) & (
+        Q(latest_calibration_due_at__isnull=True) | Q(latest_calibration_due_at__lt=Now())
+    )
+    status = EquipmentDisplayStatus
+    # Q() wraps `condition` lookups: When() has its own `condition` parameter.
+    return Case(
+        When(lifecycle_state=EquipmentLifecycleState.PLANNED, then=Value(status.ON_ORDER)),
+        When(lifecycle_state=EquipmentLifecycleState.TRANSFERRED_OUT, then=Value(status.TRANSFERRED)),
+        When(lifecycle_state=EquipmentLifecycleState.RETIRED, then=Value(status.RETIRED)),
+        When(lifecycle_state=EquipmentLifecycleState.LOST, then=Value(status.LOST)),
+        When(Q(condition=EquipmentCondition.OUT_OF_SERVICE), then=Value(status.BROKEN)),
+        When(Q(condition=EquipmentCondition.IN_MAINTENANCE), then=Value(status.MAINTENANCE)),
+        When(on_bench, then=Value(status.IN_USE)),
+        When(calibration_overdue, then=Value(status.CALIBRATION_OVERDUE)),
+        default=Value(status.AVAILABLE),
+        output_field=CharField(),
+    )
+
+
+def _latest_calibration(queryset) -> QuerySet:
+    # Latest calibration, matched exactly like ResourceModel.service_records (root and own
+    # content types). Filter by app_label/model (joined in SQL) so building it needs no DB access.
+    linked_models = {resource_root_model(queryset.model), queryset.model._meta.concrete_model}
+    return ResourceServiceRecord.objects.filter(
+        resource_content_type__app_label=Equipment._meta.app_label,
+        resource_content_type__model__in=sorted(model._meta.model_name for model in linked_models),
+        resource_object_id=Cast(OuterRef("pk"), CharField()),
+        kind=ResourceServiceRecord.Kind.CALIBRATION,
+    ).order_by("-performed_at", "-id")
+
+
+def with_display_status(queryset):
+    """Annotate ``display_status`` (and the calibration due date it needs) for filters and counts."""
+    if "latest_calibration_due_at" not in queryset.query.annotations:
+        queryset = queryset.annotate(
+            latest_calibration_due_at=Subquery(_latest_calibration(queryset).values("next_due_at")[:1])
+        )
+    return queryset.annotate(display_status=display_status_expression())
 
 
 def with_equipment_info(queryset):
@@ -34,22 +79,12 @@ def with_equipment_info(queryset):
         resource_type__model=Equipment._meta.model_name,
         resource_id=OuterRef("pk"),
     )
-    # Latest calibration, matched exactly like ResourceModel.service_records (root and own
-    # content types). Read by Equipment.last_calibrated_at / next_calibration_due_at /
-    # calibration_overdue, which otherwise run a query each per serialized row.
-    # Filter by app_label/model (joined in SQL) so building the queryset needs no DB access.
-    linked_models = {resource_root_model(queryset.model), queryset.model._meta.concrete_model}
-    calibration = ResourceServiceRecord.objects.filter(
-        resource_content_type__app_label=Equipment._meta.app_label,
-        resource_content_type__model__in=sorted(model._meta.model_name for model in linked_models),
-        resource_object_id=Cast(OuterRef("pk"), CharField()),
-        kind=ResourceServiceRecord.Kind.CALIBRATION,
-    ).order_by("-performed_at", "-id")
-    return queryset.annotate(
+    # Read by Equipment.last_calibrated_at / next_calibration_due_at / calibration_overdue,
+    # which otherwise run a query each per serialized row.
+    calibration = _latest_calibration(queryset)
+    queryset = queryset.annotate(
         latest_calibration_at=Subquery(calibration.values("performed_at")[:1]),
         latest_calibration_due_at=Subquery(calibration.values("next_due_at")[:1]),
-        current_status=Subquery(LATEST_STATUS.values("status")[:1]),
-        current_status_metadata=Subquery(LATEST_STATUS.values("metadata")[:1]),
         acquisition_price=Subquery(acquisition.values("acquisition_price")[:1]),
         acquisition_currency=Subquery(acquisition.values("purchase_item__purchase__currency")[:1]),
         has_active_assignment=Exists(
@@ -59,6 +94,7 @@ def with_equipment_info(queryset):
             )
         ),
     )
+    return with_display_status(queryset)
 
 
 ACTIVE_PLACEMENT_ATTR = "active_placements"
@@ -113,7 +149,7 @@ def list_equipment(
     if manufacturer:
         queryset = queryset.filter(manufacturer_id=manufacturer)
     if status:
-        queryset = queryset.filter(current_status=status)
+        queryset = queryset.filter(display_status=status)
     if assigned is not None:
         active_assignment = EquipmentAssignment.objects.filter(
             equipment_id=OuterRef("pk"),
@@ -337,7 +373,7 @@ def list_equipment_options(
     equipment_type: int | None = None,
     manufacturer_id: int | None = None,
     manufacturer: int | None = None,
-    lifecycle_status: str | None = None,
+    lifecycle_state: str | None = None,
     status: str | None = None,
     assigned: bool | None = None,
     q: str | None = None,
@@ -361,7 +397,6 @@ def list_equipment_options(
     kind_val = kind_id if kind_id is not None else kind
     type_val = type_id if type_id is not None else equipment_type
     mfr_val = manufacturer_id if manufacturer_id is not None else manufacturer
-    status_val = lifecycle_status if lifecycle_status is not None else status
     search_val = q or search
 
     cond = Q(deleted_at__isnull=True)
@@ -393,18 +428,18 @@ def list_equipment_options(
         else:
             cond &= ~Exists(active_assignment)
 
-    # Assignable filter: unassigned + available status
+    # Assignable: available right now (in service, operational, not on a bench, calibrated).
+    if assignable is not None or status:
+        queryset = with_display_status(queryset)
     if assignable is not None:
-        queryset = queryset.annotate(current_status=Subquery(LATEST_STATUS.values("status")[:1]))
-        if assignable:
-            cond &= ~Exists(active_assignment) & Q(current_status=EquipmentStatus.AVAILABLE)
-        else:
-            cond &= Exists(active_assignment) | ~Q(current_status=EquipmentStatus.AVAILABLE)
+        available = Q(display_status=EquipmentDisplayStatus.AVAILABLE)
+        cond &= available if assignable else ~available
 
-    if status_val:
-        if "current_status" not in queryset.query.annotations:
-            queryset = queryset.annotate(current_status=Subquery(LATEST_STATUS.values("status")[:1]))
-        cond &= Q(current_status=status_val)
+    if status:
+        cond &= Q(display_status=status)
+
+    if lifecycle_state:
+        cond &= Q(lifecycle_state=lifecycle_state)
 
     if search_val:
         cond &= (
@@ -435,7 +470,7 @@ def category_options_queryset(
     equipment_type: int | None = None,
     manufacturer_id: int | None = None,
     manufacturer: int | None = None,
-    lifecycle_status: str | None = None,
+    lifecycle_state: str | None = None,
     status: str | None = None,
     assigned: bool | None = None,
     q: str | None = None,
@@ -458,7 +493,6 @@ def category_options_queryset(
     kind_val = kind_id if kind_id is not None else kind
     type_val = type_id if type_id is not None else equipment_type
     mfr_val = manufacturer_id if manufacturer_id is not None else manufacturer
-    status_val = lifecycle_status if lifecycle_status is not None else status
     search_val = q or search
 
     cond = Q(deleted_at__isnull=True)
@@ -482,18 +516,18 @@ def category_options_queryset(
         else:
             cond &= ~Exists(active_assignment)
 
-    # Assignable filter: unassigned + available status
+    # Assignable: available right now (in service, operational, not on a bench, calibrated).
+    if assignable is not None or status:
+        queryset = with_display_status(queryset)
     if assignable is not None:
-        queryset = queryset.annotate(current_status=Subquery(LATEST_STATUS.values("status")[:1]))
-        if assignable:
-            cond &= ~Exists(active_assignment) & Q(current_status=EquipmentStatus.AVAILABLE)
-        else:
-            cond &= Exists(active_assignment) | ~Q(current_status=EquipmentStatus.AVAILABLE)
+        available = Q(display_status=EquipmentDisplayStatus.AVAILABLE)
+        cond &= available if assignable else ~available
 
-    if status_val:
-        if "current_status" not in queryset.query.annotations:
-            queryset = queryset.annotate(current_status=Subquery(LATEST_STATUS.values("status")[:1]))
-        cond &= Q(current_status=status_val)
+    if status:
+        cond &= Q(display_status=status)
+
+    if lifecycle_state:
+        cond &= Q(lifecycle_state=lifecycle_state)
 
     if search_val:
         cond &= (

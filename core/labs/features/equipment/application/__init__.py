@@ -1,7 +1,7 @@
 """Equipment write commands and immutable command inputs."""
 
 from .assign_equipment import AssignEquipmentInput, assign_equipment
-from .change_equipment_status import ChangeEquipmentStatusInput, change_equipment_status
+from .change_state import ChangeConditionInput, ChangeLifecycleInput, change_condition, change_lifecycle
 from .create_equipment import CreateEquipmentInput, create_equipment
 from .delete_equipment import DeleteEquipmentInput, delete_equipment
 from .place_equipment import PlaceEquipmentInput, RemovePlacementInput, place_equipment, remove_placement
@@ -10,7 +10,8 @@ from .update_equipment import UpdateEquipmentInput, update_equipment
 
 __all__ = (
     "AssignEquipmentInput",
-    "ChangeEquipmentStatusInput",
+    "ChangeConditionInput",
+    "ChangeLifecycleInput",
     "CreateEquipmentInput",
     "DeleteEquipmentInput",
     "PlaceEquipmentInput",
@@ -18,7 +19,8 @@ __all__ = (
     "UnassignEquipmentInput",
     "UpdateEquipmentInput",
     "assign_equipment",
-    "change_equipment_status",
+    "change_condition",
+    "change_lifecycle",
     "create_equipment",
     "delete_equipment",
     "place_equipment",

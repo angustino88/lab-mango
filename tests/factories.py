@@ -23,9 +23,10 @@ from core.labs.models import (
     ComputingActivityStatus,
     EquipmentAssignment,
     EquipmentCategory,
+    EquipmentCondition,
+    EquipmentEvent,
+    EquipmentEventAxis,
     EquipmentKind,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     LaboratoryVisitEvent,
     LabProject,
     LabSessionLog,
@@ -99,12 +100,16 @@ class ComputingEquipmentFactory(factory.django.DjangoModelFactory):
     os_name = "Ubuntu 22.04"
 
 
-class EquipmentStatusRecordFactory(factory.django.DjangoModelFactory):
+class EquipmentEventFactory(factory.django.DjangoModelFactory):
+    """A history row only. Also set the unit's column when the current state matters."""
+
     class Meta:
-        model = EquipmentStatusRecord
+        model = EquipmentEvent
 
     equipment = factory.SubFactory(ComputingEquipmentFactory)
-    status = EquipmentStatus.AVAILABLE
+    axis = EquipmentEventAxis.CONDITION
+    from_value = EquipmentCondition.OPERATIONAL
+    to_value = EquipmentCondition.OUT_OF_SERVICE
 
 
 class LabProjectFactory(factory.django.DjangoModelFactory):
@@ -321,7 +326,7 @@ __all__ = [
     "ComputingEquipmentFactory",
     "EquipmentCategoryFactory",
     "EquipmentKindFactory",
-    "EquipmentStatusRecordFactory",
+    "EquipmentEventFactory",
     "LabComputerFactory",
     "LabEquipmentFactory",
     "LabMonitoringFactory",

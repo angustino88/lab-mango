@@ -1,4 +1,4 @@
-from drf_spectacular.utils import PolymorphicProxySerializer, extend_schema_field, extend_schema_serializer
+from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
 from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
@@ -17,11 +17,12 @@ from core.labs.features.equipment.api.capabilities import EQUIPMENT_CAPABILITIES
 from core.labs.models import (
     Equipment,
     EquipmentCategory,
+    EquipmentCondition,
+    EquipmentDisplayStatus,
     EquipmentKind,
+    EquipmentLifecycleState,
     EquipmentManufacturer,
     EquipmentProductModel,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     EquipmentType,
     ProductModelSpecification,
     SpecificationDefinition,
@@ -72,7 +73,9 @@ class EquipmentSerializer(AppModelSerializer):
     last_calibrated_at = serializers.DateTimeField(read_only=True, allow_null=True)
     next_calibration_due_at = serializers.DateTimeField(read_only=True, allow_null=True)
     calibration_overdue = serializers.BooleanField(read_only=True)
-    status = serializers.SerializerMethodField(read_only=True)
+    display_status = serializers.SerializerMethodField(read_only=True)
+    lifecycle_state = serializers.SerializerMethodField(read_only=True)
+    condition = serializers.SerializerMethodField(read_only=True)
     acquisition_price = serializers.SerializerMethodField(read_only=True)
     placement = serializers.SerializerMethodField(read_only=True)
 
@@ -104,7 +107,9 @@ class EquipmentSerializer(AppModelSerializer):
             "calibration_overdue",
             "metadata",
             "replacement_date",
-            "status",
+            "display_status",
+            "lifecycle_state",
+            "condition",
             "acquisition_price",
             "created_at",
             "updated_at",
@@ -130,9 +135,17 @@ class EquipmentSerializer(AppModelSerializer):
         return EquipmentPlacementSerializer(placements[0], context=self.context).data if placements else None
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
-    def get_status(self, obj) -> dict[str, str] | None:
-        raw_status = getattr(obj, "current_status", None)
-        return to_choice_reference(raw_status, EquipmentStatus.choices)
+    def get_display_status(self, obj) -> dict[str, str] | None:
+        """Computed in SQL by the equipment projections; never stored."""
+        return to_choice_reference(getattr(obj, "display_status", None), EquipmentDisplayStatus.choices)
+
+    @extend_schema_field(ChoiceReferenceSerializer())
+    def get_lifecycle_state(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(obj.lifecycle_state, EquipmentLifecycleState.choices)
+
+    @extend_schema_field(ChoiceReferenceSerializer())
+    def get_condition(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(obj.condition, EquipmentCondition.choices)
 
 
 class EquipmentCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
@@ -166,6 +179,7 @@ class EquipmentCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelS
             "weight_kg",
             "warranty_until",
             "calibration_required",
+            "lifecycle_state",
         )
         extra_kwargs = {"sku": {"validators": []}}
 
@@ -176,126 +190,24 @@ class EquipmentAssignmentSerializer(ResourceWriteSerializerMixin, serializers.Se
     position = serializers.IntegerField(min_value=0, required=False, default=0)
 
 
-class CommonStatusDetailsSerializer(serializers.Serializer):
-    responsible_person = serializers.CharField(max_length=255)
-    notes = serializers.CharField(
-        max_length=2000,
+class EquipmentChangeConditionSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    condition = serializers.ChoiceField(choices=EquipmentCondition.choices)
+    reason = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+
+
+class EquipmentChangeLifecycleSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    lifecycle_state = serializers.ChoiceField(choices=EquipmentLifecycleState.choices)
+    reason = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+    receiving_organisation = serializers.CharField(
+        max_length=255,
         required=False,
         allow_blank=True,
         default="",
+        help_text="Required when lifecycle_state is transferred_out.",
     )
-
-
-class AvailableStatusDetailsSerializer(CommonStatusDetailsSerializer):
-    pass
-
-
-class InUseStatusDetailsSerializer(CommonStatusDetailsSerializer):
-    bench_id = serializers.IntegerField(min_value=1)
-
-
-class InStorageStatusDetailsSerializer(CommonStatusDetailsSerializer):
-    location = serializers.CharField(max_length=255)
-    stored_date = serializers.DateField()
-    condition = serializers.CharField(max_length=255)
-
-
-class TransferredStatusDetailsSerializer(CommonStatusDetailsSerializer):
-    destination = serializers.CharField(max_length=255)
-    transfer_date = serializers.DateField()
-    reason = serializers.CharField(max_length=2000)
-    condition = serializers.CharField(max_length=255)
-
-
-class MaintenanceStatusDetailsSerializer(CommonStatusDetailsSerializer):
-    reason = serializers.CharField(max_length=2000)
-    start_date = serializers.DateField()
-    expected_end_date = serializers.DateField(
-        required=False,
-        allow_null=True,
+    transfer_date = serializers.DateField(
+        required=False, allow_null=True, default=None, help_text="Defaults to today for transferred_out."
     )
-
-    def validate(self, attrs):
-        start_date = attrs["start_date"]
-        end_date = attrs.get("expected_end_date")
-
-        if end_date is not None and end_date < start_date:
-            raise serializers.ValidationError({"expected_end_date": "Must be on or after start_date."})
-
-        return attrs
-
-
-class BorrowedStatusDetailsSerializer(CommonStatusDetailsSerializer):
-    borrower = serializers.CharField(max_length=255)
-    borrow_date = serializers.DateField()
-    expected_return_date = serializers.DateField()
-    purpose = serializers.CharField(max_length=2000)
-    condition = serializers.CharField(max_length=255)
-
-    def validate(self, attrs):
-        borrow_date = attrs["borrow_date"]
-        return_date = attrs["expected_return_date"]
-
-        if return_date < borrow_date:
-            raise serializers.ValidationError({"expected_return_date": "Must be on or after borrow_date."})
-
-        return attrs
-
-
-class BrokenStatusDetailsSerializer(CommonStatusDetailsSerializer):
-    issue_description = serializers.CharField(max_length=2000)
-    issue_date = serializers.DateField()
-    failure_cause = serializers.CharField(
-        max_length=2000,
-        required=False,
-        allow_blank=True,
-        default="",
-    )
-
-
-class LostStatusDetailsSerializer(CommonStatusDetailsSerializer):
-    last_known_location = serializers.CharField(max_length=255)
-    reported_date = serializers.DateField()
-    description = serializers.CharField(max_length=2000)
-
-
-class OnOrderStatusDetailsSerializer(CommonStatusDetailsSerializer):
-    expected_delivery_date = serializers.DateField(required=False, allow_null=True)
-    supplier = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
-
-
-class EquipmentStatusSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
-    status = serializers.ChoiceField(choices=EquipmentStatus.choices)
-    details = serializers.DictField(required=False, default=dict)
-
-    def validate(self, attrs):
-        status = attrs["status"]
-        details_serializer = {
-            EquipmentStatus.AVAILABLE: AvailableStatusDetailsSerializer,
-            EquipmentStatus.IN_USE: InUseStatusDetailsSerializer,
-            EquipmentStatus.IN_STORAGE: InStorageStatusDetailsSerializer,
-            EquipmentStatus.TRANSFERRED: TransferredStatusDetailsSerializer,
-            EquipmentStatus.MAINTENANCE: MaintenanceStatusDetailsSerializer,
-            EquipmentStatus.BORROWED: BorrowedStatusDetailsSerializer,
-            EquipmentStatus.BROKEN: BrokenStatusDetailsSerializer,
-            EquipmentStatus.LOST: LostStatusDetailsSerializer,
-            EquipmentStatus.ON_ORDER: OnOrderStatusDetailsSerializer,
-        }.get(status)
-        if details_serializer is None:
-            raise serializers.ValidationError({"status": "Unsupported equipment status."})
-        details_serializer = details_serializer(data=attrs.get("details") or {})
-        details_serializer.is_valid(raise_exception=True)
-        attrs["details"] = details_serializer.validated_data
-        return attrs
-
-
-EquipmentStatusOpenApiSerializer = PolymorphicProxySerializer(
-    component_name="EquipmentStatusRequest",
-    resource_type_field_name="status",
-    serializers=[
-        EquipmentStatusSerializer,
-    ],
-)
 
 
 class EquipmentCategorySerializer(AppModelSerializer):
@@ -406,20 +318,6 @@ class EquipmentPlacementWriteSerializer(ResourceWriteSerializerMixin, serializer
         return attrs
 
 
-class EquipmentStatusRecordSerializer(AppModelSerializer):
-    status = serializers.SerializerMethodField(read_only=True)
-    metadata = serializers.DictField(read_only=True)
-
-    class Meta:
-        model = EquipmentStatusRecord
-        fields = ("id", "equipment", "status", "metadata", "created_at")
-        read_only_fields = fields
-
-    @extend_schema_field(ChoiceReferenceSerializer)
-    def get_status(self, obj) -> dict[str, str] | None:
-        return to_choice_reference(getattr(obj, "status", None), EquipmentStatus.choices)
-
-
 class DepartmentSerializer(AppModelSerializer):
     class Meta:
         model = Department
@@ -482,7 +380,10 @@ class EquipmentOptionsQuerySerializer(OptionsQueryMixin):
         min_value=1,
         help_text="Parent filter. Large Equipment selectors require q or at least one declared parent filter.",
     )
-    lifecycle_status = serializers.CharField(required=False)
+    lifecycle_state = serializers.ChoiceField(choices=EquipmentLifecycleState.choices, required=False)
+    status = serializers.ChoiceField(
+        choices=EquipmentDisplayStatus.choices, required=False, help_text="Filters the computed display_status."
+    )
     assigned = serializers.BooleanField(required=False, allow_null=True, default=None)
     assignable = serializers.BooleanField(required=False, allow_null=True, default=None)
 
@@ -505,6 +406,9 @@ class CategoryOptionsQuerySerializer(OptionsQueryMixin):
         min_value=1,
         help_text="Parent filter. Large Equipment selectors require q or at least one declared parent filter.",
     )
-    lifecycle_status = serializers.CharField(required=False)
+    lifecycle_state = serializers.ChoiceField(choices=EquipmentLifecycleState.choices, required=False)
+    status = serializers.ChoiceField(
+        choices=EquipmentDisplayStatus.choices, required=False, help_text="Filters the computed display_status."
+    )
     assigned = serializers.BooleanField(required=False, allow_null=True, default=None)
     assignable = serializers.BooleanField(required=False, allow_null=True, default=None)

@@ -17,7 +17,7 @@ from core.labs.features.equipment.application import (
     remove_placement,
 )
 from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced
-from core.labs.features.equipment.public import get_active_placement, inactive_equipment_candidates
+from core.labs.features.equipment.public import get_active_placement, inactive_equipment_candidates, list_equipment
 from core.labs.features.locations.public import LocationConflict, RoomConflict, delete_room, delete_station
 from core.labs.models import (
     Bench,
@@ -27,7 +27,6 @@ from core.labs.models import (
     EquipmentCategory,
     EquipmentKind,
     EquipmentPlacement,
-    EquipmentStatusRecord,
     Room,
     Station,
 )
@@ -143,13 +142,13 @@ def test_move_between_resting_places_closes_previous(unit, room, station):
 
 
 @pytest.mark.django_db
-def test_room_to_bench_moves_and_records_in_use(unit, room, bench):
+def test_room_to_bench_moves_and_shows_in_use(unit, room, bench):
     resting = _place(unit, room_id=room.pk)
     placement = _place(unit, bench_id=bench.pk)
     resting.refresh_from_db()
     assert resting.unassigned_at is not None
     assert placement.bench_id == bench.pk
-    assert EquipmentStatusRecord.objects.filter(equipment=unit).latest("created").status == "in_use"
+    assert list_equipment().get(pk=unit.pk).display_status == "in_use"
 
 
 @pytest.mark.django_db
@@ -185,7 +184,7 @@ def test_remove_placement(unit, room, bench):
     _place(unit, bench_id=bench.pk)
     remove_placement(RemovePlacementInput(unit.pk), actor=None)
     assert not _active(unit).exists()
-    assert EquipmentStatusRecord.objects.filter(equipment=unit).latest("created").status == "available"
+    assert list_equipment().get(pk=unit.pk).display_status == "available"
 
 
 @pytest.mark.django_db

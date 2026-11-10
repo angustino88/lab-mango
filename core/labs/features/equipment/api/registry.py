@@ -11,7 +11,7 @@ from core.labs.features.equipment.api.capabilities import (
     LICENSABLE,
     STATUS_TRACKING,
 )
-from core.labs.models import Equipment, EquipmentStatus
+from core.labs.models import Equipment
 from core.labs.models.resource import equipment as equipment_models
 
 
@@ -20,13 +20,9 @@ class EquipmentDefinition:
     key: str
     category: str
     model: type[Model]
-    status_field: str = "equipment"
     display_field: str = "name"
     searchable_fields: tuple[str, ...] = ()
     capabilities: frozenset[str] = frozenset({ASSIGNABLE, LICENSABLE, STATUS_TRACKING, AUDITABLE, BOOKABLE})
-    status_relation: str = "equipment"
-    status_source: str = "model"
-    allowed_statuses: frozenset[str] = frozenset(EquipmentStatus.values)
 
     @property
     def public_key(self) -> str:
@@ -35,10 +31,6 @@ class EquipmentDefinition:
     @property
     def search_fields(self) -> tuple[str, ...]:
         return self.searchable_fields or ("sku", "name", "serial_number", "log_label")
-
-    @property
-    def status_field_name(self) -> str:
-        return self.status_relation
 
 
 EQUIPMENT_REGISTRY = {

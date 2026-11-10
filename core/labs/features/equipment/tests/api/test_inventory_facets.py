@@ -24,8 +24,6 @@ from core.labs.models import (
     EquipmentKind,
     EquipmentManufacturer,
     EquipmentProductModel,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     EquipmentType,
 )
 from core.labs.models.resource.base.resource import Department, ResourceGroup
@@ -429,16 +427,15 @@ def test_inherited_filters_exact_bucket_parity(inventory, path, filter_name):
     actor = get_user_model().objects.get(username="facets_actor")
     Equipment.objects.filter(pk=rows[0].pk).update(owner=actor, created=now - timedelta(days=1))
     Equipment.objects.filter(pk__in=[rows[1].pk, rows[2].pk]).update(created=now - timedelta(days=3))
-    EquipmentStatusRecord.objects.create(equipment=rows[0], status=EquipmentStatus.IN_STORAGE)
-    EquipmentStatusRecord.objects.create(equipment=rows[1], status=EquipmentStatus.IN_STORAGE)
-    EquipmentStatusRecord.objects.create(equipment=rows[1], status=EquipmentStatus.BROKEN)
+    # rows[0] is on a bench (display_status in_use); rows[1] is out of service (broken).
+    Equipment.objects.filter(pk=rows[1].pk).update(condition="out_of_service")
     bench = Bench.objects.create(sku="FACET-BENCH", name="Synthetic facet bench")
     EquipmentAssignment.objects.create(equipment=rows[0], bench=bench, assigned_at=now)
     EquipmentAssignment.objects.create(
         equipment=rows[1], bench=bench, assigned_at=now - timedelta(days=2), unassigned_at=now
     )
     queries: dict[str, dict[str, Any]] = {
-        "status": {"status": EquipmentStatus.IN_STORAGE},
+        "status": {"status": "in_use"},
         "assigned": {"assigned": "true"},
         "owner": {"owner_id": actor.pk},
         "date": {"created_at_after": (now - timedelta(days=2)).isoformat(), "created_at_before": now.isoformat()},

@@ -5,8 +5,7 @@ from dataclasses import dataclass
 from django.db import transaction
 from django.utils import timezone
 
-from core.labs.features.equipment.application._status_transition import record_equipment_status
-from core.labs.models import Equipment, EquipmentStatus
+from core.labs.models import Equipment
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 
@@ -26,10 +25,4 @@ def unassign_equipment(command: UnassignEquipmentInput, *, actor):
     assignment.unassigned_at = timezone.now()
     assignment.last_modified_by = actor
     assignment.save(update_fields=("unassigned_at", "last_modified_by"))
-    record_equipment_status(
-        equipment=equipment,
-        status=EquipmentStatus.AVAILABLE,
-        details={"bench": assignment.bench_id, "bench_id": assignment.bench_id},
-        actor=actor,
-    )
     return assignment

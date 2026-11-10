@@ -304,8 +304,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}
   /api/labs/equipment/{equipment_id}/actions/assign:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1assign
-  /api/labs/equipment/{equipment_id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-status
+  /api/labs/equipment/{equipment_id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-condition
+  /api/labs/equipment/{equipment_id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-lifecycle
   /api/labs/equipment/{equipment_id}/assignment:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1assignment
   /api/labs/equipment/{equipment_id}/placement:
@@ -314,8 +316,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory
   /api/labs/equipment/accessory/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1{id}
-  /api/labs/equipment/accessory/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1{id}~1actions~1change-status
+  /api/labs/equipment/accessory/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1{id}~1actions~1change-condition
+  /api/labs/equipment/accessory/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/accessory/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1facets
   /api/labs/equipment/accessory/filters:
@@ -334,8 +338,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing
   /api/labs/equipment/computing/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1{id}
-  /api/labs/equipment/computing/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1{id}~1actions~1change-status
+  /api/labs/equipment/computing/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1{id}~1actions~1change-condition
+  /api/labs/equipment/computing/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/computing/activity-summary:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1activity-summary
   /api/labs/equipment/computing/facets:
@@ -358,8 +364,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging
   /api/labs/equipment/debugging/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1{id}
-  /api/labs/equipment/debugging/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1{id}~1actions~1change-status
+  /api/labs/equipment/debugging/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1{id}~1actions~1change-condition
+  /api/labs/equipment/debugging/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/debugging/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1facets
   /api/labs/equipment/debugging/filters:
@@ -378,8 +386,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display
   /api/labs/equipment/display/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1{id}
-  /api/labs/equipment/display/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1{id}~1actions~1change-status
+  /api/labs/equipment/display/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1{id}~1actions~1change-condition
+  /api/labs/equipment/display/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/display/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1facets
   /api/labs/equipment/display/filters:
@@ -402,8 +412,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture
   /api/labs/equipment/furniture/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1{id}
-  /api/labs/equipment/furniture/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1{id}~1actions~1change-status
+  /api/labs/equipment/furniture/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1{id}~1actions~1change-condition
+  /api/labs/equipment/furniture/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/furniture/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1facets
   /api/labs/equipment/furniture/filters:
@@ -422,8 +434,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument
   /api/labs/equipment/instrument/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1{id}
-  /api/labs/equipment/instrument/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1{id}~1actions~1change-status
+  /api/labs/equipment/instrument/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1{id}~1actions~1change-condition
+  /api/labs/equipment/instrument/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/instrument/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1facets
   /api/labs/equipment/instrument/filters:
@@ -442,8 +456,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory
   /api/labs/equipment/laboratory/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1{id}
-  /api/labs/equipment/laboratory/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1{id}~1actions~1change-status
+  /api/labs/equipment/laboratory/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1{id}~1actions~1change-condition
+  /api/labs/equipment/laboratory/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/laboratory/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1facets
   /api/labs/equipment/laboratory/filters:
@@ -462,8 +478,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical
   /api/labs/equipment/mechanical/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1{id}
-  /api/labs/equipment/mechanical/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1{id}~1actions~1change-status
+  /api/labs/equipment/mechanical/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1{id}~1actions~1change-condition
+  /api/labs/equipment/mechanical/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/mechanical/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1facets
   /api/labs/equipment/mechanical/filters:
@@ -482,8 +500,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking
   /api/labs/equipment/networking/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1{id}
-  /api/labs/equipment/networking/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1{id}~1actions~1change-status
+  /api/labs/equipment/networking/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1{id}~1actions~1change-condition
+  /api/labs/equipment/networking/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/networking/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1facets
   /api/labs/equipment/networking/filters:
@@ -504,8 +524,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other
   /api/labs/equipment/other/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1{id}
-  /api/labs/equipment/other/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1{id}~1actions~1change-status
+  /api/labs/equipment/other/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1{id}~1actions~1change-condition
+  /api/labs/equipment/other/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/other/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1facets
   /api/labs/equipment/other/filters:
@@ -524,8 +546,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power
   /api/labs/equipment/power/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1{id}
-  /api/labs/equipment/power/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1{id}~1actions~1change-status
+  /api/labs/equipment/power/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1{id}~1actions~1change-condition
+  /api/labs/equipment/power/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/power/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1facets
   /api/labs/equipment/power/filters:
@@ -614,8 +638,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample
   /api/labs/equipment/sample/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1{id}
-  /api/labs/equipment/sample/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1{id}~1actions~1change-status
+  /api/labs/equipment/sample/{id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1{id}~1actions~1change-condition
+  /api/labs/equipment/sample/{id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1{id}~1actions~1change-lifecycle
   /api/labs/equipment/sample/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1facets
   /api/labs/equipment/sample/filters:

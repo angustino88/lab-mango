@@ -9,7 +9,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.urls import path
 from drf_api_contracts import OperationContract, ResponseContract
 from drf_spectacular.utils import extend_schema_view
-from rest_framework import serializers, status
+from rest_framework import serializers
 
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
 from core.common.api.options import CatalogOptionListSerializer, CatalogOptionSerializer
@@ -17,6 +17,7 @@ from core.common.api.pagination import PageNumberQuerySerializer
 from core.labs.features.base.serializers import NamedReferenceSerializer
 from core.labs.features.equipment.api.category_definitions import EquipmentCategoryAPIConfig
 from core.labs.features.equipment.api.category_serializers import (
+    EQUIPMENT_CREATE_ONLY_FIELDS,
     EQUIPMENT_WRITE_FIELDS,
     EquipmentFormReferenceSerializer,
     EquipmentWriteSerializer,
@@ -35,13 +36,13 @@ from core.labs.features.equipment.api.retrieve_update_delete import EquipmentRet
 from core.labs.features.equipment.api.serializers import (
     CategoryOptionsQuerySerializer,
     EquipmentSerializer,
-    EquipmentStatusSerializer,
     EquipmentStatusSummarySerializer,
 )
 from core.labs.features.equipment.api.views import (
     EquipmentCategoryOptionsAPIView,
-    EquipmentCategoryStatusAPIView,
     EquipmentCategorySummaryAPIView,
+    EquipmentStateActionAPIView,
+    state_action_contract,
 )
 from core.labs.features.equipment.queries import category_queryset, category_reference_data
 
@@ -198,7 +199,7 @@ def build_category_urlpatterns(definition: EquipmentCategoryAPIConfig, *, module
     create_serializer = serializer_class(
         f"{prefix}EquipmentCreateSerializer",
         EquipmentWriteSerializer,
-        EQUIPMENT_WRITE_FIELDS + create_fields,
+        EQUIPMENT_WRITE_FIELDS + EQUIPMENT_CREATE_ONLY_FIELDS + create_fields,
     )
     update_serializer = serializer_class(
         f"{prefix}EquipmentUpdateSerializer",
@@ -341,28 +342,19 @@ def build_category_urlpatterns(definition: EquipmentCategoryAPIConfig, *, module
     )
     extend_schema_view(get=reference_view.get_contract.schema())(reference_view)
     markcoroutinefunction(reference_view.get)
-    status_contract = OperationContract(
-        request=EquipmentStatusSerializer,
-        success=ResponseContract.success(
-            f"{prefix}EquipmentDetailAfterStatusChange",
-            detail_serializer,
-        ),
-        bad_request=ResponseContract.bad_request(),
-        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
-        not_found=ResponseContract.not_found(),
-        conflict=ResponseContract.conflict(),
-        tags=common["schema_tags"],
-    )
-    status_view = type(
-        f"{prefix}EquipmentStatusAPIView",
-        (EquipmentCategoryStatusAPIView,),
-        {
-            **common,
-            "post_contract": status_contract,
-        },
-    )
-    extend_schema_view(post=status_contract.schema())(status_view)
-    markcoroutinefunction(status_view.post)
+    state_views = []
+    for action, label in (("condition", "Condition"), ("lifecycle", "Lifecycle")):
+        contract = state_action_contract(
+            action, f"{prefix}EquipmentDetailAfter{label}Change", detail_serializer, tags=common["schema_tags"]
+        )
+        state_view = type(
+            f"{prefix}EquipmentChange{label}APIView",
+            (EquipmentStateActionAPIView,),
+            {**common, "action": action, "post_contract": contract},
+        )
+        extend_schema_view(post=contract.schema())(state_view)
+        markcoroutinefunction(state_view.post)
+        state_views.append((action, state_view))
     options_contract = OperationContract(
         query=CategoryOptionsQuerySerializer,
         success=ResponseContract(
@@ -422,7 +414,7 @@ def build_category_urlpatterns(definition: EquipmentCategoryAPIConfig, *, module
         sku_view,
         uid_view,
         reference_view,
-        status_view,
+        *(view for _, view in state_views),
         options_view,
         summary_view,
     ):
@@ -433,10 +425,13 @@ def build_category_urlpatterns(definition: EquipmentCategoryAPIConfig, *, module
         path(f"{definition.key}/<int:pk>", detail_view.as_view(), name=f"{definition.key}-retrieve-update"),
         path(f"{definition.key}/filters", filters_view.as_view(), name=f"{definition.key}-filters"),
         path(f"{definition.key}/facets", facets_view.as_view(), name=f"{definition.key}-facets"),
-        path(
-            f"{definition.key}/<int:pk>/actions/change-status",
-            status_view.as_view(),
-            name=f"{definition.key}-action-change-status",
+        *(
+            path(
+                f"{definition.key}/<int:pk>/actions/change-{action}",
+                view.as_view(),
+                name=f"{definition.key}-action-change-{action}",
+            )
+            for action, view in state_views
         ),
         path(f"{definition.key}/options", options_view.as_view(), name=f"{definition.key}-options"),
         path(f"{definition.key}/summary", summary_view.as_view(), name=f"{definition.key}-summary"),
@@ -448,6 +443,5 @@ def build_category_urlpatterns(definition: EquipmentCategoryAPIConfig, *, module
 __all__ = (
     "EquipmentCategoryOptionsAPIView",
     "EquipmentCategoryReferenceAPIView",
-    "EquipmentCategoryStatusAPIView",
     "build_category_urlpatterns",
 )

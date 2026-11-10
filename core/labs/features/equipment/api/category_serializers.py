@@ -36,6 +36,10 @@ EQUIPMENT_WRITE_FIELDS = (
 )
 
 
+# Set once at creation; afterwards only the change-lifecycle action changes it.
+EQUIPMENT_CREATE_ONLY_FIELDS = ("lifecycle_state",)
+
+
 class EquipmentWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
     """Validate related references before model save, including partial updates."""
 

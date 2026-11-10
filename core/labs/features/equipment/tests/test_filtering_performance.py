@@ -27,8 +27,6 @@ from core.labs.models import (
     EquipmentKind,
     EquipmentManufacturer,
     EquipmentProductModel,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     EquipmentType,
 )
 from core.labs.models.resource.base.resource import Department, ResourceGroup
@@ -81,13 +79,6 @@ def cardinality_inventory():
         ]
     )
     EquipmentAssignment.objects.create(equipment=display, bench=bench, assigned_at=now)
-    EquipmentStatusRecord.objects.bulk_create(
-        [
-            EquipmentStatusRecord(equipment=display, status=EquipmentStatus.BROKEN),
-            EquipmentStatusRecord(equipment=display, status=EquipmentStatus.AVAILABLE, metadata={"synthetic": True}),
-            EquipmentStatusRecord(equipment=null, status=EquipmentStatus.IN_STORAGE),
-        ]
-    )
     return display, null, deleted
 
 
@@ -179,8 +170,9 @@ def test_m2m_filter_and_separate_reverse_filter_calls(cardinality_inventory):
     "filters",
     [
         {},
-        {"status": EquipmentStatus.AVAILABLE},
-        {"status": EquipmentStatus.BROKEN},
+        {"status": "available"},
+        {"status": "in_use"},
+        {"status": "broken"},
         {"assigned": True},
         {"assigned": False},
         {"search": "Synthetic"},
@@ -208,8 +200,7 @@ def test_generic_list_count_page_annotation_parity(cardinality_inventory, filter
     assert [row.pk for row in page] == [row.pk for row in old_page]
     assert len({row.pk for row in page}) == len(page)
     annotations = (
-        "current_status",
-        "current_status_metadata",
+        "display_status",
         "acquisition_price",
         "acquisition_currency",
         "has_active_assignment",
@@ -225,8 +216,9 @@ def test_generic_list_does_not_request_distinct(cardinality_inventory):
 
 def test_latest_history_and_false_assignment_membership(cardinality_inventory):
     display, null, deleted = cardinality_inventory
-    assert list(list_equipment(status=EquipmentStatus.BROKEN).values_list("pk", flat=True)) == []
-    assert list(list_equipment(status=EquipmentStatus.AVAILABLE).values_list("pk", flat=True)) == [display.pk]
+    assert list(list_equipment(status="broken").values_list("pk", flat=True)) == []
+    assert list(list_equipment(status="in_use").values_list("pk", flat=True)) == [display.pk]
+    assert list(list_equipment(status="available").values_list("pk", flat=True)) == [null.pk]
     assert list(list_equipment(assigned=False).values_list("pk", flat=True)) == [null.pk]
     assert list(list_equipment(assigned=True).values_list("pk", flat=True)) == [display.pk]
     references = {
@@ -249,7 +241,7 @@ def measure_synthetic_explain_capture(cardinality_inventory):
     assert connection.settings_dict["NAME"] == "test_filtering_perf"
     display, null, deleted = cardinality_inventory
     kind = display.kind
-    rows = Equipment.objects.bulk_create(
+    Equipment.objects.bulk_create(
         [
             Equipment(
                 sku=f"SYN-PERF-{i:05d}",
@@ -264,13 +256,6 @@ def measure_synthetic_explain_capture(cardinality_inventory):
             for i in range(1600)
         ]
     )
-    EquipmentStatusRecord.objects.bulk_create(
-        [
-            EquipmentStatusRecord(equipment=row, status=status)
-            for row in rows
-            for status in (EquipmentStatus.BROKEN, EquipmentStatus.AVAILABLE)
-        ]
-    )
     with connection.cursor() as cursor:
         cursor.execute("ANALYZE")
     base = list_equipment()
@@ -278,7 +263,7 @@ def measure_synthetic_explain_capture(cardinality_inventory):
     cases = {
         "generic": base,
         "generic_search": list_equipment(search="inventory"),
-        "generic_status": list_equipment(status=EquipmentStatus.AVAILABLE),
+        "generic_status": list_equipment(status="available"),
         "generic_unassigned": list_equipment(assigned=False),
         "shared_absent": spec.apply(Equipment.objects.filter(deleted_at__isnull=True).order_by("pk"), {}),
         **{f"facet_{key}": equipment_facet_rows(population=base, dimension=key) for key in EQUIPMENT_DIMENSIONS},

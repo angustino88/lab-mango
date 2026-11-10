@@ -146,6 +146,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -175,6 +181,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -1136,10 +1148,11 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Assign Equipment by Equipment ID
-  /api/labs/equipment/{equipment_id}/actions/change-status:
+  /api/labs/equipment/{equipment_id}/actions/change-condition:
     post:
-      operationId: labs_equipment_actions_change_status_create_by_equipment_id
-      description: Record a new status for an equipment record.
+      operationId: labs_equipment_actions_change_condition_create_by_equipment_id
+      description: Set whether an in-service unit works (operational, in maintenance,
+        out of service).
       parameters:
       - in: path
         name: equipment_id
@@ -1152,13 +1165,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -1168,7 +1181,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EquipmentDetailAfterStatusChangeSerializersEquipmentDetailResponse'
+                $ref: '#/components/schemas/EquipmentDetailAfterConditionChangeSerializersEquipmentDetailResponse'
           description: ''
         '400':
           content:
@@ -1194,7 +1207,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment by Equipment ID
+      summary: Change Condition Equipment by Equipment ID
+  /api/labs/equipment/{equipment_id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_actions_change_lifecycle_create_by_equipment_id
+      description: Move a unit along its lifecycle (planned, in service, transferred
+        out, retired, lost).
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentDetailAfterLifecycleChangeSerializersEquipmentDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment by Equipment ID
   /api/labs/equipment/{equipment_id}/assignment:
     get:
       operationId: labs_equipment_assignment_retrieve_by_equipment_id
@@ -1447,6 +1520,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -1476,6 +1555,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -1765,10 +1850,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Accessory by ID
-  /api/labs/equipment/accessory/{id}/actions/change-status:
+  /api/labs/equipment/accessory/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_accessory_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_accessory_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -1781,13 +1871,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -1797,7 +1887,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AccessoryEquipmentDetailAfterStatusChangeUrlsAccessoryEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/AccessoryEquipmentDetailAfterConditionChangeUrlsAccessoryEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -1823,7 +1913,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Accessory by ID
+      summary: Change Condition Equipment Accessory by ID
+  /api/labs/equipment/accessory/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_accessory_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Accessory Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessoryEquipmentDetailAfterLifecycleChangeUrlsAccessoryEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Accessory by ID
   /api/labs/equipment/accessory/facets:
     get:
       operationId: labs_equipment_accessory_facets_retrieve
@@ -1836,6 +1990,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -1897,6 +2057,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -2048,10 +2214,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -2066,6 +2247,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -2372,6 +2591,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -2401,6 +2626,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -2697,10 +2928,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Computing by ID
-  /api/labs/equipment/computing/{id}/actions/change-status:
+  /api/labs/equipment/computing/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_computing_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_computing_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -2713,13 +2949,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -2729,7 +2965,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ComputingEquipmentDetailAfterStatusChangeUrlsComputingEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/ComputingEquipmentDetailAfterConditionChangeUrlsComputingEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -2755,7 +2991,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Computing by ID
+      summary: Change Condition Equipment Computing by ID
+  /api/labs/equipment/computing/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_computing_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Computing Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComputingEquipmentDetailAfterLifecycleChangeUrlsComputingEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Computing by ID
   /api/labs/equipment/computing/activity-summary:
     get:
       operationId: labs_equipment_computing_activity_summary_retrieve
@@ -2792,6 +3092,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -2853,6 +3159,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -3011,10 +3323,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -3029,6 +3356,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -3417,6 +3782,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -3446,6 +3817,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -3735,10 +4112,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Debugging by ID
-  /api/labs/equipment/debugging/{id}/actions/change-status:
+  /api/labs/equipment/debugging/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_debugging_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_debugging_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -3751,13 +4133,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -3767,7 +4149,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DebuggingEquipmentDetailAfterStatusChangeUrlsDebuggingEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/DebuggingEquipmentDetailAfterConditionChangeUrlsDebuggingEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -3793,7 +4175,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Debugging by ID
+      summary: Change Condition Equipment Debugging by ID
+  /api/labs/equipment/debugging/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_debugging_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Debugging Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebuggingEquipmentDetailAfterLifecycleChangeUrlsDebuggingEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Debugging by ID
   /api/labs/equipment/debugging/facets:
     get:
       operationId: labs_equipment_debugging_facets_retrieve
@@ -3806,6 +4252,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -3867,6 +4319,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -4018,10 +4476,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -4036,6 +4509,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -4342,6 +4853,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -4371,6 +4888,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -4674,10 +5197,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Display by ID
-  /api/labs/equipment/display/{id}/actions/change-status:
+  /api/labs/equipment/display/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_display_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_display_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -4690,13 +5218,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -4706,7 +5234,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DisplayEquipmentDetailAfterStatusChangeUrlsDisplayEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/DisplayEquipmentDetailAfterConditionChangeUrlsDisplayEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -4732,7 +5260,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Display by ID
+      summary: Change Condition Equipment Display by ID
+  /api/labs/equipment/display/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_display_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Display Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayEquipmentDetailAfterLifecycleChangeUrlsDisplayEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Display by ID
   /api/labs/equipment/display/facets:
     get:
       operationId: labs_equipment_display_facets_retrieve
@@ -4745,6 +5337,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -4806,6 +5404,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -4971,10 +5575,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -4989,6 +5608,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -5296,6 +5953,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -5352,6 +6015,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -5481,6 +6150,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -5510,6 +6185,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -5806,10 +6487,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Furniture by ID
-  /api/labs/equipment/furniture/{id}/actions/change-status:
+  /api/labs/equipment/furniture/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_furniture_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_furniture_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -5822,13 +6508,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -5838,7 +6524,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FurnitureEquipmentDetailAfterStatusChangeUrlsFurnitureEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/FurnitureEquipmentDetailAfterConditionChangeUrlsFurnitureEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -5864,7 +6550,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Furniture by ID
+      summary: Change Condition Equipment Furniture by ID
+  /api/labs/equipment/furniture/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_furniture_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Furniture Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FurnitureEquipmentDetailAfterLifecycleChangeUrlsFurnitureEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Furniture by ID
   /api/labs/equipment/furniture/facets:
     get:
       operationId: labs_equipment_furniture_facets_retrieve
@@ -5877,6 +6627,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -5938,6 +6694,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -6096,10 +6858,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -6114,6 +6891,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -6420,6 +7235,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -6449,6 +7270,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -6738,10 +7565,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Instrument by ID
-  /api/labs/equipment/instrument/{id}/actions/change-status:
+  /api/labs/equipment/instrument/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_instrument_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_instrument_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -6754,13 +7586,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -6770,7 +7602,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InstrumentEquipmentDetailAfterStatusChangeUrlsInstrumentEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/InstrumentEquipmentDetailAfterConditionChangeUrlsInstrumentEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -6796,7 +7628,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Instrument by ID
+      summary: Change Condition Equipment Instrument by ID
+  /api/labs/equipment/instrument/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_instrument_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Instrument Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstrumentEquipmentDetailAfterLifecycleChangeUrlsInstrumentEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Instrument by ID
   /api/labs/equipment/instrument/facets:
     get:
       operationId: labs_equipment_instrument_facets_retrieve
@@ -6809,6 +7705,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -6870,6 +7772,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -7021,10 +7929,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -7039,6 +7962,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -7345,6 +8306,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -7374,6 +8341,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -7663,10 +8636,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Laboratory by ID
-  /api/labs/equipment/laboratory/{id}/actions/change-status:
+  /api/labs/equipment/laboratory/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_laboratory_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_laboratory_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -7679,13 +8657,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -7695,7 +8673,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LaboratoryEquipmentDetailAfterStatusChangeUrlsLaboratoryEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/LaboratoryEquipmentDetailAfterConditionChangeUrlsLaboratoryEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -7721,7 +8699,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Laboratory by ID
+      summary: Change Condition Equipment Laboratory by ID
+  /api/labs/equipment/laboratory/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_laboratory_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Laboratory Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaboratoryEquipmentDetailAfterLifecycleChangeUrlsLaboratoryEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Laboratory by ID
   /api/labs/equipment/laboratory/facets:
     get:
       operationId: labs_equipment_laboratory_facets_retrieve
@@ -7734,6 +8776,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -7795,6 +8843,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -7946,10 +9000,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -7964,6 +9033,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -8270,6 +9377,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -8299,6 +9412,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -8595,10 +9714,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Mechanical by ID
-  /api/labs/equipment/mechanical/{id}/actions/change-status:
+  /api/labs/equipment/mechanical/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_mechanical_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_mechanical_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -8611,13 +9735,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -8627,7 +9751,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MechanicalEquipmentDetailAfterStatusChangeUrlsMechanicalEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/MechanicalEquipmentDetailAfterConditionChangeUrlsMechanicalEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -8653,7 +9777,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Mechanical by ID
+      summary: Change Condition Equipment Mechanical by ID
+  /api/labs/equipment/mechanical/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_mechanical_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Mechanical Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MechanicalEquipmentDetailAfterLifecycleChangeUrlsMechanicalEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Mechanical by ID
   /api/labs/equipment/mechanical/facets:
     get:
       operationId: labs_equipment_mechanical_facets_retrieve
@@ -8666,6 +9854,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -8727,6 +9921,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -8885,10 +10085,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -8903,6 +10118,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -9209,6 +10462,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -9238,6 +10497,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -9534,10 +10799,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Networking by ID
-  /api/labs/equipment/networking/{id}/actions/change-status:
+  /api/labs/equipment/networking/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_networking_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_networking_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -9550,13 +10820,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -9566,7 +10836,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NetworkingEquipmentDetailAfterStatusChangeUrlsNetworkingEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/NetworkingEquipmentDetailAfterConditionChangeUrlsNetworkingEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -9592,7 +10862,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Networking by ID
+      summary: Change Condition Equipment Networking by ID
+  /api/labs/equipment/networking/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_networking_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Networking Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkingEquipmentDetailAfterLifecycleChangeUrlsNetworkingEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Networking by ID
   /api/labs/equipment/networking/facets:
     get:
       operationId: labs_equipment_networking_facets_retrieve
@@ -9605,6 +10939,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -9666,6 +11006,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -9824,10 +11170,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -9842,6 +11203,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -10177,10 +11576,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -10195,6 +11609,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -10248,6 +11700,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -10277,6 +11735,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -10566,10 +12030,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Other by ID
-  /api/labs/equipment/other/{id}/actions/change-status:
+  /api/labs/equipment/other/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_other_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_other_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -10582,13 +12051,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -10598,7 +12067,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OtherEquipmentDetailAfterStatusChangeUrlsOtherEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/OtherEquipmentDetailAfterConditionChangeUrlsOtherEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -10624,7 +12093,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Other by ID
+      summary: Change Condition Equipment Other by ID
+  /api/labs/equipment/other/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_other_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Other Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OtherEquipmentDetailAfterLifecycleChangeUrlsOtherEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Other by ID
   /api/labs/equipment/other/facets:
     get:
       operationId: labs_equipment_other_facets_retrieve
@@ -10637,6 +12170,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -10698,6 +12237,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -10849,10 +12394,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -10867,6 +12427,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -11173,6 +12771,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -11209,6 +12813,12 @@ paths:
           format: int64
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -11498,10 +13108,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Power by ID
-  /api/labs/equipment/power/{id}/actions/change-status:
+  /api/labs/equipment/power/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_power_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_power_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -11514,13 +13129,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -11530,7 +13145,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PowerEquipmentDetailAfterStatusChangeUrlsPowerEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/PowerEquipmentDetailAfterConditionChangeUrlsPowerEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -11556,7 +13171,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Power by ID
+      summary: Change Condition Equipment Power by ID
+  /api/labs/equipment/power/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_power_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Power Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PowerEquipmentDetailAfterLifecycleChangeUrlsPowerEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Power by ID
   /api/labs/equipment/power/facets:
     get:
       operationId: labs_equipment_power_facets_retrieve
@@ -11569,6 +13248,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -11637,6 +13322,12 @@ paths:
           format: int64
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -11788,10 +13479,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -11806,6 +13512,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -14446,6 +16190,12 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -14482,6 +16232,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -14771,10 +16527,15 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Sample by ID
-  /api/labs/equipment/sample/{id}/actions/change-status:
+  /api/labs/equipment/sample/{id}/actions/change-condition:
     post:
-      operationId: labs_equipment_sample_actions_change_status_create_by_id
-      description: Record a new status for a category equipment record.
+      operationId: labs_equipment_sample_actions_change_condition_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
       parameters:
       - in: path
         name: id
@@ -14787,13 +16548,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EquipmentStatus'
+              $ref: '#/components/schemas/EquipmentChangeCondition'
         required: true
       security:
       - jwtAuth: []
@@ -14803,7 +16564,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SampleEquipmentDetailAfterStatusChangeUrlsSampleEquipmentDetailDetailResponse'
+                $ref: '#/components/schemas/SampleEquipmentDetailAfterConditionChangeUrlsSampleEquipmentDetailDetailResponse'
           description: ''
         '400':
           content:
@@ -14829,7 +16590,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Change Status Equipment Sample by ID
+      summary: Change Condition Equipment Sample by ID
+  /api/labs/equipment/sample/{id}/actions/change-lifecycle:
+    post:
+      operationId: labs_equipment_sample_actions_change_lifecycle_create_by_id
+      description: 'Change a unit''s condition or lifecycle state; responds with the
+        updated equipment.
+
+
+        Category routes set ``queryset_provider`` so a unit of another category is
+        404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Sample Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentChangeLifecycle'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SampleEquipmentDetailAfterLifecycleChangeUrlsSampleEquipmentDetailDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Equipment Sample by ID
   /api/labs/equipment/sample/facets:
     get:
       operationId: labs_equipment_sample_facets_retrieve
@@ -14842,6 +16667,12 @@ paths:
           type: boolean
       - in: query
         name: category
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -14910,6 +16741,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: kind
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_state
         schema:
           type: string
           minLength: 1
@@ -15061,10 +16898,25 @@ paths:
         description: Parent filter. Large Equipment selectors require q or at least
           one declared parent filter.
       - in: query
-        name: lifecycle_status
+        name: lifecycle_state
         schema:
+          enum:
+          - planned
+          - in_service
+          - transferred_out
+          - retired
+          - lost
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `transferred_out` - Transferred out
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: manufacturer_id
         schema:
@@ -15079,6 +16931,44 @@ paths:
           maxLength: 100
           minLength: 1
         description: Search text (1 to 100 characters).
+      - in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - in_use
+          - borrowed
+          - maintenance
+          - broken
+          - calibration_overdue
+          - on_order
+          - transferred
+          - retired
+          - lost
+          type: string
+          minLength: 1
+        description: 'Filters the computed display_status.
+
+
+          * `available` - Available
+
+          * `in_use` - In use
+
+          * `borrowed` - Borrowed
+
+          * `maintenance` - Maintenance
+
+          * `broken` - Broken
+
+          * `calibration_overdue` - Calibration overdue
+
+          * `on_order` - On order
+
+          * `transferred` - Transferred
+
+          * `retired` - Retired
+
+          * `lost` - Lost'
       - in: query
         name: type_id
         schema:
@@ -15588,6 +17478,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         kind_id:
           type: integer
         type_id:
@@ -15727,10 +17633,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -15753,14 +17667,17 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - details
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -15773,13 +17690,20 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    AccessoryEquipmentDetailAfterStatusChangeUrlsAccessoryEquipmentDetailDetailResponse:
+    AccessoryEquipmentDetailAfterConditionChangeUrlsAccessoryEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/AccessoryEquipmentDetail'
+      required:
+      - data
+    AccessoryEquipmentDetailAfterLifecycleChangeUrlsAccessoryEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -15953,10 +17877,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -15976,13 +17908,16 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -15995,7 +17930,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -16517,6 +18451,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         mac_address:
           oneOf:
           - type: string
@@ -16668,10 +18618,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -16731,10 +18689,12 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - details
       - disk_usage
+      - display_status
       - firmware_version
       - group
       - hostname
@@ -16742,6 +18702,7 @@ components:
       - ip_address
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - mac_address
       - manufacturer
@@ -16758,7 +18719,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - system_info
       - technical_user
       - type
@@ -16766,7 +18726,15 @@ components:
       - updated_at
       - warranty_until
       - weight_kg
-    ComputingEquipmentDetailAfterStatusChangeUrlsComputingEquipmentDetailDetailResponse:
+    ComputingEquipmentDetailAfterConditionChangeUrlsComputingEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ComputingEquipmentDetail'
+      required:
+      - data
+    ComputingEquipmentDetailAfterLifecycleChangeUrlsComputingEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -16940,10 +18908,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -16973,14 +18949,17 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - ip_address
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - mac_address
       - manufacturer
@@ -16995,7 +18974,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -17215,6 +19193,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         kind_id:
           type: integer
         type_id:
@@ -17354,10 +19348,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -17380,14 +19382,17 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - details
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -17400,13 +19405,20 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    DebuggingEquipmentDetailAfterStatusChangeUrlsDebuggingEquipmentDetailDetailResponse:
+    DebuggingEquipmentDetailAfterConditionChangeUrlsDebuggingEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/DebuggingEquipmentDetail'
+      required:
+      - data
+    DebuggingEquipmentDetailAfterLifecycleChangeUrlsDebuggingEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -17580,10 +19592,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -17603,13 +19623,16 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -17622,7 +19645,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -17973,6 +19995,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         kind_id:
           type: integer
         type_id:
@@ -18122,10 +20160,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -18163,15 +20209,18 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - details
+      - display_status
       - firmware_version
       - group
       - id
       - interfaces
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -18186,13 +20235,20 @@ components:
       - serial_number
       - size
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    DisplayEquipmentDetailAfterStatusChangeUrlsDisplayEquipmentDetailDetailResponse:
+    DisplayEquipmentDetailAfterConditionChangeUrlsDisplayEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/DisplayEquipmentDetail'
+      required:
+      - data
+    DisplayEquipmentDetailAfterLifecycleChangeUrlsDisplayEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -18366,10 +20422,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -18404,14 +20468,17 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - interfaces
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -18426,7 +20493,6 @@ components:
       - serial_number
       - size
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -18964,10 +21030,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -18987,13 +21061,16 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -19006,7 +21083,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -19253,6 +21329,53 @@ components:
           $ref: '#/components/schemas/EquipmentCategoryReferenceListSerializersEquipmentCategoryCatalogRecordPagination'
       required:
       - pagination
+    EquipmentChangeCondition:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        condition:
+          $ref: '#/components/schemas/EquipmentConditionEnum'
+        reason:
+          type: string
+          default: ''
+          maxLength: 500
+      required:
+      - condition
+    EquipmentChangeLifecycle:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        lifecycle_state:
+          $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+        reason:
+          type: string
+          default: ''
+          maxLength: 500
+        receiving_organisation:
+          type: string
+          default: ''
+          description: Required when lifecycle_state is transferred_out.
+          maxLength: 255
+        transfer_date:
+          type: string
+          format: date
+          nullable: true
+          description: Defaults to today for transferred_out.
+      required:
+      - lifecycle_state
+    EquipmentConditionEnum:
+      enum:
+      - operational
+      - in_maintenance
+      - out_of_service
+      type: string
+      description: '* `operational` - Operational
+
+        * `in_maintenance` - In maintenance
+
+        * `out_of_service` - Out of service'
     EquipmentCreate:
       type: object
       description: Reject unsupported keys and return a stable error when SKU is supplied
@@ -19329,6 +21452,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
       required:
       - kind_id
       - sku
@@ -19340,7 +21479,15 @@ components:
           $ref: '#/components/schemas/Equipment'
       required:
       - data
-    EquipmentDetailAfterStatusChangeSerializersEquipmentDetailResponse:
+    EquipmentDetailAfterConditionChangeSerializersEquipmentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Equipment'
+      required:
+      - data
+    EquipmentDetailAfterLifecycleChangeSerializersEquipmentDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -19686,6 +21833,23 @@ components:
           $ref: '#/components/schemas/EquipmentKindReferenceListSerializersEquipmentKindCatalogRecordPagination'
       required:
       - pagination
+    EquipmentLifecycleStateEnum:
+      enum:
+      - planned
+      - in_service
+      - transferred_out
+      - retired
+      - lost
+      type: string
+      description: '* `planned` - Planned
+
+        * `in_service` - In service
+
+        * `transferred_out` - Transferred out
+
+        * `retired` - Retired
+
+        * `lost` - Lost'
     EquipmentListSerializersEquipmentPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -20273,47 +22437,6 @@ components:
           $ref: '#/components/schemas/EquipmentReferenceData'
       required:
       - data
-    EquipmentStatus:
-      type: object
-      description: Reject unsupported keys and return a stable error when SKU is supplied
-        on update.
-      properties:
-        status:
-          $ref: '#/components/schemas/EquipmentStatusEnum'
-        details:
-          type: object
-          additionalProperties: {}
-      required:
-      - status
-    EquipmentStatusEnum:
-      enum:
-      - in_use
-      - available
-      - in_storage
-      - transferred
-      - borrowed
-      - maintenance
-      - broken
-      - lost
-      - on_order
-      type: string
-      description: '* `in_use` - In-use
-
-        * `available` - Available
-
-        * `in_storage` - In-storage
-
-        * `transferred` - Transferred
-
-        * `borrowed` - Borrowed
-
-        * `maintenance` - Maintenance
-
-        * `broken` - Broken
-
-        * `lost` - Lost
-
-        * `on_order` - On Order'
     EquipmentStatusSummaryDataSerializersEquipmentStatusSummaryDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -20578,6 +22701,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         dimensions:
           description: Keys length_mm, width_mm, height_mm.
         kind_id:
@@ -20722,10 +22861,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -20756,15 +22903,18 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - details
       - dimensions
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - material
@@ -20778,13 +22928,20 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    FurnitureEquipmentDetailAfterStatusChangeUrlsFurnitureEquipmentDetailDetailResponse:
+    FurnitureEquipmentDetailAfterConditionChangeUrlsFurnitureEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/FurnitureEquipmentDetail'
+      required:
+      - data
+    FurnitureEquipmentDetailAfterLifecycleChangeUrlsFurnitureEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -20958,10 +23115,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -20989,14 +23154,17 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - dimensions
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - material
@@ -21010,7 +23178,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -21231,6 +23398,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         kind_id:
           type: integer
         type_id:
@@ -21374,10 +23557,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -21405,15 +23596,18 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - details
+      - display_status
       - firmware_version
       - group
       - id
       - interfaces
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -21426,13 +23620,20 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    InstrumentEquipmentDetailAfterStatusChangeUrlsInstrumentEquipmentDetailDetailResponse:
+    InstrumentEquipmentDetailAfterConditionChangeUrlsInstrumentEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/InstrumentEquipmentDetail'
+      required:
+      - data
+    InstrumentEquipmentDetailAfterLifecycleChangeUrlsInstrumentEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -21606,10 +23807,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -21634,14 +23843,17 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - interfaces
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -21654,7 +23866,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -21861,6 +24072,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         kind_id:
           type: integer
         type_id:
@@ -22000,10 +24227,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -22026,14 +24261,17 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - details
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -22046,13 +24284,20 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    LaboratoryEquipmentDetailAfterStatusChangeUrlsLaboratoryEquipmentDetailDetailResponse:
+    LaboratoryEquipmentDetailAfterConditionChangeUrlsLaboratoryEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LaboratoryEquipmentDetail'
+      required:
+      - data
+    LaboratoryEquipmentDetailAfterLifecycleChangeUrlsLaboratoryEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -22226,10 +24471,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -22249,13 +24502,16 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -22268,7 +24524,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -23216,6 +25471,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         dimensions:
           description: Keys length_mm, width_mm, height_mm.
         kind_id:
@@ -23360,10 +25631,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -23394,15 +25673,18 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - details
       - dimensions
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - material
@@ -23416,13 +25698,20 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    MechanicalEquipmentDetailAfterStatusChangeUrlsMechanicalEquipmentDetailDetailResponse:
+    MechanicalEquipmentDetailAfterConditionChangeUrlsMechanicalEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/MechanicalEquipmentDetail'
+      required:
+      - data
+    MechanicalEquipmentDetailAfterLifecycleChangeUrlsMechanicalEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -23596,10 +25885,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -23627,14 +25924,17 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - dimensions
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - material
@@ -23648,7 +25948,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -23869,6 +26168,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         mac_address:
           oneOf:
           - type: string
@@ -24018,10 +26333,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -24052,14 +26375,17 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - details
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - mac_address
       - manufacturer
@@ -24074,13 +26400,20 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    NetworkingEquipmentDetailAfterStatusChangeUrlsNetworkingEquipmentDetailDetailResponse:
+    NetworkingEquipmentDetailAfterConditionChangeUrlsNetworkingEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/NetworkingEquipmentDetail'
+      required:
+      - data
+    NetworkingEquipmentDetailAfterLifecycleChangeUrlsNetworkingEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -24254,10 +26587,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -24285,13 +26626,16 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - mac_address
       - manufacturer
@@ -24306,7 +26650,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -24622,6 +26965,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         kind_id:
           type: integer
         type_id:
@@ -24761,10 +27120,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -24787,14 +27154,17 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
       - details
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -24807,13 +27177,20 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    OtherEquipmentDetailAfterStatusChangeUrlsOtherEquipmentDetailDetailResponse:
+    OtherEquipmentDetailAfterConditionChangeUrlsOtherEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/OtherEquipmentDetail'
+      required:
+      - data
+    OtherEquipmentDetailAfterLifecycleChangeUrlsOtherEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -24987,10 +27364,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -25010,13 +27395,16 @@ components:
       - calibration_overdue
       - calibration_required
       - category
+      - condition
       - created_at
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -25029,7 +27417,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -26159,6 +28546,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         channels:
           type: integer
           maximum: 32767
@@ -26312,10 +28715,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -26353,15 +28764,18 @@ components:
       - calibration_required
       - category
       - channels
+      - condition
       - created_at
       - department
       - details
+      - display_status
       - firmware_version
       - group
       - id
       - interface
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -26375,13 +28789,20 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    PowerEquipmentDetailAfterStatusChangeUrlsPowerEquipmentDetailDetailResponse:
+    PowerEquipmentDetailAfterConditionChangeUrlsPowerEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/PowerEquipmentDetail'
+      required:
+      - data
+    PowerEquipmentDetailAfterLifecycleChangeUrlsPowerEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -26555,10 +28976,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -26593,14 +29022,17 @@ components:
       - calibration_required
       - category
       - channels
+      - condition
       - created_at
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - interface
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -26614,7 +29046,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
@@ -27485,6 +29916,22 @@ components:
         calibration_required:
           type: boolean
           description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
+          description: 'Changed only by the change_lifecycle command; history is in
+            EquipmentEvent.
+
+
+            * `planned` - Planned
+
+            * `in_service` - In service
+
+            * `transferred_out` - Transferred out
+
+            * `retired` - Retired
+
+            * `lost` - Lost'
         kind_id:
           type: integer
         type_id:
@@ -27635,10 +30082,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -27677,16 +30132,19 @@ components:
       - calibration_required
       - category
       - characteristics
+      - condition
       - created_at
       - customer
       - department
       - details
+      - display_status
       - firmware_version
       - group
       - id
       - interfaces
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -27699,13 +30157,20 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at
       - warranty_until
       - weight_kg
-    SampleEquipmentDetailAfterStatusChangeUrlsSampleEquipmentDetailDetailResponse:
+    SampleEquipmentDetailAfterConditionChangeUrlsSampleEquipmentDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/SampleEquipmentDetail'
+      required:
+      - data
+    SampleEquipmentDetailAfterLifecycleChangeUrlsSampleEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -27879,10 +30344,18 @@ components:
           readOnly: true
           nullable: true
           description: Planned date when the equipment should be replaced.
-        status:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
+          readOnly: true
+        lifecycle_state:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
         acquisition_price:
           allOf:
@@ -27918,15 +30391,18 @@ components:
       - calibration_required
       - category
       - characteristics
+      - condition
       - created_at
       - customer
       - department
+      - display_status
       - firmware_version
       - group
       - id
       - interfaces
       - kind
       - last_calibrated_at
+      - lifecycle_state
       - log_label
       - manufacturer
       - metadata
@@ -27939,7 +30415,6 @@ components:
       - replacement_date
       - serial_number
       - sku
-      - status
       - type
       - uid
       - updated_at

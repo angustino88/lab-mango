@@ -56,7 +56,8 @@ def test_public_module_exports_supported_queries_and_commands():
     assert set(_exports(public)) == {
         "ActiveEquipmentBenchAssignment",
         "AssignEquipmentInput",
-        "ChangeEquipmentStatusInput",
+        "ChangeConditionInput",
+        "ChangeLifecycleInput",
         "CreateEquipmentInput",
         "DeleteEquipmentInput",
         "UpdateEquipmentInput",
@@ -72,7 +73,9 @@ def test_public_module_exports_supported_queries_and_commands():
         "get_active_placement",
         "has_active_placements",
         "assign_equipment",
-        "change_equipment_status",
+        "change_condition",
+        "change_lifecycle",
+        "equipment_state_timelines",
         "create_equipment",
         "delete_equipment",
         "update_equipment",
@@ -120,7 +123,7 @@ def test_commands_have_atomic_transactions_and_no_transport_imports():
     for source_file in application.glob("*.py"):
         imports = _absolute_imports(source_file)
         assert not any("rest_framework" in name or "equipment.api" in name for name in imports)
-        if source_file.name not in {"__init__.py", "_placement.py", "_status_transition.py", "_validation.py"}:
+        if source_file.name not in {"__init__.py", "_placement.py", "_validation.py"}:
             tree = _module(source_file)
             command_functions = [
                 node
@@ -148,7 +151,7 @@ def test_feature_package_has_canonical_layers_and_no_transitional_tree():
     assert (FEATURE_ROOT / "tests" / "conftest.py").is_file()
     assert (FEATURE_ROOT / "tests" / "application" / "test_assignment.py").is_file()
     assert (FEATURE_ROOT / "tests" / "application" / "test_assignment_sync.py").is_file()
-    assert (FEATURE_ROOT / "tests" / "application" / "test_status.py").is_file()
+    assert (FEATURE_ROOT / "tests" / "application" / "test_state.py").is_file()
     assert (FEATURE_ROOT / "tests" / "api" / "test_category_contracts.py").is_file()
     repository_root = FEATURE_ROOT.parents[3]
     for legacy_test in (
@@ -170,7 +173,7 @@ def test_application_commands_use_frozen_inputs_and_keyword_only_actor():
     application = FEATURE_ROOT / "application"
     for name in (
         "assign_equipment.py",
-        "change_equipment_status.py",
+        "change_state.py",
         "create_equipment.py",
         "delete_equipment.py",
         "unassign_equipment.py",

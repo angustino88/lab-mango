@@ -7,12 +7,11 @@ from typing import Any
 
 from django.db.models import Count, Q
 
+from core.labs.features.equipment.public import get_equipment_status_summary
 from core.labs.models import (
     Bench,
     BenchBooking,
     BenchGroup,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     LabSessionLog,
     ProjectUsageObservation,
 )
@@ -56,28 +55,12 @@ def get_bench_group_distribution() -> list[dict[str, Any]]:
 
 
 def get_equipment_status_distribution() -> list[dict[str, Any]]:
-    """Return the number of equipment items in each status, using each item's latest status record.
-
-    Status history is append-only, so counting every record would count an item once per
-    status change. Only the most recent record per equipment is considered.
-    """
-    latest_status_ids = (
-        EquipmentStatusRecord.objects.filter(equipment__deleted_at__isnull=True)
-        .order_by("equipment_id", "-created", "-id")
-        .distinct("equipment_id")
-        .values("id")
-    )
-    rows = (
-        EquipmentStatusRecord.objects.filter(id__in=latest_status_ids)
-        .values("status")
-        .annotate(total=Count("id"))
-        .order_by("status")
-    )
-    counts: dict[str, int] = {choice: 0 for choice, _ in EquipmentStatus.choices}
-    for row in rows:
-        counts[row["status"]] = row["total"]
-
-    return [{"status": status, "count": count, "entries": count} for status, count in counts.items()]
+    """Number of non-deleted equipment items per computed display status (equipment owns the rule)."""
+    summary = get_equipment_status_summary()
+    return [
+        {"status": row["status"]["value"], "count": row["resource_count"], "entries": row["resource_count"]}
+        for row in summary["statuses"]
+    ]
 
 
 def get_bench_efficiency_rankings(

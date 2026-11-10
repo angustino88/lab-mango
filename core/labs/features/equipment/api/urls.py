@@ -37,9 +37,14 @@ urlpatterns = [
         name="equipment-placement-detail",
     ),
     path(
-        "equipment/<int:equipment_id>/actions/change-status",
-        views.EquipmentStatusAPIView.as_view(),
-        name="equipment-action-change-status",
+        "equipment/<int:equipment_id>/actions/change-condition",
+        views.EquipmentChangeConditionAPIView.as_view(),
+        name="equipment-action-change-condition",
+    ),
+    path(
+        "equipment/<int:equipment_id>/actions/change-lifecycle",
+        views.EquipmentChangeLifecycleAPIView.as_view(),
+        name="equipment-action-change-lifecycle",
     ),
     path(
         "equipment/computing/sku/<str:sku>/activity",

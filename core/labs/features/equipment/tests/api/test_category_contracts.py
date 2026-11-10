@@ -23,14 +23,14 @@ from core.labs.features.equipment.api.category_serializers import EquipmentWrite
 from core.labs.features.equipment.api.registry import EQUIPMENT_REGISTRY
 from core.labs.features.equipment.api.retrieve_update_delete import EquipmentRetrieveUpdateDeleteAPIView
 from core.labs.features.equipment.api.serializers import (
+    EquipmentChangeConditionSerializer,
+    EquipmentChangeLifecycleSerializer,
     EquipmentSerializer,
-    EquipmentStatusSerializer,
 )
 from core.labs.features.equipment.api.views import (
     EquipmentCategoryOptionsAPIView,
-    EquipmentCategoryStatusAPIView,
     EquipmentOptionsAPIView,
-    EquipmentStatusAPIView,
+    EquipmentStateActionAPIView,
 )
 from core.labs.models import ComputingEquipment, EquipmentCategory, EquipmentKind
 from core.labs.models.resource.equipment import (
@@ -50,7 +50,8 @@ def test_category_routes_and_response_contracts(key):
         ("", {"GET", "POST"}),
         ("/42", {"GET", "PUT", "PATCH", "DELETE"}),
         ("/reference-data", {"GET"}),
-        ("/42/actions/change-status", {"POST"}),
+        ("/42/actions/change-condition", {"POST"}),
+        ("/42/actions/change-lifecycle", {"POST"}),
         ("/options", {"GET"}),
     ):
         match = resolve(f"/equipment/{key}{suffix}", urlconf=URLCONF)
@@ -62,31 +63,32 @@ def test_category_routes_and_response_contracts(key):
             assert issubclass(view, EquipmentCategoryOptionsAPIView)
             assert view.model is definition.model
             assert view.get_contract.responses.success.payload_serializer is CatalogOptionSerializer
-        elif suffix == "/42/actions/change-status":
-            view.validate_configuration()
-            assert issubclass(view, EquipmentCategoryStatusAPIView)
-            assert issubclass(view, EquipmentStatusAPIView)
+        elif suffix.startswith("/42/actions/change-"):
+            assert issubclass(view, EquipmentStateActionAPIView)
             assert view.model is definition.model
-            assert view.post_contract.request is EquipmentStatusSerializer
+            expected_request = (
+                EquipmentChangeConditionSerializer if suffix.endswith("condition") else EquipmentChangeLifecycleSerializer
+            )
+            assert view.post_contract.request is expected_request
             response = view.post_contract.responses.success.payload_serializer
             fields = response().get_fields()
             expected_read_fields = definition.fields_for("detail")
             assert set(expected_read_fields) <= fields.keys()
             assert "acquisition_price" in fields
-            assert "status" in fields
+            assert "display_status" in fields
         elif suffix != "/reference-data":
             view.validate_configuration()
             assert view.model is definition.model
             queryset = view.queryset_provider()
             sql, params = queryset.query.sql_with_params()
             assert "equipment" in params  # Pricing links to the canonical Equipment, not its subtype.
-            assert {"acquisition_price", "acquisition_currency", "current_status"} <= queryset.query.annotations.keys()
+            assert {"acquisition_price", "acquisition_currency", "display_status"} <= queryset.query.annotations.keys()
             response = view.list_serializer_class if not suffix else view.response_serializer_class
             fields = response().get_fields()
             expected_read_fields = definition.fields_for("detail" if suffix else "list")
             assert set(expected_read_fields) <= fields.keys()
             assert "acquisition_price" in fields
-            assert "status" in fields
+            assert "display_status" in fields
             assert len(response.Meta.fields) == len(set(response.Meta.fields))
         else:
             fields = view.get_contract.responses.success.payload_serializer().get_fields()
@@ -113,7 +115,7 @@ def test_category_writes_are_explicit_and_do_not_duplicate_pricing(key):
     expected_update = {to_write_key(f) for f in definition.fields_for("update")}
     assert expected_create <= fields.keys()
     assert expected_update <= detail_view.update_serializer_class().get_fields().keys()
-    assert not {"equipment_ptr", "currency", "purchase_price", "acquisition_price", "current_status"} & fields.keys()
+    assert not {"equipment_ptr", "currency", "purchase_price", "acquisition_price", "display_status", "condition"} & fields.keys()
     assert isinstance(serializer, EquipmentWriteSerializer)
     assert "group_id" in fields
     assert "department_id" in fields
@@ -290,17 +292,17 @@ async def test_generated_handlers_preserve_async_dispatch(monkeypatch, suffix):
 
 
 @pytest.mark.asyncio
-async def test_generated_status_handler_preserves_async_dispatch(monkeypatch):
+async def test_generated_state_handler_preserves_async_dispatch(monkeypatch):
     from django.contrib.auth.models import AnonymousUser
     from rest_framework.response import Response
     from rest_framework.test import APIRequestFactory
 
-    view = resolve("/equipment/display/42/actions/change-status", urlconf=URLCONF).func.view_class
+    view = resolve("/equipment/display/42/actions/change-condition", urlconf=URLCONF).func.view_class
     monkeypatch.setattr(view, "authentication_classes", [])
     monkeypatch.setattr(view, "permission_classes", [])
     monkeypatch.setattr(view, "throttle_classes", [])
     monkeypatch.setattr(view, "handle_post", lambda self, request, **kwargs: Response({"data": {"ok": True}}))
-    request = APIRequestFactory().post("/equipment/display/42/actions/change-status", data={}, format="json")
+    request = APIRequestFactory().post("/equipment/display/42/actions/change-condition", data={}, format="json")
     request.user = AnonymousUser()
     response = await view.as_view()(request, pk=42)
     assert response.status_code == 200
@@ -516,8 +518,8 @@ def test_category_url_reverse_names_follow_consistent_generated_convention(key):
     assert reverse(f"{key}-reference-data", urlconf=URLCONF) == f"/equipment/{key}/reference-data"
     assert reverse(f"{key}-retrieve-update", kwargs={"pk": 42}, urlconf=URLCONF) == f"/equipment/{key}/42"
     assert (
-        reverse(f"{key}-action-change-status", kwargs={"pk": 42}, urlconf=URLCONF)
-        == f"/equipment/{key}/42/actions/change-status"
+        reverse(f"{key}-action-change-condition", kwargs={"pk": 42}, urlconf=URLCONF)
+        == f"/equipment/{key}/42/actions/change-condition"
     )
     assert reverse(f"{key}-options", urlconf=URLCONF) == f"/equipment/{key}/options"
     assert reverse("equipment-options", urlconf=URLCONF) == "/equipment/options"

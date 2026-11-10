@@ -24,7 +24,6 @@ from core.labs.models import (
     EquipmentBooking,
     EquipmentCategory,
     EquipmentKind,
-    EquipmentStatusRecord,
     LicenseAssignment,
     Room,
 )
@@ -90,8 +89,8 @@ def test_plain_user_cannot_write_equipment_but_can_read(plain_user, computing_ki
         ("patch", f"equipment/computing/sku/{computing_unit.sku}", {"name": "renamed"}),
         ("post", f"equipment/{pk}/assignment", {"bench_id": bench.pk}),
         ("delete", f"equipment/{pk}/assignment", None),
-        ("post", f"equipment/{pk}/actions/change-status", {"status": "broken", "details": {}}),
-        ("post", f"equipment/computing/{pk}/actions/change-status", {"status": "broken", "details": {}}),
+        ("post", f"equipment/{pk}/actions/change-condition", {"condition": "out_of_service"}),
+        ("post", f"equipment/computing/{pk}/actions/change-lifecycle", {"lifecycle_state": "retired"}),
     ]
     for method, path, body in writes:
         response = getattr(client, method)(ROOT + path, body, format="json")
@@ -299,18 +298,16 @@ def test_delete_api_returns_conflict_when_assigned(coordinator, computing_unit):
     assert response.data["error"]["code"] == "equipment_in_use"
 
 
-# D5: leaderboard counts each unit once, by its latest status -------------------------------
+# D5: leaderboard counts each unit once, by its current state ------------------------------
 
 
 @pytest.mark.django_db
-def test_leaderboard_summary_counts_latest_status_per_unit(computing_kind):
-    first = ComputingEquipment.objects.create(sku="S0-LB-1", name="A", kind=computing_kind)
-    second = ComputingEquipment.objects.create(sku="S0-LB-2", name="B", kind=computing_kind)
-    ComputingEquipment.objects.create(sku="S0-LB-3", name="No status", kind=computing_kind)
-    deleted = ComputingEquipment.objects.create(sku="S0-LB-4", name="Gone", kind=computing_kind)
-    for unit, statuses in ((first, ("available", "in_use", "broken")), (second, ("available",)), (deleted, ("lost",))):
-        for value in statuses:
-            EquipmentStatusRecord.objects.create(equipment=unit, status=value)
+def test_leaderboard_summary_counts_each_unit_once(computing_kind):
+    broken = ComputingEquipment.objects.create(sku="S0-LB-1", name="A", kind=computing_kind)
+    ComputingEquipment.objects.create(sku="S0-LB-2", name="B", kind=computing_kind)
+    ComputingEquipment.objects.create(sku="S0-LB-3", name="C", kind=computing_kind, lifecycle_state="planned")
+    deleted = ComputingEquipment.objects.create(sku="S0-LB-4", name="Gone", kind=computing_kind, lifecycle_state="lost")
+    Equipment.objects.filter(pk=broken.pk).update(condition="out_of_service")
     Equipment.objects.filter(pk=deleted.pk).update(deleted_at=timezone.now())
 
     summary = get_dashboard_summary()
@@ -318,5 +315,5 @@ def test_leaderboard_summary_counts_latest_status_per_unit(computing_kind):
     assert summary["total"] == 3
     assert summary["status"]["broken"] == 1
     assert summary["status"]["available"] == 1
-    assert summary["status"]["in_use"] == 0
+    assert summary["status"]["on_order"] == 1
     assert summary["status"]["lost"] == 0

@@ -15,11 +15,10 @@ from core.labs.features.analytics.queries.utilization import (
     get_equipment_status_distribution,
     get_user_booking_compliance,
 )
-from core.labs.models import ActiveLaboratoryObservation, EquipmentStatus
+from core.labs.models import ActiveLaboratoryObservation, Equipment
 from tests.factories import (
     BenchBookingFactory,
     ComputingEquipmentFactory,
-    EquipmentStatusRecordFactory,
     LabSessionLogFactory,
     StorageQuotaMeasurementFactory,
 )
@@ -58,15 +57,16 @@ class TestExceededStorageQuotas:
 
 @pytest.mark.django_db
 class TestEquipmentStatusDistribution:
-    def test_counts_latest_status_per_equipment_not_every_record(self):
+    def test_counts_each_equipment_once_by_current_state(self):
         equipment = ComputingEquipmentFactory()
-        EquipmentStatusRecordFactory(equipment=equipment, status=EquipmentStatus.AVAILABLE)
-        EquipmentStatusRecordFactory(equipment=equipment, status=EquipmentStatus.MAINTENANCE)
+        ComputingEquipmentFactory(lifecycle_state="planned")
+        Equipment.objects.filter(pk=equipment.pk).update(condition="in_maintenance")
 
         counts = {row["status"]: row["count"] for row in get_equipment_status_distribution()}
 
-        assert counts[EquipmentStatus.MAINTENANCE] == 1
-        assert counts[EquipmentStatus.AVAILABLE] == 0
+        assert counts["maintenance"] == 1
+        assert counts["on_order"] == 1
+        assert counts["available"] == 0
 
 
 @pytest.mark.django_db

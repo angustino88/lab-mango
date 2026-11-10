@@ -58,7 +58,7 @@ def _validate_fields(model: type[Equipment], values: dict[str, Any]) -> None:
             raise ValidationError({name: "Unknown equipment field."}) from error
         if field.primary_key or field.auto_created or field.one_to_many:
             raise ValidationError({name: "This equipment field cannot be written directly."})
-        if name in {"creator", "last_modified_by", "deleted_at", "uid"}:
+        if name in {"creator", "last_modified_by", "deleted_at", "uid", "lifecycle_state", "condition"}:
             raise ValidationError({name: "This equipment field is managed by the application."})
 
 

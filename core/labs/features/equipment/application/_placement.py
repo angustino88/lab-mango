@@ -10,9 +10,10 @@ A unit's room is the room of its active room placement; ``Equipment.storage_room
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced
+from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced, InvalidEquipmentStatus
 from core.labs.models import Equipment, Room, Station
 from core.labs.models.resource.equipment.assignment import LOCATION_NOTE_MAX_LENGTH, EquipmentAssignment
+from core.labs.models.resource.equipment.equipment import GONE_LIFECYCLE_STATES
 
 
 def lock_active_placement(equipment: Equipment) -> EquipmentAssignment | None:
@@ -74,6 +75,8 @@ def rest_equipment(
         raise ValidationError({"non_field_errors": "Choose one target: bench, station, room, or a location note."})
     if station is None and room is None and not location_note:
         raise ValidationError({"location_note": "Describe where the equipment is when no target is chosen."})
+    if equipment.lifecycle_state in GONE_LIFECYCLE_STATES:
+        raise InvalidEquipmentStatus("Equipment that is transferred out, retired or lost cannot be placed.")
     current = lock_active_placement(equipment)
     if current is not None:
         if current.bench_id is not None:

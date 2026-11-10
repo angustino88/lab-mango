@@ -4,18 +4,17 @@ from typing import Any
 
 from django.db.models import Model
 
-from core.common.queries.status_summary import status_summary, with_latest_status
-from core.labs.models import ComputingEquipment, Equipment, EquipmentStatus, EquipmentStatusRecord
+from core.common.queries.status_summary import status_summary
+from core.labs.models import ComputingEquipment, Equipment, EquipmentDisplayStatus
 from core.labs.models.activity.computing_activity import ComputingActivityStatus
+
+from .equipment import with_display_status
 
 
 def get_equipment_status_summary() -> dict[str, Any]:
-    inventory = with_latest_status(
-        Equipment.objects.filter(deleted_at__isnull=True),
-        records=EquipmentStatusRecord.objects.all(),
-        resource_field="equipment_id",
-    )
-    return status_summary(inventory, field="summary_status", choices=EquipmentStatus.choices)
+    """Non-deleted equipment counted once each by computed ``display_status``. One query."""
+    inventory = with_display_status(Equipment.objects.filter(deleted_at__isnull=True))
+    return status_summary(inventory, field="display_status", choices=EquipmentDisplayStatus.choices)
 
 
 def get_computing_activity_summary() -> dict[str, Any]:
@@ -28,10 +27,6 @@ def get_computing_activity_summary() -> dict[str, Any]:
 
 
 def get_equipment_category_status_summary(*, equipment_model: type[Model]) -> dict[str, Any]:
-    """Count one registered equipment category by its latest lifecycle state."""
-    inventory = with_latest_status(
-        equipment_model.objects.filter(deleted_at__isnull=True),
-        records=EquipmentStatusRecord.objects.all(),
-        resource_field="equipment_id",
-    )
-    return status_summary(inventory, field="summary_status", choices=EquipmentStatus.choices)
+    """Count one registered equipment category by computed ``display_status``. One query."""
+    inventory = with_display_status(equipment_model.objects.filter(deleted_at__isnull=True))
+    return status_summary(inventory, field="display_status", choices=EquipmentDisplayStatus.choices)

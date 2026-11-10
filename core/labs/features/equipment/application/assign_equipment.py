@@ -6,9 +6,8 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from core.labs.features.equipment.application._placement import close_resting_placement
-from core.labs.features.equipment.application._status_transition import record_equipment_status
-from core.labs.features.equipment.exceptions import EquipmentAlreadyAssigned
-from core.labs.models import Bench, Equipment, EquipmentStatus
+from core.labs.features.equipment.exceptions import EquipmentAlreadyAssigned, InvalidEquipmentStatus
+from core.labs.models import Bench, Equipment, EquipmentLifecycleState
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 
@@ -28,13 +27,9 @@ def assign_equipment(command: AssignEquipmentInput, *, actor):
         equipment=equipment, unassigned_at__isnull=True
     ).first()
     if current and current.bench_id == command.bench_id:
-        record_equipment_status(
-            equipment=equipment,
-            status=EquipmentStatus.IN_USE,
-            details={"bench": command.bench_id, "bench_id": command.bench_id},
-            actor=actor,
-        )
         return current
+    if equipment.lifecycle_state != EquipmentLifecycleState.IN_SERVICE:
+        raise InvalidEquipmentStatus("Only equipment in service can be placed on a bench.")
     if current:
         raise EquipmentAlreadyAssigned()
     # A unit resting at a station, in a room, or at an untracked place moves onto the bench.
@@ -56,10 +51,4 @@ def assign_equipment(command: AssignEquipmentInput, *, actor):
         if constraint_name == "one_active_bench_per_equipment":
             raise EquipmentAlreadyAssigned() from exc
         raise
-    record_equipment_status(
-        equipment=equipment,
-        status=EquipmentStatus.IN_USE,
-        details={"bench": command.bench_id, "bench_id": command.bench_id},
-        actor=actor,
-    )
     return assignment

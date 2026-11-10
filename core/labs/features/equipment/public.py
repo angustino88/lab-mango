@@ -1,7 +1,7 @@
 """Supported external commands, queries, and stable business errors."""
 
 from .application.assign_equipment import AssignEquipmentInput, assign_equipment
-from .application.change_equipment_status import ChangeEquipmentStatusInput, change_equipment_status
+from .application.change_state import ChangeConditionInput, ChangeLifecycleInput, change_condition, change_lifecycle
 from .application.create_equipment import CreateEquipmentInput, create_equipment
 from .application.delete_equipment import DeleteEquipmentInput, delete_equipment
 from .application.place_equipment import (
@@ -26,6 +26,7 @@ from .queries.equipment import (
 )
 from .queries.inactivity_notifications import inactive_equipment_candidates
 from .queries.placements import get_active_placement, has_active_placements
+from .queries.state_history import equipment_state_timelines
 from .queries.summaries import (
     get_computing_activity_summary,
     get_equipment_category_status_summary,
@@ -38,7 +39,8 @@ __all__ = (
     "get_equipment_status_summary",
     "get_equipment_category_status_summary",
     "AssignEquipmentInput",
-    "ChangeEquipmentStatusInput",
+    "ChangeConditionInput",
+    "ChangeLifecycleInput",
     "CreateEquipmentInput",
     "DeleteEquipmentInput",
     "EquipmentAlreadyAssigned",
@@ -47,6 +49,7 @@ __all__ = (
     "InvalidEquipmentStatus",
     "PlaceEquipmentInput",
     "RemovePlacementInput",
+    "equipment_state_timelines",
     "get_active_placement",
     "has_active_placements",
     "place_equipment",
@@ -58,7 +61,8 @@ __all__ = (
     "active_bench_assignment_mapping_rows",
     "active_equipment_bench_assignment",
     "lock_active_equipment_bench_assignment",
-    "change_equipment_status",
+    "change_condition",
+    "change_lifecycle",
     "computing_activity_projection",
     "create_equipment",
     "delete_equipment",

@@ -7,8 +7,12 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from core.labs.models import Equipment, EquipmentKind
+from core.labs.models import Equipment, EquipmentKind, EquipmentLifecycleState
 from core.labs.models.resource.base.resource import Department, ResourceGroup
+
+from .change_state import record_initial_lifecycle
+
+CREATE_LIFECYCLE_STATES = frozenset({EquipmentLifecycleState.PLANNED, EquipmentLifecycleState.IN_SERVICE})
 
 
 def _resolve_reference(model, value, *, field_name: str):
@@ -60,6 +64,7 @@ SHARED_CREATE_FIELDS = frozenset(
         "weight_kg",
         "warranty_until",
         "calibration_required",
+        "lifecycle_state",
     }
 )
 
@@ -122,6 +127,9 @@ def create_equipment(command: CreateEquipmentInput, *, actor, model=Equipment, c
     if owner and not owner.is_active:
         raise ValidationError({"owner": "Select an active owner."})
     values["kind"] = kind
+    lifecycle_state = values.get("lifecycle_state", EquipmentLifecycleState.IN_SERVICE)
+    if lifecycle_state not in CREATE_LIFECYCLE_STATES:
+        raise ValidationError({"lifecycle_state": "New equipment is planned or in service."})
     if not issubclass(model, Equipment):
         raise TypeError("Equipment creation requires an Equipment model subtype.")
     if model is Equipment:
@@ -141,6 +149,7 @@ def create_equipment(command: CreateEquipmentInput, *, actor, model=Equipment, c
     equipment.save()
     for name, related in many_to_many.items():
         getattr(equipment, name).set(related)
+    record_initial_lifecycle(equipment, actor=actor)
     if expected_category == "computing":
         from core.labs.features.equipment.categories.computing.application import ensure_computing_activity
 

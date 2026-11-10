@@ -1,6 +1,6 @@
 """Contract-based API views for redesigned equipment resources."""
 
-from typing import Any
+from typing import Any, ClassVar
 
 from asgiref.sync import sync_to_async
 from drf_api_contracts import OperationContract, ResponseContract
@@ -22,13 +22,15 @@ from core.labs.features.equipment.api.serializers import (
 )
 from core.labs.features.equipment.application import (
     AssignEquipmentInput,
-    ChangeEquipmentStatusInput,
+    ChangeConditionInput,
+    ChangeLifecycleInput,
     CreateEquipmentInput,
     PlaceEquipmentInput,
     RemovePlacementInput,
     UnassignEquipmentInput,
     assign_equipment,
-    change_equipment_status,
+    change_condition,
+    change_lifecycle,
     create_equipment,
     place_equipment,
     remove_placement,
@@ -82,6 +84,8 @@ from .serializers import (
     DepartmentSerializer,
     EquipmentAssignmentResultSerializer,
     EquipmentAssignmentSerializer,
+    EquipmentChangeConditionSerializer,
+    EquipmentChangeLifecycleSerializer,
     EquipmentCreateSerializer,
     EquipmentKindOptionsQuerySerializer,
     EquipmentManufacturerOptionsQuerySerializer,
@@ -91,7 +95,6 @@ from .serializers import (
     EquipmentProductModelOptionsQuerySerializer,
     EquipmentReferenceDataSerializer,
     EquipmentSerializer,
-    EquipmentStatusSerializer,
     EquipmentStatusSummarySerializer,
     EquipmentTypeOptionsQuerySerializer,
     ResourceGroupCatalogSerializer,
@@ -346,65 +349,73 @@ class DeprecatedEquipmentAssignmentActionAPIView(EquipmentAssignmentAPIView):
         return response
 
 
-class EquipmentStatusAPIView(EquipmentAPIView):
-    """Record a new status for an equipment record."""
+class EquipmentStateActionAPIView(EquipmentAPIView):
+    """Change a unit's condition or lifecycle state; responds with the updated equipment.
 
-    post_contract = OperationContract(
-        request=EquipmentStatusSerializer,
-        success=ResponseContract.success("EquipmentDetailAfterStatusChange", EquipmentSerializer),
+    Category routes set ``queryset_provider`` so a unit of another category is 404.
+    """
+
+    action: ClassVar[str] = ""
+    queryset_provider: Any = None
+
+    def handle_post(self, request: Request, equipment_id: int | None = None, pk: int | None = None, *args, **kwargs) -> Response:
+        target_id = equipment_id if equipment_id is not None else pk
+        provider = type(self).queryset_provider
+        visible = provider() if provider is not None else list_equipment()
+        if target_id is None or not visible.filter(pk=target_id).exists():
+            return self.respond_problem("not_found")
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        if self.action == "condition":
+            change_condition(
+                ChangeConditionInput(equipment_id=target_id, condition=data["condition"], reason=data["reason"]),
+                actor=self.acting_user,
+            )
+        elif self.action == "lifecycle":
+            change_lifecycle(
+                ChangeLifecycleInput(
+                    equipment_id=target_id,
+                    lifecycle_state=data["lifecycle_state"],
+                    reason=data["reason"],
+                    receiving_organisation=data["receiving_organisation"],
+                    transfer_date=data["transfer_date"],
+                ),
+                actor=self.acting_user,
+            )
+        else:
+            raise TypeError(f"{type(self).__name__} must set action to 'condition' or 'lifecycle'.")
+        return self.respond(visible.get(pk=target_id))
+
+
+def state_action_contract(action: str, response_name: str, detail_serializer: Any, **extra: Any) -> OperationContract:
+    request = EquipmentChangeConditionSerializer if action == "condition" else EquipmentChangeLifecycleSerializer
+    return OperationContract(
+        request=request,
+        success=ResponseContract.success(response_name, detail_serializer),
         bad_request=ResponseContract.bad_request(),
         validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
         not_found=ResponseContract.not_found(),
         conflict=ResponseContract.conflict(),
+        **extra,
     )
 
-    def handle_post(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
-        serializer, error = self.validate_request()
-        if error is not None:
-            return error
-        status_record = change_equipment_status(
-            ChangeEquipmentStatusInput(
-                equipment_id=equipment_id,
-                status=serializer.validated_data["status"],
-                details=tuple(serializer.validated_data["details"].items()),
-            ),
-            actor=request.user,
-        )
-        equipment = get_equipment(status_record.equipment_id)
-        return self.respond(equipment)
+
+class EquipmentChangeConditionAPIView(EquipmentStateActionAPIView):
+    """Set whether an in-service unit works (operational, in maintenance, out of service)."""
+
+    action = "condition"
+    post_contract = state_action_contract("condition", "EquipmentDetailAfterConditionChange", EquipmentSerializer)
 
 
-class EquipmentCategoryStatusAPIView(EquipmentStatusAPIView):
-    """Record a new status for a category equipment record."""
+class EquipmentChangeLifecycleAPIView(EquipmentStateActionAPIView):
+    """Move a unit along its lifecycle (planned, in service, transferred out, retired, lost)."""
 
-    model = None
-    queryset_provider = None
-    entity_name = None
-    required_attributes = ("model", "queryset_provider")
-
-    def handle_post(self, request: Request, pk: int = None, equipment_id: int = None, *args, **kwargs) -> Response:
-        self.validate_configuration()
-        target_id = pk if pk is not None else kwargs.get("id", kwargs.get("equipment_id", equipment_id))
-        if target_id is None:
-            return self.respond_problem("not_found")
-        serializer, error = self.validate_request()
-        if error is not None:
-            return error
-        if not self.queryset_provider().filter(pk=target_id).exists():
-            return self.respond_problem("not_found")
-        details_dict = serializer.validated_data.get("details") or {}
-        user = getattr(request, "user", None)
-        actor = user if getattr(user, "is_authenticated", False) else None
-        status_record = change_equipment_status(
-            ChangeEquipmentStatusInput(
-                equipment_id=target_id,
-                status=serializer.validated_data["status"],
-                details=tuple(details_dict.items()),
-            ),
-            actor=actor,
-        )
-        instance = self.queryset_provider().get(pk=status_record.equipment_id)
-        return self.respond(instance)
+    action = "lifecycle"
+    post_contract = state_action_contract("lifecycle", "EquipmentDetailAfterLifecycleChange", EquipmentSerializer)
 
 
 class EquipmentReferenceDataAPIView(EquipmentAPIView):
