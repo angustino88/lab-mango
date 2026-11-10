@@ -10,7 +10,7 @@ from core.support_desk.models.priority import SupportPriority
 from core.support_desk.models.settings import SupportSettings
 from core.support_desk.models.status import SupportStatus
 from core.support_desk.models.transition import SupportStatusTransition
-from tests.factories import UserFactory
+from core.users.tests.factories import UserFactory
 
 
 @pytest.fixture

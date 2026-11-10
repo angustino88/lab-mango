@@ -1,5 +1,12 @@
 """Read query selectors for support tickets."""
 
+from core.support_desk.features.tickets.queries.catalog import (
+    list_categories,
+    list_labels,
+    list_priorities,
+    list_statuses,
+    list_teams,
+)
 from core.support_desk.features.tickets.queries.get_ticket import get_ticket_by_key
 from core.support_desk.features.tickets.queries.list_tickets import list_tickets
 from core.support_desk.features.tickets.queries.options import (
@@ -21,5 +28,10 @@ __all__ = [
     "get_status_options",
     "get_team_options",
     "get_ticket_by_key",
+    "list_categories",
+    "list_labels",
+    "list_priorities",
+    "list_statuses",
+    "list_teams",
     "list_tickets",
 ]

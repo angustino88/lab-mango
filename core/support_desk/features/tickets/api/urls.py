@@ -54,6 +54,7 @@ urlpatterns = [
     path("labels/<int:label_id>", views.AdminLabelDetailAPIView.as_view(), name="label-detail"),
 
     path("canned-responses", views.CannedResponseListAPIView.as_view(), name="canned-response-list"),
+    path("settings", views.SupportSettingsAPIView.as_view(), name="support-settings"),
 
     # Admin configuration (workflow, canned responses, settings)
     path("admin/transitions", views.AdminTransitionListCreateAPIView.as_view(), name="admin-transition-list-create"),

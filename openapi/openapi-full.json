@@ -45662,6 +45662,66 @@
         "summary": "Get Resources Tickets by Resource Type Resource ID"
       }
     },
+    "/api/support/settings": {
+      "get": {
+        "operationId": "support_settings_retrieve",
+        "description": "Client-facing subset of the Support Desk settings that drives ticket forms and actions.",
+        "tags": [
+          "Support Desk"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportSettingsDetailSerializersSupportPublicSettingsDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Settings"
+      }
+    },
     "/api/support/statuses": {
       "get": {
         "operationId": "support_statuses_retrieve",
@@ -51480,6 +51540,40 @@
         ],
         "type": "string",
         "description": "* `PASS` - PASS\n* `FAIL` - FAIL\n* `NOT_ASSESSED` - NOT_ASSESSED\n* `OK` - OK\n* `NOK` - NOK"
+      },
+      "AvailableTransition": {
+        "type": "object",
+        "description": "A status change the current viewer may perform on the ticket right now.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "to_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Status"
+              }
+            ],
+            "readOnly": true
+          },
+          "requires_reason": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Whether this transition requires a reason from the actor."
+          },
+          "requires_resolution": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Whether this transition requires a resolution summary."
+          }
+        },
+        "required": [
+          "id",
+          "requires_reason",
+          "requires_resolution",
+          "to_status"
+        ]
       },
       "Bench": {
         "type": "object",
@@ -83313,6 +83407,71 @@
           "status"
         ]
       },
+      "SupportPublicSettings": {
+        "type": "object",
+        "description": "Settings every ticket user needs to build forms and actions; operational tuning stays admin-only.",
+        "properties": {
+          "requesters_can_set_priority": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "If disabled, requesters describe impact/urgency and the priority is derived (agents still set it)."
+          },
+          "default_ticket_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketTypeEnum"
+              }
+            ],
+            "readOnly": true,
+            "description": "Type applied when a ticket is created without one.\n\n* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+          },
+          "reopen_window_days": {
+            "type": "integer",
+            "readOnly": true,
+            "description": "Days after resolution during which a requester may reopen a ticket."
+          },
+          "comment_edit_window_minutes": {
+            "type": "integer",
+            "readOnly": true,
+            "description": "Minutes after creation during which an author may edit/delete their comment."
+          },
+          "max_attachment_size_bytes": {
+            "type": "integer",
+            "readOnly": true,
+            "description": "Maximum allowed attachment size in bytes (default 25 MB)."
+          },
+          "allowed_attachment_extensions": {
+            "readOnly": true,
+            "description": "List of permitted file extensions with dots, e.g. ['.png', '.pdf']."
+          },
+          "max_attachments_per_ticket": {
+            "type": "integer",
+            "readOnly": true,
+            "description": "Maximum number of attachments allowed on a single ticket."
+          },
+          "csat_enabled": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Allow requesters to rate resolved tickets (1-5)."
+          },
+          "csat_window_days": {
+            "type": "integer",
+            "readOnly": true,
+            "description": "Days after resolution during which the requester can submit a satisfaction rating."
+          }
+        },
+        "required": [
+          "allowed_attachment_extensions",
+          "comment_edit_window_minutes",
+          "csat_enabled",
+          "csat_window_days",
+          "default_ticket_type",
+          "max_attachment_size_bytes",
+          "max_attachments_per_ticket",
+          "reopen_window_days",
+          "requesters_can_set_priority"
+        ]
+      },
       "SupportQueueStatsSerializersQueueStatsDetailResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
@@ -83402,6 +83561,18 @@
         },
         "required": [
           "updated_at"
+        ]
+      },
+      "SupportSettingsDetailSerializersSupportPublicSettingsDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SupportPublicSettings"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "SyncInfoResponse": {
@@ -83516,14 +83687,18 @@
                 "$ref": "#/components/schemas/UserSummary"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true,
+            "description": "Support agents only; null for other readers."
           },
           "members": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UserSummary"
             },
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true,
+            "description": "Support agents only; null for other readers."
           },
           "is_active": {
             "type": "boolean",
@@ -84289,6 +84464,13 @@
             "additionalProperties": {},
             "readOnly": true
           },
+          "available_transitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailableTransition"
+            },
+            "readOnly": true
+          },
           "version": {
             "type": "integer",
             "maximum": 2147483647,
@@ -84330,6 +84512,7 @@
           "activities",
           "assignee",
           "attachments",
+          "available_transitions",
           "category",
           "children",
           "comments",
