@@ -129,6 +129,44 @@ Rules:
 **Available** (computed, AC3): `lifecycle_state = in_service` and `condition = operational` and no active
 bench placement and no active loan and (calibration not overdue, when the unit requires calibration).
 
+#### Display status (computed, read-only)
+
+The old single status does not disappear from the user's view. Responses carry one computed
+`display_status` beside the detailed fields, so lists, filters, and dashboard counts keep one familiar
+label. It is never written; it is derived from the stored facts.
+
+| Old status | Source of truth now |
+|---|---|
+| `available` | the computed availability rule above |
+| `in_use` | active placement on a bench |
+| `in_storage` | active placement in a room, a station, or an untracked place (`location_note`) |
+| `borrowed` | active loan |
+| `maintenance` | `condition = in_maintenance` |
+| `broken` | `condition = out_of_service` |
+| `on_order` | `lifecycle_state = planned` |
+| `transferred` | `lifecycle_state = transferred_out` |
+| `lost` | `lifecycle_state = lost` |
+
+When several facts hold at once, the first matching row wins:
+
+| Priority | Condition | `display_status` |
+|---|---|---|
+| 1 | `lifecycle_state` is not `in_service` | `lost`, `transferred`, `retired`, or `planned` |
+| 2 | `condition = out_of_service` | `broken` |
+| 3 | `condition = in_maintenance` | `maintenance` |
+| 4 | active loan | `borrowed` (the response also carries `overdue: true` when past due) |
+| 5 | active placement on a bench | `in_use` |
+| 6 | calibration required and overdue | `calibration_overdue` |
+| 7 | otherwise | `available` |
+
+A unit resting in a room, at a station, or in an untracked place displays as `available`; where it is
+shows in `placement`. A separate `in_storage` label is produced only if the storage flag on `Room` is
+adopted (open question), in which case the owner also decides whether a stored unit is bookable.
+
+The detailed fields stay in the response, so "broken while on loan" is visible as `display_status =
+broken` with a non-null `loan`. The value is computed in SQL (one `CASE` over the stored columns plus
+`Exists` for loan and bench placement), so it can be filtered and counted without per-row queries.
+
 ### 2. Location: `EquipmentPlacement`
 
 Replaces `EquipmentAssignment` and `Equipment.storage_room` (OD1).
@@ -201,7 +239,7 @@ All of these are breaking and need a compatibility plan per `docs/api/response-s
 
 | Change | Contract effect |
 |---|---|
-| `status` on equipment responses | replaced by `lifecycle_state`, `condition`, `availability` (computed), `placement`, `loan` |
+| `status` on equipment responses | replaced by `display_status` (computed, same shape as today's `status`), plus `lifecycle_state`, `condition`, `placement`, `loan` |
 | `POST /equipment/{id}/actions/change-status` | replaced by `actions/change-condition` and `actions/change-lifecycle`; old route kept as a deprecated adapter for a sunset period |
 | `/equipment/{id}/assignment` | becomes `/equipment/{id}/placement` (bench, station, room, or note); old route kept as a deprecated alias for bench placements |
 | `storage_room`, `storage_room_id` | removed |
@@ -340,7 +378,7 @@ change. `EquipmentEvent` is the audit trail for state; placement and loan rows a
 |---|---|
 | AC1, AC4 | changing condition leaves the active placement untouched |
 | AC2 | constraint tests for one target, one active placement, one active loan; hand-over closes placement |
-| AC3 | availability matrix over lifecycle, condition, placement, loan, calibration |
+| AC3 | availability and `display_status` priority matrix over lifecycle, condition, placement, loan, calibration |
 | AC5 | PostgreSQL concurrency tests from the write-path table |
 | AC6 | import-boundary test over Labs features |
 | AC7 | create a category at runtime, then create, list, and filter a unit in it |
