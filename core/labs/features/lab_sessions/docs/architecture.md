@@ -165,9 +165,13 @@ map). No migration. Rollback is a code revert; stored session logs stay valid.
 | Validation answers uniformly over HTTP | `core/agents/tests/api/test_agent_booking_validation.py` |
 | Published paths | `test_info_publishes_session_and_validation_paths` |
 
-## 10. Open questions
+## 10. Decisions and known drift
 
-1. May a user log in before the booking's start time? Today: no (§6, rule 4).
-2. Should validation also accept `pending` bookings? Today: no. Note that `activate_bench_bookings`
-   (`bench_bookings/application/state_transitions.py:15`) does not filter on approval status, so a pending
-   booking can still be activated by computing activity. Reported as drift; not changed here.
+Owner decisions (2026-11-11), recorded as O20 and O21 in the parent proposal:
+
+1. A user may not log in before the booking's start time (§6, rule 4).
+2. Validation does not accept `pending` (or `rejected`) bookings; only `approved` (§6, rule 2).
+
+Known drift, not changed here: `activate_bench_bookings`
+(`bench_bookings/application/state_transitions.py:15`) does not filter on approval status, so a pending
+booking can still be activated by computing activity. This contradicts O21 and needs its own change.

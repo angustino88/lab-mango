@@ -47,6 +47,8 @@ session links → operating calendar → analytics rebuild, with the finance fix
 | O17 | Only lab admins may exclude or restore a session log (existing `IsLabAdmin`). |
 | O18 | There is no data policy restricting session-log personal data. Remote user and remote IP are kept forever with no removal path. |
 | O19 | Session-log limits confirmed: logout at most 5 minutes after server time, login at most 7 days before server time, sessions over 24 hours flagged (§5.6). |
+| O20 | An agent may not log a user in before the booking's start time. |
+| O21 | Only approved bookings pass agent validation; pending and rejected bookings do not. |
 
 ## 3. Current state: lab analytics
 
