@@ -41,6 +41,8 @@ session links → operating calendar → analytics rebuild, with the finance fix
 | O12 | Before accepting a booking code, the agent checks that the booking's start and end time cover the login and that the booking belongs to this computer. A code the agent sends is therefore valid at login. |
 | O13 | Each session is pushed once, after logout, and is final. There is no update or correction endpoint. |
 | O14 | The finance direction in §8 is accepted (2026-11-10). Each work package still needs its own design note and approval before merge (T2). |
+| O15 | New agent APIs are designed for session-log push and booking validation (§5.5). The planned but unbuilt `GET /agent/bookings/code/{booking_code}` is not relied on. |
+| O16 | Session logs are kept forever. |
 
 ## 3. Current state: lab analytics
 
@@ -214,10 +216,41 @@ The agent already validates the booking before login (O12). The backend still re
 rather than trusting the client, but `unmatched` is not an expected case: it means the booking was
 cancelled or moved after login, or the agent check failed. It is reported as a data-quality alert.
 
-### 5.3 Used time for a booking
+### 5.3 Used time, including benches with several computers
 
-- Used time is the sum of the booking's sessions, using the agent's active time (O10). No overlap
-  merging is needed for sessions on one computer.
+One computer runs one remote user at a time (O10), but one bench can hold several computers: a
+computer has at most one active bench (`one_active_bench_per_equipment`,
+`core/labs/models/resource/equipment/assignment.py`), while a bench has no limit on computers. So the
+same bench booking can be in use on two computers at once.
+
+Solution: keep two figures and use each for its own question.
+
+| Figure | Definition | Used for |
+| --- | --- | --- |
+| Computer active time | Sum of `active_duration_seconds` of the sessions on that computer | Computer utilisation, per-user usage, machine-hours |
+| Bench occupied time | Length of the union of the `[login_time, logout_time]` intervals of all sessions on all computers of the bench | Bench utilisation, booked-versus-used |
+
+Rules:
+
+- The bench of each session is resolved from the computer's assignment at login time (§5.2), so a
+  computer moved between benches counts toward the right bench on each date.
+- For booked-versus-used, the union is clipped to the booking window. Time outside the window is
+  reported separately as overrun, so booked-versus-used never exceeds 100%.
+- Temp-login sessions on the bench join the union too: the bench was occupied, whoever used it.
+- The union uses login and logout times, because active time is a single number with no interval.
+- The agent is not asked to block a second computer. Agents do not coordinate with each other, and
+  concurrent use of one booking on several computers is legitimate.
+
+Example: bench B has PC1 and PC2. Booking 09:00–12:00.
+
+| Session | Login–logout | Active time |
+| --- | --- | --- |
+| PC1 | 09:00–11:00 | 1.5 h |
+| PC2 | 10:00–12:30 | 2.0 h |
+
+- Computer active time: PC1 1.5 h, PC2 2.0 h, machine-hours 3.5 h.
+- Bench occupied time: union 09:00–12:30 = 3.5 h; within the booking 3.0 h, overrun 0.5 h.
+- Booked-versus-used: 3.0 h of 3.0 h = 100%, with 0.5 h overrun reported beside it.
 
 ### 5.4 Session log list (for a frontend table)
 
@@ -229,6 +262,108 @@ No list endpoint exists today. Proposed:
 - Filters: date range (required), computer, bench, user, booking code, session kind.
 - Access: lab coordinators and lab admins only (O11), for reads as well as writes. The existing
   `IsLabCoordinator` allows any authenticated user to read, so this endpoint needs `read_roles` set.
+
+### 5.5 New agent APIs (O15)
+
+Both endpoints sit beside the existing `agent/heartbeat` and reuse its authentication:
+`AgentSignatureAuthentication` with `IsAuthenticatedAgent` (`core/agents/api/views.py:326-330`). The
+computer is always `AgentIdentity.equipment`, never a value in the request body.
+
+`GET /agent/info` adds the paths of both endpoints to its response, so the agent reads the push URL from
+the backend (O8). This is an additive field.
+
+#### 5.5.1 `POST /agent/bookings/actions/validate`
+
+Called by the agent when a user enters a booking code at login (O12). Read-only: it does not check in,
+start a session or change the booking. The code goes in the body, not the URL, so it does not appear in
+access logs.
+
+Request:
+
+```json
+{ "booking_code": "BK-7F3K9Q" }
+```
+
+Eligible when all hold: the booking exists; it is approved; its status is reserved or in progress; its
+bench is the computer's active bench; and now is within the booking window, including the existing
+10-minute start grace (`bench_bookings/application/policies.py:10`).
+
+`200` when eligible:
+
+```json
+{
+  "data": {
+    "eligible": true,
+    "booking_code": "BK-7F3K9Q",
+    "starts_at": "2026-11-11T09:00:00+07:00",
+    "ends_at": "2026-11-11T12:00:00+07:00",
+    "booked_by": "nguyen.an"
+  }
+}
+```
+
+`200` with `"eligible": false` and no booking details for every other case: unknown code, wrong bench,
+not approved, cancelled, outside the window. One answer for all failures stops a caller from learning
+which codes exist. `401` for a bad signature, `429` above the rate limit.
+
+#### 5.5.2 `POST /agent/session-logs`
+
+Called once after logout (O1, O13). Body:
+
+```json
+{
+  "event_id": "5b0f6c1e-2a7d-4c9e-9a3b-0d6e4f1a2c77",
+  "login_time": "2026-11-11T09:02:11+07:00",
+  "logout_time": "2026-11-11T11:47:40+07:00",
+  "active_duration_seconds": 8912,
+  "remote_user": "nguyen.an",
+  "remote_ip": "10.20.4.17",
+  "remote_host": "LT-NGUYENAN",
+  "booking_code": "BK-7F3K9Q",
+  "agent_version": "2.4.1"
+}
+```
+
+`booking_code` is null or omitted for a temp login. Unknown fields are rejected.
+
+| Response | When |
+| --- | --- |
+| `201` | Stored. Body returns the session id and its kind (`booked`, `temp_login`, `unmatched`). |
+| `200` | Same `event_id` and same body already stored. Returns the original record. |
+| `409` | Same `event_id` with a different body. |
+| `422` | Validation failed (§5.6 hard limits). |
+| `401` / `429` | Bad signature / rate limit. |
+
+The race guard is the existing unique rule `unique_session_report_per_agent` (computer, agent, event id).
+The insert and the booking and bench resolution happen in one transaction. An `unmatched` code is
+stored, not rejected, because the session really happened.
+
+### 5.6 Wrong records
+
+A record is final once pushed (O13) and kept forever (O16), but some records will still be wrong. These
+are the cases expected in practice:
+
+| # | Example | What goes wrong | Handling |
+| --- | --- | --- | --- |
+| W1 | The computer clock is wrong, so the session shows a login in 2019 or a logout tomorrow | Usage lands on the wrong day | Rejected at ingestion (hard limit) |
+| W2 | The agent hangs, and the logout is recorded two days later | One session counts as 48 hours | Accepted and flagged as suspect for review |
+| W3 | A disk image with the agent's identity is copied to a second PC | Both PCs report as one computer | Admin excludes the affected rows; IT re-enrols the agent |
+| W4 | IT staff log in to install software before the bench opens | Setup work counts as lab use | Admin excludes the rows with reason "maintenance" |
+| W5 | A PC is moved to another bench, but the assignment is updated a week late | That week's use counts for the old bench | Fix the assignment history and recompute the bench link; the raw row is untouched |
+| W6 | The booking is cancelled after the user has logged in | The session becomes `unmatched` | Kept as recorded; shown in the data-quality list |
+| W7 | An agent bug sends one session twice with different event ids | Usage doubles | Flagged as probable duplicate (same computer, same login and logout); admin excludes one |
+
+Mechanisms:
+
+- **Hard limits at ingestion (reject with `422`):** logout after login; logout not more than 5 minutes
+  in the future; login not more than 7 days in the past; active time not more than logout minus login.
+- **Automatic flags (accept and mark for review):** a session longer than 24 hours; a probable
+  duplicate. Flagged rows still count until a person decides.
+- **Exclusion instead of deletion:** a lab admin marks a row as excluded, with a reason (maintenance,
+  duplicate, wrong computer, clock error, other) and an optional note. The raw values never change. Who
+  excluded it and when is recorded. Reports skip excluded rows. Exclusion can be undone.
+- **Derived links are recomputable:** bench, booking and user links come from master data, so fixing
+  that data (W5) and recomputing corrects the reports without touching the pushed record.
 
 ## 6. Proposed design: operating calendar
 
@@ -298,12 +433,13 @@ Track A (lab analytics) is strictly ordered. Track B (finance) can run in parall
 | WP | Deliverable | Depends on | Done when |
 | --- | --- | --- | --- |
 | A0 | Decisions: fields the agent may send, retention period, correction path, overlap rule (§5.3), roles for the session list and per-user reports | none | Done (O8–O13), except retention (§11) |
-| A1 | New agent session-log ingestion endpoint and its URL published to the agent (§5.1) | A0 | A completed session posted twice creates one row; computer comes from agent identity; only the O9 fields are accepted |
+| A1 | `POST /agent/session-logs` and its path in `agent/info` (§5.1, §5.5.2), with the hard limits of §5.6 | A0 | A completed session posted twice creates one row; same event id with a different body returns 409; computer comes from agent identity; only the O9 fields are accepted |
+| A1b | `POST /agent/bookings/actions/validate` (§5.5.1) | none | Eligible only for an approved, active booking on the computer's bench inside its window; every failure returns the same answer |
 | A2 | Session links and session kind (§5.2), resolved at ingestion; backfill for existing rows | A1 | Each session has a kind; bench resolves from assignment at login time; unmatched codes are countable |
 | A3 | Operating calendar stage 1: timezone and weekly hours, inherited (§6) | none | Available hours for a room and day come from the calendar, in the lab's timezone |
-| A4 | Fact tables and backfillable job (§7) | A2, A3 | Re-running a day is idempotent; a missed day can be backfilled |
+| A4 | Fact tables and backfillable job (§7), with computer active time and bench occupied time (§5.3) | A2, A3 | Re-running a day is idempotent; a missed day can be backfilled; the §5.3 example gives 3.0 h used and 0.5 h overrun |
 | A5 | Rebuilt reports and new endpoints; legacy endpoints deprecated with a sunset date | A4 | Three-way booked/used split and calendar-based utilisation match hand-checked samples |
-| A6 | Session log list endpoint (§5.4) | A2 | Stable ordering across pages; date range required; role enforced |
+| A6 | Session log list endpoint (§5.4); exclusion with reason and the review list of flagged rows (§5.6) | A2 | Stable ordering across pages; date range required; role enforced; excluded rows leave every report and can be restored |
 | A7 | Operating calendar stage 2: manual closed dates (§6) | A3 | A closed date removes that day's available hours; unconfigured countries are flagged |
 | A8 | Analytics write and read access; per-user reports limited to lab coordinators and admins (O11); storage alert fix | none | Plain users cannot post measurements or read per-user reports; an overage alerts once |
 | A9 | Remove unused observation models and retired endpoints | A5 | No reader or writer remains; OpenAPI regenerated |
@@ -342,16 +478,22 @@ passed, failed or not run, with the exact command.
 | 6 | Finance design | Direction accepted; per-package approval still required (O14) |
 | 7 | Correction path for session logs | None; each record is pushed once and is final (O13) |
 
+### Resolved (2026-11-11)
+
+| # | Question | Answer |
+| --- | --- | --- |
+| 8 | Rely on the planned booking-code route? | No; new agent APIs designed (O15, §5.5) |
+| 9 | Retention | Forever (O16) |
+| 10 | Benches with several computers | Two figures: computer active time and bench occupied time (§5.3) |
+| 11 | Wrong records | Hard limits, automatic flags and audited exclusion; no deletion (§5.6) |
+
 ### Still open
 
-1. **Retention:** how long are session logs kept? They hold remote user and remote IP, which are personal
-   data. The answer belongs in the agent-platform ingestion approval
-   (`docs/agent-platform/backend-api.md:47`).
-2. **Benches with more than one computer:** O10 covers one computer. If one bench booking can be used on
-   two computers at the same time, used time for that booking is machine-hours and can exceed booked
-   time. Confirm whether this can happen.
-3. **Wrong record:** with no correction endpoint (O13), is removing a wrong session log through the Django
-   admin acceptable, and must that removal be audited?
+1. **Limits in §5.6:** confirm or change the values: 5 minutes of clock skew, 7 days maximum age, 24
+   hours before a session is flagged.
+2. **Who may exclude a session log:** lab admins only, or lab coordinators too?
+3. **Retention forever and personal data:** confirm that keeping remote user and remote IP forever is
+   allowed by your company's data policy, and whether a person who leaves can ask for removal.
 
 ## 12. Facts, assumptions and residual risks
 
@@ -361,9 +503,10 @@ passed, failed or not run, with the exact command.
 
 - The agent can include a stable event id in the logout push, so a retry is recognised as the same
   session.
-- The agent's booking check (O12) uses the same booking data the backend holds, through
-  `GET /agent/bookings/code/{booking_code}` or an equivalent route. *Not verified:* that route is
-  designed in `docs/agent-platform/backend-api.md` but not mounted.
+- The agent's booking check (O12) calls `POST /agent/bookings/actions/validate` (§5.5.1), so the agent
+  and the backend judge a booking with the same data.
+- Each agent identity is linked to its computer (`AgentIdentity.equipment`), as the existing agent
+  booking command already relies on.
 - A computer's bench can be resolved from its equipment assignment history at login time.
 - Manual holiday entry will be kept current each year by an admin.
 
@@ -371,6 +514,8 @@ passed, failed or not run, with the exact command.
 
 - Used time is understated by sessions lost to network failure or crash (accepted, O2).
 - Booked sessions without a code are counted as temp logins (accepted, O4).
-- A wrong session log cannot be corrected through the API (O13).
+- A wrong session log cannot be corrected through the API (O13); it can only be excluded (§5.6).
+- Remote user and remote IP are kept forever (O16). If the data policy later requires removal, there is
+  no path for it in this design.
 - Until A7, utilisation is understated in holiday periods.
 - Until A1 ships, all session-based reports have no production data source.
