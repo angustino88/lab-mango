@@ -172,6 +172,10 @@ Owner decisions (2026-11-11), recorded as O20 and O21 in the parent proposal:
 1. A user may not log in before the booking's start time (§6, rule 4).
 2. Validation does not accept `pending` (or `rejected`) bookings; only `approved` (§6, rule 2).
 
-Known drift, not changed here: `activate_bench_bookings`
-(`bench_bookings/application/state_transitions.py:15`) does not filter on approval status, so a pending
-booking can still be activated by computing activity. This contradicts O21 and needs its own change.
+Resolved 2026-11-11: `activate_bench_bookings` (`bench_bookings/application/state_transitions.py`) now
+activates only approved bookings, so activation and agent validation apply the same O21 rule.
+
+Known gap, not changed here: neither `activate_bench_bookings` nor
+`activate_bench_booking_for_computing_activity` has a production caller. The agent activity report
+(`PATCH /agent/equipment/activity`) does not call them, so bookings do not move to `in_progress` from
+agent activity today.

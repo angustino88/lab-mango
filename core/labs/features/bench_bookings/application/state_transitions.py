@@ -6,14 +6,24 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from core.labs.models import BenchBooking, BookingStatus, ComputingActivityStatus, EquipmentAssignment
+from core.labs.models import (
+    BenchBooking,
+    BookingApprovalStatus,
+    BookingStatus,
+    ComputingActivityStatus,
+    EquipmentAssignment,
+)
 from core.labs.models.booking import ensure_booking_status_transition
 
 from .policies import ACTIVATION_WINDOW
 
 
 def activate_bench_bookings(*, bench_id: int, booking_code: str, now: datetime) -> int:
-    """Move one matching reserved booking to in progress after confirmed activity."""
+    """Move one matching approved reserved booking to in progress after confirmed activity.
+
+    Pending and rejected bookings are never activated (owner decision O21), matching the agent
+    login check in ``policies.is_agent_login_eligible``.
+    """
     with transaction.atomic():
         booking = (
             BenchBooking.objects.select_for_update()
@@ -21,6 +31,7 @@ def activate_bench_bookings(*, bench_id: int, booking_code: str, now: datetime) 
                 bench_id=bench_id,
                 booking_code=booking_code,
                 status=BookingStatus.RESERVED,
+                approval_status=BookingApprovalStatus.APPROVED,
                 starts_at__lte=now,
                 ends_at__gt=now,
             )
