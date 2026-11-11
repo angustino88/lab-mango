@@ -5,12 +5,14 @@ from unittest.mock import patch
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from core.labs.models import ComputingActivity
 from core.labs.models.resource.equipment.computing import ComputingEquipment
 from core.labs.models.resource.equipment.reference_data import EquipmentCategory, EquipmentKind
+from core.users.models import URSGroup
 
 _PATCH_APIKEY = "rest_framework_api_key.permissions.HasAPIKey.has_permission"
 
@@ -33,6 +35,9 @@ def admin_client(db):
 @pytest.fixture()
 def plain_client(db):
     user = get_user_model().objects.create_user(username="act_plain", email="plain@example.com")
+    group = Group.objects.create(name="act-plain-users")
+    URSGroup.objects.create(group=group, urs_group_id=310001, labs_role="user")
+    user.groups.add(group)
     client = APIClient()
     client.force_authenticate(user=user)
     return client
@@ -68,6 +73,14 @@ def test_authenticated_member_can_read_but_not_write(plain_client, computing):
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert not ComputingActivity.objects.filter(computing=computing).exists()
+
+
+def test_user_without_labs_role_cannot_read(db, computing):
+    user = get_user_model().objects.create_user(username="act_norole", email="norole@example.com")
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    assert client.get(_url(computing.sku)).status_code == status.HTTP_403_FORBIDDEN
 
 
 def test_coordinator_patch_updates_activity(admin_client, computing):

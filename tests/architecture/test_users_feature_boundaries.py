@@ -18,7 +18,6 @@ EXCLUDED_DIRECTORIES = {"__pycache__", "migrations", "tests"}
 
 # Existing/approved violations (path relative to core/users); remove entries as boundaries are repaired.
 LEGACY_EXTERNAL_FEATURE_IMPORTS = {
-    "admin.py",
     "tasks.py",
     "public.py",
 }

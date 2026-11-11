@@ -35,6 +35,21 @@ from core.labs.features.analytics.api.utilization.views import (
 )
 from core.labs.features.analytics.public import get_finance_summary
 
+
+@pytest.fixture()
+def user(db):
+    """Finance reports are for lab coordinators and admins: the default caller holds ``coord``."""
+    from django.contrib.auth.models import Group
+
+    from core.users.models import URSGroup
+    from tests.factories import UserFactory
+
+    caller = UserFactory(username="finance-coordinator")
+    group = Group.objects.create(name="finance-coordinators")
+    URSGroup.objects.create(group=group, urs_group_id=320001, labs_role="coord")
+    caller.groups.add(group)
+    return caller
+
 BASE = "/api/labs/analytics/finance/"
 PARAMS = {"currency": "EUR", "start_month": "2026-01", "end_month": "2026-03"}
 WINDOW = {"currency": "EUR", "start_month": date(2026, 1, 1), "end_month": date(2026, 3, 1)}
