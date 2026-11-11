@@ -367,13 +367,23 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 | How the frontend reaches a backend | Frontend asks the Router service for the user's prefix, then sends every request to that prefix; Router Nginx strips it and forwards to the backend | H7 target flow; H6 prefix-aware cookies; H4 one trusted hop |
 | Graph permission for linking before first login | Not available | H1 first-login binding stays, safeguards mandatory; owner accepts residual risk |
 | Silent second Entra sign-in | Unknown | H7 target flow avoids it (frontend-held secret, one sign-in) |
+| Router returns a department list for zero or several matches | Yes (2026-11-11) | H7 and M14 Router side agreed; CNS-6 revision still to be written in the Router repository |
 | Multi-department users | They can switch; when several backends match, the user chooses | M14: Router returns a department list; CNS-6 must change |
 | Secrets per backend | Each department runs its own container and environment | M12: keys expected to differ; issuer/audience kept as defense in depth |
 
 ## Open questions for the owner
 
-1. **Frontend nonce (H7).** Can the frontend pass its own `nonce` in the Entra sign-in request? Most MSAL
-   versions accept it in the login request; to be confirmed for the version in use.
-2. **Risk acceptance (H1).** Do you accept first-login binding by username with the listed safeguards?
-3. **Router changes (H7, M14).** Does the Router team agree to return a department list for zero or
-   several matches?
+1. **Frontend nonce (H7).** Ask the frontend developer whether the Entra sign-in call can take a custom
+   `nonce` value. With MSAL for browsers this is normally the `nonce` field of the login request, for example:
+
+   ```ts
+   const secret = crypto.getRandomValues(new Uint8Array(32));          // keep in memory / sessionStorage
+   const digest = await crypto.subtle.digest("SHA-256", secret);
+   const nonce = base64url(new Uint8Array(digest));                    // send to Entra
+   await msal.loginRedirect({ scopes: ["openid", "profile"], nonce });
+   // later: POST <prefix>/auth/aad-login { id_token, nonce_secret: base64url(secret) }
+   ```
+
+   *Not verified* against the MSAL version in use.
+2. **Risk acceptance (H1).** First-login linking by username, with the safeguards, is acceptable — or every
+   first link needs an operator's approval instead?
