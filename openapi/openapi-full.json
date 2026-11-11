@@ -6,6 +6,93 @@
     "description": "LabMango Backend REST API"
   },
   "paths": {
+    "/agent/bookings/actions/check-in": {
+      "post": {
+        "operationId": "agent_check_in_booking",
+        "description": "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers (see the agentSignatureAuth security scheme). Call when the user enters a booking code at login. Eligible only for an approved booking on this computer's bench, from its start until 10 minutes later (reserved) or until it ends (in progress). Repeating a check-in is safe. Every failure returns checked_in: false with no other fields.",
+        "summary": "Check a user in with a booking code; the booking becomes in progress",
+        "tags": [
+          "Agents"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentBookingValidationRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentBookingValidationRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentBookingValidationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "agentSignatureAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentBookingCheckInResponse"
+                }
+              }
+            },
+            "description": "Check-in result"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Body is not a JSON object"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing, invalid, stale or replayed signature, or agent not active"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown field or invalid code"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request rate exceeded"
+          }
+        }
+      }
+    },
     "/agent/bookings/actions/validate": {
       "post": {
         "operationId": "agent_validate_booking",
@@ -35729,6 +35816,48 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/AgentActivityData"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "AgentBookingCheckInData": {
+        "type": "object",
+        "properties": {
+          "checked_in": {
+            "type": "boolean",
+            "description": "True when the booking is now in progress for this login."
+          },
+          "booking_code": {
+            "type": "string",
+            "description": "Present only when checked in."
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Present only when checked in."
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Present only when checked in."
+          },
+          "booked_for": {
+            "type": "string",
+            "nullable": true,
+            "description": "Username the booking is for; present only when checked in."
+          }
+        },
+        "required": [
+          "checked_in"
+        ]
+      },
+      "AgentBookingCheckInResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AgentBookingCheckInData"
           }
         },
         "required": [

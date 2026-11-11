@@ -526,6 +526,36 @@ components:
           $ref: '#/components/schemas/AgentActivityData'
       required:
       - data
+    AgentBookingCheckInData:
+      type: object
+      properties:
+        checked_in:
+          type: boolean
+          description: True when the booking is now in progress for this login.
+        booking_code:
+          type: string
+          description: Present only when checked in.
+        starts_at:
+          type: string
+          format: date-time
+          description: Present only when checked in.
+        ends_at:
+          type: string
+          format: date-time
+          description: Present only when checked in.
+        booked_for:
+          type: string
+          nullable: true
+          description: Username the booking is for; present only when checked in.
+      required:
+      - checked_in
+    AgentBookingCheckInResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentBookingCheckInData'
+      required:
+      - data
     AgentBookingValidationData:
       type: object
       properties:
