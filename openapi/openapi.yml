@@ -8,6 +8,8 @@ paths:
     $ref: ./agents.yml#/paths/~1agent~1bookings~1actions~1check-in
   /agent/bookings/actions/complete:
     $ref: ./agents.yml#/paths/~1agent~1bookings~1actions~1complete
+  /agent/bookings/actions/extend:
+    $ref: ./agents.yml#/paths/~1agent~1bookings~1actions~1extend
   /agent/bookings/actions/validate:
     $ref: ./agents.yml#/paths/~1agent~1bookings~1actions~1validate
   /agent/enrollments:

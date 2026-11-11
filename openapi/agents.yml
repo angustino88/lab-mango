@@ -120,6 +120,74 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Request rate exceeded
+  /agent/bookings/actions/extend:
+    post:
+      operationId: agent_extend_booking
+      description: 'Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and
+        X-Agent-Signature headers (see the agentSignatureAuth security scheme). Only
+        an approved, in-progress booking on this computer''s bench can be extended:
+        at least 10 minutes later than the current end, before the current end has
+        passed, without overlapping the next booking, and at most 4 hours from the
+        start (longer bookings need approval in the web app). Seconds are dropped.
+        Repeating the same end time is safe. An unknown or foreign booking returns
+        extended: false with no other fields.'
+      summary: Extend a running booking at the user's request
+      tags:
+      - Agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentBookingExtendRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AgentBookingExtendRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AgentBookingExtendRequest'
+        required: true
+      security:
+      - agentSignatureAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentBookingExtendResponse'
+          description: Extension result
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Body is not a JSON object
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Missing, invalid, stale or replayed signature, or agent not
+            active
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentBookingExtendError'
+          description: 'bench_not_free: another booking starts at details[0].limit'
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentBookingExtendError'
+          description: 'validation_failed: unknown field or invalid value; extension_not_allowed:
+            details[0].code says why (already_ended, not_later, too_short, needs_approval,
+            bench_not_in_service)'
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Request rate exceeded
   /agent/bookings/actions/validate:
     post:
       operationId: agent_validate_booking
@@ -857,6 +925,106 @@ components:
           $ref: '#/components/schemas/AgentBookingCompleteData'
       required:
       - data
+    AgentBookingExtendData:
+      type: object
+      properties:
+        extended:
+          type: boolean
+          description: True when the booking now ends at ends_at.
+        booking_code:
+          type: string
+          description: Present only when extended.
+        starts_at:
+          type: string
+          format: date-time
+          description: Present only when extended.
+        ends_at:
+          type: string
+          format: date-time
+          description: The new end; present only when extended.
+      required:
+      - extended
+    AgentBookingExtendError:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/AgentBookingExtendErrorBody'
+      required:
+      - error
+    AgentBookingExtendErrorBody:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentBookingExtendErrorDetail'
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    AgentBookingExtendErrorDetail:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Always ends_at.
+        code:
+          allOf:
+          - $ref: '#/components/schemas/CodeEnum'
+          description: 'Why the extension was refused (stable).
+
+
+            * `already_ended` - already_ended
+
+            * `not_later` - not_later
+
+            * `too_short` - too_short
+
+            * `needs_approval` - needs_approval
+
+            * `bench_not_in_service` - bench_not_in_service
+
+            * `bench_not_free` - bench_not_free'
+        message:
+          type: string
+        limit:
+          type: string
+          format: date-time
+          nullable: true
+          description: 'too_short: earliest accepted end; needs_approval: latest accepted
+            end; bench_not_free: when the next booking starts; otherwise null.'
+      required:
+      - code
+      - field
+      - limit
+      - message
+    AgentBookingExtendRequest:
+      type: object
+      properties:
+        booking_code:
+          type: string
+          maxLength: 64
+        ends_at:
+          type: string
+          format: date-time
+          description: The new end time. Seconds are dropped.
+      required:
+      - booking_code
+      - ends_at
+    AgentBookingExtendResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentBookingExtendData'
+      required:
+      - data
     AgentBookingValidationData:
       type: object
       properties:
@@ -1131,6 +1299,26 @@ components:
           $ref: '#/components/schemas/AgentSessionLogData'
       required:
       - data
+    CodeEnum:
+      enum:
+      - already_ended
+      - not_later
+      - too_short
+      - needs_approval
+      - bench_not_in_service
+      - bench_not_free
+      type: string
+      description: '* `already_ended` - already_ended
+
+        * `not_later` - not_later
+
+        * `too_short` - too_short
+
+        * `needs_approval` - needs_approval
+
+        * `bench_not_in_service` - bench_not_in_service
+
+        * `bench_not_free` - bench_not_free'
     ComputingActivityStatusEnum:
       enum:
       - offline
