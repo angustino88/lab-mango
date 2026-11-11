@@ -43,6 +43,8 @@ session links → operating calendar → analytics rebuild, with the finance fix
 | O14 | The finance direction in §8 is accepted (2026-11-10). Each work package still needs its own design note and approval before merge (T2). |
 | O15 | New agent APIs are designed for session-log push and booking validation (§5.5). The planned but unbuilt `GET /agent/bookings/code/{booking_code}` is not relied on. |
 | O16 | Session logs are kept forever. |
+| O17 | Only lab admins may exclude or restore a session log (existing `IsLabAdmin`). |
+| O18 | There is no data policy restricting session-log personal data. Remote user and remote IP are kept forever with no removal path. |
 
 ## 3. Current state: lab analytics
 
@@ -357,6 +359,14 @@ Mechanisms:
 
 - **Hard limits at ingestion (reject with `422`):** logout after login; logout not more than 5 minutes
   in the future; login not more than 7 days in the past; active time not more than logout minus login.
+  The times come from the PC's clock, the check uses the server's clock:
+
+  | Limit | Why | Example |
+  | --- | --- | --- |
+  | Logout ≤ server time + 5 min | The session ended before the push, so a logout in the future means the PC clock is ahead. 5 minutes tolerates normal clock drift. | Server time 11:50, logout 11:52: accepted. Logout 14:00: rejected, PC clock about 2 hours ahead. |
+  | Login ≥ server time − 7 days | A push is sent right after logout, so a login weeks ago means the PC clock is behind or the date is wrong. 7 days still allows a long session. | Login 2019-03-01: rejected. |
+  | Active time ≤ logout − login | The user cannot be active longer than they were logged in. | Logged in 2 h, active 3 h: rejected. |
+  | Session > 24 h | Not a rejection: stored and flagged for review (W2). | Login Monday 09:00, logout Wednesday 10:00: stored, flagged `long_session`. |
 - **Automatic flags (accept and mark for review):** a session longer than 24 hours; a probable
   duplicate. Flagged rows still count until a person decides.
 - **Exclusion instead of deletion:** a lab admin marks a row as excluded, with a reason (maintenance,
@@ -379,7 +389,7 @@ Endpoints involved:
 | --- | --- | --- | --- |
 | `POST /agent/session-logs` | `lab_sessions` | New (§5.5.2) | Agent, after logout |
 | `GET /api/labs/session-logs` | `lab_sessions` | New (§5.4) | Lab coordinator, lab admin |
-| `POST /api/labs/session-logs/{id}/actions/exclude` | `lab_sessions` | New | Lab admin (see §11) |
+| `POST /api/labs/session-logs/{id}/actions/exclude` | `lab_sessions` | New | Lab admin (O17) |
 | `POST /api/labs/session-logs/{id}/actions/restore` | `lab_sessions` | New | Lab admin |
 | `POST /api/labs/session-logs/actions/recompute-links` | `lab_sessions` | New | Lab admin, after master data is fixed |
 | `POST /api/labs/equipment/{id}/assignment` | `equipment` | Exists; always records the current time | Lab coordinator |
@@ -525,13 +535,13 @@ passed, failed or not run, with the exact command.
 | 10 | Benches with several computers | Two figures: computer active time and bench occupied time (§5.3) |
 | 11 | Wrong records | Hard limits, automatic flags and audited exclusion; no deletion (§5.6) |
 
+| 12 | Who may exclude a session log | Lab admins only (O17) |
+| 13 | Data policy for remote user and IP | None applies; kept forever (O18) |
+
 ### Still open
 
-1. **Limits in §5.6:** confirm or change the values: 5 minutes of clock skew, 7 days maximum age, 24
-   hours before a session is flagged.
-2. **Who may exclude a session log:** lab admins only, or lab coordinators too?
-3. **Retention forever and personal data:** confirm that keeping remote user and remote IP forever is
-   allowed by your company's data policy, and whether a person who leaves can ask for removal.
+1. **Limits in §5.6:** confirm or change the values: 5 minutes of clock tolerance, 7 days maximum age,
+   24 hours before a session is flagged.
 
 ## 12. Facts, assumptions and residual risks
 
@@ -553,7 +563,7 @@ passed, failed or not run, with the exact command.
 - Used time is understated by sessions lost to network failure or crash (accepted, O2).
 - Booked sessions without a code are counted as temp logins (accepted, O4).
 - A wrong session log cannot be corrected through the API (O13); it can only be excluded (§5.6).
-- Remote user and remote IP are kept forever (O16). If the data policy later requires removal, there is
+- Remote user and remote IP are kept forever (O16, O18). If a policy is introduced later that requires removal, there is
   no path for it in this design.
 - Until A7, utilisation is understated in holiday periods.
 - Until A1 ships, all session-based reports have no production data source.
