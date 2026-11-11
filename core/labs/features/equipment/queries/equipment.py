@@ -3,7 +3,6 @@
 from typing import Any
 
 from django.contrib.auth import get_user_model
-from django.db import models
 from django.db.models import Case, CharField, Exists, OuterRef, Prefetch, Q, QuerySet, Subquery, Value, When
 from django.db.models.functions import Cast, Now
 
@@ -210,8 +209,8 @@ def list_equipment(
 
 
 def get_equipment(equipment_id: int) -> Equipment:
-    """Return one visible equipment record with the list projection applied."""
-    return list_equipment().get(id=equipment_id)
+    """Return one visible equipment record with the collection projection applied."""
+    return equipment_queryset().get(id=equipment_id)
 
 
 def get_equipment_for_mapping(*, equipment_id: int) -> Equipment | None:
@@ -312,95 +311,63 @@ def active_bench_assignment_mapping_rows(*, bench_ids=(), equipment_ids=(), stat
     )
 
 
-def equipment_reference_data() -> dict[str, QuerySet]:
-    """Return active reference rows used by the generic equipment form."""
-    return {
-        "categories": EquipmentCategory.objects.filter(active=True),
-        "kinds": EquipmentKind.objects.filter(active=True, category__active=True),
-        "types": EquipmentType.objects.filter(active=True, kind__active=True),
-        "manufacturers": EquipmentManufacturer.objects.filter(active=True),
-        "product_models": EquipmentProductModel.objects.filter(active=True, manufacturer__active=True),
-    }
+# Typed foreign keys and the computing profile read by the equipment collection (step 6).
+TYPED_JOINS = ("material", "size", "resolution", "protocol", "customer", "computing_profile__technical_user", "activity")
+TYPED_PREFETCHES = ("interfaces", "characteristics")
 
 
-def category_queryset(model: type[models.Model], fields: tuple[str, ...], *, related: tuple[str, ...] = ()):
-    """Build a category list projection using its declared relation fields.
+def equipment_queryset() -> QuerySet[Equipment]:
+    """List and detail projection of the single equipment collection.
 
-    ``related`` names extra reverse one-to-one relations to join for detail projections.
+    ``list_equipment`` plus the typed references, the computing profile and its activity (one
+    joined query) and two prefetches for interfaces and characteristics.
     """
-    joins = [
-        "kind",
-        "kind__category",
-        "type",
-        "manufacturer",
-        "product_model",
-        "owner",
-        "department",
-        "group",
-        *related,
-    ]
-    prefetches = []
-    for name in fields:
-        field = model._meta.get_field(name)
-        if field.many_to_many:
-            prefetches.append(name)
-        elif field.many_to_one:
-            joins.append(name)
-    return with_upcoming_reservations(
-        with_active_loan(
-            with_active_placement(
-                with_equipment_info(
-                    model.objects.filter(deleted_at__isnull=True)
-                    .select_related(*joins)
-                    .prefetch_related(*prefetches)
-                    .order_by("name", "sku", "pk")
-                )
-            )
-        )
-    )
+    return list_equipment().select_related(*TYPED_JOINS).prefetch_related(*TYPED_PREFETCHES)
 
 
-def category_reference_data(
-    category_key: str,
-    lookups: tuple[tuple[str, type[models.Model], str], ...],
-) -> dict[str, QuerySet]:
-    """Return reference rows needed to create or edit category equipment."""
-    # Match the stable category key; rows not migrated to a key fall back to the name,
-    # mirroring EquipmentCategory.effective_key. Renaming a category must not hide its kinds.
-    by_key = Q(key=category_key) | Q(key__isnull=True, name__iexact=category_key)
-    kinds = EquipmentKind.objects.filter(
-        Q(category__key=category_key) | Q(category__key__isnull=True, category__name__iexact=category_key),
-        active=True,
-        category__active=True,
-    ).select_related("category")
-    active_category = EquipmentCategory.objects.filter(by_key, active=True)
-    types = EquipmentType.objects.filter(
-        active=True,
-        kind__active=True,
-        kind__in=kinds,
+def equipment_form_reference_data(*, category_id: int | None = None) -> dict[str, QuerySet]:
+    """Reference rows for the create and edit form, narrowed to one category when given."""
+    kinds = EquipmentKind.objects.filter(active=True, category__active=True).select_related("category")
+    categories = EquipmentCategory.objects.filter(active=True)
+    manufacturers = EquipmentManufacturer.objects.filter(active=True)
+    product_models = EquipmentProductModel.objects.filter(
+        active=True, manufacturer__active=True, equipment_type__active=True, equipment_type__kind__active=True
     )
-    manufacturers = EquipmentManufacturer.objects.filter(
-        active=True,
-        categories__in=active_category,
-    ).distinct()
-    payload = {
+    if category_id is not None:
+        categories = categories.filter(pk=category_id)
+        kinds = kinds.filter(category_id=category_id)
+        manufacturers = manufacturers.filter(categories__in=categories).distinct()
+        product_models = product_models.filter(
+            manufacturer__categories__in=categories, equipment_type__kind__in=kinds
+        ).distinct()
+    from core.labs.models.resource.equipment import (
+        DisplayResolution,
+        DisplaySize,
+        EquipmentInterface,
+        Material,
+        NetworkingProtocol,
+        SampleCharacteristic,
+        SampleCustomer,
+        TechnicalUser,
+    )
+
+    return {
+        "categories": categories,
         "kinds": kinds,
-        "types": types,
+        "types": EquipmentType.objects.filter(active=True, kind__active=True, kind__in=kinds),
         "manufacturers": manufacturers,
-        "product_models": EquipmentProductModel.objects.filter(
-            active=True,
-            manufacturer__active=True,
-            manufacturer__categories__in=active_category,
-            equipment_type__active=True,
-            equipment_type__kind__active=True,
-            equipment_type__kind__in=kinds,
-            equipment_type__kind__category__in=active_category,
-        ).distinct(),
+        "product_models": product_models,
         "groups": ResourceGroup.objects.filter(active=True),
         "owners": get_user_model().objects.filter(is_active=True).order_by("username", "pk"),
+        "materials": Material.objects.all(),
+        "sizes": DisplaySize.objects.all(),
+        "resolutions": DisplayResolution.objects.all(),
+        "protocols": NetworkingProtocol.objects.all(),
+        "customers": SampleCustomer.objects.all(),
+        "interfaces": EquipmentInterface.objects.all(),
+        "characteristics": SampleCharacteristic.objects.all(),
+        "technical_users": TechnicalUser.objects.all(),
     }
-    payload.update({key: model.objects.all() for key, model, _ in lookups})
-    return payload
 
 
 def list_equipment_options(
@@ -491,92 +458,6 @@ def list_equipment_options(
             | Q(kind__name__icontains=search_val)
             | Q(manufacturer__name__icontains=search_val)
             | Q(product_model__name__icontains=search_val)
-        )
-
-    query_filter = cond
-    if include_ids:
-        query_filter |= Q(pk__in=include_ids, deleted_at__isnull=True)
-
-    return queryset.filter(query_filter).only("id", "sku", "name").order_by("name", "id")
-
-
-def category_options_queryset(
-    model: type[models.Model],
-    fields: tuple[str, ...] = (),
-    *,
-    assignable: bool | None = None,
-    kind_id: int | None = None,
-    kind: str | int | None = None,
-    type_id: int | None = None,
-    equipment_type: int | None = None,
-    manufacturer_id: int | None = None,
-    manufacturer: int | None = None,
-    lifecycle_state: str | None = None,
-    status: str | None = None,
-    assigned: bool | None = None,
-    q: str | None = None,
-    search: str | None = None,
-    include_ids: Any = None,
-    actor: Any = None,
-) -> QuerySet:
-    """Return category equipment options for selectors, projecting only id, sku, and name.
-
-    Reserved for selector data: GET /api/<resource>/options/.
-    Ordered stably by name. Uses Exists(...) for has/has-not filters.
-    """
-    queryset = model.objects.filter(deleted_at__isnull=True)
-
-    active_assignment = EquipmentAssignment.objects.filter(
-        equipment_id=OuterRef("pk"),
-        unassigned_at__isnull=True,
-    )
-
-    kind_val = kind_id if kind_id is not None else kind
-    type_val = type_id if type_id is not None else equipment_type
-    mfr_val = manufacturer_id if manufacturer_id is not None else manufacturer
-    search_val = q or search
-
-    cond = Q(deleted_at__isnull=True)
-
-    if kind_val:
-        kind_filter = (
-            Q(kind_id=kind_val) if isinstance(kind_val, int) or str(kind_val).isdigit() else Q(kind__key=kind_val)
-        )
-        cond &= kind_filter
-
-    if type_val:
-        cond &= Q(type_id=type_val)
-
-    if mfr_val:
-        cond &= Q(manufacturer_id=mfr_val)
-
-    # Has / has-not filter using Exists(...)
-    if assigned is not None:
-        if assigned:
-            cond &= Exists(active_assignment)
-        else:
-            cond &= ~Exists(active_assignment)
-
-    # Assignable: available right now (in service, operational, not on a bench, calibrated).
-    if assignable is not None or status:
-        queryset = with_display_status(queryset)
-    if assignable is not None:
-        available = Q(display_status=EquipmentDisplayStatus.AVAILABLE)
-        cond &= available if assignable else ~available
-
-    if status:
-        cond &= Q(display_status=status)
-
-    if lifecycle_state:
-        cond &= Q(lifecycle_state=lifecycle_state)
-
-    if search_val:
-        cond &= (
-            Q(sku__icontains=search_val)
-            | Q(name__icontains=search_val)
-            | Q(serial_number__icontains=search_val)
-            | Q(log_label__icontains=search_val)
-            | Q(kind__name__icontains=search_val)
         )
 
     query_filter = cond

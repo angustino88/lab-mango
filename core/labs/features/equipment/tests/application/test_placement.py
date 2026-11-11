@@ -21,7 +21,6 @@ from core.labs.features.locations.public import LocationConflict, RoomConflict, 
 from core.labs.models import (
     Bench,
     ComputingActivity,
-    ComputingEquipment,
     EquipmentAssignment,
     EquipmentCategory,
     EquipmentKind,
@@ -29,6 +28,7 @@ from core.labs.models import (
     Room,
     Station,
 )
+from tests.factories import create_computing_equipment
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def kind(db):
 
 @pytest.fixture
 def unit(kind):
-    return ComputingEquipment.objects.create(sku="PL-1", name="Placement unit", kind=kind)
+    return create_computing_equipment(sku="PL-1", name="Placement unit", kind=kind)
 
 
 @pytest.fixture
@@ -195,7 +195,7 @@ def test_remove_placement(unit, room, bench):
 @pytest.mark.django_db
 def test_delete_closes_resting_placement(unit, room):
     _place(unit, room_id=room.pk)
-    delete_equipment(DeleteEquipmentInput(equipment_id=unit.pk, model=ComputingEquipment), actor=None)
+    delete_equipment(DeleteEquipmentInput(equipment_id=unit.pk), actor=None)
     assert not _active(unit).exists()
 
 
@@ -227,7 +227,7 @@ def test_room_and_station_cannot_be_deleted_while_equipment_rests_there(unit, ki
     _place(unit, room_id=other_room.pk)
     with pytest.raises(RoomConflict):
         delete_room(room_id=other_room.pk, actor=None)
-    second = ComputingEquipment.objects.create(sku="PL-2", name="Second", kind=kind)
+    second = create_computing_equipment(sku="PL-2", name="Second", kind=kind)
     _place(second, station_id=station.pk)
     with pytest.raises(LocationConflict):
         delete_station(station_id=station.pk, actor=None)
@@ -240,7 +240,7 @@ def test_room_and_station_cannot_be_deleted_while_equipment_rests_there(unit, ki
 
 @pytest.mark.django_db(transaction=True)
 def test_concurrent_placements_leave_one_active(kind):
-    unit = ComputingEquipment.objects.create(sku="PL-C-1", name="Concurrent", kind=kind)
+    unit = create_computing_equipment(sku="PL-C-1", name="Concurrent", kind=kind)
     rooms = [Room.objects.create(sku=f"PL-C-R{index}", name=f"Room {index}") for index in range(2)]
     barrier = threading.Barrier(2)
     errors = []

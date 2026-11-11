@@ -18,7 +18,7 @@ class LabSessionLog(AgentReportedModel, TimeStampedModel, UserStampedModel):
     login_time = models.DateTimeField(null=True, blank=True)
     logout_time = models.DateTimeField(null=True, blank=True)
     computing_equipment = models.ForeignKey(
-        "labs.ComputingEquipment",
+        "labs.Equipment",
         related_name="session_logs",
         on_delete=models.SET_NULL,
         null=True,

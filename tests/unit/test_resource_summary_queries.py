@@ -44,7 +44,7 @@ def test_computing_category_summary_counts_only_computing_equipment(django_asser
     computing = ComputingEquipmentFactory()
     Equipment.objects.filter(pk=ComputingEquipmentFactory().pk).update(condition="out_of_service")
     with django_assert_num_queries(1):
-        summary = get_equipment_category_status_summary(equipment_model=type(computing))
+        summary = get_equipment_category_status_summary(category_id=computing.kind.category_id)
     counts = {item["status"]["value"]: item["resource_count"] for item in summary["statuses"]}
     assert summary["total_count"] == 2
     assert counts["available"] == 1

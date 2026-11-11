@@ -3,7 +3,6 @@ from django.db import models
 from model_utils.models import TimeStampedModel
 
 from core.common.models import UserStampedModel
-from core.labs.models.resource.equipment.equipment import Equipment
 
 
 class DisplaySize(TimeStampedModel, UserStampedModel):
@@ -52,30 +51,3 @@ class DisplayResolution(TimeStampedModel, UserStampedModel):
                 name="display_resolution_idx",
             ),
         ]
-
-
-class DisplayEquipment(Equipment):
-    EQUIPMENT_CATEGORY_KEY = "display"
-
-    size = models.ForeignKey(
-        "labs.DisplaySize",
-        related_name="%(app_label)s_%(class)s_size",
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-    )
-    resolution = models.ForeignKey(
-        "labs.DisplayResolution",
-        related_name="%(app_label)s_%(class)s_resolution",
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-    )
-    interfaces = models.ManyToManyField(
-        "labs.EquipmentInterface",
-        related_name="%(app_label)s_%(class)s_interfaces",
-        blank=True,
-    )
-
-    class Meta:
-        app_label = "labs"

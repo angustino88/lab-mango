@@ -18,7 +18,7 @@ from core.labs.features.leaderboard.public import get_dashboard_summary
 from core.labs.models import (
     Bench,
     ComputingActivity,
-    ComputingEquipment,
+    ComputingProfile,
     Equipment,
     EquipmentAssignment,
     EquipmentBooking,
@@ -34,6 +34,7 @@ from core.labs.models.resource.license.license import (
     LicenseType,
     LicenseVendor,
 )
+from tests.factories import create_computing_equipment
 
 ROOT = "/api/labs/"
 User = get_user_model()
@@ -63,14 +64,14 @@ def lab_admin(db):
 @pytest.fixture
 def computing_kind(db):
     category, _ = EquipmentCategory.objects.get_or_create(
-        key="computing", defaults={"name": "Computing", "definition": "Computing", "active": True}
+        key="computing", defaults={"name": "Computing", "definition": "Computing", "active": True, "monitored": True}
     )
     return EquipmentKind.objects.create(category=category, name="Workstation")
 
 
 @pytest.fixture
 def computing_unit(computing_kind):
-    return ComputingEquipment.objects.create(sku="S0-COMP-1", name="Step0 PC", kind=computing_kind)
+    return create_computing_equipment(sku="S0-COMP-1", name="Step0 PC", kind=computing_kind)
 
 
 # D1: equipment writes need the coordinator role -------------------------------------------
@@ -83,14 +84,14 @@ def test_plain_user_cannot_read_or_write_equipment(plain_user, computing_kind, c
     pk = computing_unit.pk
     writes = [
         ("post", "equipment", {"kind_id": computing_kind.pk, "sku": "S0-NEW", "name": "x"}),
-        ("post", "equipment/computing", {"kind_id": computing_kind.pk, "sku": "S0-NEW2", "name": "x"}),
-        ("patch", f"equipment/computing/{pk}", {"name": "renamed"}),
-        ("delete", f"equipment/computing/{pk}", None),
-        ("patch", f"equipment/computing/sku/{computing_unit.sku}", {"name": "renamed"}),
+        ("post", "equipment", {"kind_id": computing_kind.pk, "sku": "S0-NEW2", "name": "x"}),
+        ("patch", f"equipment/{pk}", {"name": "renamed"}),
+        ("delete", f"equipment/{pk}", None),
+        ("patch", f"equipment/sku/{computing_unit.sku}", {"name": "renamed"}),
         ("post", f"equipment/{pk}/assignment", {"bench_id": bench.pk}),
         ("delete", f"equipment/{pk}/assignment", None),
         ("post", f"equipment/{pk}/actions/change-condition", {"condition": "out_of_service"}),
-        ("post", f"equipment/computing/{pk}/actions/change-lifecycle", {"lifecycle_state": "retired"}),
+        ("post", f"equipment/{pk}/actions/change-lifecycle", {"lifecycle_state": "retired"}),
     ]
     for method, path, body in writes:
         response = getattr(client, method)(ROOT + path, body, format="json")
@@ -98,7 +99,7 @@ def test_plain_user_cannot_read_or_write_equipment(plain_user, computing_kind, c
     computing_unit.refresh_from_db()
     assert computing_unit.name == "Step0 PC" and computing_unit.deleted_at is None
     # Equipment is visible to coordinators and administrators only (owner decision R4).
-    for path in ("equipment", f"equipment/computing/{pk}", "equipment/options?q=x", "equipment/facets", "equipment-kinds"):
+    for path in ("equipment", f"equipment/{pk}", "equipment/options?q=x", "equipment/facets", "equipment-kinds"):
         assert client.get(ROOT + path).status_code == 403, path
     # Organisation lookups stay readable (R9).
     assert client.get(ROOT + "departments").status_code == 200
@@ -109,11 +110,11 @@ def test_plain_user_cannot_read_or_write_equipment(plain_user, computing_kind, c
 def test_coordinator_can_create_and_delete_equipment(coordinator, computing_kind):
     client = _client(coordinator)
     created = client.post(
-        ROOT + "equipment/computing", {"kind_id": computing_kind.pk, "sku": "S0-C-1", "name": "PC"}, format="json"
+        ROOT + "equipment", {"kind_id": computing_kind.pk, "sku": "S0-C-1", "name": "PC"}, format="json"
     )
     assert created.status_code == 201, created.data
-    pk = ComputingEquipment.objects.get(sku="S0-C-1").pk
-    assert client.delete(ROOT + f"equipment/computing/{pk}").status_code == 204
+    pk = Equipment.objects.get(sku="S0-C-1").pk
+    assert client.delete(ROOT + f"equipment/{pk}").status_code == 204
 
 
 # D1 / OD12: catalog writes need the admin role ---------------------------------------------
@@ -167,9 +168,9 @@ def test_generic_create_builds_category_subtype_with_activity(coordinator, compu
         ROOT + "equipment", {"kind_id": computing_kind.pk, "sku": "S0-GEN-1", "name": "Generic PC"}, format="json"
     )
     assert response.status_code == 201, response.data
-    unit = ComputingEquipment.objects.get(sku="S0-GEN-1")
+    unit = Equipment.objects.get(sku="S0-GEN-1")
     assert ComputingActivity.objects.filter(computing=unit).exists()
-    listed = _client(coordinator).get(ROOT + "equipment/computing", {"search": "S0-GEN-1"})
+    listed = _client(coordinator).get(ROOT + "equipment", {"search": "S0-GEN-1"})
     assert listed.status_code == 200
     assert [row["id"] for row in listed.data["data"]] == [unit.pk]
 
@@ -183,7 +184,7 @@ def test_generic_create_for_runtime_category_keeps_base_row(coordinator):
     )
     assert response.status_code == 201, response.data
     unit = Equipment.objects.get(sku="S0-OPT-1")
-    assert not ComputingEquipment.objects.filter(pk=unit.pk).exists()
+    assert not ComputingProfile.objects.filter(equipment=unit).exists()
 
 
 # D3: create accepts every field its serializers accept -------------------------------------
@@ -215,7 +216,7 @@ def test_generic_create_accepts_declared_fields(coordinator, computing_kind):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("path", ["equipment", "equipment/computing"])
+@pytest.mark.parametrize("path", ["equipment"])
 def test_create_rejects_removed_storage_room_field(coordinator, computing_kind, path):
     """``storage_room`` was removed; where a unit is kept is its placement."""
     room = Room.objects.create(sku=f"S0-ROOM-{path[-3:]}", name="Store")
@@ -245,7 +246,7 @@ def _license():
 
 def _assert_delete_blocked(unit, blocker):
     with pytest.raises(EquipmentInUse) as error:
-        delete_equipment(DeleteEquipmentInput(equipment_id=unit.pk, model=ComputingEquipment), actor=None)
+        delete_equipment(DeleteEquipmentInput(equipment_id=unit.pk), actor=None)
     assert error.value.details == {"blockers": [blocker]}
     unit.refresh_from_db()
     assert unit.deleted_at is None
@@ -288,7 +289,7 @@ def test_delete_allowed_after_dependents_are_released(computing_unit):
         status="cancelled",
         cancellation_reason="no longer needed",
     )
-    delete_equipment(DeleteEquipmentInput(equipment_id=computing_unit.pk, model=ComputingEquipment), actor=None)
+    delete_equipment(DeleteEquipmentInput(equipment_id=computing_unit.pk), actor=None)
     computing_unit.refresh_from_db()
     assert computing_unit.deleted_at is not None
 
@@ -297,7 +298,7 @@ def test_delete_allowed_after_dependents_are_released(computing_unit):
 def test_delete_api_returns_conflict_when_assigned(coordinator, computing_unit):
     bench = Bench.objects.create(name="S0 bench", sku="S0-BENCH-4")
     EquipmentAssignment.objects.create(equipment=computing_unit, bench=bench, assigned_at=timezone.now())
-    response = _client(coordinator).delete(ROOT + f"equipment/computing/{computing_unit.pk}")
+    response = _client(coordinator).delete(ROOT + f"equipment/{computing_unit.pk}")
     assert response.status_code == 409
     assert response.data["error"]["code"] == "equipment_in_use"
 
@@ -307,10 +308,10 @@ def test_delete_api_returns_conflict_when_assigned(coordinator, computing_unit):
 
 @pytest.mark.django_db
 def test_leaderboard_summary_counts_each_unit_once(computing_kind):
-    broken = ComputingEquipment.objects.create(sku="S0-LB-1", name="A", kind=computing_kind)
-    ComputingEquipment.objects.create(sku="S0-LB-2", name="B", kind=computing_kind)
-    ComputingEquipment.objects.create(sku="S0-LB-3", name="C", kind=computing_kind, lifecycle_state="planned")
-    deleted = ComputingEquipment.objects.create(sku="S0-LB-4", name="Gone", kind=computing_kind, lifecycle_state="lost")
+    broken = create_computing_equipment(sku="S0-LB-1", name="A", kind=computing_kind)
+    create_computing_equipment(sku="S0-LB-2", name="B", kind=computing_kind)
+    create_computing_equipment(sku="S0-LB-3", name="C", kind=computing_kind, lifecycle_state="planned")
+    deleted = create_computing_equipment(sku="S0-LB-4", name="Gone", kind=computing_kind, lifecycle_state="lost")
     Equipment.objects.filter(pk=broken.pk).update(condition="out_of_service")
     Equipment.objects.filter(pk=deleted.pk).update(deleted_at=timezone.now())
 

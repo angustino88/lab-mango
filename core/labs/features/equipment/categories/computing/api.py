@@ -12,8 +12,8 @@ from core.labs.features.equipment.categories.computing.application import (
     sync_computing_activity,
 )
 from core.labs.features.equipment.categories.computing.queries import (
-    get_computing_activity_by_sku,
-    get_computing_id_by_sku,
+    get_computing_activity,
+    get_computing_id,
 )
 from core.labs.models import ComputingActivity, ComputingActivityStatus
 from core.users.public import IsLabCoordinator
@@ -56,7 +56,7 @@ class ComputingActivityUpdateSerializer(serializers.Serializer):
 class ComputingActivityAPIView(CommandAPIView):
     """Read or report the live activity state of one computing equipment record."""
 
-    schema_tags = ("Computing Equipment",)
+    schema_tags = ("Equipment",)
     permission_classes = [HasAPIKey | IsLabCoordinator]
     get_contract = OperationContract(
         success=ResponseContract.success("ComputingActivityDetail", ComputingActivitySerializer),
@@ -70,10 +70,10 @@ class ComputingActivityAPIView(CommandAPIView):
         not_found=ResponseContract.not_found(),
     )
 
-    def handle_get(self, request: Request, sku: str, *args, **kwargs) -> Response:
-        return self._execute(lambda: get_computing_activity_by_sku(sku))
+    def handle_get(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        return self._execute(lambda: get_computing_activity(equipment_id))
 
-    def handle_patch(self, request: Request, sku: str, *args, **kwargs) -> Response:
+    def handle_patch(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
         serializer, error = self.validate_request(partial=True)
         if error is not None:
             return error
@@ -82,7 +82,7 @@ class ComputingActivityAPIView(CommandAPIView):
         actor = user if getattr(user, "is_authenticated", False) else None
 
         def run() -> ComputingActivity:
-            command = SyncComputingActivityInput(computing_id=get_computing_id_by_sku(sku), fields=fields)
+            command = SyncComputingActivityInput(computing_id=get_computing_id(equipment_id), fields=fields)
             return sync_computing_activity(command, actor=actor)
 
         return self._execute(run)

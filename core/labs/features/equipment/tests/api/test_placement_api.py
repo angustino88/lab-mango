@@ -5,7 +5,8 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
 from core.labs.features.equipment.tests.roles import grant_labs_role
-from core.labs.models import Bench, ComputingEquipment, EquipmentCategory, EquipmentKind, Room
+from core.labs.models import Bench, EquipmentCategory, EquipmentKind, Room
+from tests.factories import create_computing_equipment
 
 ROOT = "/api/labs/equipment/"
 User = get_user_model()
@@ -17,7 +18,7 @@ def unit(db):
         key="computing", defaults={"name": "Computing", "definition": "Computing", "active": True}
     )
     kind = EquipmentKind.objects.create(category=category, name="API PC")
-    return ComputingEquipment.objects.create(sku="PL-API-1", name="API unit", kind=kind)
+    return create_computing_equipment(sku="PL-API-1", name="API unit", kind=kind)
 
 
 @pytest.fixture
@@ -98,7 +99,7 @@ def test_equipment_responses_include_placement(coordinator_client, unit):
     assert detail["placement"]["room"]["id"] == room.pk
     assert "storage_room" not in detail
 
-    rows = coordinator_client.get(f"{ROOT}computing", {"search": unit.sku}).data["data"]
+    rows = coordinator_client.get(ROOT.rstrip("/"), {"search": unit.sku}).data["data"]
     assert [row["placement"]["room"]["id"] for row in rows] == [room.pk]
 
     coordinator_client.delete(f"{ROOT}{unit.pk}/placement")
@@ -106,7 +107,7 @@ def test_equipment_responses_include_placement(coordinator_client, unit):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("path", ["", "computing"])
+@pytest.mark.parametrize("path", [""])
 def test_list_placement_query_count_does_not_grow_with_rows(coordinator_client, unit, path):
     from django.db import connection
     from django.test.utils import CaptureQueriesContext
@@ -114,7 +115,7 @@ def test_list_placement_query_count_does_not_grow_with_rows(coordinator_client, 
     room = Room.objects.create(sku="PL-API-QR", name="Store Q")
 
     def seed(index):
-        extra = ComputingEquipment.objects.create(sku=f"PL-API-Q{path}{index}", name="Q", kind=unit.kind)
+        extra = create_computing_equipment(sku=f"PL-API-Q{path}{index}", name="Q", kind=unit.kind)
         coordinator_client.put(f"{ROOT}{extra.pk}/placement", {"room_id": room.pk}, format="json")
 
     def count():

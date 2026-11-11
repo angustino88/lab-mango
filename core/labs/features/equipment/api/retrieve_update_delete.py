@@ -39,7 +39,7 @@ class EquipmentRetrieveUpdateDeleteAPIView(ResourceChangeLogMixin, RetrieveUpdat
     def perform_delete(self, instance, request) -> None:
         actor = request.user if request.user.is_authenticated else None
         delete_equipment(
-            DeleteEquipmentInput(equipment_id=instance.pk, model=self.model),
+            DeleteEquipmentInput(equipment_id=instance.pk),
             actor=actor,
         )
 
@@ -48,7 +48,6 @@ class EquipmentRetrieveUpdateDeleteAPIView(ResourceChangeLogMixin, RetrieveUpdat
         return update_equipment(
             UpdateEquipmentInput(
                 equipment_id=instance.pk,
-                model=self.model,
                 fields=tuple(serializer.validated_data.items()),
             ),
             actor=actor,

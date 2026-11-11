@@ -65,12 +65,12 @@ GONE_LIFECYCLE_STATES = frozenset(
 class Equipment(ResourceModel):
     """Shared record of every piece of equipment.
 
-    Category-specific data lives in the subclasses (ComputingEquipment ...).
-    Technical specifications of the model (channels, max voltage ...) live in
+    One table for every category (redesign step 6); the category comes only from
+    ``kind.category``. Typed fields used by some categories are plain nullable columns
+    here (display size, networking protocol, ...); computing columns live in
+    ``ComputingProfile``. Technical specifications of the model (max voltage ...) live in
     ``ProductModelSpecification``; this table keeps only data that differs per unit.
     """
-
-    EQUIPMENT_CATEGORY_KEY = "equipment"
 
     kind = models.ForeignKey(
         "labs.EquipmentKind",
@@ -151,6 +151,30 @@ class Equipment(ResourceModel):
         default=False,
         help_text="History and due dates are kept as ResourceServiceRecord (kind=calibration).",
     )
+    # Typed fields shared by categories (owner decision A, 2026-11-10). A category uses the ones it needs.
+    mac_address = models.CharField(max_length=17, blank=True, default="", validators=[MAC_ADDRESS_VALIDATOR])
+    channels = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Output channels (power).")
+    power_rating = models.PositiveIntegerField(null=True, blank=True, help_text="Output capacity in watts (power).")
+    dimensions = models.JSONField(
+        default=dict, blank=True, help_text="Keys length_mm, width_mm, height_mm (mechanical, furniture)."
+    )
+    material = models.ForeignKey(
+        "labs.Material", related_name="equipment", on_delete=models.PROTECT, null=True, blank=True
+    )
+    size = models.ForeignKey(
+        "labs.DisplaySize", related_name="equipment", on_delete=models.PROTECT, null=True, blank=True
+    )
+    resolution = models.ForeignKey(
+        "labs.DisplayResolution", related_name="equipment", on_delete=models.PROTECT, null=True, blank=True
+    )
+    protocol = models.ForeignKey(
+        "labs.NetworkingProtocol", related_name="equipment", on_delete=models.PROTECT, null=True, blank=True
+    )
+    customer = models.ForeignKey(
+        "labs.SampleCustomer", related_name="equipment", on_delete=models.PROTECT, null=True, blank=True
+    )
+    interfaces = models.ManyToManyField("labs.EquipmentInterface", related_name="equipment", blank=True)
+    characteristics = models.ManyToManyField("labs.SampleCharacteristic", related_name="equipment", blank=True)
 
     def apply_product_defaults(self) -> None:
         """Fill empty fields from the selected product model (only when still empty)."""
@@ -171,10 +195,6 @@ class Equipment(ResourceModel):
         errors = {}
         if self.type_id and self.kind_id and self.type.kind_id != self.kind_id:
             errors["type"] = "The equipment type must belong to the selected kind."
-        category_key = getattr(self, "EQUIPMENT_CATEGORY_KEY", None)
-        if category_key and category_key != "equipment" and self.kind_id:
-            if self.kind.category.effective_key != category_key:
-                errors["kind"] = "The equipment kind must belong to the category."
         if self.product_model_id:
             model = self.product_model
             if self.manufacturer_id and model.manufacturer_id != self.manufacturer_id:
@@ -211,9 +231,25 @@ class Equipment(ResourceModel):
         due = self.next_calibration_due_at
         return bool(self.calibration_required and (due is None or due < timezone.now()))
 
+    def hard_delete(self, using: str | None = None, keep_parents: bool = False) -> tuple[int, dict[str, int]]:
+        """Permanently delete the row; the computing profile cascades, so remove its .rdp file first."""
+        from .computing import ComputingProfile
+
+        profile = ComputingProfile.objects.filter(equipment_id=self.pk).first() if self.pk else None
+        if profile is not None and profile.rdp_file and profile.rdp_file.name:
+            try:
+                profile.rdp_file.delete(save=False)
+            except Exception:  # noqa: BLE001 - storage cleanup is best effort.
+                pass
+        return super().hard_delete(using=using, keep_parents=keep_parents)
+
+    @property
+    def category_key(self) -> str:
+        return self.kind.category.effective_key if self.kind_id else "equipment"
+
     @property
     def image_upload_folder(self) -> str:
-        return self.EQUIPMENT_CATEGORY_KEY
+        return self.category_key
 
     class Meta:
         app_label = "labs"

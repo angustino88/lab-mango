@@ -39,6 +39,14 @@ class EquipmentCategory(ProtectedReferenceMixin, EquipmentBase):
         ),
     )
     definition = models.TextField()
+    # Capabilities checked by the equipment commands (redesign step 6).
+    bookable = models.BooleanField(default=True, help_text="Units can be lent and reserved.")
+    placeable_on_bench = models.BooleanField(default=True, help_text="Units can be assigned to a bench.")
+    calibratable = models.BooleanField(default=True, help_text="Units may require calibration.")
+    monitored = models.BooleanField(
+        default=False,
+        help_text="Units carry computing columns and may run the monitoring agent (ComputingProfile).",
+    )
 
     class Meta:
         app_label = "labs"

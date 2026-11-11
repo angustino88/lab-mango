@@ -168,10 +168,9 @@ class DashboardEquipmentActivitySerializer(serializers.Serializer):
 
 
 def _equipment_activity_summary(equipment: Any) -> dict[str, Any] | None:
-    computing = getattr(equipment, "computingequipment", None)
-    if computing is None:
+    if getattr(equipment, "computing_profile", None) is None:
         return None
-    activity = getattr(computing, "activity", None)
+    activity = getattr(equipment, "activity", None)
     heartbeat = activity.last_agent_report_at if activity else None
     stale = None if heartbeat is None else heartbeat < timezone.now() - timedelta(minutes=10)
     return {
@@ -310,11 +309,11 @@ class DashboardBenchSerializer(serializers.Serializer):
                     continue
 
                 # Computing
-                computing = getattr(equipment, "computingequipment", None)
+                computing = getattr(equipment, "computing_profile", None)
                 if computing_data is None and computing is not None:
-                    activity = getattr(computing, "activity", None)
+                    activity = getattr(equipment, "activity", None)
                     computing_data = {
-                        "id": computing.id,
+                        "id": equipment.id,
                         "sku": equipment.sku or "",
                         "name": equipment.name or "",
                         "activity_status": activity.status if activity else "offline",
@@ -346,12 +345,11 @@ class DashboardBenchSerializer(serializers.Serializer):
                         )
 
                 # Samples
-                is_sample = hasattr(equipment, "sampleequipment")
-                if not is_sample:
-                    kind = getattr(equipment, "kind", None)
-                    category = getattr(kind, "category", None) if kind else None
-                    if category and category.name.lower() in ("sample", "samples"):
-                        is_sample = True
+                kind = getattr(equipment, "kind", None)
+                category = getattr(kind, "category", None) if kind else None
+                is_sample = bool(
+                    category and (category.effective_key == "sample" or category.name.lower() in ("sample", "samples"))
+                )
 
                 if is_sample:
                     samples_data.append({

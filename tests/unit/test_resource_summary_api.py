@@ -108,43 +108,18 @@ def test_combined_dashboard_route_removed():
         resolve("/api/labs/dashboard/resource-summary")
 
 
-@pytest.mark.parametrize(
-    "category",
-    (
-        "accessory",
-        "computing",
-        "debugging",
-        "display",
-        "furniture",
-        "instrument",
-        "laboratory",
-        "mechanical",
-        "networking",
-        "other",
-        "power",
-        "sample",
-    ),
-)
-def test_equipment_status_summary_is_scoped_to_registered_category(category):
-    from core.labs.features.equipment.api.registry import EQUIPMENT_REGISTRY
-
-    match = resolve(f"/api/labs/equipment/{category}/summary")
-    assert match.url_name == f"{category}-summary"
-    assert match.func.view_class.category_key == category
-    assert match.func.view_class.category_model is EQUIPMENT_REGISTRY[category].model
-
-
-def test_computing_category_summary_uses_its_own_inventory(summary_client, monkeypatch):
+def test_equipment_status_summary_takes_an_optional_category(summary_client, monkeypatch):
+    """Per-category summary routes are gone (step 6); ``?category=<id>`` narrows the one summary."""
     from core.labs.features.equipment.api import views
 
     query = Mock(return_value={"total_count": 2, "unknown_status_count": 1, "statuses": []})
     monkeypatch.setattr(views, "get_equipment_category_status_summary", query)
-    response = summary_client.get("/api/labs/equipment/computing/summary")
+    response = summary_client.get("/api/labs/equipment/status-summary", {"category": 7})
     assert response.status_code == 200
     assert response.json()["data"]["total_count"] == 2
-    query.assert_called_once_with(
-        equipment_model=resolve("/api/labs/equipment/computing/summary").func.view_class.category_model
-    )
+    query.assert_called_once_with(category_id=7)
+    with pytest.raises(Resolver404):
+        resolve("/api/labs/equipment/computing/summary")
 
 
 def test_status_counts_include_unknown_and_zero_buckets():

@@ -74,7 +74,7 @@ from .resource.equipment import (
     SpecificationDefinition,
 )
 from .resource.equipment.assignment import EquipmentAssignment, EquipmentPlacement
-from .resource.equipment.computing import ComputingEquipment, TechnicalUser
+from .resource.equipment.computing import ComputingProfile, TechnicalUser
 from .resource.license.agreement import LicenseAgreement
 from .resource.license.assignment import LicenseAssignment
 from .resource.license.license import License, LicenseStatus, LicenseStatusRecord
@@ -119,7 +119,7 @@ __all__ = [
     "City",
     "ComputingActivity",
     "ComputingActivityStatus",
-    "ComputingEquipment",
+    "ComputingProfile",
     "Country",
     "Department",
     "Equipment",

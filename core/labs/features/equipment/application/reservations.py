@@ -290,6 +290,8 @@ def reservation_problems(
 ) -> list[str]:
     """Why an item cannot be reserved for the window (empty when it can). Caller holds the lock."""
     reasons = []
+    if not equipment.kind.category.bookable:
+        reasons.append("category is not bookable")
     if equipment.lifecycle_state != EquipmentLifecycleState.IN_SERVICE:
         reasons.append(f"lifecycle state is {equipment.lifecycle_state}")
     placement = lock_active_placement(equipment)

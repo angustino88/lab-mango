@@ -25,7 +25,7 @@
 
 ## 3. Public interface and dependencies
 
-**Verified.** The feature exports equipment command inputs/commands and query functions from `public.py`. Its API registers list/detail, assignment, status, reference-data, and category routes through `urls.py` and `api/urls.py`.
+**Verified.** The feature exports equipment command inputs/commands and query functions from `public.py`. Its API registers one equipment collection (`api/collection.py`: list, create, detail, by-key, filters, facets, reference data, state actions) plus assignment, placement, loan, reservation and status routes through `urls.py` and `api/urls.py`. Per-category route sets were removed in redesign step 6.
 
 **Proposed:**
 
@@ -100,9 +100,9 @@ Verification and remaining gate/review limitations are recorded in the task hand
 
 ### Computing activity
 
-**Verified.** Category-specific behaviour lives in `categories/<category>/` with the same layering as the feature: `application.py` (commands), `queries.py` (reads), `api.py` (HTTP adapter and serializers). Only categories with logic beyond the generic category builder get code there; the rest keep one-line placeholder holders, and `CATEGORIES_WITH_CODE` in the boundary test lists the exceptions. Generic category views stay in `api/categories.py` and take category extras through config such as `detail_relations`, never a per-category branch.
+**Verified.** Since redesign step 6 every category shares one table and one route set. Category rules are data: typed fields per category in `application/_category.py`, capability flags on `EquipmentCategory`. Only computing has its own code, in `categories/computing/` (`application.py`, `queries.py`, `api.py`, `tasks.py`), for the live activity; the computing profile is written by `application/computing_profile.py`.
 
-`categories/computing/application.py` owns writes to `ComputingActivity`: `ensure_computing_activity` (idempotent get-or-create as `offline`, called by `create_equipment` for computing) and `sync_computing_activity` (row-locked, atomic; rejects unknown or server-managed fields and invalid statuses; maintains `offline_at`, `inactive_at`, and `inactive_reminder_count` on transitions). `GET`/`PATCH /api/labs/equipment/computing/sku/<sku>/activity` expose it; reads are open to authenticated users, writes require an API key or a lab coordinator. `GET` on a computer that has not reported returns an unsaved `offline` default and writes nothing. The computing detail response includes a read-only nullable `activity` object; list responses do not.
+`categories/computing/application.py` owns writes to `ComputingActivity`: `ensure_computing_activity` (idempotent get-or-create as `offline`, called by `create_equipment` and `update_equipment` when a unit gets a computing profile) and `sync_computing_activity` (row-locked, atomic; rejects unknown or server-managed fields and invalid statuses; maintains `offline_at`, `inactive_at`, and `inactive_reminder_count` on transitions). `GET`/`PATCH /api/labs/equipment/<id>/activity` expose it (404 for a unit without a computing profile); reads are open to authenticated users, writes require an API key or a lab coordinator. `GET` on a computer that has not reported returns an unsaved `offline` default and writes nothing. The equipment detail response includes a read-only nullable `activity` object; list responses do not.
 
 **Status-change notification.** A `post_save` signal on `ComputingActivity` (`core/labs/signals.py`) publishes only real status changes, and only after the transaction commits, so a rolled-back write never notifies. The payload carries `computer_id`, `status`, `previous_status`, and `bench_id` (null when unassigned). It is published to `ws:computing:<id>` (WebSocket `ws/computing/{computing_id}`) always, and to the bench (`ws/monitoring/{bench_id}`) and dashboard channels when the computer has an active bench assignment. The WebSocket handler authenticates the JWT but does not check per-object access, like the other Labs handlers. Delivery is best-effort Redis pub/sub with no replay.
 

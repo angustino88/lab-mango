@@ -4,27 +4,31 @@ from collections.abc import Sequence
 from datetime import datetime, timedelta
 from typing import Any
 
-from core.labs.models import ComputingActivity, ComputingActivityStatus
-from core.labs.models.resource.equipment.computing import ComputingEquipment
+from core.labs.models import ComputingActivity, ComputingActivityStatus, Equipment
 
 
-def get_computing_activity_by_sku(sku: str) -> ComputingActivity:
-    """Return the activity of an active computing equipment record, looked up by SKU.
+def computing_equipment():
+    """Active units that carry a computing profile (category ``monitored``)."""
+    return Equipment.objects.filter(deleted_at__isnull=True, computing_profile__isnull=False)
+
+
+def get_computing_activity(equipment_id: int) -> ComputingActivity:
+    """Return the activity of an active computing equipment record.
 
     A computer that has not reported yet has no row; an unsaved offline default is returned so
-    readers get a stable shape without a write on GET. Raises ``ComputingEquipment.DoesNotExist``
+    readers get a stable shape without a write on GET. Raises ``Equipment.DoesNotExist``
     for a missing or soft-deleted computer.
     """
-    computing = ComputingEquipment.objects.select_related("activity").get(sku=sku, deleted_at__isnull=True)
+    computing = computing_equipment().select_related("activity").get(pk=equipment_id)
     try:
         return computing.activity
     except ComputingActivity.DoesNotExist:
         return ComputingActivity(computing=computing)
 
 
-def get_computing_id_by_sku(sku: str) -> int:
-    """Return the primary key of an active computing equipment record, looked up by SKU."""
-    return ComputingEquipment.objects.values_list("pk", flat=True).get(sku=sku, deleted_at__isnull=True)
+def get_computing_id(equipment_id: int) -> int:
+    """Return the primary key of an active computing equipment record (404 for other units)."""
+    return computing_equipment().values_list("pk", flat=True).get(pk=equipment_id)
 
 
 def computing_activity_projection(
@@ -32,10 +36,10 @@ def computing_activity_projection(
 ) -> dict[int, dict[str, Any]]:
     """Batch safe live-state facts, without fetching remote identity or telemetry.
 
-    Only actual computing subtypes appear in the result. Missing activity is an
+    Only units with a computing profile appear in the result. Missing activity is an
     offline read default, never persisted. Freshness does not change stored status.
     """
-    rows = ComputingEquipment.objects.filter(pk__in=equipment_ids, deleted_at__isnull=True).values(
+    rows = computing_equipment().filter(pk__in=equipment_ids).values(
         "pk",
         "activity__status",
         "activity__last_agent_report_at",
@@ -53,4 +57,9 @@ def computing_activity_projection(
     return result
 
 
-__all__ = ("computing_activity_projection", "get_computing_activity_by_sku", "get_computing_id_by_sku")
+__all__ = (
+    "computing_activity_projection",
+    "computing_equipment",
+    "get_computing_activity",
+    "get_computing_id",
+)

@@ -16,7 +16,7 @@ from core.labs.features.base.serializers import (
     to_choice_reference,
     to_money,
 )
-from core.labs.features.equipment.api.capabilities import EQUIPMENT_CAPABILITIES
+from core.labs.features.equipment.api.capabilities import EQUIPMENT_CAPABILITIES, category_capabilities
 from core.labs.models import (
     Equipment,
     EquipmentBooking,
@@ -498,11 +498,12 @@ class EquipmentCategorySerializer(AppModelSerializer):
 
     class Meta:
         model = EquipmentCategory
-        fields = ("name", "definition", "capabilities")
+        fields = ("id", "key", "name", "definition", "capabilities")
 
-    @extend_schema_field({"type": "array", "items": {"type": "string"}})
+    @extend_schema_field({"type": "array", "items": {"type": "string", "enum": list(EQUIPMENT_CAPABILITIES)}})
     def get_capabilities(self, obj):
-        return list(EQUIPMENT_CAPABILITIES)
+        """What units of the category can do, from the category's flags (redesign step 6)."""
+        return category_capabilities(obj)
 
 
 class EquipmentKindSerializer(AppModelSerializer):

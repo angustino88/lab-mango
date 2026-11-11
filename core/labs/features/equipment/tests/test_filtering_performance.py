@@ -30,7 +30,7 @@ from core.labs.models import (
     EquipmentType,
 )
 from core.labs.models.resource.base.resource import Department, ResourceGroup
-from core.labs.models.resource.equipment import DisplayEquipment, EquipmentInterface
+from core.labs.models.resource.equipment import EquipmentInterface
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 pytestmark = pytest.mark.django_db
@@ -49,7 +49,7 @@ def cardinality_inventory():
     EquipmentManufacturer.objects.filter(pk=maker.pk).update(active=False)
     department = Department.objects.create(name="Synthetic department", active=False)
     group = ResourceGroup.objects.create(name="Synthetic group", department=department, active=False)
-    display = DisplayEquipment.objects.create(
+    display = Equipment.objects.create(
         sku="SYN-DISPLAY",
         name="Synthetic match",
         kind=kind,
@@ -107,7 +107,7 @@ def test_all_dimension_paths_are_single_valued():
 def test_facet_membership_isolation(cardinality_inventory, dimension, membership, django_assert_num_queries):
     display, null, deleted = cardinality_inventory
     if membership == "m2m":
-        population = DisplayEquipment.objects.filter(interfaces__name__icontains="HDMI")
+        population = Equipment.objects.filter(interfaces__name__icontains="HDMI")
         assert population.count() == 3
         expected_ids = [display.pk]
     elif membership == "reverse":
@@ -149,7 +149,7 @@ def test_m2m_filter_and_separate_reverse_filter_calls(cardinality_inventory):
     spec = FilterSpec(
         [Filter("interface", serializers.CharField(), "interfaces__name__icontains", "text", distinct=True)]
     )
-    assert list(spec.apply(DisplayEquipment.objects.all(), {"interface": "HDMI"}).values_list("pk", flat=True)) == [
+    assert list(spec.apply(Equipment.objects.all(), {"interface": "HDMI"}).values_list("pk", flat=True)) == [
         display.pk
     ]
     separate = FilterSpec(
@@ -268,7 +268,7 @@ def measure_synthetic_explain_capture(cardinality_inventory):
         "shared_absent": spec.apply(Equipment.objects.filter(deleted_at__isnull=True).order_by("pk"), {}),
         **{f"facet_{key}": equipment_facet_rows(population=base, dimension=key) for key in EQUIPMENT_DIMENSIONS},
         "facet_m2m": equipment_facet_rows(
-            population=DisplayEquipment.objects.filter(interfaces__name__icontains="HDMI"), dimension="kind"
+            population=Equipment.objects.filter(interfaces__name__icontains="HDMI"), dimension="kind"
         ),
     }
     evidence: dict[str, Any] = {

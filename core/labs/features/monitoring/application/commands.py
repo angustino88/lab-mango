@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from core.labs.features.monitoring.exceptions import ComputerNotFound, MonitoringEventConflict
 from core.labs.models import MonitoringEvent, MonitoringEventAction
-from core.labs.models.resource.equipment.computing import ComputingEquipment
+from core.labs.models.resource.equipment.equipment import Equipment
 
 
 @dataclass(frozen=True)
@@ -37,13 +37,14 @@ def create_monitoring_event(
     actor=None,
 ) -> MonitoringEvent:
     """Record an immutable monitoring event received from an agent."""
+    computers = Equipment.objects.filter(computing_profile__isnull=False)
     computer = None
     if command.computer_id is not None:
-        computer = ComputingEquipment.objects.filter(pk=command.computer_id).first()
+        computer = computers.filter(pk=command.computer_id).first()
     elif command.computer_sku:
         computer = (
-            ComputingEquipment.objects.filter(sku=command.computer_sku).first()
-            or ComputingEquipment.objects.filter(name=command.computer_sku).first()
+            computers.filter(sku=command.computer_sku).first()
+            or computers.filter(name=command.computer_sku).first()
         )
 
     if not computer:

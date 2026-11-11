@@ -31,7 +31,7 @@ The analytics feature provides operational business intelligence, usage metrics,
 | `LaboratoryVisitEvent` | Yes | Access visit events |
 | `BenchBooking` | No (Dependency) | Owned by `core.labs.features.bench_bookings` |
 | `Bench`, `BenchGroup` | No (Dependency) | Owned by `core.labs.features.benches` |
-| `Equipment`, `ComputingEquipment` | No (Dependency) | Owned by `core.labs.features.equipment` |
+| `Equipment`, `ComputingProfile` | No (Dependency) | Owned by `core.labs.features.equipment` |
 | `LabSessionLog` | No (Dependency) | Owned by `core.labs.models.session` |
 
 ---

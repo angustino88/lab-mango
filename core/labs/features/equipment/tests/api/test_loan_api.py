@@ -8,7 +8,8 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.labs.features.equipment.tests.roles import grant_labs_role
-from core.labs.models import ComputingEquipment, EquipmentCategory, EquipmentKind, EquipmentLoan, Room
+from core.labs.models import EquipmentCategory, EquipmentKind, EquipmentLoan, Room
+from tests.factories import create_computing_equipment
 
 ROOT = "/api/labs/equipment"
 User = get_user_model()
@@ -19,7 +20,7 @@ def unit(db):
     category, _ = EquipmentCategory.objects.get_or_create(
         key="computing", defaults={"name": "Computing", "definition": "Computing", "active": True}
     )
-    return ComputingEquipment.objects.create(
+    return create_computing_equipment(
         sku="LN-API-1", name="Loan API unit", kind=EquipmentKind.objects.create(category=category, name="LN API")
     )
 

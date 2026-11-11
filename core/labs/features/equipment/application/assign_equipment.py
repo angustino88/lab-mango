@@ -30,6 +30,8 @@ def assign_equipment(command: AssignEquipmentInput, *, actor):
         return current
     if equipment.lifecycle_state != EquipmentLifecycleState.IN_SERVICE:
         raise InvalidEquipmentStatus("Only equipment in service can be placed on a bench.")
+    if not equipment.kind.category.placeable_on_bench:
+        raise InvalidEquipmentStatus("Units of this category are not placed on a bench.")
     ensure_not_on_loan(equipment)
     if current:
         raise EquipmentAlreadyAssigned()

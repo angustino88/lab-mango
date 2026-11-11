@@ -34,7 +34,6 @@ from core.labs.features.equipment.exceptions import (
 from core.labs.features.equipment.public import list_equipment
 from core.labs.models import (
     Bench,
-    ComputingEquipment,
     Equipment,
     EquipmentBooking,
     EquipmentCategory,
@@ -44,6 +43,7 @@ from core.labs.models import (
     EquipmentPlacement,
     Room,
 )
+from tests.factories import create_computing_equipment
 
 User = get_user_model()
 
@@ -58,7 +58,7 @@ def kind(db):
 
 @pytest.fixture
 def unit(kind):
-    return ComputingEquipment.objects.create(sku="LN-1", name="Loan unit", kind=kind)
+    return create_computing_equipment(sku="LN-1", name="Loan unit", kind=kind)
 
 
 @pytest.fixture
@@ -173,7 +173,7 @@ def test_lifecycle_rules_while_on_loan(unit, borrower):
 def test_delete_is_refused_while_on_loan(unit, borrower):
     _hand_over(unit, borrower)
     with pytest.raises(EquipmentInUse) as error:
-        delete_equipment(DeleteEquipmentInput(equipment_id=unit.pk, model=ComputingEquipment), actor=None)
+        delete_equipment(DeleteEquipmentInput(equipment_id=unit.pk), actor=None)
     assert error.value.details == {"blockers": ["loan"]}
 
 
@@ -247,7 +247,7 @@ def test_loan_constraints(unit, borrower):
 
 @pytest.mark.django_db(transaction=True)
 def test_concurrent_hand_overs_open_one_loan(kind):
-    unit = ComputingEquipment.objects.create(sku="LN-C1", name="Concurrent", kind=kind)
+    unit = create_computing_equipment(sku="LN-C1", name="Concurrent", kind=kind)
     borrowers = [User.objects.create_user(username=f"ln-c{index}") for index in range(2)]
     barrier = threading.Barrier(2)
     outcomes = []

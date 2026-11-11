@@ -8,7 +8,8 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.labs.features.equipment.tests.roles import grant_labs_role
-from core.labs.models import ComputingEquipment, EquipmentCategory, EquipmentKind, Room
+from core.labs.models import EquipmentCategory, EquipmentKind, Room
+from tests.factories import create_computing_equipment
 
 ROOT = "/api/labs/"
 User = get_user_model()
@@ -21,7 +22,7 @@ def items(db):
     )
     kind = EquipmentKind.objects.create(category=category, name="LB API")
     return [
-        ComputingEquipment.objects.create(sku=f"LB-API-{index}", name=f"Scope {index}", kind=kind)
+        create_computing_equipment(sku=f"LB-API-{index}", name=f"Scope {index}", kind=kind)
         for index in range(3)
     ]
 
@@ -127,7 +128,6 @@ def test_engineers_cannot_read_equipment_but_can_read_organisation(items):
     for path in (
         "equipment",
         f"equipment/{items[0].pk}",
-        "equipment/computing",
         "equipment/options?q=Scope",
         "equipment-loans",
         "equipment-kinds",

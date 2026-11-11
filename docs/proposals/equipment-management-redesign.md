@@ -350,7 +350,7 @@ Each step is its own T2 change with its own plan and approval. Order matters bec
 | 3 | `EquipmentLoan` (**implemented**, see the step 3 plan below) | none (legacy `borrowed` rows have no borrower FK; see table) | additive |
 | 4 | Equipment bookings feature | none | feature routes removable |
 | 5 | Bench state reduction (**implemented** 2026-11-10: four values with check `bench_lifecycle_valid`; new benches default to `in_service`; bench bookings refused unless `in_service`) | map `reserved`, `active` to `in_service`; `maintenance` to `out_of_service`; `available` to `in_service` | value map is reversible only for unchanged rows |
-| 6 | Single-table equipment and `ComputingProfile` | copy subclass columns into profile, product-model specifications, or `attributes`; largest step, plan separately | separate plan |
+| 6 | Single-table equipment and `ComputingProfile` (**implemented** 2026-11-11, see the step 6 plan below) | none: migrations reset again (ADR 006), development database recreated | revert the commit and reset again |
 
 Backfill from the latest legacy status:
 
@@ -409,7 +409,9 @@ Decisions that refine the step 1 row above:
 | API | `GET /equipment/{id}/loan`; `POST /equipment/{id}/actions/hand-over`, `.../actions/return`, `.../actions/extend-loan` (coordinator). Overdue reminders belong to step 4 (bookings). |
 
 
-### Step 6 implementation plan (draft, decisions pending; 2026-11-10)
+### Step 6 implementation plan (decided 2026-11-10)
+
+**Implemented 2026-11-11.** Details as built: `core/labs/features/equipment/docs/spec.md` sections 2.2 and 4; migration reset in ADR 006. Deviation from the order row below: the parts were built and committed together, because each intermediate state needed the migration reset anyway.
 
 **Evidence (2026-11-10):** 12 subclasses of `Equipment` by multi-table inheritance. Laboratory, accessory,
 debugging and other add no columns. Typed columns: computing (hostname, MAC, IP, OS, disks, system info,
@@ -423,10 +425,10 @@ MAC), power (interface, power rating), mechanical and furniture (dimensions, mat
 |---|---|
 | Table | One `Equipment` table; the category comes only from `kind.category`, so a category created at runtime works with no migration or route (AC7). |
 | Computing | `ComputingProfile`, one-to-one with `Equipment` and sharing its primary key, holds the computing columns. `ComputingActivity`, `LabSessionLog`, `MonitoringEvent` and `AgentIdentity` point at `Equipment` (same ids, so data keeps its links). RDP generation moves from `save()` into the computing command. |
-| Other typed fields | Decision A below. |
+| Other typed fields | **Decision A (owner, 2026-11-10): shared columns.** Fields used by several categories become plain nullable columns on `Equipment`: `mac_address`, `power_rating`, `channels`, `dimensions`, `material`. Display size and resolution, networking protocol, and sample customer stay real foreign keys on `Equipment`; `interfaces` and `characteristics` are many-to-many on `Equipment` (power's single `interface` merges into `interfaces`). A category uses only the fields it needs; `kind.category` says which ones the API shows. |
 | Capabilities | `EquipmentCategory` gains `bookable`, `placeable_on_bench`, `calibratable`, `monitored`; commands check them (bench placement, reservation, loan); `api/capabilities.py` reads them. |
-| API | Decision B below. |
-| Data | Decision C below. |
+| API | **Decision B (owner, 2026-11-10): remove the category route sets.** The 12 generated `/equipment/<category>/...` route sets are deleted. One `/api/labs/equipment` collection keeps list, create, detail, update, delete, filters, facets, by-SKU and by-UID lookups, options, summary and state actions, with a `category` filter; the detail returns the category's fields and, for computing, a `computing` object. Computing keeps its activity route as `/equipment/{id}/activity`. This is a breaking API change approved by the owner. |
+| Data | **Decision C (owner, 2026-11-10): reset migrations again** as in ADR 005; the development database is dropped and recreated. Custom operations (extensions, seed priorities, support-desk sequence and trigger) are carried over. |
 | Order | 1. profile and capability flags; 2. move computing references; 3. typed fields per decision A; 4. drop subclasses; 5. routes per decision B; 6. tests, OpenAPI, docs. Each part is committed separately with the full suite green. |
 
 ## Observability

@@ -15,10 +15,11 @@ from core.labs.models import (
     BookingStatus,
     ComputingActivity,
     ComputingActivityStatus,
+    Equipment,
     LicenseAssignment,
 )
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
-from core.labs.models.resource.equipment.sample import SampleCustomer, SampleEquipment
+from core.labs.models.resource.equipment.sample import SampleCustomer
 from core.labs.models.resource.license.license import (
     License,
     LicenseCategory,
@@ -192,7 +193,7 @@ class TestDashboardOverviewAPI:
         sample_cat = EquipmentCategoryFactory(name="Sample")
         sample_kind = EquipmentKindFactory(category=sample_cat, name="Sample DUT")
         customer = SampleCustomer.objects.create(name=f"Customer-{uuid.uuid4().hex[:6]}")
-        sample = SampleEquipment.objects.create(
+        sample = Equipment.objects.create(
             name="Sample Radar v2",
             sku=f"SMP-{uuid.uuid4().hex[:6]}",
             customer=customer,

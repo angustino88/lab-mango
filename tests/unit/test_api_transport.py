@@ -1,4 +1,3 @@
-from importlib import import_module
 
 from django.test import RequestFactory
 from drf_api_contracts import OperationContract, ResponseContract
@@ -212,17 +211,12 @@ def test_public_error_codes_are_normalized_to_snake_case():
     assert default_code_value("InvalidStateTransition") == "invalid_state_transition"
 
 
-def test_generated_category_create_contract_is_created_and_uses_detail_shape():
-    from core.labs.features.equipment.api.category_definitions import CATEGORY_DEFINITIONS
-    from core.labs.features.equipment.api.registry import EQUIPMENT_REGISTRY
+def test_equipment_create_contract_is_created_and_uses_detail_shape():
+    from core.labs.features.equipment.api.collection import EquipmentCollectionAPIView, EquipmentDetailSerializer
 
-    module = import_module("core.labs.features.equipment.api.urls")
-    prefix = EQUIPMENT_REGISTRY["computing"].model.__name__.removesuffix("Equipment")
-    view = getattr(module, f"ListCreate{prefix}EquipmentAPIView")
-
+    view = EquipmentCollectionAPIView
     assert view.post_contract.responses.success.status_code == 201
-    assert view.post_contract.responses.success.payload_serializer is view.create_response_serializer_class
-    assert CATEGORY_DEFINITIONS["computing"].model is view.model
+    assert view.post_contract.responses.success.payload_serializer is EquipmentDetailSerializer
 
 
 def test_strict_request_validation_rejects_unknown_fields_and_coercible_types() -> None:

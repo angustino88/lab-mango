@@ -17,13 +17,13 @@ from core.labs.features.equipment.application import (
 )
 from core.labs.features.equipment.application.reminders import collect_overdue_reminders, deliver_overdue_reminders
 from core.labs.models import (
-    ComputingEquipment,
     EquipmentCategory,
     EquipmentKind,
     EquipmentLoan,
     EquipmentLoanBatch,
     EquipmentLoanReminder,
 )
+from tests.factories import create_computing_equipment
 
 User = get_user_model()
 
@@ -38,7 +38,7 @@ def kind(db):
 
 def _lend(kind, count=1, prefix="RM", **borrower):
     items = [
-        ComputingEquipment.objects.create(sku=f"{prefix}-{index}", name=f"Scope {index}", kind=kind)
+        create_computing_equipment(sku=f"{prefix}-{index}", name=f"Scope {index}", kind=kind)
         for index in range(count)
     ]
     borrower.setdefault("borrower_name", "Anna Tran")

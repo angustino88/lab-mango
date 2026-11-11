@@ -1,11 +1,8 @@
-from django.urls import include, path
+from django.urls import path
 
-from core.labs.features.equipment.api.category_definitions import CATEGORY_DEFINITIONS
 from core.labs.features.equipment.categories.computing.api import ComputingActivityAPIView
 
-from . import views
-from .categories import build_category_urlpatterns
-from .facets import EquipmentFacetsAPIView
+from . import collection, views
 from .reference_data import urlpatterns as reference_urlpatterns
 
 urlpatterns = [
@@ -15,12 +12,24 @@ urlpatterns = [
         views.ComputingActivitySummaryAPIView.as_view(),
         name="computing-activity-summary",
     ),
-    path("equipment", views.EquipmentListCreateAPIView.as_view(), name="equipment-list-create"),
-    path("equipment/filters", views.EquipmentFiltersAPIView.as_view(), name="equipment-filters"),
-    path("equipment/facets", EquipmentFacetsAPIView.as_view(), name="equipment-facets"),
+    # One collection for every category (redesign step 6, decision B).
+    path("equipment", collection.EquipmentCollectionAPIView.as_view(), name="equipment-list-create"),
+    path("equipment/filters", collection.EquipmentFiltersAPIView.as_view(), name="equipment-filters"),
+    path("equipment/facets", collection.EquipmentCollectionFacetsAPIView.as_view(), name="equipment-facets"),
     path("equipment/options", views.EquipmentOptionsAPIView.as_view(), name="equipment-options"),
-    path("equipment/reference-data", views.EquipmentReferenceDataAPIView.as_view(), name="equipment-reference-data"),
-    path("equipment/<int:equipment_id>", views.EquipmentRetrieveAPIView.as_view(), name="equipment-retrieve"),
+    path(
+        "equipment/reference-data",
+        collection.EquipmentReferenceDataAPIView.as_view(),
+        name="equipment-reference-data",
+    ),
+    path("equipment/sku/<str:sku>", collection.EquipmentBySKUAPIView.as_view(), name="equipment-by-sku"),
+    path("equipment/uid/<uuid:uid>", collection.EquipmentByUIDAPIView.as_view(), name="equipment-by-uid"),
+    path("equipment/<int:pk>", collection.EquipmentDetailAPIView.as_view(), name="equipment-retrieve"),
+    path(
+        "equipment/<int:equipment_id>/activity",
+        ComputingActivityAPIView.as_view(),
+        name="equipment-activity",
+    ),
     path(
         "equipment/<int:equipment_id>/actions/assign",
         views.DeprecatedEquipmentAssignmentActionAPIView.as_view(),
@@ -90,18 +99,13 @@ urlpatterns = [
     ),
     path(
         "equipment/<int:equipment_id>/actions/change-condition",
-        views.EquipmentChangeConditionAPIView.as_view(),
+        collection.EquipmentChangeConditionAPIView.as_view(),
         name="equipment-action-change-condition",
     ),
     path(
         "equipment/<int:equipment_id>/actions/change-lifecycle",
-        views.EquipmentChangeLifecycleAPIView.as_view(),
+        collection.EquipmentChangeLifecycleAPIView.as_view(),
         name="equipment-action-change-lifecycle",
-    ),
-    path(
-        "equipment/computing/sku/<str:sku>/activity",
-        ComputingActivityAPIView.as_view(),
-        name="computing-activity",
     ),
 
     # Lookup catalogs and options (ADR 002)
@@ -134,11 +138,4 @@ urlpatterns = [
     path("resource-groups/<int:group_id>", views.ResourceGroupDetailAPIView.as_view(), name="resource-group-detail"),
 ]
 
-urlpatterns += [
-    path(
-        "equipment/",
-        include(build_category_urlpatterns(definition, module=__name__)),
-    )
-    for definition in CATEGORY_DEFINITIONS.values()
-]
 urlpatterns += reference_urlpatterns

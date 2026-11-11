@@ -97,18 +97,45 @@ The full design and its rationale are in `docs/proposals/equipment-management-re
   - `lifecycle_state` (CharField(32), indexed, default `in_service`; `planned` or `in_service` at creation).
   - `condition` (CharField(32), indexed, default `operational`).
   - `licenses` (ManyToManyField `License`, through `LicenseAssignment`).
+  - Typed fields shared by categories (step 6, decision A), all optional: `mac_address`, `channels`,
+    `power_rating`, `dimensions` (JSON), `material`, `size`, `resolution`, `protocol`, `customer` (FKs,
+    PROTECT), `interfaces`, `characteristics` (many-to-many).
 - **DB Invariants:**
   - Soft-deletion via `deleted_at`. Active SKUs must be unique.
   - Deletion of an active equipment kind or type referenced by an active equipment instance is protected (`on_delete=PROTECT`).
   - `equipment_lifecycle_valid`, `equipment_condition_valid`: values must be in their enumerations.
   - `equipment_condition_only_in_service`: `condition = 'operational'` unless `lifecycle_state = 'in_service'`.
 
-### 2.2 Category Polymorphic Specializations (1:1 with `Equipment`)
-- `ComputingEquipment`: `ip_address`, `os_name`, `disk_usage`, `system_info`, `hostname`, `mac_address`, `monitored_devices`, `rdp_file`, `technical_user`.
-- `DisplayEquipment`: `resolution`, `size`, `interface`.
-- `FurnitureEquipment`: `material`.
-- `InstrumentEquipment`: `interface`.
-- `MechanicalEquipment`, `NetworkingEquipment`, `PowerEquipment`, `SampleEquipment`, `AccessoryEquipment`, `DebuggingEquipment`, `LaboratoryEquipment`, `OtherEquipment`.
+### 2.2 One table for every category (redesign step 6)
+- There are no category subclasses. The category of a unit is `kind.category`; a category created at runtime
+  works with no model, migration or route.
+- Which typed fields a category uses is `CATEGORY_TYPED_FIELDS` in `application/_category.py`:
+
+  | Category | Typed fields |
+  |---|---|
+  | computing | `mac_address` (+ `ComputingProfile`) |
+  | display | `size`, `resolution`, `interfaces` |
+  | furniture, mechanical | `dimensions`, `material` |
+  | instrument | `interfaces` |
+  | networking | `protocol`, `mac_address` |
+  | power | `channels`, `interfaces`, `power_rating` |
+  | sample | `customer`, `interfaces`, `characteristics` |
+  | any other | none |
+
+  Create and update refuse a typed field the category does not use (422). Moving a unit to another category is
+  refused while it still holds a value the new category does not use.
+- `EquipmentCategory` flags, checked by the commands: `bookable` (lend and reserve), `placeable_on_bench`
+  (bench assignment), `calibratable` (`calibration_required` allowed), `monitored` (computing profile, agent,
+  activity). Seeded categories: all flags on except `monitored`, which is on for Computing only.
+- `ComputingProfile` (`core.labs.models`): one-to-one with `Equipment`, primary key = equipment id,
+  `related_name="computing_profile"`. Columns `hostname`, `ip_address`, `os_name`, `disk_usage`, `system_info`,
+  `monitored_devices`, `rdp_file`, `technical_user`. A unit has a profile exactly when its category is
+  `monitored`: `create_equipment` creates it with the activity record; `update_equipment` creates it when a unit
+  moves into a monitored category and refuses to move a unit with a profile out of one. The .rdp file is written
+  by `application/computing_profile.sync_rdp_file` on create and when the SKU, hostname or technical user
+  changes (no longer in `save()`).
+- `ComputingActivity.computing`, `LabSessionLog.computing_equipment`, `MonitoringEvent.computer` and
+  `AgentIdentity.equipment` point at `Equipment`; "is computing" means `computing_profile__isnull=False`.
 
 ### 2.3 `core.labs.models.EquipmentAssignment` (placement) and the `EquipmentPlacement` proxy
 One table records every placement. `EquipmentAssignment.objects` returns bench placements only (the historic meaning of "assignment"); `EquipmentAssignment.all_placements` and the proxy `EquipmentPlacement` return every placement.
@@ -153,27 +180,38 @@ Append-only history of lifecycle and condition changes, written only by `change_
 
 ## 4. API Endpoints & Transport Contracts
 
+### One collection (step 6, decision B; breaking change approved by the owner)
+- The 12 per-category route sets (`/equipment/<category>`, `/equipment/<category>/{pk}`, `.../sku/...`,
+  `.../uid/...`, `.../filters`, `.../facets`, `.../options`, `.../summary`, `.../reference-data`,
+  `.../actions/...`) are removed. Use `/equipment` with `category=<id>` (list, facets), `category_id` (options)
+  or `category` (reference data, status summary).
+- List and detail return every typed field; fields the category does not use are `null` or empty. `computing`
+  is the `ComputingProfile` (`null` for other units); the detail adds `activity` and `details`.
+- Write payloads: typed foreign keys as `<name>_id`, many-to-many as `<name>_ids`; `computing` is a nested
+  object (`hostname` on create; `monitored_devices`, `technical_user_id` on update).
+
 ### Computing field ownership
-- `ip_address`, `os_name`, `system_info`, and `disk_usage` are agent-owned snapshot fields. `hostname` is agent-reported inventory data. They are returned where configured for reading, but category create/update requests reject them as unknown or read-only.
-- The authenticated agent snapshot endpoint described in `docs/agent-platform/backend-api.md` is not implemented yet. Until it is available, these values cannot be changed through the category API.
-- `rdp_file` is server-generated and is also rejected on category create/update. `mac_address` remains user-editable on create; `monitored_devices` and `technical_user` remain editable on update. Agent writes to `technical_user` are prohibited by the agent contract.
-- The computing agent snapshot endpoint is not implemented. Agent-owned fields remain readable through category detail responses, but this API currently offers no agent ingestion path.
-- `hostname` is excluded from computing list responses until the agent snapshot endpoint exists; detail retains its read-only projection.
+- `ip_address`, `os_name`, `system_info`, and `disk_usage` are agent-owned snapshot fields and are never written
+  through the API. `hostname` is entered at registration (it names the RDP host).
+- The authenticated agent snapshot endpoint described in `docs/agent-platform/backend-api.md` is not implemented yet.
+- `rdp_file` is server-generated. `mac_address` is a shared column; `computing.monitored_devices` and
+  `computing.technical_user_id` are editable on update. Agent writes to `technical_user` are prohibited by the
+  agent contract.
 - Lifecycle state and condition are read-only in update and change only through `actions/change-lifecycle` and `actions/change-condition`; history is `EquipmentEvent`. `display_status` is computed, never written.
 - Audit result/remarks are managed by the resource-audit API, not category payloads. Authenticated equipment creation currently still creates a server-generated `NOT_ASSESSED` audit record; this behavior is retained.
 - Equipment `details`, shared-resource `remark`, `EquipmentEvent.details`, and per-audit `remarks` remain separate stored concepts. Do not consolidate them without an approved data and API compatibility plan.
 
 | Method & Path | View Class | Request / Contract | Purpose |
 |---|---|---|---|
-| `GET /api/labs/equipment` | `EquipmentListCreateAPIView` | FilterSet query params | Paginated equipment inventory list. |
-| `POST /api/labs/equipment` | `EquipmentListCreateAPIView` | `EquipmentCreateSerializer` | Create new equipment instance. |
-| `GET /api/labs/equipment/{id}` | `EquipmentRetrieveAPIView` | Path `{id}` | Retrieve equipment details with assignments. |
-| `PATCH /api/labs/equipment/{id}` | `EquipmentRetrieveAPIView` | `EquipmentUpdateSerializer` | Update equipment metadata. |
-| `DELETE /api/labs/equipment/{id}` | `EquipmentRetrieveAPIView` | Path `{id}` | Soft delete equipment record. |
+| `GET /api/labs/equipment` | `EquipmentCollectionAPIView` | Filters incl. `category`, typed `*_id` filters, `q` | Paginated inventory of every category. |
+| `POST /api/labs/equipment` | `EquipmentCollectionAPIView` | `EquipmentCreateSerializer` | Create a unit of any category. |
+| `GET` / `PATCH` / `PUT` / `DELETE /api/labs/equipment/{pk}` | `EquipmentDetailAPIView` | `EquipmentUpdateSerializer` | Read, change or soft-delete one unit. |
+| `GET` / `PATCH /api/labs/equipment/sku/{sku}`, `/api/labs/equipment/uid/{uid}` | `EquipmentBySKUAPIView`, `EquipmentByUIDAPIView` | `EquipmentUpdateSerializer` | Same, by business key. |
+| `GET /api/labs/equipment/facets` | `EquipmentCollectionFacetsAPIView` | `dimension` + list filters | Counts per dimension. |
 | `GET /api/labs/equipment/options` | `EquipmentOptionsAPIView` | Options query params | Dropdown selector `{id, sku, name}`. |
 | `GET /api/labs/equipment/filters` | `EquipmentFiltersAPIView` | None | Available filter metadata schema. |
-| `GET /api/labs/equipment/reference-data` | `EquipmentReferenceDataAPIView` | None | Category kinds, types, manufacturers. |
-| `GET /api/labs/equipment/status-summary` | `EquipmentStatusSummaryAPIView` | Query filters | Aggregated count per operational status. |
+| `GET /api/labs/equipment/reference-data` | `EquipmentReferenceDataAPIView` | Optional `category` | Form catalogs and typed lookups, narrowed to one category. |
+| `GET /api/labs/equipment/status-summary` | `EquipmentStatusSummaryAPIView` | Optional `category` | Count per display status. |
 | `GET /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | Path `{equipment_id}` | Active bench assignment detail. |
 | `POST /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | `EquipmentAssignmentSerializer` | Assign equipment to bench. |
 | `DELETE /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | Path `{equipment_id}` | Unassign equipment from current bench. |
@@ -197,4 +235,4 @@ Append-only history of lifecycle and condition changes, written only by `change_
 | `POST /api/labs/equipment/{id}/actions/change-condition` | `EquipmentChangeConditionAPIView` | `EquipmentChangeConditionSerializer` | Set operational / in maintenance / out of service (in service only). |
 | `POST /api/labs/equipment/{id}/actions/change-lifecycle` | `EquipmentChangeLifecycleAPIView` | `EquipmentChangeLifecycleSerializer` | Move along the lifecycle transition table. |
 | `GET /api/labs/equipment/computing/activity-summary` | `ComputingActivitySummaryAPIView` | None | Summary of monitored computing units. |
-| `GET /api/labs/equipment/computing/sku/{sku}/activity` | `ComputingActivityAPIView` | Path `{sku}` | Telemetry logs for computing unit. |
+| `GET` / `PATCH /api/labs/equipment/{equipment_id}/activity` | `ComputingActivityAPIView` | `ComputingActivityUpdateSerializer` | Live activity of a computing unit (404 for other units). |

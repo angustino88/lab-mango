@@ -231,6 +231,8 @@ def unavailable_reasons(
     An item can leave a room, a station, a noted place, or no recorded place; never a bench.
     """
     reasons = []
+    if not equipment.kind.category.bookable:
+        reasons.append("category is not bookable")
     if equipment.lifecycle_state != EquipmentLifecycleState.IN_SERVICE:
         reasons.append(f"lifecycle state is {equipment.lifecycle_state}")
     if equipment.condition != EquipmentCondition.OPERATIONAL:
@@ -257,7 +259,10 @@ def unavailable_reasons(
 def _lock_equipment(ids: Sequence[int], *, field: str = "equipment_id") -> dict[int, Equipment]:
     rows = {
         row.pk: row
-        for row in Equipment.objects.select_for_update().filter(pk__in=ids, deleted_at__isnull=True).order_by("pk")
+        for row in Equipment.objects.select_for_update(of=("self",))
+        .select_related("kind__category")
+        .filter(pk__in=ids, deleted_at__isnull=True)
+        .order_by("pk")
     }
     missing = [equipment_id for equipment_id in ids if equipment_id not in rows]
     if missing:

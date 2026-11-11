@@ -8,7 +8,8 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.labs.features.equipment.tests.roles import grant_labs_role
-from core.labs.models import ComputingEquipment, EquipmentCategory, EquipmentKind
+from core.labs.models import EquipmentCategory, EquipmentKind
+from tests.factories import create_computing_equipment
 
 ROOT = "/api/labs/"
 User = get_user_model()
@@ -21,7 +22,7 @@ def items(db):
     )
     kind = EquipmentKind.objects.create(category=category, name="RS API")
     return [
-        ComputingEquipment.objects.create(sku=f"RS-API-{index}", name=f"Probe {index}", kind=kind)
+        create_computing_equipment(sku=f"RS-API-{index}", name=f"Probe {index}", kind=kind)
         for index in range(3)
     ]
 

@@ -51,25 +51,7 @@ def get_resource_audit(audit_id: int) -> ResourceAudit | None:
 
 
 def _downcast_equipment(equipment: models.Model | None) -> models.Model | None:
-    if not equipment:
-        return equipment
-    for rel_name in (
-        "computingequipment",
-        "displayequipment",
-        "instrumentequipment",
-        "powerequipment",
-        "mechanicalequipment",
-        "furnitureequipment",
-        "laboratoryequipment",
-        "networkingequipment",
-        "otherequipment",
-        "sampleequipment",
-        "debuggingequipment",
-        "accessoryequipment",
-    ):
-        sub = getattr(equipment, rel_name, None)
-        if sub is not None:
-            return sub
+    """Equipment is one table since redesign step 6; there is no subtype to resolve."""
     return equipment
 
 
@@ -168,18 +150,12 @@ def list_audits_for_resource(
     result: str | None = None,
 ) -> QuerySet[ResourceAudit]:
     """List historical audits for a resource resolved by ID, SKU, or UID."""
-    from core.labs.models.resource.equipment.equipment import Equipment
-
     resource = resolve_resource(
         identifier,
         identifier_type=identifier_type,
         resource_type=resource_type,
     )
     content_types = [ContentType.objects.get_for_model(resource, for_concrete_model=False)]
-    if hasattr(resource, "equipment_ptr") or hasattr(resource, "computingequipment"):
-        base_eq_ct = ContentType.objects.get_for_model(Equipment)
-        if base_eq_ct not in content_types:
-            content_types.append(base_eq_ct)
 
     qs = ResourceAudit.objects.filter(
         resource_content_type__in=content_types,

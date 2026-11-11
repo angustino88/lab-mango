@@ -25,7 +25,6 @@ from core.labs.features.equipment.public import (
 )
 from core.labs.models import (
     Bench,
-    ComputingEquipment,
     Equipment,
     EquipmentBooking,
     EquipmentCategory,
@@ -34,6 +33,7 @@ from core.labs.models import (
     EquipmentPlacement,
     Room,
 )
+from tests.factories import create_computing_equipment
 
 LIFECYCLES = ("planned", "in_service", "transferred_out", "retired", "lost")
 ALLOWED = {
@@ -58,7 +58,7 @@ def kind(db):
 
 @pytest.fixture
 def unit(kind):
-    return ComputingEquipment.objects.create(sku="ST-1", name="State unit", kind=kind)
+    return create_computing_equipment(sku="ST-1", name="State unit", kind=kind)
 
 
 def _lifecycle(unit, state, **extra):
@@ -154,7 +154,7 @@ def test_condition_only_in_service_is_a_database_constraint(unit):
 @pytest.mark.parametrize("source", LIFECYCLES)
 @pytest.mark.parametrize("target", LIFECYCLES)
 def test_lifecycle_transition_table(kind, source, target):
-    unit = ComputingEquipment.objects.create(
+    unit = create_computing_equipment(
         sku=f"ST-T-{source}-{target}", name="t", kind=kind, lifecycle_state=source
     )
     extra = {"receiving_organisation": "Partner lab"} if target == "transferred_out" else {}
@@ -218,13 +218,13 @@ def test_gone_states_refuse_bench_close_resting_placement_and_cancel_reserved_bo
 
 @pytest.mark.django_db
 def test_placement_gating_by_lifecycle(kind):
-    planned = ComputingEquipment.objects.create(sku="ST-P1", name="p", kind=kind, lifecycle_state="planned")
+    planned = create_computing_equipment(sku="ST-P1", name="p", kind=kind, lifecycle_state="planned")
     bench = Bench.objects.create(sku="ST-B3", name="Bench")
     room = Room.objects.create(sku="ST-R2", name="Store")
     with pytest.raises(InvalidEquipmentStatus):
         place_equipment(PlaceEquipmentInput(equipment_id=planned.pk, bench_id=bench.pk), actor=None)
     place_equipment(PlaceEquipmentInput(equipment_id=planned.pk, room_id=room.pk), actor=None)  # awaiting service
-    lost = ComputingEquipment.objects.create(sku="ST-P2", name="l", kind=kind, lifecycle_state="lost")
+    lost = create_computing_equipment(sku="ST-P2", name="l", kind=kind, lifecycle_state="lost")
     with pytest.raises(InvalidEquipmentStatus):
         place_equipment(PlaceEquipmentInput(equipment_id=lost.pk, location_note="Found in a drawer?"), actor=None)
 
@@ -245,14 +245,14 @@ def test_display_status_priority(unit, kind):
     assert _display(unit) == "maintenance"
     _condition(unit, "out_of_service")
     assert _display(unit) == "broken"  # broken outranks maintenance and the bench
-    resting = ComputingEquipment.objects.create(sku="ST-D2", name="r", kind=kind)
+    resting = create_computing_equipment(sku="ST-D2", name="r", kind=kind)
     place_equipment(PlaceEquipmentInput(equipment_id=resting.pk, location_note="Cabinet 3"), actor=None)
     assert _display(resting) == "available"  # resting somewhere is not "in use"
 
 
 @pytest.mark.django_db
 def test_status_summary_counts_display_status(unit, kind):
-    ComputingEquipment.objects.create(sku="ST-S2", name="s", kind=kind, lifecycle_state="planned")
+    create_computing_equipment(sku="ST-S2", name="s", kind=kind, lifecycle_state="planned")
     _condition(unit, "in_maintenance")
     counts = {row["status"]["value"]: row["resource_count"] for row in get_equipment_status_summary()["statuses"]}
     assert counts["maintenance"] == 1 and counts["on_order"] == 1 and counts["available"] == 0

@@ -27,9 +27,10 @@ from core.agents.contracts import CreateEnrollmentGrantInput
 from core.agents.exceptions import AgentEnrollmentConflict
 from core.agents.models import AgentIdentity, EnrollmentGrant
 from core.agents.tests.signing import b64url, signed_headers
-from core.labs.models import ComputingEquipment, EquipmentCategory, EquipmentKind
+from core.labs.models import EquipmentCategory, EquipmentKind
 from core.routing.models import RoutingEntity
 from core.users.models import URSGroup
+from tests.factories import create_computing_equipment
 
 _URS_IDS = itertools.count(82000)
 
@@ -49,7 +50,7 @@ def equipment(db):
         key="computing", defaults={"name": "Computing", "definition": "Computing", "active": True}
     )
     kind = EquipmentKind.objects.create(category=category, name=f"Computer-{uuid.uuid4()}")
-    return ComputingEquipment.objects.create(sku=f"LC-{uuid.uuid4()}", kind=kind, name="Lifecycle host")
+    return create_computing_equipment(sku=f"LC-{uuid.uuid4()}", kind=kind, name="Lifecycle host")
 
 
 def _enroll(grant: str, agent_uid, private_key: Ed25519PrivateKey) -> AgentIdentity:
@@ -119,7 +120,7 @@ def test_key_of_another_identity_is_still_rejected(coordinator, equipment):
     _enroll(issued.grant, issued.agent_uid, key)
 
     other_kind = EquipmentKind.objects.create(category=equipment.kind.category, name=f"Other-{uuid.uuid4()}")
-    other = ComputingEquipment.objects.create(sku=f"LC-{uuid.uuid4()}", kind=other_kind, name="Other host")
+    other = create_computing_equipment(sku=f"LC-{uuid.uuid4()}", kind=other_kind, name="Other host")
     second = create_enrollment_grant(CreateEnrollmentGrantInput(other.uid, 10), actor=coordinator)
     with pytest.raises(AgentEnrollmentConflict):
         _enroll(second.grant, second.agent_uid, key)

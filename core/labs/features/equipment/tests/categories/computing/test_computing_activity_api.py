@@ -9,8 +9,8 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from core.labs.models import ComputingActivity
-from core.labs.models.resource.equipment.computing import ComputingEquipment
 from core.labs.models.resource.equipment.reference_data import EquipmentCategory, EquipmentKind
+from tests.factories import create_computing_equipment
 
 _PATCH_APIKEY = "rest_framework_api_key.permissions.HasAPIKey.has_permission"
 
@@ -19,7 +19,7 @@ _PATCH_APIKEY = "rest_framework_api_key.permissions.HasAPIKey.has_permission"
 def computing(db):
     category = EquipmentCategory.objects.create(name="Computing", definition="Computing equipment")
     kind = EquipmentKind.objects.create(category=category, name="Computer")
-    return ComputingEquipment.objects.create(sku="COMP-API-1", name="Host API", kind=kind)
+    return create_computing_equipment(sku="COMP-API-1", name="Host API", kind=kind)
 
 
 @pytest.fixture()
@@ -38,33 +38,33 @@ def plain_client(db):
     return client
 
 
-def _url(sku):
-    return f"/api/labs/equipment/computing/sku/{sku}/activity"
+def _url(equipment_id):
+    return f"/api/labs/equipment/{equipment_id}/activity"
 
 
 def test_unauthenticated_requests_are_rejected(computing):
     client = APIClient()
 
-    assert client.get(_url(computing.sku)).status_code == status.HTTP_401_UNAUTHORIZED
-    assert client.patch(_url(computing.sku), {"status": "free"}, format="json").status_code == 401
+    assert client.get(_url(computing.pk)).status_code == status.HTTP_401_UNAUTHORIZED
+    assert client.patch(_url(computing.pk), {"status": "free"}, format="json").status_code == 401
 
 
 def test_get_returns_offline_default_without_creating_a_row(admin_client, computing):
-    response = admin_client.get(_url(computing.sku))
+    response = admin_client.get(_url(computing.pk))
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["data"]["status"] == "offline"
     assert not ComputingActivity.objects.filter(computing=computing).exists()
 
 
-def test_get_unknown_sku_is_not_found(admin_client):
-    assert admin_client.get(_url("NOPE")).status_code == status.HTTP_404_NOT_FOUND
+def test_get_unknown_unit_is_not_found(admin_client):
+    assert admin_client.get(_url(999999)).status_code == status.HTTP_404_NOT_FOUND
 
 
 def test_authenticated_member_can_read_but_not_write(plain_client, computing):
-    assert plain_client.get(_url(computing.sku)).status_code == status.HTTP_200_OK
+    assert plain_client.get(_url(computing.pk)).status_code == status.HTTP_200_OK
 
-    response = plain_client.patch(_url(computing.sku), {"status": "active"}, format="json")
+    response = plain_client.patch(_url(computing.pk), {"status": "active"}, format="json")
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert not ComputingActivity.objects.filter(computing=computing).exists()
@@ -72,7 +72,7 @@ def test_authenticated_member_can_read_but_not_write(plain_client, computing):
 
 def test_coordinator_patch_updates_activity(admin_client, computing):
     response = admin_client.patch(
-        _url(computing.sku),
+        _url(computing.pk),
         {"status": "active", "remote_user": "alice", "remote_ip": "10.0.0.5"},
         format="json",
     )
@@ -90,7 +90,7 @@ def test_api_key_agent_can_report_activity(computing):
     client = APIClient()
 
     with patch(_PATCH_APIKEY, return_value=True):
-        response = client.patch(_url(computing.sku), {"status": "free"}, format="json")
+        response = client.patch(_url(computing.pk), {"status": "free"}, format="json")
 
     assert response.status_code == status.HTTP_200_OK
     activity = ComputingActivity.objects.get(computing=computing)
@@ -102,7 +102,7 @@ def test_agent_api_error_does_not_persist_activity_or_heartbeat(computing):
     client = APIClient()
 
     with patch(_PATCH_APIKEY, return_value=True):
-        response = client.patch(_url(computing.sku), {"status": "invalid"}, format="json")
+        response = client.patch(_url(computing.pk), {"status": "invalid"}, format="json")
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert not ComputingActivity.objects.filter(computing=computing).exists()
@@ -112,7 +112,7 @@ def test_api_agent_report_updates_heartbeat_and_repeated_inactive_keeps_inactive
     client = APIClient()
 
     with patch(_PATCH_APIKEY, return_value=True):
-        initial = client.patch(_url(computing.sku), {"status": "inactive"}, format="json")
+        initial = client.patch(_url(computing.pk), {"status": "inactive"}, format="json")
         assert initial.status_code == status.HTTP_200_OK
         activity = ComputingActivity.objects.get(computing=computing)
         initial_heartbeat = activity.last_agent_report_at
@@ -121,7 +121,7 @@ def test_api_agent_report_updates_heartbeat_and_repeated_inactive_keeps_inactive
         # Move the stored heartbeat back deterministically so a successful retry must refresh it.
         stale_heartbeat = initial_heartbeat - timedelta(minutes=1)
         ComputingActivity.objects.filter(pk=activity.pk).update(last_agent_report_at=stale_heartbeat)
-        repeated = client.patch(_url(computing.sku), {"status": "inactive"}, format="json")
+        repeated = client.patch(_url(computing.pk), {"status": "inactive"}, format="json")
 
     assert repeated.status_code == status.HTTP_200_OK
     activity.refresh_from_db()
@@ -130,8 +130,8 @@ def test_api_agent_report_updates_heartbeat_and_repeated_inactive_keeps_inactive
 
 
 def test_patch_rejects_invalid_status_and_server_managed_fields(admin_client, computing):
-    bad_status = admin_client.patch(_url(computing.sku), {"status": "exploded"}, format="json")
-    managed = admin_client.patch(_url(computing.sku), {"offline_at": "2026-01-01T00:00:00Z"}, format="json")
+    bad_status = admin_client.patch(_url(computing.pk), {"status": "exploded"}, format="json")
+    managed = admin_client.patch(_url(computing.pk), {"offline_at": "2026-01-01T00:00:00Z"}, format="json")
 
     assert bad_status.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert managed.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -141,7 +141,7 @@ def test_patch_rejects_invalid_status_and_server_managed_fields(admin_client, co
 
 @pytest.mark.parametrize("field", ("offline_at", "inactive_at"))
 def test_patch_rejects_each_transition_timestamp_as_read_only(admin_client, computing, field):
-    response = admin_client.patch(_url(computing.sku), {field: "2026-01-01T00:00:00Z"}, format="json")
+    response = admin_client.patch(_url(computing.pk), {field: "2026-01-01T00:00:00Z"}, format="json")
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert any(
@@ -150,8 +150,8 @@ def test_patch_rejects_each_transition_timestamp_as_read_only(admin_client, comp
     assert not ComputingActivity.objects.filter(computing=computing).exists()
 
 
-def test_patch_unknown_sku_is_not_found(admin_client):
-    response = admin_client.patch(_url("NOPE"), {"status": "free"}, format="json")
+def test_patch_unknown_unit_is_not_found(admin_client):
+    response = admin_client.patch(_url(999999), {"status": "free"}, format="json")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -159,7 +159,7 @@ def test_patch_unknown_sku_is_not_found(admin_client):
 def test_computing_detail_includes_activity(admin_client, computing):
     ComputingActivity.objects.create(computing=computing, status="active", remote_user="alice")
 
-    response = admin_client.get(f"/api/labs/equipment/computing/{computing.pk}")
+    response = admin_client.get(f"/api/labs/equipment/{computing.pk}")
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["data"]["activity"]["status"] == "active"
@@ -167,7 +167,7 @@ def test_computing_detail_includes_activity(admin_client, computing):
 
 
 def test_computing_detail_activity_is_null_when_never_reported(admin_client, computing):
-    response = admin_client.get(f"/api/labs/equipment/computing/{computing.pk}")
+    response = admin_client.get(f"/api/labs/equipment/{computing.pk}")
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["data"]["activity"] is None
@@ -177,8 +177,8 @@ def test_activity_is_a_detail_only_projection():
     from django.urls import resolve
 
     urlconf = "core.labs.features.equipment.api.urls"
-    list_view = resolve("/equipment/computing", urlconf=urlconf).func.view_class
-    detail_view = resolve("/equipment/computing/42", urlconf=urlconf).func.view_class
+    list_view = resolve("/equipment", urlconf=urlconf).func.view_class
+    detail_view = resolve("/equipment/42", urlconf=urlconf).func.view_class
 
     assert "activity" not in list_view.list_serializer_class().get_fields()
     assert "activity" in detail_view.response_serializer_class().get_fields()

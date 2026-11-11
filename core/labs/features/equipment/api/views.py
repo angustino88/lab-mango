@@ -5,12 +5,11 @@ from typing import Any, ClassVar
 from asgiref.sync import sync_to_async
 from drf_api_contracts import OperationContract, ResponseContract
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
-from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
 from core.common.api.options import OptionsAPIView, OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer, ResultsSetPagination
 from core.labs.features.equipment.api.serializers import (
@@ -25,7 +24,6 @@ from core.labs.features.equipment.application import (
     CancelReservationInput,
     ChangeConditionInput,
     ChangeLifecycleInput,
-    CreateEquipmentInput,
     ExtendLoanInput,
     ExtendLoansInput,
     HandOverEquipmentInput,
@@ -42,7 +40,6 @@ from core.labs.features.equipment.application import (
     cancel_reservation,
     change_condition,
     change_lifecycle,
-    create_equipment,
     extend_loan,
     extend_loans,
     hand_over_equipment,
@@ -58,10 +55,7 @@ from core.labs.features.equipment.application import (
 )
 from core.labs.features.equipment.exceptions import LoanIdempotencyKeyRequired
 from core.labs.features.equipment.queries import (
-    category_options_queryset,
-    equipment_reference_data,
     get_active_equipment_assignment,
-    get_equipment,
     list_equipment,
     list_equipment_options,
 )
@@ -102,14 +96,12 @@ from ..queries.summaries import (
 from .common import EQUIPMENT_PERMISSIONS, ORGANIZATION_PERMISSIONS, EquipmentAPIView
 from .resource_filters import EQUIPMENT_FILTERS
 from .serializers import (
-    CategoryOptionsQuerySerializer,
     ComputingActivitySummarySerializer,
     DepartmentSerializer,
     EquipmentAssignmentResultSerializer,
     EquipmentAssignmentSerializer,
     EquipmentChangeConditionSerializer,
     EquipmentChangeLifecycleSerializer,
-    EquipmentCreateSerializer,
     EquipmentExtendLoanSerializer,
     EquipmentExtendLoansSerializer,
     EquipmentHandOverSerializer,
@@ -123,7 +115,6 @@ from .serializers import (
     EquipmentPlacementSerializer,
     EquipmentPlacementWriteSerializer,
     EquipmentProductModelOptionsQuerySerializer,
-    EquipmentReferenceDataSerializer,
     EquipmentReservationCancelSerializer,
     EquipmentReservationHandOverSerializer,
     EquipmentReservationListQuerySerializer,
@@ -132,7 +123,6 @@ from .serializers import (
     EquipmentReserveSerializer,
     EquipmentReturnBatchSerializer,
     EquipmentReturnSerializer,
-    EquipmentSerializer,
     EquipmentStatusSummarySerializer,
     EquipmentTypeOptionsQuerySerializer,
     ResourceGroupCatalogSerializer,
@@ -142,20 +132,27 @@ from .serializers import (
 EquipmentListQuerySerializer = EQUIPMENT_FILTERS.serializer("EquipmentListQuerySerializer")
 
 
+class EquipmentStatusSummaryQuerySerializer(serializers.Serializer):
+    category = serializers.IntegerField(required=False, min_value=1, help_text="Count one category only.")
+
+
 class EquipmentStatusSummaryAPIView(EquipmentAPIView):
-    """Non-deleted equipment by latest recorded lifecycle status; no filters."""
+    """Non-deleted equipment by computed display status, optionally for one category."""
 
     get_contract = OperationContract(
+        query=EquipmentStatusSummaryQuerySerializer,
         success=ResponseContract.success("EquipmentStatusSummaryData", EquipmentStatusSummarySerializer),
         bad_request=ResponseContract.bad_request(),
     )
 
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
-        if request.query_params:
-            return self.respond_problem(
-                "bad_request", code="invalid_query", detail="This endpoint accepts no query parameters."
-            )
-        return self.respond(get_equipment_status_summary())
+        filters, error = self.validate_query()
+        if error is not None:
+            return error
+        category_id = (filters or {}).get("category")
+        if category_id is None:
+            return self.respond(get_equipment_status_summary())
+        return self.respond(get_equipment_category_status_summary(category_id=category_id))
 
 
 class ComputingActivitySummaryAPIView(EquipmentAPIView):
@@ -173,86 +170,6 @@ class ComputingActivitySummaryAPIView(EquipmentAPIView):
                 "bad_request", code="invalid_query", detail="This endpoint accepts no query parameters."
             )
         return self.respond(get_computing_activity_summary())
-
-
-class EquipmentCategorySummaryAPIView(EquipmentAPIView):
-    """Summary of one equipment subtype, configured by category route generation."""
-
-    category_key = None
-    category_model = None
-
-    get_contract = OperationContract(
-        success=ResponseContract.success("EquipmentCategoryStatusSummaryData", EquipmentStatusSummarySerializer),
-        bad_request=ResponseContract.bad_request(),
-    )
-
-    def handle_get(self, request: Request, *args, **kwargs) -> Response:
-        if request.query_params:
-            return self.respond_problem(
-                "bad_request", code="invalid_query", detail="This endpoint accepts no query parameters."
-            )
-        if self.category_model is None:
-            raise TypeError("Equipment category summary view must define category_model")
-        return self.respond(get_equipment_category_status_summary(equipment_model=self.category_model))
-
-
-class EquipmentListAPIView(AppListAPIView, EquipmentAPIView):
-    """Paginated response adapter for the generic equipment collection."""
-
-    pagination_class = ResultsSetPagination
-    get_contract = OperationContract(
-        query=EquipmentListQuerySerializer,
-        success=ResponseContract.paginated("EquipmentList", EquipmentSerializer),
-        bad_request=ResponseContract.bad_request(),
-    )
-
-    def handle_get(self, request: Request, *args, **kwargs) -> Response:
-        filters, error = self.validate_query()
-        if error is not None:
-            return error
-        queryset = EQUIPMENT_FILTERS.apply(list_equipment(), filters)
-        return self.list_response_sync(queryset)
-
-
-class EquipmentFiltersAPIView(FilterMetadataMixin, EquipmentAPIView):
-    filter_spec = EQUIPMENT_FILTERS
-    get_contract = OperationContract(
-        query=PageNumberQuerySerializer,
-        success=ResponseContract.success("EquipmentFilters", FilterMetadataSerializer),
-    )
-
-
-class EquipmentListCreateAPIView(EquipmentListAPIView):
-    """List equipment with filters, or create a base equipment record."""
-
-    post_contract = OperationContract(
-        request=EquipmentCreateSerializer,
-        success=ResponseContract.created("EquipmentCreate", EquipmentSerializer),
-        bad_request=ResponseContract.bad_request(),
-        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
-    )
-
-    def handle_post(self, request: Request, *args, **kwargs) -> Response:
-        serializer, error = self.validate_request()
-        if error is not None:
-            return error
-        equipment = create_equipment(
-            CreateEquipmentInput(fields=tuple(serializer.validated_data.items())),
-            actor=request.user,
-        )
-        return self.respond(equipment)
-
-
-class EquipmentRetrieveAPIView(EquipmentAPIView):
-    """Retrieve one equipment record."""
-
-    get_contract = OperationContract(
-        success=ResponseContract.success("EquipmentDetail", EquipmentSerializer),
-        not_found=ResponseContract.not_found(),
-    )
-
-    def handle_get(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
-        return self.respond(get_equipment(equipment_id))
 
 
 class EquipmentAssignmentAPIView(EquipmentAPIView):
@@ -784,40 +701,6 @@ def state_action_contract(action: str, response_name: str, detail_serializer: An
     )
 
 
-class EquipmentChangeConditionAPIView(EquipmentStateActionAPIView):
-    """Set whether an in-service unit works (operational, in maintenance, out of service)."""
-
-    action = "condition"
-    post_contract = state_action_contract("condition", "EquipmentDetailAfterConditionChange", EquipmentSerializer)
-
-
-class EquipmentChangeLifecycleAPIView(EquipmentStateActionAPIView):
-    """Move a unit along its lifecycle (planned, in service, transferred out, retired, lost)."""
-
-    action = "lifecycle"
-    post_contract = state_action_contract("lifecycle", "EquipmentDetailAfterLifecycleChange", EquipmentSerializer)
-
-
-class EquipmentReferenceDataAPIView(EquipmentAPIView):
-    """Generic equipment lookups. Computing-specific lookups live under computing/."""
-
-    get_contract = OperationContract(
-        success=ResponseContract.success("EquipmentReferenceData", EquipmentReferenceDataSerializer),
-        unauthorized=ResponseContract.unauthorized(),
-    )
-
-    def handle_get(self, request: Request, *args, **kwargs) -> Response:
-        references = equipment_reference_data()
-        data = {
-            "categories": EquipmentCategorySerializer(references["categories"], many=True).data,
-            "kinds": EquipmentKindSerializer(references["kinds"], many=True).data,
-            "types": EquipmentTypeSerializer(references["types"], many=True).data,
-            "manufacturers": EquipmentManufacturerSerializer(references["manufacturers"], many=True).data,
-            "product_models": EquipmentProductModelSerializer(references["product_models"], many=True).data,
-        }
-        return self.respond_data(data)
-
-
 class EquipmentOptionsAPIView(OptionsAPIView):
     """List equipment as compact options, optionally filtering for assignable items (ADR 002)."""
 
@@ -841,30 +724,6 @@ class EquipmentOptionsAPIView(OptionsAPIView):
 
     def select(self, *, actor: Any, filters: dict[str, Any]) -> Any:
         return list_equipment_options(actor=actor, **filters)
-
-
-class EquipmentCategoryOptionsAPIView(OptionsAPIView):
-    """List category equipment as compact options, optionally filtering for assignable items (ADR 002)."""
-
-    permission_classes = EQUIPMENT_PERMISSIONS
-    schema_description = (
-        "Large category Equipment selectors require q or at least one declared parent filter: kind_id, type_id, "
-        "or manufacturer_id. include_ids, lifecycle_status, assigned, and assignable do not satisfy this requirement."
-    )
-    model = None
-    queryset_provider = None
-    entity_name = None
-    required_attributes = ("model", "queryset_provider")
-    category_fields = ()
-
-    query_serializer = CategoryOptionsQuerySerializer
-    size_class = SizeClass.LARGE
-    required_any = ("q", "kind_id", "type_id", "manufacturer_id")
-    owner = "equipment"
-    schema_tags = ("Equipment",)
-
-    def select(self, *, actor: Any, filters: dict[str, Any]) -> Any:
-        return category_options_queryset(self.model, self.category_fields, actor=actor, **filters)
 
 
 # 1. Equipment Categories

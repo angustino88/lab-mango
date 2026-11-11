@@ -13,8 +13,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
-from core.labs.models import ComputingActivity, ComputingActivityStatus
-from core.labs.models.resource.equipment.computing import ComputingEquipment
+from core.labs.models import ComputingActivity, ComputingActivityStatus, Equipment
 
 _WRITABLE_FIELDS = frozenset(
     {
@@ -36,7 +35,7 @@ class SyncComputingActivityInput:
     fields: tuple[tuple[str, object], ...]
 
 
-def ensure_computing_activity(computing: ComputingEquipment) -> ComputingActivity:
+def ensure_computing_activity(computing: Equipment) -> ComputingActivity:
     """Return the activity row for ``computing``, creating a before-transition row when missing."""
     # The offline timestamp constraint is checked immediately, so persist an initial
     # offline timestamp for new rows; API transitions away from offline still clear it.
@@ -72,8 +71,8 @@ def sync_computing_activity(command: SyncComputingActivityInput, *, actor=None) 
 
     ``actor`` is ``None`` for agent (API-key) submissions. Only these submissions
     refresh ``last_agent_report_at``; coordinator edits never change the heartbeat.
-    Raises ``ComputingEquipment.DoesNotExist``
-    for a missing or soft-deleted computer and ``ValidationError`` for unknown fields or statuses.
+    Raises ``Equipment.DoesNotExist``
+    for a missing or soft-deleted computer (a unit without a computing profile) and ``ValidationError`` for unknown fields or statuses.
     """
     values = dict(command.fields)
     unexpected = values.keys() - _WRITABLE_FIELDS
@@ -82,7 +81,9 @@ def sync_computing_activity(command: SyncComputingActivityInput, *, actor=None) 
     if "status" in values and values["status"] not in ComputingActivityStatus.values:
         raise ValidationError({"status": "Select a valid status."})
 
-    computing = ComputingEquipment.objects.get(pk=command.computing_id, deleted_at__isnull=True)
+    computing = Equipment.objects.get(
+        pk=command.computing_id, deleted_at__isnull=True, computing_profile__isnull=False
+    )
     ensure_computing_activity(computing)
     activity = ComputingActivity.objects.select_for_update().get(computing=computing)
     previous_status = activity.status

@@ -29,7 +29,6 @@ from core.labs.features.equipment.exceptions import (
 )
 from core.labs.models import (
     Bench,
-    ComputingEquipment,
     EquipmentBooking,
     EquipmentCategory,
     EquipmentKind,
@@ -39,6 +38,7 @@ from core.labs.models import (
     Room,
     Station,
 )
+from tests.factories import create_computing_equipment
 
 User = get_user_model()
 
@@ -53,7 +53,7 @@ def kind(db):
 
 def _items(kind, count, prefix="LB"):
     return [
-        ComputingEquipment.objects.create(sku=f"{prefix}-{index}", name=f"Item {index}", kind=kind)
+        create_computing_equipment(sku=f"{prefix}-{index}", name=f"Item {index}", kind=kind)
         for index in range(count)
     ]
 

@@ -2,21 +2,17 @@
 
 from collections import Counter
 from datetime import timedelta
-from typing import Any, cast
+from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from django.contrib.auth import get_user_model
 from django.test import override_settings
-from django.urls import resolve
 from django.utils import timezone
 from drf_spectacular.generators import SchemaGenerator
 from rest_framework.test import APIClient
 from rest_framework_api_key.models import APIKey
 
-from core.labs.features.equipment.api.category_definitions import CATEGORY_DEFINITIONS
-from core.labs.features.equipment.api.facets import EquipmentFacetsAPIView
-from core.labs.features.equipment.api.registry import EQUIPMENT_REGISTRY
 from core.labs.features.equipment.tests.roles import grant_labs_role
 from core.labs.models import (
     Bench,
@@ -28,7 +24,6 @@ from core.labs.models import (
     EquipmentType,
 )
 from core.labs.models.resource.base.resource import Department, ResourceGroup
-from core.labs.models.resource.equipment import DisplayEquipment, EquipmentInterface
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 BASE = "/api/labs/equipment"
@@ -62,9 +57,8 @@ def inventory(db):
     rows = []
     for i in range(3):
         index = 0 if i < 2 else 1
-        model = cast(type[Equipment], EQUIPMENT_REGISTRY[str(categories[index].key)].model)
         rows.append(
-            model.objects.create(
+            Equipment.objects.create(
                 sku=f"FACET-{i}",
                 name=f"Facet inventory {i}",
                 kind=kinds[index],
@@ -131,7 +125,7 @@ def test_taxonomy_and_organization_dependencies(inventory):
         {"dimension": "category", "category": f"{categories[0].pk},{categories[1].pk}", "q": "Facet inventory"},
     )
     assert [row["equipment_count"] for row in combined.data["data"]] == [2, 1]
-    for path in (BASE, f"{BASE}/computing"):
+    for path in (BASE,):
         listed = client.get(path, {"department_id": departments[0].pk, "product_model_id": models[0].pk})
         assert listed.status_code == 200
         assert {row["id"] for row in listed.data["data"]} == {rows[0].pk, rows[1].pk}
@@ -180,7 +174,7 @@ def test_null_retired_buckets_pagination_and_unknown_ids(inventory):
 )
 def test_invalid_queries(inventory, query):
     client = inventory[0]
-    for path in (f"{BASE}/facets", f"{BASE}/computing/facets"):
+    for path in (f"{BASE}/facets",):
         response = client.get(path, query)
         assert response.status_code == 400
         assert response.data["error"]["code"] == "invalid_query"
@@ -192,7 +186,7 @@ def test_repeated_parameters_and_search_parity(inventory):
     client = inventory[0]
     repeated = client.get(f"{BASE}/facets?dimension=kind&dimension=type")
     assert repeated.status_code == 400 and repeated.data["error"]["code"] == "invalid_query"
-    for path, search in ((BASE, "Facet maker 0"), (f"{BASE}/computing", "FACET-0")):
+    for path, search in ((BASE, "Facet maker 0"), (BASE, "FACET-0")):
         for alias in ("q", "search"):
             listed = client.get(path, {alias: search})
             facets = client.get(f"{path}/facets", {"dimension": "kind", alias: search})
@@ -204,49 +198,30 @@ def test_repeated_parameters_and_search_parity(inventory):
 
 
 @pytest.mark.django_db
-def test_category_m2m_search_is_distinct(inventory):
-    client, categories, kinds, types, makers, models, departments, groups, rows = inventory
-    display = DisplayEquipment.objects.get(pk=rows[2].pk)
-    display.interfaces.add(*(EquipmentInterface.objects.create(name=f"Facet HDMI {i}") for i in range(3)))
-    response = client.get(f"{BASE}/display/facets", {"dimension": "kind", "q": "HDMI"})
-    listed = client.get(f"{BASE}/display", {"q": "HDMI"})
-    assert response.status_code == 200
-    assert response.data["data"][0]["equipment_count"] == listed.data["meta"]["pagination"]["count"] == 1
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("category", tuple(CATEGORY_DEFINITIONS))
-def test_every_category_generates_facets(inventory, category):
+def test_runtime_category_lists_and_facets_through_the_single_collection(inventory):
+    """A category created at runtime needs no model or route: filter the one collection (AC7)."""
     client = inventory[0]
-    catalog = EquipmentCategory.objects.get_or_create(
-        key=category, defaults={"name": f"Adapter {category}", "definition": "Synthetic adapter category"}
-    )[0]
-    kind = EquipmentKind.objects.create(category=catalog, name=f"Adapter {category} kind")
-    record = cast(type[Equipment], EQUIPMENT_REGISTRY[category].model).objects.create(
-        sku=f"ADAPTER-{category}", name=f"Adapter {category} inventory", kind=kind
-    )
-    path = f"{BASE}/{category}"
-    match = resolve(f"{path}/facets")
-    assert issubclass(getattr(match.func, "view_class"), EquipmentFacetsAPIView)
-    assert match.url_name == f"{category}-facets"
-    listed = client.get(path, {"q": f"ADAPTER-{category}"})
-    facets = client.get(f"{path}/facets", {"dimension": "category", "q": f"ADAPTER-{category}"})
-    assert facets.status_code == 200
+    catalog = EquipmentCategory.objects.create(name="Adapter runtime", key="adapter-runtime", definition="Runtime")
+    kind = EquipmentKind.objects.create(category=catalog, name="Adapter runtime kind")
+    record = Equipment.objects.create(sku="ADAPTER-RUNTIME", name="Adapter runtime inventory", kind=kind)
+    listed = client.get(BASE, {"category": catalog.pk})
+    facets = client.get(f"{BASE}/facets", {"dimension": "category", "category": catalog.pk})
+    assert listed.status_code == facets.status_code == 200
     assert {row["id"] for row in listed.data["data"]} == {record.pk}
     assert facets.data["data"] == [{"value": {"id": catalog.pk, "name": catalog.name}, "equipment_count": 1}]
-    assert client.get(f"{path}/facets/", {"dimension": "category"}).status_code == 404
+    assert client.get(f"{BASE}/adapter-runtime").status_code == 404
 
 
 @pytest.mark.django_db
 def test_authorization(inventory):
     client = APIClient()
-    for path in (f"{BASE}/facets", f"{BASE}/computing/facets"):
+    for path in (f"{BASE}/facets",):
         denied = client.get(path, {"dimension": "kind"})
         assert denied.status_code == 401
         assert "error" in denied.data and "data" not in denied.data
     key_record, key = APIKey.objects.create_key(name="synthetic-facet-test")
     client.credentials(HTTP_AUTHORIZATION=f"Api-Key {key}")
-    for path in (f"{BASE}/facets", f"{BASE}/computing/facets"):
+    for path in (f"{BASE}/facets",):
         assert client.get(path, {"dimension": "kind"}).status_code == 200
     key_record.revoked = True
     key_record.save()
@@ -254,11 +229,11 @@ def test_authorization(inventory):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("path", (BASE, f"{BASE}/computing"))
+@pytest.mark.parametrize("path", (BASE,))
 def test_bounded_queries(inventory, django_assert_num_queries, path):
     client, categories, kinds, types, makers, models, departments, groups, rows = inventory
     for i in range(3):
-        cast(type[Equipment], EQUIPMENT_REGISTRY["computing"].model).objects.create(
+        Equipment.objects.create(
             sku=f"BUDGET-{i}",
             name=f"Budget {i}",
             kind=kinds[0],
@@ -274,7 +249,7 @@ def test_bounded_queries(inventory, django_assert_num_queries, path):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("path", (BASE, f"{BASE}/computing"))
+@pytest.mark.parametrize("path", (BASE,))
 @pytest.mark.parametrize("parameter", ("page", "page_size"))
 def test_oversized_decimal_pagination_is_400_before_inventory_sql(
     inventory, django_assert_num_queries, path, parameter
@@ -296,7 +271,7 @@ def test_all_facet_operations_document_pagination_and_api_key(custom_header):
     with override_settings(API_KEY_CUSTOM_HEADER=custom_header):
         schema = SchemaGenerator(patterns=urlpatterns).get_schema(public=True)
     operations = [item["get"] for path, item in schema["paths"].items() if path.endswith("/facets")]
-    assert len(operations) == 13
+    assert len(operations) == 1
     for operation in operations:
         parameters = {item["name"]: item for item in operation["parameters"]}
         assert parameters["dimension"]["required"] is True
@@ -327,7 +302,7 @@ def test_pagination_controls_are_not_membership_filters(inventory, monkeypatch):
         return original(spec, population, values)
 
     monkeypatch.setattr(FilterSpec, "apply", apply)
-    for path in (BASE, f"{BASE}/computing"):
+    for path in (BASE,):
         for query in ({}, {"page": 1, "page_size": 100}):
             assert inventory[0].get(f"{path}/facets", {"dimension": "kind", **query}).status_code == 200
 
@@ -424,7 +399,7 @@ def test_parent_only_siblings_crossed_relationships_and_csv_conjunction(inventor
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("path", (BASE, f"{BASE}/computing"))
+@pytest.mark.parametrize("path", (BASE,))
 @pytest.mark.parametrize("filter_name", ("status", "assigned", "owner", "date", "combined"))
 def test_inherited_filters_exact_bucket_parity(inventory, path, filter_name):
     client, categories, kinds, types, makers, models, departments, groups, rows = inventory
@@ -452,7 +427,7 @@ def test_inherited_filters_exact_bucket_parity(inventory, path, filter_name):
     )
     assert_bucket_parity(client, path, {**query, "q": "Facet inventory"}, "type", [rows[0].pk])
     if filter_name == "assigned":
-        expected = [rows[1].pk] if path.endswith("computing") else [rows[1].pk, rows[2].pk]
+        expected = [rows[1].pk, rows[2].pk]
         assert_bucket_parity(client, path, {"assigned": "false", "q": "Facet inventory"}, "type", expected)
 
 
@@ -462,9 +437,9 @@ def test_category_subtype_filter_bucket_parity(inventory):
 
     client, categories, kinds, types, makers, models, departments, groups, rows = inventory
     size = DisplaySize.objects.create(size="Facet 24 inch")
-    DisplayEquipment.objects.filter(pk=rows[2].pk).update(size=size)
-    DisplayEquipment.objects.create(sku="SUBTYPE-OTHER", name="Other display", kind=kinds[1])
-    assert_bucket_parity(client, f"{BASE}/display", {"size_id": size.pk}, "kind", [rows[2].pk])
+    Equipment.objects.filter(pk=rows[2].pk).update(size=size)
+    Equipment.objects.create(sku="SUBTYPE-OTHER", name="Other display", kind=kinds[1])
+    assert_bucket_parity(client, BASE, {"size_id": size.pk}, "kind", [rows[2].pk])
 
 
 @pytest.mark.django_db

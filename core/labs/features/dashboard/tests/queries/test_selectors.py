@@ -18,10 +18,11 @@ from core.labs.models import (
     BookingStatus,
     ComputingActivity,
     ComputingActivityStatus,
+    Equipment,
     LicenseAssignment,
 )
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
-from core.labs.models.resource.equipment.sample import SampleCustomer, SampleEquipment
+from core.labs.models.resource.equipment.sample import SampleCustomer
 from core.labs.models.resource.license.license import (
     License,
     LicenseCategory,
@@ -141,7 +142,7 @@ class TestListDashboardBenches:
         sample_cat = EquipmentCategoryFactory(name="Sample")
         sample_kind = EquipmentKindFactory(category=sample_cat, name="Sample Kind")
         customer = SampleCustomer.objects.create(name="Acme Corp")
-        sample = SampleEquipment.objects.create(
+        sample = Equipment.objects.create(
             name="Sample Radar",
             sku="SMP-RADAR-01",
             customer=customer,
@@ -177,8 +178,8 @@ class TestListDashboardBenches:
         assert len(assignments) == 2
 
         eq_map = {a.equipment.sku: a.equipment for a in assignments}
-        assert hasattr(eq_map["SMP-RADAR-01"], "sampleequipment")
-        assert hasattr(eq_map["PC-RIG-01"], "computingequipment")
+        assert eq_map["SMP-RADAR-01"].kind.category.name == "Sample"
+        assert eq_map["PC-RIG-01"].computing_profile is not None
 
         comp_eq = eq_map["PC-RIG-01"]
         lic_assignments = getattr(comp_eq, "_active_license_assignments", [])

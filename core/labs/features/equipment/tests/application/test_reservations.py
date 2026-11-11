@@ -34,12 +34,12 @@ from core.labs.features.equipment.application import (
 from core.labs.features.equipment.exceptions import EquipmentNotAvailable, ReservationConflict
 from core.labs.models import (
     Bench,
-    ComputingEquipment,
     EquipmentBooking,
     EquipmentCategory,
     EquipmentKind,
     EquipmentLoan,
 )
+from tests.factories import create_computing_equipment
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ def kind(db):
 
 def _items(kind, count, prefix="RS"):
     return [
-        ComputingEquipment.objects.create(sku=f"{prefix}-{index}", name=f"Scope {index}", kind=kind)
+        create_computing_equipment(sku=f"{prefix}-{index}", name=f"Scope {index}", kind=kind)
         for index in range(count)
     ]
 
