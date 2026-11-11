@@ -1,0 +1,282 @@
+"""POST /agent/bookings/actions/validate and the paths GET /agent/info publishes."""
+
+import json
+from datetime import timedelta
+
+import pytest
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from rest_framework.test import APIClient
+
+from core.agents.tests.api.test_agent_request_signature import _clear_nonce_cache, enrolled  # noqa: F401
+from core.agents.tests.signing import signed_headers
+from core.labs.models import Bench, BenchBooking, BookingStatus, EquipmentAssignment
+
+PATH = "/agent/bookings/actions/validate"
+CHECK_IN_PATH = "/agent/bookings/actions/check-in"
+COMPLETE_PATH = "/agent/bookings/actions/complete"
+EXTEND_PATH = "/agent/bookings/actions/extend"
+
+
+def validate(identity, key, payload, *, path=PATH):
+    body = json.dumps(payload).encode()
+    client = APIClient()
+    client.credentials(**signed_headers(key, identity.agent_uid, body, method="POST", path=path))
+    return client.post(path, data=body, content_type="application/json")
+
+
+def check_in(identity, key, payload):
+    return validate(identity, key, payload, path=CHECK_IN_PATH)
+
+
+def complete(identity, key, payload):
+    return validate(identity, key, payload, path=COMPLETE_PATH)
+
+
+def extend(identity, key, payload):
+    return validate(identity, key, payload, path=EXTEND_PATH)
+
+
+@pytest.fixture()
+def placed(enrolled):  # noqa: F811
+    """The enrolled agent's computer on bench A, plus bench B and a user who books."""
+    identity, key, _ = enrolled
+    bench = Bench.objects.create(sku="VAL-BENCH-A", name="Bench A")
+    other_bench = Bench.objects.create(sku="VAL-BENCH-B", name="Bench B")
+    EquipmentAssignment.objects.create(
+        equipment=identity.equipment, bench=bench, assigned_at=timezone.now() - timedelta(days=1)
+    )
+    user = get_user_model().objects.create_user(username="booker", password="unused")
+    return identity, key, bench, other_bench, user
+
+
+def make_booking(user, bench, code, *, status=BookingStatus.RESERVED, start=-timedelta(minutes=1)):
+    now = timezone.now()
+    booking = BenchBooking(
+        bench=bench,
+        starts_at=now + start,
+        ends_at=now + start + timedelta(hours=1),
+        status=status,
+        booking_code=code,
+        cancellation_reason="Cancelled in test setup" if status == BookingStatus.CANCELLED else "",
+    )
+    booking.save(actor=user)
+    return booking
+
+
+def test_eligible_booking_returns_its_window(placed):
+    identity, key, bench, _, user = placed
+    booking = make_booking(user, bench, "BK-OK")
+
+    response = validate(identity, key, {"booking_code": "BK-OK"})
+
+    assert response.status_code == 200, response.json()
+    data = response.json()["data"]
+    assert data["eligible"] is True
+    assert data["booking_code"] == "BK-OK" and data["booked_for"] == "booker"
+    assert data["starts_at"] and data["ends_at"]
+    booking.refresh_from_db()
+    assert booking.status == BookingStatus.RESERVED  # read-only: no check-in
+
+
+def test_every_failure_gets_the_same_answer(placed):
+    identity, key, bench, other_bench, user = placed
+    make_booking(user, other_bench, "BK-OTHER-BENCH")
+    make_booking(user, bench, "BK-CANCELLED", status=BookingStatus.CANCELLED)
+    make_booking(user, bench, "BK-LATER", start=timedelta(hours=1))
+
+    bodies = [
+        validate(identity, key, {"booking_code": code}).json()
+        for code in ("BK-UNKNOWN", "BK-OTHER-BENCH", "BK-CANCELLED", "BK-LATER")
+    ]
+
+    assert all(body == bodies[0] for body in bodies)
+    assert bodies[0] == {"data": {"eligible": False}}
+
+
+@pytest.mark.parametrize("payload", [{"booking_code": ""}, {}, {"booking_code": "x" * 65}])
+def test_invalid_code_is_rejected(placed, payload):
+    identity, key, *_ = placed
+
+    assert validate(identity, key, payload).status_code == 422
+
+
+def test_request_cannot_name_a_bench_or_computer(placed):
+    identity, key, bench, _, user = placed
+    make_booking(user, bench, "BK-OK")
+
+    response = validate(identity, key, {"booking_code": "BK-OK", "bench_id": bench.pk})
+
+    assert response.status_code == 422
+
+
+@pytest.mark.django_db
+def test_unsigned_request_is_rejected():
+    response = APIClient().post(PATH, data={"booking_code": "BK-OK"}, format="json")
+
+    assert response.status_code == 401
+
+
+def test_info_publishes_session_and_validation_paths(db):
+    data = APIClient().get("/agent/info").json()["data"]
+
+    assert {"session_logs", "booking_validation", "booking_check_in"} <= set(data["capabilities"])
+    assert data["endpoints"] == {
+        "session_logs": "/agent/session-logs",
+        "booking_validation": "/agent/bookings/actions/validate",
+        "booking_check_in": "/agent/bookings/actions/check-in",
+        "booking_complete": "/agent/bookings/actions/complete",
+        "booking_extend": "/agent/bookings/actions/extend",
+    }
+
+
+def test_check_in_starts_the_booking(placed):
+    identity, key, bench, _, user = placed
+    booking = make_booking(user, bench, "BK-IN")
+
+    response = check_in(identity, key, {"booking_code": "BK-IN"})
+
+    assert response.status_code == 200, response.json()
+    data = response.json()["data"]
+    assert data["checked_in"] is True and data["booking_code"] == "BK-IN" and data["booked_for"] == "booker"
+    booking.refresh_from_db()
+    assert booking.status == BookingStatus.IN_PROGRESS
+    assert check_in(identity, key, {"booking_code": "BK-IN"}).json()["data"]["checked_in"] is True
+
+
+def test_check_in_failures_get_the_same_answer(placed):
+    identity, key, bench, other_bench, user = placed
+    make_booking(user, other_bench, "BK-OTHER-BENCH")
+    make_booking(user, bench, "BK-CANCELLED", status=BookingStatus.CANCELLED)
+    later = make_booking(user, bench, "BK-LATER", start=timedelta(hours=1))
+
+    bodies = [
+        check_in(identity, key, {"booking_code": code}).json()
+        for code in ("BK-UNKNOWN", "BK-OTHER-BENCH", "BK-CANCELLED", "BK-LATER")
+    ]
+
+    assert all(body == {"data": {"checked_in": False}} for body in bodies)
+    later.refresh_from_db()
+    assert later.status == BookingStatus.RESERVED
+
+
+@pytest.mark.parametrize("payload", [{"booking_code": ""}, {}, {"booking_code": "BK-IN", "bench_id": 1}])
+def test_check_in_rejects_invalid_requests(placed, payload):
+    identity, key, *_ = placed
+
+    assert check_in(identity, key, payload).status_code == 422
+
+
+@pytest.mark.django_db
+def test_unsigned_check_in_is_rejected():
+    assert APIClient().post(CHECK_IN_PATH, data={"booking_code": "BK-IN"}, format="json").status_code == 401
+
+
+def test_user_ends_the_booking_after_check_in(placed):
+    identity, key, bench, _, user = placed
+    booking = make_booking(user, bench, "BK-END")
+    check_in(identity, key, {"booking_code": "BK-END"})
+
+    response = complete(identity, key, {"booking_code": "BK-END"})
+
+    assert response.status_code == 200, response.json()
+    data = response.json()["data"]
+    assert data["completed"] is True and data["booking_code"] == "BK-END"
+    booking.refresh_from_db()
+    assert booking.status == BookingStatus.COMPLETED
+    assert complete(identity, key, {"booking_code": "BK-END"}).json()["data"]["completed"] is True
+    assert check_in(identity, key, {"booking_code": "BK-END"}).json() == {"data": {"checked_in": False}}
+
+
+def test_end_failures_get_the_same_answer(placed):
+    identity, key, bench, other_bench, user = placed
+    not_started = make_booking(user, bench, "BK-NOT-STARTED")
+    make_booking(user, other_bench, "BK-OTHER-BENCH", status=BookingStatus.IN_PROGRESS)
+
+    bodies = [
+        complete(identity, key, {"booking_code": code}).json()
+        for code in ("BK-UNKNOWN", "BK-NOT-STARTED", "BK-OTHER-BENCH")
+    ]
+
+    assert all(body == {"data": {"completed": False}} for body in bodies)
+    not_started.refresh_from_db()
+    assert not_started.status == BookingStatus.RESERVED
+
+
+@pytest.mark.django_db
+def test_unsigned_end_is_rejected():
+    assert APIClient().post(COMPLETE_PATH, data={"booking_code": "BK-END"}, format="json").status_code == 401
+
+
+def test_user_extends_the_running_booking(placed):
+    identity, key, bench, _, user = placed
+    booking = make_booking(user, bench, "BK-EXT")
+    check_in(identity, key, {"booking_code": "BK-EXT"})
+    new_end = (booking.ends_at + timedelta(minutes=30)).replace(second=0, microsecond=0)
+
+    response = extend(identity, key, {"booking_code": "BK-EXT", "ends_at": new_end.isoformat()})
+
+    assert response.status_code == 200, response.json()
+    assert response.json()["data"]["extended"] is True
+    booking.refresh_from_db()
+    assert booking.ends_at == new_end
+
+
+def test_refused_extension_says_why(placed):
+    identity, key, bench, _, user = placed
+    booking = make_booking(user, bench, "BK-EXT")
+    check_in(identity, key, {"booking_code": "BK-EXT"})
+
+    too_long = extend(
+        identity, key, {"booking_code": "BK-EXT", "ends_at": (booking.starts_at + timedelta(hours=5)).isoformat()}
+    )
+    blocked_start = booking.ends_at + timedelta(minutes=20)
+    BenchBooking(
+        bench=bench, starts_at=blocked_start, ends_at=blocked_start + timedelta(hours=1), booking_code="BK-NEXT"
+    ).save(actor=user)
+    blocked = extend(
+        identity, key, {"booking_code": "BK-EXT", "ends_at": (booking.ends_at + timedelta(hours=1)).isoformat()}
+    )
+
+    assert too_long.status_code == 422
+    error = too_long.json()["error"]
+    assert error["code"] == "extension_not_allowed"
+    assert error["details"][0]["field"] == "ends_at" and error["details"][0]["code"] == "needs_approval"
+    assert error["details"][0]["limit"] is not None
+    assert blocked.status_code == 409
+    detail = blocked.json()["error"]["details"][0]
+    assert blocked.json()["error"]["code"] == "bench_not_free" and detail["code"] == "bench_not_free"
+    assert detail["limit"] is not None
+
+
+def test_extend_of_a_foreign_or_unknown_booking_gets_the_same_answer(placed):
+    identity, key, bench, other_bench, user = placed
+    make_booking(user, other_bench, "BK-OTHER-BENCH", status=BookingStatus.IN_PROGRESS)
+    not_started = make_booking(user, bench, "BK-NOT-STARTED")
+    later = (not_started.ends_at + timedelta(hours=1)).isoformat()
+
+    bodies = [
+        extend(identity, key, {"booking_code": code, "ends_at": later}).json()
+        for code in ("BK-UNKNOWN", "BK-OTHER-BENCH", "BK-NOT-STARTED")
+    ]
+
+    assert all(body == {"data": {"extended": False}} for body in bodies)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [{"booking_code": "BK-EXT"}, {"ends_at": "2026-01-01T10:00:00Z"}, {"booking_code": "BK-EXT", "ends_at": "soon"}],
+)
+def test_extend_rejects_invalid_requests(placed, payload):
+    identity, key, *_ = placed
+
+    assert extend(identity, key, payload).status_code == 422
+
+
+@pytest.mark.django_db
+def test_unsigned_extend_is_rejected():
+    response = APIClient().post(
+        EXTEND_PATH, data={"booking_code": "BK-EXT", "ends_at": "2026-01-01T10:00:00Z"}, format="json"
+    )
+
+    assert response.status_code == 401

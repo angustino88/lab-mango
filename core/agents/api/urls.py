@@ -3,15 +3,20 @@
 from django.urls import path
 
 from .views import (
+    AgentActivityAPIView,
+    AgentBookingCheckInAPIView,
+    AgentBookingCompleteAPIView,
+    AgentBookingExtendAPIView,
+    AgentBookingValidationAPIView,
     AgentDecommissionActionAPIView,
     AgentDetailAPIView,
-    AgentGrantCreateAPIView,
-    AgentListCreateAPIView,
-    AgentRevokeActionAPIView,
     AgentEnrollmentAPIView,
-    AgentActivityAPIView,
+    AgentGrantCreateAPIView,
     AgentHeartbeatAPIView,
     AgentInfoAPIView,
+    AgentListCreateAPIView,
+    AgentRevokeActionAPIView,
+    AgentSessionLogAPIView,
 )
 
 urlpatterns = [
@@ -28,4 +33,25 @@ urlpatterns = [
     path("agent/enrollments", AgentEnrollmentAPIView.as_view(), name="agent-enrollment"),
     path("agent/heartbeat", AgentHeartbeatAPIView.as_view(), name="agent-heartbeat"),
     path("agent/equipment/activity", AgentActivityAPIView.as_view(), name="agent-equipment-activity"),
+    path("agent/session-logs", AgentSessionLogAPIView.as_view(), name="agent-session-logs"),
+    path(
+        "agent/bookings/actions/validate",
+        AgentBookingValidationAPIView.as_view(),
+        name="agent-booking-validation",
+    ),
+    path(
+        "agent/bookings/actions/check-in",
+        AgentBookingCheckInAPIView.as_view(),
+        name="agent-booking-check-in",
+    ),
+    path(
+        "agent/bookings/actions/complete",
+        AgentBookingCompleteAPIView.as_view(),
+        name="agent-booking-complete",
+    ),
+    path(
+        "agent/bookings/actions/extend",
+        AgentBookingExtendAPIView.as_view(),
+        name="agent-booking-extend",
+    ),
 ]

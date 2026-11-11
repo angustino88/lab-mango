@@ -13,7 +13,7 @@ from core.labs.features.bench_bookings.application import (
     update_bench_booking,
 )
 from core.labs.features.bench_bookings.exceptions import BenchBookingConflict
-from core.labs.models import BenchBooking, BookingStatus
+from core.labs.models import BenchBooking, BookingApprovalStatus, BookingStatus
 
 
 @pytest.mark.django_db
@@ -34,6 +34,22 @@ class TestActivation:
         booking.refresh_from_db()
         assert activated == 1
         assert booking.status == BookingStatus.IN_PROGRESS
+
+    @pytest.mark.parametrize("approval", [BookingApprovalStatus.PENDING, BookingApprovalStatus.REJECTED])
+    def test_unapproved_booking_is_not_activated(self, make_booking, now, approval):
+        booking = make_booking(
+            starts_at=now - timedelta(minutes=1),
+            ends_at=now + timedelta(hours=1),
+            code="BOOKING-UNAPPROVED",
+        )
+        reason = "Rejected in test setup" if approval == BookingApprovalStatus.REJECTED else ""
+        BenchBooking.objects.filter(pk=booking.pk).update(approval_status=approval, rejection_reason=reason)
+
+        activated = activate_bench_bookings(bench_id=booking.bench_id, booking_code=booking.booking_code, now=now)
+
+        booking.refresh_from_db()
+        assert activated == 0
+        assert booking.status == BookingStatus.RESERVED
 
     def test_active_computing_does_not_activate_outside_booking_window(self, make_booking, now):
         booking = make_booking(

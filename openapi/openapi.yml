@@ -4,6 +4,14 @@ info:
   version: 1.0.0
   description: LabMango Backend REST API
 paths:
+  /agent/bookings/actions/check-in:
+    $ref: ./agents.yml#/paths/~1agent~1bookings~1actions~1check-in
+  /agent/bookings/actions/complete:
+    $ref: ./agents.yml#/paths/~1agent~1bookings~1actions~1complete
+  /agent/bookings/actions/extend:
+    $ref: ./agents.yml#/paths/~1agent~1bookings~1actions~1extend
+  /agent/bookings/actions/validate:
+    $ref: ./agents.yml#/paths/~1agent~1bookings~1actions~1validate
   /agent/enrollments:
     $ref: ./agents.yml#/paths/~1agent~1enrollments
   /agent/equipment/activity:
@@ -12,6 +20,8 @@ paths:
     $ref: ./agents.yml#/paths/~1agent~1heartbeat
   /agent/info:
     $ref: ./agents.yml#/paths/~1agent~1info
+  /agent/session-logs:
+    $ref: ./agents.yml#/paths/~1agent~1session-logs
   /api/agents:
     $ref: ./agents.yml#/paths/~1api~1agents
   /api/agents/{id}:

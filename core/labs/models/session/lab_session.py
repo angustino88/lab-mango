@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -12,8 +13,20 @@ from core.common.models import UserStampedModel
 from core.labs.models.base import AgentReportedModel
 
 
+class SessionAccessType(models.TextChoices):
+    """How the user got access to the computer for one session (owner decision O22)."""
+
+    BOOKED = "booked", _("Booked")
+    AD_HOC = "ad_hoc", _("Ad hoc (no booking)")
+    UNVERIFIED_BOOKING = "unverified_booking", _("Booking not verified")
+
+
 class LabSessionLog(AgentReportedModel, TimeStampedModel, UserStampedModel):
-    """Immutable history of completed remote computing sessions."""
+    """Immutable history of completed remote computing sessions.
+
+    The pushed values are final. ``access_type``, ``booking``, ``bench`` and ``user`` are derived
+    from them and master data when the session is stored, and may be recomputed.
+    """
 
     login_time = models.DateTimeField(null=True, blank=True)
     logout_time = models.DateTimeField(null=True, blank=True)
@@ -31,6 +44,37 @@ class LabSessionLog(AgentReportedModel, TimeStampedModel, UserStampedModel):
     remote_ip = models.GenericIPAddressField(null=True, blank=True)
     booking_code = models.CharField(max_length=255, null=True, blank=True)
     active_duration_seconds = models.FloatField(null=True, blank=True)
+    access_type = models.CharField(
+        max_length=32,
+        choices=SessionAccessType.choices,
+        null=True,
+        blank=True,
+        help_text=_("How the user got access. Null only on rows stored before access types existed."),
+    )
+    booking = models.ForeignKey(
+        "labs.BenchBooking",
+        related_name="session_logs",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text=_("The verified booking; set only when the access type is booked."),
+    )
+    bench = models.ForeignKey(
+        "labs.Bench",
+        related_name="session_logs",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text=_("The bench the computer was placed on at login time."),
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="lab_session_logs",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text=_("The app user whose username matches the remote login name."),
+    )
 
     @property
     def duration(self) -> timedelta | None:
@@ -116,6 +160,24 @@ class LabSessionLog(AgentReportedModel, TimeStampedModel, UserStampedModel):
                 | models.Q(active_duration_seconds__gte=0),
                 name="labsess_active_duration_nonnegative",
             ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(access_type__isnull=True)
+                    | models.Q(access_type=SessionAccessType.AD_HOC, booking_code__isnull=True)
+                    | models.Q(
+                        access_type__in=(SessionAccessType.BOOKED, SessionAccessType.UNVERIFIED_BOOKING),
+                        booking_code__isnull=False,
+                    )
+                ),
+                name="labsess_access_type_matches_code",
+            ),
+            models.CheckConstraint(
+                # access_type IS NOT NULL is explicit: a comparison with NULL is unknown, and a CHECK
+                # constraint passes on unknown, which would let an unclassified row link a booking.
+                condition=models.Q(booking__isnull=True)
+                | models.Q(access_type__isnull=False, access_type=SessionAccessType.BOOKED),
+                name="labsess_booking_only_when_booked",
+            ),
         ]
         indexes = [
             models.Index(
@@ -125,4 +187,7 @@ class LabSessionLog(AgentReportedModel, TimeStampedModel, UserStampedModel):
             models.Index(fields=["remote_user", "login_time"], name="session_remote_user_login_idx"),
             models.Index(fields=["booking_code"], name="session_booking_code_idx"),
             models.Index(fields=["host_name", "login_time"], name="session_host_login_idx"),
+            models.Index(fields=["bench", "login_time"], name="session_bench_login_idx"),
+            models.Index(fields=["user", "login_time"], name="session_user_login_idx"),
+            models.Index(fields=["access_type", "login_time"], name="session_access_login_idx"),
         ]

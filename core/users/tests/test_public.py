@@ -13,6 +13,7 @@ from core.users.public import (
     VerifiedTeamsRecipient,
     resolve_notification_recipient,
     resolve_teams_recipient,
+    resolve_user_id_for_login_name,
 )
 
 
@@ -128,3 +129,16 @@ def test_lifecycle_command_boundary_has_explicit_exports():
         "set_user_active",
         "unlink_entra_identity",
     }
+
+
+@pytest.mark.django_db
+def test_resolve_user_id_for_login_name(django_user_model):
+    user = django_user_model.objects.create_user(username="nguyen.an", password="x")
+    django_user_model.objects.create_user(username="gone", password="x", is_active=False)
+    django_user_model.objects.create_user(username="Twin", password="x")
+    django_user_model.objects.create_user(username="twin", password="x")
+
+    for login_name in ("nguyen.an", "Nguyen.An", "CORP\\nguyen.an", " corp\\NGUYEN.AN "):
+        assert resolve_user_id_for_login_name(login_name=login_name) == user.pk, login_name
+    for unmatched in (None, "", "  ", "CORP\\", "nobody", "gone", "twin", "nguyen"):
+        assert resolve_user_id_for_login_name(login_name=unmatched) is None, unmatched

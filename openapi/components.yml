@@ -50,6 +50,17 @@ components:
           $ref: '#/components/schemas/AADLoginResponse'
       required:
       - data
+    AccessTypeEnum:
+      enum:
+      - booked
+      - ad_hoc
+      - unverified_booking
+      type: string
+      description: '* `booked` - Booked
+
+        * `ad_hoc` - Ad hoc (no booking)
+
+        * `unverified_booking` - Booking not verified'
     ActionEnum:
       enum:
       - heartbeat
@@ -515,6 +526,199 @@ components:
           $ref: '#/components/schemas/AgentActivityData'
       required:
       - data
+    AgentBookingCheckInData:
+      type: object
+      properties:
+        checked_in:
+          type: boolean
+          description: True when the booking is now in progress for this login.
+        booking_code:
+          type: string
+          description: Present only when checked in.
+        starts_at:
+          type: string
+          format: date-time
+          description: Present only when checked in.
+        ends_at:
+          type: string
+          format: date-time
+          description: Present only when checked in.
+        booked_for:
+          type: string
+          nullable: true
+          description: Username the booking is for; present only when checked in.
+      required:
+      - checked_in
+    AgentBookingCheckInResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentBookingCheckInData'
+      required:
+      - data
+    AgentBookingCompleteData:
+      type: object
+      properties:
+        completed:
+          type: boolean
+          description: True when the booking is now completed.
+        booking_code:
+          type: string
+          description: Present only when completed.
+        starts_at:
+          type: string
+          format: date-time
+          description: Present only when completed.
+        ends_at:
+          type: string
+          format: date-time
+          description: The booked end time, unchanged; present only when completed.
+      required:
+      - completed
+    AgentBookingCompleteResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentBookingCompleteData'
+      required:
+      - data
+    AgentBookingExtendData:
+      type: object
+      properties:
+        extended:
+          type: boolean
+          description: True when the booking now ends at ends_at.
+        booking_code:
+          type: string
+          description: Present only when extended.
+        starts_at:
+          type: string
+          format: date-time
+          description: Present only when extended.
+        ends_at:
+          type: string
+          format: date-time
+          description: The new end; present only when extended.
+      required:
+      - extended
+    AgentBookingExtendError:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/AgentBookingExtendErrorBody'
+      required:
+      - error
+    AgentBookingExtendErrorBody:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentBookingExtendErrorDetail'
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    AgentBookingExtendErrorDetail:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Always ends_at.
+        code:
+          allOf:
+          - $ref: '#/components/schemas/CodeEnum'
+          description: 'Why the extension was refused (stable).
+
+
+            * `already_ended` - already_ended
+
+            * `not_later` - not_later
+
+            * `too_short` - too_short
+
+            * `needs_approval` - needs_approval
+
+            * `bench_not_in_service` - bench_not_in_service
+
+            * `bench_not_free` - bench_not_free'
+        message:
+          type: string
+        limit:
+          type: string
+          format: date-time
+          nullable: true
+          description: 'too_short: earliest accepted end; needs_approval: latest accepted
+            end; bench_not_free: when the next booking starts; otherwise null.'
+      required:
+      - code
+      - field
+      - limit
+      - message
+    AgentBookingExtendRequest:
+      type: object
+      properties:
+        booking_code:
+          type: string
+          maxLength: 64
+        ends_at:
+          type: string
+          format: date-time
+          description: The new end time. Seconds are dropped.
+      required:
+      - booking_code
+      - ends_at
+    AgentBookingExtendResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentBookingExtendData'
+      required:
+      - data
+    AgentBookingValidationData:
+      type: object
+      properties:
+        eligible:
+          type: boolean
+        booking_code:
+          type: string
+          description: Present only when eligible.
+        starts_at:
+          type: string
+          format: date-time
+          description: Present only when eligible.
+        ends_at:
+          type: string
+          format: date-time
+          description: Present only when eligible.
+        booked_for:
+          type: string
+          nullable: true
+          description: Username the booking is for; present only when eligible.
+      required:
+      - eligible
+    AgentBookingValidationRequest:
+      type: object
+      properties:
+        booking_code:
+          type: string
+          maxLength: 64
+      required:
+      - booking_code
+    AgentBookingValidationResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentBookingValidationData'
+      required:
+      - data
     AgentDetailResponse:
       type: object
       properties:
@@ -634,9 +838,15 @@ components:
           type: array
           items:
             type: string
+        endpoints:
+          type: object
+          additionalProperties:
+            type: string
+          description: Paths of the agent routes this backend serves, keyed by capability.
       required:
       - backend_id
       - capabilities
+      - endpoints
       - server_time
     AgentListMeta:
       type: object
@@ -657,6 +867,95 @@ components:
       required:
       - data
       - meta
+    AgentSessionLogData:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: string
+          format: uuid
+        login_time:
+          type: string
+          format: date-time
+        logout_time:
+          type: string
+          format: date-time
+        booking_code:
+          type: string
+          nullable: true
+        access_type:
+          nullable: true
+          description: 'booked: a verified booking for this computer''s bench; ad_hoc:
+            no booking code; unverified_booking: a code that did not verify. Null
+            only for sessions stored before access types existed.
+
+
+            * `booked` - Booked
+
+            * `ad_hoc` - Ad hoc (no booking)
+
+            * `unverified_booking` - Booking not verified'
+          oneOf:
+          - $ref: '#/components/schemas/AccessTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+      required:
+      - access_type
+      - booking_code
+      - event_id
+      - id
+      - login_time
+      - logout_time
+    AgentSessionLogReport:
+      type: object
+      description: One completed remote session, pushed once after logout. The computer
+        is the signing agent's.
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Agent-generated id of this session; repeat it on retry.
+        login_time:
+          type: string
+          format: date-time
+        logout_time:
+          type: string
+          format: date-time
+        active_duration_seconds:
+          type: number
+          format: double
+          minimum: 0
+        remote_user:
+          type: string
+          maxLength: 255
+        remote_ip:
+          type: string
+          nullable: true
+        remote_host:
+          type: string
+          nullable: true
+          maxLength: 255
+        booking_code:
+          type: string
+          nullable: true
+          description: Empty for a temp login (no booking).
+          maxLength: 64
+        agent_version:
+          type: string
+          maxLength: 64
+      required:
+      - active_duration_seconds
+      - event_id
+      - login_time
+      - logout_time
+      - remote_user
+    AgentSessionLogResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentSessionLogData'
+      required:
+      - data
     AllResourceAuditListSerializersResourceAuditItemPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -2780,6 +3079,26 @@ components:
           $ref: '#/components/schemas/CityReferenceListSerializersCityCatalogRecordPagination'
       required:
       - pagination
+    CodeEnum:
+      enum:
+      - already_ended
+      - not_later
+      - too_short
+      - needs_approval
+      - bench_not_in_service
+      - bench_not_free
+      type: string
+      description: '* `already_ended` - already_ended
+
+        * `not_later` - not_later
+
+        * `too_short` - too_short
+
+        * `needs_approval` - needs_approval
+
+        * `bench_not_in_service` - bench_not_in_service
+
+        * `bench_not_free` - bench_not_free'
     CommentCreateRequest:
       type: object
       properties:

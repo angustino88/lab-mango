@@ -139,6 +139,9 @@ Both models refer to resource targets with generic content-type/object-id associ
 - `MonitoringEvent` extends `AgentReportedModel`, protects its `Equipment` relation (a unit with a computing profile), and has an idempotency key on computer/agent/event ID plus time-oriented indexes. Custom-action naming and JSON-object validation are model-level behavior.
 - `ComputingActivity` is one-to-one with `Equipment` (computing units only) and stores current remote-access/activity state. Its `offline`, `free`, `active`, `inactive`, and `maintaining` choices are live activity, not equipment lifecycle or booking status. Equipment deletion cascades to this row.
 - `LabSessionLog` retains remote session identifiers/times and optionally references computing equipment with `SET_NULL`. It enforces agent/event uniqueness per equipment, a valid login/logout interval, and nonnegative duration; history can remain if equipment is deleted.
+  - Derived fields (owner: `lab_sessions`, set at ingestion and by `backfill_session_links`): `access_type` (`SessionAccessType`: `booked`, `ad_hoc`, `unverified_booking`; null only on rows not yet backfilled), and nullable `SET_NULL` links `booking` (`BenchBooking`), `bench` (the computer's bench at login time) and `user` (the active user whose username matches the remote login name). The pushed values stay unchanged; the derived fields can be recomputed.
+  - `labsess_access_type_matches_code`: `ad_hoc` has no booking code; `booked` and `unverified_booking` have one. `labsess_booking_only_when_booked`: only `booked` rows link a booking (null access type explicitly excluded). A `booked` row may lose its booking link when the booking is deleted.
+  - Indexes `(bench, login_time)`, `(user, login_time)`, `(access_type, login_time)` serve the planned utilisation reports. Design: `core/labs/features/lab_sessions/docs/architecture.md` section 11.
 
 ### Agent identity and enrollment
 

@@ -2,29 +2,64 @@
 
 from .application import (
     AgentBookingEndTimeInput,
+    CheckAgentBookingLoginInput,
+    CheckInAgentBookingInput,
+    CompleteAgentBookingInput,
     CreateBenchBookingInput,
+    ExtendAgentBookingInput,
     UpdateBenchBookingInput,
     activate_bench_booking_for_computing_activity,
     activate_bench_bookings,
+    check_agent_booking_login,
+    check_in_agent_booking,
+    complete_agent_booking,
     create_bench_booking,
+    extend_agent_booking,
     reconcile_bench_booking_statuses,
     update_agent_booking_end_time,
     update_bench_booking,
 )
-from .exceptions import BenchBookingConflict, LabProjectNotFound
-from .queries import get_bench_booking, get_bench_booking_by_code, get_lab_project, list_lab_projects
+from .contracts import AgentBookingEnded, AgentBookingExtended, AgentBookingLogin, SessionBookingFacts
+from .exceptions import (
+    AgentExtensionBenchNotFree,
+    AgentExtensionNotAllowed,
+    BenchBookingConflict,
+    LabProjectNotFound,
+)
+from .queries import (
+    find_session_booking_facts,
+    get_bench_booking,
+    get_bench_booking_by_code,
+    get_lab_project,
+    list_lab_projects,
+)
 from .queries.bench_bookings import bench_booking_summary
 
 __all__ = (
+    "AgentBookingEnded",
+    "AgentBookingExtended",
+    "AgentExtensionBenchNotFree",
+    "AgentExtensionNotAllowed",
+    "AgentBookingLogin",
     "BenchBookingConflict",
     "AgentBookingEndTimeInput",
+    "CheckAgentBookingLoginInput",
+    "CheckInAgentBookingInput",
+    "CompleteAgentBookingInput",
     "CreateBenchBookingInput",
+    "ExtendAgentBookingInput",
     "LabProjectNotFound",
+    "SessionBookingFacts",
     "UpdateBenchBookingInput",
     "activate_bench_booking_for_computing_activity",
     "activate_bench_bookings",
     "bench_booking_summary",
+    "check_agent_booking_login",
+    "check_in_agent_booking",
+    "complete_agent_booking",
     "create_bench_booking",
+    "extend_agent_booking",
+    "find_session_booking_facts",
     "get_bench_booking",
     "get_bench_booking_by_code",
     "get_lab_project",
