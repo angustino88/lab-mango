@@ -8,10 +8,10 @@ Django group they belong to.
 * ``admin``: full control, including procurement and finance.
 * ``coord``: operational management of labs, equipment, licenses, benches, and the work of other
   users (bookings).
-* ``user``: authenticated read access; creates and changes only their own bookings.
+* ``user``: read access; creates and changes only their own bookings.
 
 Higher roles imply lower ones (``admin`` > ``coord`` > ``user``). Superusers hold every role. A user
-with no mapped group holds no role and has no write access (fail closed).
+with no mapped group holds no role and can neither read nor write through these classes (fail closed).
 
 Effective roles are cached on the user instance, so a request pays for at most one query. Code that
 changes a user's groups and then re-checks access on the same instance must call
@@ -80,34 +80,55 @@ def has_labs_role(user: Any, role: LabsRole) -> bool:
 
 
 class LabsRolePermission(RolePermission):
-    """Base for Labs permission classes: roles are resolved from URS group mappings."""
+    """Base for Labs permission classes: roles are resolved from URS group mappings.
+
+    Reads require at least the ``user`` role; a user without any Labs role is denied.
+    """
+
+    read_roles = (LabsRole.USER,)
 
     def resolve_roles(self, user: Any) -> frozenset[str]:
         return effective_labs_roles(user)
 
 
 class IsLabAdmin(LabsRolePermission):
-    """Reads: any authenticated user. Writes: lab administrators (procurement, finance)."""
+    """Reads: any Labs role. Writes: lab administrators."""
 
     write_roles = (LabsRole.ADMIN,)
 
 
 class IsLabCoordinator(LabsRolePermission):
-    """Reads: any authenticated user. Writes: lab coordinators and administrators."""
+    """Reads: any Labs role. Writes: lab coordinators and administrators."""
 
     write_roles = (LabsRole.COORDINATOR,)
 
 
 class IsLabMember(LabsRolePermission):
-    """Reads: any authenticated user. Writes: any Labs role. Ownership is enforced per object."""
+    """Reads and writes: any Labs role. Ownership is enforced per object."""
 
     write_roles = (LabsRole.USER,)
+
+
+class IsLabCoordinatorReadWrite(LabsRolePermission):
+    """Reads and writes: lab coordinators and administrators (procurement, expenses, finance reports)."""
+
+    read_roles = (LabsRole.COORDINATOR,)
+    write_roles = (LabsRole.COORDINATOR,)
+
+
+class IsLabAdminReadWrite(LabsRolePermission):
+    """Reads and writes: lab administrators only (user directory and group membership)."""
+
+    read_roles = (LabsRole.ADMIN,)
+    write_roles = (LabsRole.ADMIN,)
 
 
 __all__ = [
     "LABS_ROLE_HIERARCHY",
     "IsLabAdmin",
+    "IsLabAdminReadWrite",
     "IsLabCoordinator",
+    "IsLabCoordinatorReadWrite",
     "IsLabMember",
     "LabsRole",
     "LabsRolePermission",

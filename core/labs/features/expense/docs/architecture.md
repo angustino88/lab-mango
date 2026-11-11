@@ -36,7 +36,7 @@ Models owned by this feature (link to authoritative docs; do not copy definition
 | GET, POST | `/api/labs/rooms/<room_id>/expenses` | Room missing returns 404; invalid dates or amount return 422 |
 | GET, POST | `/api/labs/expenses/<expense_id>/payments` | Expense missing returns 404 |
 
-**Verified (permissions).** Expense views set `permission_classes = [HasAPIKey | IsLabCoordinator]`. Writes: lab admins (who inherit the coordinator role), coordinators, and API keys. Plain-user writes and unauthenticated requests without an API key get 403. Reads: any authenticated user, because `RolePermission` (`core.common.api.permissions`) allows all safe methods unless `read_roles` is set; restricting reads to coordinators is an open decision. API-key writes record no creator because the actor is `None`. Access-control change: requires human approval before merge (T2).
+**Verified (permissions).** Expense views set `permission_classes = [HasAPIKey | IsLabCoordinatorReadWrite]`. Writes: lab admins (who inherit the coordinator role), coordinators, and API keys. Plain-user writes and unauthenticated requests without an API key get 403. Reads: lab coordinators and admins only (`IsLabCoordinatorReadWrite`, owner decision 2026-11-11); plain users and users without a Labs role get 403. API-key writes record no creator because the actor is `None`. Access-control change: requires human approval before merge (T2).
 
 **Verified (OpenAPI).** Responses use `drf_api_contracts`. The schema has not been regenerated and reviewed for this feature.
 
@@ -45,7 +45,7 @@ Models owned by this feature (link to authoritative docs; do not copy definition
 | Depends on | Through | Direction rule |
 | --- | --- | --- |
 | `core.common.api` (`AppListAPIView`) | Import | Shared code |
-| `core.users.access` (`IsLabCoordinator`) | Import | Users app; owns the Labs role mapping |
+| `core.users.public` (`IsLabCoordinatorReadWrite`) | Import | Users app; owns the Labs role mapping |
 | `core.labs.features.base` (`CommandAPIView`) | Import | Shared Labs base |
 | `core.labs.models` (`Expense`, `ExpensePayment`, `Room`) | Import | Models centralized |
 
@@ -117,7 +117,7 @@ Financial report endpoints:
 
 ## 8. Security and authorization
 
-**Verified.** Writes: lab admins, coordinators, and API keys (`HasAPIKey | IsLabCoordinator`). Reads: any authenticated user (open decision, see above). Deny by default: plain-user writes get 403, and unauthenticated requests without an API key are rejected for writes.
+**Verified.** Writes: lab admins, coordinators, and API keys (`HasAPIKey | IsLabCoordinatorReadWrite`). Reads: lab coordinators and admins (see above). Deny by default: plain-user reads and writes get 403, and unauthenticated requests without an API key are rejected for writes.
 
 **Open.** Align the reads-versus-writes comment with the behavior (see section 3).
 

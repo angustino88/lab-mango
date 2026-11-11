@@ -4,11 +4,14 @@ import itertools
 
 import pytest
 from django.contrib.auth.models import AnonymousUser, Group
+from django.db import IntegrityError, transaction
 from rest_framework.test import APIRequestFactory
 
 from core.users.access import (
     IsLabAdmin,
+    IsLabAdminReadWrite,
     IsLabCoordinator,
+    IsLabCoordinatorReadWrite,
     IsLabMember,
     LabsRole,
     clear_labs_roles_cache,
@@ -51,8 +54,10 @@ class TestEffectiveLabsRoles:
     def test_group_without_labs_role_grants_nothing(self):
         assert effective_labs_roles(_user_with_roles("access-blank", "")) == frozenset()
 
-    def test_unknown_stored_role_is_ignored(self):
-        assert effective_labs_roles(_user_with_roles("access-unknown", "root")) == frozenset()
+    def test_unknown_role_is_rejected_by_the_database(self):
+        group = Group.objects.create(name="access-unknown")
+        with pytest.raises(IntegrityError), transaction.atomic():
+            URSGroup.objects.create(group=group, urs_group_id=next(_URS_IDS), labs_role="root")
 
     @pytest.mark.parametrize(
         ("stored_role", "expected"),
@@ -137,8 +142,27 @@ class TestLabsPermissionClasses:
 
     @pytest.mark.parametrize("permission", [IsLabAdmin, IsLabCoordinator, IsLabMember])
     @pytest.mark.parametrize("method", ["GET", "HEAD", "OPTIONS"])
-    def test_reads_allow_any_authenticated_user(self, permission, method):
-        assert permission().has_permission(_request(method, _user_with_roles("access-reader")), view=None)
+    def test_reads_require_a_labs_role(self, permission, method):
+        no_role = _user_with_roles("access-reader-none")
+        blank_role = _user_with_roles("access-reader-blank", "")
+        plain_user = _user_with_roles("access-reader-user", "user")
+        assert not permission().has_permission(_request(method, no_role), view=None)
+        assert not permission().has_permission(_request(method, blank_role), view=None)
+        assert permission().has_permission(_request(method, plain_user), view=None)
+
+    @pytest.mark.parametrize(
+        ("permission", "allowed_roles"),
+        [
+            (IsLabCoordinatorReadWrite, {"admin", "coord"}),
+            (IsLabAdminReadWrite, {"admin"}),
+        ],
+    )
+    @pytest.mark.parametrize("role", ["admin", "coord", "user", ""])
+    def test_strict_classes_gate_reads_and_writes(self, permission, allowed_roles, role):
+        user = _user_with_roles(f"access-strict-{permission.__name__}-{role or 'blank'}", role)
+        for method in ("GET", "HEAD", "OPTIONS", "POST", "PATCH", "DELETE"):
+            allowed = permission().has_permission(_request(method, user), view=None)
+            assert allowed is (role in allowed_roles), method
 
     @pytest.mark.parametrize("permission", [IsLabAdmin, IsLabCoordinator, IsLabMember])
     @pytest.mark.parametrize("method", ["GET", "POST", "DELETE"])

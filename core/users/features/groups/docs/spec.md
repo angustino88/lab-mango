@@ -1,32 +1,35 @@
 # Feature Specification: User Groups & Role-Based Access Control (`core/users/features/groups`)
 
 ## 1. Domain Overview & Purpose
-The User Groups feature bridges Django's standard authorization group model with enterprise URS (User Rights Service) roles, providing hierarchical permission sets (`admin`, `coordinator`, `engineer`, `viewer`, `guest`).
+Exposes Django authorization groups and their members. Membership comes from URS sync
+(`core/users/features/urs_sync`); each URS-linked group carries one Labs role (`core/users/access.py`).
 
 ---
 
 ## 2. Data Models & Constraints
 
 ### 2.1 `django.contrib.auth.models.Group`
-- Standard group entity storing `name` (unique) and permissions.
+- Standard group entity storing `name` (unique) and permissions. Changes in Django admin: superusers only.
 
 ### 2.2 `core.users.models.URSGroup`
-- **Purpose:** Associates an external enterprise URS directory identifier with an internal Lab Mango group and role tier.
+- **Purpose:** Links a URS service ID to one Django group and one Labs role.
 - **Key Fields:**
-  - `group` (OneToOneField `Group`, on_delete=CASCADE, related_name="urs_metadata").
-  - `urs_group_id` (IntegerField, unique, indexed).
-  - `labs_role`: CharField enum with choices:
-    - `admin`: Full system, user, and financial configuration rights.
-    - `coordinator`: Equipment lifecycle management, booking approvals, status changes.
-    - `engineer`: Bench booking, equipment usage, support ticket reporting.
-    - `viewer`: Read-only operational inspection.
-    - `guest`: Restricted visitor profile.
+  - `group` (OneToOneField `Group`, `on_delete=SET_NULL`, nullable).
+  - `urs_group_id` (PositiveBigIntegerField, unique: `users_ursgroup_unique_urs_group_id`).
+  - `labs_role`: `admin`, `coord`, `user`, or empty (no role); checked by `users_ursgroup_valid_labs_role`.
+    Roles imply lower ones: `admin` > `coord` > `user`.
+  - `active`: only active groups are synced by the scheduled task.
+  - `last_sync_at`, `last_sync_status` (`applied`, `blocked`, `failed`), `last_sync_message`: written by sync.
 
 ---
 
-## 3. API Endpoints & Transport Contracts
+## 3. Authorization
+Both endpoints require the Labs `admin` role (`IsLabAdminReadWrite`): membership reveals who holds which
+role (owner decision, 2026-11-11). Superusers hold every role.
+
+## 4. API Endpoints & Transport Contracts
 
 | Method & Path | View Class | Request Params | Success Contract | Problem Codes |
 |---|---|---|---|---|
-| `GET /api/user-groups` | `ListGroupUserView` | `PageNumberQuerySerializer` (`page`, `page_size`) | `Paginated[UserGroupSerializer]` (`id`, `name`, `user_count`) | 400, 401 |
-| `GET /api/user-groups/{group_id}/users` | `ListUsersInGroupView` | Path `{group_id}`, `page`, `page_size` | `Paginated[UserGroupMemberSerializer]` (`id`, `name`) | 400, 401, 404 |
+| `GET /api/user-groups` | `ListGroupUserView` | `PageNumberQuerySerializer` (`page`, `page_size`) | `Paginated[UserGroupSerializer]` (`id`, `name`, `user_count`, `users_url`) | 400, 401, 403 |
+| `GET /api/user-groups/{group_id}/users` | `ListUsersInGroupView` | Path `{group_id}`, `page`, `page_size` | `Paginated[UserGroupMemberSerializer]` (`id`, `name`) | 400, 401, 403, 404 |

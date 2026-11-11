@@ -10,7 +10,9 @@ from uuid import UUID
 
 from core.users.access import (
     IsLabAdmin,
+    IsLabAdminReadWrite,
     IsLabCoordinator,
+    IsLabCoordinatorReadWrite,
     IsLabMember,
     LabsRole,
     clear_labs_roles_cache,
@@ -130,7 +132,9 @@ __all__ = [
     "SetUserActiveInput",
     "UnlinkEntraIdentityInput",
     "IsLabAdmin",
+    "IsLabAdminReadWrite",
     "IsLabCoordinator",
+    "IsLabCoordinatorReadWrite",
     "IsLabMember",
     "LabsRole",
     "NotificationRecipientProfile",

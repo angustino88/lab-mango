@@ -254,6 +254,11 @@ URS_API_URL = env("URS_API_URL", default="https://rb-pandora-n1.bosch.com:15000/
 URS_API_VERIFY_SSL = env.bool("URS_API_VERIFY_SSL", default=False)
 # Service token sent to the URS API. Empty by default: sync fails closed when unset.
 URS_ACCESS_TOKEN = env("URS_ACCESS_TOKEN", default="")
+URS_API_TIMEOUT_S = env.int("URS_API_TIMEOUT_S", default=15)
+# Safety check: a group sync that removes every member, or more than this share of a group with at
+# least URS_SYNC_BRAKE_MIN_MEMBERS members, is blocked until an operator forces it in Django admin.
+URS_SYNC_MAX_REMOVAL_RATIO = env.float("URS_SYNC_MAX_REMOVAL_RATIO", default=0.5)
+URS_SYNC_BRAKE_MIN_MEMBERS = env.int("URS_SYNC_BRAKE_MIN_MEMBERS", default=10)
 
 # ADMIN
 # ------------------------------------------------------------------------------

@@ -6,11 +6,10 @@ from drf_api_contracts import (
     ResponseContract,
 )
 from rest_framework import serializers
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_api_key.permissions import HasAPIKey
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.users.access import IsLabAdminReadWrite
 
 
 class UserGroupSerializer(serializers.Serializer):
@@ -39,11 +38,14 @@ class ListGroupUserView(AppListAPIView):
     """List user authorization groups with membership counts."""
 
     schema_tags = ("User Groups",)
-    permission_classes = [HasAPIKey | IsAuthenticated]
+    # Group membership shows who holds which role: lab administrators only.
+    permission_classes = [IsLabAdminReadWrite]
     get_contract = OperationContract(
         query=PageNumberQuerySerializer,
         success=ResponseContract.paginated("UserGroupList", UserGroupSerializer),
         bad_request=ResponseContract.bad_request(),
+        unauthorized=ResponseContract.unauthorized(),
+        forbidden=ResponseContract.forbidden(),
     )
 
     def handle_get(self, request, *args, **kwargs):
@@ -58,11 +60,14 @@ class ListUsersInGroupView(AppListAPIView):
     """List members belonging to a specific user group."""
 
     schema_tags = ("User Groups",)
-    permission_classes = [HasAPIKey | IsAuthenticated]
+    # Group membership shows who holds which role: lab administrators only.
+    permission_classes = [IsLabAdminReadWrite]
     get_contract = OperationContract(
         query=UserGroupMembersQuerySerializer,
         success=ResponseContract.paginated("UserGroupMemberList", UserGroupMemberSerializer),
         bad_request=ResponseContract.bad_request(),
+        unauthorized=ResponseContract.unauthorized(),
+        forbidden=ResponseContract.forbidden(),
         not_found=ResponseContract.not_found(),
     )
 

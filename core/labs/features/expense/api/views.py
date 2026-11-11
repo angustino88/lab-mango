@@ -18,12 +18,12 @@ from core.labs.features.expense.public import (
     CreateExpenseInput,
     CreateExpensePaymentInput,
 )
-from core.users.public import IsLabCoordinator
+from core.users.public import IsLabCoordinatorReadWrite
 
 
 class ExpenseAPIView(AppListAPIView, CommandAPIView):
-    # Reads: any authenticated user (existing rule, open question). Writes: lab admins, coordinators, and API keys.
-    permission_classes = [HasAPIKey | IsLabCoordinator]
+    # Reads and writes: lab coordinators and admins (owner decision 2026-11-11), and API keys.
+    permission_classes = [HasAPIKey | IsLabCoordinatorReadWrite]
 
 
 class RoomExpenseListCreateAPIView(ExpenseAPIView):

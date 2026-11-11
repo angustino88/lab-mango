@@ -57,7 +57,7 @@ class GroupFactory(DjangoModelFactory):
 class URSGroupFactory(DjangoModelFactory):
     group = factory.SubFactory(GroupFactory)
     urs_group_name = Faker("word")
-    urs_group_id = Faker("random_int", min=1000, max=9999)
+    urs_group_id = factory.Sequence(lambda n: 1000 + n)
     active = True
 
     class Meta:

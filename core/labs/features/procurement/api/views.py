@@ -39,17 +39,17 @@ from core.labs.features.procurement.public import (
     UpdatePurchaseDraftInput,
 )
 from core.labs.features.procurement.exceptions import PurchaseETagRequired, PurchaseMachineWriteForbidden
-from core.users.public import IsLabCoordinator
+from core.users.public import IsLabCoordinatorReadWrite
 
 
 class ProcurementAPIView(AppListAPIView, CommandAPIView):
-    # Reads: any authenticated user (existing rule, open question). Writes: lab admins, coordinators, and API keys.
-    permission_classes = [HasAPIKey | IsLabCoordinator]
+    # Reads and writes: lab coordinators and admins (owner decision 2026-11-11), and API keys.
+    permission_classes = [HasAPIKey | IsLabCoordinatorReadWrite]
 
 
 class PurchasePriorityOptionsAPIView(FeatureAPIView):
     schema_tags = ("Procurement",)
-    permission_classes = [HasAPIKey | IsLabCoordinator]
+    permission_classes = [HasAPIKey | IsLabCoordinatorReadWrite]
     get_contract = OperationContract(
         query=PurchasePriorityQuerySerializer,
         success=ResponseContract.success("PurchasePriorityOptions", PurchasePriorityOptionSerializer, many=True),

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import BooleanField, CharField
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 from model_utils.fields import MonitorField
 
@@ -48,6 +49,9 @@ class User(AbstractUser):
 
     class Meta(AbstractUser.Meta):
         constraints = [
+            # URS and Entra match usernames case-insensitively; two accounts differing only in case
+            # would make that match ambiguous.
+            models.UniqueConstraint(Lower("username"), name="users_user_username_ci_unique"),
             models.CheckConstraint(
                 condition=models.Q(account_type__in=["PROVIDER", "STAFF", "CUSTOMER"]),
                 name="users_user_valid_account_type",

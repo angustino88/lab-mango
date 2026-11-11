@@ -1,6 +1,6 @@
 # User Roles and URS Group Sync Proposal
 
-**Status:** Proposed — not approved, nothing implemented
+**Status:** In implementation on branch `claude/bold-volta-rjje8r` (2026-11-11); T2, needs review and owner approval before merge
 **Risk tier:** T2 — authorization, background job, external integration, migration
 **Scope:** `core/users/access.py`, `core/common/api/permissions.py`, `core/users/models/urs_group.py`,
 `core/users/features/urs_sync/`, `core/users/tasks.py`, `core/users/admin.py`,
@@ -186,11 +186,43 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 - [ ] Tests for each acceptance criterion; quality gates from `docs/ai-team/quality-gates.md`.
 - [ ] When an item is approved and implemented, fold its rule into the owning spec and remove it here.
 
+## Owner decisions (2026-11-11)
+
+| Question | Answer | Effect |
+| --- | --- | --- |
+| Safety brake share (R1) | Unknown | Default: block an empty answer, and removal of more than 50 % of a group with at least 10 members; both settings are configurable |
+| Same account name in two domains (R7) | One account name is the same person | Keep dropping the domain; documented in the sync spec |
+| Reads without a Labs role; plain users reading procurement and expenses (R9) | No | Labs permission classes require a role to read; procurement, expenses and finance reports require coordinator |
+| Who may list groups and members (R8) | Admin | Group endpoints require the Labs `admin` role |
+| Where roles are configured | Django admin | Admin workflow improved (R3, L6) |
+
+## Implementation status
+
+| Item | Status | Where |
+| --- | --- | --- |
+| R1 safety brake, strict response check | Done | `urs_sync/sync_group/service.py`, settings `URS_SYNC_*` |
+| R2 case-insensitive matching, unmanaged accounts skipped, DB constraint | Done | service; `User` constraint `users_user_username_ci_unique` (migration 0005) |
+| R3 role-granting fields superuser-only | Done | `core/users/admin.py` (users, URS groups, Django groups) |
+| R4 API keys on money endpoints | Not in this change | Authentication proposal M11 |
+| R5 single apply transaction with advisory lock; admin action queued | Done | service; `core/users/tasks.py` (`users.urs_sync.sync_selected_groups`) |
+| R6 invalid usernames skipped | Done | service |
+| R7 domain | Decided: keep dropping | sync spec |
+| R8 group list admin-only | Done | `groups/list_groups/api.py`, OpenAPI regenerated |
+| R9 reads need a role | **Partly done:** views using `IsLabAdmin`, `IsLabCoordinator`, `IsLabMember` (bench bookings, agents, computing) and the coordinator-only areas (procurement, expenses, finance reports). **Open:** other Labs views still use `HasAPIKey \| IsAuthenticated` from the shared base view; requiring a role there needs a Labs-level base permission (`core.common` may not import `core.users`) | `core/users/access.py`, labs views |
+| R10 document which permission system governs what | Not done | |
+| R11 role check and unique URS id constraints | Done | `URSGroup` constraints (migration 0005) |
+| L1 code uses settings value | Done (default still `False`, see authentication H5) | service |
+| L2 spec | Done | `urs_sync/docs/spec.md`, `groups/docs/spec.md` |
+| L3 timeout setting | Done (`URS_API_TIMEOUT_S=15`); calls still sequential | settings |
+| L4 extra queries | Done | service |
+| L5 admin error text | Done | admin |
+| L6 sync report and last status per group | Done | `URSGroup.last_sync_*`, admin list |
+
+Migration 0005 stops with a clear message before adding constraints when existing data has case-variant
+usernames, duplicate URS ids or unknown roles. Check production-like data before deploying.
+
 ## Open questions for the owner
 
-1. **Safety brake (R1).** What share of a group may disappear in one sync before it needs a human check?
-2. **Domains (R7).** Which URS domains are valid (for example `apac`), and can the same account name exist
-   in two domains?
-3. **Reads (R9).** Should a user with no Labs role be able to read Labs data, and should procurement and
-   expenses be readable by plain users?
-4. **Directory (R8).** Who may see the list of groups and their members?
+1. **R9 follow-up.** Should every other Labs endpoint (benches, equipment, rooms, analytics, ...) also
+   require a Labs role to read? It is a wider change across all Labs features.
+2. **R1 limits.** Keep 50 % and 10 members, or choose other values?

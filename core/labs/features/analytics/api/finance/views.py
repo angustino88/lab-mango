@@ -1,4 +1,4 @@
-"""Additive finance reads with existing authenticated-or-API-key access."""
+"""Finance reads for lab coordinators and admins (owner decision 2026-11-11), and API keys."""
 
 from collections.abc import Callable
 from typing import Any
@@ -8,10 +8,12 @@ from drf_api_contracts import OperationContract, ResponseContract
 from drf_spectacular.utils import extend_schema
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework_api_key.permissions import HasAPIKey
 
 from core.common.api.correlation import REQUEST_ID_HEADER, get_request_id
 from core.common.api.exceptions import api_exception_handler
 from core.labs.features.base.common import FeatureAPIView
+from core.users.public import IsLabCoordinatorReadWrite
 
 from ...public import AnalyticsValidationError, get_finance_breakdown, get_finance_monthly_trends, get_finance_summary
 from .schema import FinanceAutoSchema
@@ -27,6 +29,7 @@ from .throttles import FinanceCallerThrottle
 
 @extend_schema(parameters=[FinanceQuerySerializer])
 class _FinanceAPIView(FeatureAPIView):
+    permission_classes = [HasAPIKey | IsLabCoordinatorReadWrite]
     throttle_classes = [FinanceCallerThrottle]
     schema = FinanceAutoSchema()
     schema_tags = ("Analytics",)
