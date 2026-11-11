@@ -45,6 +45,7 @@ session links → operating calendar → analytics rebuild, with the finance fix
 | O16 | Session logs are kept forever. |
 | O17 | Only lab admins may exclude or restore a session log (existing `IsLabAdmin`). |
 | O18 | There is no data policy restricting session-log personal data. Remote user and remote IP are kept forever with no removal path. |
+| O19 | Session-log limits confirmed: logout at most 5 minutes after server time, login at most 7 days before server time, sessions over 24 hours flagged (§5.6). |
 
 ## 3. Current state: lab analytics
 
@@ -479,7 +480,7 @@ Track A (lab analytics) is strictly ordered. Track B (finance) can run in parall
 
 | WP | Deliverable | Depends on | Done when |
 | --- | --- | --- | --- |
-| A0 | Decisions: fields the agent may send, retention period, correction path, overlap rule (§5.3), roles for the session list and per-user reports | none | Done (O8–O13), except retention (§11) |
+| A0 | Decisions: fields the agent may send, retention period, correction path, overlap rule (§5.3), roles for the session list and per-user reports | none | Done (O8–O19) |
 | A1 | `POST /agent/session-logs` and its path in `agent/info` (§5.1, §5.5.2), with the hard limits of §5.6 | A0 | A completed session posted twice creates one row; same event id with a different body returns 409; computer comes from agent identity; only the O9 fields are accepted |
 | A1b | `POST /agent/bookings/actions/validate` (§5.5.1) | none | Eligible only for an approved, active booking on the computer's bench inside its window; every failure returns the same answer |
 | A2 | Session links and session kind (§5.2), resolved at ingestion; backfill for existing rows | A1 | Each session has a kind; bench resolves from assignment at login time; unmatched codes are countable |
@@ -538,10 +539,12 @@ passed, failed or not run, with the exact command.
 | 12 | Who may exclude a session log | Lab admins only (O17) |
 | 13 | Data policy for remote user and IP | None applies; kept forever (O18) |
 
+| 14 | Session-log limits | 5 minutes, 7 days, 24 hours confirmed (O19) |
+
 ### Still open
 
-1. **Limits in §5.6:** confirm or change the values: 5 minutes of clock tolerance, 7 days maximum age,
-   24 hours before a session is flagged.
+None for the session log (Track A). Track B work packages each need their own design note and
+approval before merge (O14).
 
 ## 12. Facts, assumptions and residual risks
 
