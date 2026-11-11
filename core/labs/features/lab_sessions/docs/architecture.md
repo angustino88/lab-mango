@@ -4,7 +4,7 @@
 - **Status:** Implemented on branch for review; merge requires human approval
 - **Date:** 2026-11-11
 - **Parent proposal:** [finance and lab analytics](../../../../../docs/proposals/finance-and-lab-analytics.md),
-  work packages A1 and A1b, owner decisions O1–O19
+  work packages A1, A1b and A2, owner decisions O1–O23
 
 ## 1. Purpose and scope
 
@@ -22,8 +22,10 @@ Also delivered with this change (A1b), owned by `bench_bookings`, not by this fe
 
 - `check_agent_booking_login` and `POST /agent/bookings/actions/validate` (§6).
 
-Out of scope, later work packages: stored session kind and booking, bench and user links (A2); flags,
-exclusion and the session list (A6); recompute of links (A10).
+A2 (§11) adds the stored access type and the booking, bench and user links.
+
+Out of scope, later work packages: flags, exclusion and the session list (A6); recompute of links after
+master-data corrections (A10).
 
 ## 2. Ownership
 
@@ -179,3 +181,86 @@ Known gap, not changed here: neither `activate_bench_bookings` nor
 `activate_bench_booking_for_computing_activity` has a production caller. The agent activity report
 (`PATCH /agent/equipment/activity`) does not call them, so bookings do not move to `in_progress` from
 agent activity today.
+
+## 11. A2: access type and session links
+
+### 11.1 Owner decisions
+
+| ID | Decision |
+| --- | --- |
+| O22 | The session kind is stored as `access_type` with values `booked` ("Booked"), `ad_hoc` ("Ad hoc (no booking)") and `unverified_booking` ("Booking not verified"). |
+| O23 | A session links to an app user when its remote login name, ignoring case and any `DOMAIN\` prefix, equals exactly one active username. Otherwise the user link stays empty. |
+
+### 11.2 Fields on `LabSessionLog`
+
+| Field | Type | Delete rule | Meaning |
+| --- | --- | --- | --- |
+| `access_type` | `CharField(32)`, choices `SessionAccessType`, nullable | — | How the user got access. Null only on rows stored before A2 and not yet backfilled. |
+| `booking` | FK `BenchBooking`, nullable | `SET_NULL` | The verified booking; set only when `access_type` is `booked`. |
+| `bench` | FK `Bench`, nullable | `SET_NULL` | The bench the computer was placed on at login time. |
+| `user` | FK user, nullable | `SET_NULL` | The app user resolved from `remote_user` (O23). |
+
+`SET_NULL` because the session stays valid history without the target (model conventions §5), and
+bench and booking deletion paths must keep working (AGENTS.md rule 1). Raw values (`booking_code`,
+`remote_user`, computer) are kept, so a link can be recomputed.
+
+### 11.3 Resolution at ingestion
+
+Resolved once, inside `record_session_log`, from facts read before the insert:
+
+1. **Bench:** the computer's bench placement covering `login_time`
+   (`assigned_at` ≤ login < `unassigned_at`, or still active), through `equipment.public`.
+2. **Access type and booking:**
+   - no booking code → `ad_hoc`;
+   - code matches a bench booking that is approved, not cancelled, on the resolved bench, with
+     `starts_at` ≤ `login_time` < `ends_at` → `booked`, with the booking linked;
+   - any other code → `unverified_booking`, no booking linked.
+
+   `expired` and `completed` bookings still verify: because activation has no production caller, a
+   used booking can end as `expired`. The pure rule is `classify_access` in `lab_sessions.application`;
+   the booking facts come from `bench_bookings.public`.
+3. **User:** `users.public.resolve_user_id_for_login_name` (O23).
+
+Classification is a snapshot at ingestion. A later booking change does not reclassify a stored
+session; that is the recompute job (A10). Replay comparison (§4) uses only the pushed values, so a
+retry never fails because master data changed in between.
+
+### 11.4 Constraints
+
+| Name | Rule | Why |
+| --- | --- | --- |
+| `labsess_access_type_matches_code` | `access_type` is null, or `ad_hoc` with no code, or `booked`/`unverified_booking` with a code | A kind cannot contradict the pushed code |
+| `labsess_booking_only_when_booked` | `booking` is null, or `access_type` is `booked` | Only verified sessions point at a booking |
+
+`booked` with a null booking stays legal so that deleting a booking (`SET_NULL`) is never blocked.
+Indexes: `(bench, login_time)`, `(user, login_time)`, `(access_type, login_time)` for the reports A4
+and A5 will run; the booking FK has Django's default index.
+
+### 11.5 Migration and backfill
+
+- **Expand:** one migration adds the four nullable columns, two constraints and three indexes. The
+  table has no production writer before A1, so it is expected to be small; existing rows satisfy the
+  constraints because `access_type` starts null.
+- **Migrate:** `resolve_session_links(*, batch_size, max_batches)` fills rows whose `access_type` is
+  null, in primary-key order, one transaction per batch, with `select_for_update(skip_locked=True)`.
+  Idempotent and resumable: a filled row is never selected again. Entry point:
+  `manage.py backfill_session_links`. Rows without a login time get the access type from the code and
+  no bench or booking.
+- **Contract:** making `access_type` non-null is a later change, after the backfill reports zero rows.
+- **Rollback:** reverse the migration (drops the columns). No pushed value is lost, because links are
+  derived.
+
+### 11.6 API
+
+`POST /agent/session-logs` responses add `access_type`. Additive, non-breaking (VER-2).
+
+### 11.7 Tests
+
+| Criterion | Test |
+| --- | --- |
+| Each access type and its booking link | `test_application.py::test_access_type_*` |
+| Bench at login time, not current bench | `test_bench_is_the_placement_at_login_time` |
+| User match: case, domain prefix, inactive, ambiguous | `test_user_link_*`, `core/users` resolver tests |
+| Constraints | `test_access_type_constraints` |
+| Backfill idempotent and batched | `test_backfill_*` |
+| Response includes access type | agent HTTP tests |

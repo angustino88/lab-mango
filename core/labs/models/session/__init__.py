@@ -1,5 +1,6 @@
-from .lab_session import LabSessionLog
+from .lab_session import LabSessionLog, SessionAccessType
 
 __all__ = [
     "LabSessionLog",
+    "SessionAccessType",
 ]

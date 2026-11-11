@@ -107,6 +107,7 @@ def test_public_module_exports_supported_queries_and_commands():
         "RemovePlacementInput",
         "place_equipment",
         "remove_placement",
+        "bench_id_at",
         "get_active_placement",
         "has_active_placements",
         "assign_equipment",

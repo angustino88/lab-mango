@@ -54,6 +54,8 @@ def test_push_stores_session_for_the_agents_computer(enrolled):  # noqa: F811
     assert response.status_code == 201, response.json()
     data = response.json()["data"]
     assert data["event_id"] == payload["event_id"] and data["booking_code"] == "BK-7F3K9Q"
+    # The enrolled computer stands on no bench, so the code cannot verify.
+    assert data["access_type"] == "unverified_booking"
     stored = LabSessionLog.objects.get(pk=data["id"])
     assert stored.computing_equipment_id == identity.equipment_id
     assert stored.agent_id == str(identity.agent_uid)
@@ -91,6 +93,7 @@ def test_temp_login_has_no_booking_code(enrolled, code):  # noqa: F811
 
     assert response.status_code == 201, response.json()
     assert response.json()["data"]["booking_code"] is None
+    assert response.json()["data"]["access_type"] == "ad_hoc"
 
 
 def test_booking_code_may_be_omitted(enrolled):  # noqa: F811

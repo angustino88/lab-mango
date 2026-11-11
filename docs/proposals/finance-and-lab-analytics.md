@@ -1,6 +1,6 @@
 # Design: Finance, Procurement, Expense and Lab Analytics — Review and Implementation Plan
 
-- **Tier:** T2 · **Status:** Draft; session-log decisions and finance direction recorded; A1 and A1b implemented on branch `claude/loving-hopper-n5grpk`, pending review and approval · **Date:** 2026-11-10, updated 2026-11-11
+- **Tier:** T2 · **Status:** Draft; session-log decisions and finance direction recorded; A1, A1b and A2 implemented on branch `claude/loving-hopper-n5grpk`, pending review and approval · **Date:** 2026-11-10, updated 2026-11-11
 - **Note:** main was redesigned after this review (single equipment table; `EquipmentAssignment` now holds every placement, with `EquipmentAssignment.objects` returning bench placements only). Model names in §3–§4 refer to the code as reviewed on 2026-11-10.
 - **Domain:** Labs (`procurement`, `expense`, `analytics`, session log, agent session ingestion)
 - **Scope of this change:** documentation only. No code, schema, API or permission was changed.
@@ -49,6 +49,8 @@ session links → operating calendar → analytics rebuild, with the finance fix
 | O19 | Session-log limits confirmed: logout at most 5 minutes after server time, login at most 7 days before server time, sessions over 24 hours flagged (§5.6). |
 | O20 | An agent may not log a user in before the booking's start time. |
 | O21 | Only approved bookings pass agent validation; pending and rejected bookings do not. |
+| O22 | The session kind is stored as `access_type`: `booked`, `ad_hoc` (no booking, formerly "temp login"), `unverified_booking`. |
+| O23 | A session links to an app user when its remote login name, ignoring case and any `DOMAIN\` prefix, equals exactly one active username. |
 
 ## 3. Current state: lab analytics
 
@@ -208,18 +210,18 @@ renewals.
 | Bench | Resolved from the computer's equipment assignment at login time, not from the booking. |
 | User | Resolved from the remote user where a mapping exists; otherwise left empty and reported as unmapped. |
 
-Session kind, stored on the row:
+Access type (`access_type`, O22), stored on the row:
 
-| Kind | Condition |
+| Value | Condition |
 | --- | --- |
-| `booked` | Booking code present and matches a booking |
-| `temp_login` | No booking code (O3, O4) |
-| `unmatched` | Booking code present but matches no booking for this computer |
+| `booked` | Booking code present and verified against a booking (§11 of the lab sessions design) |
+| `ad_hoc` | No booking code (O3, O4) |
+| `unverified_booking` | Booking code present but does not verify for this computer and login time |
 
 The backend holds no temp-login time rule (O3).
 
 The agent already validates the booking before login (O12). The backend still resolves the code itself
-rather than trusting the client, but `unmatched` is not an expected case: it means the booking was
+rather than trusting the client, but `unverified_booking` is not an expected case: it means the booking was
 cancelled or moved after login, or the agent check failed. It is reported as a data-quality alert.
 
 ### 5.3 Used time, including benches with several computers
@@ -341,7 +343,7 @@ Called once after logout (O1, O13). Body:
 | `401` / `429` | Bad signature / rate limit. |
 
 The race guard is the existing unique rule `unique_session_report_per_agent` (computer, agent, event id).
-The insert and the booking and bench resolution happen in one transaction. An `unmatched` code is
+The insert and the booking and bench resolution happen in one transaction. An `unverified_booking` code is
 stored, not rejected, because the session really happened.
 
 ### 5.6 Wrong records
@@ -356,7 +358,7 @@ are the cases expected in practice:
 | W3 | A disk image with the agent's identity is copied to a second PC | Both PCs report as one computer | Admin excludes the affected rows; IT re-enrols the agent |
 | W4 | IT staff log in to install software before the bench opens | Setup work counts as lab use | Admin excludes the rows with reason "maintenance" |
 | W5 | A PC is moved to another bench, but the assignment is updated a week late | That week's use counts for the old bench | Fix the assignment history and recompute the bench link; the raw row is untouched |
-| W6 | The booking is cancelled after the user has logged in | The session becomes `unmatched` | Kept as recorded; shown in the data-quality list |
+| W6 | The booking is cancelled after the user has logged in | The session becomes `unverified_booking` | Kept as recorded; shown in the data-quality list |
 | W7 | An agent bug sends one session twice with different event ids | Usage doubles | Flagged as probable duplicate (same computer, same login and logout); admin excludes one |
 
 Mechanisms:
@@ -410,7 +412,7 @@ Where each example is caught and fixed:
 | W3 | Copied disk image | Not detectable automatically; noticed when one computer shows two users at once | `POST /api/agents/{id}/actions/revoke`, re-enrol each PC; admin excludes the mixed rows with reason `wrong_computer` |
 | W4 | IT staff setup sessions | Not detectable automatically | Admin filters the list by computer and date, then excludes with reason `maintenance` |
 | W5 | PC moved, assignment updated late | Not detectable automatically | Correct the past assignment date in `equipment` (missing today), then `.../actions/recompute-links` for that computer and period |
-| W6 | Booking cancelled after login | `POST /agent/session-logs` stores it as kind `unmatched` | No fix needed; listed by `GET /api/labs/session-logs?kind=unmatched` |
+| W6 | Booking cancelled after login | `POST /agent/session-logs` stores it as access type `unverified_booking` | No fix needed; listed by `GET /api/labs/session-logs?access_type=unverified_booking` |
 | W7 | Same session sent twice with different ids | `POST /agent/session-logs` stores it with flag `probable_duplicate` | Admin excludes one copy with reason `duplicate` |
 
 After any exclusion, restore or recompute, every report (`analytics`, `leaderboard`) reflects it on its
@@ -486,7 +488,7 @@ Track A (lab analytics) is strictly ordered. Track B (finance) can run in parall
 | A0 | Decisions: fields the agent may send, retention period, correction path, overlap rule (§5.3), roles for the session list and per-user reports | none | Done (O8–O19) |
 | A1 | `POST /agent/session-logs` and its path in `agent/info` (§5.1, §5.5.2), with the hard limits of §5.6 | A0 | A completed session posted twice creates one row; same event id with a different body returns 409; computer comes from agent identity; only the O9 fields are accepted. **Implemented on branch**; design in `core/labs/features/lab_sessions/docs/architecture.md` |
 | A1b | `POST /agent/bookings/actions/validate` (§5.5.1) | none | Eligible only for an approved, active booking on the computer's bench inside its window; every failure returns the same answer. **Implemented on branch** |
-| A2 | Session links and session kind (§5.2), resolved at ingestion and returned by the push; backfill for existing rows | A1 | Each session has a kind; bench resolves from assignment at login time; unmatched codes are countable |
+| A2 | Session links and session kind (§5.2), resolved at ingestion and returned by the push; backfill for existing rows | A1 | Each session has a kind; bench resolves from assignment at login time; unmatched codes are countable. **Implemented on branch** as `access_type` (`booked`, `ad_hoc`, `unverified_booking`), O22–O23 |
 | A3 | Operating calendar stage 1: timezone and weekly hours, inherited (§6) | none | Available hours for a room and day come from the calendar, in the lab's timezone |
 | A4 | Fact tables and backfillable job (§7), with computer active time and bench occupied time (§5.3) | A2, A3 | Re-running a day is idempotent; a missed day can be backfilled; the §5.3 example gives 3.0 h used and 0.5 h overrun |
 | A5 | Rebuilt reports and new endpoints; legacy endpoints deprecated with a sunset date | A4 | Three-way booked/used split and calendar-based utilisation match hand-checked samples |

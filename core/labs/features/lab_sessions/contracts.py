@@ -7,13 +7,17 @@ from uuid import UUID
 
 @dataclass(frozen=True, slots=True)
 class SessionLogRecord:
-    """A stored session log; ``created`` is False when the push was a replay of a stored record."""
+    """A stored session log; ``created`` is False when the push was a replay of a stored record.
+
+    ``access_type`` is None only for a replay of a row stored before access types existed.
+    """
 
     id: int
     event_id: UUID
     login_time: datetime
     logout_time: datetime
     booking_code: str | None
+    access_type: str | None
     created: bool
 
 

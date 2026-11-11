@@ -5,6 +5,7 @@ from typing import Any
 
 from django.db.models import Q, QuerySet
 
+from core.labs.features.bench_bookings.contracts import SessionBookingFacts
 from core.labs.models import BenchBooking, Booking, BookingApprovalStatus, BookingStatus, LabProject
 from core.users.public import LabsRole, has_labs_role
 
@@ -130,6 +131,25 @@ def get_bench_booking_by_code(*, booking_code: str):
 def find_bench_booking_for_agent_login(*, booking_code: str) -> BenchBooking | None:
     """The booking with this code and the users it names, or None. One query."""
     return BenchBooking.objects.select_related("requester", "creator").filter(booking_code=booking_code).first()
+
+
+def find_session_booking_facts(*, booking_code: str) -> SessionBookingFacts | None:
+    """Facts of the booking with this code, or None. One query."""
+    row = (
+        BenchBooking.objects.filter(booking_code=booking_code)
+        .values("pk", "bench_id", "starts_at", "ends_at", "status", "approval_status")
+        .first()
+    )
+    if row is None:
+        return None
+    return SessionBookingFacts(
+        booking_id=row["pk"],
+        bench_id=row["bench_id"],
+        starts_at=row["starts_at"],
+        ends_at=row["ends_at"],
+        status=row["status"],
+        approval_status=row["approval_status"],
+    )
 
 
 def conflicting_bench_bookings(*, bench_id, starts_at, ends_at, exclude_id=None):

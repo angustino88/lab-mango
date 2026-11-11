@@ -62,7 +62,7 @@ from .queries.equipment import (
 )
 from .queries.inactivity_notifications import inactive_equipment_candidates
 from .queries.loans import get_active_loan, get_loan_batch, list_loans
-from .queries.placements import get_active_placement, has_active_placements
+from .queries.placements import bench_id_at, get_active_placement, has_active_placements
 from .queries.reservations import list_reservations
 from .queries.state_history import equipment_state_timelines
 from .queries.summaries import (
@@ -118,6 +118,7 @@ __all__ = (
     "get_loan_batch",
     "list_loans",
     "list_reservations",
+    "bench_id_at",
     "get_active_placement",
     "has_active_placements",
     "place_equipment",

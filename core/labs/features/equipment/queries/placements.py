@@ -1,5 +1,9 @@
 """Read-only placement queries (redesign step 1)."""
 
+from datetime import datetime
+
+from django.db.models import Q
+
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 
@@ -26,4 +30,19 @@ def has_active_placements(*, room_id: int | None = None, station_id: int | None 
     ).exists()
 
 
-__all__ = ("get_active_placement", "has_active_placements")
+def bench_id_at(*, equipment_id: int, at: datetime) -> int | None:
+    """The bench the unit was placed on at ``at``, from placement history, or None. 1 query.
+
+    A placement covers the half-open range [assigned_at, unassigned_at). Deleted benches still count:
+    the question is where the unit was, not whether the bench exists today.
+    """
+    return (
+        EquipmentAssignment.objects.filter(equipment_id=equipment_id, assigned_at__lte=at)
+        .filter(Q(unassigned_at__isnull=True) | Q(unassigned_at__gt=at))
+        .order_by("-assigned_at", "-pk")
+        .values_list("bench_id", flat=True)
+        .first()
+    )
+
+
+__all__ = ("bench_id_at", "get_active_placement", "has_active_placements")

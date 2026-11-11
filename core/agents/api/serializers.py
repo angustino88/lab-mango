@@ -5,7 +5,7 @@ import math
 from rest_framework import serializers
 
 from core.agents.models import AgentIdentity
-from core.labs.models import ComputingActivityStatus
+from core.labs.models import ComputingActivityStatus, SessionAccessType
 
 
 class AgentIdentitySerializer(serializers.ModelSerializer):
@@ -169,6 +169,15 @@ class AgentSessionLogDataSerializer(serializers.Serializer):
     login_time = serializers.DateTimeField()
     logout_time = serializers.DateTimeField()
     booking_code = serializers.CharField(allow_null=True)
+    access_type = serializers.ChoiceField(
+        choices=SessionAccessType.choices,
+        allow_null=True,
+        help_text=(
+            "booked: a verified booking for this computer's bench; ad_hoc: no booking code; "
+            "unverified_booking: a code that did not verify. Null only for sessions stored before "
+            "access types existed."
+        ),
+    )
 
 
 class AgentSessionLogResponseSerializer(serializers.Serializer):

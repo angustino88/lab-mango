@@ -1,5 +1,6 @@
 """record_session_log: one completed session per agent push, safe to repeat."""
 
+import importlib
 import uuid
 from datetime import timedelta
 from threading import Barrier, Thread
@@ -8,7 +9,6 @@ import pytest
 from django.db import connection
 from django.utils import timezone
 
-from core.labs.features.lab_sessions import application
 from core.labs.features.lab_sessions.public import (
     RecordSessionLogInput,
     SessionLogConflict,
@@ -20,6 +20,8 @@ from core.labs.models import LabSessionLog
 from tests.factories import ComputingEquipmentFactory
 
 NOW = timezone.now().replace(microsecond=0)
+# The package re-exports the command under the module's name, so fetch the module itself.
+record_module = importlib.import_module("core.labs.features.lab_sessions.application.record_session_log")
 
 
 @pytest.fixture()
@@ -180,7 +182,7 @@ def test_deleted_computer_is_refused(computer):
 def test_insert_race_is_answered_from_the_winning_row(computer, monkeypatch):
     """The lookup misses a row a concurrent push just committed; the unique key decides."""
     winner = record_session_log(session(computer), actor=None, now=NOW)
-    monkeypatch.setattr(application, "_find_stored", lambda key: None)
+    monkeypatch.setattr(record_module, "_find_stored", lambda key: None)
 
     replay = record_session_log(session(computer), actor=None, now=NOW)
     assert (replay.created, replay.id) == (False, winner.id)

@@ -26,6 +26,18 @@ def scheduled_start_is_due(*, starts_at: datetime, ends_at: datetime, now: datet
 
 
 @dataclass(frozen=True, slots=True)
+class SessionBookingFacts:
+    """A booking's facts that decide whether a completed session used it."""
+
+    booking_id: int
+    bench_id: int
+    starts_at: datetime
+    ends_at: datetime
+    status: str
+    approval_status: str
+
+
+@dataclass(frozen=True, slots=True)
 class AgentBookingLogin:
     """What an agent may know about a booking it is allowed to log a user in with."""
 

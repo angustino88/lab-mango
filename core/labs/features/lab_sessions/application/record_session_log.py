@@ -1,4 +1,4 @@
-"""Session log write commands: the agent pushes one completed session after logout."""
+"""Record one completed session pushed by the agent after logout."""
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -15,6 +15,8 @@ from core.labs.features.lab_sessions.exceptions import (
     SessionLogInvalid,
 )
 from core.labs.models import Equipment, LabSessionLog
+
+from .resolve_session_links import resolve_links
 
 # Owner decision O19 (docs/proposals/finance-and-lab-analytics.md). Times come from the agent's
 # computer clock and are checked against the server clock.
@@ -118,6 +120,7 @@ def _record(session_log: LabSessionLog, values: _SessionValues, *, created: bool
         login_time=values.login_time,
         logout_time=values.logout_time,
         booking_code=values.booking_code,
+        access_type=session_log.access_type,
         created=created,
     )
 
@@ -142,6 +145,10 @@ def record_session_log(
     constraint name and answered from the winner's row. Idempotent on that natural key: equal values
     return the stored record, different values raise ``SessionLogConflict``. ``actor`` is the agent
     principal, not a user, so the record carries no creator (as in ``sync_computing_activity``).
+
+    Access type and the booking, bench and user links are resolved from master data before the
+    insert, as a snapshot (docs/architecture.md section 11). A replay returns the stored links and
+    never re-resolves them, so a retry cannot fail because master data changed in between.
     """
     now = now or timezone.now()
     values = _normalized_values(command)
@@ -161,9 +168,16 @@ def record_session_log(
         if stored is not None:
             return _replay(stored, values)
 
+        links = resolve_links(
+            equipment_id=command.equipment_id,
+            login_time=values.login_time,
+            booking_code=values.booking_code,
+            remote_user=values.remote_user,
+        )
         session_log = LabSessionLog(
             **key,
             **values.as_fields(),
+            **links.as_fields(),
             agent_version=command.agent_version.strip(),
             reported_at=now,
         )

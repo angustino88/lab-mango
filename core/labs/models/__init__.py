@@ -95,6 +95,7 @@ from .resource.location import (
     StationType,
 )
 from .routing import RoutingChange, RoutingEntity, SyncState
+from .session import SessionAccessType
 
 __all__ = [
     "ActiveLaboratoryObservation",
@@ -149,6 +150,7 @@ __all__ = [
     "EnrollmentGrant",
     "LabProject",
     "LabSessionLog",
+    "SessionAccessType",
     "Material",
     "License",
     "LicenseAssignment",

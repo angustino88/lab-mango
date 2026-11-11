@@ -23,6 +23,7 @@ def test_public_exports():
         "SessionLogInvalid",
         "SessionLogRecord",
         "record_session_log",
+        "resolve_session_links",
     }
 
 
