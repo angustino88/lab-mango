@@ -39,7 +39,10 @@ Append-only. Enforced by model `save/delete` guards **and** PostgreSQL triggers 
 
 ## 3. Business Rules
 
-### 3.1 Visibility (security)
+### 3.1 Roles and visibility (security)
+- Support roles come only from Labs roles (`core.users.public`): Labs `admin` and superusers are support
+  admins; Labs `coord` is a support agent; everyone else is a requester. Django group names grant nothing
+  (owner decision 2026-11-11). Roles are configured on URS groups in Django admin.
 - Agents/admins see all tickets. Requesters see tickets they requested, created, or watch.
 - An invisible ticket is indistinguishable from a missing one (**404**), for list, detail, comments, activity, attachments (incl. download), resource history and every mutating command.
 - Internal notes, restricted attachments and their activity entries are agent-only.

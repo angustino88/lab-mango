@@ -61,10 +61,13 @@ activated, deactivated, skipped, unusable names).
 | Celery task queued by the admin actions | `users.urs_sync.sync_selected_groups` | selected groups, optional `force` |
 
 ## 5. Django admin workflow
+- **One place to configure roles: the URS group** (URS id, name, Labs role, active). Saving it creates and
+  names its Django group; the Django group only stores membership. A URS group without a Django group gets
+  one at its next sync. The Django group screen is visible to superusers only.
 - **URS groups** list shows the linked group, Labs role, active flag, member count, and the last sync time,
   status and message, with filters on role, active and last status.
-- Adding, changing or deleting URS groups (including `labs_role`) and Django group permissions is limited
-  to superusers. Other staff can view.
+- Adding, changing or deleting URS groups (including `labs_role`) is limited to superusers. Other staff can
+  view.
 - On users, `is_staff`, `is_superuser`, `is_urs_managed`, `groups` and `user_permissions` are editable by
   superusers only; `is_active` is read-only (managed by sync) and the effective Labs roles are shown.
 - Actions: "Sync selected URS groups" queues a sync; "... and apply blocked removals" queues a forced sync.

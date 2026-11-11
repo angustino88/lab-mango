@@ -1,8 +1,12 @@
 """Django admin for users, URS groups and role mapping.
 
+Roles are configured in one place: the URS group (URS id, name, Labs role). Saving a URS group creates and
+names its Django group, which only stores membership written by URS sync. The Django group screen is shown
+to superusers only.
+
 Role-granting fields (``is_staff``, ``is_superuser``, ``is_urs_managed``, ``groups``, ``user_permissions``,
-URS group ``labs_role`` and mapping, Django group permissions) are editable by superusers only.
-Every other staff user sees them read-only. Django admin records each change in its log.
+URS groups) are editable by superusers only. Every other staff user sees them read-only. Django admin
+records each change in its log.
 """
 
 import logging
@@ -18,6 +22,7 @@ from django.utils.translation import gettext_lazy as _
 from core.users.access import LabsRole, effective_labs_roles
 from core.users.forms import UserAdminChangeForm, UserAdminCreationForm
 from core.users.models import EntraIdentity, LabManagementEmail, URSGroup
+from core.users.public import ensure_urs_group_linked
 from core.users.tasks import sync_selected_urs_groups
 
 logger = logging.getLogger(__name__)
@@ -85,7 +90,13 @@ class UserAdmin(auth_admin.UserAdmin):
 
 
 class SuperuserManagedGroupAdmin(auth_admin.GroupAdmin):
-    """Group permissions grant Django permissions; only superusers may change them."""
+    """Django groups are created by URS groups; only superusers see or change them."""
+
+    def has_module_permission(self, request):
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
 
     def has_add_permission(self, request):
         return request.user.is_superuser
@@ -131,8 +142,8 @@ class URSGroupAdmin(admin.ModelAdmin):
     list_editable = ("labs_role",)
     list_filter = ("labs_role", "active", "last_sync_status")
     search_fields = ("urs_group_name", "urs_group_id", "group__name")
-    readonly_fields = ("last_sync_at", "last_sync_status", "last_sync_message")
-    fields = ("urs_group_name", "urs_group_id", "group", "labs_role", "active", *readonly_fields)
+    readonly_fields = ("group", "last_sync_at", "last_sync_status", "last_sync_message")
+    fields = ("urs_group_name", "urs_group_id", "labs_role", "active", *readonly_fields)
     actions = ["queue_sync", "queue_forced_sync"]
 
     def get_queryset(self, request):
@@ -150,6 +161,10 @@ class URSGroupAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        ensure_urs_group_linked(urs_group_id=obj.pk)
 
     @admin.action(description=_("Sync selected URS groups"), permissions=["change"])
     def queue_sync(self, request, queryset):

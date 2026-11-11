@@ -133,3 +133,26 @@ def test_change_pages_render_for_superuser_and_read_only_for_staff():
     client.force_login(staff)
     page = client.get(f"/admin/users/ursgroup/{urs_group.pk}/change/").content.decode()
     assert 'name="labs_role"' not in page
+
+
+def test_saving_a_urs_group_in_admin_creates_its_django_group():
+    superuser = UserFactory(username="save_root", is_staff=True, is_superuser=True)
+    client = Client()
+    client.force_login(superuser)
+
+    response = client.post(
+        "/admin/users/ursgroup/add/",
+        {"urs_group_name": "Admin Created", "urs_group_id": 66001, "labs_role": "coord", "active": "on"},
+    )
+
+    assert response.status_code == 302, response.content
+    urs_group = URSGroup.objects.get(urs_group_id=66001)
+    assert urs_group.group is not None and urs_group.group.name == "Admin Created"
+
+
+def test_django_group_screen_is_hidden_from_staff():
+    staff = _staff_with_all_user_and_urs_permissions()
+    group_admin = site._registry[Group]
+
+    assert not group_admin.has_module_permission(_request(staff))
+    assert not group_admin.has_view_permission(_request(staff))

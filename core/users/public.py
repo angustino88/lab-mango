@@ -18,6 +18,7 @@ from core.users.access import (
     clear_labs_roles_cache,
     effective_labs_roles,
     has_labs_role,
+    users_holding_labs_role,
 )
 from core.users.features.lifecycle.application import (
     _bind_entra_identity_from_operator,
@@ -39,6 +40,7 @@ from core.users.features.lifecycle.public import (
 from core.users.features.lifecycle.public import (
     set_user_active as _set_user_active,
 )
+from core.users.features.urs_sync.mapping import ensure_linked_group as _ensure_linked_group
 from core.users.models import EntraIdentity, User
 
 
@@ -82,6 +84,11 @@ def unlink_entra_identity(*, data: UnlinkEntraIdentityInput) -> UserLifecycleRes
 
 def delete_user(*, data: DeleteUserInput) -> UserLifecycleResult:
     return _delete_user_from_operator(data)
+
+
+def ensure_urs_group_linked(*, urs_group_id: int) -> int:
+    """Create or rename the Django group of URS group row ``urs_group_id``; return the Django group id."""
+    return _ensure_linked_group(urs_group_id).pk
 
 
 def resolve_teams_recipient(*, user_id: int, expected_tenant_id: UUID | None) -> VerifiedTeamsRecipient | None:
@@ -143,6 +150,7 @@ __all__ = [
     "bind_entra_identity",
     "bind_entra_identity_from_operator",
     "delete_user",
+    "ensure_urs_group_linked",
     "replace_entra_identity",
     "set_user_active",
     "unlink_entra_identity",
@@ -151,4 +159,5 @@ __all__ = [
     "has_labs_role",
     "resolve_notification_recipient",
     "resolve_teams_recipient",
+    "users_holding_labs_role",
 ]

@@ -25,8 +25,10 @@ application layer, and querysets must still be scoped by the caller.
 from enum import StrEnum
 from typing import Any
 
+from django.db.models import Q, QuerySet
+
 from core.common.api.permissions import RoleHierarchy, RolePermission, is_authenticated
-from core.users.models import URSGroup
+from core.users.models import URSGroup, User
 
 _ROLES_CACHE_ATTR = "_labs_roles_cache"
 
@@ -66,6 +68,16 @@ def effective_labs_roles(user: Any) -> frozenset[str]:
     roles = LABS_ROLE_HIERARCHY.expand(assigned_roles)
     setattr(user, _ROLES_CACHE_ATTR, roles)
     return roles
+
+
+def users_holding_labs_role(role: LabsRole) -> QuerySet[User]:
+    """Active users who hold ``role`` directly, through a higher role, or as superusers. One query."""
+    granting = [held for held in LABS_ROLE_HIERARCHY.roles if role in LABS_ROLE_HIERARCHY.expand([held])]
+    return (
+        User.objects.filter(is_active=True)
+        .filter(Q(is_superuser=True) | Q(groups__ursgroup__labs_role__in=granting))
+        .distinct()
+    )
 
 
 def clear_labs_roles_cache(user: Any) -> None:
@@ -135,4 +147,5 @@ __all__ = [
     "clear_labs_roles_cache",
     "effective_labs_roles",
     "has_labs_role",
+    "users_holding_labs_role",
 ]

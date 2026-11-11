@@ -9,7 +9,9 @@ Exposes Django authorization groups and their members. Membership comes from URS
 ## 2. Data Models & Constraints
 
 ### 2.1 `django.contrib.auth.models.Group`
-- Standard group entity storing `name` (unique) and permissions. Changes in Django admin: superusers only.
+- Stores membership only. Each URS group gets its Django group automatically, named after the URS group
+  (`core/users/features/urs_sync/mapping.py`); nobody creates or renames it by hand. Group names grant no
+  role. The Django group screen in admin is visible to superusers only.
 
 ### 2.2 `core.users.models.URSGroup`
 - **Purpose:** Links a URS service ID to one Django group and one Labs role.

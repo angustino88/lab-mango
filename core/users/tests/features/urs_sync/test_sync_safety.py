@@ -109,16 +109,15 @@ def test_request_error_fails_the_group_only():
     assert urs_group.last_sync_message == "URS request failed (ConnectionError)."
 
 
-def test_group_without_django_group_is_reported_failed():
-    urs_group = URSGroupFactory(group=None)
+def test_group_without_django_group_gets_one_and_syncs():
+    urs_group = URSGroupFactory(group=None, urs_group_name="Unlinked team")
 
-    with patch(_POST) as post:
-        report = sync_urs_group(URSGroup.objects.filter(pk=urs_group.pk))
+    report = _sync(urs_group, _answer("apac\\linked_member"))
 
     urs_group.refresh_from_db()
-    post.assert_not_called()
-    assert report.failed == [str(urs_group)]
-    assert urs_group.last_sync_status == URSGroup.SyncStatus.FAILED
+    assert report.applied == [str(urs_group)]
+    assert urs_group.group.name == "Unlinked team"
+    assert urs_group.group.user_set.filter(username="linked_member").exists()
 
 
 def test_existing_account_is_matched_case_insensitively_without_duplicates():

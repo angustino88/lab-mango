@@ -13,33 +13,23 @@ from core.support_desk.models.settings import SupportSettings
 from core.support_desk.models.ticket import SupportTicket
 from core.support_desk.models.transition import SupportStatusTransition
 from core.support_desk.models.watcher import TicketWatcher
+from core.users.public import LabsRole, effective_labs_roles
 
 
 def resolve_support_role(user: Any) -> SupportRole | None:
-    """Resolve the effective support role for a given user."""
+    """Resolve the support role from Labs roles: admin -> support admin, coordinator -> support agent.
+
+    Group names grant nothing; roles are configured on URS groups (``core.users``).
+    """
     if not user or not getattr(user, "is_authenticated", False):
         return None
     if getattr(user, "is_superuser", False):
         return SupportRole.ADMIN
-
-    # Check Labs roles
-    try:
-        from core.users.public import LabsRole, effective_labs_roles
-
-        roles = effective_labs_roles(user)
-        if LabsRole.ADMIN in roles:
-            return SupportRole.ADMIN
-        if LabsRole.COORDINATOR in roles:
-            return SupportRole.AGENT
-    except Exception:
-        pass
-
-    # Check group membership
-    if user.groups.filter(name__in=["Support Administrator", "Administrator", "admin"]).exists():
+    roles = effective_labs_roles(user)
+    if LabsRole.ADMIN in roles:
         return SupportRole.ADMIN
-    if user.groups.filter(name__in=["Support Agent", "Coordinator", "coord"]).exists():
+    if LabsRole.COORDINATOR in roles:
         return SupportRole.AGENT
-
     return SupportRole.REQUESTER
 
 

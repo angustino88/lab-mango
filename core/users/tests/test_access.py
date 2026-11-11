@@ -17,6 +17,7 @@ from core.users.access import (
     clear_labs_roles_cache,
     effective_labs_roles,
     has_labs_role,
+    users_holding_labs_role,
 )
 from core.users.models import URSGroup
 from core.users.tests.factories import UserFactory
@@ -173,3 +174,20 @@ class TestLabsPermissionClasses:
     def test_superuser_can_write(self, permission):
         user = _user_with_roles("access-w-super", superuser=True)
         assert permission().has_permission(_request("POST", user), view=None)
+
+
+class TestUsersHoldingLabsRole:
+    def test_includes_implied_roles_and_superusers_only_once(self, django_assert_num_queries):
+        admin = _user_with_roles("holder-admin", "admin", "coord")
+        coord = _user_with_roles("holder-coord", "coord")
+        _user_with_roles("holder-user", "user")
+        _user_with_roles("holder-none")
+        superuser = _user_with_roles("holder-super", superuser=True)
+        inactive = _user_with_roles("holder-inactive", "admin")
+        inactive.is_active = False
+        inactive.save(update_fields=["is_active"])
+
+        with django_assert_num_queries(1):
+            holders = list(users_holding_labs_role(LabsRole.COORDINATOR))
+
+        assert sorted(u.pk for u in holders) == sorted([admin.pk, coord.pk, superuser.pk])

@@ -36,6 +36,7 @@ from django.db.models import Count
 from django.db.models.functions import Lower
 from django.utils import timezone
 
+from core.users.features.urs_sync.mapping import ensure_linked_group
 from core.users.models import URSGroup, User
 from core.users.public import SetUserActiveInput, set_user_active
 
@@ -99,9 +100,9 @@ def sync_urs_group(queryset: Iterable[URSGroup], *, force: bool = False) -> Sync
     for urs_group in queryset:
         name = str(urs_group)
         if urs_group.group_id is None:
-            failures[urs_group.pk] = "No Django group is linked."
-            report.failed.append(name)
-            continue
+            # Older URS groups may predate automatic linking; create their Django group now.
+            urs_group.group = ensure_linked_group(urs_group.pk)
+            urs_group.group_id = urs_group.group.pk
         result = _fetch_members(urs_group, url=urs_api_url, access_token=access_token)
         if isinstance(result, str):
             failures[urs_group.pk] = result

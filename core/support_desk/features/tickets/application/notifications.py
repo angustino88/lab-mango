@@ -12,36 +12,17 @@ from core.support_desk.features.tickets.application.shared import actor_display_
 from core.support_desk.models.outbox import NotificationOutbox
 from core.support_desk.models.ticket import SupportTicket
 from core.support_desk.models.watcher import TicketWatcher
+from core.users.public import LabsRole, users_holding_labs_role
 
 User = get_user_model()
 
-_AGENT_GROUPS = frozenset({"Support Administrator", "Administrator", "Support Agent", "Coordinator"})
 BOTH_CHANNELS = (OutboxChannel.EMAIL, OutboxChannel.IN_APP)
 IN_APP_ONLY = (OutboxChannel.IN_APP,)
 
 
 def _get_support_agents_and_admins() -> list[Any]:
-    """Return all users with agent or administrator privileges."""
-    users = list(User.objects.filter(is_active=True).prefetch_related("groups"))
-    try:
-        from core.users.public import LabsRole, effective_labs_roles
-    except Exception:
-        return [u for u in users if u.is_superuser]
-
-    agents = []
-    for user in users:
-        if user.is_superuser:
-            agents.append(user)
-            continue
-        try:
-            roles = effective_labs_roles(user)
-        except Exception:
-            roles = ()
-        if LabsRole.ADMIN in roles or LabsRole.COORDINATOR in roles:
-            agents.append(user)
-        elif any(group.name in _AGENT_GROUPS for group in user.groups.all()):
-            agents.append(user)
-    return agents
+    """Active support agents and administrators: Labs coordinators, admins and superusers."""
+    return list(users_holding_labs_role(LabsRole.COORDINATOR))
 
 
 def _team_or_all_agents(ticket: SupportTicket) -> list[Any]:

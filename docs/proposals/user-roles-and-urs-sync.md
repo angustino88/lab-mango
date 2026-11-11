@@ -195,6 +195,7 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 | Reads without a Labs role; plain users reading procurement and expenses (R9) | No | Labs permission classes require a role to read; procurement, expenses and finance reports require coordinator |
 | Who may list groups and members (R8) | Admin | Group endpoints require the Labs `admin` role |
 | Where roles are configured | Django admin | Admin workflow improved (R3, L6) |
+| Labs roles vs Django groups (R10) | Option 1: URS group is the only configuration; Django group only stores membership | Automatic Django group per URS group; support desk on Labs roles |
 
 ## Implementation status
 
@@ -209,7 +210,7 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 | R7 domain | Decided: keep dropping | sync spec |
 | R8 group list admin-only | Done | `groups/list_groups/api.py`, OpenAPI regenerated |
 | R9 reads need a role | **Partly done:** views using `IsLabAdmin`, `IsLabCoordinator`, `IsLabMember` (bench bookings, agents, computing) and the coordinator-only areas (procurement, expenses, finance reports). **Open:** other Labs views still use `HasAPIKey \| IsAuthenticated` from the shared base view; requiring a role there needs a Labs-level base permission (`core.common` may not import `core.users`) | `core/users/access.py`, labs views |
-| R10 document which permission system governs what | Not done | |
+| R10 one role system | **Done (option 1, 2026-11-11):** URS group is the only place roles are configured; its Django group is created and named automatically and only stores membership; support desk uses Labs roles only (admin -> support admin, coord -> support agent), group names grant nothing. Remaining: reference-data writes still use Django permissions (`core/reference_data/policies.py:13`) | `urs_sync/mapping.py`, `core/users/admin.py`, `support_desk/.../policies.py`, `notifications.py` |
 | R11 role check and unique URS id constraints | Done | `URSGroup` constraints (migration 0005) |
 | L1 code uses settings value | Done (default still `False`, see authentication H5) | service |
 | L2 spec | Done | `urs_sync/docs/spec.md`, `groups/docs/spec.md` |
