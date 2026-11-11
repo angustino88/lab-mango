@@ -128,41 +128,59 @@ proxy strips (`routing-sync.md:74`). The current authentication code was written
   - [ ] Test that a response sets only prefixed paths and backend-specific names.
   - [ ] Do not rely on the proxy rewriting cookie paths; the backend must emit correct cookies itself.
 
-#### H7. Login routing and first-login binding need a defined contract with the Router
+#### H7. The Router-forwarded login breaks the backend's challenge, CSRF and first-login binding
 
-- **Evidence:** the Router routes a user only when exactly one backend claims their Entra key
-  (`routing-sync.md` CNS-6); a user with no binding has no claim. The challenge request carries no
-  identity, but its nonce is stored in one backend's database (`aad_login/service.py:66-72`), so the
-  later `aad-login` must reach **the same** backend.
-- **Owner (2026-11-11):** users select the department backend in the frontend and can switch between
-  backends. The frontend therefore knows the target prefix before login, so the challenge, the login and
-  first-login binding all go to the selected backend directly. This resolves the reachability problem.
-- **Remaining gaps:**
-  - [ ] Write the selection flow into the Router contract: selection is a *routing* choice only; the
-    selected backend still authenticates and authorizes (routing-sync P1). A user who selects a backend
-    where they have no account gets the normal `401`, with no hint whether the account exists.
-  - [ ] Claim-based default routing must not fail closed for legitimate multi-department users (see M14).
-  - [ ] Test the full challenge → login → refresh → logout path through two prefixes in one browser
-    (depends on H6).
-- **Optional: link Entra IDs before first login (removes H1's username risk).** Not required now that
-  selection makes first-login binding reachable; recommended if H1's residual risk is not accepted.
-  How it works without the user logging in:
-  1. Register an Entra application for the backend with the Microsoft Graph **application** permission
-     `User.Read.All` (admin consent, granted by the tenant administrator).
-  2. A backend job runs after URS sync. For each URS-managed user without a binding, it requests an app
-     token (client-credentials flow) and calls Graph, for example
-     `GET https://graph.microsoft.com/v1.0/users?$filter=onPremisesSamAccountName eq '<username>'&$select=id,userPrincipalName,accountEnabled,userType`
-     (advanced query: header `ConsistencyLevel: eventual` and `$count=true`). This matches the URS
-     username to the directory's account name exactly, instead of guessing a UPN domain.
-  3. Bind only when exactly one result is returned, `userType` is `Member` and `accountEnabled` is true;
-     otherwise skip and report. Binding uses the existing `bind_entra_identity` command, which publishes
-     the routing claim.
-  4. Then turn `ENTRA_BIND_BY_USERNAME` off: login only accepts identities that are already bound.
-  Costs: a client secret or certificate per backend, outbound access to `graph.microsoft.com` and
-  `login.microsoftonline.com`, tenant-admin consent, and a new integration (T2; `requests` and `httpx` are
-  already dependencies, so no new package is needed). Fallback with no Graph access: an operator exports
-  `samAccountName,objectId` from Entra and loads it with a management command built on
-  `bind_entra_identity`.
+- **Confirmed login flow (owner, 2026-11-11):**
+  1. The frontend obtains an ID token from Entra and sends the login to the Router.
+  2. The Router validates the token, reads the Entra tenant and object IDs, and looks up the backend in its
+     mapping table (the claims from routing sync).
+  3. The Router forwards the login request to that backend.
+- **What this breaks in the current backend code:**
+  - **Challenge nonce.** The nonce must be in the Entra request *before* the Router knows the user, but the
+    backend only accepts a nonce it issued and stored itself (`aad_login/service.py:66-72`, `:110-121`).
+    No backend can have issued it, so every login fails.
+  - **CSRF.** `aad-login` requires a CSRF cookie and header for that backend (`aad_login/api.py:60`). On a
+    first visit the browser has never talked to that backend, so it has no CSRF cookie and the login is
+    rejected with `403`.
+  - **First-login binding.** The Router finds a backend only for an Entra ID that is already bound and
+    claimed. A user who has never logged in has no claim, so the request never reaches the backend that
+    would bind them by username (`aad_login/service.py:127-133`). Automatic binding at login cannot run.
+  - **Cookies.** The backend's `Set-Cookie` headers travel back through the Router; their path and names
+    must match the public prefix (H6).
+  - **Client address.** The backend sees the Router as the client. Without a trusted forwarded address,
+    the `auth_login` limit of 10/min (`base.py:349`) applies to **all users together** (H4).
+- **Proposal:**
+  - [ ] **Move the challenge to the Router.** The Router issues the nonce and sets it in an HttpOnly
+    cookie on the shared host, and checks it at login. The backend still enforces single use on its side:
+    it requires that the forwarded challenge cookie hashes to the token's `nonce`, and stores the nonce
+    digest as consumed (unique constraint), so the same ID token cannot be replayed to it directly through
+    its public prefix. Remove the backend's challenge endpoint. This adds one contract item (the challenge
+    cookie name) and keeps the rule that backends know nothing else about the Router.
+  - [ ] **Replace CSRF on the login request.** A CSRF check needs a prior backend visit, which this flow
+    does not have. The ID token plus the browser-bound challenge cookie already prove the request is the
+    user's own login; require `Content-Type: application/json` and a same-site `Origin`/`Sec-Fetch-Site`
+    check instead. Keep CSRF on refresh and logout, and return the CSRF token in the login response (M4).
+  - [ ] **Link identities before first login (now required, not optional).** Because the Router routes
+    only bound users, bind every user before they log in, with a backend job after URS sync:
+    1. The tenant administrator grants the backend's Entra app the Microsoft Graph application permission
+       `User.Read.All`.
+    2. For each URS-managed user without a binding, the job gets an app token (client-credentials flow)
+       and calls `GET https://graph.microsoft.com/v1.0/users?$filter=onPremisesSamAccountName eq '<username>'&$select=id,userPrincipalName,accountEnabled,userType`
+       (headers: `ConsistencyLevel: eventual`; query `$count=true`).
+    3. It binds only on exactly one enabled `Member` result, through the existing `bind_entra_identity`
+       command, which publishes the claim the Router needs. Everything else is skipped and reported.
+    4. Remove automatic binding from `aad-login` and set `ENTRA_BIND_BY_USERNAME` off. This also closes H1.
+    Costs: a client secret or certificate per backend, outbound access to `graph.microsoft.com`, tenant-admin
+    consent, a new integration (T2). `requests` and `httpx` are already dependencies. Fallback without Graph
+    access: an operator exports `samAccountName,objectId` from Entra and loads it with a management command.
+    Alternative: the Router sends unknown users to a department chooser and the backend keeps
+    first-login binding with H1's safeguards; not recommended, because it reopens H1 across departments.
+  - [ ] **Forwarded client address.** The Router passes the client address in a forwarded header, and the
+    backend trusts exactly the configured number of hops (H4). Test that two users behind the Router get
+    separate limits.
+  - [ ] **Keep validating the ID token on the backend** (signature, audience, issuer, tenant, nonce) even
+    though the Router validated it: routing is not authorization (`routing-sync.md` P1).
+  - [ ] Test the full flow through the Router: challenge → Entra → login → refresh → logout.
 
 #### M14. Multi-department users conflict with the Router's single-owner rule
 
@@ -322,7 +340,7 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 
 ## Suggested order
 
-1. H7 and M14 — agree the selection flow and the multi-department rule with the Router repository.
+1. H7 and M14 — agree the challenge, linking and multi-department rules with the Router repository.
 2. H3, H4, H5 — configuration only, no contract change.
 3. H6 with M3 and M4 — one route/cookie contract change while there are no production clients.
 4. H1 — implement the binding decision from step 1.
@@ -346,12 +364,14 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 | Location of this document | `docs/proposals/` confirmed | — |
 | Frontend and API addresses | Browser sees one shared host; backend URLs are not exposed | M3: `SameSite=Strict` is possible; L9: CORS can be off in production |
 | Deployment topology | Multiple department backends; the router service maps users by Entra ID using the routing sync (2026-11-11) | New H6, H7, M14; M12 extended |
-| How users reach a backend | They select a department backend in the frontend and can switch | H7: login reaches the selected backend; M14: routing spec CNS-6 must change |
+| How login reaches a backend | Frontend sends the Entra ID token to the Router; the Router validates it, looks up the backend by Entra ID and forwards the login | H7: challenge moves to the Router, CSRF on login replaced, identities must be linked before first login |
+| Multi-department users | They can switch between department backends | M14: routing spec CNS-6 must change |
 | Secrets per backend | Each department runs its own container and environment | M12: keys expected to differ; issuer/audience kept as defense in depth |
 
 ## Open questions for the owner
 
-1. **Pre-linking (H7, optional).** Accept H1's residual risk with first-login binding plus its safeguards,
-   or add the Graph lookup job so identities are linked before first login?
-2. **Default backend (M14).** When a multi-department user arrives without choosing, open the last-used
-   backend or show a chooser?
+1. **Linking before first login (H7).** Can the tenant administrator grant the backend app the Graph
+   permission `User.Read.All`? If not, use the operator export as the fallback.
+2. **Default backend (M14).** When the Router finds a user on several backends, open the last-used backend
+   or show a chooser?
+3. **Challenge ownership (H7).** Does the Router team agree to issue and check the login nonce?
