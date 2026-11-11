@@ -66,8 +66,9 @@ def test_get_unknown_sku_is_not_found(admin_client):
     assert admin_client.get(_url("NOPE")).status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_authenticated_member_can_read_but_not_write(plain_client, computing):
-    assert plain_client.get(_url(computing.sku)).status_code == status.HTTP_200_OK
+def test_plain_lab_user_can_neither_read_nor_write(plain_client, computing):
+    # Equipment is for lab coordinators and admins; plain users see it only through the dashboard.
+    assert plain_client.get(_url(computing.sku)).status_code == status.HTTP_403_FORBIDDEN
 
     response = plain_client.patch(_url(computing.sku), {"status": "active"}, format="json")
 

@@ -12,6 +12,7 @@ from core.labs.models.resource.license.license import (
     LicenseType,
     LicenseVendor,
 )
+from tests.factories import grant_labs_role
 
 
 @pytest.fixture()
@@ -22,6 +23,7 @@ def actor(db):
 @pytest.fixture()
 def client(actor):
     c = APIClient()
+    grant_labs_role(actor, "coord")
     c.force_authenticate(user=actor)
     return c
 

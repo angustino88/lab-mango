@@ -13,6 +13,7 @@ from tests.factories import (
     ComputingEquipmentFactory,
     LabMonitoringFactory,
     UserFactory,
+    grant_labs_role,
 )
 
 
@@ -24,6 +25,7 @@ def monitoring_user(db):
 @pytest.fixture()
 def monitoring_client(monitoring_user):
     client = APIClient()
+    grant_labs_role(monitoring_user, "coord")
     client.force_authenticate(user=monitoring_user)
     return client
 

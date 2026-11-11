@@ -17,6 +17,7 @@ from tests.factories import (
     LaboratoryVisitEventFactory,
     LabSessionLogFactory,
     UserFactory,
+    grant_labs_role,
 )
 
 BASE = "/api/labs/analytics"
@@ -33,7 +34,7 @@ QUERY = urlencode({"from_date_time": WINDOW_START.isoformat(), "to_date_time": W
 @pytest.fixture()
 def auth_client(db) -> APIClient:
     client = APIClient()
-    client.force_authenticate(user=UserFactory())
+    client.force_authenticate(user=grant_labs_role(UserFactory(), "coord"))
     return client
 
 

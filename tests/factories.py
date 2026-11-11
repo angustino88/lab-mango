@@ -35,7 +35,21 @@ from core.labs.models import (
     VisitorVolumeObservation,
 )
 from core.labs.models.resource.equipment.computing import ComputingEquipment, TechnicalUser
-from core.users.models import User
+from core.users.models import URSGroup, User
+
+_LABS_ROLE_URS_IDS = iter(range(700000, 799999))
+
+
+def grant_labs_role(user: User, role: str = "coord") -> User:
+    """Give ``user`` a Labs role through a URS group, as production does. Returns ``user``."""
+    from django.contrib.auth.models import Group
+
+    group, _ = Group.objects.get_or_create(name=f"test-labs-{role}")
+    URSGroup.objects.get_or_create(group=group, defaults={"urs_group_id": next(_LABS_ROLE_URS_IDS), "labs_role": role})
+    user.groups.add(group)
+    if hasattr(user, "_labs_roles_cache"):
+        del user._labs_roles_cache
+    return user
 
 
 class UserFactory(factory.django.DjangoModelFactory):

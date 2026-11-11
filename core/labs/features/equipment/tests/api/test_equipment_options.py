@@ -19,6 +19,7 @@ from core.labs.models.resource.equipment.reference_data import (
     EquipmentProductModel,
     EquipmentType,
 )
+from tests.factories import grant_labs_role
 
 
 @pytest.fixture()
@@ -29,7 +30,7 @@ def api_client():
 @pytest.fixture()
 def actor(db):
     User = get_user_model()
-    return User.objects.create_user(username="options_actor", email="options@example.com")
+    return grant_labs_role(User.objects.create_user(username="options_actor", email="options@example.com"), "coord")
 
 
 @pytest.fixture()
@@ -494,6 +495,8 @@ def test_category_reference_data_query_count_is_bounded(
             name=f"Query Budget Model {index}",
         )
 
+    # Warm the per-user Labs role cache (one query on the first request) before measuring.
+    api_client.get("/api/labs/equipment/computing/reference-data")
     with django_assert_num_queries(10):
         response = api_client.get("/api/labs/equipment/computing/reference-data")
 
@@ -613,6 +616,8 @@ def test_equipment_options_query_count_is_bounded_as_results_grow(
     api_client.force_authenticate(user=actor)
     _, kind = computing_category
     ComputingEquipment.objects.create(sku="EQ-QUERY-1", name="Query Item 1", kind=kind)
+    # Warm the per-user Labs role cache (one query on the first request) before measuring.
+    api_client.get("/api/labs/equipment/options", {"q": "Query Item"})
 
     with django_assert_num_queries(1):
         one_result = api_client.get("/api/labs/equipment/options", {"q": "Query Item"})

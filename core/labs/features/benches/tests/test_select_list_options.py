@@ -8,6 +8,7 @@ from rest_framework.test import APIClient
 
 from core.labs.features.benches.api import views
 from core.labs.models import Bench, BenchFavorite, BenchGroup, BenchType
+from tests.factories import grant_labs_role
 
 URL = "/api/labs/benches/options"
 GROUPS_URL = "/api/labs/bench-groups/options"
@@ -22,6 +23,7 @@ def actor(db):
 @pytest.fixture()
 def client(actor):
     api_client = APIClient()
+    grant_labs_role(actor, "coord")
     api_client.force_authenticate(user=actor)
     return api_client
 

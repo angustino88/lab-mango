@@ -7,8 +7,9 @@ from .access import LABS_STAFF_ACCESS
 
 
 class CommandAPIView(_CommandAPIView):
-    """Labs command view. Default access: lab coordinators and admins."""
-
+    # Labs command view. Default access: lab coordinators and admins. The inherited docstring is kept
+    # because generated API descriptions fall back to it.
+    __doc__ = _CommandAPIView.__doc__
     permission_classes = LABS_STAFF_ACCESS
 
 

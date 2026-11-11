@@ -12,6 +12,7 @@ from core.labs.models.resource.equipment.computing import ComputingEquipment
 from core.labs.models.resource.equipment.display import DisplayEquipment
 from core.labs.models.resource.equipment.equipment import EquipmentStatus, EquipmentStatusRecord
 from core.labs.models.resource.equipment.reference_data import EquipmentCategory, EquipmentKind
+from tests.factories import grant_labs_role
 
 
 @pytest.fixture()
@@ -22,7 +23,9 @@ def api_client():
 @pytest.fixture()
 def actor(db):
     User = get_user_model()
-    return User.objects.create_user(username="equipment_status_actor", email="status_actor@example.com")
+    return grant_labs_role(
+        User.objects.create_user(username="equipment_status_actor", email="status_actor@example.com"), "coord"
+    )
 
 
 @pytest.fixture()

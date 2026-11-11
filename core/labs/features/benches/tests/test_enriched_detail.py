@@ -14,6 +14,7 @@ from core.labs.models import Bench, BenchBooking, ComputingActivity, Equipment, 
 from core.labs.models.booking.reference_data import LabProject
 from core.labs.models.resource.equipment.computing import ComputingEquipment
 from core.labs.models.resource.equipment.reference_data import EquipmentCategory, EquipmentKind
+from tests.factories import grant_labs_role
 
 pytestmark = pytest.mark.django_db
 NOW = datetime(2026, 10, 20, 12, tzinfo=timezone.utc)
@@ -31,6 +32,7 @@ def detail(monkeypatch, settings):
     reader = get_user_model().objects.create_user(username="detail-reader", email="reader@example.test")
     bench = Bench.objects.create(sku="DETAIL-BENCH", name="Detail bench", owner=owner)
     client = APIClient()
+    grant_labs_role(reader, "coord")
     client.force_authenticate(reader)
     client._test_user = reader
     return client, bench

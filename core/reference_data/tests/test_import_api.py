@@ -14,6 +14,7 @@ from core.labs.models import Department, EquipmentCategory, EquipmentKind
 from core.reference_data.application import create_reference
 from core.reference_data.contracts import CreateReferenceInput, ReferenceResource
 from core.reference_data.models import ReferenceImportReceipt
+from tests.factories import grant_labs_role
 
 ROOT = "/api/labs/"
 PATHS = [
@@ -55,6 +56,7 @@ def importer(db):
 @pytest.fixture
 def client(importer):
     result = APIClient()
+    grant_labs_role(importer, "coord")
     result.force_authenticate(importer)
     return result
 
@@ -96,11 +98,14 @@ def test_create_retrieve_replay_and_mismatched_key(client):
 def test_permissions_input_and_foreign_keys(client):
     url = ROOT + "equipment/reference-data/departments"
     reader = get_user_model().objects.create(username="synthetic-no-permissions")
+    grant_labs_role(reader, "coord")
     client.force_authenticate(reader)
     denied = client.post(url, {"name": "Denied"}, format="json", HTTP_IDEMPOTENCY_KEY="denied")
     assert denied.status_code == 403, denied.data
     assert not Department.objects.filter(name="Denied").exists()
-    client.force_authenticate(get_user_model().objects.get(username="synthetic-importer"))
+    client.force_authenticate(
+        user=grant_labs_role(get_user_model().objects.get(username="synthetic-importer"), "coord")
+    )
     for payload in ({"name": "Valid", "creator": 1}, {"name": ""}, {"name": 123}):
         assert client.post(url, payload, format="json", HTTP_IDEMPOTENCY_KEY="invalid").status_code == 422
     assert client.post(url, {"name": "No key"}, format="json").status_code == 422
@@ -232,9 +237,11 @@ def test_create_and_retrieve_every_reference_type(client):
         assert replay.status_code == 201, (catalog, replay.data)
         assert replay.data == response.data
         assert replay["Idempotency-Replayed"] == "true"
+        grant_labs_role(reader, "coord")
         client.force_authenticate(reader)
         denied = client.post(ROOT + catalog, payload, format="json", HTTP_IDEMPOTENCY_KEY=f"denied-{index}")
         assert denied.status_code == 403, (catalog, denied.data)
+        grant_labs_role(importer, "coord")
         client.force_authenticate(importer)
 
 
@@ -244,6 +251,7 @@ def test_add_permission_without_staff_is_sufficient(client):
 
     user = get_user_model().objects.create(username="synthetic-scoped-importer")
     user.user_permissions.add(Permission.objects.get(content_type__app_label="labs", codename="add_department"))
+    grant_labs_role(user, "coord")
     client.force_authenticate(user)
     created = client.post(
         ROOT + "equipment/reference-data/departments",

@@ -6,6 +6,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
+
 from tests.factories import (
     BenchBookingFactory,
     BenchFactory,
@@ -17,6 +18,7 @@ from tests.factories import (
     StorageQuotaMeasurementFactory,
     UserFactory,
     VisitorVolumeObservationFactory,
+    grant_labs_role,
 )
 
 BASE = "/api/labs/analytics"
@@ -29,6 +31,7 @@ TO_DT = NOW.isoformat()
 def auth_client(db) -> APIClient:
     user = UserFactory()
     client = APIClient()
+    grant_labs_role(user, "coord")
     client.force_authenticate(user=user)
     return client
 

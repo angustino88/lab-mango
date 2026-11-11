@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 from rest_framework.views import APIView
 
 from core.labs.features.benches.api.serializers import BenchSerializer
-from tests.factories import BenchFactory, UserFactory
+from tests.factories import BenchFactory, UserFactory, grant_labs_role
 
 pytestmark = pytest.mark.django_db
 
@@ -50,6 +50,7 @@ def bench_api(monkeypatch, settings):
     user = UserFactory()
     bench = BenchFactory()
     client = APIClient()
+    grant_labs_role(user, "coord")
     client.force_authenticate(user)
     return client, bench
 

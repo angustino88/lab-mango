@@ -31,6 +31,7 @@ from core.labs.models import (
 from core.labs.models.resource.base.resource import Department, ResourceGroup
 from core.labs.models.resource.equipment import DisplayEquipment, EquipmentInterface
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
+from tests.factories import grant_labs_role
 
 BASE = "/api/labs/equipment"
 DIMENSIONS = ("category", "kind", "type", "manufacturer", "product_model_id", "department_id", "group_id")
@@ -40,6 +41,7 @@ DIMENSIONS = ("category", "kind", "type", "manufacturer", "product_model_id", "d
 def inventory(db):
     actor = get_user_model().objects.create_user(username="facets_actor", email="facets@example.invalid")
     client = APIClient()
+    grant_labs_role(actor, "coord")
     client.force_authenticate(actor)
     categories = [
         EquipmentCategory.objects.create(name=name, key=name.lower(), definition=f"Synthetic {name}")
@@ -279,6 +281,8 @@ def test_bounded_queries(inventory, django_assert_num_queries, path):
 def test_oversized_decimal_pagination_is_400_before_inventory_sql(
     inventory, django_assert_num_queries, path, parameter
 ):
+    # Warm the per-user Labs role cache (one query on the first request) before measuring.
+    inventory[0].get(f"{path}/facets", {"dimension": "kind"})
     with django_assert_num_queries(0):
         response = inventory[0].get(f"{path}/facets", {"dimension": "kind", parameter: "9" * 5000})
     assert response.status_code == 400

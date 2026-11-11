@@ -3,13 +3,14 @@
 import pytest
 from rest_framework.test import APIClient
 
-from tests.factories import BenchFactory, LabComputerFactory, UserFactory
+from tests.factories import BenchFactory, LabComputerFactory, UserFactory, grant_labs_role
 
 
 @pytest.fixture
 def auditor_client(db):
     user = UserFactory(username="auditor_bob", email="auditor_bob@example.com")
     client = APIClient()
+    grant_labs_role(user, "coord")
     client.force_authenticate(user=user)
     return client, user
 

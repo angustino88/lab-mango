@@ -8,13 +8,15 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from core.labs.models import LabProject
+from tests.factories import grant_labs_role
 
 URL = "/api/labs/lab-projects/options"
 
 
 @pytest.fixture()
 def actor(db):
-    return get_user_model().objects.create_user(username="project_actor", email="proj@example.com")
+    user = get_user_model().objects.create_user(username="project_actor", email="proj@example.com")
+    return grant_labs_role(user, "user")
 
 
 @pytest.fixture()
