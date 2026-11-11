@@ -118,6 +118,14 @@ decision O25). An approved `in_progress` booking on the agent's bench moves to `
 (identity → equipment → bench → booking). Completion at the end time stays with
 `reconcile_bench_booking_statuses`, scheduled as `labs.bench_bookings.reconcile_statuses` (O26).
 
+### Agent extend
+
+`extend_agent_booking(ExtendAgentBookingInput(agent_uid, booking_code, ends_at), actor=..., now=None)` answers
+`POST /agent/bookings/actions/extend` (owner decision O28). Rules, responses and tests:
+[agent-extend.md](agent-extend.md). It uses the shared `lock_agent_booking`; the bench lock makes it and
+`create_bench_booking` serialise on the overlap check. The older `update_agent_booking_end_time` has no
+caller and can be removed in a separate change.
+
 `application/state_transitions.py` exposes the supported lifecycle commands:
 
 - `activate_bench_booking_for_computing_activity(computing_id, now)`: resolves the activity-to-bench relationship and activates the matching booking.

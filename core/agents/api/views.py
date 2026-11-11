@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -38,12 +38,16 @@ from core.agents.models import AgentIdentity
 from core.common.api.correlation import get_request_id
 from core.common.api.pagination import ResultsSetPagination
 from core.labs.features.bench_bookings.public import (
+    AgentExtensionBenchNotFree,
+    AgentExtensionNotAllowed,
     CheckAgentBookingLoginInput,
     CheckInAgentBookingInput,
     CompleteAgentBookingInput,
+    ExtendAgentBookingInput,
     check_agent_booking_login,
     check_in_agent_booking,
     complete_agent_booking,
+    extend_agent_booking,
 )
 from core.labs.features.equipment.public import SyncComputingActivityInput, sync_computing_activity
 from core.labs.features.lab_sessions.public import (
@@ -65,6 +69,10 @@ from .serializers import (
     AgentBookingCheckInResponseSerializer,
     AgentBookingCompleteDataSerializer,
     AgentBookingCompleteResponseSerializer,
+    AgentBookingExtendDataSerializer,
+    AgentBookingExtendErrorSerializer,
+    AgentBookingExtendRequestSerializer,
+    AgentBookingExtendResponseSerializer,
     AgentBookingValidationDataSerializer,
     AgentBookingValidationRequestSerializer,
     AgentBookingValidationResponseSerializer,
@@ -777,6 +785,117 @@ class AgentBookingCompleteAPIView(APIView):
         return Response({"data": AgentBookingCompleteDataSerializer(data).data}, status=status.HTTP_200_OK)
 
 
+def _extension_refusal(request: Request, status_code: int, code: str, message: str, reason: str, limit) -> Response:
+    detail = {
+        "field": "ends_at",
+        "code": reason,
+        "message": message,
+        "limit": serializers.DateTimeField().to_representation(limit) if limit is not None else None,
+    }
+    return _error_response(status_code, code, message, request, [detail])
+
+
+class AgentBookingExtendAPIView(APIView):
+    """Extend a running booking at the user's request (POST /agent/bookings/actions/extend).
+
+    Only an approved in-progress booking on the agent's own bench can be extended, by at least
+    10 minutes, up to 4 hours in total. Unknown or foreign bookings get ``extended: false``; a refused
+    extension of the agent's own booking says why, so the agent can offer an alternative.
+    """
+
+    authentication_classes = [AgentSignatureAuthentication]
+    permission_classes = [IsAuthenticatedAgent]
+
+    @extend_schema(
+        operation_id="agent_extend_booking",
+        summary="Extend a running booking at the user's request",
+        description=(
+            "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers "
+            "(see the agentSignatureAuth security scheme). Only an approved, in-progress booking on this "
+            "computer's bench can be extended: at least 10 minutes later than the current end, before the "
+            "current end has passed, without overlapping the next booking, and at most 4 hours from the "
+            "start (longer bookings need approval in the web app). Seconds are dropped. Repeating the "
+            "same end time is safe. An unknown or foreign booking returns extended: false with no other "
+            "fields."
+        ),
+        request=AgentBookingExtendRequestSerializer,
+        responses={
+            200: OpenApiResponse(response=AgentBookingExtendResponseSerializer, description="Extension result"),
+            400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Body is not a JSON object"),
+            401: OpenApiResponse(
+                response=ErrorEnvelopeSerializer,
+                description="Missing, invalid, stale or replayed signature, or agent not active",
+            ),
+            409: OpenApiResponse(
+                response=AgentBookingExtendErrorSerializer,
+                description="bench_not_free: another booking starts at details[0].limit",
+            ),
+            422: OpenApiResponse(
+                response=AgentBookingExtendErrorSerializer,
+                description=(
+                    "validation_failed: unknown field or invalid value; extension_not_allowed: "
+                    "details[0].code says why (already_ended, not_later, too_short, needs_approval, "
+                    "bench_not_in_service)"
+                ),
+            ),
+            429: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Request rate exceeded"),
+        },
+        tags=["Agents"],
+    )
+    def post(self, request: Request) -> Response:
+        if not isinstance(request.data, dict):
+            return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", "Send a JSON object.", request)
+        serializer = AgentBookingExtendRequestSerializer(data=request.data)
+        unknown = sorted(set(request.data) - set(serializer.fields))
+        if unknown or not serializer.is_valid():
+            return _error_response(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "validation_failed",
+                "Invalid booking extension request.",
+                request,
+                _validation_details(serializer, unknown),
+            )
+        identity = _signing_identity(request)
+        try:
+            extended = extend_agent_booking(
+                ExtendAgentBookingInput(
+                    agent_uid=identity.agent_uid,
+                    booking_code=serializer.validated_data["booking_code"],
+                    ends_at=serializer.validated_data["ends_at"],
+                ),
+                actor=None,  # an agent action on the user's request, not a user session
+            )
+        except AgentExtensionNotAllowed as error:
+            details = error.details or {}
+            return _extension_refusal(
+                request,
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                error.code,
+                error.message,
+                details.get("reason", ""),
+                details.get("limit"),
+            )
+        except AgentExtensionBenchNotFree as error:
+            return _extension_refusal(
+                request,
+                status.HTTP_409_CONFLICT,
+                error.code,
+                error.message,
+                error.code,
+                (error.details or {}).get("available_until"),
+            )
+        if extended is None:
+            # A fixed body, not serialized: the same bytes for every failure, with no null fields.
+            return Response({"data": {"extended": False}}, status=status.HTTP_200_OK)
+        data = {
+            "extended": True,
+            "booking_code": extended.booking_code,
+            "starts_at": extended.starts_at,
+            "ends_at": extended.ends_at,
+        }
+        return Response({"data": AgentBookingExtendDataSerializer(data).data}, status=status.HTTP_200_OK)
+
+
 class AgentInfoAPIView(APIView):
     """Discover agent capabilities and backend metadata (GET /agent/info)."""
 
@@ -813,12 +932,14 @@ class AgentInfoAPIView(APIView):
                         "booking_validation",
                         "booking_check_in",
                         "booking_complete",
+                        "booking_extend",
                     ],
                     "endpoints": {
                         "session_logs": reverse("agent-session-logs"),
                         "booking_validation": reverse("agent-booking-validation"),
                         "booking_check_in": reverse("agent-booking-check-in"),
                         "booking_complete": reverse("agent-booking-complete"),
+                        "booking_extend": reverse("agent-booking-extend"),
                     },
                 }
             },

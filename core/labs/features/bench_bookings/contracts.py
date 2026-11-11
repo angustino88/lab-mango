@@ -38,6 +38,15 @@ class SessionBookingFacts:
 
 
 @dataclass(frozen=True, slots=True)
+class AgentBookingExtended:
+    """A running booking the agent extended; ``ends_at`` is the new end."""
+
+    booking_code: str
+    starts_at: datetime
+    ends_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class AgentBookingEnded:
     """A booking the agent ended at the user's request."""
 

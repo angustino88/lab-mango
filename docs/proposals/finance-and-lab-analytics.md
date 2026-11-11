@@ -55,6 +55,7 @@ session links → operating calendar → analytics rebuild, with the finance fix
 | O25 | A booking is ended only by the user's own action. The agent calls `POST /agent/bookings/actions/complete` when the user chooses to end the booking; it does not complete bookings at logout. |
 | O26 | Automatic completion at the booking's end time belongs to the bench-booking feature's scheduled job (`labs.bench_bookings.reconcile_statuses`), not to the agent. |
 | O27 | The reconciliation job is scheduled in code (`CELERY_BEAT_SCHEDULE`, every 60 seconds), so every environment gets it when beat starts; admins can still disable it. |
+| O28 | The agent may extend a booking at the user's request: only an approved in-progress booking, by at least 10 minutes each time (no maximum, repeatable), and never past 4 hours in total; longer bookings need approval in the web app (`core/labs/features/bench_bookings/docs/agent-extend.md`). |
 
 ## 3. Current state: lab analytics
 
@@ -551,8 +552,6 @@ passed, failed or not run, with the exact command.
 | 14 | Session-log limits | 5 minutes, 7 days, 24 hours confirmed (O19) |
 
 ### Still open
-
-- **Agent extend:** design ready in `core/labs/features/bench_bookings/docs/agent-extend.md`; rules E1–E8 and four questions (§5) need owner confirmation before implementation.
 
 None for the session log (Track A). Track B work packages each need their own design note and
 approval before merge (O14).

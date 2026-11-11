@@ -170,6 +170,12 @@ Race guard: the same lock sequence as check-in (`lock_agent_booking`). Bookings 
 at their end time by the bench-booking feature's scheduled job, `labs.bench_bookings.reconcile_statuses`
 (O26). A completed booking cannot be checked in again.
 
+### 6.3 Extending a booking (O28)
+
+`POST /agent/bookings/actions/extend` moves the end of an approved in-progress booking later, by at least
+10 minutes, never past 4 hours in total, and never into the next booking. Design, rules and responses:
+[agent extend](../../bench_bookings/docs/agent-extend.md).
+
 ## 7. Authorization and threat notes
 
 - Device-only routes: user and API-key credentials are not accepted.

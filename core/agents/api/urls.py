@@ -6,6 +6,7 @@ from .views import (
     AgentActivityAPIView,
     AgentBookingCheckInAPIView,
     AgentBookingCompleteAPIView,
+    AgentBookingExtendAPIView,
     AgentBookingValidationAPIView,
     AgentDecommissionActionAPIView,
     AgentDetailAPIView,
@@ -47,5 +48,10 @@ urlpatterns = [
         "agent/bookings/actions/complete",
         AgentBookingCompleteAPIView.as_view(),
         name="agent-booking-complete",
+    ),
+    path(
+        "agent/bookings/actions/extend",
+        AgentBookingExtendAPIView.as_view(),
+        name="agent-booking-extend",
     ),
 ]

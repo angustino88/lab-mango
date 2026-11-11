@@ -231,3 +231,53 @@ class AgentBookingCompleteDataSerializer(serializers.Serializer):
 
 class AgentBookingCompleteResponseSerializer(serializers.Serializer):
     data = AgentBookingCompleteDataSerializer()
+
+
+class AgentBookingExtendRequestSerializer(serializers.Serializer):
+    booking_code = serializers.CharField(max_length=64)
+    ends_at = serializers.DateTimeField(help_text="The new end time. Seconds are dropped.")
+
+
+class AgentBookingExtendDataSerializer(serializers.Serializer):
+    extended = serializers.BooleanField(help_text="True when the booking now ends at ends_at.")
+    booking_code = serializers.CharField(required=False, help_text="Present only when extended.")
+    starts_at = serializers.DateTimeField(required=False, help_text="Present only when extended.")
+    ends_at = serializers.DateTimeField(required=False, help_text="The new end; present only when extended.")
+
+
+class AgentBookingExtendResponseSerializer(serializers.Serializer):
+    data = AgentBookingExtendDataSerializer()
+
+
+class AgentBookingExtendErrorDetailSerializer(serializers.Serializer):
+    field = serializers.CharField(help_text="Always ends_at.")
+    code = serializers.ChoiceField(
+        choices=(
+            "already_ended",
+            "not_later",
+            "too_short",
+            "needs_approval",
+            "bench_not_in_service",
+            "bench_not_free",
+        ),
+        help_text="Why the extension was refused (stable).",
+    )
+    message = serializers.CharField()
+    limit = serializers.DateTimeField(
+        allow_null=True,
+        help_text=(
+            "too_short: earliest accepted end; needs_approval: latest accepted end; "
+            "bench_not_free: when the next booking starts; otherwise null."
+        ),
+    )
+
+
+class AgentBookingExtendErrorBodySerializer(serializers.Serializer):
+    code = serializers.CharField()
+    message = serializers.CharField()
+    details = AgentBookingExtendErrorDetailSerializer(many=True)
+    request_id = serializers.CharField()
+
+
+class AgentBookingExtendErrorSerializer(serializers.Serializer):
+    error = AgentBookingExtendErrorBodySerializer()

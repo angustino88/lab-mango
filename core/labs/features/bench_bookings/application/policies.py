@@ -5,13 +5,15 @@ from datetime import datetime, timedelta
 from django.core.exceptions import ValidationError
 
 from core.labs.features.bench_bookings.contracts import scheduled_start_is_due
-from core.labs.features.bench_bookings.exceptions import BenchBookingConflict
+from core.labs.features.bench_bookings.exceptions import AgentExtensionNotAllowed, BenchBookingConflict
 from core.labs.models import BookingApprovalStatus, BookingStatus
 
 START_GRACE = timedelta(minutes=10)
 ACTIVATION_WINDOW = START_GRACE
 MIN_BOOKING_DURATION = timedelta(minutes=10)
 LONG_BOOKING_APPROVAL_THRESHOLD = timedelta(hours=4)
+# Owner decision O28: each agent extension adds at least this much; there is no maximum per step.
+AGENT_EXTENSION_MIN_STEP = MIN_BOOKING_DURATION
 
 
 def format_duration(duration: timedelta) -> str:
@@ -100,3 +102,31 @@ def is_agent_login_eligible(
     if status == BookingStatus.IN_PROGRESS:
         return starts_at <= now < ends_at
     return False
+
+
+def ensure_agent_extension(
+    *, starts_at: datetime, current_ends_at: datetime, new_ends_at: datetime, now: datetime
+) -> None:
+    """Agent extension rules E2, E3, E5 and E6 (bench_bookings/docs/agent-extend.md, decision O28).
+
+    The total booking stays within ``LONG_BOOKING_APPROVAL_THRESHOLD`` so it remains approved and
+    the user can still check in again (O21); longer bookings are requested in the web app.
+    """
+    if current_ends_at <= now:
+        raise AgentExtensionNotAllowed(reason="already_ended", message="The booking has already ended.")
+    if new_ends_at <= current_ends_at:
+        raise AgentExtensionNotAllowed(reason="not_later", message="The new end must be after the current end.")
+    latest = starts_at + LONG_BOOKING_APPROVAL_THRESHOLD
+    earliest = current_ends_at + AGENT_EXTENSION_MIN_STEP
+    if new_ends_at > latest or earliest > latest:
+        raise AgentExtensionNotAllowed(
+            reason="needs_approval",
+            limit=latest,
+            message=f"Bookings longer than {format_duration(LONG_BOOKING_APPROVAL_THRESHOLD)} need approval in the web app.",
+        )
+    if new_ends_at < earliest:
+        raise AgentExtensionNotAllowed(
+            reason="too_short",
+            limit=earliest,
+            message=f"Extend by at least {format_duration(AGENT_EXTENSION_MIN_STEP)}.",
+        )

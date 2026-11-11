@@ -9,6 +9,7 @@ from .decide_booking_approval import (
     DecideBenchBookingApprovalResult,
     decide_bench_booking_approval,
 )
+from .extend_agent_booking import ExtendAgentBookingInput, extend_agent_booking
 from .state_transitions import (
     activate_bench_booking_for_computing_activity,
     activate_bench_bookings,
@@ -24,6 +25,7 @@ __all__ = [
     "CreateBenchBookingInput",
     "DecideBenchBookingApprovalInput",
     "DecideBenchBookingApprovalResult",
+    "ExtendAgentBookingInput",
     "AgentBookingEndTimeInput",
     "UpdateBenchBookingInput",
     "activate_bench_booking_for_computing_activity",
@@ -33,6 +35,7 @@ __all__ = [
     "complete_agent_booking",
     "create_bench_booking",
     "decide_bench_booking_approval",
+    "extend_agent_booking",
     "reconcile_bench_booking_statuses",
     "update_bench_booking",
     "update_agent_booking_end_time",

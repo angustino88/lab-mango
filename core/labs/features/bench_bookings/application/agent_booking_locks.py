@@ -5,7 +5,7 @@ from uuid import UUID
 
 from core.agents.public import AgentEnrollmentConflict, require_active_agent_identity
 from core.labs.features.equipment.public import lock_active_equipment_bench_assignment
-from core.labs.models import BenchBooking
+from core.labs.models import Bench, BenchBooking
 
 from .locks import lock_benches
 
@@ -13,6 +13,7 @@ from .locks import lock_benches
 @dataclass(frozen=True, slots=True)
 class LockedAgentBooking:
     booking: BenchBooking
+    bench: Bench
     computer_bench_id: int
 
 
@@ -37,7 +38,7 @@ def lock_agent_booking(*, agent_uid: UUID, booking_code: str, actor: object) -> 
     booking_bench_id = BenchBooking.objects.filter(booking_code=code).values_list("bench_id", flat=True).first()
     if booking_bench_id is None or booking_bench_id != placement.bench_id:
         return None
-    lock_benches((booking_bench_id,))
+    bench = lock_benches((booking_bench_id,))[booking_bench_id]
     booking = (
         BenchBooking.objects.select_for_update(of=("self",))
         .select_related("requester", "creator")
@@ -46,4 +47,4 @@ def lock_agent_booking(*, agent_uid: UUID, booking_code: str, actor: object) -> 
     )
     if booking is None:  # moved to another bench between the read and the lock
         return None
-    return LockedAgentBooking(booking=booking, computer_bench_id=placement.bench_id)
+    return LockedAgentBooking(booking=booking, bench=bench, computer_bench_id=placement.bench_id)
