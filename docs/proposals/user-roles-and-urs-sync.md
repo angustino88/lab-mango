@@ -241,11 +241,10 @@ usernames, duplicate URS ids or unknown roles. Check production-like data before
 | **C. Permission bundles (NIST RBAC core)** | Roles are named sets of permissions (`booking.approve`, `bench.write`, `finance.read`, ...) edited in Django admin and assigned to URS groups | Roles change often, or each department wants different bundles | Large: permission registry, admin UI, every view checks a permission |
 | D. Scoped roles (ABAC) | Roles per room or lab | One backend serves several teams | Not needed: each department has its own backend |
 
-Note: `core/users/access.py` describes `admin` as owning procurement and finance, while the code lets coordinators manage procurement and expenses. Model B with a `finance` role would resolve this; with model A, the documentation should say coordinators manage them.
+**Decision (2026-11-11): keep model A.** `core/users/access.py` now states what the code does: coordinators manage procurement, expenses and finance reports; admins add the user directory.
 
 ## Open questions for the owner
 
-1. **Role model.** Keep model A, or add functional roles (model B: `finance`, `auditor`, ...)?
-2. **R1 limits.** Keep 50 % and 10 members, or choose other values?
-3. **Standards items** S2 (no self-approval of bookings), S5 (access review report), S6 (role-change audit):
+1. **R1 limits.** Keep 50 % and 10 members, or choose other values?
+2. **Standards items** S2 (no self-approval of bookings), S5 (access review report), S6 (role-change audit):
    implement now?

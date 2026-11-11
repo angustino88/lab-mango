@@ -5,10 +5,13 @@
 administrators in Django admin. A user's roles are the ``labs_role`` values of the URS groups whose
 Django group they belong to.
 
-* ``admin``: full control, including procurement and finance.
-* ``coord``: operational management of labs, equipment, licenses, benches, and the work of other
-  users (bookings).
-* ``user``: read access; creates and changes only their own bookings.
+* ``admin``: everything a coordinator can do, plus the user directory (groups and members).
+* ``coord``: operational management of labs, equipment, licenses, benches, rooms and monitoring;
+  procurement, expenses and finance reports; and the work of other users (booking approval).
+* ``user``: reads the dashboard (including bench detail) and the leaderboard; creates and changes only
+  their own bookings. No direct access to benches, equipment or other Labs data.
+
+The per-endpoint matrix lives in ``core/labs/features/base/access.py`` (owner decision 2026-11-11).
 
 Higher roles imply lower ones (``admin`` > ``coord`` > ``user``). Superusers hold every role. A user
 with no mapped group holds no role and can neither read nor write through these classes (fail closed).
