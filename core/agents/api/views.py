@@ -7,6 +7,7 @@ import logging
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
@@ -36,7 +37,15 @@ from core.agents.exceptions import (
 from core.agents.models import AgentIdentity
 from core.common.api.correlation import get_request_id
 from core.common.api.pagination import ResultsSetPagination
+from core.labs.features.bench_bookings.public import CheckAgentBookingLoginInput, check_agent_booking_login
 from core.labs.features.equipment.public import SyncComputingActivityInput, sync_computing_activity
+from core.labs.features.lab_sessions.public import (
+    RecordSessionLogInput,
+    SessionLogConflict,
+    SessionLogEquipmentUnavailable,
+    SessionLogInvalid,
+    record_session_log,
+)
 from core.labs.models import Equipment
 from core.routing.api.serializers import ErrorEnvelopeSerializer
 from core.users.public import IsLabCoordinator
@@ -45,12 +54,18 @@ from .serializers import (
     AgentActivityDataSerializer,
     AgentActivityReportSerializer,
     AgentActivityResponseSerializer,
+    AgentBookingValidationDataSerializer,
+    AgentBookingValidationRequestSerializer,
+    AgentBookingValidationResponseSerializer,
     AgentDetailResponseSerializer,
     AgentHeartbeatRequestSerializer,
     AgentHeartbeatResponseSerializer,
     AgentIdentitySerializer,
     AgentInfoResponseSerializer,
     AgentListResponseSerializer,
+    AgentSessionLogDataSerializer,
+    AgentSessionLogReportSerializer,
+    AgentSessionLogResponseSerializer,
     CreateAgentGrantRequestSerializer,
     CreateGrantForAgentRequestSerializer,
     EnrollAgentRequestSerializer,
@@ -452,6 +467,171 @@ class AgentActivityAPIView(APIView):
         return Response({"data": AgentActivityDataSerializer(activity).data}, status=status.HTTP_200_OK)
 
 
+def _validation_details(serializer, unknown: list[str]) -> list[dict[str, str]]:
+    if unknown:
+        return [{"field": name, "message": "Unknown or read-only field."} for name in unknown]
+    return [{"field": k, "message": str(v[0])} for k, v in serializer.errors.items()]
+
+
+def _signing_identity(request: Request) -> AgentIdentity:
+    principal = request.user
+    if not isinstance(principal, AgentPrincipal):  # guaranteed by IsAuthenticatedAgent
+        raise AuthenticationFailed("Agent request authentication failed.")
+    return principal.identity
+
+
+class AgentSessionLogAPIView(APIView):
+    """Store one completed remote session (POST /agent/session-logs), pushed once after logout.
+
+    The computer is the one the signing agent is enrolled for. Race guard and idempotency come from
+    ``lab_sessions.record_session_log`` (unique computer, agent and event id).
+    """
+
+    authentication_classes = [AgentSignatureAuthentication]
+    permission_classes = [IsAuthenticatedAgent]
+
+    @extend_schema(
+        operation_id="agent_record_session_log",
+        summary="Record a completed remote session",
+        description=(
+            "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers "
+            "(see the agentSignatureAuth security scheme). Send once after logout. Repeat the same "
+            "event_id when retrying: identical values return 200 with the stored record. Rejected when "
+            "logout is more than 5 minutes ahead of server time, login is more than 7 days old, or active "
+            "time exceeds the time between login and logout."
+        ),
+        request=AgentSessionLogReportSerializer,
+        responses={
+            201: OpenApiResponse(response=AgentSessionLogResponseSerializer, description="Session stored"),
+            200: OpenApiResponse(
+                response=AgentSessionLogResponseSerializer, description="Same event already stored; no change"
+            ),
+            400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Body is not a JSON object"),
+            401: OpenApiResponse(
+                response=ErrorEnvelopeSerializer,
+                description="Missing, invalid, stale or replayed signature, or agent not active",
+            ),
+            409: OpenApiResponse(
+                response=ErrorEnvelopeSerializer,
+                description="Event id stored with different values, or the agent's computer is deleted",
+            ),
+            422: OpenApiResponse(
+                response=ErrorEnvelopeSerializer, description="Unknown field, invalid value or limit exceeded"
+            ),
+            429: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Request rate exceeded"),
+        },
+        tags=["Agents"],
+    )
+    def post(self, request: Request) -> Response:
+        if not isinstance(request.data, dict):
+            return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", "Send a JSON object.", request)
+        serializer = AgentSessionLogReportSerializer(data=request.data)
+        unknown = sorted(set(request.data) - set(serializer.fields))
+        if unknown or not serializer.is_valid():
+            return _error_response(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "validation_failed",
+                "Invalid session log.",
+                request,
+                _validation_details(serializer, unknown),
+            )
+        identity = _signing_identity(request)
+        values = serializer.validated_data
+        try:
+            record = record_session_log(
+                RecordSessionLogInput(
+                    equipment_id=identity.equipment_id,
+                    agent_id=str(identity.agent_uid),
+                    event_id=values["event_id"],
+                    login_time=values["login_time"],
+                    logout_time=values["logout_time"],
+                    active_duration_seconds=values["active_duration_seconds"],
+                    remote_user=values["remote_user"],
+                    remote_ip=values.get("remote_ip"),
+                    remote_host=values.get("remote_host"),
+                    booking_code=values.get("booking_code"),
+                    agent_version=values.get("agent_version", ""),
+                ),
+                actor=None,  # an agent report, not a user action
+            )
+        except SessionLogInvalid as error:
+            details = [{"field": k, "message": str(v)} for k, v in (error.details or {}).items()]
+            return _error_response(
+                status.HTTP_422_UNPROCESSABLE_ENTITY, error.code, "Invalid session log.", request, details
+            )
+        except (SessionLogConflict, SessionLogEquipmentUnavailable) as error:
+            return _error_response(status.HTTP_409_CONFLICT, error.code, error.message, request)
+        return Response(
+            {"data": AgentSessionLogDataSerializer(record).data},
+            status=status.HTTP_201_CREATED if record.created else status.HTTP_200_OK,
+        )
+
+
+class AgentBookingValidationAPIView(APIView):
+    """Check a booking code before login (POST /agent/bookings/actions/validate). Read-only.
+
+    Eligible only for an approved booking on the bench of the agent's own computer, inside its usable
+    window. Every other case gets the same ``eligible: false`` answer.
+    """
+
+    authentication_classes = [AgentSignatureAuthentication]
+    permission_classes = [IsAuthenticatedAgent]
+
+    @extend_schema(
+        operation_id="agent_validate_booking",
+        summary="Check whether a booking code may be used to log in on this computer now",
+        description=(
+            "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers "
+            "(see the agentSignatureAuth security scheme). Does not check in or change the booking. "
+            "Unknown, unapproved, cancelled, finished, other-bench and out-of-window codes all return "
+            "eligible: false with no other fields."
+        ),
+        request=AgentBookingValidationRequestSerializer,
+        responses={
+            200: OpenApiResponse(response=AgentBookingValidationResponseSerializer, description="Eligibility"),
+            400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Body is not a JSON object"),
+            401: OpenApiResponse(
+                response=ErrorEnvelopeSerializer,
+                description="Missing, invalid, stale or replayed signature, or agent not active",
+            ),
+            422: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unknown field or invalid code"),
+            429: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Request rate exceeded"),
+        },
+        tags=["Agents"],
+    )
+    def post(self, request: Request) -> Response:
+        if not isinstance(request.data, dict):
+            return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", "Send a JSON object.", request)
+        serializer = AgentBookingValidationRequestSerializer(data=request.data)
+        unknown = sorted(set(request.data) - set(serializer.fields))
+        if unknown or not serializer.is_valid():
+            return _error_response(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "validation_failed",
+                "Invalid booking validation request.",
+                request,
+                _validation_details(serializer, unknown),
+            )
+        identity = _signing_identity(request)
+        login = check_agent_booking_login(
+            CheckAgentBookingLoginInput(
+                equipment_id=identity.equipment_id,
+                booking_code=serializer.validated_data["booking_code"],
+            )
+        )
+        if login is None:
+            # A fixed body, not serialized: the same bytes for every failure, with no null fields.
+            return Response({"data": {"eligible": False}}, status=status.HTTP_200_OK)
+        data = {
+            "eligible": True,
+            "booking_code": login.booking_code,
+            "starts_at": login.starts_at,
+            "ends_at": login.ends_at,
+            "booked_for": login.booked_for,
+        }
+        return Response({"data": AgentBookingValidationDataSerializer(data).data}, status=status.HTTP_200_OK)
+
+
 class AgentInfoAPIView(APIView):
     """Discover agent capabilities and backend metadata (GET /agent/info)."""
 
@@ -478,7 +658,19 @@ class AgentInfoAPIView(APIView):
                 "data": {
                     "backend_id": backend_id,
                     "server_time": timezone.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "capabilities": ["enrollment", "heartbeat", "reporting", "activity", "request_signature_v1"],
+                    "capabilities": [
+                        "enrollment",
+                        "heartbeat",
+                        "reporting",
+                        "activity",
+                        "request_signature_v1",
+                        "session_logs",
+                        "booking_validation",
+                    ],
+                    "endpoints": {
+                        "session_logs": reverse("agent-session-logs"),
+                        "booking_validation": reverse("agent-booking-validation"),
+                    },
                 }
             },
             status=status.HTTP_200_OK,

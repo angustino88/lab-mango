@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from django.core.exceptions import ValidationError
 
+from core.labs.features.bench_bookings.contracts import scheduled_start_is_due
 from core.labs.features.bench_bookings.exceptions import BenchBookingConflict
 from core.labs.models import BookingApprovalStatus, BookingStatus
 
@@ -75,3 +76,27 @@ def ensure_start_mutable(status: str, *, starts_at_changed: bool, bench_changed:
 def ensure_no_conflicting_bookings(*, has_conflicts: bool) -> None:
     if has_conflicts:
         raise BenchBookingConflict("The bench is not free for the requested period.")
+
+
+def is_agent_login_eligible(
+    *,
+    status: str,
+    approval_status: str,
+    starts_at: datetime,
+    ends_at: datetime,
+    booking_bench_id: int,
+    computer_bench_id: int | None,
+    now: datetime,
+) -> bool:
+    """Whether an agent may log a user in with this booking on a computer at ``computer_bench_id``.
+
+    A reserved booking is usable from its start until the activation window closes, the moment the
+    reconciliation job would expire it. An in-progress booking is usable until it ends.
+    """
+    if approval_status != BookingApprovalStatus.APPROVED or computer_bench_id != booking_bench_id:
+        return False
+    if status == BookingStatus.RESERVED:
+        return scheduled_start_is_due(starts_at=starts_at, ends_at=ends_at, now=now)
+    if status == BookingStatus.IN_PROGRESS:
+        return starts_at <= now < ends_at
+    return False

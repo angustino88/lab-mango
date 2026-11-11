@@ -1,6 +1,7 @@
 # Design: Finance, Procurement, Expense and Lab Analytics — Review and Implementation Plan
 
-- **Tier:** T2 · **Status:** Draft; session-log decisions and finance direction recorded, not approved for implementation · **Date:** 2026-11-10
+- **Tier:** T2 · **Status:** Draft; session-log decisions and finance direction recorded; A1 and A1b implemented on branch `claude/loving-hopper-n5grpk`, pending review and approval · **Date:** 2026-11-10, updated 2026-11-11
+- **Note:** main was redesigned after this review (single equipment table; `EquipmentAssignment` now holds every placement, with `EquipmentAssignment.objects` returning bench placements only). Model names in §3–§4 refer to the code as reviewed on 2026-11-10.
 - **Domain:** Labs (`procurement`, `expense`, `analytics`, session log, agent session ingestion)
 - **Scope of this change:** documentation only. No code, schema, API or permission was changed.
 - **Verification:** findings come from reading the code. No test or endpoint was run. Items marked
@@ -331,7 +332,7 @@ Called once after logout (O1, O13). Body:
 
 | Response | When |
 | --- | --- |
-| `201` | Stored. Body returns the session id and its kind (`booked`, `temp_login`, `unmatched`). |
+| `201` | Stored. Body returns the session id, event id, login and logout time, and booking code. The session kind is added with A2, where it is also stored. |
 | `200` | Same `event_id` and same body already stored. Returns the original record. |
 | `409` | Same `event_id` with a different body. |
 | `422` | Validation failed (§5.6 hard limits). |
@@ -481,9 +482,9 @@ Track A (lab analytics) is strictly ordered. Track B (finance) can run in parall
 | WP | Deliverable | Depends on | Done when |
 | --- | --- | --- | --- |
 | A0 | Decisions: fields the agent may send, retention period, correction path, overlap rule (§5.3), roles for the session list and per-user reports | none | Done (O8–O19) |
-| A1 | `POST /agent/session-logs` and its path in `agent/info` (§5.1, §5.5.2), with the hard limits of §5.6 | A0 | A completed session posted twice creates one row; same event id with a different body returns 409; computer comes from agent identity; only the O9 fields are accepted |
-| A1b | `POST /agent/bookings/actions/validate` (§5.5.1) | none | Eligible only for an approved, active booking on the computer's bench inside its window; every failure returns the same answer |
-| A2 | Session links and session kind (§5.2), resolved at ingestion; backfill for existing rows | A1 | Each session has a kind; bench resolves from assignment at login time; unmatched codes are countable |
+| A1 | `POST /agent/session-logs` and its path in `agent/info` (§5.1, §5.5.2), with the hard limits of §5.6 | A0 | A completed session posted twice creates one row; same event id with a different body returns 409; computer comes from agent identity; only the O9 fields are accepted. **Implemented on branch**; design in `core/labs/features/lab_sessions/docs/architecture.md` |
+| A1b | `POST /agent/bookings/actions/validate` (§5.5.1) | none | Eligible only for an approved, active booking on the computer's bench inside its window; every failure returns the same answer. **Implemented on branch** |
+| A2 | Session links and session kind (§5.2), resolved at ingestion and returned by the push; backfill for existing rows | A1 | Each session has a kind; bench resolves from assignment at login time; unmatched codes are countable |
 | A3 | Operating calendar stage 1: timezone and weekly hours, inherited (§6) | none | Available hours for a room and day come from the calendar, in the lab's timezone |
 | A4 | Fact tables and backfillable job (§7), with computer active time and bench occupied time (§5.3) | A2, A3 | Re-running a day is idempotent; a missed day can be backfilled; the §5.3 example gives 3.0 h used and 0.5 h overrun |
 | A5 | Rebuilt reports and new endpoints; legacy endpoints deprecated with a sunset date | A4 | Three-way booked/used split and calendar-based utilisation match hand-checked samples |

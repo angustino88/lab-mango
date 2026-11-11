@@ -21,10 +21,14 @@ and is unchanged. Model definitions remain in the [Labs model architecture](../.
 | Monitoring command | [public facade](../../core/labs/features/monitoring/public.py#L1-L15), [persistence](../../core/labs/features/monitoring/application/commands.py#L34-L98) | Duplicate insertion conflicts; no same-content replay acknowledgment, snapshot or liveness side effects |
 | Narrow Agent booking end-time update | [command](../../core/labs/features/bench_bookings/application/update_agent_booking_end_time.py#L29-L108) | Active identity → Computing assignment → bench → booking; no Agent session or durable request-key idempotency |
 | Activity HTTP adapters | [agent report](../../core/agents/api/views.py) (`PATCH /agent/equipment/activity`), [equipment read](../../core/labs/features/equipment/categories/computing/api.py) (`GET /api/labs/equipment/{equipment_id}/activity`) | Agent writes are signed-request authenticated (interim); the equipment route is read-only (2026-11-11) |
+| Session-log ingestion | [agent route](../../core/agents/api/views.py) (`POST /agent/session-logs`), [command](../../core/labs/features/lab_sessions/application.py) | One completed session per push after logout; idempotent on computer, agent and event id; signed-request authenticated (interim). Design: [lab sessions](../../core/labs/features/lab_sessions/docs/architecture.md) (branch, pending approval) |
+| Booking-code validation | [agent route](../../core/agents/api/views.py) (`POST /agent/bookings/actions/validate`), [use case](../../core/labs/features/bench_bookings/application/check_agent_booking_login.py) | Read-only; no check-in or session; uniform `eligible: false`. Used instead of the planned `GET /agent/bookings/code/{booking_code}` (owner decision O15) |
 
 **Verified discovery limits:** scoped searches of backend models/features/routes found no `AgentInventory`,
 `MetricSample`, separate hardware inventory domain, mounted new Agent lifecycle surface or dedicated raw-session
 ingestion. This is a source-search result, not a deployment audit. External Agent implementations were not inspected.
+Update 2026-11-11: dedicated session-log ingestion now exists on a review branch (table above); the field list,
+retention and correction decisions are recorded as O8–O19 in `docs/proposals/finance-and-lab-analytics.md`.
 
 **Proposed target scope:** operator lifecycle, bootstrap, installation mTLS, computing state, activity,
 monitoring, heartbeat, and booking-code lookup/check-in with backend booking-session actions. The owner

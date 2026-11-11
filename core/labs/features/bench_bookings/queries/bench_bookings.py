@@ -127,6 +127,11 @@ def get_bench_booking_by_code(*, booking_code: str):
     )
 
 
+def find_bench_booking_for_agent_login(*, booking_code: str) -> BenchBooking | None:
+    """The booking with this code and the users it names, or None. One query."""
+    return BenchBooking.objects.select_related("requester", "creator").filter(booking_code=booking_code).first()
+
+
 def conflicting_bench_bookings(*, bench_id, starts_at, ends_at, exclude_id=None):
     """Return reserving bookings that overlap the requested half-open period."""
     queryset = BenchBooking.objects.filter(

@@ -1,5 +1,6 @@
 """Supported bench booking commands and their frozen inputs."""
 
+from .check_agent_booking_login import CheckAgentBookingLoginInput, check_agent_booking_login
 from .create_booking import CreateBenchBookingInput, create_bench_booking
 from .decide_booking_approval import (
     DecideBenchBookingApprovalInput,
@@ -15,6 +16,7 @@ from .update_agent_booking_end_time import AgentBookingEndTimeInput, update_agen
 from .update_booking import UpdateBenchBookingInput, update_bench_booking
 
 __all__ = [
+    "CheckAgentBookingLoginInput",
     "CreateBenchBookingInput",
     "DecideBenchBookingApprovalInput",
     "DecideBenchBookingApprovalResult",
@@ -22,6 +24,7 @@ __all__ = [
     "UpdateBenchBookingInput",
     "activate_bench_booking_for_computing_activity",
     "activate_bench_bookings",
+    "check_agent_booking_login",
     "create_bench_booking",
     "decide_bench_booking_approval",
     "reconcile_bench_booking_statuses",

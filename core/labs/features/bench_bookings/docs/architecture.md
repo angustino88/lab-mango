@@ -82,6 +82,24 @@ An unchanged end time is a no-op for persistence and notification intent creatio
 changed requests idempotent, and `request_id` is not persisted as an audit record here. No durable
 audit or notification-delivery guarantee is claimed.
 
+### Agent booking login check
+
+`check_agent_booking_login(CheckAgentBookingLoginInput(equipment_id, booking_code), now=None)` answers
+`POST /agent/bookings/actions/validate`. It is a read-only use case: no transaction, lock, check-in or
+status change. `equipment_id` is the signing agent's computer, set by the agent view, never the body.
+
+It returns an `AgentBookingLogin` (`booking_code`, `starts_at`, `ends_at`, `booked_for`) when the pure rule
+`policies.is_agent_login_eligible` holds, otherwise `None` for every failure:
+
+- the booking is approved and on the computer's active bench
+  (`equipment.public.active_equipment_bench_assignment`);
+- a `reserved` booking is inside `scheduled_start_is_due` (start to start + 10 minutes, the moment
+  reconciliation would expire it); an `in_progress` booking is before its end.
+
+Two queries: the booking with `requester` and `creator`, and the computer's active bench. `booked_for`
+is the requester's username, or the creator's when no requester is set. Design and tests:
+[lab sessions architecture](../../lab_sessions/docs/architecture.md#6-booking-validation-a1b-owned-by-bench_bookings).
+
 `application/state_transitions.py` exposes the supported lifecycle commands:
 
 - `activate_bench_booking_for_computing_activity(computing_id, now)`: resolves the activity-to-bench relationship and activates the matching booking.

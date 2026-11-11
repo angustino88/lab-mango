@@ -35,7 +35,7 @@ Scope: feature responsibilities, model ownership, dependencies, workflow boundar
 | `finance` | Expense types, expenses, billing periods, and payments/refunds against expenses | Purchase order/acquisition allocation, license agreement terms and payments |
 | `monitoring` | Incoming monitoring facts/events, source reconciliation and monitoring adapters | Resource lifecycle or booking state transitions unless an explicit command is invoked |
 | `activity` | Live computing activity and its transitions, derived from telemetry/agent facts | Booking state and resource lifecycle state |
-| `session` | Lab session logs and session-specific activity records | Booking approval or resource assignment |
+| `session` (package `lab_sessions`) | Lab session logs and session-specific activity records; agent session-log ingestion (`record_session_log`, see `core/labs/features/lab_sessions/docs/architecture.md`) | Booking approval or resource assignment |
 | `auditing` | Resource audit and change-log records, audit read projections and recording contract | Owning feature's business decision or workflow orchestration |
 | `analytics` | Derived observations, event summaries, aggregates and reporting queries | Source-of-truth mutations or authoritative lifecycle state |
 | `leaderboard` | User persona engagement scoring, laboratory and bench utilization rankings, and weekly heatmaps | Raw telemetry ingestion, booking mutations, or direct lifecycle transitions |

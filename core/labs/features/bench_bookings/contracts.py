@@ -23,3 +23,13 @@ class BookingNotificationSnapshot:
 
 def scheduled_start_is_due(*, starts_at: datetime, ends_at: datetime, now: datetime) -> bool:
     return starts_at <= now < min(ends_at, starts_at + timedelta(minutes=10))
+
+
+@dataclass(frozen=True, slots=True)
+class AgentBookingLogin:
+    """What an agent may know about a booking it is allowed to log a user in with."""
+
+    booking_code: str
+    starts_at: datetime
+    ends_at: datetime
+    booked_for: str | None
