@@ -128,39 +128,54 @@ proxy strips (`routing-sync.md:74`). The current authentication code was written
   - [ ] Test that a response sets only prefixed paths and backend-specific names.
   - [ ] Do not rely on the proxy rewriting cookie paths; the backend must emit correct cookies itself.
 
-#### H7. The login flow and first-login binding are not reachable through identity-based routing
+#### H7. Login routing and first-login binding need a defined contract with the Router
 
 - **Evidence:** the Router routes a user only when exactly one backend claims their Entra key
-  (`routing-sync.md` CNS-6); a user with no binding has no claim and resolves to nothing. Yet:
-  - the challenge request (`POST aad-login/challenge`) carries no identity, but its nonce is stored in one
-    backend's database (`aad_login/service.py:66-72`), so the later `aad-login` must reach **the same**
-    backend or it always fails;
-  - first-login binding by username (H1) runs inside `aad-login` on a backend, but an unbound user has no
-    claim and cannot be routed there.
-- **Not verified:** how the Router routes the challenge and the first login (Router repository).
-- **Proposal:** decide and document one contract with the Router repository:
-  - [ ] **Option A (recommended):** bind identities before first login, outside the login request: URS
-    sync supplies usernames, an operator or an automated reconciliation job binds each user's Entra object
-    ID (looked up in Entra by UPN, server to server), and the backend publishes the claim. Login then only
-    accepts already-bound identities, and automatic binding in `aad-login` is removed. This also removes
-    most of H1's risk.
-  - [ ] **Option B:** keep first-login binding, and define a Router "discovery" route for unbound users
-    (for example by department selection or UPN domain). This needs its own threat model, because it
-    reopens H1 across departments.
-  - [ ] Either way: make the challenge either Router-routed to the backend that will handle the login, or
-    stateless (signed with the backend's key and bound to the browser cookie), and test the full
-    challenge → login → refresh path through prefixed routes.
+  (`routing-sync.md` CNS-6); a user with no binding has no claim. The challenge request carries no
+  identity, but its nonce is stored in one backend's database (`aad_login/service.py:66-72`), so the
+  later `aad-login` must reach **the same** backend.
+- **Owner (2026-11-11):** users select the department backend in the frontend and can switch between
+  backends. The frontend therefore knows the target prefix before login, so the challenge, the login and
+  first-login binding all go to the selected backend directly. This resolves the reachability problem.
+- **Remaining gaps:**
+  - [ ] Write the selection flow into the Router contract: selection is a *routing* choice only; the
+    selected backend still authenticates and authorizes (routing-sync P1). A user who selects a backend
+    where they have no account gets the normal `401`, with no hint whether the account exists.
+  - [ ] Claim-based default routing must not fail closed for legitimate multi-department users (see M14).
+  - [ ] Test the full challenge → login → refresh → logout path through two prefixes in one browser
+    (depends on H6).
+- **Optional: link Entra IDs before first login (removes H1's username risk).** Not required now that
+  selection makes first-login binding reachable; recommended if H1's residual risk is not accepted.
+  How it works without the user logging in:
+  1. Register an Entra application for the backend with the Microsoft Graph **application** permission
+     `User.Read.All` (admin consent, granted by the tenant administrator).
+  2. A backend job runs after URS sync. For each URS-managed user without a binding, it requests an app
+     token (client-credentials flow) and calls Graph, for example
+     `GET https://graph.microsoft.com/v1.0/users?$filter=onPremisesSamAccountName eq '<username>'&$select=id,userPrincipalName,accountEnabled,userType`
+     (advanced query: header `ConsistencyLevel: eventual` and `$count=true`). This matches the URS
+     username to the directory's account name exactly, instead of guessing a UPN domain.
+  3. Bind only when exactly one result is returned, `userType` is `Member` and `accountEnabled` is true;
+     otherwise skip and report. Binding uses the existing `bind_entra_identity` command, which publishes
+     the routing claim.
+  4. Then turn `ENTRA_BIND_BY_USERNAME` off: login only accepts identities that are already bound.
+  Costs: a client secret or certificate per backend, outbound access to `graph.microsoft.com` and
+  `login.microsoftonline.com`, tenant-admin consent, and a new integration (T2; `requests` and `httpx` are
+  already dependencies, so no new package is needed). Fallback with no Graph access: an operator exports
+  `samAccountName,objectId` from Entra and loads it with a management command built on
+  `bind_entra_identity`.
 
-#### M14. One person bound on two backends locks them out
+#### M14. Multi-department users conflict with the Router's single-owner rule
 
-- **Evidence:** URS sync creates a stub user per department group by username
-  (`urs_sync/sync_group/service.py:106`); each backend may bind the same Entra identity independently
-  (H1). Two claims for one key are a conflict, and the Router then routes the user nowhere
-  (`routing-sync.md` CNS-6). A backend cannot detect this itself (backends know nothing about each other).
+- **Evidence:** the routing spec says a user must not exist in two departments and treats two claims for
+  one key as a conflict that routes nowhere (`routing-sync.md` CNS-6). The owner confirmed on 2026-11-11
+  that users can belong to several departments and switch between them. The spec and the product rule
+  disagree (drift).
 - **Proposal:**
-  - [ ] Define which department owns a person who appears in several departments' URS groups, and enforce
-    it at the source (URS group design or the binding job in H7 Option A).
-  - [ ] Router conflict alerts must reach an operator runbook that names the fix (unlink on one backend).
+  - [ ] Revise CNS-6 in the routing spec (Router repository change, owner decision): several claims mean
+    "let the user choose", not "route nowhere"; keep "fail closed" only for invalid or unknown claims.
+  - [ ] Decide the default when a user arrives without a selection (last-used backend, or a chooser).
+  - [ ] Each backend keeps its own binding and claim for the same Entra key; nothing changes in this
+    backend's data model. H6 (per-backend cookies) is mandatory for switching to work.
 
 ### Medium
 
@@ -255,14 +270,16 @@ proxy strips (`routing-sync.md:74`). The current authentication code was written
 #### M12. Token signing shares Django's secret key
 
 - **Evidence:** `SIMPLE_JWT` sets no `SIGNING_KEY`, `ISSUER` or `AUDIENCE` (`base.py:366-373`).
-- **Multi-backend impact:** if department backends share a secret key (not verified), a token from
-  `dept_a` passes the signature check on `dept_b`. In production `EntraJWTAuthentication` then requires
+- **Multi-backend impact:** the owner confirmed (2026-11-11) that each department backend runs in its own
+  container with its own environment, so secret keys are expected to differ; nothing enforces it. If two
+  environments ever share a key (for example a copied `.env`), a token from `dept_a` passes the signature
+  check on `dept_b`. In production `EntraJWTAuthentication` then requires
   a local binding with the same tenant/object ID for that user ID (`authentication.py:22-27`), which stops
   a different person but not the same person present on two backends. Non-production
   `JWTAuthentication` has no such check.
 - **Proposal:**
   - [ ] Dedicated signing key per backend, with a rotation procedure.
-  - [ ] Set `ISSUER` and `AUDIENCE` from `BACKEND_ID` (`base.py:115`) and environment, so a token issued by
+  - [ ] Set `ISSUER` and `AUDIENCE` from `BACKEND_ID` (defense in depth against a copied environment) (`base.py:115`) and environment, so a token issued by
     one backend or environment is rejected by every other one; startup check that they are set.
 
 #### M13. Thin audit trail
@@ -305,7 +322,7 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 
 ## Suggested order
 
-1. H7 — agree the login and binding contract with the Router repository; it decides H1 and M14.
+1. H7 and M14 — agree the selection flow and the multi-department rule with the Router repository.
 2. H3, H4, H5 — configuration only, no contract change.
 3. H6 with M3 and M4 — one route/cookie contract change while there are no production clients.
 4. H1 — implement the binding decision from step 1.
@@ -329,13 +346,12 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 | Location of this document | `docs/proposals/` confirmed | — |
 | Frontend and API addresses | Browser sees one shared host; backend URLs are not exposed | M3: `SameSite=Strict` is possible; L9: CORS can be off in production |
 | Deployment topology | Multiple department backends; the router service maps users by Entra ID using the routing sync (2026-11-11) | New H6, H7, M14; M12 extended |
+| How users reach a backend | They select a department backend in the frontend and can switch | H7: login reaches the selected backend; M14: routing spec CNS-6 must change |
+| Secrets per backend | Each department runs its own container and environment | M12: keys expected to differ; issuer/audience kept as defense in depth |
 
 ## Open questions for the owner
 
-1. **Login routing (H7).** How does the Router route the identity-less challenge request and a user who
-   has no binding yet? Option A in H7 (bind before first login) is recommended; it needs the owner's
-   decision and the Router team's agreement.
-2. **Multi-department users (M14).** Can one person legitimately belong to more than one department? If
-   yes, which backend owns them?
-3. **Shared secrets (M12).** Do department backends share `DJANGO_SECRET_KEY` today? (Deployment fact, not
-   visible in this repository.)
+1. **Pre-linking (H7, optional).** Accept H1's residual risk with first-login binding plus its safeguards,
+   or add the Graph lookup job so identities are linked before first login?
+2. **Default backend (M14).** When a multi-department user arrives without choosing, open the last-used
+   backend or show a chooser?
