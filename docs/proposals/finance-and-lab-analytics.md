@@ -365,6 +365,43 @@ Mechanisms:
 - **Derived links are recomputable:** bench, booking and user links come from master data, so fixing
   that data (W5) and recomputing corrects the reports without touching the pushed record.
 
+### 5.7 Which feature and endpoint handles each case
+
+All seven examples are about one record type, `LabSessionLog`. No feature owns it today: analytics and
+the leaderboard only read it. *Proposed:* a new feature `core/labs/features/lab_sessions` owns its
+writes, queries, flags and exclusions. The `/agent/...` routes are mounted with the other agent routes
+but call `lab_sessions` through its `public.py`, the same way the agent booking end-time command lives in
+`bench_bookings`.
+
+Endpoints involved:
+
+| Endpoint | Feature | Status | Who calls it |
+| --- | --- | --- | --- |
+| `POST /agent/session-logs` | `lab_sessions` | New (§5.5.2) | Agent, after logout |
+| `GET /api/labs/session-logs` | `lab_sessions` | New (§5.4) | Lab coordinator, lab admin |
+| `POST /api/labs/session-logs/{id}/actions/exclude` | `lab_sessions` | New | Lab admin (see §11) |
+| `POST /api/labs/session-logs/{id}/actions/restore` | `lab_sessions` | New | Lab admin |
+| `POST /api/labs/session-logs/actions/recompute-links` | `lab_sessions` | New | Lab admin, after master data is fixed |
+| `POST /api/labs/equipment/{id}/assignment` | `equipment` | Exists; always records the current time | Lab coordinator |
+| Correction of a past assignment date | `equipment` | Missing | Lab admin |
+| `POST /api/agents/{id}/actions/revoke` and re-enrolment | `core.agents` | Exists | Lab coordinator |
+| `GET /api/labs/analytics/...` and leaderboard | `analytics`, `leaderboard` | Exist; must skip excluded rows | Readers of reports |
+
+Where each example is caught and fixed:
+
+| # | Example | Caught by | Fixed with |
+| --- | --- | --- | --- |
+| W1 | Wrong PC clock | `POST /agent/session-logs` returns `422`; nothing is stored | Fix the PC clock; that session is lost (accepted, like O2) |
+| W2 | Logout two days late | `POST /agent/session-logs` stores it with flag `long_session` | Admin finds it in `GET /api/labs/session-logs?flag=long_session` and calls `.../exclude` if it is wrong |
+| W3 | Copied disk image | Not detectable automatically; noticed when one computer shows two users at once | `POST /api/agents/{id}/actions/revoke`, re-enrol each PC; admin excludes the mixed rows with reason `wrong_computer` |
+| W4 | IT staff setup sessions | Not detectable automatically | Admin filters the list by computer and date, then excludes with reason `maintenance` |
+| W5 | PC moved, assignment updated late | Not detectable automatically | Correct the past assignment date in `equipment` (missing today), then `.../actions/recompute-links` for that computer and period |
+| W6 | Booking cancelled after login | `POST /agent/session-logs` stores it as kind `unmatched` | No fix needed; listed by `GET /api/labs/session-logs?kind=unmatched` |
+| W7 | Same session sent twice with different ids | `POST /agent/session-logs` stores it with flag `probable_duplicate` | Admin excludes one copy with reason `duplicate` |
+
+After any exclusion, restore or recompute, every report (`analytics`, `leaderboard`) reflects it on its
+next read or next fact-table run (A4); no report reads excluded rows.
+
 ## 6. Proposed design: operating calendar
 
 - A calendar is inherited country → building → room; the most specific level wins.
@@ -439,10 +476,11 @@ Track A (lab analytics) is strictly ordered. Track B (finance) can run in parall
 | A3 | Operating calendar stage 1: timezone and weekly hours, inherited (§6) | none | Available hours for a room and day come from the calendar, in the lab's timezone |
 | A4 | Fact tables and backfillable job (§7), with computer active time and bench occupied time (§5.3) | A2, A3 | Re-running a day is idempotent; a missed day can be backfilled; the §5.3 example gives 3.0 h used and 0.5 h overrun |
 | A5 | Rebuilt reports and new endpoints; legacy endpoints deprecated with a sunset date | A4 | Three-way booked/used split and calendar-based utilisation match hand-checked samples |
-| A6 | Session log list endpoint (§5.4); exclusion with reason and the review list of flagged rows (§5.6) | A2 | Stable ordering across pages; date range required; role enforced; excluded rows leave every report and can be restored |
+| A6 | `lab_sessions` feature: session log list (§5.4), exclude and restore endpoints, review filters for flags and kinds (§5.6, §5.7) | A2 | Stable ordering across pages; date range required; role enforced; excluded rows leave every report and can be restored |
 | A7 | Operating calendar stage 2: manual closed dates (§6) | A3 | A closed date removes that day's available hours; unconfigured countries are flagged |
 | A8 | Analytics write and read access; per-user reports limited to lab coordinators and admins (O11); storage alert fix | none | Plain users cannot post measurements or read per-user reports; an overage alerts once |
 | A9 | Remove unused observation models and retired endpoints | A5 | No reader or writer remains; OpenAPI regenerated |
+| A10 | Correction of a past equipment assignment date in `equipment`, audited, plus `.../actions/recompute-links` in `lab_sessions` (§5.7, W5) | A2 | A corrected assignment moves that period's sessions to the right bench after recompute; the pushed rows are unchanged |
 
 ### Track B: finance
 
