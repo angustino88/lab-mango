@@ -209,7 +209,7 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 | R6 invalid usernames skipped | Done | service |
 | R7 domain | Decided: keep dropping | sync spec |
 | R8 group list admin-only | Done | `groups/list_groups/api.py`, OpenAPI regenerated |
-| R9 reads need a role | **Partly done:** views using `IsLabAdmin`, `IsLabCoordinator`, `IsLabMember` (bench bookings, agents, computing) and the coordinator-only areas (procurement, expenses, finance reports). **Open:** other Labs views still use `HasAPIKey \| IsAuthenticated` from the shared base view; requiring a role there needs a Labs-level base permission (`core.common` may not import `core.users`) | `core/users/access.py`, labs views |
+| R9 reads need a role | **Done (2026-11-11):** Labs-wide policy in `core/labs/features/base/access.py`; default coordinator and admin for every Labs endpoint; plain users read only the dashboard (including bench detail and its equipment mapping) and the leaderboard, and manage their own bench bookings; no role means no access. `core/labs/tests/test_access_policy.py` walks every `/api/labs/` route | `core/labs/features/base/`, Labs views, `core/common/api/reference_views.py` |
 | R10 one role system | **Done (option 1, 2026-11-11):** URS group is the only place roles are configured; its Django group is created and named automatically and only stores membership; support desk uses Labs roles only (admin -> support admin, coord -> support agent), group names grant nothing. Remaining: reference-data writes still use Django permissions (`core/reference_data/policies.py:13`) | `urs_sync/mapping.py`, `core/users/admin.py`, `support_desk/.../policies.py`, `notifications.py` |
 | R11 role check and unique URS id constraints | Done | `URSGroup` constraints (migration 0005) |
 | L1 code uses settings value | Done (default still `False`, see authentication H5) | service |
@@ -222,8 +222,30 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 Migration 0005 stops with a clear message before adding constraints when existing data has case-variant
 usernames, duplicate URS ids or unknown roles. Check production-like data before deploying.
 
+## Labs access matrix (owner decision 2026-11-11)
+
+| Area | No role | Plain user (`user`) | Coordinator (`coord`) | Admin (`admin`) |
+|---|---|---|---|---|
+| Dashboard: overview, summary, bench detail with equipment mapping | none | read | read | read |
+| Leaderboard (including bench and user profiles and usage) | none | read | read | read |
+| Bench bookings (own), lab projects for booking | none | own bookings | all, approve | all, approve |
+| Benches, equipment, licenses, rooms and locations, monitoring, resource audit and mappings, analytics, procurement, expenses | none | none | read and write | read and write |
+| User groups and members | none | none | none | read |
+
+## Alternative role models (for discussion)
+
+| Model | Roles | Fits when | Cost |
+|---|---|---|---|
+| **A. Current hierarchy** (recommended now) | `admin` > `coord` > `user` | One team runs equipment and money together | None |
+| **B. Functional roles added to the hierarchy** | Keep the three, add independent roles: `finance` (procurement, expenses, finance reports), `auditor` (read everything including finance and audit, write nothing), optionally `approver` (decide bookings only) and `viewer` (dashboard and leaderboard only, no bookings) | Money must be separated from equipment management, or reviewers need read-only access (separation of duties) | New role values (migration of the role check), permission classes for procurement, expenses and finance, URS groups mapped per role |
+| **C. Permission bundles (NIST RBAC core)** | Roles are named sets of permissions (`booking.approve`, `bench.write`, `finance.read`, ...) edited in Django admin and assigned to URS groups | Roles change often, or each department wants different bundles | Large: permission registry, admin UI, every view checks a permission |
+| D. Scoped roles (ABAC) | Roles per room or lab | One backend serves several teams | Not needed: each department has its own backend |
+
+Note: `core/users/access.py` describes `admin` as owning procurement and finance, while the code lets coordinators manage procurement and expenses. Model B with a `finance` role would resolve this; with model A, the documentation should say coordinators manage them.
+
 ## Open questions for the owner
 
-1. **R9 follow-up.** Should every other Labs endpoint (benches, equipment, rooms, analytics, ...) also
-   require a Labs role to read? It is a wider change across all Labs features.
+1. **Role model.** Keep model A, or add functional roles (model B: `finance`, `auditor`, ...)?
 2. **R1 limits.** Keep 50 % and 10 members, or choose other values?
+3. **Standards items** S2 (no self-approval of bookings), S5 (access review report), S6 (role-change audit):
+   implement now?

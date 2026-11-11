@@ -11,8 +11,9 @@ from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
-from core.common.api.options import OptionsAPIView, OptionsQueryMixin, SizeClass
+from core.common.api.options import OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer, ResultsSetPagination
+from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.equipment.api.serializers import (
     EquipmentCategorySerializer,
     EquipmentKindSerializer,

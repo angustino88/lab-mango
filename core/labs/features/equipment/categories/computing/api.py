@@ -4,9 +4,9 @@ from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework import serializers
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_api_key.permissions import HasAPIKey
 
 from core.labs.features.base import CommandAPIView
+from core.labs.features.base.access import LABS_STAFF_ACCESS
 from core.labs.features.equipment.categories.computing.application import (
     SyncComputingActivityInput,
     sync_computing_activity,
@@ -16,7 +16,6 @@ from core.labs.features.equipment.categories.computing.queries import (
     get_computing_id_by_sku,
 )
 from core.labs.models import ComputingActivity, ComputingActivityStatus
-from core.users.public import IsLabCoordinator
 
 
 class ComputingActivitySerializer(serializers.ModelSerializer):
@@ -57,7 +56,7 @@ class ComputingActivityAPIView(CommandAPIView):
     """Read or report the live activity state of one computing equipment record."""
 
     schema_tags = ("Computing Equipment",)
-    permission_classes = [HasAPIKey | IsLabCoordinator]
+    permission_classes = LABS_STAFF_ACCESS
     get_contract = OperationContract(
         success=ResponseContract.success("ComputingActivityDetail", ComputingActivitySerializer),
         not_found=ResponseContract.not_found(),

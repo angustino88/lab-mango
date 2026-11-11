@@ -7,7 +7,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
-from core.labs.features.base.common import FeatureAPIView
+from core.labs.features.base import LABS_MEMBER_READ_ACCESS, FeatureAPIView
 
 from ..queries import (
     get_dashboard_bench_detail,
@@ -24,6 +24,7 @@ from .serializers import (
 
 class DashboardOverviewAPIView(FeatureAPIView, AppListAPIView):
     """Operational dashboard bench listing with real-time telemetry and schedule data."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Dashboard",)
     get_contract = OperationContract(
@@ -48,6 +49,7 @@ class DashboardOverviewAPIView(FeatureAPIView, AppListAPIView):
 
 class DashboardSummaryAPIView(FeatureAPIView):
     """Operational dashboard summary metrics and status distributions."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Dashboard",)
     get_contract = OperationContract(
@@ -65,6 +67,7 @@ class DashboardSummaryAPIView(FeatureAPIView):
 
 class DashboardBenchDetailAPIView(FeatureAPIView):
     """Detailed operational view of an individual laboratory bench."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Dashboard",)
     get_contract = OperationContract(

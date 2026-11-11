@@ -8,14 +8,13 @@ from drf_api_contracts import OperationContract, ResponseContract
 from drf_spectacular.plumbing import ResolvedComponent
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_api_key.permissions import HasAPIKey
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.filtering import FilterSpec
 from core.common.api.pagination import ResultsSetPagination
+from core.labs.features.base.access import LABS_STAFF_ACCESS
 from core.labs.features.equipment.api.common import EquipmentAPIView
 from core.labs.features.equipment.api.resource_filters import EQUIPMENT_FILTERS
 from core.labs.features.equipment.queries.equipment import list_equipment
@@ -93,7 +92,7 @@ class EquipmentFacetsAutoSchema(ConfiguredAutoSchema):
 class EquipmentFacetsAPIView(AppListAPIView, EquipmentAPIView):
     """Conjunctive distinct inventory counts, ordered by value name/id, null last."""
 
-    permission_classes = [HasAPIKey | IsAuthenticated]
+    permission_classes = LABS_STAFF_ACCESS
     schema = EquipmentFacetsAutoSchema()
     pagination_class = ResultsSetPagination
     queryset_provider: Callable = staticmethod(list_equipment)

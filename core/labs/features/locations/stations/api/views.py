@@ -3,8 +3,9 @@
 from drf_api_contracts import OperationContract, ResponseContract
 
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
-from core.common.api.options import OptionsAPIView, OptionsQueryMixin, SizeClass
+from core.common.api.options import OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.locations.api.schema import operation
 from core.labs.features.locations.api.views import LocationAPIView
 from core.labs.features.locations.queries import list_station_options, list_station_type_options

@@ -1,6 +1,7 @@
 """Explicit retry-safe import routes, preserving legacy bench lookup routes."""
 
 from core.common.api.reference_views import reference_urlpatterns
+from core.labs.features.base.access import LABS_STAFF_ACCESS
 from core.labs.models import BenchGroup, BenchType
 from core.reference_data.contracts import ReferenceResource
 
@@ -14,6 +15,7 @@ for segment, model in (("groups", BenchGroup), ("types", BenchType)):
         prefix=f"benches/reference-data/{segment}",
         tag="Benches",
         module=__name__,
+        permission_classes=LABS_STAFF_ACCESS,
         create=create_catalog_reference,
         listing=list_catalog_references,
         retrieve=get_catalog_reference,

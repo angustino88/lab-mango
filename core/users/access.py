@@ -121,6 +121,12 @@ class IsLabMember(LabsRolePermission):
     write_roles = (LabsRole.USER,)
 
 
+class IsLabMemberReadOnly(LabsRolePermission):
+    """Reads: any Labs role. Writes: nobody (dashboards and rankings)."""
+
+    write_roles = ()
+
+
 class IsLabCoordinatorReadWrite(LabsRolePermission):
     """Reads and writes: lab coordinators and administrators (procurement, expenses, finance reports)."""
 
@@ -142,6 +148,7 @@ __all__ = [
     "IsLabCoordinator",
     "IsLabCoordinatorReadWrite",
     "IsLabMember",
+    "IsLabMemberReadOnly",
     "LabsRole",
     "LabsRolePermission",
     "clear_labs_roles_cache",

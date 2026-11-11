@@ -2,18 +2,18 @@
 
 from drf_api_contracts import OperationContract, ResponseContract
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.common.api.api_views import AppAPIView
+from core.labs.features.base.access import LABS_STAFF_ACCESS
 
 from ..queries import MappingQueryError, get_resource_mapping
 from .serializers import ResourceMappingQuerySerializer, ResourceMappingResponseSerializer
 
 
 class ResourceMappingAPIView(AppAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = LABS_STAFF_ACCESS
     schema_tags = ("Resource Mappings",)
     get_contract = OperationContract(
         query=ResourceMappingQuerySerializer,

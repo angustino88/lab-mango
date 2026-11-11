@@ -6,9 +6,8 @@ from rest_framework_api_key.permissions import HasAPIKey
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.correlation import get_request_id
-from core.common.api.command_views import FeatureAPIView
 from core.common.api.pagination import PageNumberQuerySerializer
-from core.labs.features.base import CommandAPIView
+from core.labs.features.base import CommandAPIView, FeatureAPIView
 from core.labs.features.procurement import public
 from core.labs.features.procurement.api.serializers import (
     DraftLineInputSerializer,

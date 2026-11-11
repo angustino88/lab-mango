@@ -1,6 +1,7 @@
 """Explicit license lookup import declarations."""
 
 from core.common.api.reference_views import reference_urlpatterns
+from core.labs.features.base.access import LABS_STAFF_ACCESS
 from core.labs.models.resource.license.license import (
     LicenseCategory,
     LicenseProduct,
@@ -27,6 +28,7 @@ for segment, model, fields in RESOURCES:
         prefix=f"licenses/reference-data/{segment}",
         tag="Licenses",
         module=__name__,
+        permission_classes=LABS_STAFF_ACCESS,
         create=create_catalog_reference,
         listing=list_catalog_references,
         retrieve=get_catalog_reference,

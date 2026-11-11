@@ -1,6 +1,7 @@
 """Explicit equipment catalog import surface; no asset or credential writes."""
 
 from core.common.api.reference_views import reference_urlpatterns
+from core.labs.features.base.access import LABS_STAFF_ACCESS
 from core.labs.models.resource.base.resource import Department, ResourceGroup
 from core.labs.models.resource.equipment.computing import TechnicalUser
 from core.labs.models.resource.equipment.display import DisplayResolution, DisplaySize
@@ -65,6 +66,7 @@ for segment, model, fields, identity, label in RESOURCES:
         prefix=f"equipment/reference-data/{segment}",
         tag="Equipment",
         module=__name__,
+        permission_classes=LABS_STAFF_ACCESS,
         create=create_catalog_reference,
         listing=list_catalog_references,
         retrieve=get_catalog_reference,
