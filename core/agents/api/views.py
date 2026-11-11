@@ -37,7 +37,12 @@ from core.agents.exceptions import (
 from core.agents.models import AgentIdentity
 from core.common.api.correlation import get_request_id
 from core.common.api.pagination import ResultsSetPagination
-from core.labs.features.bench_bookings.public import CheckAgentBookingLoginInput, check_agent_booking_login
+from core.labs.features.bench_bookings.public import (
+    CheckAgentBookingLoginInput,
+    CheckInAgentBookingInput,
+    check_agent_booking_login,
+    check_in_agent_booking,
+)
 from core.labs.features.equipment.public import SyncComputingActivityInput, sync_computing_activity
 from core.labs.features.lab_sessions.public import (
     RecordSessionLogInput,
@@ -54,6 +59,8 @@ from .serializers import (
     AgentActivityDataSerializer,
     AgentActivityReportSerializer,
     AgentActivityResponseSerializer,
+    AgentBookingCheckInDataSerializer,
+    AgentBookingCheckInResponseSerializer,
     AgentBookingValidationDataSerializer,
     AgentBookingValidationRequestSerializer,
     AgentBookingValidationResponseSerializer,
@@ -632,6 +639,73 @@ class AgentBookingValidationAPIView(APIView):
         return Response({"data": AgentBookingValidationDataSerializer(data).data}, status=status.HTTP_200_OK)
 
 
+class AgentBookingCheckInAPIView(APIView):
+    """Check a user in with a booking code (POST /agent/bookings/actions/check-in).
+
+    Same eligibility as validation. A reserved booking becomes in progress; checking in again on an
+    in-progress booking succeeds without change. Every failure gets the same ``checked_in: false``.
+    """
+
+    authentication_classes = [AgentSignatureAuthentication]
+    permission_classes = [IsAuthenticatedAgent]
+
+    @extend_schema(
+        operation_id="agent_check_in_booking",
+        summary="Check a user in with a booking code; the booking becomes in progress",
+        description=(
+            "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers "
+            "(see the agentSignatureAuth security scheme). Call when the user enters a booking code at "
+            "login. Eligible only for an approved booking on this computer's bench, from its start until "
+            "10 minutes later (reserved) or until it ends (in progress). Repeating a check-in is safe. "
+            "Every failure returns checked_in: false with no other fields."
+        ),
+        request=AgentBookingValidationRequestSerializer,
+        responses={
+            200: OpenApiResponse(response=AgentBookingCheckInResponseSerializer, description="Check-in result"),
+            400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Body is not a JSON object"),
+            401: OpenApiResponse(
+                response=ErrorEnvelopeSerializer,
+                description="Missing, invalid, stale or replayed signature, or agent not active",
+            ),
+            422: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unknown field or invalid code"),
+            429: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Request rate exceeded"),
+        },
+        tags=["Agents"],
+    )
+    def post(self, request: Request) -> Response:
+        if not isinstance(request.data, dict):
+            return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", "Send a JSON object.", request)
+        serializer = AgentBookingValidationRequestSerializer(data=request.data)
+        unknown = sorted(set(request.data) - set(serializer.fields))
+        if unknown or not serializer.is_valid():
+            return _error_response(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "validation_failed",
+                "Invalid booking check-in request.",
+                request,
+                _validation_details(serializer, unknown),
+            )
+        identity = _signing_identity(request)
+        check_in = check_in_agent_booking(
+            CheckInAgentBookingInput(
+                agent_uid=identity.agent_uid,
+                booking_code=serializer.validated_data["booking_code"],
+            ),
+            actor=None,  # an agent action, not a user action
+        )
+        if check_in is None:
+            # A fixed body, not serialized: the same bytes for every failure, with no null fields.
+            return Response({"data": {"checked_in": False}}, status=status.HTTP_200_OK)
+        data = {
+            "checked_in": True,
+            "booking_code": check_in.booking_code,
+            "starts_at": check_in.starts_at,
+            "ends_at": check_in.ends_at,
+            "booked_for": check_in.booked_for,
+        }
+        return Response({"data": AgentBookingCheckInDataSerializer(data).data}, status=status.HTTP_200_OK)
+
+
 class AgentInfoAPIView(APIView):
     """Discover agent capabilities and backend metadata (GET /agent/info)."""
 
@@ -666,10 +740,12 @@ class AgentInfoAPIView(APIView):
                         "request_signature_v1",
                         "session_logs",
                         "booking_validation",
+                        "booking_check_in",
                     ],
                     "endpoints": {
                         "session_logs": reverse("agent-session-logs"),
                         "booking_validation": reverse("agent-booking-validation"),
+                        "booking_check_in": reverse("agent-booking-check-in"),
                     },
                 }
             },

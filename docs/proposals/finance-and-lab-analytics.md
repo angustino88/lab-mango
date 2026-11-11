@@ -51,6 +51,7 @@ session links → operating calendar → analytics rebuild, with the finance fix
 | O21 | Only approved bookings pass agent validation; pending and rejected bookings do not. |
 | O22 | The session kind is stored as `access_type`: `booked`, `ad_hoc` (no booking, formerly "temp login"), `unverified_booking`. |
 | O23 | A session links to an app user when its remote login name, ignoring case and any `DOMAIN\` prefix, equals exactly one active username. |
+| O24 | When the user enters a booking code, the agent checks in: `POST /agent/bookings/actions/check-in` validates the code with the O12/O20/O21 rules and moves a reserved booking to in progress. Checking in again is safe. `POST /agent/bookings/actions/validate` stays as a read-only check. |
 
 ## 3. Current state: lab analytics
 

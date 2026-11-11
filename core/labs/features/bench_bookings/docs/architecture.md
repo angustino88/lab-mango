@@ -100,10 +100,18 @@ Two queries: the booking with `requester` and `creator`, and the computer's acti
 is the requester's username, or the creator's when no requester is set. Design and tests:
 [lab sessions architecture](../../lab_sessions/docs/architecture.md#6-booking-validation-a1b-owned-by-bench_bookings).
 
+### Agent check-in
+
+`check_in_agent_booking(CheckInAgentBookingInput(agent_uid, booking_code), actor=..., now=None)` answers
+`POST /agent/bookings/actions/check-in`. It applies `policies.is_agent_login_eligible`, then moves a
+`reserved` booking to `in_progress` through `ensure_booking_status_transition`; an `in_progress` booking is
+returned unchanged. Lock order is **agent identity → equipment → bench → booking**, the same as the agent
+end-time command. Every failure returns `None`, and no notification is recorded (owner decision O24).
+
 `application/state_transitions.py` exposes the supported lifecycle commands:
 
 - `activate_bench_booking_for_computing_activity(computing_id, now)`: resolves the activity-to-bench relationship and activates the matching booking.
-- `activate_bench_bookings(bench_id, booking_code, now)`: smaller verified-facts command that performs the `reserved -> in_progress` transition. Only approved bookings are activated; pending and rejected bookings stay `reserved` (owner decision O21, 2026-11-11). Neither activation command has a production caller yet.
+- `activate_bench_bookings(bench_id, booking_code, now)`: smaller verified-facts command that performs the `reserved -> in_progress` transition. Only approved bookings are activated; pending and rejected bookings stay `reserved` (owner decision O21, 2026-11-11). Neither activation command has a production caller yet; agent check-in uses `check_in_agent_booking`.
 - `reconcile_bench_booking_statuses(now)`: expires overdue reserved bookings and completes elapsed in-progress bookings.
 
 Each command uses an atomic database transaction and locks the booking rows before updating their status.

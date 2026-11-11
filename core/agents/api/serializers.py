@@ -202,3 +202,19 @@ class AgentBookingValidationDataSerializer(serializers.Serializer):
 
 class AgentBookingValidationResponseSerializer(serializers.Serializer):
     data = AgentBookingValidationDataSerializer()
+
+
+class AgentBookingCheckInDataSerializer(serializers.Serializer):
+    checked_in = serializers.BooleanField(help_text="True when the booking is now in progress for this login.")
+    booking_code = serializers.CharField(required=False, help_text="Present only when checked in.")
+    starts_at = serializers.DateTimeField(required=False, help_text="Present only when checked in.")
+    ends_at = serializers.DateTimeField(required=False, help_text="Present only when checked in.")
+    booked_for = serializers.CharField(
+        required=False,
+        allow_null=True,
+        help_text="Username the booking is for; present only when checked in.",
+    )
+
+
+class AgentBookingCheckInResponseSerializer(serializers.Serializer):
+    data = AgentBookingCheckInDataSerializer()

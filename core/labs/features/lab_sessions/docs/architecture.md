@@ -137,6 +137,24 @@ Placement: the pure rule is `policies.is_agent_login_eligible`; the facts are ga
 queries may not import policies (`tests/architecture/test_labs_boundaries.py`,
 `test_queries_do_not_import_application`).
 
+### 6.1 Check-in (O24)
+
+`POST /agent/bookings/actions/check-in` takes the same body and applies the same eligibility rule as
+validation, then writes:
+
+| Booking status | Result |
+| --- | --- |
+| `reserved`, inside its window | Moves to `in_progress`; `checked_in: true` |
+| `in_progress`, before its end | No change; `checked_in: true` (the user logged in again) |
+| anything else | No change; `{"checked_in": false}` and nothing else |
+
+| Write path | Race | Guard | Idempotency | Concurrency test |
+| --- | --- | --- | --- | --- |
+| `check_in_agent_booking` | Two check-ins with one code (two computers on the bench, or a retry); a booking edit or cancel at the same moment | Lock order identity → equipment → bench → booking, as `update_agent_booking_end_time`; the booking row lock makes the transition happen once | Target state: an `in_progress` booking is returned unchanged | `test_concurrent_check_ins_start_the_booking_once` |
+
+No notification is recorded, matching `activate_bench_bookings`. Validation remains for an agent that
+wants to check a code without starting the booking.
+
 ## 7. Authorization and threat notes
 
 - Device-only routes: user and API-key credentials are not accepted.
@@ -177,10 +195,10 @@ Owner decisions (2026-11-11), recorded as O20 and O21 in the parent proposal:
 Resolved 2026-11-11: `activate_bench_bookings` (`bench_bookings/application/state_transitions.py`) now
 activates only approved bookings, so activation and agent validation apply the same O21 rule.
 
-Known gap, not changed here: neither `activate_bench_bookings` nor
-`activate_bench_booking_for_computing_activity` has a production caller. The agent activity report
-(`PATCH /agent/equipment/activity`) does not call them, so bookings do not move to `in_progress` from
-agent activity today.
+Resolved 2026-11-11 (O24): the agent now checks in through `POST /agent/bookings/actions/check-in`
+(`bench_bookings.check_in_agent_booking`), which moves a reserved booking to `in_progress`. The older
+`activate_bench_bookings` and `activate_bench_booking_for_computing_activity` still have no production
+caller; they are left in place for the activity-driven path.
 
 ## 11. A2: access type and session links
 
