@@ -83,13 +83,12 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 
 - **Evidence:** throttles use `ScopedRateThrottle` keyed by client address; `NUM_PROXIES` is not set in any
   settings module. DRF then keys on the whole `X-Forwarded-For` value, which the client controls.
-- **Deployment (owner, 2026-11-10):** a single Nginx reverse proxy sits in front of the app. *Not
-  verified:* the Nginx configuration itself, which is not in this repository.
+- **Deployment (owner, 2026-11-11):** the proxy tier belongs to the separate `labmango-router`
+  repository and is out of scope here. The backend must not hard-code assumptions about it.
 - **Proposal:**
-  - [ ] Set `NUM_PROXIES = 1` in production so DRF uses the address Nginx appended, not the client's value.
-  - [ ] In Nginx, set `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` (or `$remote_addr`
-    to discard client-supplied values) and `X-Forwarded-Proto $scheme`; ensure the app port is reachable
-    only from Nginx. Add the Nginx snippet to the deployment docs.
+  - [ ] Make the trusted proxy depth an explicit, required production setting (`NUM_PROXIES` from the
+    environment), with a startup check that fails when it is unset.
+  - [ ] Record in the router contract which forwarded headers the backend trusts and how many hops add them.
   - [ ] Add a test that two requests with different spoofed `X-Forwarded-For` prefixes share one counter.
   - [ ] Add a per-username throttle on the non-production password login path.
 
@@ -101,6 +100,67 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
   list creates a stub account that the attacker's Entra login then binds to.
 - **Proposal:**
   - [ ] Default to verified TLS with a configured CA bundle; make disabling it a failing production check.
+
+### Multi-backend deployment (added 2026-11-11)
+
+Context from `docs/agent-platform/routing-sync.md` and ADR 004: one backend per department behind one
+shared frontend; the Router (separate repository) maps `entra:<tid>:<oid>` to a `backend_id` from claims the
+backends publish; requests reach a backend through a public prefix such as `/api/dept_a/`, which the
+proxy strips (`routing-sync.md:74`). The current authentication code was written for a single backend.
+
+#### H6. Auth cookies collide and leak across department backends
+
+- **Evidence:** the backend sets cookies with path `/api` and fixed names: `refresh_token`
+  (`cookies.py:7-13`, `base.py:361`), `entra_login_challenge` (`aad_login/api.py:36-44`, `base.py:108`),
+  and Django's default `sessionid` and `csrftoken`. Because the public path is `/api/<backend_id>/...`,
+  the browser sends these cookies to **every** department backend on the shared host, and a login on one
+  backend overwrites another backend's cookies of the same name.
+- **Failure cases:** a refresh token issued by `dept_a` is sent to `dept_b`, a separate trust domain; a
+  user or operator who uses two departments (testers, admins) is silently logged out of one; a challenge
+  cookie from one backend breaks a login on another.
+- **Proposal:**
+  - [ ] Add a required setting for the backend's public prefix (for example `PUBLIC_PATH_PREFIX`), with a
+    startup check in production.
+  - [ ] Scope every auth cookie path to that prefix: refresh and challenge cookies to `<prefix>/auth/`,
+    `SESSION_COOKIE_PATH` and `CSRF_COOKIE_PATH` to `<prefix>/`.
+  - [ ] Include `BACKEND_ID` in every cookie name (`SESSION_COOKIE_NAME`, `CSRF_COOKIE_NAME`, refresh,
+    challenge) so two backends can never overwrite each other.
+  - [ ] Test that a response sets only prefixed paths and backend-specific names.
+  - [ ] Do not rely on the proxy rewriting cookie paths; the backend must emit correct cookies itself.
+
+#### H7. The login flow and first-login binding are not reachable through identity-based routing
+
+- **Evidence:** the Router routes a user only when exactly one backend claims their Entra key
+  (`routing-sync.md` CNS-6); a user with no binding has no claim and resolves to nothing. Yet:
+  - the challenge request (`POST aad-login/challenge`) carries no identity, but its nonce is stored in one
+    backend's database (`aad_login/service.py:66-72`), so the later `aad-login` must reach **the same**
+    backend or it always fails;
+  - first-login binding by username (H1) runs inside `aad-login` on a backend, but an unbound user has no
+    claim and cannot be routed there.
+- **Not verified:** how the Router routes the challenge and the first login (Router repository).
+- **Proposal:** decide and document one contract with the Router repository:
+  - [ ] **Option A (recommended):** bind identities before first login, outside the login request: URS
+    sync supplies usernames, an operator or an automated reconciliation job binds each user's Entra object
+    ID (looked up in Entra by UPN, server to server), and the backend publishes the claim. Login then only
+    accepts already-bound identities, and automatic binding in `aad-login` is removed. This also removes
+    most of H1's risk.
+  - [ ] **Option B:** keep first-login binding, and define a Router "discovery" route for unbound users
+    (for example by department selection or UPN domain). This needs its own threat model, because it
+    reopens H1 across departments.
+  - [ ] Either way: make the challenge either Router-routed to the backend that will handle the login, or
+    stateless (signed with the backend's key and bound to the browser cookie), and test the full
+    challenge → login → refresh path through prefixed routes.
+
+#### M14. One person bound on two backends locks them out
+
+- **Evidence:** URS sync creates a stub user per department group by username
+  (`urs_sync/sync_group/service.py:106`); each backend may bind the same Entra identity independently
+  (H1). Two claims for one key are a conflict, and the Router then routes the user nowhere
+  (`routing-sync.md` CNS-6). A backend cannot detect this itself (backends know nothing about each other).
+- **Proposal:**
+  - [ ] Define which department owns a person who appears in several departments' URS groups, and enforce
+    it at the source (URS group design or the binding job in H7 Option A).
+  - [ ] Router conflict alerts must reach an operator runbook that names the fix (unlink on one backend).
 
 ### Medium
 
@@ -119,10 +179,10 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 #### M3. Refresh cookie is sent on every API request
 
 - **Evidence:** cookie path is `/api` (`cookies.py:13`), `SameSite=Lax`.
-- **Deployment (owner, 2026-11-10):** the browser talks to one host; Nginx forwards `/api` to the
-  backend. Frontend and API are therefore same-origin, so `Strict` does not break the app's own calls.
-- **Proposal:** [ ] move auth routes under `/api/auth/`, scope the cookie to that path, use
-  `SameSite=Strict` and a `__Secure-` name prefix. Contract change; regenerate OpenAPI.
+- **Deployment:** one shared frontend host for all department backends (`routing-sync.md` C1), so the
+  app's own calls are same-site and `Strict` does not break them.
+- **Proposal:** [ ] move auth routes under `<prefix>/auth/`, scope the cookie to that path (see H6 for the
+  prefix), use `SameSite=Strict` and a `__Secure-` name prefix. Contract change; regenerate OpenAPI.
 
 #### M4. No dedicated way to obtain a CSRF token
 
@@ -195,8 +255,15 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 #### M12. Token signing shares Django's secret key
 
 - **Evidence:** `SIMPLE_JWT` sets no `SIGNING_KEY`, `ISSUER` or `AUDIENCE` (`base.py:366-373`).
-- **Proposal:** [ ] dedicated signing key with a rotation procedure; set issuer and audience per
-  environment so tokens from one environment are rejected by another.
+- **Multi-backend impact:** if department backends share a secret key (not verified), a token from
+  `dept_a` passes the signature check on `dept_b`. In production `EntraJWTAuthentication` then requires
+  a local binding with the same tenant/object ID for that user ID (`authentication.py:22-27`), which stops
+  a different person but not the same person present on two backends. Non-production
+  `JWTAuthentication` has no such check.
+- **Proposal:**
+  - [ ] Dedicated signing key per backend, with a rotation procedure.
+  - [ ] Set `ISSUER` and `AUDIENCE` from `BACKEND_ID` (`base.py:115`) and environment, so a token issued by
+    one backend or environment is rejected by every other one; startup check that they are set.
 
 #### M13. Thin audit trail
 
@@ -224,8 +291,8 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 - [ ] **L8. Browser hardening.** No Content-Security-Policy is configured; the access token lives in page
   memory, so script injection exposes it.
 - [ ] **L9. CORS with credentials.** `CORS_ALLOW_CREDENTIALS` is on and origins come from environment
-  variables, including regexes (`production.py:55`). Because frontend and API share one origin behind
-  Nginx, production needs no CORS: leave the allowed origins empty, turn credentials off, and add a
+  variables, including regexes (`production.py:55`). Because all backends sit behind one shared frontend host,
+  production needs no CORS: leave the allowed origins empty, turn credentials off, and add a
   startup check that fails if any origin or regex is configured. Set `CSRF_TRUSTED_ORIGINS` to that one
   origin only.
 
@@ -238,11 +305,12 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 
 ## Suggested order
 
-1. H3, H4, H5 — configuration only, no contract change.
-2. H1 — decide the binding source of truth.
-3. H2 with M1 and M2 — one change to the refresh-token model (likely a migration).
-4. M3 and M4 — one route/cookie contract change while there are no production clients.
-5. Remaining medium items, then L1 last so the spec is rewritten once.
+1. H7 — agree the login and binding contract with the Router repository; it decides H1 and M14.
+2. H3, H4, H5 — configuration only, no contract change.
+3. H6 with M3 and M4 — one route/cookie contract change while there are no production clients.
+4. H1 — implement the binding decision from step 1.
+5. H2 with M1, M2 and M12 — one change to the token model (likely a migration).
+6. Remaining medium items, then L1 last so the spec is rewritten once.
 
 ## Process for each item
 
@@ -251,17 +319,23 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 - [ ] Regenerate OpenAPI and update `auth/docs/spec.md` in the same change when the contract moves.
 - [ ] When an item is approved and implemented, fold its rule into the feature spec and remove it here.
 
-## Owner decisions (2026-11-10)
+## Owner decisions
 
 | Question | Answer | Effect |
 | --- | --- | --- |
-| Reverse-proxy chain | Single Nginx | H4: `NUM_PROXIES = 1` plus Nginx header settings |
+| Reverse-proxy chain | Out of scope: owned by the separate `labmango-router` repository (2026-11-11) | H4: proxy depth becomes a required setting plus a router-contract entry |
 | Can URS provide Entra object IDs | No, usernames only | H1: keep name binding, add the safeguards listed |
 | Who uses API keys | API testing only | M11: disable the key path in production |
 | Location of this document | `docs/proposals/` confirmed | — |
-| Frontend and API addresses | Browser sees one host; Nginx routes `/api` to the backend, backend URL not exposed | M3: `SameSite=Strict` is possible; L9: CORS can be off in production |
+| Frontend and API addresses | Browser sees one shared host; backend URLs are not exposed | M3: `SameSite=Strict` is possible; L9: CORS can be off in production |
+| Deployment topology | Multiple department backends; the router service maps users by Entra ID using the routing sync (2026-11-11) | New H6, H7, M14; M12 extended |
 
 ## Open questions for the owner
 
-None. *Not verified:* the Nginx configuration (not in this repository) — confirm it once during
-implementation of H4, M3 and L9.
+1. **Login routing (H7).** How does the Router route the identity-less challenge request and a user who
+   has no binding yet? Option A in H7 (bind before first login) is recommended; it needs the owner's
+   decision and the Router team's agreement.
+2. **Multi-department users (M14).** Can one person legitimately belong to more than one department? If
+   yes, which backend owns them?
+3. **Shared secrets (M12).** Do department backends share `DJANGO_SECRET_KEY` today? (Deployment fact, not
+   visible in this repository.)
