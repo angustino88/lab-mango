@@ -52,6 +52,8 @@ session links → operating calendar → analytics rebuild, with the finance fix
 | O22 | The session kind is stored as `access_type`: `booked`, `ad_hoc` (no booking, formerly "temp login"), `unverified_booking`. |
 | O23 | A session links to an app user when its remote login name, ignoring case and any `DOMAIN\` prefix, equals exactly one active username. |
 | O24 | When the user enters a booking code, the agent checks in: `POST /agent/bookings/actions/check-in` validates the code with the O12/O20/O21 rules and moves a reserved booking to in progress. Checking in again is safe. `POST /agent/bookings/actions/validate` stays as a read-only check. |
+| O25 | A booking is ended only by the user's own action. The agent calls `POST /agent/bookings/actions/complete` when the user chooses to end the booking; it does not complete bookings at logout. |
+| O26 | Automatic completion at the booking's end time belongs to the bench-booking feature's scheduled job (`labs.bench_bookings.reconcile_statuses`), not to the agent. |
 
 ## 3. Current state: lab analytics
 
@@ -548,6 +550,9 @@ passed, failed or not run, with the exact command.
 | 14 | Session-log limits | 5 minutes, 7 days, 24 hours confirmed (O19) |
 
 ### Still open
+
+- **Agent extend:** should the agent be able to extend a running booking (the command `update_agent_booking_end_time` exists but has no route), and is the 4-hour re-approval rule right for extensions?
+- **Reconciliation schedule:** the periodic task `labs.bench_bookings.reconcile_statuses` is configured in the django-celery-beat database, not in code; confirm it is scheduled in each environment.
 
 None for the session log (Track A). Track B work packages each need their own design note and
 approval before merge (O14).

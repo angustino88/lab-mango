@@ -4,18 +4,20 @@ from .application import (
     AgentBookingEndTimeInput,
     CheckAgentBookingLoginInput,
     CheckInAgentBookingInput,
+    CompleteAgentBookingInput,
     CreateBenchBookingInput,
     UpdateBenchBookingInput,
     activate_bench_booking_for_computing_activity,
     activate_bench_bookings,
     check_agent_booking_login,
     check_in_agent_booking,
+    complete_agent_booking,
     create_bench_booking,
     reconcile_bench_booking_statuses,
     update_agent_booking_end_time,
     update_bench_booking,
 )
-from .contracts import AgentBookingLogin, SessionBookingFacts
+from .contracts import AgentBookingEnded, AgentBookingLogin, SessionBookingFacts
 from .exceptions import BenchBookingConflict, LabProjectNotFound
 from .queries import (
     find_session_booking_facts,
@@ -27,11 +29,13 @@ from .queries import (
 from .queries.bench_bookings import bench_booking_summary
 
 __all__ = (
+    "AgentBookingEnded",
     "AgentBookingLogin",
     "BenchBookingConflict",
     "AgentBookingEndTimeInput",
     "CheckAgentBookingLoginInput",
     "CheckInAgentBookingInput",
+    "CompleteAgentBookingInput",
     "CreateBenchBookingInput",
     "LabProjectNotFound",
     "SessionBookingFacts",
@@ -41,6 +45,7 @@ __all__ = (
     "bench_booking_summary",
     "check_agent_booking_login",
     "check_in_agent_booking",
+    "complete_agent_booking",
     "create_bench_booking",
     "find_session_booking_facts",
     "get_bench_booking",

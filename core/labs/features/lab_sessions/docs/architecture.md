@@ -155,6 +155,21 @@ validation, then writes:
 No notification is recorded, matching `activate_bench_bookings`. Validation remains for an agent that
 wants to check a code without starting the booking.
 
+### 6.2 Ending a booking (O25, O26)
+
+`POST /agent/bookings/actions/complete` (`bench_bookings.complete_agent_booking`) is called only when the
+user chooses to end the booking, never at logout, so a user who logs out and back in keeps the booking.
+
+| Booking status | Result |
+| --- | --- |
+| `in_progress`, approved, on this computer's bench | Moves to `completed`; `ends_at` is kept; an `updated` notification is recorded, as for the web app's complete action |
+| `completed` | No change; `completed: true` (a retry) |
+| anything else | No change; `{"completed": false}` and nothing else |
+
+Race guard: the same lock sequence as check-in (`lock_agent_booking`). Bookings nobody ends are completed
+at their end time by the bench-booking feature's scheduled job, `labs.bench_bookings.reconcile_statuses`
+(O26). A completed booking cannot be checked in again.
+
 ## 7. Authorization and threat notes
 
 - Device-only routes: user and API-key credentials are not accepted.

@@ -5,6 +5,7 @@ from django.urls import path
 from .views import (
     AgentActivityAPIView,
     AgentBookingCheckInAPIView,
+    AgentBookingCompleteAPIView,
     AgentBookingValidationAPIView,
     AgentDecommissionActionAPIView,
     AgentDetailAPIView,
@@ -41,5 +42,10 @@ urlpatterns = [
         "agent/bookings/actions/check-in",
         AgentBookingCheckInAPIView.as_view(),
         name="agent-booking-check-in",
+    ),
+    path(
+        "agent/bookings/actions/complete",
+        AgentBookingCompleteAPIView.as_view(),
+        name="agent-booking-complete",
     ),
 ]

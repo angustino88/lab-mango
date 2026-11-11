@@ -7,14 +7,12 @@ from uuid import UUID
 from django.db import transaction
 from django.utils import timezone
 
-from core.agents.public import AgentEnrollmentConflict, require_active_agent_identity
 from core.labs.features.bench_bookings.contracts import AgentBookingLogin
-from core.labs.features.equipment.public import lock_active_equipment_bench_assignment
-from core.labs.models import BenchBooking, BookingStatus
+from core.labs.models import BookingStatus
 from core.labs.models.booking import ensure_booking_status_transition
 
 from . import policies
-from .locks import lock_benches
+from .agent_booking_locks import lock_agent_booking
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,38 +33,15 @@ def check_in_agent_booking(
     A reserved booking moves to in progress; an in-progress booking is left as it is, so a user who
     logs out and back in checks in again without error. Every failure returns the same None.
 
-    Lock order is identity, equipment, bench, booking, as in ``update_agent_booking_end_time``. The
-    equipment lock keeps the computer's bench placement stable; the bench lock serialises with every
-    other booking writer on that bench; the booking row lock makes two concurrent check-ins move the
-    booking once. ``actor`` is the agent, never a Django user. No notification is recorded, matching
-    ``activate_bench_bookings``.
+    Race guard: ``lock_agent_booking`` (identity, equipment, bench, booking); the booking row lock
+    makes two concurrent check-ins move the booking once. ``actor`` is the agent, never a Django user.
+    No notification is recorded, matching ``activate_bench_bookings``.
     """
     now = now or timezone.now()
-    booking_code = command.booking_code.strip()
-    if not booking_code:
+    locked = lock_agent_booking(agent_uid=command.agent_uid, booking_code=command.booking_code, actor=actor)
+    if locked is None:
         return None
-    try:
-        identity = require_active_agent_identity(command.agent_uid, actor=actor)
-    except AgentEnrollmentConflict:
-        return None
-    placement = lock_active_equipment_bench_assignment(equipment_id=identity.equipment_id)
-    if placement is None:
-        return None
-
-    booking_bench_id = (
-        BenchBooking.objects.filter(booking_code=booking_code).values_list("bench_id", flat=True).first()
-    )
-    if booking_bench_id is None or booking_bench_id != placement.bench_id:
-        return None
-    lock_benches((booking_bench_id,))
-    booking = (
-        BenchBooking.objects.select_for_update(of=("self",))
-        .select_related("requester", "creator")
-        .filter(booking_code=booking_code, bench_id=booking_bench_id)
-        .first()
-    )
-    if booking is None:  # moved to another bench between the read and the lock
-        return None
+    booking = locked.booking
 
     eligible = policies.is_agent_login_eligible(
         status=booking.status,
@@ -74,7 +49,7 @@ def check_in_agent_booking(
         starts_at=booking.starts_at,
         ends_at=booking.ends_at,
         booking_bench_id=booking.bench_id,
-        computer_bench_id=placement.bench_id,
+        computer_bench_id=locked.computer_bench_id,
         now=now,
     )
     if not eligible:

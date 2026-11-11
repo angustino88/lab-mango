@@ -218,3 +218,16 @@ class AgentBookingCheckInDataSerializer(serializers.Serializer):
 
 class AgentBookingCheckInResponseSerializer(serializers.Serializer):
     data = AgentBookingCheckInDataSerializer()
+
+
+class AgentBookingCompleteDataSerializer(serializers.Serializer):
+    completed = serializers.BooleanField(help_text="True when the booking is now completed.")
+    booking_code = serializers.CharField(required=False, help_text="Present only when completed.")
+    starts_at = serializers.DateTimeField(required=False, help_text="Present only when completed.")
+    ends_at = serializers.DateTimeField(
+        required=False, help_text="The booked end time, unchanged; present only when completed."
+    )
+
+
+class AgentBookingCompleteResponseSerializer(serializers.Serializer):
+    data = AgentBookingCompleteDataSerializer()

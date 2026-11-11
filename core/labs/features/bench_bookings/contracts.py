@@ -38,6 +38,15 @@ class SessionBookingFacts:
 
 
 @dataclass(frozen=True, slots=True)
+class AgentBookingEnded:
+    """A booking the agent ended at the user's request."""
+
+    booking_code: str
+    starts_at: datetime
+    ends_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class AgentBookingLogin:
     """What an agent may know about a booking it is allowed to log a user in with."""
 

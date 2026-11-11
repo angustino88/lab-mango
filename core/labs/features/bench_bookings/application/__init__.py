@@ -2,6 +2,7 @@
 
 from .check_agent_booking_login import CheckAgentBookingLoginInput, check_agent_booking_login
 from .check_in_agent_booking import CheckInAgentBookingInput, check_in_agent_booking
+from .complete_agent_booking import CompleteAgentBookingInput, complete_agent_booking
 from .create_booking import CreateBenchBookingInput, create_bench_booking
 from .decide_booking_approval import (
     DecideBenchBookingApprovalInput,
@@ -19,6 +20,7 @@ from .update_booking import UpdateBenchBookingInput, update_bench_booking
 __all__ = [
     "CheckAgentBookingLoginInput",
     "CheckInAgentBookingInput",
+    "CompleteAgentBookingInput",
     "CreateBenchBookingInput",
     "DecideBenchBookingApprovalInput",
     "DecideBenchBookingApprovalResult",
@@ -28,6 +30,7 @@ __all__ = [
     "activate_bench_bookings",
     "check_agent_booking_login",
     "check_in_agent_booking",
+    "complete_agent_booking",
     "create_bench_booking",
     "decide_bench_booking_approval",
     "reconcile_bench_booking_statuses",

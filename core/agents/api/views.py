@@ -40,8 +40,10 @@ from core.common.api.pagination import ResultsSetPagination
 from core.labs.features.bench_bookings.public import (
     CheckAgentBookingLoginInput,
     CheckInAgentBookingInput,
+    CompleteAgentBookingInput,
     check_agent_booking_login,
     check_in_agent_booking,
+    complete_agent_booking,
 )
 from core.labs.features.equipment.public import SyncComputingActivityInput, sync_computing_activity
 from core.labs.features.lab_sessions.public import (
@@ -61,6 +63,8 @@ from .serializers import (
     AgentActivityResponseSerializer,
     AgentBookingCheckInDataSerializer,
     AgentBookingCheckInResponseSerializer,
+    AgentBookingCompleteDataSerializer,
+    AgentBookingCompleteResponseSerializer,
     AgentBookingValidationDataSerializer,
     AgentBookingValidationRequestSerializer,
     AgentBookingValidationResponseSerializer,
@@ -706,6 +710,73 @@ class AgentBookingCheckInAPIView(APIView):
         return Response({"data": AgentBookingCheckInDataSerializer(data).data}, status=status.HTTP_200_OK)
 
 
+class AgentBookingCompleteAPIView(APIView):
+    """End a booking at the user's request (POST /agent/bookings/actions/complete).
+
+    Only an in-progress booking on the agent's own bench can be ended; ending it again succeeds
+    without change. Bookings nobody ends are completed at their end time by the scheduled job.
+    Every failure gets the same ``completed: false``.
+    """
+
+    authentication_classes = [AgentSignatureAuthentication]
+    permission_classes = [IsAuthenticatedAgent]
+
+    @extend_schema(
+        operation_id="agent_complete_booking",
+        summary="End a booking at the user's request; the booking becomes completed",
+        description=(
+            "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers "
+            "(see the agentSignatureAuth security scheme). Call only when the user chooses to end the "
+            "booking, not at every logout. Only an approved, in-progress booking on this computer's bench "
+            "can be ended; repeating the call is safe. The booked end time is not changed. Every failure "
+            "returns completed: false with no other fields."
+        ),
+        request=AgentBookingValidationRequestSerializer,
+        responses={
+            200: OpenApiResponse(response=AgentBookingCompleteResponseSerializer, description="End result"),
+            400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Body is not a JSON object"),
+            401: OpenApiResponse(
+                response=ErrorEnvelopeSerializer,
+                description="Missing, invalid, stale or replayed signature, or agent not active",
+            ),
+            422: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unknown field or invalid code"),
+            429: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Request rate exceeded"),
+        },
+        tags=["Agents"],
+    )
+    def post(self, request: Request) -> Response:
+        if not isinstance(request.data, dict):
+            return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", "Send a JSON object.", request)
+        serializer = AgentBookingValidationRequestSerializer(data=request.data)
+        unknown = sorted(set(request.data) - set(serializer.fields))
+        if unknown or not serializer.is_valid():
+            return _error_response(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "validation_failed",
+                "Invalid booking end request.",
+                request,
+                _validation_details(serializer, unknown),
+            )
+        identity = _signing_identity(request)
+        ended = complete_agent_booking(
+            CompleteAgentBookingInput(
+                agent_uid=identity.agent_uid,
+                booking_code=serializer.validated_data["booking_code"],
+            ),
+            actor=None,  # an agent action on the user's request, not a user session
+        )
+        if ended is None:
+            # A fixed body, not serialized: the same bytes for every failure, with no null fields.
+            return Response({"data": {"completed": False}}, status=status.HTTP_200_OK)
+        data = {
+            "completed": True,
+            "booking_code": ended.booking_code,
+            "starts_at": ended.starts_at,
+            "ends_at": ended.ends_at,
+        }
+        return Response({"data": AgentBookingCompleteDataSerializer(data).data}, status=status.HTTP_200_OK)
+
+
 class AgentInfoAPIView(APIView):
     """Discover agent capabilities and backend metadata (GET /agent/info)."""
 
@@ -741,11 +812,13 @@ class AgentInfoAPIView(APIView):
                         "session_logs",
                         "booking_validation",
                         "booking_check_in",
+                        "booking_complete",
                     ],
                     "endpoints": {
                         "session_logs": reverse("agent-session-logs"),
                         "booking_validation": reverse("agent-booking-validation"),
                         "booking_check_in": reverse("agent-booking-check-in"),
+                        "booking_complete": reverse("agent-booking-complete"),
                     },
                 }
             },

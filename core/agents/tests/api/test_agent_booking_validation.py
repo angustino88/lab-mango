@@ -14,6 +14,7 @@ from core.labs.models import Bench, BenchBooking, BookingStatus, EquipmentAssign
 
 PATH = "/agent/bookings/actions/validate"
 CHECK_IN_PATH = "/agent/bookings/actions/check-in"
+COMPLETE_PATH = "/agent/bookings/actions/complete"
 
 
 def validate(identity, key, payload, *, path=PATH):
@@ -25,6 +26,10 @@ def validate(identity, key, payload, *, path=PATH):
 
 def check_in(identity, key, payload):
     return validate(identity, key, payload, path=CHECK_IN_PATH)
+
+
+def complete(identity, key, payload):
+    return validate(identity, key, payload, path=COMPLETE_PATH)
 
 
 @pytest.fixture()
@@ -115,6 +120,7 @@ def test_info_publishes_session_and_validation_paths(db):
         "session_logs": "/agent/session-logs",
         "booking_validation": "/agent/bookings/actions/validate",
         "booking_check_in": "/agent/bookings/actions/check-in",
+        "booking_complete": "/agent/bookings/actions/complete",
     }
 
 
@@ -158,3 +164,39 @@ def test_check_in_rejects_invalid_requests(placed, payload):
 @pytest.mark.django_db
 def test_unsigned_check_in_is_rejected():
     assert APIClient().post(CHECK_IN_PATH, data={"booking_code": "BK-IN"}, format="json").status_code == 401
+
+
+def test_user_ends_the_booking_after_check_in(placed):
+    identity, key, bench, _, user = placed
+    booking = make_booking(user, bench, "BK-END")
+    check_in(identity, key, {"booking_code": "BK-END"})
+
+    response = complete(identity, key, {"booking_code": "BK-END"})
+
+    assert response.status_code == 200, response.json()
+    data = response.json()["data"]
+    assert data["completed"] is True and data["booking_code"] == "BK-END"
+    booking.refresh_from_db()
+    assert booking.status == BookingStatus.COMPLETED
+    assert complete(identity, key, {"booking_code": "BK-END"}).json()["data"]["completed"] is True
+    assert check_in(identity, key, {"booking_code": "BK-END"}).json() == {"data": {"checked_in": False}}
+
+
+def test_end_failures_get_the_same_answer(placed):
+    identity, key, bench, other_bench, user = placed
+    not_started = make_booking(user, bench, "BK-NOT-STARTED")
+    make_booking(user, other_bench, "BK-OTHER-BENCH", status=BookingStatus.IN_PROGRESS)
+
+    bodies = [
+        complete(identity, key, {"booking_code": code}).json()
+        for code in ("BK-UNKNOWN", "BK-NOT-STARTED", "BK-OTHER-BENCH")
+    ]
+
+    assert all(body == {"data": {"completed": False}} for body in bodies)
+    not_started.refresh_from_db()
+    assert not_started.status == BookingStatus.RESERVED
+
+
+@pytest.mark.django_db
+def test_unsigned_end_is_rejected():
+    assert APIClient().post(COMPLETE_PATH, data={"booking_code": "BK-END"}, format="json").status_code == 401

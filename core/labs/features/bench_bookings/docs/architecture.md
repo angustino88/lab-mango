@@ -108,6 +108,16 @@ is the requester's username, or the creator's when no requester is set. Design a
 returned unchanged. Lock order is **agent identity → equipment → bench → booking**, the same as the agent
 end-time command. Every failure returns `None`, and no notification is recorded (owner decision O24).
 
+### Agent end booking
+
+`complete_agent_booking(CompleteAgentBookingInput(agent_uid, booking_code), actor=...)` answers
+`POST /agent/bookings/actions/complete`, called only when the user chooses to end the booking (owner
+decision O25). An approved `in_progress` booking on the agent's bench moves to `completed` and records an
+`updated` notification; a `completed` booking is returned unchanged; anything else returns `None`.
+`ends_at` is kept. Check-in and end share `application/agent_booking_locks.py::lock_agent_booking`
+(identity → equipment → bench → booking). Completion at the end time stays with
+`reconcile_bench_booking_statuses`, scheduled as `labs.bench_bookings.reconcile_statuses` (O26).
+
 `application/state_transitions.py` exposes the supported lifecycle commands:
 
 - `activate_bench_booking_for_computing_activity(computing_id, now)`: resolves the activity-to-bench relationship and activates the matching booking.
