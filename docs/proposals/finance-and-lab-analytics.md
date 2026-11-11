@@ -54,6 +54,7 @@ session links → operating calendar → analytics rebuild, with the finance fix
 | O24 | When the user enters a booking code, the agent checks in: `POST /agent/bookings/actions/check-in` validates the code with the O12/O20/O21 rules and moves a reserved booking to in progress. Checking in again is safe. `POST /agent/bookings/actions/validate` stays as a read-only check. |
 | O25 | A booking is ended only by the user's own action. The agent calls `POST /agent/bookings/actions/complete` when the user chooses to end the booking; it does not complete bookings at logout. |
 | O26 | Automatic completion at the booking's end time belongs to the bench-booking feature's scheduled job (`labs.bench_bookings.reconcile_statuses`), not to the agent. |
+| O27 | The reconciliation job is scheduled in code (`CELERY_BEAT_SCHEDULE`, every 60 seconds), so every environment gets it when beat starts; admins can still disable it. |
 
 ## 3. Current state: lab analytics
 
@@ -551,8 +552,7 @@ passed, failed or not run, with the exact command.
 
 ### Still open
 
-- **Agent extend:** should the agent be able to extend a running booking (the command `update_agent_booking_end_time` exists but has no route), and is the 4-hour re-approval rule right for extensions?
-- **Reconciliation schedule:** the periodic task `labs.bench_bookings.reconcile_statuses` is configured in the django-celery-beat database, not in code; confirm it is scheduled in each environment.
+- **Agent extend:** design ready in `core/labs/features/bench_bookings/docs/agent-extend.md`; rules E1–E8 and four questions (§5) need owner confirmation before implementation.
 
 None for the session log (Track A). Track B work packages each need their own design note and
 approval before merge (O14).

@@ -310,10 +310,21 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # CELERY BEAT SCHEDULE
 # ------------------------------------------------------------------------------
-# Periodic work is managed through django-celery-beat's database scheduler.
-# Define each schedule as a Periodic Task in Django admin (Django Celery Beat > Periodic tasks).
+# Periodic work runs through django-celery-beat's database scheduler.
+# Entries below are code-owned: the scheduler copies them into Periodic Tasks every time beat
+# starts, so they exist in every environment without a manual step. An admin may still disable one
+# in Django admin; beat keeps it disabled. Other schedules are defined as Periodic Tasks in Django
+# admin (Django Celery Beat > Periodic tasks).
 # Computing heartbeat timeout: task ``labs.equipment.computing.mark_stale_activities_offline``,
 # crontab ``*/10 * * * *``.
+CELERY_BEAT_SCHEDULE = {
+    # Expire reservations nobody checked in to and complete bookings whose end time has passed
+    # (owner decision O26). Idempotent and batched, safe to run every minute.
+    "bench-booking-status-reconciliation": {
+        "task": "labs.bench_bookings.reconcile_statuses",
+        "schedule": env.float("BENCH_BOOKING_RECONCILE_INTERVAL_SECONDS", default=60.0),
+    },
+}
 
 # DJANGO-ALLAUTH
 # ------------------------------------------------------------------------------

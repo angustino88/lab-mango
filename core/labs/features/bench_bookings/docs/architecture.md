@@ -143,9 +143,11 @@ Creation requires a nonblank `reason` and a valid `project`. PATCH accepts parti
 
 ## Scheduled Reconciliation
 
-`tasks.py` defines the Celery task name `labs.bench_bookings.reconcile_statuses`. It must run at least once per minute for timely lifecycle transitions.
+`tasks.py` defines the Celery task name `labs.bench_bookings.reconcile_statuses`. It must run at least once per minute for timely lifecycle transitions: it expires reservations nobody checked in to (10 minutes after start) and completes bookings whose end time has passed (owner decision O26).
 
-**Current implementation gap:** Celery `app.autodiscover_tasks()` discovers app-level `tasks.py` modules, but the task is nested under `core.labs.features.bench_bookings`. The task must be explicitly imported or included in Celery configuration before it can be consumed by a worker. The repository's static Beat schedule is commented out; the deployment owner must create a `django-celery-beat` periodic task or explicitly enable an equivalent schedule.
+- **Discovery:** `core/labs/tasks.py` imports the task, so worker autodiscovery registers it.
+- **Schedule (code-owned, 2026-11-11):** `CELERY_BEAT_SCHEDULE["bench-booking-status-reconciliation"]` in `config/settings/base.py`, every 60 seconds (`BENCH_BOOKING_RECONCILE_INTERVAL_SECONDS`). django-celery-beat's database scheduler copies the entry into its Periodic Tasks each time beat starts, so no manual step is needed per environment. An admin may disable it in Django admin; beat keeps it disabled.
+- **Tests:** `tests/unit/test_celery_beat_schedule.py`.
 
 ## Guarantees and Constraints
 
