@@ -4,6 +4,64 @@ info:
   version: 1.0.0
   description: LabMango Backend REST API
 paths:
+  /agent/bookings/actions/validate:
+    post:
+      operationId: agent_validate_booking
+      description: 'Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and
+        X-Agent-Signature headers (see the agentSignatureAuth security scheme). Does
+        not check in or change the booking. Unknown, unapproved, cancelled, finished,
+        other-bench and out-of-window codes all return eligible: false with no other
+        fields.'
+      summary: Check whether a booking code may be used to log in on this computer
+        now
+      tags:
+      - Agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentBookingValidationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AgentBookingValidationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AgentBookingValidationRequest'
+        required: true
+      security:
+      - agentSignatureAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentBookingValidationResponse'
+          description: Eligibility
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Body is not a JSON object
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Missing, invalid, stale or replayed signature, or agent not
+            active
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unknown field or invalid code
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Request rate exceeded
   /agent/enrollments:
     post:
       operationId: enroll_agent
@@ -185,6 +243,77 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Anonymous or user request rate exceeded
+  /agent/session-logs:
+    post:
+      operationId: agent_record_session_log
+      description: 'Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and
+        X-Agent-Signature headers (see the agentSignatureAuth security scheme). Send
+        once after logout. Repeat the same event_id when retrying: identical values
+        return 200 with the stored record. Rejected when logout is more than 5 minutes
+        ahead of server time, login is more than 7 days old, or active time exceeds
+        the time between login and logout.'
+      summary: Record a completed remote session
+      tags:
+      - Agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentSessionLogReport'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AgentSessionLogReport'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AgentSessionLogReport'
+        required: true
+      security:
+      - agentSignatureAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentSessionLogResponse'
+          description: Session stored
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentSessionLogResponse'
+          description: Same event already stored; no change
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Body is not a JSON object
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Missing, invalid, stale or replayed signature, or agent not
+            active
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Event id stored with different values, or the agent's computer
+            is deleted
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unknown field, invalid value or limit exceeded
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Request rate exceeded
   /api/agents:
     get:
       operationId: list_agents
@@ -545,6 +674,43 @@ components:
           $ref: '#/components/schemas/AgentActivityData'
       required:
       - data
+    AgentBookingValidationData:
+      type: object
+      properties:
+        eligible:
+          type: boolean
+        booking_code:
+          type: string
+          description: Present only when eligible.
+        starts_at:
+          type: string
+          format: date-time
+          description: Present only when eligible.
+        ends_at:
+          type: string
+          format: date-time
+          description: Present only when eligible.
+        booked_for:
+          type: string
+          nullable: true
+          description: Username the booking is for; present only when eligible.
+      required:
+      - eligible
+    AgentBookingValidationRequest:
+      type: object
+      properties:
+        booking_code:
+          type: string
+          maxLength: 64
+      required:
+      - booking_code
+    AgentBookingValidationResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentBookingValidationData'
+      required:
+      - data
     AgentDetailResponse:
       type: object
       properties:
@@ -664,9 +830,15 @@ components:
           type: array
           items:
             type: string
+        endpoints:
+          type: object
+          additionalProperties:
+            type: string
+          description: Paths of the agent routes this backend serves, keyed by capability.
       required:
       - backend_id
       - capabilities
+      - endpoints
       - server_time
     AgentListMeta:
       type: object
@@ -687,6 +859,79 @@ components:
       required:
       - data
       - meta
+    AgentSessionLogData:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: string
+          format: uuid
+        login_time:
+          type: string
+          format: date-time
+        logout_time:
+          type: string
+          format: date-time
+        booking_code:
+          type: string
+          nullable: true
+      required:
+      - booking_code
+      - event_id
+      - id
+      - login_time
+      - logout_time
+    AgentSessionLogReport:
+      type: object
+      description: One completed remote session, pushed once after logout. The computer
+        is the signing agent's.
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Agent-generated id of this session; repeat it on retry.
+        login_time:
+          type: string
+          format: date-time
+        logout_time:
+          type: string
+          format: date-time
+        active_duration_seconds:
+          type: number
+          format: double
+          minimum: 0
+        remote_user:
+          type: string
+          maxLength: 255
+        remote_ip:
+          type: string
+          nullable: true
+        remote_host:
+          type: string
+          nullable: true
+          maxLength: 255
+        booking_code:
+          type: string
+          nullable: true
+          description: Empty for a temp login (no booking).
+          maxLength: 64
+        agent_version:
+          type: string
+          maxLength: 64
+      required:
+      - active_duration_seconds
+      - event_id
+      - login_time
+      - logout_time
+      - remote_user
+    AgentSessionLogResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentSessionLogData'
+      required:
+      - data
     ComputingActivityStatusEnum:
       enum:
       - offline

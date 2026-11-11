@@ -1,9 +1,294 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 443,
+  "total_endpoints": 445,
   "generated_at": "2026-11-11",
   "endpoints": [
+    {
+      "endpoint": "/agent/bookings/actions/validate",
+      "method": "POST",
+      "operation_id": "agent_validate_booking",
+      "summary": "Check whether a booking code may be used to log in on this computer now",
+      "description": "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers (see the agentSignatureAuth security scheme). Does not check in or change the booking. Unknown, unapproved, cancelled, finished, other-bench and out-of-window codes all return eligible: false with no other fields.",
+      "tags": [
+        "Agents"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "booking_code": {
+              "type": "string",
+              "maxLength": 64
+            }
+          },
+          "required": [
+            "booking_code"
+          ]
+        },
+        "example_payload": {
+          "booking_code": "string"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Eligibility",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "eligible": {
+                    "type": "boolean"
+                  },
+                  "booking_code": {
+                    "type": "string",
+                    "description": "Present only when eligible."
+                  },
+                  "starts_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Present only when eligible."
+                  },
+                  "ends_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Present only when eligible."
+                  },
+                  "booked_for": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Username the booking is for; present only when eligible."
+                  }
+                },
+                "required": [
+                  "eligible"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "eligible": true,
+              "booking_code": "string",
+              "starts_at": "2026-10-20T12:00:00Z",
+              "ends_at": "2026-10-20T12:00:00Z",
+              "booked_for": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "Body is not a JSON object",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "401": {
+          "description": "Missing, invalid, stale or replayed signature, or agent not active",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "Unknown field or invalid code",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "429": {
+          "description": "Request rate exceeded",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
     {
       "endpoint": "/agent/enrollments",
       "method": "POST",
@@ -942,11 +1227,19 @@
                     "items": {
                       "type": "string"
                     }
+                  },
+                  "endpoints": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Paths of the agent routes this backend serves, keyed by capability."
                   }
                 },
                 "required": [
                   "backend_id",
                   "capabilities",
+                  "endpoints",
                   "server_time"
                 ]
               }
@@ -961,7 +1254,8 @@
               "server_time": "string",
               "capabilities": [
                 "string"
-              ]
+              ],
+              "endpoints": {}
             }
           }
         },
@@ -1016,6 +1310,443 @@
         },
         "429": {
           "description": "Anonymous or user request rate exceeded",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/agent/session-logs",
+      "method": "POST",
+      "operation_id": "agent_record_session_log",
+      "summary": "Record a completed remote session",
+      "description": "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers (see the agentSignatureAuth security scheme). Send once after logout. Repeat the same event_id when retrying: identical values return 200 with the stored record. Rejected when logout is more than 5 minutes ahead of server time, login is more than 7 days old, or active time exceeds the time between login and logout.",
+      "tags": [
+        "Agents"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "One completed remote session, pushed once after logout. The computer is the signing agent's.",
+          "properties": {
+            "event_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Agent-generated id of this session; repeat it on retry."
+            },
+            "login_time": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "logout_time": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "active_duration_seconds": {
+              "type": "number",
+              "format": "double",
+              "minimum": 0
+            },
+            "remote_user": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "remote_ip": {
+              "type": "string",
+              "nullable": true
+            },
+            "remote_host": {
+              "type": "string",
+              "nullable": true,
+              "maxLength": 255
+            },
+            "booking_code": {
+              "type": "string",
+              "nullable": true,
+              "description": "Empty for a temp login (no booking).",
+              "maxLength": 64
+            },
+            "agent_version": {
+              "type": "string",
+              "maxLength": 64
+            }
+          },
+          "required": [
+            "active_duration_seconds",
+            "event_id",
+            "login_time",
+            "logout_time",
+            "remote_user"
+          ]
+        },
+        "example_payload": {
+          "event_id": "123e4567-e89b-12d3-a456-426614174000",
+          "login_time": "2026-10-20T12:00:00Z",
+          "logout_time": "2026-10-20T12:00:00Z",
+          "active_duration_seconds": 0.0,
+          "remote_user": "string",
+          "remote_ip": "string",
+          "remote_host": "string",
+          "booking_code": "string",
+          "agent_version": "string"
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Session stored",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "event_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "login_time": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "logout_time": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "booking_code": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "booking_code",
+                  "event_id",
+                  "id",
+                  "login_time",
+                  "logout_time"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "event_id": "123e4567-e89b-12d3-a456-426614174000",
+              "login_time": "2026-10-20T12:00:00Z",
+              "logout_time": "2026-10-20T12:00:00Z",
+              "booking_code": "string"
+            }
+          }
+        },
+        "200": {
+          "description": "Same event already stored; no change",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "event_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "login_time": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "logout_time": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "booking_code": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "booking_code",
+                  "event_id",
+                  "id",
+                  "login_time",
+                  "logout_time"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "event_id": "123e4567-e89b-12d3-a456-426614174000",
+              "login_time": "2026-10-20T12:00:00Z",
+              "logout_time": "2026-10-20T12:00:00Z",
+              "booking_code": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "Body is not a JSON object",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "401": {
+          "description": "Missing, invalid, stale or replayed signature, or agent not active",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "Event id stored with different values, or the agent's computer is deleted",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "Unknown field, invalid value or limit exceeded",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "429": {
+          "description": "Request rate exceeded",
           "content_type": "application/json",
           "schema": {
             "type": "object",
