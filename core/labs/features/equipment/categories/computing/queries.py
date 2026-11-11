@@ -26,11 +26,6 @@ def get_computing_activity(equipment_id: int) -> ComputingActivity:
         return ComputingActivity(computing=computing)
 
 
-def get_computing_id(equipment_id: int) -> int:
-    """Return the primary key of an active computing equipment record (404 for other units)."""
-    return computing_equipment().values_list("pk", flat=True).get(pk=equipment_id)
-
-
 def computing_activity_projection(
     *, equipment_ids: Sequence[int], evaluated_at: datetime
 ) -> dict[int, dict[str, Any]]:
@@ -61,5 +56,4 @@ __all__ = (
     "computing_activity_projection",
     "computing_equipment",
     "get_computing_activity",
-    "get_computing_id",
 )

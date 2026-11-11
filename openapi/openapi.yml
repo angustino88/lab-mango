@@ -6,6 +6,8 @@ info:
 paths:
   /agent/enrollments:
     $ref: ./agents.yml#/paths/~1agent~1enrollments
+  /agent/equipment/activity:
+    $ref: ./agents.yml#/paths/~1agent~1equipment~1activity
   /agent/heartbeat:
     $ref: ./agents.yml#/paths/~1agent~1heartbeat
   /agent/info:

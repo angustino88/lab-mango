@@ -235,4 +235,4 @@ Append-only history of lifecycle and condition changes, written only by `change_
 | `POST /api/labs/equipment/{id}/actions/change-condition` | `EquipmentChangeConditionAPIView` | `EquipmentChangeConditionSerializer` | Set operational / in maintenance / out of service (in service only). |
 | `POST /api/labs/equipment/{id}/actions/change-lifecycle` | `EquipmentChangeLifecycleAPIView` | `EquipmentChangeLifecycleSerializer` | Move along the lifecycle transition table. |
 | `GET /api/labs/equipment/computing/activity-summary` | `ComputingActivitySummaryAPIView` | None | Summary of monitored computing units. |
-| `GET` / `PATCH /api/labs/equipment/{equipment_id}/activity` | `ComputingActivityAPIView` | `ComputingActivityUpdateSerializer` | Live activity of a computing unit (404 for other units). |
+| `GET /api/labs/equipment/{equipment_id}/activity` | `ComputingActivityAPIView` | Path `{equipment_id}` | Live activity of a computing unit, read-only (404 for other units). Agents write it through `PATCH /agent/equipment/activity` (agents app, signed request). |

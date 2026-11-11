@@ -46,6 +46,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Enrollment conflict
+  /agent/equipment/activity:
+    patch:
+      operationId: agent_report_activity
+      description: Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature
+        headers (see the agentSignatureAuth security scheme). Send only the fields
+        that changed.
+      summary: Report live activity of the agent's computer
+      tags:
+      - Agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAgentActivityReport'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAgentActivityReport'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAgentActivityReport'
+      security:
+      - agentSignatureAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentActivityResponse'
+          description: Activity recorded
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Body is not a JSON object
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Missing, invalid, stale or replayed signature, or agent not
+            active
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: The agent's computer was deleted or is no longer computing
+            equipment
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unknown field or invalid value
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Request rate exceeded
   /agent/heartbeat:
     post:
       operationId: agent_heartbeat
@@ -439,6 +500,51 @@ paths:
           description: Enrollment conflict
 components:
   schemas:
+    AgentActivityData:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ComputingActivityStatusEnum'
+        remote_user:
+          type: string
+        remote_user_display_name:
+          type: string
+        remote_computer:
+          type: string
+        remote_ip:
+          type: string
+          nullable: true
+        booking_code:
+          type: string
+        offline_at:
+          type: string
+          format: date-time
+          nullable: true
+        inactive_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_agent_report_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - booking_code
+      - inactive_at
+      - last_agent_report_at
+      - offline_at
+      - remote_computer
+      - remote_ip
+      - remote_user
+      - remote_user_display_name
+      - status
+    AgentActivityResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentActivityData'
+      required:
+      - data
     AgentDetailResponse:
       type: object
       properties:
@@ -581,6 +687,23 @@ components:
       required:
       - data
       - meta
+    ComputingActivityStatusEnum:
+      enum:
+      - offline
+      - free
+      - active
+      - inactive
+      - maintaining
+      type: string
+      description: '* `offline` - Offline
+
+        * `free` - Free
+
+        * `active` - Active
+
+        * `inactive` - Inactive
+
+        * `maintaining` - Maintaining'
     CreateAgentGrantRequest:
       type: object
       properties:
@@ -725,6 +848,28 @@ components:
       - page
       - page_size
       - previous
+    PatchedAgentActivityReport:
+      type: object
+      description: Live activity the agent observes on its own computer. Timestamps
+        and counters are server-managed.
+      properties:
+        status:
+          $ref: '#/components/schemas/ComputingActivityStatusEnum'
+        remote_user:
+          type: string
+          maxLength: 255
+        remote_user_display_name:
+          type: string
+          maxLength: 255
+        remote_computer:
+          type: string
+          maxLength: 255
+        remote_ip:
+          type: string
+          nullable: true
+        booking_code:
+          type: string
+          maxLength: 255
     StateEnum:
       enum:
       - pending

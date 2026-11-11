@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
@@ -35,10 +36,15 @@ from core.agents.exceptions import (
 from core.agents.models import AgentIdentity
 from core.common.api.correlation import get_request_id
 from core.common.api.pagination import ResultsSetPagination
+from core.labs.features.equipment.public import SyncComputingActivityInput, sync_computing_activity
+from core.labs.models import Equipment
 from core.routing.api.serializers import ErrorEnvelopeSerializer
 from core.users.public import IsLabCoordinator
 
 from .serializers import (
+    AgentActivityDataSerializer,
+    AgentActivityReportSerializer,
+    AgentActivityResponseSerializer,
     AgentDetailResponseSerializer,
     AgentHeartbeatRequestSerializer,
     AgentHeartbeatResponseSerializer,
@@ -373,6 +379,79 @@ class AgentHeartbeatAPIView(APIView):
         return Response({"data": {"status": "ok", "last_seen_at": seen_at}}, status=status.HTTP_200_OK)
 
 
+class AgentActivityAPIView(APIView):
+    """Report the live activity of the agent's own computer (PATCH /agent/equipment/activity).
+
+    The computer is the one the signing agent is enrolled for (``AgentIdentity.equipment``); the
+    request never names equipment. Race guard and idempotency come from the equipment command
+    (activity row lock; repeating a report changes nothing but the report time).
+    """
+
+    authentication_classes = [AgentSignatureAuthentication]
+    permission_classes = [IsAuthenticatedAgent]
+
+    @extend_schema(
+        operation_id="agent_report_activity",
+        summary="Report live activity of the agent's computer",
+        description=(
+            "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers "
+            "(see the agentSignatureAuth security scheme). Send only the fields that changed."
+        ),
+        request=AgentActivityReportSerializer,
+        responses={
+            200: OpenApiResponse(response=AgentActivityResponseSerializer, description="Activity recorded"),
+            400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Body is not a JSON object"),
+            401: OpenApiResponse(
+                response=ErrorEnvelopeSerializer,
+                description="Missing, invalid, stale or replayed signature, or agent not active",
+            ),
+            409: OpenApiResponse(
+                response=ErrorEnvelopeSerializer,
+                description="The agent's computer was deleted or is no longer computing equipment",
+            ),
+            422: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unknown field or invalid value"),
+            429: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Request rate exceeded"),
+        },
+        tags=["Agents"],
+    )
+    def patch(self, request: Request) -> Response:
+        if not isinstance(request.data, dict):
+            return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", "Send a JSON object.", request)
+        req_serializer = AgentActivityReportSerializer(data=request.data)
+        unknown = sorted(set(request.data) - set(req_serializer.fields))
+        if unknown or not req_serializer.is_valid():
+            details = [{"field": name, "message": "Unknown or read-only field."} for name in unknown]
+            if not unknown:
+                details = [{"field": k, "message": str(v[0])} for k, v in req_serializer.errors.items()]
+            return _error_response(
+                status.HTTP_422_UNPROCESSABLE_ENTITY, "validation_failed", "Invalid activity report.", request, details
+            )
+        principal = request.user
+        if not isinstance(principal, AgentPrincipal):  # guaranteed by IsAuthenticatedAgent
+            raise AuthenticationFailed("Agent request authentication failed.")
+        try:
+            activity = sync_computing_activity(
+                SyncComputingActivityInput(
+                    computing_id=principal.identity.equipment_id,
+                    fields=tuple(req_serializer.validated_data.items()),
+                ),
+                actor=None,  # an agent report: refreshes last_agent_report_at
+            )
+        except Equipment.DoesNotExist:
+            return _error_response(
+                status.HTTP_409_CONFLICT,
+                "equipment_unavailable",
+                "The computer this agent is enrolled for is deleted or no longer computing equipment.",
+                request,
+            )
+        except ValidationError as error:
+            details = [{"field": k, "message": str(v[0])} for k, v in error.message_dict.items()]
+            return _error_response(
+                status.HTTP_422_UNPROCESSABLE_ENTITY, "validation_failed", "Invalid activity report.", request, details
+            )
+        return Response({"data": AgentActivityDataSerializer(activity).data}, status=status.HTTP_200_OK)
+
+
 class AgentInfoAPIView(APIView):
     """Discover agent capabilities and backend metadata (GET /agent/info)."""
 
@@ -399,7 +478,7 @@ class AgentInfoAPIView(APIView):
                 "data": {
                     "backend_id": backend_id,
                     "server_time": timezone.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "capabilities": ["enrollment", "heartbeat", "reporting", "request_signature_v1"],
+                    "capabilities": ["enrollment", "heartbeat", "reporting", "activity", "request_signature_v1"],
                 }
             },
             status=status.HTTP_200_OK,

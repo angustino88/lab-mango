@@ -302,6 +302,399 @@
       }
     },
     {
+      "endpoint": "/agent/equipment/activity",
+      "method": "PATCH",
+      "operation_id": "agent_report_activity",
+      "summary": "Report live activity of the agent's computer",
+      "description": "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers (see the agentSignatureAuth security scheme). Send only the fields that changed.",
+      "tags": [
+        "Agents"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": false,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Live activity the agent observes on its own computer. Timestamps and counters are server-managed.",
+          "properties": {
+            "status": {
+              "enum": [
+                "offline",
+                "free",
+                "active",
+                "inactive",
+                "maintaining"
+              ],
+              "type": "string",
+              "description": "* `offline` - Offline\n* `free` - Free\n* `active` - Active\n* `inactive` - Inactive\n* `maintaining` - Maintaining"
+            },
+            "remote_user": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "remote_user_display_name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "remote_computer": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "remote_ip": {
+              "type": "string",
+              "nullable": true
+            },
+            "booking_code": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        },
+        "example_payload": {
+          "status": "offline",
+          "remote_user": "string",
+          "remote_user_display_name": "string",
+          "remote_computer": "string",
+          "remote_ip": "string",
+          "booking_code": "string"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Activity recorded",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "enum": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "type": "string",
+                    "description": "* `offline` - Offline\n* `free` - Free\n* `active` - Active\n* `inactive` - Inactive\n* `maintaining` - Maintaining"
+                  },
+                  "remote_user": {
+                    "type": "string"
+                  },
+                  "remote_user_display_name": {
+                    "type": "string"
+                  },
+                  "remote_computer": {
+                    "type": "string"
+                  },
+                  "remote_ip": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "booking_code": {
+                    "type": "string"
+                  },
+                  "offline_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "inactive_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "last_agent_report_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "booking_code",
+                  "inactive_at",
+                  "last_agent_report_at",
+                  "offline_at",
+                  "remote_computer",
+                  "remote_ip",
+                  "remote_user",
+                  "remote_user_display_name",
+                  "status"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "status": "string",
+              "remote_user": "string",
+              "remote_user_display_name": "string",
+              "remote_computer": "string",
+              "remote_ip": "string",
+              "booking_code": "string",
+              "offline_at": "2026-10-20T12:00:00Z",
+              "inactive_at": "2026-10-20T12:00:00Z",
+              "last_agent_report_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "400": {
+          "description": "Body is not a JSON object",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "401": {
+          "description": "Missing, invalid, stale or replayed signature, or agent not active",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "The agent's computer was deleted or is no longer computing equipment",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "Unknown field or invalid value",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "429": {
+          "description": "Request rate exceeded",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "endpoint": "/agent/heartbeat",
       "method": "POST",
       "operation_id": "agent_heartbeat",
@@ -51184,7 +51577,7 @@
       "method": "GET",
       "operation_id": "labs_equipment_activity_retrieve_by_equipment_id",
       "summary": "Get Equipment Activity by Equipment ID",
-      "description": "Read or report the live activity state of one computing equipment record.",
+      "description": "Read the live activity of one computing unit (coordinators and API keys, like every equipment read).\n\nAgents report activity through ``PATCH /agent/equipment/activity``, authenticated by the agent's\nsigned request; there is no write here (owner decision 2026-11-11).",
       "tags": [
         "Equipment"
       ],
@@ -51294,351 +51687,6 @@
               "inactive_at": "2026-10-20T12:00:00Z",
               "inactive_reminder_count": 1,
               "modified": "2026-10-20T12:00:00Z"
-            }
-          }
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/equipment/{equipment_id}/activity",
-      "method": "PATCH",
-      "operation_id": "labs_equipment_activity_partial_update_by_equipment_id",
-      "summary": "Update Equipment Activity by Equipment ID",
-      "description": "Read or report the live activity state of one computing equipment record.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "equipment_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": {
-        "content_type": "application/json",
-        "supported_content_types": [
-          "application/json",
-          "application/x-www-form-urlencoded",
-          "multipart/form-data"
-        ],
-        "required": false,
-        "description": "",
-        "schema": {
-          "type": "object",
-          "description": "Agent- or coordinator-reported state. Timestamps and counters are server-managed.",
-          "properties": {
-            "status": {
-              "enum": [
-                "offline",
-                "free",
-                "active",
-                "inactive",
-                "maintaining"
-              ],
-              "type": "string",
-              "description": "* `offline` - Offline\n* `free` - Free\n* `active` - Active\n* `inactive` - Inactive\n* `maintaining` - Maintaining"
-            },
-            "remote_user": {
-              "type": "string",
-              "maxLength": 255
-            },
-            "remote_user_display_name": {
-              "type": "string",
-              "maxLength": 255
-            },
-            "remote_computer": {
-              "type": "string",
-              "maxLength": 255
-            },
-            "remote_ip": {
-              "type": "string",
-              "nullable": true
-            },
-            "booking_code": {
-              "type": "string",
-              "maxLength": 255
-            },
-            "offline_at": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
-            },
-            "inactive_at": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
-            }
-          }
-        },
-        "example_payload": {
-          "status": "offline",
-          "remote_user": "string",
-          "remote_user_display_name": "string",
-          "remote_computer": "string",
-          "remote_ip": "string",
-          "booking_code": "string",
-          "offline_at": "2026-10-20T12:00:00Z",
-          "inactive_at": "2026-10-20T12:00:00Z"
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "description": "Read projection of the live activity state.",
-                "properties": {
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "remote_user": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "remote_user_display_name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "remote_computer": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "remote_ip": {
-                    "type": "string",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "booking_code": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "offline_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "inactive_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "inactive_reminder_count": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "modified": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  }
-                },
-                "required": [
-                  "booking_code",
-                  "inactive_at",
-                  "inactive_reminder_count",
-                  "modified",
-                  "offline_at",
-                  "remote_computer",
-                  "remote_ip",
-                  "remote_user",
-                  "remote_user_display_name",
-                  "status"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "status": {},
-              "remote_user": "string",
-              "remote_user_display_name": "string",
-              "remote_computer": "string",
-              "remote_ip": "string",
-              "booking_code": "string",
-              "offline_at": "2026-10-20T12:00:00Z",
-              "inactive_at": "2026-10-20T12:00:00Z",
-              "inactive_reminder_count": 1,
-              "modified": "2026-10-20T12:00:00Z"
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "422": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
             }
           }
         },

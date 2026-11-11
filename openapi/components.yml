@@ -470,6 +470,51 @@ components:
           $ref: '#/components/schemas/StatusTransition'
       required:
       - data
+    AgentActivityData:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ComputingActivityStatusEnum'
+        remote_user:
+          type: string
+        remote_user_display_name:
+          type: string
+        remote_computer:
+          type: string
+        remote_ip:
+          type: string
+          nullable: true
+        booking_code:
+          type: string
+        offline_at:
+          type: string
+          format: date-time
+          nullable: true
+        inactive_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_agent_report_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - booking_code
+      - inactive_at
+      - last_agent_report_at
+      - offline_at
+      - remote_computer
+      - remote_ip
+      - remote_user
+      - remote_user_display_name
+      - status
+    AgentActivityResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentActivityData'
+      required:
+      - data
     AgentDetailResponse:
       type: object
       properties:
@@ -2859,14 +2904,6 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/ComputingActivitySummary'
-      required:
-      - data
-    ComputingActivityUpdatedApiComputingActivityDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/ComputingActivity'
       required:
       - data
     CountTrendMetric:
@@ -11166,6 +11203,28 @@ components:
           type: boolean
         requires_resolution:
           type: boolean
+    PatchedAgentActivityReport:
+      type: object
+      description: Live activity the agent observes on its own computer. Timestamps
+        and counters are server-managed.
+      properties:
+        status:
+          $ref: '#/components/schemas/ComputingActivityStatusEnum'
+        remote_user:
+          type: string
+          maxLength: 255
+        remote_user_display_name:
+          type: string
+          maxLength: 255
+        remote_computer:
+          type: string
+          maxLength: 255
+        remote_ip:
+          type: string
+          nullable: true
+        booking_code:
+          type: string
+          maxLength: 255
     PatchedBenchBookingUpdate:
       type: object
       description: Partial update payload; the command enforces which fields may change
@@ -11304,36 +11363,6 @@ components:
       properties:
         body:
           type: string
-    PatchedComputingActivityUpdate:
-      type: object
-      description: Agent- or coordinator-reported state. Timestamps and counters are
-        server-managed.
-      properties:
-        status:
-          $ref: '#/components/schemas/ComputingActivityStatusEnum'
-        remote_user:
-          type: string
-          maxLength: 255
-        remote_user_display_name:
-          type: string
-          maxLength: 255
-        remote_computer:
-          type: string
-          maxLength: 255
-        remote_ip:
-          type: string
-          nullable: true
-        booking_code:
-          type: string
-          maxLength: 255
-        offline_at:
-          type: string
-          format: date-time
-          readOnly: true
-        inactive_at:
-          type: string
-          format: date-time
-          readOnly: true
     PatchedDraftLinePatchInput:
       type: object
       properties:

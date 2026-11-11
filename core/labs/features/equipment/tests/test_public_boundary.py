@@ -120,6 +120,8 @@ def test_public_module_exports_supported_queries_and_commands():
         "unassign_equipment",
         "with_equipment_info",
         "computing_activity_projection",
+        "SyncComputingActivityInput",
+        "sync_computing_activity",
         "active_bench_assignment_mapping_rows",
         "active_equipment_bench_assignment",
         "lock_active_equipment_bench_assignment",

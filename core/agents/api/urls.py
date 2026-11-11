@@ -9,6 +9,7 @@ from .views import (
     AgentListCreateAPIView,
     AgentRevokeActionAPIView,
     AgentEnrollmentAPIView,
+    AgentActivityAPIView,
     AgentHeartbeatAPIView,
     AgentInfoAPIView,
 )
@@ -26,4 +27,5 @@ urlpatterns = [
     path("agent/info", AgentInfoAPIView.as_view(), name="agent-info"),
     path("agent/enrollments", AgentEnrollmentAPIView.as_view(), name="agent-enrollment"),
     path("agent/heartbeat", AgentHeartbeatAPIView.as_view(), name="agent-heartbeat"),
+    path("agent/equipment/activity", AgentActivityAPIView.as_view(), name="agent-equipment-activity"),
 ]

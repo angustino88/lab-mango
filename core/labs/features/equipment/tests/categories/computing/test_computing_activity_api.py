@@ -1,6 +1,5 @@
 """API tests for computing equipment activity: detail projection and the activity endpoint."""
 
-from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
@@ -43,10 +42,7 @@ def _url(equipment_id):
 
 
 def test_unauthenticated_requests_are_rejected(computing):
-    client = APIClient()
-
-    assert client.get(_url(computing.pk)).status_code == status.HTTP_401_UNAUTHORIZED
-    assert client.patch(_url(computing.pk), {"status": "free"}, format="json").status_code == 401
+    assert APIClient().get(_url(computing.pk)).status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_get_returns_offline_default_without_creating_a_row(admin_client, computing):
@@ -61,99 +57,20 @@ def test_get_unknown_unit_is_not_found(admin_client):
     assert admin_client.get(_url(999999)).status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_authenticated_member_can_read_but_not_write(plain_client, computing):
-    assert plain_client.get(_url(computing.pk)).status_code == status.HTTP_200_OK
-
-    response = plain_client.patch(_url(computing.pk), {"status": "active"}, format="json")
-
-    assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert not ComputingActivity.objects.filter(computing=computing).exists()
+def test_engineer_cannot_read_activity(plain_client, computing):
+    """Equipment is visible to coordinators only (R4); activity follows it."""
+    assert plain_client.get(_url(computing.pk)).status_code == status.HTTP_403_FORBIDDEN
 
 
-def test_coordinator_patch_updates_activity(admin_client, computing):
-    response = admin_client.patch(
-        _url(computing.pk),
-        {"status": "active", "remote_user": "alice", "remote_ip": "10.0.0.5"},
-        format="json",
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()["data"]
-    assert data["status"] == "active"
-    assert data["remote_user"] == "alice"
-    activity = ComputingActivity.objects.get(computing=computing)
-    assert activity.status == "active"
-    assert activity.last_agent_report_at is None
-
-
-def test_api_key_agent_can_report_activity(computing):
-    client = APIClient()
-
+@pytest.mark.parametrize("method", ["patch", "put", "post"])
+def test_activity_is_read_only_here_even_for_coordinators_and_api_keys(admin_client, computing, method):
+    """Agents report through PATCH /agent/equipment/activity (owner decision 2026-11-11)."""
+    response = getattr(admin_client, method)(_url(computing.pk), {"status": "free"}, format="json")
+    assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
     with patch(_PATCH_APIKEY, return_value=True):
-        response = client.patch(_url(computing.pk), {"status": "free"}, format="json")
-
-    assert response.status_code == status.HTTP_200_OK
-    activity = ComputingActivity.objects.get(computing=computing)
-    assert activity.status == "free"
-    assert activity.last_agent_report_at is not None
-
-
-def test_agent_api_error_does_not_persist_activity_or_heartbeat(computing):
-    client = APIClient()
-
-    with patch(_PATCH_APIKEY, return_value=True):
-        response = client.patch(_url(computing.pk), {"status": "invalid"}, format="json")
-
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        keyed = getattr(APIClient(), method)(_url(computing.pk), {"status": "free"}, format="json")
+    assert keyed.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
     assert not ComputingActivity.objects.filter(computing=computing).exists()
-
-
-def test_api_agent_report_updates_heartbeat_and_repeated_inactive_keeps_inactive_at(computing):
-    client = APIClient()
-
-    with patch(_PATCH_APIKEY, return_value=True):
-        initial = client.patch(_url(computing.pk), {"status": "inactive"}, format="json")
-        assert initial.status_code == status.HTTP_200_OK
-        activity = ComputingActivity.objects.get(computing=computing)
-        initial_heartbeat = activity.last_agent_report_at
-        inactive_at = activity.inactive_at
-
-        # Move the stored heartbeat back deterministically so a successful retry must refresh it.
-        stale_heartbeat = initial_heartbeat - timedelta(minutes=1)
-        ComputingActivity.objects.filter(pk=activity.pk).update(last_agent_report_at=stale_heartbeat)
-        repeated = client.patch(_url(computing.pk), {"status": "inactive"}, format="json")
-
-    assert repeated.status_code == status.HTTP_200_OK
-    activity.refresh_from_db()
-    assert activity.inactive_at == inactive_at
-    assert activity.last_agent_report_at > stale_heartbeat
-
-
-def test_patch_rejects_invalid_status_and_server_managed_fields(admin_client, computing):
-    bad_status = admin_client.patch(_url(computing.pk), {"status": "exploded"}, format="json")
-    managed = admin_client.patch(_url(computing.pk), {"offline_at": "2026-01-01T00:00:00Z"}, format="json")
-
-    assert bad_status.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert managed.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert managed.json()["error"]["details"][0]["code"] == "read_only_field"
-    assert not ComputingActivity.objects.filter(computing=computing).exists()
-
-
-@pytest.mark.parametrize("field", ("offline_at", "inactive_at"))
-def test_patch_rejects_each_transition_timestamp_as_read_only(admin_client, computing, field):
-    response = admin_client.patch(_url(computing.pk), {field: "2026-01-01T00:00:00Z"}, format="json")
-
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert any(
-        error["field"] == field and error["code"] == "read_only_field" for error in response.json()["error"]["details"]
-    )
-    assert not ComputingActivity.objects.filter(computing=computing).exists()
-
-
-def test_patch_unknown_unit_is_not_found(admin_client):
-    response = admin_client.patch(_url(999999), {"status": "free"}, format="json")
-
-    assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 def test_computing_detail_includes_activity(admin_client, computing):

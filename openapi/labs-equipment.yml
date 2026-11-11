@@ -2062,8 +2062,14 @@ paths:
   /api/labs/equipment/{equipment_id}/activity:
     get:
       operationId: labs_equipment_activity_retrieve_by_equipment_id
-      description: Read or report the live activity state of one computing equipment
-        record.
+      description: 'Read the live activity of one computing unit (coordinators and
+        API keys, like every equipment read).
+
+
+        Agents report activity through ``PATCH /agent/equipment/activity``, authenticated
+        by the agent''s
+
+        signed request; there is no write here (owner decision 2026-11-11).'
       parameters:
       - in: path
         name: equipment_id
@@ -2089,58 +2095,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Equipment Activity by Equipment ID
-    patch:
-      operationId: labs_equipment_activity_partial_update_by_equipment_id
-      description: Read or report the live activity state of one computing equipment
-        record.
-      parameters:
-      - in: path
-        name: equipment_id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - Equipment
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedComputingActivityUpdate'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedComputingActivityUpdate'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedComputingActivityUpdate'
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ComputingActivityUpdatedApiComputingActivityDetailResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Update Equipment Activity by Equipment ID
   /api/labs/equipment/{equipment_id}/assignment:
     get:
       operationId: labs_equipment_assignment_retrieve_by_equipment_id
@@ -5872,14 +5826,6 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/ComputingActivitySummary'
-      required:
-      - data
-    ComputingActivityUpdatedApiComputingActivityDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/ComputingActivity'
       required:
       - data
     DepartmentCatalogCreate:
@@ -9677,36 +9623,6 @@ components:
     NullEnum:
       enum:
       - null
-    PatchedComputingActivityUpdate:
-      type: object
-      description: Agent- or coordinator-reported state. Timestamps and counters are
-        server-managed.
-      properties:
-        status:
-          $ref: '#/components/schemas/ComputingActivityStatusEnum'
-        remote_user:
-          type: string
-          maxLength: 255
-        remote_user_display_name:
-          type: string
-          maxLength: 255
-        remote_computer:
-          type: string
-          maxLength: 255
-        remote_ip:
-          type: string
-          nullable: true
-        booking_code:
-          type: string
-          maxLength: 255
-        offline_at:
-          type: string
-          format: date-time
-          readOnly: true
-        inactive_at:
-          type: string
-          format: date-time
-          readOnly: true
     PatchedEquipmentReservationUpdate:
       type: object
       description: Move the window of the reserved lines, add items, or drop items.

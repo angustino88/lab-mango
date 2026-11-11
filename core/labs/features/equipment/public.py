@@ -37,6 +37,7 @@ from .application.reservations import (
 )
 from .application.unassign_equipment import UnassignEquipmentInput, unassign_equipment
 from .application.update_equipment import UpdateEquipmentInput, update_equipment
+from .categories.computing.application import SyncComputingActivityInput, sync_computing_activity
 from .categories.computing.queries import computing_activity_projection
 from .contracts import ActiveEquipmentBenchAssignment
 from .exceptions import (
@@ -131,6 +132,8 @@ __all__ = (
     "change_condition",
     "change_lifecycle",
     "computing_activity_projection",
+    "SyncComputingActivityInput",
+    "sync_computing_activity",
     "create_equipment",
     "delete_equipment",
     "equipment_mapping_rows",
