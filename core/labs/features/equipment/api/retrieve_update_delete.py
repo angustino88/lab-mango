@@ -12,12 +12,13 @@ from core.labs.features.equipment.application import (
 )
 from core.labs.features.equipment.exceptions import SkuAlreadyExists
 
-from .common import is_active_sku_unique_error
+from .common import EQUIPMENT_PERMISSIONS, is_active_sku_unique_error
 
 
 class EquipmentRetrieveUpdateDeleteAPIView(ResourceChangeLogMixin, RetrieveUpdateDeleteAPIView):
     """Adds equipment validation and change logging to single-object endpoints."""
 
+    permission_classes = EQUIPMENT_PERMISSIONS
     lock_on_write = True
 
     def get_save_kwargs(self, request):
@@ -38,7 +39,7 @@ class EquipmentRetrieveUpdateDeleteAPIView(ResourceChangeLogMixin, RetrieveUpdat
     def perform_delete(self, instance, request) -> None:
         actor = request.user if request.user.is_authenticated else None
         delete_equipment(
-            DeleteEquipmentInput(equipment_id=instance.pk, model=self.model),
+            DeleteEquipmentInput(equipment_id=instance.pk),
             actor=actor,
         )
 
@@ -47,7 +48,6 @@ class EquipmentRetrieveUpdateDeleteAPIView(ResourceChangeLogMixin, RetrieveUpdat
         return update_equipment(
             UpdateEquipmentInput(
                 equipment_id=instance.pk,
-                model=self.model,
                 fields=tuple(serializer.validated_data.items()),
             ),
             actor=actor,

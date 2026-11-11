@@ -9,6 +9,14 @@ class EquipmentBooking(Booking):
         related_name="bookings",
         on_delete=models.PROTECT,
     )
+    batch = models.ForeignKey(
+        "labs.EquipmentLoanBatch",
+        related_name="reservations",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="The loan slip this reservation belongs to (borrower, purpose).",
+    )
 
     def __str__(self) -> str:
         return f"{self.booking_code}: {self.equipment}"

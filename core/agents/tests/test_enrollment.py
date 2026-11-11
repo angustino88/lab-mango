@@ -23,7 +23,6 @@ from core.agents.contracts import CreateEnrollmentGrantInput
 from core.agents.exceptions import AgentEnrollmentConflict, EnrollmentGrantInvalid
 from core.labs.models import (
     AgentIdentity,
-    ComputingEquipment,
     EnrollmentGrant,
     EquipmentCategory,
     EquipmentKind,
@@ -31,6 +30,7 @@ from core.labs.models import (
     RoutingEntity,
     SyncState,
 )
+from tests.factories import create_computing_equipment
 
 
 def _b64(data: bytes) -> str:
@@ -43,7 +43,7 @@ def agent_setup(db):
     actor = user_model.objects.create_user(username="agent-admin", password="unused")
     category = EquipmentCategory.objects.create(name="Computing", definition="Computing equipment")
     kind = EquipmentKind.objects.create(category=category, name="Computer")
-    equipment = ComputingEquipment.objects.create(sku="AGENT-01", kind=kind, name="Agent host")
+    equipment = create_computing_equipment(sku="AGENT-01", kind=kind, name="Agent host")
     return actor, equipment
 
 

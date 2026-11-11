@@ -35,10 +35,10 @@ from core.labs.models import (
     EquipmentKind,
 )
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
-from core.labs.models.resource.equipment.computing import ComputingEquipment
-from core.users.public import LabsRole
 from core.users.models import URSGroup
+from core.users.public import LabsRole
 from core.users.tests.factories import UserFactory
+from tests.factories import create_computing_equipment
 
 
 def _decision_response(booking):
@@ -639,7 +639,7 @@ class TestAgentEndTimeUpdate:
             name="Computing", defaults={"definition": "Computing equipment"}
         )
         kind, _ = EquipmentKind.objects.get_or_create(category=category, name="Computer")
-        equipment = ComputingEquipment.objects.create(
+        equipment = create_computing_equipment(
             sku=f"AGENT-BOOKING-{uuid.uuid4().hex[:8]}",
             kind=kind,
             name="Agent host",
@@ -859,7 +859,7 @@ class TestAgentEndTimeUpdate:
 
         category = EquipmentCategory.objects.create(name="Computing", definition="Computing equipment")
         kind = EquipmentKind.objects.create(category=category, name="Computer")
-        equipment = ComputingEquipment.objects.create(
+        equipment = create_computing_equipment(
             sku=f"AGENT-BOOKING-{uuid.uuid4().hex[:8]}", kind=kind, name="Unassigned"
         )
         identity = AgentIdentity.objects.create(

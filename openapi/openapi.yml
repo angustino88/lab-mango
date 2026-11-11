@@ -6,6 +6,8 @@ info:
 paths:
   /agent/enrollments:
     $ref: ./agents.yml#/paths/~1agent~1enrollments
+  /agent/equipment/activity:
+    $ref: ./agents.yml#/paths/~1agent~1equipment~1activity
   /agent/heartbeat:
     $ref: ./agents.yml#/paths/~1agent~1heartbeat
   /agent/info:
@@ -282,6 +284,14 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-kinds~1{kind_id}
   /api/labs/equipment-kinds/options:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-kinds~1options
+  /api/labs/equipment-loan-batches/{batch_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-loan-batches~1{batch_id}
+  /api/labs/equipment-loans:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-loans
+  /api/labs/equipment-loans/actions/extend:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-loans~1actions~1extend
+  /api/labs/equipment-loans/actions/return:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-loans~1actions~1return
   /api/labs/equipment-manufacturers:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-manufacturers
   /api/labs/equipment-manufacturers/{manufacturer_id}:
@@ -294,250 +304,50 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-product-models~1{model_id}
   /api/labs/equipment-product-models/options:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-product-models~1options
+  /api/labs/equipment-reservations:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-reservations
+  /api/labs/equipment-reservations/{batch_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-reservations~1{batch_id}
+  /api/labs/equipment-reservations/{batch_id}/actions/cancel:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-reservations~1{batch_id}~1actions~1cancel
+  /api/labs/equipment-reservations/{batch_id}/actions/hand-over:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-reservations~1{batch_id}~1actions~1hand-over
   /api/labs/equipment-types:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-types
   /api/labs/equipment-types/{type_id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-types~1{type_id}
   /api/labs/equipment-types/options:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-types~1options
-  /api/labs/equipment/{equipment_id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}
   /api/labs/equipment/{equipment_id}/actions/assign:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1assign
-  /api/labs/equipment/{equipment_id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-status
+  /api/labs/equipment/{equipment_id}/actions/change-condition:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-condition
+  /api/labs/equipment/{equipment_id}/actions/change-lifecycle:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-lifecycle
+  /api/labs/equipment/{equipment_id}/actions/extend-loan:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1extend-loan
+  /api/labs/equipment/{equipment_id}/actions/hand-over:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1hand-over
+  /api/labs/equipment/{equipment_id}/actions/return:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1return
+  /api/labs/equipment/{equipment_id}/activity:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1activity
   /api/labs/equipment/{equipment_id}/assignment:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1assignment
-  /api/labs/equipment/accessory:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory
-  /api/labs/equipment/accessory/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1{id}
-  /api/labs/equipment/accessory/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1{id}~1actions~1change-status
-  /api/labs/equipment/accessory/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1facets
-  /api/labs/equipment/accessory/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1filters
-  /api/labs/equipment/accessory/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1options
-  /api/labs/equipment/accessory/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1reference-data
-  /api/labs/equipment/accessory/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1sku~1{sku}
-  /api/labs/equipment/accessory/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1summary
-  /api/labs/equipment/accessory/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1accessory~1uid~1{uid}
-  /api/labs/equipment/computing:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing
-  /api/labs/equipment/computing/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1{id}
-  /api/labs/equipment/computing/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1{id}~1actions~1change-status
+  /api/labs/equipment/{equipment_id}/loan:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1loan
+  /api/labs/equipment/{equipment_id}/placement:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1placement
+  /api/labs/equipment/{id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{id}
   /api/labs/equipment/computing/activity-summary:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1activity-summary
-  /api/labs/equipment/computing/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1facets
-  /api/labs/equipment/computing/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1filters
-  /api/labs/equipment/computing/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1options
-  /api/labs/equipment/computing/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1reference-data
-  /api/labs/equipment/computing/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1sku~1{sku}
-  /api/labs/equipment/computing/sku/{sku}/activity:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1sku~1{sku}~1activity
-  /api/labs/equipment/computing/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1summary
-  /api/labs/equipment/computing/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1uid~1{uid}
-  /api/labs/equipment/debugging:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging
-  /api/labs/equipment/debugging/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1{id}
-  /api/labs/equipment/debugging/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1{id}~1actions~1change-status
-  /api/labs/equipment/debugging/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1facets
-  /api/labs/equipment/debugging/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1filters
-  /api/labs/equipment/debugging/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1options
-  /api/labs/equipment/debugging/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1reference-data
-  /api/labs/equipment/debugging/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1sku~1{sku}
-  /api/labs/equipment/debugging/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1summary
-  /api/labs/equipment/debugging/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1debugging~1uid~1{uid}
-  /api/labs/equipment/display:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display
-  /api/labs/equipment/display/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1{id}
-  /api/labs/equipment/display/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1{id}~1actions~1change-status
-  /api/labs/equipment/display/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1facets
-  /api/labs/equipment/display/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1filters
-  /api/labs/equipment/display/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1options
-  /api/labs/equipment/display/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1reference-data
-  /api/labs/equipment/display/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1sku~1{sku}
-  /api/labs/equipment/display/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1summary
-  /api/labs/equipment/display/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1display~1uid~1{uid}
   /api/labs/equipment/facets:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1facets
   /api/labs/equipment/filters:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1filters
-  /api/labs/equipment/furniture:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture
-  /api/labs/equipment/furniture/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1{id}
-  /api/labs/equipment/furniture/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1{id}~1actions~1change-status
-  /api/labs/equipment/furniture/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1facets
-  /api/labs/equipment/furniture/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1filters
-  /api/labs/equipment/furniture/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1options
-  /api/labs/equipment/furniture/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1reference-data
-  /api/labs/equipment/furniture/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1sku~1{sku}
-  /api/labs/equipment/furniture/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1summary
-  /api/labs/equipment/furniture/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1furniture~1uid~1{uid}
-  /api/labs/equipment/instrument:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument
-  /api/labs/equipment/instrument/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1{id}
-  /api/labs/equipment/instrument/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1{id}~1actions~1change-status
-  /api/labs/equipment/instrument/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1facets
-  /api/labs/equipment/instrument/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1filters
-  /api/labs/equipment/instrument/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1options
-  /api/labs/equipment/instrument/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1reference-data
-  /api/labs/equipment/instrument/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1sku~1{sku}
-  /api/labs/equipment/instrument/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1summary
-  /api/labs/equipment/instrument/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1instrument~1uid~1{uid}
-  /api/labs/equipment/laboratory:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory
-  /api/labs/equipment/laboratory/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1{id}
-  /api/labs/equipment/laboratory/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1{id}~1actions~1change-status
-  /api/labs/equipment/laboratory/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1facets
-  /api/labs/equipment/laboratory/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1filters
-  /api/labs/equipment/laboratory/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1options
-  /api/labs/equipment/laboratory/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1reference-data
-  /api/labs/equipment/laboratory/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1sku~1{sku}
-  /api/labs/equipment/laboratory/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1summary
-  /api/labs/equipment/laboratory/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1laboratory~1uid~1{uid}
-  /api/labs/equipment/mechanical:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical
-  /api/labs/equipment/mechanical/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1{id}
-  /api/labs/equipment/mechanical/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1{id}~1actions~1change-status
-  /api/labs/equipment/mechanical/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1facets
-  /api/labs/equipment/mechanical/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1filters
-  /api/labs/equipment/mechanical/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1options
-  /api/labs/equipment/mechanical/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1reference-data
-  /api/labs/equipment/mechanical/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1sku~1{sku}
-  /api/labs/equipment/mechanical/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1summary
-  /api/labs/equipment/mechanical/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1mechanical~1uid~1{uid}
-  /api/labs/equipment/networking:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking
-  /api/labs/equipment/networking/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1{id}
-  /api/labs/equipment/networking/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1{id}~1actions~1change-status
-  /api/labs/equipment/networking/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1facets
-  /api/labs/equipment/networking/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1filters
-  /api/labs/equipment/networking/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1options
-  /api/labs/equipment/networking/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1reference-data
-  /api/labs/equipment/networking/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1sku~1{sku}
-  /api/labs/equipment/networking/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1summary
-  /api/labs/equipment/networking/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1networking~1uid~1{uid}
   /api/labs/equipment/options:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1options
-  /api/labs/equipment/other:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other
-  /api/labs/equipment/other/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1{id}
-  /api/labs/equipment/other/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1{id}~1actions~1change-status
-  /api/labs/equipment/other/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1facets
-  /api/labs/equipment/other/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1filters
-  /api/labs/equipment/other/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1options
-  /api/labs/equipment/other/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1reference-data
-  /api/labs/equipment/other/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1sku~1{sku}
-  /api/labs/equipment/other/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1summary
-  /api/labs/equipment/other/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1other~1uid~1{uid}
-  /api/labs/equipment/power:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power
-  /api/labs/equipment/power/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1{id}
-  /api/labs/equipment/power/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1{id}~1actions~1change-status
-  /api/labs/equipment/power/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1facets
-  /api/labs/equipment/power/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1filters
-  /api/labs/equipment/power/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1options
-  /api/labs/equipment/power/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1reference-data
-  /api/labs/equipment/power/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1sku~1{sku}
-  /api/labs/equipment/power/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1summary
-  /api/labs/equipment/power/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1power~1uid~1{uid}
   /api/labs/equipment/reference-data:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data
   /api/labs/equipment/reference-data/categories:
@@ -608,28 +418,12 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1types
   /api/labs/equipment/reference-data/types/{reference_id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1types~1{reference_id}
-  /api/labs/equipment/sample:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample
-  /api/labs/equipment/sample/{id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1{id}
-  /api/labs/equipment/sample/{id}/actions/change-status:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1{id}~1actions~1change-status
-  /api/labs/equipment/sample/facets:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1facets
-  /api/labs/equipment/sample/filters:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1filters
-  /api/labs/equipment/sample/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1options
-  /api/labs/equipment/sample/reference-data:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1reference-data
-  /api/labs/equipment/sample/sku/{sku}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1sku~1{sku}
-  /api/labs/equipment/sample/summary:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1summary
-  /api/labs/equipment/sample/uid/{uid}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sample~1uid~1{uid}
+  /api/labs/equipment/sku/{sku}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1sku~1{sku}
   /api/labs/equipment/status-summary:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1status-summary
+  /api/labs/equipment/uid/{uid}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1uid~1{uid}
   /api/labs/resource-groups:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1resource-groups
   /api/labs/resource-groups/{group_id}:
@@ -856,8 +650,6 @@ servers:
 - url: ''
   description: Local Development Server
 tags:
-- name: Accessory Equipment
-  description: Accessory Equipment endpoints
 - name: Agents
   description: Agents endpoints
 - name: Agents (operator)
@@ -868,40 +660,20 @@ tags:
   description: Bench Bookings endpoints
 - name: Benches
   description: Benches endpoints
-- name: Computing Equipment
-  description: Computing Equipment endpoints
 - name: Dashboard
   description: Dashboard endpoints
-- name: Debugging Equipment
-  description: Debugging Equipment endpoints
-- name: Display Equipment
-  description: Display Equipment endpoints
 - name: Equipment
   description: Equipment endpoints
 - name: Expenses
   description: Expenses endpoints
-- name: Furniture Equipment
-  description: Furniture Equipment endpoints
-- name: Instrument Equipment
-  description: Instrument Equipment endpoints
-- name: Laboratory Equipment
-  description: Laboratory Equipment endpoints
 - name: Leaderboard
   description: Leaderboard endpoints
 - name: Licenses
   description: Licenses endpoints
 - name: Locations
   description: Locations endpoints
-- name: Mechanical Equipment
-  description: Mechanical Equipment endpoints
 - name: Monitoring
   description: Monitoring endpoints
-- name: Networking Equipment
-  description: Networking Equipment endpoints
-- name: Other Equipment
-  description: Other Equipment endpoints
-- name: Power Equipment
-  description: Power Equipment endpoints
 - name: Procurement
   description: Procurement endpoints
 - name: Resource Audit
@@ -912,8 +684,6 @@ tags:
   description: Rooms endpoints
 - name: Routing Sync
   description: Routing Sync endpoints
-- name: Sample Equipment
-  description: Sample Equipment endpoints
 - name: Schema
   description: Schema endpoints
 - name: Stations

@@ -17,13 +17,13 @@
 - **Out of Scope / Does not own:**
   - Live computer remote-session and activity state (owned by `activity.ComputingActivity`).
   - Session logins, logouts, and work-time aggregation (owned by `session.LabSessionLog`).
-  - Computer resource and hardware/software specifications (owned by `equipment.ComputingEquipment`).
+  - Computer resource and hardware/software specifications (owned by the equipment feature: `Equipment` with its `ComputingProfile`).
   - Reservation bookings and schedule conflicts (owned by `bench_bookings.BenchBooking`).
 
 ## 2. Model ownership and invariants
 
 **Verified.**
-- `MonitoringEvent` (`core.labs.models.monitoring`): An immutable audit log of agent-reported facts and metrics. Extends `AgentReportedModel` and `TimeStampedModel`. Protects its `ComputingEquipment` relation with `PROTECT`. Enforces natural uniqueness per agent (`computer`, `agent_id`, `event_id`).
+- `MonitoringEvent` (`core.labs.models.monitoring`): An immutable audit log of agent-reported facts and metrics. Extends `AgentReportedModel` and `TimeStampedModel`. Protects its `Equipment` relation (a unit with a computing profile) with `PROTECT`. Enforces natural uniqueness per agent (`computer`, `agent_id`, `event_id`).
 
 ## 3. Public boundary and interface contracts
 

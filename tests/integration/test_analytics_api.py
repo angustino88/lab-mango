@@ -11,7 +11,6 @@ from tests.factories import (
     BenchFactory,
     BookingVolumeObservationFactory,
     ComputingEquipmentFactory,
-    EquipmentStatusRecordFactory,
     LabProjectFactory,
     LabSessionLogFactory,
     StorageQuotaMeasurementFactory,
@@ -74,7 +73,7 @@ class TestEquipmentStatusSummary:
         assert resp.status_code == 200
 
     def test_data_has_status_and_entries(self, auth_client, db):
-        EquipmentStatusRecordFactory(status="available")
+        ComputingEquipmentFactory()
         resp = auth_client.get(f"{BASE}/lab-equipment-status")
         data = resp.json()["data"]
         assert isinstance(data, list)

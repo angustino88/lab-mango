@@ -136,7 +136,7 @@ sequenceDiagram
 
 ## 9. Observability and operations
 
-**Not verified.** No logging or metrics specific to procurement were inspected. Migration state for the procurement models was not part of this document's scope; the Labs migration check currently reports an unrelated `computingequipment.rdp_file` change.
+**Not verified.** No logging or metrics specific to procurement were inspected. Migration state for the procurement models was not part of this document's scope. The Labs migration check reports no pending changes (2026-11-11, after ADR 006).
 
 ## 10. Tests and enforcement
 

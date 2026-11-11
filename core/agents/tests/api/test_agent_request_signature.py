@@ -24,7 +24,8 @@ from core.agents.application import (
 from core.agents.contracts import CreateEnrollmentGrantInput
 from core.agents.models import AgentIdentity
 from core.agents.tests.signing import b64url, signed_headers
-from core.labs.models import ComputingEquipment, EquipmentCategory, EquipmentKind
+from core.labs.models import EquipmentCategory, EquipmentKind
+from tests.factories import create_computing_equipment
 
 HEARTBEAT = "/agent/heartbeat"
 
@@ -44,7 +45,7 @@ def enrolled(db):
         key="computing", defaults={"name": "Computing", "definition": "Computing", "active": True}
     )
     kind = EquipmentKind.objects.create(category=category, name=f"Computer-{uuid.uuid4()}")
-    equipment = ComputingEquipment.objects.create(sku=f"SIG-{uuid.uuid4()}", kind=kind, name="Signed host")
+    equipment = create_computing_equipment(sku=f"SIG-{uuid.uuid4()}", kind=kind, name="Signed host")
     issued = create_enrollment_grant(
         CreateEnrollmentGrantInput(equipment_uid=equipment.uid, ttl_minutes=10), actor=actor
     )

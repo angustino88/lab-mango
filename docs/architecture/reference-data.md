@@ -141,6 +141,8 @@ Technical users are account identifiers only: there is no password/token import 
 
 ### Migration and rollout
 
+Since the migration reset ([ADR 005](decisions/005-migration-reset.md)) the replay-receipt table is part of `reference_data.0001_initial`; the text below describes the original rollout of `0002_referenceimportreceipt`.
+
 `reference_data.0002_referenceimportreceipt` adds only the replay-receipt table. Apply it
 before serving import POSTs. Existing lookup tables/data are untouched. Roll back the code
 first, then reverse this migration only when losing replay receipts is acceptable; removing

@@ -1,0 +1,486 @@
+# Design: Equipment management redesign (state, location, custody, category model)
+
+- Tier: T2 · Status: Draft, owner decisions recorded below, not approved for implementation · Date: 2026-11-10
+- Scope: `core/labs/features/equipment`, `core/labs/models/resource/equipment`, bench status, and the
+  cross-feature reads of equipment tables. No code, migration, or deployed contract is changed by this document.
+- Companion: [equipment booking](equipment-booking.md) builds on the placement, state, and loan records
+  defined here. This document is the owner of those definitions; the booking proposal links to them.
+
+Statements marked **Evidence** were read from the repository on the date above. Nothing was executed
+(no database was available), so defects are "confirmed by reading". Everything else is **Proposed**.
+
+## Problem and acceptance criteria
+
+The equipment feature has a sound technical base (command/query layering, row locks backed by partial
+unique and exclusion constraints, a `public.py` boundary), but three modelling decisions hold it back:
+
+1. One status enum carries five different facts (lifecycle, condition, utilisation, custody, location).
+2. Equipment has no location or custody record of its own; location exists only as a side effect of a
+   bench assignment or the single `storage_room` column.
+3. Category is modelled twice: as data (`kind.category`) and as 12 multi-table-inheritance subclasses.
+
+Acceptance criteria for the redesign:
+
+| # | Criterion |
+|---|---|
+| AC1 | Lifecycle, condition, placement, custody, booking, and live activity are separate records with separate rules (extends AGENTS rule 2). |
+| AC2 | Every unit is, at any time, in exactly one of: placed (bench, station, room, or an untracked place described in text), on loan, or location unknown. |
+| AC3 | "Available" is computed from those records and cannot be set by hand. |
+| AC4 | Changing condition never changes where a unit is. |
+| AC5 | Each invariant PostgreSQL can express is a constraint; the rest are enforced in one command under a named lock. |
+| AC6 | Other features read equipment through `public.py` projections only. |
+| AC7 | Adding an equipment category needs no migration and no new routes. |
+| AC8 | Every equipment and catalog write has a server-side, object-scoped permission. |
+
+## Owner decisions recorded (2026-11-10)
+
+| # | Decision |
+|---|---|
+| OD1 | Remove `Equipment.storage_room`; use a location (placement) model instead. |
+| OD2 | A storage place may be outside the tracked rooms and stations. It is recorded as text. |
+| OD3 | Bench is virtual; its seven-value `lifecycle_status` is reduced to four values: `planned`, `in_service`, `out_of_service`, `retired`. |
+| OD4 | A loan has no code of its own. Nothing in the system reads one. |
+| OD5 | Marking equipment lost is always a manual coordinator action. No timer does it or prompts for it. |
+| OD6 | A booking can be created only when the equipment is available at that moment. |
+| OD7 | Overdue reminders: at the due time, one day later, then daily, capped at one week. |
+| OD8 | Legacy `transferred` means handed to another organisation. It gets its own lifecycle value, separate from `retired`. |
+| OD9 | Coordinators are scoped per department. |
+| OD10 | Step 0 (defect fixes D1 to D5) may proceed now, independently of the redesign. |
+| OD11 | Administrators assign coordinators to departments. One coordinator may hold several departments. |
+| OD12 | Catalog reference data (categories, kinds, types, manufacturers, product models, specifications) is writable by administrators only. |
+
+## Current state (from repository evidence)
+
+### Confirmed defects
+
+| # | Severity | Finding | Evidence |
+|---|---|---|---|
+| D1 | Critical | Every equipment write (create, update, delete, assign, change status, catalog create) is open to any authenticated user or API key. Only the computing-activity PATCH requires a coordinator. | `core/common/api/command_views.py:37`; no `permission_classes` in `core/labs/features/equipment/api/views.py`; contrast `categories/computing/api.py:60` |
+| D2 | Critical | `POST /api/labs/equipment` creates a bare `Equipment` row with no subclass row, because the category check is skipped for the base model. Such a unit is invisible to its category endpoints and a computing unit gets no `ComputingActivity`. | `api/views.py` (`EquipmentListCreateAPIView.handle_post`); `application/create_equipment.py:99-101` |
+| D3 | High | Create rejects fields its own serializers accept (`firmware_version`, `power_draw_w`, `weight_kg`, `warranty_until`, `calibration_required`, and `storage_room_id` on the generic route). On category routes a storage room reaches `reference.active`, which `Room` does not have. | `application/create_equipment.py:23,42-59,69`; `api/serializers.py:112-136`; `api/category_serializers.py:17-38` |
+| D4 | High | Soft delete has no guards: it leaves the active bench assignment, license seats, and reserving bookings pointing at a deleted unit. Bench delete does check these. | `application/delete_equipment.py`; contrast `features/benches/application/services.py:186-191` |
+| D5 | High | Leaderboard "current status counts" count every history row, not the latest per unit. | `features/leaderboard/queries/selectors.py:275` |
+| D6 | Low | Filters use `kind__key`; `EquipmentKind` has no `key` field. Reachability from the API is not verified. | `queries/equipment.py:93,361,450` |
+| D7 | Low | N+1: the list serializer emits `storage_room`, no selector joins it. | `queries/equipment.py:76-85`; `api/serializers.py:50` |
+| D8 | Low | Docs drift: `architecture.md` cites `core/labs/signals.py` (absent); `spec.md` lists `PATCH`/`DELETE /equipment/{id}` (the view is GET-only). | `features/equipment/docs/` |
+
+### Design problems
+
+- **Status conflation.** `EquipmentStatus` (`models/resource/equipment/equipment.py:171-180`) mixes
+  lifecycle (`on_order`, `lost`), condition (`broken`, `maintenance`), utilisation (`in_use`, `available`),
+  custody (`borrowed`, `transferred`), and location (`in_storage`). There is no transition table. Any
+  non-`in_use` status closes the bench assignment (`application/_status_transition.py:45-48`).
+  `assign_equipment` never checks status. New equipment gets no status record, so it is excluded from
+  `assignable` selectors (`queries/equipment.py:381`). Loans, transfers, and storage are free-text JSON
+  (`api/serializers.py:147-240`).
+- **No location of record.** A unit is "somewhere" only through an active `EquipmentAssignment` or `storage_room`.
+- **Current status is derived**, by correlated subquery over history, so status filters cannot use an
+  index. `Bench` stores `lifecycle_status` as a column; the two resources disagree on the pattern.
+- **Bench status is unenforced.** `Bench.LIFECYCLE_STATUSES` has seven values including `reserved` and
+  `active`, set by hand; no module under `features/bench_bookings/application/` reads it.
+- **Category twice.** Of 12 subclasses, 4 add no columns and one adds only an M2M. Agreement between the
+  class and `kind.category` is enforced only in `clean()`. Categories can be created at runtime
+  (`api/reference_data.py:24`) but get no model and no routes.
+- **Three attribute mechanisms.** Typed subclass columns hold make-and-model facts (display size and
+  resolution, power channels and rating, material, dimensions); `ProductModelSpecification` is an
+  entity-attribute-value table for the same kind of fact; `metadata`, `details`, `remark`, `log_label`
+  are four more free-form fields.
+- **Generic foreign keys** for service records (string id) and purchase allocations (bigint id), with no
+  referential integrity. Calibration has no interval and gates nothing.
+- **Boundary leaks.** Benches, bench bookings, dashboard, licenses, monitoring, analytics, and leaderboard
+  query `EquipmentAssignment`, `EquipmentStatusRecord`, or `ComputingActivity` directly (for example
+  `features/bench_bookings/application/state_transitions.py:38`).
+- **Generated API surface.** `openapi/labs-equipment.yml` has 187 paths: 10 routes for each of 12
+  categories built with `type()` in `api/categories.py`, two near-identical options selectors, aliased
+  parameters, and three identifier routes per category.
+
+## Proposed behavior and invariants
+
+### 1. Equipment state: two stored axes
+
+| Axis | Values | Replaces |
+|---|---|---|
+| `lifecycle_state` | `planned`, `in_service`, `transferred_out`, `retired`, `lost` | `on_order`, `transferred`, `lost`, and soft delete as the only "gone" signal |
+| `condition` | `operational`, `in_maintenance`, `out_of_service` | `maintenance`, `broken` |
+
+Both are columns on `Equipment`, set at creation (`planned` or `in_service`, `operational`). History moves
+to an append-only `EquipmentEvent` (axis, from, to, reason, actor, time).
+
+Allowed transitions:
+
+| Axis | From | To |
+|---|---|---|
+| lifecycle | `planned` | `in_service`, `retired` |
+| lifecycle | `in_service` | `transferred_out`, `retired`, `lost` |
+| lifecycle | `lost` | `in_service` (found), `retired` |
+| lifecycle | `transferred_out` | `in_service` (handed back) |
+| lifecycle | `retired` | none (terminal) |
+| condition | any | any other, only while `in_service` |
+
+Rules:
+- `transferred_out` means the unit was handed to another organisation (OD8); `retired` means disposed of
+  or scrapped. A transfer records the receiving organisation and date on its `EquipmentEvent`.
+- Entering `transferred_out`, `retired`, or `lost` requires no active placement on a bench and closes any
+  other active placement. `transferred_out` and `retired` also require no active loan. `lost` closes the active loan with reason `lost` and cancels future bookings (OD5: manual only).
+- A condition change never opens or closes a placement (AC4).
+- `in_use`, `available`, `in_storage`, and `borrowed` are no longer statuses. They are read from
+  placement and loan.
+
+**Available** (computed, AC3): `lifecycle_state = in_service` and `condition = operational` and no active
+bench placement and no active loan and (calibration not overdue, when the unit requires calibration).
+
+#### Display status (computed, read-only)
+
+The old single status does not disappear from the user's view. Responses carry one computed
+`display_status` beside the detailed fields, so lists, filters, and dashboard counts keep one familiar
+label. It is never written; it is derived from the stored facts.
+
+| Old status | Source of truth now |
+|---|---|
+| `available` | the computed availability rule above |
+| `in_use` | active placement on a bench |
+| `in_storage` | active placement in a room, a station, or an untracked place (`location_note`) |
+| `borrowed` | active loan |
+| `maintenance` | `condition = in_maintenance` |
+| `broken` | `condition = out_of_service` |
+| `on_order` | `lifecycle_state = planned` |
+| `transferred` | `lifecycle_state = transferred_out` |
+| `lost` | `lifecycle_state = lost` |
+
+When several facts hold at once, the first matching row wins:
+
+| Priority | Condition | `display_status` |
+|---|---|---|
+| 1 | `lifecycle_state` is not `in_service` | `lost`, `transferred`, `retired`, or `planned` |
+| 2 | `condition = out_of_service` | `broken` |
+| 3 | `condition = in_maintenance` | `maintenance` |
+| 4 | active loan | `borrowed` (the response also carries `overdue: true` when past due) |
+| 5 | active placement on a bench | `in_use` |
+| 6 | calibration required and overdue | `calibration_overdue` |
+| 7 | otherwise | `available` |
+
+A unit resting in a room, at a station, or in an untracked place displays as `available`; where it is
+shows in `placement`. A separate `in_storage` label is produced only if the storage flag on `Room` is
+adopted (open question), in which case the owner also decides whether a stored unit is bookable.
+
+The detailed fields stay in the response, so "broken while on loan" is visible as `display_status =
+broken` with a non-null `loan`. The value is computed in SQL (one `CASE` over the stored columns plus
+`Exists` for loan and bench placement), so it can be filtered and counted without per-row queries.
+
+### 2. Location: `EquipmentPlacement`
+
+Replaces `EquipmentAssignment` and `Equipment.storage_room` (OD1).
+
+| Field | Notes |
+|---|---|
+| `equipment` | FK, PROTECT |
+| `bench`, `station`, `room` | nullable FKs, PROTECT; at most one set |
+| `location_note` | text; required when no FK is set (OD2); otherwise an optional detail such as "Cabinet 3, shelf B" |
+| `role`, `position`, `monitor` | carried over from `EquipmentAssignment`; bench placements only |
+| `placed_at`, `removed_at` | `removed_at IS NULL` is the current placement |
+
+| Situation | Recorded as |
+|---|---|
+| Installed on a bench | placement with `bench` |
+| At a tracked station or room | placement with `station` or `room` |
+| Somewhere untracked | placement with only `location_note` |
+| With a person | no active placement; an active loan |
+| Unknown | neither |
+
+The room of a bench-mounted unit is derived (bench, then station, then room) and never copied, because a
+bench can move. One equipment-owned selector answers "everything in room X". If the same untracked
+places recur, promote `location_note` values to a lookup table later; do not start with one.
+
+### 3. Custody: `EquipmentLoan`
+
+| Field | Notes |
+|---|---|
+| `equipment` | FK, PROTECT |
+| `borrower` | FK user, PROTECT |
+| `booking` | one-to-one to `EquipmentBooking`, nullable (reserved for custody that is not a booking, such as an external calibration vendor) |
+| `handed_over_at`, `handed_over_by` | |
+| `due_at` | equals the booking end; an extension updates both in one transaction |
+| `returned_at`, `received_by` | |
+| `condition_out`, `condition_in` | short text |
+| `close_reason` | `returned`, `lost`, `written_off`; null while open |
+
+No code field (OD4). Overdue is computed: `returned_at IS NULL AND due_at < now()`.
+
+### 4. Bench state
+
+Reduce `Bench.lifecycle_status` to `planned`, `in_service`, `out_of_service`, `retired` (OD3).
+Remove `reserved` and `active`; the dashboard computes them from bookings and computing activity. Bench
+booking creation refuses a bench that is not `in_service`. `maintenance` maps to `out_of_service`.
+
+### 5. Category model
+
+Single `Equipment` table. Keep a one-to-one profile table only where behaviour exists: `ComputingProfile`
+(hostname, MAC, IP, OS, technical user, RDP file) with `ComputingActivity` keyed on it. Make-and-model
+facts move to the product model's specifications. Remaining per-unit variation goes into an `attributes`
+JSON column validated against a schema held on `EquipmentCategory`. `EquipmentCategory` gains capability
+flags (`bookable`, `placeable_on_bench`, `calibratable`, `monitored`) so `api/capabilities.py` stops
+advertising every capability for every category.
+
+## Module ownership and allowed dependencies
+
+| Area | Owns | Others use it through |
+|---|---|---|
+| Equipment | identity, lifecycle and condition, placement, loans, service records, computing profile | `public.py` commands (`place_equipment`, `remove_placement`, `hand_over_equipment`, `return_equipment`, `change_condition`, `change_lifecycle`) and read projections |
+| Equipment catalog (sub-package of equipment) | categories, kinds, types, manufacturers, product models, specifications | `public.py` |
+| Equipment bookings (new) | schedule and approval only | calls equipment's public custody commands |
+| Benches, locations | bench and station/room lifecycle | ask equipment "is anything placed here" |
+| Organization (new home, to confirm) | departments and resource groups, today served from the equipment feature | its own `public.py` |
+
+Add an import-boundary test covering Labs features (AC6); the existing architecture tests do not prove this rule.
+
+## API contract (endpoints, errors, breaking?)
+
+All of these are breaking and need a compatibility plan per `docs/api/response-standard.md` and AGENTS rule 6.
+
+| Change | Contract effect |
+|---|---|
+| `status` on equipment responses | replaced by `display_status` (computed, same shape as today's `status`), plus `lifecycle_state`, `condition`, `placement`, `loan` |
+| `POST /equipment/{id}/actions/change-status` | replaced by `actions/change-condition` and `actions/change-lifecycle`; old route kept as a deprecated adapter for a sunset period |
+| `/equipment/{id}/assignment` | becomes `/equipment/{id}/placement` (bench, station, room, or note); old route kept as a deprecated alias for bench placements |
+| `storage_room`, `storage_room_id` | removed |
+| Bench `lifecycle_status` | value set shrinks to four |
+| Category routes | one `/equipment` collection with a `category` filter and polymorphic detail; category routes become deprecated aliases |
+
+Stable errors (existing `Conflict` base): `equipment_not_available`, `equipment_already_placed`,
+`equipment_on_loan`, `invalid_state_transition`, `equipment_has_future_bookings`.
+
+## Data model, constraints, concurrency
+
+```mermaid
+erDiagram
+  EquipmentCategory ||--o{ EquipmentKind : has
+  EquipmentKind ||--o{ EquipmentType : has
+  EquipmentManufacturer ||--o{ EquipmentProductModel : makes
+  EquipmentType ||--o{ EquipmentProductModel : classifies
+  EquipmentKind ||--o{ Equipment : classifies
+  EquipmentProductModel |o--o{ Equipment : describes
+  Equipment ||--o| ComputingProfile : "has (computing only)"
+  ComputingProfile ||--o| ComputingActivity : reports
+  Equipment ||--o{ EquipmentPlacement : "is placed"
+  Bench |o--o{ EquipmentPlacement : target
+  Station |o--o{ EquipmentPlacement : target
+  Room |o--o{ EquipmentPlacement : target
+  Equipment ||--o{ EquipmentLoan : "is lent"
+  EquipmentBooking |o--o| EquipmentLoan : fulfils
+  Equipment ||--o{ EquipmentBooking : "is booked"
+  Equipment ||--o{ EquipmentEvent : history
+  Equipment ||--o{ ServiceRecord : serviced
+```
+
+Constraints (names are proposals):
+
+| Constraint | Kind | Rule |
+|---|---|---|
+| `equipment_placement_one_target` | check | `num_nonnulls(bench, station, room) = 1` or (all null and `location_note <> ''`) |
+| `equipment_placement_bench_fields` | check | `role`, `position`, `monitor` at defaults unless `bench` is set |
+| `one_active_placement_per_equipment` | partial unique | `(equipment)` where `removed_at IS NULL` (today `one_active_bench_per_equipment`) |
+| `equipment_placement_end_after_start` | check | carried over |
+| `one_active_loan_per_equipment` | partial unique | `(equipment)` where `returned_at IS NULL` |
+| `equipment_loan_closed_has_reason` | check | `returned_at IS NULL` if and only if `close_reason IS NULL` |
+| `equipment_lifecycle_valid`, `equipment_condition_valid` | check | values in the enumerations |
+| `equipment_condition_only_in_service` | check | `condition = 'operational'` unless `lifecycle_state = 'in_service'` |
+| `equipment_serial_per_model_uniq` | partial unique | `(product_model, serial_number)` where both set and not deleted |
+
+"A unit on loan has no active placement" and "a retired unit has neither" span tables and cannot be
+check constraints. They are enforced in the commands below while holding the `Equipment` row lock.
+
+| Write path | Race | Guard (constraint name / lock order) | Idempotency (key or natural target state) | Concurrency test |
+|---|---|---|---|---|
+| `place_equipment` | two placements for one unit | lock `Equipment`, then `Bench` if bench target; `one_active_placement_per_equipment` | same target already active returns it | two simultaneous placements, one wins |
+| `remove_placement` | double removal | lock `Equipment`; row lock on placement | no active placement returns none | repeat call is a no-op |
+| `hand_over_equipment` | two loans; loan while placed | lock `Equipment`; `one_active_loan_per_equipment`; closes active placement in the same transaction | active loan for the same booking returns it | simultaneous hand-over of two bookings |
+| `return_equipment` | double return | lock `Equipment`; row lock on loan | already closed returns it | repeat call is a no-op |
+| `change_condition`, `change_lifecycle` | lost update | lock `Equipment`; transition table; checks above | target state already current returns without an event | concurrent conflicting transitions |
+| `delete_equipment` | delete during placement or loan | lock `Equipment`; refuse on active placement, loan, license seat, or reserving booking | already deleted is a no-op | delete racing a placement |
+
+Lock order everywhere: `Equipment`, then `Bench`, then placement, loan, or booking rows. This matches the
+existing convention stated in `queries/equipment.py` (`lock_active_equipment_bench_assignment`).
+
+## Read paths and query budget
+
+| Endpoint | Query function | `select_related` / `prefetch_related` / annotations | Budget (N queries) | Page cap |
+|---|---|---|---|---|
+| `GET /equipment` | `list_equipment` | join kind, category, type, manufacturer, product model, owner, department, group; `Exists` for active loan; one subquery for active placement target | page + count = 2, plus 1 for M2M prefetch where a profile needs it | 100 |
+| `GET /equipment/{id}` | `get_equipment` | same, plus computing profile and activity | 2 | n/a |
+| status summary | `get_equipment_status_summary` | aggregate on stored columns | 1 | n/a |
+| "equipment in room X" | new selector | placement joined to bench and station for derived room | 1 | 100 |
+
+Status filters become plain indexed predicates. Add trigram indexes on `sku`, `name`, `serial_number`;
+representative-volume query plans are not verified.
+
+## Authorization and threat notes
+
+- D1 is fixed first and independently (OD10): coordinator role for all equipment and catalog writes, deny
+  by default. This stage uses the existing global role (`IsLabCoordinator`, `core/users/access.py:95`).
+- Department scope (OD9) is a second stage, because the link it needs does not exist yet. **Evidence:**
+  Labs roles are global, granted through a URS group (`core/users/models/urs_group.py:17`), and
+  `User.department` is free text (`core/users/models/user.py:41`), not a reference to `labs.Department`.
+  **Proposed:** an explicit coordinator-to-department assignment table (many-to-many, written by
+  administrators only, OD11); never match on the text field.
+  A coordinator may write equipment whose `department` is one of theirs. Lab administrators keep
+  lab-wide write access. Reads stay open to authenticated users.
+- Consequences of department scope to design for: units with no department are writable by
+  administrators only, so backfill `department` before enforcing; moving a unit between departments needs
+  rights on both, or an administrator; a booking is handled by a coordinator of the unit's department,
+  whoever the requester is; catalog reference data is lab-wide and administrator-only (OD12).
+- Hand-over and return are coordinator-only.
+- `location_note`, `condition_out`, `condition_in` are free text shown to other users: length-capped and
+  never rendered as HTML.
+
+## Async/integration behavior
+
+No external calls inside equipment transactions. WebSocket and notification effects are emitted after
+commit, as `categories/computing/application.py` already does. RDP file generation moves out of
+`ComputingEquipment.save()` into the computing command.
+
+## Migration, rollout, rollback
+
+Each step is its own T2 change with its own plan and approval. Order matters because later steps read earlier ones.
+
+| Step | Change | Data migration | Rollback |
+|---|---|---|---|
+| 0 | Fix D1 to D5 on the current model (**implemented**, see `features/equipment/docs/architecture.md` section 6) | none | revert |
+| 1 | `EquipmentPlacement` (**implemented**, see the step 1 plan below) | rename and extend `EquipmentAssignment` (state-only rename where possible); `storage_room` becomes a room placement for units with no active assignment; drop the column in a later release | keep the column until step 1 is verified |
+| 2 | `lifecycle_state`, `condition`, `EquipmentEvent` (**implemented**, see the step 2 plan below) | backfill from the latest `EquipmentStatusRecord` using the table below; keep the old table read-only | columns are additive; adapter keeps old route working |
+| 3 | `EquipmentLoan` (**implemented**, see the step 3 plan below) | none (legacy `borrowed` rows have no borrower FK; see table) | additive |
+| 4 | Equipment bookings (**implemented** 2026-11-10: phases 1 to 3 of `docs/proposals/equipment-booking.md`, revision 2; reservations live in the equipment feature) | none | feature routes removable |
+| 5 | Bench state reduction (**implemented** 2026-11-10: four values with check `bench_lifecycle_valid`; new benches default to `in_service`; bench bookings refused unless `in_service`) | map `reserved`, `active` to `in_service`; `maintenance` to `out_of_service`; `available` to `in_service` | value map is reversible only for unchanged rows |
+| 6 | Single-table equipment and `ComputingProfile` (**implemented** 2026-11-11, see the step 6 plan below) | none: migrations reset again (ADR 006), development database recreated | revert the commit and reset again |
+
+Backfill from the latest legacy status:
+
+| Legacy status | `lifecycle_state` | `condition` | Other |
+|---|---|---|---|
+| none recorded | `in_service` | `operational` | list for coordinator review |
+| `on_order` | `planned` | `operational` | |
+| `available` | `in_service` | `operational` | |
+| `in_use` | `in_service` | `operational` | existing assignment becomes a bench placement |
+| `in_storage` | `in_service` | `operational` | placement from `storage_room`, else `location_note` from `metadata.location` |
+| `maintenance` | `in_service` | `in_maintenance` | |
+| `broken` | `in_service` | `out_of_service` | |
+| `lost` | `lost` | `operational` | |
+| `borrowed` | `in_service` | `operational` | no loan row can be built from text; `location_note` "On loan to <borrower>" and list for coordinator review |
+| `transferred` | `transferred_out` | `operational` | receiving organisation from `metadata.destination`, date from `metadata.transfer_date`, on the backfilled event |
+
+### Step 1 implementation plan (approved to start by the owner, 2026-11-10)
+
+Decisions that refine the step 1 row above:
+
+| Topic | Decision | Why |
+|---|---|---|
+| Table | Extend `labs_equipmentassignment` in place: `bench` becomes nullable; add `station`, `room` (PROTECT) and `location_note` (max 255). No table, field, or constraint rename. | AGENTS rule 1: model imports, query paths (`bench_assignments__...`) and permission codenames stay valid. One table keeps "one active placement per unit" a PostgreSQL guard (`one_active_bench_per_equipment` now covers every placement). |
+| Names | `EquipmentAssignment.objects` returns bench placements only, so every existing reader keeps its meaning. `EquipmentAssignment.all_placements` and the proxy model `EquipmentPlacement` see every placement. The class rename is deferred. | A rename changes content types and permission codenames; it is cosmetic and can follow as a state-only change. |
+| Readers | Join-based readers that start from equipment (`computing__bench_assignments__...`) do not use the manager; the two that can match a non-bench row (inactivity notifications, dashboard computing filter) add `bench__isnull=False`. | Verified by grep of every `bench_assignments__` lookup. |
+| Constraints | `equipment_placement_one_target`, `equipment_placement_bench_fields` (check). Existing rows all have a bench, so both validate on add. | AC2, AC5. |
+| Commands | `place_equipment` (bench target delegates to `assign_equipment`, keeping its status records), `remove_placement` (bench delegates to `unassign_equipment`). A unit resting in a room, station, or untracked place moves on placement; a unit on a bench must be removed from the bench first (`equipment_already_placed`, 409). Lock order: `Equipment`, then `Bench`, `Station`, or `Room`, then placement rows. | Bench removal has side effects (status, bookings); an implicit move off a bench would hide them. |
+| `storage_room` | **Removed** (owner, 2026-11-10). Where a unit is kept is its placement; equipment responses carry `placement` (one prefetch per page); `storage_room_id` input is rejected as an unknown field. | OD1. Development only, so no compatibility window. |
+| Backfill | None: migrations were reset to a fresh initial set (ADR 005); development databases are recreated. | Owner decision, 2026-11-10. |
+| Locations | `delete_room` and `delete_station` refuse while a unit is placed there (asked through equipment `public.py`); both already lock the row that `place_equipment` locks. | "Benches, locations ask equipment" (module ownership table). |
+| API | New `GET`/`PUT`/`DELETE /api/labs/equipment/{id}/placement`. `/assignment` is unchanged and keeps showing bench placements only (404 when the unit rests in a room). Equipment list and detail responses (generic and category routes) include `placement`. | Additive contract change. |
+
+
+### Step 2 implementation plan (owner: "continue", 2026-11-10; development, no compatibility window)
+
+| Topic | Decision |
+|---|---|
+| Storage | `Equipment.lifecycle_state` and `Equipment.condition` columns (indexed), checks `equipment_lifecycle_valid`, `equipment_condition_valid`, `equipment_condition_only_in_service`. Append-only `EquipmentEvent` (axis, from, to, reason, details, actor, time). `EquipmentStatusRecord` and `EquipmentStatus` are removed (no data to keep; ADR 005). |
+| Commands | `change_condition`, `change_lifecycle` (`application/change_state.py`), transition table above, `invalid_state_transition` (409). Same target is a no-op without an event. Leaving `in_service` resets condition to `operational` (with its own event). Entering `transferred_out`, `retired`, or `lost` refuses a bench placement (`equipment_already_placed`), closes any other placement, and cancels reserved equipment bookings with the event reason. `transferred_out` requires `receiving_organisation` (stored on the event). |
+| Placement gating | A bench placement needs `lifecycle_state = in_service`; any other placement is refused for `transferred_out`, `retired`, `lost`. Condition never gates or moves a placement (AC4). Bench and placement commands no longer write status history. |
+| Display | `display_status` is a SQL `CASE` annotation on every equipment projection (priority table above). Values keep the familiar labels where they exist: `on_order` (planned), `transferred`, `lost`, `retired`, `broken`, `maintenance`, `in_use`, `calibration_overdue`, `available`. `borrowed` is added with loans (step 3). `in_storage` is not produced (open question 2). |
+| API | Responses: `status` is replaced by `display_status`, `lifecycle_state`, `condition`. `POST .../actions/change-status` (generic and category routes) is replaced by `.../actions/change-condition` and `.../actions/change-lifecycle`. Filters: `status` filters `display_status`; new `lifecycle_state` and `condition` filters. Option selectors: `status` filters `display_status`, `lifecycle_status` is renamed `lifecycle_state`, `assignable` means `display_status = available`. Creation accepts `lifecycle_state` (`planned` or `in_service`, default `in_service`). |
+| Readers | Status summaries count `display_status`. Analytics reads equipment state through `public.py` (`get_equipment_status_summary`, `equipment_state_timelines`) instead of querying equipment tables. |
+
+
+### Step 3 implementation plan (owner: "go to step 3", 2026-11-10; development)
+
+| Topic | Decision |
+|---|---|
+| Storage | `EquipmentLoan` as in section 3: `equipment`, `borrower` (user, PROTECT), optional one-to-one `booking`, `handed_over_at`/`handed_over_by`, `due_at`, `returned_at`/`received_by`, `condition_out`/`condition_in` (text, 255), `close_reason` (`returned`, `lost`). Checks `one_active_loan_per_equipment`, `equipment_loan_closed_has_reason`, `equipment_loan_due_after_handover`, `equipment_loan_returned_after_handover`. `written_off` is not added until a path needs it. No code (OD4). |
+| Hand over | `hand_over_equipment` locks `Equipment`; the unit must be available (in service, operational, not on a bench, no active loan, calibration not overdue), otherwise `equipment_not_available` (409). A resting placement (room, station, note) is closed in the same transaction. The borrower must be an active user; `due_at` must be in the future. Idempotent: an active loan for the same booking is returned. The booking feature (step 4) passes `booking_id`; the equipment API does not. |
+| Return | `return_equipment` closes the active loan (`returned`, `received_by`, `condition_in`), then optionally places the unit (bench, station, room, or note) and optionally sets its condition, all in one transaction. Repeating it returns the loan already closed. |
+| Extend | `extend_loan` moves `due_at` of an active loan without a booking; a booking-linked loan is extended through the booking (step 4). |
+| Other rules | Placement is refused while on loan (`equipment_on_loan`). `transferred_out` and `retired` are refused while on loan; `lost` closes the loan with reason `lost`. Delete refuses on an active loan (blocker `loan`). Condition may change while on loan ("broken while on loan"). |
+| Read side | `display_status = borrowed` at priority 4. Responses add `loan` (active loan or `null`: borrower, handed over, due, `overdue`), prefetched once per page. List filters `on_loan`, `loan_overdue`. |
+| API | `GET /equipment/{id}/loan`; `POST /equipment/{id}/actions/hand-over`, `.../actions/return`, `.../actions/extend-loan` (coordinator). Overdue reminders belong to step 4 (bookings). |
+
+
+### Step 6 implementation plan (decided 2026-11-10)
+
+**Implemented 2026-11-11.** Details as built: `core/labs/features/equipment/docs/spec.md` sections 2.2 and 4; migration reset in ADR 006. Deviation from the order row below: the parts were built and committed together, because each intermediate state needed the migration reset anyway.
+
+**Evidence (2026-11-10):** 12 subclasses of `Equipment` by multi-table inheritance. Laboratory, accessory,
+debugging and other add no columns. Typed columns: computing (hostname, MAC, IP, OS, disks, system info,
+monitored devices, RDP file, technical user), display (size, resolution, interfaces), networking (protocol,
+MAC), power (interface, power rating), mechanical and furniture (dimensions, material), instrument
+(interfaces), sample (customer, interfaces, characteristics). Four models point at `ComputingEquipment`:
+`ComputingActivity`, `LabSessionLog`, `MonitoringEvent`, `AgentIdentity`. 134 of 183 equipment paths are the
+12 generated category route sets.
+
+| Topic | Proposal |
+|---|---|
+| Table | One `Equipment` table; the category comes only from `kind.category`, so a category created at runtime works with no migration or route (AC7). |
+| Computing | `ComputingProfile`, one-to-one with `Equipment` and sharing its primary key, holds the computing columns. `ComputingActivity`, `LabSessionLog`, `MonitoringEvent` and `AgentIdentity` point at `Equipment` (same ids, so data keeps its links). RDP generation moves from `save()` into the computing command. |
+| Other typed fields | **Decision A (owner, 2026-11-10): shared columns.** Fields used by several categories become plain nullable columns on `Equipment`: `mac_address`, `power_rating`, `channels`, `dimensions`, `material`. Display size and resolution, networking protocol, and sample customer stay real foreign keys on `Equipment`; `interfaces` and `characteristics` are many-to-many on `Equipment` (power's single `interface` merges into `interfaces`). A category uses only the fields it needs; `kind.category` says which ones the API shows. |
+| Capabilities | `EquipmentCategory` gains `bookable`, `placeable_on_bench`, `calibratable`, `monitored`; commands check them (bench placement, reservation, loan); `api/capabilities.py` reads them. |
+| API | **Decision B (owner, 2026-11-10): remove the category route sets.** The 12 generated `/equipment/<category>/...` route sets are deleted. One `/api/labs/equipment` collection keeps list, create, detail, update, delete, filters, facets, by-SKU and by-UID lookups, options, summary and state actions, with a `category` filter; the detail returns the category's fields and, for computing, a `computing` object. Computing keeps its activity route as `/equipment/{id}/activity`. This is a breaking API change approved by the owner. |
+| Data | **Decision C (owner, 2026-11-10): reset migrations again** as in ADR 005; the development database is dropped and recreated. Custom operations (extensions, seed priorities, support-desk sequence and trigger) are carried over. |
+| Order | 1. profile and capability flags; 2. move computing references; 3. typed fields per decision A; 4. drop subclasses; 5. routes per decision B; 6. tests, OpenAPI, docs. Each part is committed separately with the full suite green. |
+
+## Observability
+
+Log command name, equipment id, target, actor id, and outcome for every placement, loan, and state
+change. `EquipmentEvent` is the audit trail for state; placement and loan rows are their own history.
+
+## Test plan (criterion → test)
+
+| Criterion | Test |
+|---|---|
+| AC1, AC4 | changing condition leaves the active placement untouched |
+| AC2 | constraint tests for one target, one active placement, one active loan; hand-over closes placement |
+| AC3 | availability and `display_status` priority matrix over lifecycle, condition, placement, loan, calibration |
+| AC5 | PostgreSQL concurrency tests from the write-path table |
+| AC6 | import-boundary test over Labs features |
+| AC7 | create a category at runtime, then create, list, and filter a unit in it |
+| AC8 | denied-access tests per write endpoint and per object scope |
+| D2 to D5 | regression test per defect |
+
+## Other models and features worth improving
+
+Found while reviewing; each is outside the core redesign and can be scheduled separately.
+
+| Area | Improvement | Evidence or status |
+|---|---|---|
+| Bench bookings | Refuse bookings on a bench that is not in service | no reference to `lifecycle_status` under `features/bench_bookings/application/` |
+| Bench bookings | Read computing activity through equipment `public.py` instead of traversing `equipment__computingequipment__activity` | `features/bench_bookings/application/state_transitions.py:38` |
+| Leaderboard | Count the latest status per unit, or read the new stored columns | D5 |
+| Service records | Real foreign key to equipment instead of a generic key with a string id; add a calibration interval on the product model (overridable per unit) and let "overdue" block hand-over | `models/resource/base/service_record.py` |
+| Bench | Remove deprecated `last_inspected_at`, `next_inspection_due_at` once readers use service records | marked deprecated in `models/resource/bench/bench.py` |
+| Licenses | The seat limit lives in `LicenseAssignment.clean()`. Whether `assign_license` runs it is not verified; if not, the limit is unenforced. The license row is locked, so a check inside the command would be race-safe | `models/resource/license/assignment.py`; `features/licenses/application/assignments.py` |
+| Monitoring | `MonitoringEvent.bench` runs one query per event when read in a list | `models/monitoring/monitoring.py:124-137` |
+| Computing activity | `booking_code` is free text reported by the agent; resolve it to a booking at write time or document it as untrusted | `models/activity/computing_activity.py` |
+| Equipment | Optional parent/child link for assemblies (rack with modules, PC with cards); rename `sku` to asset tag, since a SKU names a catalog item, not a unit | proposal, low priority |
+| Organization | Move department and resource-group endpoints out of the equipment feature | `features/equipment/api/urls.py:66-72` |
+| Equipment API | Single options selector; remove parameter aliases; fix D6 to D8 | `queries/equipment.py` |
+
+## Alternatives considered
+
+| Topic | Alternative | Why not |
+|---|---|---|
+| Location | Keep `storage_room` and add `station` | three unrelated columns, no history, cannot express untracked places |
+| Location | One unified location tree for room, station, bench, cabinet | `Room` and `Station` are full resources with their own status and slots; merging them is a far larger change |
+| Location | Copy the room onto each placement | goes stale when a bench moves |
+| State | Keep one enum, add a transition table | cannot represent "broken while on loan"; custody stays free text |
+| Custody | Hand-over columns on `EquipmentBooking` only | equipment could not compute availability without importing the booking feature; no room for non-booking custody |
+| Category | Keep multi-table inheritance | D2; category cannot change; runtime categories have no model |
+| Category | Pure entity-attribute-value, or JSON only | untyped and slow to filter; computing has real behaviour and indexed columns |
+
+## Open questions / decisions needed from the owner
+
+1. Is a three-level taxonomy (category, kind, type) needed, or can one level go?
+2. Should a flag on `Room` mark storage rooms for reporting?
+3. Sunset period for the deprecated `change-status` and `assignment` routes.

@@ -68,9 +68,8 @@ def list_dashboard_benches(
         ).select_related(
             "equipment",
             "equipment__kind__category",
-            "equipment__computingequipment",
-            "equipment__computingequipment__activity",
-            "equipment__sampleequipment",
+            "equipment__computing_profile",
+            "equipment__activity",
         ).prefetch_related(
             Prefetch(
                 "equipment__license_assignments",
@@ -153,7 +152,7 @@ def list_dashboard_benches(
             bench_id=OuterRef("pk"),
             unassigned_at__isnull=True,
             equipment__deleted_at__isnull=True,
-            equipment__computingequipment__isnull=False,
+            equipment__computing_profile__isnull=False,
         )
         queryset = queryset.filter(
             Exists(computing_subquery) if has_computing else ~Exists(computing_subquery)
@@ -170,7 +169,7 @@ def list_dashboard_benches(
         has_joins_for_filter = True
         queryset = queryset.filter(
             equipment_assignments__unassigned_at__isnull=True,
-            equipment_assignments__equipment__computingequipment__activity__status=activity_status,
+            equipment_assignments__equipment__activity__status=activity_status,
         )
 
     if search:
@@ -184,11 +183,11 @@ def list_dashboard_benches(
             | Q(setup_location__name__icontains=search_term)
             | Q(setup_location__room__name__icontains=search_term)
             | Q(
-                equipment_assignments__equipment__computingequipment__ip_address__icontains=search_term,
+                equipment_assignments__equipment__computing_profile__ip_address__icontains=search_term,
                 equipment_assignments__unassigned_at__isnull=True,
             )
             | Q(
-                equipment_assignments__equipment__computingequipment__activity__remote_user__icontains=search_term,
+                equipment_assignments__equipment__activity__remote_user__icontains=search_term,
                 equipment_assignments__unassigned_at__isnull=True,
             )
         )
@@ -238,6 +237,7 @@ def get_dashboard_summary(actor: Any = None) -> dict[str, Any]:
     activity_rows = (
         ComputingActivity.objects.filter(
             computing__bench_assignments__unassigned_at__isnull=True,
+            computing__bench_assignments__bench__isnull=False,
             computing__bench_assignments__bench__deleted_at__isnull=True,
         )
         .values("status")
@@ -297,9 +297,8 @@ def get_dashboard_bench_detail(bench_id: int, actor: Any = None) -> Bench:
             "equipment__kind__category",
             "equipment__kind",
             "equipment__type",
-            "equipment__computingequipment",
-            "equipment__computingequipment__activity",
-            "equipment__sampleequipment",
+            "equipment__computing_profile",
+            "equipment__activity",
         ).prefetch_related(
             Prefetch(
                 "equipment__license_assignments",

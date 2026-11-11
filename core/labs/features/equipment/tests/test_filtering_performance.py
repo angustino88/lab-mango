@@ -27,12 +27,10 @@ from core.labs.models import (
     EquipmentKind,
     EquipmentManufacturer,
     EquipmentProductModel,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     EquipmentType,
 )
 from core.labs.models.resource.base.resource import Department, ResourceGroup
-from core.labs.models.resource.equipment import DisplayEquipment, EquipmentInterface
+from core.labs.models.resource.equipment import EquipmentInterface
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 pytestmark = pytest.mark.django_db
@@ -51,7 +49,7 @@ def cardinality_inventory():
     EquipmentManufacturer.objects.filter(pk=maker.pk).update(active=False)
     department = Department.objects.create(name="Synthetic department", active=False)
     group = ResourceGroup.objects.create(name="Synthetic group", department=department, active=False)
-    display = DisplayEquipment.objects.create(
+    display = Equipment.objects.create(
         sku="SYN-DISPLAY",
         name="Synthetic match",
         kind=kind,
@@ -81,13 +79,6 @@ def cardinality_inventory():
         ]
     )
     EquipmentAssignment.objects.create(equipment=display, bench=bench, assigned_at=now)
-    EquipmentStatusRecord.objects.bulk_create(
-        [
-            EquipmentStatusRecord(equipment=display, status=EquipmentStatus.BROKEN),
-            EquipmentStatusRecord(equipment=display, status=EquipmentStatus.AVAILABLE, metadata={"synthetic": True}),
-            EquipmentStatusRecord(equipment=null, status=EquipmentStatus.IN_STORAGE),
-        ]
-    )
     return display, null, deleted
 
 
@@ -116,7 +107,7 @@ def test_all_dimension_paths_are_single_valued():
 def test_facet_membership_isolation(cardinality_inventory, dimension, membership, django_assert_num_queries):
     display, null, deleted = cardinality_inventory
     if membership == "m2m":
-        population = DisplayEquipment.objects.filter(interfaces__name__icontains="HDMI")
+        population = Equipment.objects.filter(interfaces__name__icontains="HDMI")
         assert population.count() == 3
         expected_ids = [display.pk]
     elif membership == "reverse":
@@ -158,7 +149,7 @@ def test_m2m_filter_and_separate_reverse_filter_calls(cardinality_inventory):
     spec = FilterSpec(
         [Filter("interface", serializers.CharField(), "interfaces__name__icontains", "text", distinct=True)]
     )
-    assert list(spec.apply(DisplayEquipment.objects.all(), {"interface": "HDMI"}).values_list("pk", flat=True)) == [
+    assert list(spec.apply(Equipment.objects.all(), {"interface": "HDMI"}).values_list("pk", flat=True)) == [
         display.pk
     ]
     separate = FilterSpec(
@@ -179,8 +170,9 @@ def test_m2m_filter_and_separate_reverse_filter_calls(cardinality_inventory):
     "filters",
     [
         {},
-        {"status": EquipmentStatus.AVAILABLE},
-        {"status": EquipmentStatus.BROKEN},
+        {"status": "available"},
+        {"status": "in_use"},
+        {"status": "broken"},
         {"assigned": True},
         {"assigned": False},
         {"search": "Synthetic"},
@@ -189,7 +181,7 @@ def test_m2m_filter_and_separate_reverse_filter_calls(cardinality_inventory):
         {"kind": 0},
     ],
 )
-def test_generic_list_count_page_annotation_parity(cardinality_inventory, filters, django_assert_num_queries):
+def test_generic_list_count_page_annotation_parity(cardinality_inventory, filters, django_assert_max_num_queries):
     if "kind" in filters:
         filters = {"kind": cardinality_inventory[0].kind_id}
     rows = list_equipment(**filters)
@@ -201,14 +193,14 @@ def test_generic_list_count_page_annotation_parity(cardinality_inventory, filter
             assert not field.one_to_many and not field.many_to_many
     legacy = rows.distinct()
     assert rows.count() == legacy.count()
-    with django_assert_num_queries(1):
+    # 1 for the page, plus the placement, loan and upcoming-reservation prefetches when the page has rows.
+    with django_assert_max_num_queries(4):
         page = list(rows[:25])
     old_page = list(legacy[:25])
     assert [row.pk for row in page] == [row.pk for row in old_page]
     assert len({row.pk for row in page}) == len(page)
     annotations = (
-        "current_status",
-        "current_status_metadata",
+        "display_status",
         "acquisition_price",
         "acquisition_currency",
         "has_active_assignment",
@@ -224,8 +216,9 @@ def test_generic_list_does_not_request_distinct(cardinality_inventory):
 
 def test_latest_history_and_false_assignment_membership(cardinality_inventory):
     display, null, deleted = cardinality_inventory
-    assert list(list_equipment(status=EquipmentStatus.BROKEN).values_list("pk", flat=True)) == []
-    assert list(list_equipment(status=EquipmentStatus.AVAILABLE).values_list("pk", flat=True)) == [display.pk]
+    assert list(list_equipment(status="broken").values_list("pk", flat=True)) == []
+    assert list(list_equipment(status="in_use").values_list("pk", flat=True)) == [display.pk]
+    assert list(list_equipment(status="available").values_list("pk", flat=True)) == [null.pk]
     assert list(list_equipment(assigned=False).values_list("pk", flat=True)) == [null.pk]
     assert list(list_equipment(assigned=True).values_list("pk", flat=True)) == [display.pk]
     references = {
@@ -248,7 +241,7 @@ def measure_synthetic_explain_capture(cardinality_inventory):
     assert connection.settings_dict["NAME"] == "test_filtering_perf"
     display, null, deleted = cardinality_inventory
     kind = display.kind
-    rows = Equipment.objects.bulk_create(
+    Equipment.objects.bulk_create(
         [
             Equipment(
                 sku=f"SYN-PERF-{i:05d}",
@@ -263,13 +256,6 @@ def measure_synthetic_explain_capture(cardinality_inventory):
             for i in range(1600)
         ]
     )
-    EquipmentStatusRecord.objects.bulk_create(
-        [
-            EquipmentStatusRecord(equipment=row, status=status)
-            for row in rows
-            for status in (EquipmentStatus.BROKEN, EquipmentStatus.AVAILABLE)
-        ]
-    )
     with connection.cursor() as cursor:
         cursor.execute("ANALYZE")
     base = list_equipment()
@@ -277,12 +263,12 @@ def measure_synthetic_explain_capture(cardinality_inventory):
     cases = {
         "generic": base,
         "generic_search": list_equipment(search="inventory"),
-        "generic_status": list_equipment(status=EquipmentStatus.AVAILABLE),
+        "generic_status": list_equipment(status="available"),
         "generic_unassigned": list_equipment(assigned=False),
         "shared_absent": spec.apply(Equipment.objects.filter(deleted_at__isnull=True).order_by("pk"), {}),
         **{f"facet_{key}": equipment_facet_rows(population=base, dimension=key) for key in EQUIPMENT_DIMENSIONS},
         "facet_m2m": equipment_facet_rows(
-            population=DisplayEquipment.objects.filter(interfaces__name__icontains="HDMI"), dimension="kind"
+            population=Equipment.objects.filter(interfaces__name__icontains="HDMI"), dimension="kind"
         ),
     }
     evidence: dict[str, Any] = {

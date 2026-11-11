@@ -1,4 +1,4 @@
-"""Equipment category serializer bases and write-field allowlists."""
+"""Equipment write serializer base and write-field allowlists."""
 
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
@@ -28,13 +28,16 @@ EQUIPMENT_WRITE_FIELDS = (
     "owner",
     "department",
     "group",
-    "storage_room",
     "firmware_version",
     "power_draw_w",
     "weight_kg",
     "warranty_until",
     "calibration_required",
 )
+
+
+# Set once at creation; afterwards only the change-lifecycle action changes it.
+EQUIPMENT_CREATE_ONLY_FIELDS = ("lifecycle_state",)
 
 
 class EquipmentWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
@@ -44,6 +47,8 @@ class EquipmentWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSe
         fields = super().get_fields()
         model = self.Meta.model
         for field_name in tuple(fields):
+            if field_name in self._declared_fields:  # nested input such as ``computing``
+                continue
             model_field = model._meta.get_field(field_name)
             if not model_field.is_relation:
                 continue
@@ -68,9 +73,6 @@ class EquipmentWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSe
         manufacturer = value("manufacturer")
         product_model = value("product_model")
         errors = {}
-        expected_category = self.Meta.model.EQUIPMENT_CATEGORY_KEY
-        if kind and expected_category != "equipment" and kind.category.effective_key != expected_category:
-            errors["kind"] = "The equipment kind must belong to the selected category."
         if kind and (not kind.active or not kind.category.active):
             errors["kind"] = "Select an active equipment kind and category."
         if equipment_type and kind and equipment_type.kind_id != kind.pk:

@@ -29,6 +29,8 @@ REFERENCE_LISTS: Final[tuple[ReferenceList, ...]] = (
                 "name": name,
                 "definition": f"{name} equipment category.",
                 "active": True,
+                # Computing units carry a ComputingProfile and may run the monitoring agent.
+                "monitored": name == "Computing",
             }
             for name in _CATEGORY_NAMES
         ),

@@ -16,7 +16,7 @@ from core.labs.models import (
     ComputingActivity,
     Equipment,
     EquipmentBooking,
-    EquipmentStatusRecord,
+    EquipmentEvent,
     LaboratoryAvailabilityObservation,
     LaboratoryVisitEvent,
     LabProject,
@@ -37,7 +37,7 @@ from core.labs.models import (
     VisitorVolumeObservation,
 )
 from core.labs.models.resource.equipment import (
-    ComputingEquipment,
+    ComputingProfile,
     EquipmentCategory,
     EquipmentKind,
     EquipmentManufacturer,
@@ -69,10 +69,10 @@ for model in (
     Building,
     City,
     ComputingActivity,
-    ComputingEquipment,
+    ComputingProfile,
     Equipment,
     EquipmentBooking,
-    EquipmentStatusRecord,
+    EquipmentEvent,
     LaboratoryAvailabilityObservation,
     LaboratoryVisitEvent,
     LabProject,
@@ -111,7 +111,7 @@ class EquipmentTypeInline(admin.TabularInline):
 
 @admin.register(EquipmentCategory)
 class EquipmentCategoryAdmin(ProtectedReferenceAdmin):
-    list_display = ("name", "kind_count", "active")
+    list_display = ("name", "kind_count", "bookable", "placeable_on_bench", "calibratable", "monitored", "active")
     search_fields = ("name",)
     inlines = [EquipmentKindInline]
 

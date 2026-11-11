@@ -9,7 +9,6 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from core.labs.models import (
-    ComputingEquipment,
     EquipmentCategory,
     EquipmentKind,
     RoutingChange,
@@ -19,6 +18,7 @@ from core.labs.models import (
 from core.routing.application.publish import RoutingChangeInput, _apply_change
 from core.routing.exceptions import RoutingPublishError
 from core.routing.public import publish_agent_identity, publish_user_identity
+from tests.factories import create_computing_equipment
 
 ROUTING_ROOT = Path(__file__).resolve().parents[2]
 
@@ -30,7 +30,7 @@ def routing_agent_setup(db):
         name=f"Computing-{uuid.uuid4()}", key="computing", definition="Computing", active=True
     )
     kind = EquipmentKind.objects.create(category=category, name=f"Computer-{uuid.uuid4()}")
-    equipment = ComputingEquipment.objects.create(sku=f"AGENT-{uuid.uuid4()}", kind=kind, name="Agent host")
+    equipment = create_computing_equipment(sku=f"AGENT-{uuid.uuid4()}", kind=kind, name="Agent host")
     return actor, equipment
 
 

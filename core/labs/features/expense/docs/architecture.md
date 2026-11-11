@@ -123,7 +123,7 @@ Financial report endpoints:
 
 ## 9. Observability and operations
 
-**Not verified.** No expense-specific logging or metrics were inspected. The Labs migration check currently reports an unrelated `computingequipment.rdp_file` change, which this feature does not own.
+**Not verified.** No expense-specific logging or metrics were inspected. The Labs migration check reports no pending changes (2026-11-11, after ADR 006).
 
 ## 10. Tests and enforcement
 

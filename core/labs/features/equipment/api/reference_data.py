@@ -21,7 +21,13 @@ from ..application.reference_data import create_catalog_reference
 from ..queries.reference_data import get_catalog_reference, list_catalog_references
 
 RESOURCES = (
-    ("categories", EquipmentCategory, ("name", "key", "definition", "active"), ("name",), "name"),
+    (
+        "categories",
+        EquipmentCategory,
+        ("name", "key", "definition", "bookable", "placeable_on_bench", "calibratable", "monitored", "active"),
+        ("name",),
+        "name",
+    ),
     ("kinds", EquipmentKind, ("name", "category", "active"), ("category_id", "name"), "name"),
     ("types", EquipmentType, ("name", "kind", "active"), ("kind_id", "name"), "name"),
     ("manufacturers", EquipmentManufacturer, ("name", "categories", "active"), ("name",), "name"),

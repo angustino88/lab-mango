@@ -12,7 +12,7 @@
 
 | Concept | Owner | Boundary |
 | --- | --- | --- |
-| `Equipment`, equipment reference rows, equipment status records | Equipment | Authoritative equipment data; model code remains centralized under `core/labs/models/` |
+| `Equipment`, equipment reference rows, `EquipmentEvent` (lifecycle and condition history) | Equipment | Authoritative equipment data; model code remains centralized under `core/labs/models/` |
 | Equipment category behavior and category-specific API mapping | Equipment | Variants remain inside the equipment feature; avoid sibling feature packages per category |
 | `EquipmentAssignment` | Equipment | Owns assignment/unassignment commands and assignment history |
 | Bench lifecycle / station-slot placement | Benches | Equipment may read a bench identifier; it does not position benches |
@@ -25,7 +25,7 @@
 
 ## 3. Public interface and dependencies
 
-**Verified.** The feature exports equipment command inputs/commands and query functions from `public.py`. Its API registers list/detail, assignment, status, reference-data, and category routes through `urls.py` and `api/urls.py`.
+**Verified.** The feature exports equipment command inputs/commands and query functions from `public.py`. Its API registers one equipment collection (`api/collection.py`: list, create, detail, by-key, filters, facets, reference data, state actions) plus assignment, placement, loan, reservation and status routes through `urls.py` and `api/urls.py`. Per-category route sets were removed in redesign step 6.
 
 **Proposed:**
 
@@ -48,13 +48,13 @@ flowchart LR
 
 ## 4. Main workflows
 
-### Create/update/status
+### Create/update/state
 
-**Verified.** Feature-local application modules include create, update, delete, and status-transition operations. **Proposed.** API, admin, tasks, and scripts delegate to a single owning application command for each write. Keep category-specific validation/mapping in the equipment feature and generic hardware identity rules in canonical Equipment ownership.
+**Verified.** Feature-local application modules include create, update, delete, placement, and lifecycle/condition (`change_state.py`) commands. **Proposed.** API, admin, tasks, and scripts delegate to a single owning application command for each write. Keep category-specific validation/mapping in the equipment feature and generic hardware identity rules in canonical Equipment ownership.
 
 ### Assignment
 
-**Verified.** Equipment assignment application handles assignment to a bench and equipment status updates. The model has an active-row uniqueness constraint and a time-order check.
+**Verified.** Equipment assignment application handles placement on a bench; it no longer writes status history (bench placement shows as `display_status = in_use`). The model has an active-row uniqueness constraint and a time-order check.
 
 **Proposed write path:**
 
@@ -72,6 +72,18 @@ sequenceDiagram
 
 The service/API should translate only the known active-assignment constraint into the stable equipment conflict; unrelated integrity failures must propagate. Race correctness relies on the database constraint, not only a pre-check.
 
+### Placement (redesign step 1)
+
+**Implemented.** `EquipmentAssignment` rows now record every placement: a bench, a station, a room, or only a `location_note` (check constraints `equipment_placement_one_target`, `equipment_placement_bench_fields`; `one_active_bench_per_equipment` is one active placement per unit). `EquipmentAssignment.objects` returns bench placements only, so pre-existing readers keep their meaning; `EquipmentAssignment.all_placements` and the proxy `EquipmentPlacement` return every placement. Join-based readers starting from equipment must add `bench__isnull=False` when they mean a bench. `place_equipment` and `remove_placement` (`application/place_equipment.py`) lock `Equipment`, then the target, then placement rows; bench targets delegate to `assign_equipment` / `unassign_equipment`. A resting unit moves; a unit on a bench must leave it first. `Equipment.storage_room` was removed; equipment list and detail responses carry `placement` (prefetched once per page by `with_active_placement`). `delete_room` and `delete_station` refuse while equipment rests there (`public.has_active_placements`). Plan and decisions: `docs/proposals/equipment-management-redesign.md`, "Step 1 implementation plan".
+
+### Lifecycle state and condition (redesign step 2)
+
+**Implemented.** `Equipment.lifecycle_state` (`planned`, `in_service`, `transferred_out`, `retired`, `lost`) and `Equipment.condition` (`operational`, `in_maintenance`, `out_of_service`) are stored columns, changed only by `change_lifecycle` / `change_condition` (`application/change_state.py`), each change recorded in append-only `EquipmentEvent`. `display_status` is a SQL `CASE` on every projection (`queries/equipment.py::display_status_expression`), so it filters and counts without per-row queries. Analytics reads history through `public.equipment_state_timelines`. Plan: `docs/proposals/equipment-management-redesign.md`, "Step 2 implementation plan".
+
+### Loans (redesign step 3)
+
+**Implemented.** `EquipmentLoan` records custody (borrower, due time, condition out and in). `hand_over_equipment`, `return_equipment`, `extend_loan` (`application/loans.py`) lock `Equipment`, then the booking, placement and loan rows; `one_active_loan_per_equipment` backs them. Placement, lifecycle and delete commands refuse or close loans as described in `spec.md` section 2.0. Responses carry `loan`, prefetched once per page (`with_active_loan`). `EquipmentLoanBatch` is the loan slip (borrower user or name, contact, purpose); `lend_equipment_batch`, `return_equipment_batch`, `extend_loans` handle several items all or nothing, locking every `Equipment` row in one query ordered by pk. Reservations (`application/reservations.py`): `EquipmentBooking` rows grouped by `batch`, created approved; reserve, update, cancel and hand-over lock every involved `Equipment` row in one query ordered by pk, then the slip, then booking rows, with `equipment_booking_no_overlap` as the database guard; `expire_uncollected_reservations` (task `labs.equipment.expire_uncollected_reservations`, `skip_locked`) expires reserved lines after their start day. Every equipment route reads and writes with `HasAPIKey | IsLabCoordinatorOnly`; departments and resource groups use `HasAPIKey | IsLabCoordinator` (readable by all signed-in users).
+
 ### Queries
 
 **Verified.** Equipment selectors filter deleted resources, support search/reference/status/assignment filters, and build category projections. **Proposed.** Queries remain read-only and apply caller visibility where policy requires it. Querysets remain internal to the Labs app; external feature boundaries should prefer bounded projections/DTOs.
@@ -88,9 +100,9 @@ Verification and remaining gate/review limitations are recorded in the task hand
 
 ### Computing activity
 
-**Verified.** Category-specific behaviour lives in `categories/<category>/` with the same layering as the feature: `application.py` (commands), `queries.py` (reads), `api.py` (HTTP adapter and serializers). Only categories with logic beyond the generic category builder get code there; the rest keep one-line placeholder holders, and `CATEGORIES_WITH_CODE` in the boundary test lists the exceptions. Generic category views stay in `api/categories.py` and take category extras through config such as `detail_relations`, never a per-category branch.
+**Verified.** Since redesign step 6 every category shares one table and one route set. Category rules are data: typed fields per category in `application/_category.py`, capability flags on `EquipmentCategory`. Only computing has its own code, in `categories/computing/` (`application.py`, `queries.py`, `api.py`, `tasks.py`), for the live activity; the computing profile is written by `application/computing_profile.py`.
 
-`categories/computing/application.py` owns writes to `ComputingActivity`: `ensure_computing_activity` (idempotent get-or-create as `offline`, called by `create_equipment` for computing) and `sync_computing_activity` (row-locked, atomic; rejects unknown or server-managed fields and invalid statuses; maintains `offline_at`, `inactive_at`, and `inactive_reminder_count` on transitions). `GET`/`PATCH /api/labs/equipment/computing/sku/<sku>/activity` expose it; reads are open to authenticated users, writes require an API key or a lab coordinator. `GET` on a computer that has not reported returns an unsaved `offline` default and writes nothing. The computing detail response includes a read-only nullable `activity` object; list responses do not.
+`categories/computing/application.py` owns writes to `ComputingActivity`: `ensure_computing_activity` (idempotent get-or-create as `offline`, called by `create_equipment` and `update_equipment` when a unit gets a computing profile) and `sync_computing_activity` (row-locked, atomic; rejects unknown or server-managed fields and invalid statuses; maintains `offline_at`, `inactive_at`, and `inactive_reminder_count` on transitions). `GET /api/labs/equipment/<id>/activity` reads it (coordinators and API keys, like other equipment reads; 404 for a unit without a computing profile). The only write path is the agents app's `PATCH /agent/equipment/activity`, which resolves the computer from the signing agent's identity and calls `sync_computing_activity` through `public.py` (owner decision 2026-11-11). `GET` on a computer that has not reported returns an unsaved `offline` default and writes nothing. The equipment detail response includes a read-only nullable `activity` object; list responses do not.
 
 **Status-change notification.** A `post_save` signal on `ComputingActivity` (`core/labs/signals.py`) publishes only real status changes, and only after the transaction commits, so a rolled-back write never notifies. The payload carries `computer_id`, `status`, `previous_status`, and `bench_id` (null when unassigned). It is published to `ws:computing:<id>` (WebSocket `ws/computing/{computing_id}`) always, and to the bench (`ws/monitoring/{bench_id}`) and dashboard channels when the computer has an active bench assignment. The WebSocket handler authenticates the JWT but does not check per-object access, like the other Labs handlers. Delivery is best-effort Redis pub/sub with no replay.
 
@@ -98,17 +110,19 @@ Verification and remaining gate/review limitations are recorded in the task hand
 
 ## 5. Lifecycle and invariants
 
-- Equipment resource lifecycle remains distinct from equipment operational status history.
+- Lifecycle state, condition, placement, and (later) loans are separate facts with separate rules; `display_status` is computed from them. What each means in practice: `spec.md` section 2.0.
 - Assignment has an active period (`unassigned_at` null) and historical periods; it is not a status value.
 - **Verified:** the assignment model's conditional unique constraint allows at most one active bench assignment per equipment; a check constraint prevents an end time preceding its start time.
 - **Proposed:** all assignment mutations occur in atomic application commands. Use database constraints as the final concurrency guard and test simultaneous conflicting assignments on PostgreSQL.
 - Do not infer booking availability or a live computing activity from equipment assignment/status alone.
 
-No complete equipment state-transition table is specified here; confirm allowed lifecycle and status transitions before changing them.
+The lifecycle transition table is in `spec.md` section 2.0 (owner: `EquipmentLifecycleState` and `LIFECYCLE_TRANSITIONS` in `core/labs/models/resource/equipment/equipment.py`); change it only with an owner decision.
 
 ## 6. Security and failure behavior
 
 **Proposed.** Authenticate and authorize every equipment command server-side. Scope detail and list queries to permitted resources. Passing a bench or equipment ID is not proof of access. Background processes use explicit, narrowly scoped actors. Keep permission logic independent of DRF and test denied object access.
+
+**Implemented (redesign Step 0).** Every equipment HTTP adapter (`EquipmentAPIView` and `EquipmentRetrieveUpdateDeleteAPIView`) uses `HasAPIKey | IsLabCoordinator`: reads stay open to authenticated users and API keys; writes need the coordinator role (or admin), or an API key. Every create under `equipment/reference-data/` (the catalog and the lookups equipment references by foreign key, such as departments, resource groups and materials) additionally requires the Labs admin role in `application/reference_data.py`, on top of the shared Django model permission. API keys keep full equipment write access (owner decision, 2026-11-10); the shared reference layer already rejects actorless (API-key) reference creates. `delete_equipment` locks the `Equipment` row and refuses with `equipment_in_use` (409, `details.blockers`) while the unit has an active bench assignment, an active license seat, or a reserving equipment booking. Department scope is not implemented yet.
 
 Translate expected not-found, invalid-transition, and assignment-conflict cases into stable feature errors at the API boundary. Do not turn broad `IntegrityError` exceptions into a generic conflict.
 

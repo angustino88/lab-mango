@@ -243,17 +243,19 @@ def test_add_permission_without_staff_is_sufficient(client):
     from django.contrib.auth.models import Permission
 
     user = get_user_model().objects.create(username="synthetic-scoped-importer")
-    user.user_permissions.add(Permission.objects.get(content_type__app_label="labs", codename="add_department"))
+    # Equipment reference data additionally requires the Labs admin role, so this owner-neutral
+    # property is checked on a licence catalog.
+    user.user_permissions.add(Permission.objects.get(content_type__app_label="labs", codename="add_licensevendor"))
     client.force_authenticate(user)
     created = client.post(
-        ROOT + "equipment/reference-data/departments",
-        {"name": "Scoped department"},
+        ROOT + "licenses/reference-data/vendors",
+        {"name": "Scoped vendor"},
         format="json",
         HTTP_IDEMPOTENCY_KEY="scoped",
     )
     assert created.status_code == 201, created.data
     denied = client.post(
-        ROOT + "equipment/reference-data/materials",
+        ROOT + "licenses/reference-data/types",
         {"name": "Not permitted"},
         format="json",
         HTTP_IDEMPOTENCY_KEY="other",

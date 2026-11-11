@@ -59,6 +59,7 @@ class RetrieveUpdateDeleteAPIView(AppDetailAPIView, FeatureAPIView):
         cls.delete_contract = OperationContract(
             success=ResponseContract.no_content(),
             not_found=ResponseContract.problem(status.HTTP_404_NOT_FOUND),
+            conflict=ResponseContract.problem(status.HTTP_409_CONFLICT),
         )
         async_methods = [
             method for method in ("get", "patch", "put", "delete") if iscoroutinefunction(getattr(cls, method))

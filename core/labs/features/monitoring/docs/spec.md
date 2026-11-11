@@ -10,7 +10,7 @@ The Monitoring feature ingests real-time hardware telemetry, peripheral attach/d
 ### 2.1 `core.labs.models.MonitoringEvent`
 - **Inheritance:** `AgentReportedModel`, `TimeStampedModel`.
 - **Fields:**
-  - `computer` (FK `ComputingEquipment`, PROTECT).
+  - `computer` (FK `Equipment`, PROTECT; resolved only among units with a `ComputingProfile`).
   - `occurred_at` (DateTimeField).
   - `action`: Enum (`heartbeat`, `device_inserted`, `device_removed`, `device_changed`, `device_status_changed`, `inventory_snapshot`, `metric_reported`, `alert_raised`, `alert_resolved`, `custom`).
   - `action_name` (CharField(128), required if action is `custom`).

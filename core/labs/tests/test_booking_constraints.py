@@ -75,8 +75,8 @@ def test_valid_states_are_accepted(booking):
     BenchBooking.objects.filter(pk=booking.pk).update(approved_by=None)
 
 
-def test_constraints_are_not_validated_against_history():
-    """Added NOT VALID so deploys never fail or scan on historical rows."""
+def test_booking_reason_and_approver_constraints_exist_and_are_validated():
+    """Created with the table since the migration reset (ADR 005), so PostgreSQL validates them."""
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT conname, convalidated FROM pg_constraint "
@@ -88,4 +88,4 @@ def test_constraints_are_not_validated_against_history():
         for model in ("benchbooking", "equipmentbooking")
         for rule in ("rejection_has_reason", "pending_has_no_approver", "cancellation_has_reason")
     }
-    assert not any(rows.values())
+    assert all(rows.values())

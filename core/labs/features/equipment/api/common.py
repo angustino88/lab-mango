@@ -1,6 +1,16 @@
 """Equipment-specific API foundation and persistence helpers."""
 
+from rest_framework_api_key.permissions import HasAPIKey
+
 from core.labs.features.base import FeatureAPIView
+from core.users.public import IsLabCoordinator, IsLabCoordinatorOnly
+
+# Equipment is visible to and managed by lab coordinators and administrators only (owner decision
+# R4, 2026-11-10), or an API key (agents). Department scope (redesign OD9) is a later stage.
+EQUIPMENT_PERMISSIONS = [HasAPIKey | IsLabCoordinatorOnly]
+# Organisation lookups served from this feature but used by other screens stay readable by every
+# authenticated user (R9); writes need a coordinator.
+ORGANIZATION_PERMISSIONS = [HasAPIKey | IsLabCoordinator]
 
 
 def sku_exists(sku: str, *, exclude_model=None, exclude_pk: int | None = None) -> bool:
@@ -22,4 +32,5 @@ def is_active_sku_unique_error(error) -> bool:
 class EquipmentAPIView(FeatureAPIView):
     """Equipment specialization of the shared feature API foundation."""
 
+    permission_classes = EQUIPMENT_PERMISSIONS
     schema_tags = ("Equipment",)

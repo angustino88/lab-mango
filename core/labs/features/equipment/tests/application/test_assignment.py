@@ -6,11 +6,10 @@ from core.labs.features.equipment.application.unassign_equipment import Unassign
 from core.labs.features.equipment.queries.equipment import list_equipment
 from core.labs.models.resource.bench.bench import Bench
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
-from core.labs.models.resource.equipment.equipment import EquipmentStatus, EquipmentStatusRecord
 
 
 @pytest.mark.django_db
-def test_assign_and_unassign_equipment_records_assignment_and_status(equipment):
+def test_assign_and_unassign_equipment_records_assignment_and_display_status(equipment):
     bench = Bench.objects.create(sku="BN-01")
 
     assignment = assign_equipment(AssignEquipmentInput(equipment.pk, bench.pk), actor=None)
@@ -22,21 +21,13 @@ def test_assign_and_unassign_equipment_records_assignment_and_status(equipment):
         bench=bench,
         unassigned_at__isnull=True,
     ).exists()
-    assert EquipmentStatusRecord.objects.filter(
-        equipment=equipment,
-        status=EquipmentStatus.IN_USE,
-        metadata={"bench": bench.pk, "bench_id": bench.pk},
-    ).exists()
+    assert list_equipment().get(pk=equipment.pk).display_status == "in_use"
 
     closed_assignment = unassign_equipment(UnassignEquipmentInput(equipment.pk), actor=None)
 
     assert closed_assignment is not None
     assert closed_assignment.unassigned_at is not None
-    assert EquipmentStatusRecord.objects.filter(
-        equipment=equipment,
-        status=EquipmentStatus.AVAILABLE,
-        metadata={"bench": bench.pk, "bench_id": bench.pk},
-    ).exists()
+    assert list_equipment().get(pk=equipment.pk).display_status == "available"
 
 
 @pytest.mark.django_db

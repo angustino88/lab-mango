@@ -8,12 +8,12 @@ import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from core.labs.models import BookingStatus
+from core.labs.models import BookingStatus, Equipment
 from tests.factories import (
     BenchBookingFactory,
     BenchFactory,
     ComputingEquipmentFactory,
-    EquipmentStatusRecordFactory,
+    EquipmentEventFactory,
     LaboratoryVisitEventFactory,
     LabSessionLogFactory,
     UserFactory,
@@ -156,9 +156,15 @@ class TestEquipmentAvailability:
         equipment = ComputingEquipmentFactory()
         # Available for the first quarter of the window, then broken for the rest.
         quarter = (WINDOW_END - WINDOW_START) / 4
-        EquipmentStatusRecordFactory(equipment=equipment, status="available", created=WINDOW_START - timedelta(hours=1))
-        broken = EquipmentStatusRecordFactory(equipment=equipment, status="broken")
-        type(broken).objects.filter(pk=broken.pk).update(created=WINDOW_START + quarter)
+        Equipment.objects.filter(pk=equipment.pk).update(
+            created=WINDOW_START - timedelta(hours=1), condition="out_of_service"
+        )
+        EquipmentEventFactory(
+            equipment=equipment,
+            from_value="operational",
+            to_value="out_of_service",
+            occurred_at=WINDOW_START + quarter,
+        )
 
         data = auth_client.get(f"{EQUIPMENT_AVAILABILITY}?{QUERY}").json()["data"]
 
@@ -168,7 +174,7 @@ class TestEquipmentAvailability:
         assert item["current_status"] == "broken"
         assert item["uptime_percent"] == 25.0
 
-    def test_no_history_returns_empty_items(self, auth_client):
+    def test_no_equipment_returns_empty_items(self, auth_client):
         data = auth_client.get(f"{EQUIPMENT_AVAILABILITY}?{QUERY}").json()["data"]
 
         assert data["equipment_count"] == 0

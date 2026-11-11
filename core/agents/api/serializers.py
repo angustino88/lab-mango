@@ -3,6 +3,7 @@
 from rest_framework import serializers
 
 from core.agents.models import AgentIdentity
+from core.labs.models import ComputingActivityStatus
 
 
 class AgentIdentitySerializer(serializers.ModelSerializer):
@@ -92,6 +93,33 @@ class AgentHeartbeatResponseDataSerializer(serializers.Serializer):
 
 class AgentHeartbeatResponseSerializer(serializers.Serializer):
     data = AgentHeartbeatResponseDataSerializer()
+
+
+class AgentActivityReportSerializer(serializers.Serializer):
+    """Live activity the agent observes on its own computer. Timestamps and counters are server-managed."""
+
+    status = serializers.ChoiceField(choices=ComputingActivityStatus.choices, required=False)
+    remote_user = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    remote_user_display_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    remote_computer = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    remote_ip = serializers.IPAddressField(required=False, allow_null=True)
+    booking_code = serializers.CharField(max_length=255, required=False, allow_blank=True)
+
+
+class AgentActivityDataSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=ComputingActivityStatus.choices)
+    remote_user = serializers.CharField(allow_blank=True)
+    remote_user_display_name = serializers.CharField(allow_blank=True)
+    remote_computer = serializers.CharField(allow_blank=True)
+    remote_ip = serializers.IPAddressField(allow_null=True)
+    booking_code = serializers.CharField(allow_blank=True)
+    offline_at = serializers.DateTimeField(allow_null=True)
+    inactive_at = serializers.DateTimeField(allow_null=True)
+    last_agent_report_at = serializers.DateTimeField(allow_null=True)
+
+
+class AgentActivityResponseSerializer(serializers.Serializer):
+    data = AgentActivityDataSerializer()  # type: ignore[assignment]
 
 
 class AgentInfoResponseDataSerializer(serializers.Serializer):

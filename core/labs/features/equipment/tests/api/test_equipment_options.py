@@ -6,12 +6,12 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from core.labs.features.equipment.tests.roles import grant_labs_role
 from core.labs.models import Bench
 from core.labs.models.resource.base.resource import Department, ResourceGroup
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
-from core.labs.models.resource.equipment.computing import ComputingEquipment, TechnicalUser
-from core.labs.models.resource.equipment.display import DisplayEquipment
-from core.labs.models.resource.equipment.equipment import EquipmentStatus, EquipmentStatusRecord
+from core.labs.models.resource.equipment.computing import TechnicalUser
+from core.labs.models.resource.equipment.equipment import Equipment
 from core.labs.models.resource.equipment.reference_data import (
     EquipmentCategory,
     EquipmentKind,
@@ -19,6 +19,7 @@ from core.labs.models.resource.equipment.reference_data import (
     EquipmentProductModel,
     EquipmentType,
 )
+from core.users.public import effective_labs_roles
 
 
 @pytest.fixture()
@@ -29,7 +30,8 @@ def api_client():
 @pytest.fixture()
 def actor(db):
     User = get_user_model()
-    return User.objects.create_user(username="options_actor", email="options@example.com")
+    user = User.objects.create_user(username="options_actor", email="options@example.com")
+    return grant_labs_role(user, "coord")  # equipment is visible to coordinators only (R4)
 
 
 @pytest.fixture()
@@ -51,24 +53,15 @@ def bench(db):
     return Bench.objects.create(name="Bench 1", sku="BENCH-OPT-01")
 
 
-def _set_status(equipment, status_value, actor):
-    return EquipmentStatusRecord.objects.create(
-        equipment=equipment,
-        status=status_value,
-        metadata={"note": "Test status"},
-        creator=actor,
-        last_modified_by=actor,
-    )
+def _set_state(equipment, **fields):
+    """Set stored lifecycle_state / condition directly; display_status is computed from them."""
+    Equipment.objects.filter(pk=equipment.pk).update(**fields)
 
 
 @pytest.mark.django_db
 def test_unauthenticated_options_rejected(api_client):
     assert api_client.get("/api/labs/equipment/options", {"q": "Laptop"}).status_code == status.HTTP_401_UNAUTHORIZED
-    assert api_client.get("/api/labs/equipment/computing/reference-data").status_code == status.HTTP_401_UNAUTHORIZED
-    assert (
-        api_client.get("/api/labs/equipment/computing/options", {"q": "PC"}).status_code
-        == status.HTTP_401_UNAUTHORIZED
-    )
+    assert api_client.get("/api/labs/equipment/reference-data").status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.django_db
@@ -83,14 +76,6 @@ def test_unauthenticated_options_rejected(api_client):
                 "type_id",
                 "manufacturer_id",
             ),
-        ),
-        (
-            "/api/labs/equipment/computing/options",
-            ("kind_id", "type_id", "manufacturer_id"),
-        ),
-        (
-            "/api/labs/equipment/display/options",
-            ("kind_id", "type_id", "manufacturer_id"),
         ),
         ("/api/labs/equipment-types/options", ("kind_id", "category_id")),
         ("/api/labs/equipment-manufacturers/options", ("category_id",)),
@@ -124,7 +109,7 @@ def test_large_equipment_options_require_adr_declared_narrowing(
         equipment_type=display_type,
         name="Unrelated Monitor",
     )
-    equipment = ComputingEquipment.objects.create(
+    equipment = Equipment.objects.create(
         sku="SEL-COMPUTER",
         name="Selector Computer",
         kind=computing_kind,
@@ -132,7 +117,7 @@ def test_large_equipment_options_require_adr_declared_narrowing(
         manufacturer=manufacturer,
         product_model=product_model,
     )
-    display_equipment = DisplayEquipment.objects.create(
+    Equipment.objects.create(
         sku="SEL-DISPLAY",
         name="Selector Display",
         kind=display_kind,
@@ -140,8 +125,6 @@ def test_large_equipment_options_require_adr_declared_narrowing(
         manufacturer=unrelated_manufacturer,
         product_model=unrelated_product_model,
     )
-    _set_status(equipment, EquipmentStatus.AVAILABLE, actor)
-    _set_status(display_equipment, EquipmentStatus.AVAILABLE, actor)
 
     filter_values = {
         "category_id": computing.pk,
@@ -149,10 +132,6 @@ def test_large_equipment_options_require_adr_declared_narrowing(
         "type_id": computing_type.pk,
         "manufacturer_id": manufacturer.pk,
     }
-    if path == "/api/labs/equipment/display/options":
-        filter_values["kind_id"] = display_kind.pk
-        filter_values["type_id"] = display_type.pk
-        filter_values["manufacturer_id"] = unrelated_manufacturer.pk
     missing = api_client.get(path)
     assert missing.status_code == status.HTTP_400_BAD_REQUEST
     assert missing.data["error"]["code"] == "invalid_query"
@@ -164,10 +143,6 @@ def test_large_equipment_options_require_adr_declared_narrowing(
             result_ids = {item["id"] for item in narrowed.data["data"]}
             if path == "/api/labs/equipment/options":
                 expected_ids = {equipment.pk}
-            elif path == "/api/labs/equipment/computing/options":
-                expected_ids = {equipment.pk}
-            elif path == "/api/labs/equipment/display/options":
-                expected_ids = {display_equipment.pk}
             elif path == "/api/labs/equipment-types/options":
                 expected_ids = {computing_type.pk}
             elif path == "/api/labs/equipment-manufacturers/options":
@@ -188,12 +163,12 @@ def test_large_equipment_options_require_adr_declared_narrowing(
     included_with_search = api_client.get(path, {"q": "matching-none", "include_ids": "999999"})
     assert included_with_search.status_code == status.HTTP_200_OK
 
-    if path in {"/api/labs/equipment/options", "/api/labs/equipment/computing/options"}:
+    if path == "/api/labs/equipment/options":
         valid_nonmatching = api_client.get(path, {"q": "matching-none", "include_ids": str(equipment.pk)})
         assert valid_nonmatching.status_code == status.HTTP_200_OK
         assert [item["id"] for item in valid_nonmatching.data["data"]] == [equipment.pk]
 
-        deleted = ComputingEquipment.objects.create(
+        deleted = Equipment.objects.create(
             sku="SEL-DELETED",
             name="Deleted Selector Computer",
             kind=computing_kind,
@@ -217,12 +192,10 @@ def test_equipment_options_assignable_true_ignores_bench_assigned_and_unavailabl
     _, kind = computing_category
 
     # 1. Available and unassigned -> INCLUDED
-    available_eq = ComputingEquipment.objects.create(sku="EQ-AVAIL", name="Available Laptop", kind=kind)
-    _set_status(available_eq, EquipmentStatus.AVAILABLE, actor)
+    available_eq = Equipment.objects.create(sku="EQ-AVAIL", name="Available Laptop", kind=kind)
 
     # 2. Available status BUT actively assigned to a bench -> IGNORED (already assigned)
-    assigned_eq = ComputingEquipment.objects.create(sku="EQ-ASSIGNED", name="Assigned Laptop", kind=kind)
-    _set_status(assigned_eq, EquipmentStatus.AVAILABLE, actor)
+    assigned_eq = Equipment.objects.create(sku="EQ-ASSIGNED", name="Assigned Laptop", kind=kind)
     EquipmentAssignment.objects.create(
         equipment=assigned_eq,
         bench=bench,
@@ -231,23 +204,22 @@ def test_equipment_options_assignable_true_ignores_bench_assigned_and_unavailabl
         last_modified_by=actor,
     )
 
-    # 3. In-use unassigned -> IGNORED (not available)
-    in_use_eq = ComputingEquipment.objects.create(sku="EQ-INUSE", name="In Use Laptop", kind=kind)
-    _set_status(in_use_eq, EquipmentStatus.IN_USE, actor)
+    # 3. Planned (on order), unassigned -> IGNORED (not available)
+    in_use_eq = Equipment.objects.create(sku="EQ-INUSE", name="In Use Laptop", kind=kind)
+    _set_state(in_use_eq, lifecycle_state="planned")
 
     # 4. Maintenance unassigned -> IGNORED (not available)
-    maint_eq = ComputingEquipment.objects.create(sku="EQ-MAINT", name="Maintenance Laptop", kind=kind)
-    _set_status(maint_eq, EquipmentStatus.MAINTENANCE, actor)
+    maint_eq = Equipment.objects.create(sku="EQ-MAINT", name="Maintenance Laptop", kind=kind)
+    _set_state(maint_eq, condition="in_maintenance")
 
     # 5. Broken unassigned -> IGNORED (not available)
-    broken_eq = ComputingEquipment.objects.create(sku="EQ-BROKEN", name="Broken Laptop", kind=kind)
-    _set_status(broken_eq, EquipmentStatus.BROKEN, actor)
+    broken_eq = Equipment.objects.create(sku="EQ-BROKEN", name="Broken Laptop", kind=kind)
+    _set_state(broken_eq, condition="out_of_service")
 
     # 6. Soft-deleted -> IGNORED
-    deleted_eq = ComputingEquipment.objects.create(
+    deleted_eq = Equipment.objects.create(
         sku="EQ-DELETED", name="Deleted Laptop", kind=kind, deleted_at=timezone.now()
     )
-    _set_status(deleted_eq, EquipmentStatus.AVAILABLE, actor)
 
     # Query with pattern options?assignable=true
     response = api_client.get("/api/labs/equipment/options", {"assignable": "true", "q": "Laptop"})
@@ -277,8 +249,7 @@ def test_equipment_options_assignable_true_ignores_bench_assigned_and_unavailabl
 def test_slashless_options_route_standard(api_client, actor, computing_category):
     api_client.force_authenticate(user=actor)
     _, kind = computing_category
-    eq = ComputingEquipment.objects.create(sku="EQ-SLASH", name="Slash Test", kind=kind)
-    _set_status(eq, EquipmentStatus.AVAILABLE, actor)
+    Equipment.objects.create(sku="EQ-SLASH", name="Slash Test", kind=kind)
 
     resp_slashless = api_client.get("/api/labs/equipment/options", {"q": "Slash"})
     assert resp_slashless.status_code == status.HTTP_200_OK
@@ -332,7 +303,7 @@ def test_category_reference_data_follows_category_kind_type_manufacturer_model_h
         equipment_type=display_type,
         name="Display Model After M2M Change",
     )
-    response = api_client.get("/api/labs/equipment/computing/reference-data")
+    response = api_client.get("/api/labs/equipment/reference-data", {"category": computing.pk})
 
     assert response.status_code == status.HTTP_200_OK
     data = response.data["data"]
@@ -379,7 +350,7 @@ def test_category_reference_data_excludes_inactive_parents(api_client, actor, co
     inactive_manufacturer.save()
     inactive_type.active = False
     inactive_type.save()
-    response = api_client.get("/api/labs/equipment/computing/reference-data")
+    response = api_client.get("/api/labs/equipment/reference-data", {"category": category.pk})
 
     assert response.status_code == status.HTTP_200_OK
     data = response.data["data"]
@@ -399,7 +370,7 @@ def test_category_reference_data_excludes_inactive_parents(api_client, actor, co
     inactive_model_manufacturer.save()
     inactive_model.active = False
     EquipmentProductModel.objects.filter(pk=inactive_model.pk).update(active=False)
-    response = api_client.get("/api/labs/equipment/computing/reference-data")
+    response = api_client.get("/api/labs/equipment/reference-data", {"category": category.pk})
     assert response.status_code == status.HTTP_200_OK
     assert inactive_model.pk not in {row["id"] for row in response.data["data"]["product_models"]}
 
@@ -418,10 +389,11 @@ def test_category_reference_data_excludes_inactive_category_descendants(api_clie
     )
     EquipmentCategory.objects.filter(pk=category.pk).update(active=False)
 
-    response = api_client.get("/api/labs/equipment/computing/reference-data")
+    response = api_client.get("/api/labs/equipment/reference-data", {"category": category.pk})
 
     assert response.status_code == status.HTTP_200_OK
     data = response.data["data"]
+    assert data["categories"] == []
     assert data["kinds"] == []
     assert data["types"] == []
     assert data["manufacturers"] == []
@@ -436,16 +408,24 @@ def test_category_reference_data_preserves_groups_owners_and_category_lookups(ap
     technical_user = TechnicalUser.objects.create(username="reference-tech")
     category.manufacturers.add(EquipmentManufacturer.objects.create(name="Lookup Preservation Maker"))
 
-    response = api_client.get("/api/labs/equipment/computing/reference-data")
+    response = api_client.get("/api/labs/equipment/reference-data", {"category": category.pk})
 
     assert response.status_code == status.HTTP_200_OK
     assert set(response.data["data"]) == {
+        "categories",
         "kinds",
         "types",
         "manufacturers",
         "product_models",
         "groups",
         "owners",
+        "materials",
+        "sizes",
+        "resolutions",
+        "protocols",
+        "customers",
+        "interfaces",
+        "characteristics",
         "technical_users",
     }
     data = response.data["data"]
@@ -483,6 +463,9 @@ def test_category_reference_data_query_count_is_bounded(
     api_client, actor, computing_category, django_assert_num_queries
 ):
     api_client.force_authenticate(user=actor)
+    # Reads are role-checked; resolve the actor's roles first (cached on the user) so the count
+    # below measures only the endpoint's own queries.
+    effective_labs_roles(actor)
     category, kind = computing_category
     equipment_type = EquipmentType.objects.create(kind=kind, name="Query Budget Type")
     manufacturer = EquipmentManufacturer.objects.create(name="Query Budget Manufacturer")
@@ -494,8 +477,9 @@ def test_category_reference_data_query_count_is_bounded(
             name=f"Query Budget Model {index}",
         )
 
-    with django_assert_num_queries(10):
-        response = api_client.get("/api/labs/equipment/computing/reference-data")
+    # Catalogs plus the eight typed lookups; constant in the number of rows.
+    with django_assert_num_queries(18):
+        response = api_client.get("/api/labs/equipment/reference-data", {"category": category.pk})
 
     assert response.status_code == status.HTTP_200_OK
     assert len(response.data["data"]["product_models"]) == 3
@@ -506,12 +490,9 @@ def test_options_ordering_is_stable_by_name(api_client, actor, computing_categor
     api_client.force_authenticate(user=actor)
     _, kind = computing_category
 
-    eq_z = ComputingEquipment.objects.create(sku="EQ-Z", name="Zebra Machine", kind=kind)
-    _set_status(eq_z, EquipmentStatus.AVAILABLE, actor)
-    eq_a = ComputingEquipment.objects.create(sku="EQ-A", name="Apple Machine", kind=kind)
-    _set_status(eq_a, EquipmentStatus.AVAILABLE, actor)
-    eq_m = ComputingEquipment.objects.create(sku="EQ-M", name="Mango Machine", kind=kind)
-    _set_status(eq_m, EquipmentStatus.AVAILABLE, actor)
+    Equipment.objects.create(sku="EQ-Z", name="Zebra Machine", kind=kind)
+    Equipment.objects.create(sku="EQ-A", name="Apple Machine", kind=kind)
+    Equipment.objects.create(sku="EQ-M", name="Mango Machine", kind=kind)
 
     resp = api_client.get("/api/labs/equipment/options", {"q": "Machine"})
     assert resp.status_code == status.HTTP_200_OK
@@ -524,14 +505,12 @@ def test_options_status_and_assigned_filters(api_client, actor, computing_catego
     api_client.force_authenticate(user=actor)
     _, kind = computing_category
 
-    eq1 = ComputingEquipment.objects.create(sku="EQ-F1", name="Eq Available", kind=kind)
-    _set_status(eq1, EquipmentStatus.AVAILABLE, actor)
+    eq1 = Equipment.objects.create(sku="EQ-F1", name="Eq Available", kind=kind)
 
-    eq2 = ComputingEquipment.objects.create(sku="EQ-F2", name="Eq In Use", kind=kind)
-    _set_status(eq2, EquipmentStatus.IN_USE, actor)
+    eq2 = Equipment.objects.create(sku="EQ-F2", name="Eq In Use", kind=kind)
+    _set_state(eq2, lifecycle_state="planned")
 
-    eq3 = ComputingEquipment.objects.create(sku="EQ-F3", name="Eq Assigned", kind=kind)
-    _set_status(eq3, EquipmentStatus.AVAILABLE, actor)
+    eq3 = Equipment.objects.create(sku="EQ-F3", name="Eq Assigned", kind=kind)
     EquipmentAssignment.objects.create(
         equipment=eq3,
         bench=bench,
@@ -540,13 +519,19 @@ def test_options_status_and_assigned_filters(api_client, actor, computing_catego
         last_modified_by=actor,
     )
 
-    # Filter by lifecycle_status
-    resp = api_client.get("/api/labs/equipment/options", {"lifecycle_status": "available", "q": "Eq"})
+    # Filter by computed display status: a unit on a bench is in use, not available.
+    resp = api_client.get("/api/labs/equipment/options", {"status": "available", "q": "Eq"})
     assert resp.status_code == status.HTTP_200_OK
     ids = [i["id"] for i in resp.data["data"]]
     assert eq1.pk in ids
-    assert eq3.pk in ids
+    assert eq3.pk not in ids
     assert eq2.pk not in ids
+    in_use = api_client.get("/api/labs/equipment/options", {"status": "in_use", "q": "Eq"})
+    assert [i["id"] for i in in_use.data["data"]] == [eq3.pk]
+
+    # Filter by stored lifecycle state
+    planned = api_client.get("/api/labs/equipment/options", {"lifecycle_state": "planned", "q": "Eq"})
+    assert [i["id"] for i in planned.data["data"]] == [eq2.pk]
 
     # Filter by assigned=true
     resp_assigned = api_client.get("/api/labs/equipment/options", {"assigned": "true", "q": "Eq"})
@@ -561,8 +546,7 @@ def test_options_status_and_assigned_filters(api_client, actor, computing_catego
 @pytest.mark.parametrize(
     ("path", "equipment_model"),
     (
-        ("/api/labs/equipment/options", ComputingEquipment),
-        ("/api/labs/equipment/computing/options", ComputingEquipment),
+        ("/api/labs/equipment/options", Equipment),
     ),
 )
 def test_include_ids_include_nonmatching_active_but_exclude_soft_deleted(
@@ -591,8 +575,8 @@ def test_include_ids_include_nonmatching_active_but_exclude_soft_deleted(
 def test_include_ids_count_toward_selector_result_cap(api_client, actor, computing_category, monkeypatch):
     api_client.force_authenticate(user=actor)
     _, kind = computing_category
-    included = ComputingEquipment.objects.create(sku="EQ-INCLUDE-CAP", name="Included by ID", kind=kind)
-    ComputingEquipment.objects.create(sku="EQ-ORDINARY-CAP", name="Ordinary match", kind=kind)
+    included = Equipment.objects.create(sku="EQ-INCLUDE-CAP", name="Included by ID", kind=kind)
+    Equipment.objects.create(sku="EQ-ORDINARY-CAP", name="Ordinary match", kind=kind)
 
     from core.labs.features.equipment.api.views import EquipmentOptionsAPIView
 
@@ -611,8 +595,11 @@ def test_equipment_options_query_count_is_bounded_as_results_grow(
     api_client, actor, computing_category, django_assert_num_queries
 ):
     api_client.force_authenticate(user=actor)
+    # Reads are role-checked; resolve the actor's roles first (cached on the user) so the count
+    # below measures only the endpoint's own queries.
+    effective_labs_roles(actor)
     _, kind = computing_category
-    ComputingEquipment.objects.create(sku="EQ-QUERY-1", name="Query Item 1", kind=kind)
+    Equipment.objects.create(sku="EQ-QUERY-1", name="Query Item 1", kind=kind)
 
     with django_assert_num_queries(1):
         one_result = api_client.get("/api/labs/equipment/options", {"q": "Query Item"})
@@ -620,7 +607,7 @@ def test_equipment_options_query_count_is_bounded_as_results_grow(
     assert len(one_result.data["data"]) == 1
 
     for index in range(2, 101):
-        ComputingEquipment.objects.create(
+        Equipment.objects.create(
             sku=f"EQ-QUERY-{index}",
             name=f"Query Item {index}",
             kind=kind,
@@ -637,15 +624,14 @@ def test_category_options_isolates_by_category(api_client, actor, computing_cate
     api_client.force_authenticate(user=actor)
     _, computing_kind = computing_category
     _, display_kind = display_category
-    comp_eq = ComputingEquipment.objects.create(sku="OPT-COMPUTING", name="PC", kind=computing_kind)
-    disp_eq = DisplayEquipment.objects.create(sku="OPT-DISPLAY", name="Monitor", kind=display_kind)
-    _set_status(comp_eq, EquipmentStatus.AVAILABLE, actor)
-    _set_status(disp_eq, EquipmentStatus.AVAILABLE, actor)
+    comp_eq = Equipment.objects.create(sku="OPT-COMPUTING", name="PC", kind=computing_kind)
+    disp_eq = Equipment.objects.create(sku="OPT-DISPLAY", name="Monitor", kind=display_kind)
 
-    # Category computing options?assignable=true
-    comp_resp = api_client.get("/api/labs/equipment/computing/options", {"assignable": "true", "q": "PC"})
-    assert comp_resp.status_code == status.HTTP_200_OK
-    disp_resp = api_client.get("/api/labs/equipment/display/options", {"assignable": "true", "q": "Monitor"})
+    display_category_row, _ = display_category
+    # One options route; the category is a filter (step 6).
+    disp_resp = api_client.get(
+        "/api/labs/equipment/options", {"assignable": "true", "q": "Monitor", "category_id": display_category_row.pk}
+    )
     assert disp_resp.status_code == status.HTTP_200_OK
     disp_ids = [item["id"] for item in disp_resp.data["data"]]
     assert disp_eq.pk in disp_ids
@@ -657,11 +643,9 @@ def test_options_q_filter(api_client, actor, computing_category):
     api_client.force_authenticate(user=actor)
     _, kind = computing_category
 
-    eq1 = ComputingEquipment.objects.create(sku="SRCH-ALPHA", name="Alpha Station", kind=kind)
-    _set_status(eq1, EquipmentStatus.AVAILABLE, actor)
+    eq1 = Equipment.objects.create(sku="SRCH-ALPHA", name="Alpha Station", kind=kind)
 
-    eq2 = ComputingEquipment.objects.create(sku="SRCH-BETA", name="Beta Station", kind=kind)
-    _set_status(eq2, EquipmentStatus.AVAILABLE, actor)
+    eq2 = Equipment.objects.create(sku="SRCH-BETA", name="Beta Station", kind=kind)
 
     resp = api_client.get("/api/labs/equipment/options", {"q": "Alpha", "assignable": "true"})
     assert resp.status_code == status.HTTP_200_OK

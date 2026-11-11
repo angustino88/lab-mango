@@ -24,7 +24,7 @@ from core.labs.models.resource.base.generic_links import (
 )
 
 # Resources that can carry costs. Always link the ROOT model (Equipment, not
-# ComputingEquipment); use Expense.set_resource() to do that for you.
+# a subclass); use Expense.set_resource() to do that for you.
 EXPENSE_RESOURCE_MODELS = {
     ("labs", "room"),
     ("labs", "station"),

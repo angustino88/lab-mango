@@ -16,7 +16,7 @@ class ComputingActivity(TimeStampedModel):
     """Current activity and remote-access state of a computing resource."""
 
     computing = models.OneToOneField(
-        "labs.ComputingEquipment",
+        "labs.Equipment",
         related_name="activity",
         on_delete=models.CASCADE,
     )

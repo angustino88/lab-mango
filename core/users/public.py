@@ -11,6 +11,7 @@ from uuid import UUID
 from core.users.access import (
     IsLabAdmin,
     IsLabCoordinator,
+    IsLabCoordinatorOnly,
     IsLabMember,
     LabsRole,
     clear_labs_roles_cache,
@@ -131,6 +132,7 @@ __all__ = [
     "UnlinkEntraIdentityInput",
     "IsLabAdmin",
     "IsLabCoordinator",
+    "IsLabCoordinatorOnly",
     "IsLabMember",
     "LabsRole",
     "NotificationRecipientProfile",

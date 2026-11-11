@@ -10,15 +10,13 @@ from core.labs.features.equipment.queries.summaries import (
     get_equipment_status_summary,
 )
 from core.labs.models import ComputingActivity, Equipment
-from tests.factories import BenchFactory, ComputingEquipmentFactory, EquipmentStatusRecordFactory
+from tests.factories import BenchFactory, ComputingEquipmentFactory
 
 
 @pytest.mark.django_db
-def test_latest_equipment_status_and_deleted_inventory(django_assert_num_queries):
+def test_current_equipment_display_status_and_deleted_inventory(django_assert_num_queries):
     equipment = ComputingEquipmentFactory()
-    first = EquipmentStatusRecordFactory(equipment=equipment, status="available")
-    second = EquipmentStatusRecordFactory(equipment=equipment, status="broken")
-    type(first).objects.filter(pk=second.pk).update(created=first.created)
+    Equipment.objects.filter(pk=equipment.pk).update(condition="out_of_service")
     deleted = ComputingEquipmentFactory()
     Equipment.objects.filter(pk=deleted.pk).update(deleted_at=timezone.now())
     with django_assert_num_queries(1):
@@ -44,10 +42,9 @@ def test_computing_activity_includes_unassigned_and_missing_telemetry(django_ass
 @pytest.mark.django_db
 def test_computing_category_summary_counts_only_computing_equipment(django_assert_num_queries):
     computing = ComputingEquipmentFactory()
-    EquipmentStatusRecordFactory(equipment=computing, status="available")
-    EquipmentStatusRecordFactory(equipment=ComputingEquipmentFactory(), status="broken")
+    Equipment.objects.filter(pk=ComputingEquipmentFactory().pk).update(condition="out_of_service")
     with django_assert_num_queries(1):
-        summary = get_equipment_category_status_summary(equipment_model=type(computing))
+        summary = get_equipment_category_status_summary(category_id=computing.kind.category_id)
     counts = {item["status"]["value"]: item["resource_count"] for item in summary["statuses"]}
     assert summary["total_count"] == 2
     assert counts["available"] == 1
@@ -56,7 +53,7 @@ def test_computing_category_summary_counts_only_computing_equipment(django_asser
 
 @pytest.mark.django_db
 def test_bench_lifecycle_is_not_activity_or_booking(django_assert_num_queries):
-    BenchFactory(lifecycle_status="available")
+    BenchFactory(lifecycle_status="in_service")
     with django_assert_num_queries(1):
         summary = get_bench_status_summary()
     assert summary["total_count"] == 1

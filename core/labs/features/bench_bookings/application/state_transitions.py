@@ -35,7 +35,7 @@ def activate_bench_bookings(*, bench_id: int, booking_code: str, now: datetime) 
 def activate_bench_booking_for_computing_activity(*, computing_id: int, now: datetime) -> int:
     """Activate a booking when its assigned computing resource reports active use."""
     assignment = (
-        EquipmentAssignment.objects.select_related("equipment__computingequipment__activity")
+        EquipmentAssignment.objects.select_related("equipment__activity")
         .filter(equipment_id=computing_id, unassigned_at__isnull=True)
         .order_by("pk")
         .first()
@@ -43,8 +43,8 @@ def activate_bench_booking_for_computing_activity(*, computing_id: int, now: dat
     if assignment is None:
         return 0
 
-    activity = assignment.equipment.computingequipment.activity
-    if activity.status != ComputingActivityStatus.ACTIVE or not activity.booking_code:
+    activity = getattr(assignment.equipment, "activity", None)
+    if activity is None or activity.status != ComputingActivityStatus.ACTIVE or not activity.booking_code:
         return 0
 
     return activate_bench_bookings(

@@ -25,7 +25,7 @@ The activity-to-booking association is resolved through the existing chain:
 
 ```mermaid
 flowchart LR
-    Activity["ComputingActivity"] --> Computing["ComputingEquipment"]
+    Activity["ComputingActivity"] --> Computing["Equipment (with ComputingProfile)"]
     Computing --> Assignment["EquipmentAssignment"]
     Assignment --> Bench["Bench"]
     Activity --> Code["booking_code"]

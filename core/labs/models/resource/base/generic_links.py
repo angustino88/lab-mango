@@ -1,7 +1,7 @@
 """Helpers for generic links to lab resources.
 
-Resources that use multi-table inheritance (e.g. ``ComputingEquipment`` extends
-``Equipment``) have one ContentType per class. Generic links (audits, costs,
+Resources that use multi-table inheritance have one ContentType per class (equipment
+had category subclasses until redesign step 6). Generic links (audits, costs,
 purchases, service records) therefore always use the *root* resource model, so
 the same physical asset is never split across two content types.
 """

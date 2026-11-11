@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 
 from core.agents.models import AgentIdentity
 from core.labs.models import (
-    ComputingEquipment,
     EquipmentCategory,
     EquipmentKind,
 )
@@ -19,6 +18,7 @@ from core.routing.models import (
     SyncState,
 )
 from core.users.models import EntraIdentity
+from tests.factories import create_computing_equipment
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def routing_agent_setup(db):
         defaults={"name": "Computing", "definition": "Computing", "active": True},
     )
     kind = EquipmentKind.objects.create(category=category, name=f"Computer-{uuid.uuid4()}")
-    equipment = ComputingEquipment.objects.create(sku=f"AGENT-{uuid.uuid4()}", kind=kind, name="Agent host")
+    equipment = create_computing_equipment(sku=f"AGENT-{uuid.uuid4()}", kind=kind, name="Agent host")
     return actor, equipment
 
 

@@ -2,11 +2,9 @@
 
 from .equipment import (
     active_bench_assignment_mapping_rows,
-    category_options_queryset,
-    category_queryset,
-    category_reference_data,
+    equipment_form_reference_data,
     equipment_mapping_rows,
-    equipment_reference_data,
+    equipment_queryset,
     get_active_equipment_assignment,
     get_equipment,
     get_equipment_for_mapping,
@@ -16,11 +14,9 @@ from .equipment import (
 )
 
 __all__ = (
-    "category_options_queryset",
-    "category_queryset",
-    "category_reference_data",
     "active_bench_assignment_mapping_rows",
-    "equipment_reference_data",
+    "equipment_form_reference_data",
+    "equipment_queryset",
     "equipment_mapping_rows",
     "get_active_equipment_assignment",
     "get_equipment",

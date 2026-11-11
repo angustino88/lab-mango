@@ -60,7 +60,7 @@ core/labs/features/dashboard/
 
 To ensure low latency and prevent N+1 query patterns:
 1. **Active Bookings:** Prefetched using `Prefetch("bookings", queryset=BenchBooking.objects.filter(starts_at__lte=now, ends_at__gte=now, status__in=[...]).select_related("creator"), to_attr="_active_bookings")`.
-2. **Computing Equipment & Real-Time Activity:** Prefetched using `Prefetch("equipment_assignments", queryset=EquipmentAssignment.objects.filter(unassigned_at__isnull=True).select_related("equipment", "equipment__computingequipment", "equipment__computingequipment__activity"), to_attr="_active_equipment_assignments")`.
+2. **Computing Equipment & Real-Time Activity:** Prefetched using `Prefetch("equipment_assignments", queryset=EquipmentAssignment.objects.filter(unassigned_at__isnull=True).select_related("equipment", "equipment__computing_profile", "equipment__activity"), to_attr="_active_equipment_assignments")`.
 3. **Location Hierarchy:** Single query join through `select_related("type", "bench_group", "owner", "station_slot", "setup_location__room__building", "setup_location__room__city", "setup_location__room__country")`.
 4. **Favorite Bookmarks:** Subquery evaluation using `Exists(BenchFavorite.objects.filter(user=actor, bench_id=OuterRef("pk")))`.
 5. **Equipment Counts:** Single database annotation using `Count("equipment_assignments", filter=Q(...), distinct=True)`.
