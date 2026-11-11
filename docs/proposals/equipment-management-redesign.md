@@ -348,7 +348,7 @@ Each step is its own T2 change with its own plan and approval. Order matters bec
 | 1 | `EquipmentPlacement` (**implemented**, see the step 1 plan below) | rename and extend `EquipmentAssignment` (state-only rename where possible); `storage_room` becomes a room placement for units with no active assignment; drop the column in a later release | keep the column until step 1 is verified |
 | 2 | `lifecycle_state`, `condition`, `EquipmentEvent` (**implemented**, see the step 2 plan below) | backfill from the latest `EquipmentStatusRecord` using the table below; keep the old table read-only | columns are additive; adapter keeps old route working |
 | 3 | `EquipmentLoan` (**implemented**, see the step 3 plan below) | none (legacy `borrowed` rows have no borrower FK; see table) | additive |
-| 4 | Equipment bookings feature | none | feature routes removable |
+| 4 | Equipment bookings (**implemented** 2026-11-10: phases 1 to 3 of `docs/proposals/equipment-booking.md`, revision 2; reservations live in the equipment feature) | none | feature routes removable |
 | 5 | Bench state reduction (**implemented** 2026-11-10: four values with check `bench_lifecycle_valid`; new benches default to `in_service`; bench bookings refused unless `in_service`) | map `reserved`, `active` to `in_service`; `maintenance` to `out_of_service`; `available` to `in_service` | value map is reversible only for unchanged rows |
 | 6 | Single-table equipment and `ComputingProfile` (**implemented** 2026-11-11, see the step 6 plan below) | none: migrations reset again (ADR 006), development database recreated | revert the commit and reset again |
 
