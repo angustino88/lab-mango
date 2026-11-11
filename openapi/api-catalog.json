@@ -1472,9 +1472,24 @@
                   "booking_code": {
                     "type": "string",
                     "nullable": true
+                  },
+                  "access_type": {
+                    "nullable": true,
+                    "description": "booked: a verified booking for this computer's bench; ad_hoc: no booking code; unverified_booking: a code that did not verify. Null only for sessions stored before access types existed.\n\n* `booked` - Booked\n* `ad_hoc` - Ad hoc (no booking)\n* `unverified_booking` - Booking not verified",
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
                   }
                 },
                 "required": [
+                  "access_type",
                   "booking_code",
                   "event_id",
                   "id",
@@ -1493,7 +1508,8 @@
               "event_id": "123e4567-e89b-12d3-a456-426614174000",
               "login_time": "2026-10-20T12:00:00Z",
               "logout_time": "2026-10-20T12:00:00Z",
-              "booking_code": "string"
+              "booking_code": "string",
+              "access_type": {}
             }
           }
         },
@@ -1524,9 +1540,24 @@
                   "booking_code": {
                     "type": "string",
                     "nullable": true
+                  },
+                  "access_type": {
+                    "nullable": true,
+                    "description": "booked: a verified booking for this computer's bench; ad_hoc: no booking code; unverified_booking: a code that did not verify. Null only for sessions stored before access types existed.\n\n* `booked` - Booked\n* `ad_hoc` - Ad hoc (no booking)\n* `unverified_booking` - Booking not verified",
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
                   }
                 },
                 "required": [
+                  "access_type",
                   "booking_code",
                   "event_id",
                   "id",
@@ -1545,7 +1576,8 @@
               "event_id": "123e4567-e89b-12d3-a456-426614174000",
               "login_time": "2026-10-20T12:00:00Z",
               "logout_time": "2026-10-20T12:00:00Z",
-              "booking_code": "string"
+              "booking_code": "string",
+              "access_type": {}
             }
           }
         },

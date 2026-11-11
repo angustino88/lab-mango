@@ -629,6 +629,17 @@ paths:
           description: Enrollment conflict
 components:
   schemas:
+    AccessTypeEnum:
+      enum:
+      - booked
+      - ad_hoc
+      - unverified_booking
+      type: string
+      description: '* `booked` - Booked
+
+        * `ad_hoc` - Ad hoc (no booking)
+
+        * `unverified_booking` - Booking not verified'
     AgentActivityData:
       type: object
       properties:
@@ -876,7 +887,23 @@ components:
         booking_code:
           type: string
           nullable: true
+        access_type:
+          nullable: true
+          description: 'booked: a verified booking for this computer''s bench; ad_hoc:
+            no booking code; unverified_booking: a code that did not verify. Null
+            only for sessions stored before access types existed.
+
+
+            * `booked` - Booked
+
+            * `ad_hoc` - Ad hoc (no booking)
+
+            * `unverified_booking` - Booking not verified'
+          oneOf:
+          - $ref: '#/components/schemas/AccessTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
       required:
+      - access_type
       - booking_code
       - event_id
       - id
@@ -1070,6 +1097,9 @@ components:
         * `os_keystore` - OS keystore
 
         * `software` - Software key store'
+    NullEnum:
+      enum:
+      - null
     PaginationMeta:
       type: object
       properties:
