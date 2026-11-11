@@ -44,8 +44,10 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 - **Failure cases:** a guest account or a second verified domain with the same local part; a UPN reassigned
   to a new employee before the previous owner ever logged in. Whoever logs in first owns the account.
 - **Also:** contradicts the model docstring "No email-based linking" (`models/entra_identity.py:1`).
-- **Constraint (owner, 2026-11-10):** URS provides usernames only, not Entra object IDs. Binding by name
-  therefore stays, and the safeguards below must make it safe.
+- **Constraint (owner, 2026-11-10/11):** URS provides usernames only, and Graph access for linking before
+  first login is not available. First-login binding by username is therefore **the** linking path
+  (reached through the Router's department chooser, H7), and the safeguards below are mandatory, not
+  optional. The owner must accept the residual risk in writing.
 - **Proposal:**
   - [ ] Accept the local-part match only when the UPN domain is on an explicit allow-list of corporate
     domains (setting, empty by default, startup check in production). Reject every other domain.
@@ -54,7 +56,12 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
     require the operator command to bind it again (no automatic re-bind).
   - [ ] Emit an audit event for every automatic bind, and alert on binds of accounts older than a
     threshold (a long-dormant account claimed by a new person is the risky case).
+  - [ ] Bind only on the backend the user chose, and only to a URS-provisioned account there (already the
+    case: login never creates users).
   - [ ] Keep `ENTRA_BIND_BY_USERNAME` as the kill switch and document when to turn it off.
+  - [ ] *Investigate with the tenant administrator (not verified):* whether the ID token can carry an
+    on-premises identifier (optional claim `onprem_sid`, or `sAMAccountName` through a claims-mapping
+    policy). Matching that exact value to the URS username would be stronger than `preferred_username`.
 
 #### H2. No absolute session lifetime; Entra offboarding is not propagated
 
@@ -128,65 +135,63 @@ proxy strips (`routing-sync.md:74`). The current authentication code was written
   - [ ] Test that a response sets only prefixed paths and backend-specific names.
   - [ ] Do not rely on the proxy rewriting cookie paths; the backend must emit correct cookies itself.
 
-#### H7. Prefix discovery happens after Entra sign-in, so the backend's login nonce arrives too late
+#### H7. Target login flow through the Router, and what the backend must change
 
-- **Confirmed flow (owner, 2026-11-11):**
-  1. The frontend signs the user in with Entra and asks the Router service which prefix serves this user
-     (the Router validates the ID token and looks up the Entra ID in its mapping).
-  2. The frontend uses that prefix (for example `/api/dept_a/`) for every later request, including the
-     backend's login endpoints and WebSocket.
-  3. Nginx in the Router repository strips the prefix and forwards to the backend. The Router service is
-     not in the data path (`routing-sync.md` dependency rule 4).
-- **What works as-is:** the backend's `aad-login/challenge` and `aad-login` are reached through the
-  prefix, so the CSRF cookie and the challenge cookie come from the right backend.
-- **What breaks:**
-  - **Nonce order.** The backend requires an ID token whose `nonce` matches a challenge it issued
-    (`aad_login/service.py:110-121`). The first ID token was obtained *before* the frontend knew which
-    backend to ask for a challenge, so its nonce can never match and the login fails.
-  - **First-login binding.** The Router returns a prefix only for an Entra ID that is already bound and
-    claimed. A user who has never logged in gets no prefix, so their request never reaches the backend
-    that would bind them by username (`aad_login/service.py:127-133`).
-  - **Cookie paths.** Nginx strips the prefix, so the backend thinks it serves `/api/...` and sets cookies
-    for `/api`; the browser then sends them to every department (H6).
-- **Proposal:**
-  - [ ] **Second, silent Entra sign-in for the backend.** After the prefix is known, the frontend calls
-    `<prefix>/aad-login/challenge`, then requests a **fresh** ID token from Entra with that nonce without
-    prompting the user (MSAL `ssoSilent`, or a redirect with `prompt=none`), and sends it to
-    `<prefix>/aad-login`. The user sees one sign-in; the backend code for nonce and CSRF stays as it is.
-    The frontend must not reuse a cached ID token, whose nonce would not match. *Not verified:* behavior of
-    the frontend's MSAL version, and silent sign-in where the browser blocks third-party cookies (the
-    redirect variant avoids that).
-  - [ ] **Link identities before first login (required).** Because the Router resolves only bound users,
-    bind every user before their first login with a backend job after URS sync:
-    1. The tenant administrator grants the backend's Entra app the Microsoft Graph application permission
-       `User.Read.All`.
-    2. For each URS-managed user without a binding, the job gets an app token (client-credentials flow)
-       and calls `GET https://graph.microsoft.com/v1.0/users?$filter=onPremisesSamAccountName eq '<username>'&$select=id,userPrincipalName,accountEnabled,userType`
-       (header `ConsistencyLevel: eventual`; query `$count=true`).
-    3. It binds only on exactly one enabled `Member` result, through the existing `bind_entra_identity`
-       command, which publishes the claim the Router resolves. Everything else is skipped and reported.
-    4. Remove automatic binding from `aad-login` and set `ENTRA_BIND_BY_USERNAME` off. This also closes H1.
-    Costs: a client secret or certificate per backend, outbound access to `graph.microsoft.com`, tenant-admin
-    consent, a new integration (T2). `requests` and `httpx` are already dependencies. Fallback without Graph
-    access: an operator exports `samAccountName,objectId` from Entra and loads it with a management command.
-  - [ ] **Prefix-aware cookies (H6).** The backend sets cookie paths from a configured public prefix; do
-    not depend on Nginx rewriting them.
-  - [ ] **One trusted hop (H4).** Nginx is the only proxy in front of the backend, so the backend trusts one
-    forwarded hop; record this in the Router contract.
-  - [ ] **Backend keeps validating the ID token** (signature, audience, issuer, tenant, nonce): routing is
-    not authorization (`routing-sync.md` P1).
-  - [ ] Test the full flow through a prefix: resolve → challenge → silent sign-in → login → refresh → logout.
+- **Confirmed (owner, 2026-11-11):**
+  - The frontend signs the user in with Entra, asks the Router service for the user's prefix, then sends
+    every request to that prefix; Nginx in the Router repository strips it and forwards to the backend.
+  - When a user is known on several backends, the user chooses.
+  - No Microsoft Graph access for linking users before their first login.
+  - Whether the frontend can do a second, silent Entra sign-in is unknown.
+- **Problems with the current backend code in this flow:**
+  - **Nonce order.** The backend accepts only an ID token whose `nonce` matches a challenge it issued
+    (`aad_login/service.py:110-121`), but the token was obtained before the frontend knew which backend to
+    ask. Every login fails.
+  - **CSRF.** Without the challenge call, the browser has no CSRF cookie for that backend, and
+    `aad-login` returns `403` (`aad_login/api.py:60`).
+  - **First login.** The Router has no claim for an unbound user, so it returns no prefix
+    (`routing-sync.md` CNS-6).
+  - **Cookies.** Nginx strips the prefix, so cookies set for `/api` reach every department (H6).
+- **Target flow:**
+  1. Frontend creates a random secret `S` and keeps it in memory (or `sessionStorage` for the redirect).
+  2. Frontend signs in with Entra, passing `nonce = SHA-256(S)` (base64url) in the sign-in request.
+  3. Frontend sends **only the ID token** to the Router service and gets back: one prefix, several prefixes
+     (user chooses), or none (first login: user chooses a department from the Router's list).
+  4. Frontend calls `GET <prefix>/auth/csrf` (M4), then `POST <prefix>/auth/aad-login` with the ID token
+     and `S`, plus the CSRF header.
+  5. Backend validates the token itself (signature, audience, issuer, tenant, expiry, issued within the
+     last few minutes), checks `SHA-256(S) == nonce`, and records the nonce as used (unique constraint) so
+     the same token cannot be used twice on this backend.
+  6. Backend finds the bound identity, or binds by username with H1's safeguards, publishes the claim,
+     and returns the access token with prefix-scoped, backend-named cookies (H6).
+  - One Entra sign-in, no backend call before sign-in, no silent second sign-in.
+  - The Router sees the token but not `S`, so it cannot replay the login; neither can anyone who copies the
+    token from a log.
+- **Backend changes (proposal):**
+  - [ ] Replace the issued challenge (`EntraLoginChallenge`, `aad-login/challenge`, challenge cookie) with
+    the secret/nonce check and a consumed-nonce record with expiry. Migration, API contract change.
+  - [ ] Add the CSRF endpoint (M4); keep CSRF on `aad-login`, refresh and logout.
+  - [ ] Bound token age (`iat`) on `aad-login`, so the consumed-nonce table stays small (M5 purges it).
+  - [ ] Prefix-aware cookie paths and backend-specific cookie names (H6); one trusted forwarded hop (H4).
+  - [ ] Keep validating the ID token on the backend even though the Router did: routing is not
+    authorization (`routing-sync.md` P1).
+  - [ ] End-to-end test through a prefix: resolve → csrf → login → refresh → logout, and switching between
+    two backends in one browser.
+- **Router-repository changes (not verified, outside this repository):** return a department list for
+  zero or several claims (M14); accept the ID token for resolve without needing the backend's nonce.
+- **Trade-off:** `S` lives in page memory, so script injection on the page could steal it together with the
+  token. The current HttpOnly challenge cookie resists that slightly better, but needs a backend call
+  before sign-in, which this flow does not have. L8 (Content-Security-Policy) reduces the risk.
 
 #### M14. Multi-department users conflict with the Router's single-owner rule
 
-- **Evidence:** the routing spec says a user must not exist in two departments and treats two claims for
-  one key as a conflict that routes nowhere (`routing-sync.md` CNS-6). The owner confirmed on 2026-11-11
-  that users can belong to several departments and switch between them. The spec and the product rule
-  disagree (drift).
+- **Evidence:** the routing spec treats two claims for one key as a conflict that routes nowhere, and says
+  a user must not exist in two departments (`routing-sync.md` CNS-6). The owner confirmed on 2026-11-11
+  that users can belong to several departments and that **the user chooses** which one to use.
 - **Proposal:**
-  - [ ] Revise CNS-6 in the routing spec (Router repository change, owner decision): several claims mean
-    "let the user choose", not "route nowhere"; keep "fail closed" only for invalid or unknown claims.
-  - [ ] Decide the default when a user arrives without a selection (last-used backend, or a chooser).
+  - [ ] Revise CNS-6 in the routing spec (Router repository change): several claims return the list of
+    departments for the user to choose; zero claims return the department list for first login (H7);
+    fail closed only for invalid claims.
   - [ ] Each backend keeps its own binding and claim for the same Entra key; nothing changes in this
     backend's data model. H6 (per-backend cookies) is mandatory for switching to work.
 
@@ -335,10 +340,10 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 
 ## Suggested order
 
-1. H7 and M14 — agree the challenge, linking and multi-department rules with the Router repository.
+1. H7 and M14 — agree the target login flow and the chooser with the Router repository and frontend.
 2. H3, H4, H5 — configuration only, no contract change.
 3. H6 with M3 and M4 — one route/cookie contract change while there are no production clients.
-4. H1 — implement the binding decision from step 1.
+4. H7 backend changes together with H1's safeguards (one change to the login endpoint and its migration).
 5. H2 with M1, M2 and M12 — one change to the token model (likely a migration).
 6. Remaining medium items, then L1 last so the spec is rewritten once.
 
@@ -359,15 +364,16 @@ endpoint, and a frontend change. Decide before investing in H2's claim-based lim
 | Location of this document | `docs/proposals/` confirmed | — |
 | Frontend and API addresses | Browser sees one shared host; backend URLs are not exposed | M3: `SameSite=Strict` is possible; L9: CORS can be off in production |
 | Deployment topology | Multiple department backends; the router service maps users by Entra ID using the routing sync (2026-11-11) | New H6, H7, M14; M12 extended |
-| How the frontend reaches a backend | Frontend asks the Router service for the user's prefix, then sends every request to that prefix; Router Nginx strips it and forwards to the backend | H7: second silent Entra sign-in with the backend's nonce; identities linked before first login; H6 prefix-aware cookies; H4 one trusted hop |
-| Multi-department users | They can switch between department backends | M14: routing spec CNS-6 must change |
+| How the frontend reaches a backend | Frontend asks the Router service for the user's prefix, then sends every request to that prefix; Router Nginx strips it and forwards to the backend | H7 target flow; H6 prefix-aware cookies; H4 one trusted hop |
+| Graph permission for linking before first login | Not available | H1 first-login binding stays, safeguards mandatory; owner accepts residual risk |
+| Silent second Entra sign-in | Unknown | H7 target flow avoids it (frontend-held secret, one sign-in) |
+| Multi-department users | They can switch; when several backends match, the user chooses | M14: Router returns a department list; CNS-6 must change |
 | Secrets per backend | Each department runs its own container and environment | M12: keys expected to differ; issuer/audience kept as defense in depth |
 
 ## Open questions for the owner
 
-1. **Linking before first login (H7).** Can the tenant administrator grant the backend app the Graph
-   permission `User.Read.All`? If not, use the operator export as the fallback.
-2. **Silent second sign-in (H7).** Can the frontend request a fresh ID token with the backend's nonce
-   after resolving the prefix (MSAL `ssoSilent` or `prompt=none` redirect)?
-3. **Default backend (M14).** When the Router finds a user on several backends, return the last-used
-   prefix or let the user choose?
+1. **Frontend nonce (H7).** Can the frontend pass its own `nonce` in the Entra sign-in request? Most MSAL
+   versions accept it in the login request; to be confirmed for the version in use.
+2. **Risk acceptance (H1).** Do you accept first-login binding by username with the listed safeguards?
+3. **Router changes (H7, M14).** Does the Router team agree to return a department list for zero or
+   several matches?
