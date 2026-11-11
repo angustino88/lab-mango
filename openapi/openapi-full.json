@@ -93,6 +93,93 @@
         }
       }
     },
+    "/agent/bookings/actions/complete": {
+      "post": {
+        "operationId": "agent_complete_booking",
+        "description": "Requires the X-Agent-Id, X-Agent-Timestamp, X-Agent-Nonce and X-Agent-Signature headers (see the agentSignatureAuth security scheme). Call only when the user chooses to end the booking, not at every logout. Only an approved, in-progress booking on this computer's bench can be ended; repeating the call is safe. The booked end time is not changed. Every failure returns completed: false with no other fields.",
+        "summary": "End a booking at the user's request; the booking becomes completed",
+        "tags": [
+          "Agents"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentBookingValidationRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentBookingValidationRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentBookingValidationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "agentSignatureAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentBookingCompleteResponse"
+                }
+              }
+            },
+            "description": "End result"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Body is not a JSON object"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing, invalid, stale or replayed signature, or agent not active"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unknown field or invalid code"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request rate exceeded"
+          }
+        }
+      }
+    },
     "/agent/bookings/actions/validate": {
       "post": {
         "operationId": "agent_validate_booking",
@@ -35858,6 +35945,43 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/AgentBookingCheckInData"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "AgentBookingCompleteData": {
+        "type": "object",
+        "properties": {
+          "completed": {
+            "type": "boolean",
+            "description": "True when the booking is now completed."
+          },
+          "booking_code": {
+            "type": "string",
+            "description": "Present only when completed."
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Present only when completed."
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The booked end time, unchanged; present only when completed."
+          }
+        },
+        "required": [
+          "completed"
+        ]
+      },
+      "AgentBookingCompleteResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AgentBookingCompleteData"
           }
         },
         "required": [

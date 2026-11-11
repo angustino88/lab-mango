@@ -556,6 +556,32 @@ components:
           $ref: '#/components/schemas/AgentBookingCheckInData'
       required:
       - data
+    AgentBookingCompleteData:
+      type: object
+      properties:
+        completed:
+          type: boolean
+          description: True when the booking is now completed.
+        booking_code:
+          type: string
+          description: Present only when completed.
+        starts_at:
+          type: string
+          format: date-time
+          description: Present only when completed.
+        ends_at:
+          type: string
+          format: date-time
+          description: The booked end time, unchanged; present only when completed.
+      required:
+      - completed
+    AgentBookingCompleteResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentBookingCompleteData'
+      required:
+      - data
     AgentBookingValidationData:
       type: object
       properties:
