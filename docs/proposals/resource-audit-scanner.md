@@ -2,7 +2,8 @@
 
 - Tier: T2 · Status: Draft, not approved, nothing implemented · Date: 2026-11-12
 - Scope: `core/labs/features/resource_audit`, a new audit-catalog read, `core/users/features/auth`
-  (new authentication class), Entra app registration, frontend tag page and label printing.
+  (new authentication class), changes to the existing frontend Entra app registration, frontend tag page
+  and label printing.
 - Basis: read-only review of the code at commit `f8af818`. No code was changed and no checks were run.
 
 ## Problem and acceptance criteria
@@ -64,7 +65,8 @@ The tool avoids all four by addressing resources by `uid` only.
 ## Proposed behavior and invariants
 
 Tool workflow:
-1. Sign in with Microsoft (MSAL, public client, system browser or Windows broker). No secret in the tool.
+1. Sign in with Microsoft. The tool is written in Python and uses MSAL for Python as a public client
+   (Windows broker or system browser). No secret in the tool.
 2. Download the audit catalog; later runs request only rows changed since the last cursor.
 3. Scan a QR: `https://<lab-mango-host>/t/<uid>`. The tool reads the last path segment as `uid`. Fallback when
    the tag is damaged: type the SKU and pick from the local matches (type shown).
@@ -152,8 +154,9 @@ Indexes on `(updated_at, id)` per resource table are needed if they do not exist
 
 ## Authorization and threat notes
 
-- New `EntraAccessTokenAuthentication`: accepts Microsoft **access tokens** for the new "Lab Mango API" app
-  registration. Checks RS256 signature via JWKS, issuer = the configured tenant, audience = the API app,
+- New `EntraAccessTokenAuthentication`: accepts Microsoft **access tokens** issued for the scope exposed on
+  the existing frontend app registration (`AAD_AUDIENCE`, `config/settings/base.py:100`). Checks RS256
+  signature via JWKS, issuer = the configured tenant, audience = `api://<client-id>` (or the client ID),
   `scp` contains `LabMango.Audit`, token not expired. Maps `tid` + `oid` to `EntraIdentity` → user; no
   identity → `401`. No user is created from a token. Pattern follows `core/routing/api/authentication.py`
   for JWKS handling, but for delegated user tokens.
@@ -172,7 +175,11 @@ JWKS). JWKS unavailable → `503`, matching the routing sync behavior.
 
 ## Migration, rollout, rollback
 
-1. Entra: register "Lab Mango API" (scope `LabMango.Audit`) and the tool as a public client. Owner action.
+1. Entra, on the **existing** frontend app registration (no new app). Owner action:
+   - Authentication: add platform "Mobile and desktop applications" with redirect URIs `http://localhost`
+     and `ms-appx-web://microsoft.aad.brokerplugin/<client-id>` (Windows broker).
+   - Expose an API: Application ID URI `api://<client-id>`, scope `LabMango.Audit`.
+   - Optional: "Allow public client flows" = Yes, only if device-code sign-in is used.
 2. Backend: migration for the two columns and the constraint (additive); authentication class; catalog
    endpoint; idempotency in `record_resource_audit`; regenerated OpenAPI; updated `resource_audit/docs/spec.md`.
 3. Frontend: label printing page (QR with `uid` URL, SKU, name, serial) and `/t/<uid>` page. The QR library
@@ -212,6 +219,11 @@ Rollback: disable the new authentication class in settings; the columns are null
   carrier itself. The owner chose option A (one tag per license); B stays possible later.
 - **Audit sessions to detect missing items.** Out of scope by owner decision.
 - **Batch push endpoint.** Not needed now; one-by-one with idempotency covers retries.
+- **Separate app registrations for the tool and the API.** Microsoft's general recommendation, but one
+  registration as both client and API is allowed and keeps one client ID. Decided: reuse the frontend
+  registration (2026-11-12); splitting later changes only settings and the tool's client ID.
+- **Tool reuses the frontend's login.** The frontend's Lab Mango tokens live in the browser (memory and an
+  HttpOnly cookie) and cannot be read by another program; a hand-off would reinvent OAuth. Rejected.
 
 ## Open questions / decisions needed from the owner
 
@@ -220,7 +232,8 @@ Decided (2026-11-12):
    it from frontend configuration (a tag base URL setting), never hard-coded. Print tags with the
    production frontend address so phone scans keep working after go-live. The tool reads only the `uid`.
 2. Owners: the repository owner (full stack) owns the backend, the frontend and the QR dependency. Creating
-   the Entra app registrations needs rights in the Microsoft tenant; if the owner does not hold them, a
+   the Entra changes on the existing app registration needs rights in the Microsoft tenant; if the owner
+   does not hold them, a
    tenant admin creates or approves them (not verified).
 3. `EntraAccessTokenAuthentication` is used for the scanner endpoints first and later also for the web
    frontend login. The frontend switch is a separate T2 change with its own design.
