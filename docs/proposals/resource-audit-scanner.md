@@ -254,3 +254,14 @@ Decided (2026-11-12):
 3. `EntraAccessTokenAuthentication` is used for the scanner endpoints first and later also for the web
    frontend login. The frontend switch is a separate T2 change with its own design.
 4. The four drift items are fixed as separate tasks, not in this change.
+
+## Follow-ups after the first implementation (owner approved 2026-11-12)
+
+| # | Gap | Decision and implementation |
+|---|---|---|
+| 1 | Real Microsoft tokens not tested | Owner sets `accessTokenAcceptedVersion: 2` in the app manifest. `manage.py check_entra_access_token` (token on stdin, never printed) reports each check; startup checks `users.E010`-`E013` fail a deploy on missing audience, scope, tenant or JWKS URL. After a real token passes, narrow `ENTRA_API_AUDIENCES` to the value the tenant actually sends. |
+| 2 | Unlinked users | Option A: the token never links a user. An unlinked subject gets `401 entra_identity_not_linked` with a "sign in to the browser once" message; the tool shows it. Linking from the tool (option B) is not built. |
+| 3 | Station, room, license status empty | Newest status record via subquery (existing `<type>_status_latest_idx`); license `expiry_date` added. Still one query per type. |
+| 4 | No index on `modified` | Not added. Measure with `EXPLAIN ANALYZE` (command in the feature spec); add a per-model index only past about 50,000 rows or 50 ms. |
+| 5 | Stale location names and statuses in delta sync | Delta also returns rows whose location parent changed or that got a new status record; the tool does a full download every 7 days and on "Full refresh". |
+

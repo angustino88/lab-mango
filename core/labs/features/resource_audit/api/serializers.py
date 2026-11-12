@@ -192,13 +192,17 @@ class AuditCatalogItemSerializer(serializers.Serializer):
     serial_number = serializers.CharField(allow_blank=True, help_text="Equipment only; empty for other types.")
     status = serializers.CharField(
         allow_blank=True,
-        help_text="Equipment lifecycle_state or bench lifecycle_status; empty for station, room and license.",
+        help_text=(
+            "Equipment lifecycle_state, bench lifecycle_status, or the newest status record of a station, room "
+            "or license; empty when none exists."
+        ),
     )
     condition = serializers.CharField(allow_blank=True, help_text="Equipment only; empty for other types.")
     location = serializers.CharField(
         allow_blank=True,
         help_text="Bench: setup station name. Station: room name. Room: building name. Otherwise empty.",
     )
+    expiry_date = serializers.DateTimeField(allow_null=True, help_text="License expiry; null for other types.")
     updated_at = serializers.DateTimeField()
     deleted = serializers.BooleanField(help_text="True when the resource was deleted; remove it from the local copy.")
 

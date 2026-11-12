@@ -7,7 +7,15 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.labs.models import Bench, Equipment, EquipmentCategory, EquipmentKind, License, Room, RoomSlot, Station
-from core.labs.models.resource.license.license import LicenseCategory, LicenseProduct, LicenseType, LicenseVendor
+from core.labs.models.resource.license.license import (
+    LicenseCategory,
+    LicenseProduct,
+    LicenseStatusRecord,
+    LicenseType,
+    LicenseVendor,
+)
+from core.labs.models.resource.location.room import RoomStatusRecord
+from core.labs.models.resource.location.station import StationStatusRecord
 from tests.factories import UserFactory, grant_labs_role
 
 URL = "/api/labs/audit-catalog"
@@ -163,3 +171,71 @@ def test_users_without_coordinator_role_are_denied(role):
 @pytest.mark.django_db
 def test_anonymous_is_denied():
     assert APIClient().get(URL).status_code in (401, 403)
+
+
+def _by_uid(body):
+    return {item["uid"]: item for item in body["data"]}
+
+
+@pytest.mark.django_db
+class TestCatalogStatusAndDelta:
+    def test_latest_status_record_is_the_status(self, client, resources):
+        StationStatusRecord.objects.create(station=resources["station"], status="available")
+        StationStatusRecord.objects.create(station=resources["station"], status="maintenance")
+        RoomStatusRecord.objects.create(room=resources["room"], status="closed")
+        LicenseStatusRecord.objects.create(license=resources["license"], status="expired")
+
+        items = _by_uid(client.get(URL).json())
+
+        assert items[str(resources["station"].uid)]["status"] == "maintenance"
+        assert items[str(resources["room"].uid)]["status"] == "closed"
+        assert items[str(resources["license"].uid)]["status"] == "expired"
+
+    def test_license_expiry_is_returned(self, client, resources):
+        expiry = timezone.now() + timedelta(days=30)
+        License.objects.filter(pk=resources["license"].pk).update(expiry_date=expiry)
+
+        items = _by_uid(client.get(URL).json())
+
+        assert items[str(resources["license"].uid)]["expiry_date"] is not None
+        assert items[str(resources["equipment"].uid)]["expiry_date"] is None
+
+    def test_renamed_station_returns_its_benches(self, client, resources):
+        since = timezone.now()
+        Station.objects.filter(pk=resources["station"].pk).update(
+            name="Renamed station", modified=since + timedelta(seconds=1)
+        )
+
+        items = _by_uid(client.get(URL, {"changed_since": since.isoformat()}).json())
+
+        assert items[str(resources["bench"].uid)]["location"] == "Renamed station"
+        assert str(resources["station"].uid) in items
+
+    def test_renamed_room_returns_its_stations(self, client, resources):
+        since = timezone.now()
+        Room.objects.filter(pk=resources["room"].pk).update(name="Renamed room", modified=since + timedelta(seconds=1))
+
+        items = _by_uid(client.get(URL, {"changed_since": since.isoformat()}).json())
+
+        assert items[str(resources["station"].uid)]["location"] == "Renamed room"
+
+    def test_new_status_record_returns_the_resource(self, client, resources):
+        since = timezone.now()
+        StationStatusRecord.objects.create(station=resources["station"], status="issue")
+        LicenseStatusRecord.objects.create(license=resources["license"], status="revoked")
+
+        items = _by_uid(client.get(URL, {"changed_since": since.isoformat()}).json())
+
+        assert set(items) == {str(resources["station"].uid), str(resources["license"].uid)}
+        assert items[str(resources["station"].uid)]["status"] == "issue"
+
+    def test_unchanged_resources_are_not_returned(self, client, resources):
+        since = timezone.now() + timedelta(seconds=1)
+
+        assert client.get(URL, {"changed_since": since.isoformat()}).json()["data"] == []
+
+    def test_delta_query_budget(self, client, resources, django_assert_max_num_queries):
+        since = (timezone.now() - timedelta(days=1)).isoformat()
+
+        with django_assert_max_num_queries(10):
+            assert client.get(URL, {"changed_since": since}).status_code == 200

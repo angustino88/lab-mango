@@ -22,7 +22,7 @@ from core.users.access import (
     has_labs_role,
     users_holding_labs_role,
 )
-from core.users.features.auth.access_token import with_entra_access_token
+from core.users.features.auth.access_token import diagnose_access_token, with_entra_access_token
 from core.users.features.lifecycle.application import (
     _bind_entra_identity_from_operator,
     _delete_user_from_operator,
@@ -169,6 +169,7 @@ __all__ = [
     "bind_entra_identity",
     "bind_entra_identity_from_operator",
     "delete_user",
+    "diagnose_access_token",
     "ensure_urs_group_linked",
     "has_ever_been_bound",
     "replace_entra_identity",

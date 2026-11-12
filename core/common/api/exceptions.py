@@ -135,6 +135,11 @@ def api_exception_handler(exc: Exception, context: dict[str, Any]) -> Response |
         details = []
         if status_code == status.HTTP_400_BAD_REQUEST:
             code = "malformed_request"
+        # Opt-in: an APIException subclass may name a stable public code, e.g. a specific 401 reason.
+        error_code = getattr(exc, "error_code", None)
+        if isinstance(exc, exceptions.APIException) and isinstance(error_code, str) and error_code:
+            code = error_code
+            message = str(exc.detail)
 
     response.data = {
         "error": {

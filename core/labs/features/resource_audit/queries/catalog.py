@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 
 from django.core import signing
-from django.db.models import F, Q, QuerySet, Value
+from django.db.models import DateTimeField, Exists, F, Model, OuterRef, Q, QuerySet, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -15,9 +15,9 @@ from django.utils.dateparse import parse_datetime
 from core.labs.features.resource_audit.exceptions import InvalidCatalogCursorError
 from core.labs.models.resource.bench.bench import Bench
 from core.labs.models.resource.equipment.equipment import Equipment
-from core.labs.models.resource.license.license import License
-from core.labs.models.resource.location.room import Room
-from core.labs.models.resource.location.station import Station
+from core.labs.models.resource.license.license import License, LicenseStatusRecord
+from core.labs.models.resource.location.room import Room, RoomStatusRecord
+from core.labs.models.resource.location.station import Station, StationStatusRecord
 
 CATALOG_PAGE_SIZE_DEFAULT = 500
 CATALOG_PAGE_SIZE_MAX = 1000
@@ -40,40 +40,80 @@ def _base_values(queryset: QuerySet) -> QuerySet:
     return queryset.values("id", "uid", "sku", "name", "modified", "deleted_at")
 
 
+# Station, room and license status is the newest status-history record (index ``<type>_status_latest_idx``).
+_STATUS_RECORDS: dict[str, tuple[type[Model], str]] = {
+    "station": (StationStatusRecord, "station"),
+    "room": (RoomStatusRecord, "room"),
+    "license": (LicenseStatusRecord, "license"),
+}
+
+
+def _latest_status(resource_type: str) -> Coalesce:
+    model, owner = _STATUS_RECORDS[resource_type]
+    records = model._default_manager.filter(**{owner: OuterRef("pk")})
+    newest = records.order_by("-created", "-id").values("status")[:1]
+    return Coalesce(Subquery(newest), Value(""))
+
+
 def _typed_querysets() -> dict[str, QuerySet]:
     blank = Value("")
+    no_expiry = Value(None, output_field=DateTimeField())
     return {
         "equipment": _base_values(Equipment.all_objects.all()).annotate(
             serial=F("serial_number"),
             state=F("lifecycle_state"),
             item_condition=F("condition"),
             location_name=blank,
+            expires=no_expiry,
         ),
         "bench": _base_values(Bench.all_objects.all()).annotate(
             serial=blank,
             state=F("lifecycle_status"),
             item_condition=blank,
             location_name=Coalesce(F("setup_location__name"), blank),
+            expires=no_expiry,
         ),
         "station": _base_values(Station.all_objects.all()).annotate(
             serial=blank,
-            state=blank,
+            state=_latest_status("station"),
             item_condition=blank,
             location_name=Coalesce(F("room__name"), blank),
+            expires=no_expiry,
         ),
         "room": _base_values(Room.all_objects.all()).annotate(
             serial=blank,
-            state=blank,
+            state=_latest_status("room"),
             item_condition=blank,
             location_name=Coalesce(F("building__name"), blank),
+            expires=no_expiry,
         ),
         "license": _base_values(License.all_objects.all()).annotate(
             serial=blank,
-            state=blank,
+            state=_latest_status("license"),
             item_condition=blank,
             location_name=blank,
+            expires=F("expiry_date"),
         ),
     }
+
+
+def _changed_since(resource_type: str, since: datetime) -> Q:
+    """The row itself changed or was deleted, its location parent was renamed, or it got a new status record.
+
+    Parent and status changes do not touch the row's own ``modified``, so without these terms a delta sync
+    would keep a stale location name or status.
+    """
+    condition = Q(modified__gte=since) | Q(deleted_at__gte=since)
+    if resource_type == "bench":
+        condition |= Q(setup_location__modified__gte=since)
+    elif resource_type == "station":
+        condition |= Q(room__modified__gte=since)
+    elif resource_type == "room":
+        condition |= Q(building__modified__gte=since)
+    if resource_type in _STATUS_RECORDS:
+        model, owner = _STATUS_RECORDS[resource_type]
+        condition |= Q(Exists(model._default_manager.filter(**{owner: OuterRef("pk"), "created__gte": since})))
+    return condition
 
 
 def _project(resource_type: str, row: dict[str, Any]) -> dict[str, Any]:
@@ -86,6 +126,7 @@ def _project(resource_type: str, row: dict[str, Any]) -> dict[str, Any]:
         "status": row["state"] or "",
         "condition": row["item_condition"] or "",
         "location": row["location_name"] or "",
+        "expiry_date": row["expires"],
         "updated_at": max(filter(None, (row["modified"], row["deleted_at"]))),
         "deleted": row["deleted_at"] is not None,
     }
@@ -130,7 +171,8 @@ def list_audit_catalog(
     """Return one page of auditable resources of every type, ordered by (type, id).
 
     Without ``changed_since`` it is a full download of live rows. With it, rows created, changed or
-    soft-deleted at or after that time are returned, deleted rows flagged ``deleted``. Pages after the
+    soft-deleted at or after that time are returned, deleted rows flagged ``deleted``; so are rows whose
+    location parent was renamed or that got a new status record (``_changed_since``). Pages after the
     first come from ``cursor`` only, which carries the filter, the page size and the ``server_time`` of
     the first page; the client stores that ``server_time`` as its next ``changed_since``, so changes made
     while it was paging are picked up by the next sync. At most one query per resource type per page.
@@ -151,7 +193,7 @@ def list_audit_catalog(
         if changed_since is None:
             queryset = queryset.filter(deleted_at__isnull=True)
         else:
-            queryset = queryset.filter(Q(modified__gte=changed_since) | Q(deleted_at__gte=changed_since))
+            queryset = queryset.filter(_changed_since(resource_type, changed_since))
         if index == type_index and after_id:
             queryset = queryset.filter(id__gt=after_id)
         remaining = page_size - len(items)

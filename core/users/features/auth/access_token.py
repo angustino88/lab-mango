@@ -14,6 +14,8 @@ failure is a ``401`` (or ``403`` for a missing scope), never a fallback.
 from __future__ import annotations
 
 import logging
+import time
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, cast
 from uuid import UUID
@@ -32,6 +34,14 @@ logger = logging.getLogger(__name__)
 
 _INVALID = "Invalid authentication token."
 _MISSING_SCOPE = "The access token does not grant this API scope."
+
+
+class EntraIdentityNotLinked(AuthenticationFailed):
+    """A valid Entra token whose subject is not linked to any Lab Mango user yet (first web sign-in links it)."""
+
+    default_detail = "Sign in to Lab Mango in the browser once to link your Microsoft account, then retry."
+    default_code = "entra_identity_not_linked"
+    error_code = "entra_identity_not_linked"
 
 
 class EntraUnavailable(APIException):
@@ -93,6 +103,85 @@ def verify_access_token(token: str) -> dict[str, Any]:
     return claims
 
 
+def resolve_linked_user(claims: dict[str, Any]) -> User:
+    """The active user linked to the token's ``tid``/``oid``; never creates or links one."""
+    identity = (
+        EntraIdentity.objects.select_related("user")
+        .filter(tenant_id=UUID(claims["tid"]), object_id=UUID(claims["oid"]))
+        .first()
+    )
+    if identity is None:
+        # The signature, tenant and scope already passed, so this reveals nothing about other users.
+        logger.info("Entra access token rejected: subject not linked")
+        raise EntraIdentityNotLinked()
+    if not identity.user.is_active:
+        logger.info("Entra access token rejected: inactive user")
+        raise AuthenticationFailed(_INVALID)
+    return identity.user
+
+
+@dataclass(frozen=True, slots=True)
+class DiagnosticCheck:
+    name: str
+    passed: bool
+    detail: str
+
+
+# Claims shown by the diagnostic. Never the token, the signature or the object ID.
+DIAGNOSTIC_CLAIMS = ("ver", "iss", "aud", "scp", "roles", "idtyp", "tid", "exp")
+
+
+def diagnose_access_token(token: str) -> tuple[list[DiagnosticCheck], dict[str, Any]]:
+    """Run each check separately for operators; the last check is the real verifier, so results match it."""
+    checks: list[DiagnosticCheck] = []
+
+    def add(name: str, passed: bool, detail: str) -> bool:
+        checks.append(DiagnosticCheck(name, passed, detail))
+        return passed
+
+    try:
+        header = jwt.get_unverified_header(token)
+        unverified = jwt.decode(token, options={"verify_signature": False})
+    except (jwt.PyJWTError, ValueError, TypeError):
+        add("token format", False, "not a JWT")
+        return checks, {}
+    shown = {name: unverified[name] for name in DIAGNOSTIC_CLAIMS if name in unverified}
+    add("token format", True, "JWT")
+    add("algorithm", header.get("alg") == "RS256", f"alg={header.get('alg')}")
+    add("issuer", unverified.get("iss") in accepted_issuers(), f"accepted: {', '.join(sorted(accepted_issuers()))}")
+    audiences = unverified.get("aud")
+    audiences = [audiences] if isinstance(audiences, str) else list(audiences or [])
+    add(
+        "audience",
+        bool(set(audiences) & set(settings.ENTRA_API_AUDIENCES)),
+        f"accepted: {', '.join(settings.ENTRA_API_AUDIENCES)}",
+    )
+    try:
+        same_tenant = UUID(str(unverified.get("tid"))) == UUID(settings.AAD_TENANT_ID)
+    except ValueError:
+        same_tenant = False
+    add("tenant", same_tenant, "tid must equal AAD_TENANT_ID")
+    exp = unverified.get("exp")
+    add("not expired", isinstance(exp, int) and exp > time.time() - 60, "exp is in the future (60 s leeway)")
+    delegated = unverified.get("idtyp") != "app" and isinstance(unverified.get("scp"), str)
+    add("delegated user token", delegated, "needs scp; app-only tokens are refused")
+    scopes = unverified.get("scp", "").split() if delegated else []
+    add("scope", settings.ENTRA_API_AUDIT_SCOPE in scopes, f"needs {settings.ENTRA_API_AUDIT_SCOPE}")
+    try:
+        claims = verify_access_token(token)
+    except APIException as exc:
+        add("backend verification", False, f"{exc.status_code}: {exc.detail}")
+        return checks, shown
+    add("backend verification", True, "signature and all claims accepted")
+    try:
+        user = resolve_linked_user(claims)
+    except APIException as exc:
+        add("linked user", False, f"{exc.status_code}: {exc.detail}")
+        return checks, shown
+    add("linked user", True, f"user id {user.pk}")
+    return checks, shown
+
+
 class EntraAccessTokenAuthentication(authentication.BaseAuthentication):
     """``Authorization: Bearer <Entra access token>`` for views that list this class explicitly."""
 
@@ -114,15 +203,7 @@ class EntraAccessTokenAuthentication(authentication.BaseAuthentication):
         if not _claims_ours(token):
             return None
         claims = verify_access_token(token)
-        identity = (
-            EntraIdentity.objects.select_related("user")
-            .filter(tenant_id=UUID(claims["tid"]), object_id=UUID(claims["oid"]))
-            .first()
-        )
-        if identity is None or not identity.user.is_active:
-            logger.info("Entra access token rejected: no active bound user")
-            raise AuthenticationFailed(_INVALID)
-        return identity.user, claims
+        return resolve_linked_user(claims), claims
 
     def authenticate_header(self, request: Request) -> str:
         return 'Bearer realm="api"'
@@ -174,10 +255,14 @@ class EntraAccessTokenReadOnlyScheme(EntraAccessTokenScheme):
 
 
 __all__ = [
+    "DiagnosticCheck",
+    "EntraIdentityNotLinked",
     "EntraAccessTokenAuthentication",
     "EntraAccessTokenReadOnlyAuthentication",
     "EntraUnavailable",
     "accepted_issuers",
+    "diagnose_access_token",
+    "resolve_linked_user",
     "verify_access_token",
     "with_entra_access_token",
 ]

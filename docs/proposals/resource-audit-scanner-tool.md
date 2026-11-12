@@ -26,6 +26,7 @@ start tool
 │ auth.py     MSAL PublicClientApplication + encrypted token cache   │
 │ catalog.py  SQLite table: catalog (uid PK, resource_type, sku,     │
 │             name, serial_number, location, status, condition,      │
+│             expiry_date (licenses),                                │
 │             updated_at) + sync cursor                              │
 │ scan.py     QR input (USB scanner = keyboard input, or camera)     │
 │ outbox.py   SQLite table: outbox (client_audit_id PK, uid, result, │
@@ -110,7 +111,7 @@ def parse_tag(raw: str) -> uuid.UUID | None:
 
 | Step | Call | Notes |
 |---|---|---|
-| Catalog sync | First page `GET /api/labs/audit-catalog?changed_since=<last server_time>` (omit on first run); next pages `GET /api/labs/audit-catalog?cursor=<meta.pagination.next_cursor>` only | Items in `data`. Loop until `next_cursor` is null; then save `meta.server_time` as the next `changed_since`; delete rows with `deleted: true` |
+| Catalog sync | First page `GET /api/labs/audit-catalog?changed_since=<last server_time>` (omit on first run); next pages `GET /api/labs/audit-catalog?cursor=<meta.pagination.next_cursor>` only | Items in `data`. Loop until `next_cursor` is null; then save `meta.server_time` as the next `changed_since`; upsert rows by `uid`; delete rows with `deleted: true`. Do a **full** download (no `changed_since`, replace the table) every 7 days and from a "Full refresh" button |
 | Equipment detail | `GET /api/labs/equipment/uid/{uid}` | Exists. Other types: show the catalog row |
 | Push audit | `POST /api/labs/resources/uid/{uid}/audits` | Exists; `Idempotency-Key` is the new extension |
 
@@ -132,7 +133,8 @@ Response handling in the sender:
 | Status | Action |
 |---|---|
 | `201` (also with `Idempotency-Replayed: true`) | Remove the row from the outbox |
-| `401` | Get a new token (silent, else interactive), retry |
+| `401` with `error.code = entra_identity_not_linked` | Stop and show: "Sign in to Lab Mango in the browser once to link your Microsoft account, then retry." Keep the outbox |
+| `401` (other codes) | Get a new token (silent, else interactive), retry once |
 | `403` | Stop; the user lacks the coordinator/admin role |
 | `404` | Mark the row failed: the resource no longer exists; show it to the auditor |
 | `422` | Mark failed and show the error (`idempotency_key_reuse` means a bug: same key, different body) |

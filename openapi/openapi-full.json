@@ -36826,7 +36826,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Equipment lifecycle_state or bench lifecycle_status; empty for station, room and license."
+            "description": "Equipment lifecycle_state, bench lifecycle_status, or the newest status record of a station, room or license; empty when none exists."
           },
           "condition": {
             "type": "string",
@@ -36835,6 +36835,12 @@
           "location": {
             "type": "string",
             "description": "Bench: setup station name. Station: room name. Room: building name. Otherwise empty."
+          },
+          "expiry_date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "License expiry; null for other types."
           },
           "updated_at": {
             "type": "string",
@@ -36848,6 +36854,7 @@
         "required": [
           "condition",
           "deleted",
+          "expiry_date",
           "location",
           "name",
           "resource_type",

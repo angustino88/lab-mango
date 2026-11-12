@@ -1,5 +1,6 @@
 """Entra access tokens for the desktop audit tool on the endpoints that opt in."""
 
+import io
 import time
 import uuid
 from unittest.mock import MagicMock, patch
@@ -8,6 +9,8 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings as django_settings
+from django.core.checks import run_checks
+from django.core.management import CommandError, call_command
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -110,8 +113,13 @@ class TestEntraAccessToken:
 
         assert _client(_token(other_key, coordinator)).get(CATALOG).status_code == 401
 
-    def test_unbound_subject_is_unauthorized(self, jwks, signing_key, db):
-        assert _client(_token(signing_key)).get(CATALOG).status_code == 401
+    def test_unbound_subject_gets_not_linked_code(self, jwks, signing_key, db):
+        response = _client(_token(signing_key)).get(CATALOG)
+
+        assert response.status_code == 401
+        assert response.json()["error"]["code"] == "entra_identity_not_linked"
+        assert "browser" in response.json()["error"]["message"]
+        assert response["WWW-Authenticate"].startswith("Bearer")
 
     def test_inactive_user_is_unauthorized(self, jwks, signing_key, coordinator):
         coordinator.is_active = False
@@ -157,3 +165,78 @@ class TestEntraAccessToken:
 
     def test_other_endpoints_do_not_accept_entra_tokens(self, jwks, signing_key, coordinator):
         assert _client(_token(signing_key, coordinator)).get("/api/labs/audits").status_code == 401
+
+
+def _run_check_command(token):
+    out = io.StringIO()
+    with patch("sys.stdin", io.StringIO(token)):
+        try:
+            call_command("check_entra_access_token", stdout=out)
+        except CommandError:
+            return False, out.getvalue()
+    return True, out.getvalue()
+
+
+@pytest.mark.django_db
+class TestCheckEntraAccessTokenCommand:
+    def test_valid_token_passes_every_check(self, jwks, signing_key, coordinator):
+        token = _token(signing_key, coordinator)
+
+        accepted, output = _run_check_command(token)
+
+        assert accepted
+        assert "FAIL" not in output
+        assert "linked user" in output
+        assert token not in output
+        assert str(coordinator.entra_identity.object_id) not in output
+
+    def test_bearer_prefix_is_accepted(self, jwks, signing_key, coordinator):
+        accepted, _ = _run_check_command("Bearer " + _token(signing_key, coordinator))
+
+        assert accepted
+
+    def test_wrong_audience_is_reported(self, jwks, signing_key, coordinator):
+        accepted, output = _run_check_command(_token(signing_key, coordinator, aud="api://someone-else"))
+
+        assert not accepted
+        assert "FAIL  audience" in output
+
+    def test_missing_scope_is_reported(self, jwks, signing_key, coordinator):
+        accepted, output = _run_check_command(_token(signing_key, coordinator, scp="User.Read"))
+
+        assert not accepted
+        assert "FAIL  scope" in output
+
+    def test_unlinked_subject_is_reported(self, jwks, signing_key, db):
+        accepted, output = _run_check_command(_token(signing_key))
+
+        assert not accepted
+        assert "FAIL  linked user" in output
+
+    def test_garbage_is_reported(self, db):
+        accepted, output = _run_check_command("not-a-token")
+
+        assert not accepted
+        assert "FAIL  token format" in output
+
+
+def _error_ids():
+    return {message.id for message in run_checks(include_deployment_checks=False)}
+
+
+def test_startup_check_requires_audience_and_scope(settings):
+    settings.ENTRA_API_ACCESS_TOKENS_ENABLED = True
+    settings.ENTRA_API_AUDIENCES = []
+    settings.ENTRA_API_AUDIT_SCOPE = "Two Scopes"
+
+    ids = _error_ids()
+
+    assert {"users.E010", "users.E011"} <= ids
+
+
+def test_startup_check_is_quiet_when_configured_or_disabled(settings):
+    assert not {"users.E010", "users.E011", "users.E012", "users.E013"} & _error_ids()
+    settings.ENTRA_API_ACCESS_TOKENS_ENABLED = False
+    settings.ENTRA_API_AUDIENCES = []
+
+    assert "users.E010" not in _error_ids()

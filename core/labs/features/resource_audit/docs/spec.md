@@ -52,7 +52,21 @@ Invariants:
   advisory lock on the same pair, so concurrent retries wait and replay instead of failing.
 - Audit results never change lifecycle state, condition, booking or assignment status.
 
+Catalog fields: `status` is equipment `lifecycle_state`, bench `lifecycle_status`, or the newest status record
+of a station, room or license; `expiry_date` is set for licenses only. A delta (`changed_since`) also returns
+rows whose location parent was renamed (bench ← station, station ← room, room ← building) or that got a new
+status record, so locations and statuses do not go stale.
+
+Query performance: one query per type per page (status via a subquery on `<type>_status_latest_idx`).
+`modified` is not indexed (decision 2026-11-12: measure first). Add an index on `modified` for a model only when
+it passes about 50,000 rows or a delta query on it takes over about 50 ms. Measure with, for example:
+`EXPLAIN (ANALYZE, BUFFERS) SELECT id FROM labs_equipment WHERE modified >= now() - interval '1 day' OR
+deleted_at >= now() - interval '1 day' ORDER BY id LIMIT 501;`
+
 Authentication: these three views accept a Microsoft Entra delegated access token with scope
 `ENTRA_API_AUDIT_SCOPE` (`core.users.features.auth.access_token`) in addition to the Lab Mango JWT. The token's
-`tid`/`oid` must map to an active, already bound `EntraIdentity`. Authorization is unchanged: lab coordinators
-and admins. Settings: `ENTRA_API_ACCESS_TOKENS_ENABLED`, `ENTRA_API_AUDIENCES`, `ENTRA_API_AUDIT_SCOPE`.
+`tid`/`oid` must map to an active, already bound `EntraIdentity`; an unlinked subject gets
+`401 entra_identity_not_linked` (sign in to the web frontend once to link it). Authorization is unchanged: lab coordinators
+and admins. Settings: `ENTRA_API_ACCESS_TOKENS_ENABLED`, `ENTRA_API_AUDIENCES`, `ENTRA_API_AUDIT_SCOPE`, checked at startup
+(`users.E010`-`E013`). Verify a real token with `python manage.py check_entra_access_token < token.txt`: it
+prints pass/fail per check and never the token.
