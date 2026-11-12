@@ -30,6 +30,27 @@ from .serializer import NotificationSerializer
                 required=False,
                 description="Number of results to return per page.",
             ),
+            OpenApiParameter(
+                "since",
+                {"type": "integer", "minimum": 0},
+                OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    "Reconnection cursor: return only notifications whose id is greater than this value. "
+                    "Pass the highest id already received. A value that is not a non-negative integer is ignored."
+                ),
+            ),
+            OpenApiParameter(
+                "user_id",
+                {"type": "integer", "minimum": 0},
+                OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    "Return only notifications targeted at this user; broadcasts are excluded. Only the caller's "
+                    "own id is honoured: any other id returns an empty page. A value that is not a non-negative "
+                    "integer is ignored."
+                ),
+            ),
         ],
         responses={
             200: extend_schema_serializer(many=False)(

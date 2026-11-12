@@ -103138,6 +103138,26 @@
             "minimum": 1,
             "maximum": 100
           }
+        },
+        {
+          "name": "since",
+          "in": "query",
+          "required": false,
+          "description": "Reconnection cursor: return only notifications whose id is greater than this value. Pass the highest id already received. A value that is not a non-negative integer is ignored.",
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        {
+          "name": "user_id",
+          "in": "query",
+          "required": false,
+          "description": "Return only notifications targeted at this user; broadcasts are excluded. Only the caller's own id is honoured: any other id returns an empty page. A value that is not a non-negative integer is ignored.",
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
         }
       ],
       "request_body": null,
