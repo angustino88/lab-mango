@@ -357,7 +357,10 @@ class LicenseProductListAPIView(AppListAPIView, FeatureAPIView):
         query, error = self.validate_query()
         if error is not None:
             return error
-        return self.list_response_sync(list_license_products(vendor_id=query.get("vendor_id") if query else None))
+        vendor_id = query.get("vendor_id") if query else None
+        return self.list_response_sync(
+            list_license_products(search=query.get("q") if query else None, vendor_id=vendor_id)
+        )
 
 
 class LicenseProductDetailAPIView(FeatureAPIView):

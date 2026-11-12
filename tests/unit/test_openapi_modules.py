@@ -444,7 +444,10 @@ def _is_page_number_envelope(schema, components):
 
 
 def test_every_page_number_list_documents_page_and_page_size():
-    """A paginated envelope without documented paging parameters leaves clients paging locally."""
+    """A paginated envelope without documented paging parameters leaves clients paging locally.
+
+    The paginator answers a page beyond the last one with 404, so that response is documented too.
+    """
     schema = SchemaGenerator().get_schema(request=None, public=True)
     components = schema["components"]["schemas"]
     paged = []
@@ -457,6 +460,8 @@ def test_every_page_number_list_documents_page_and_page_size():
         if not body or not _is_page_number_envelope(body["schema"], components):
             continue
         paged.append(path)
+        if "404" not in operation["responses"]:
+            missing.append(f"{path} 404 (page beyond the last page)")
         parameters = {parameter["name"]: parameter for parameter in _query_parameters(operation)}
         for name in ("page", "page_size"):
             parameter = parameters.get(name)
@@ -465,5 +470,8 @@ def test_every_page_number_list_documents_page_and_page_size():
                 continue
             assert not parameter.get("required", False), (path, name)
             assert parameter["schema"]["type"] == "integer", (path, name)
+            assert parameter["schema"].get("minimum") == 1, (path, name)
+        if "page_size" in parameters:
+            assert parameters["page_size"]["schema"].get("maximum") == 100, path
     assert "/api/labs/equipment" in paged
     assert missing == []

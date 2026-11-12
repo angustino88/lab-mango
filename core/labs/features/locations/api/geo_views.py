@@ -80,7 +80,8 @@ class CityListAPIView(AppListAPIView, FeatureAPIView):
         query, error = self.validate_query()
         if error is not None:
             return error
-        return self.list_response_sync(list_cities(country_id=query.get("country_id") if query else None))
+        country_id = query.get("country_id") if query else None
+        return self.list_response_sync(list_cities(search=query.get("q") if query else None, country_id=country_id))
 
 
 class CityDetailAPIView(FeatureAPIView):
@@ -116,7 +117,8 @@ class BuildingListAPIView(AppListAPIView, FeatureAPIView):
         query, error = self.validate_query()
         if error is not None:
             return error
-        return self.list_response_sync(list_buildings(city_id=query.get("city_id") if query else None))
+        city_id = query.get("city_id") if query else None
+        return self.list_response_sync(list_buildings(search=query.get("q") if query else None, city_id=city_id))
 
 
 class BuildingDetailAPIView(FeatureAPIView):

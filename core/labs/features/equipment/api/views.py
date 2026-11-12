@@ -778,7 +778,10 @@ class EquipmentKindListAPIView(AppListAPIView, EquipmentAPIView):
         query, error = self.validate_query()
         if error is not None:
             return error
-        return self.list_response_sync(list_equipment_kinds(category_id=query.get("category_id") if query else None))
+        category_id = query.get("category_id") if query else None
+        return self.list_response_sync(
+            list_equipment_kinds(search=query.get("q") if query else None, category_id=category_id)
+        )
 
 
 class EquipmentKindDetailAPIView(EquipmentAPIView):
@@ -818,7 +821,9 @@ class EquipmentTypeListAPIView(AppListAPIView, EquipmentAPIView):
             return error
         kind_id = query.get("kind_id") if query else None
         category_id = query.get("category_id") if query else None
-        return self.list_response_sync(list_equipment_types(kind_id=kind_id, category_id=category_id))
+        return self.list_response_sync(
+            list_equipment_types(search=query.get("q") if query else None, kind_id=kind_id, category_id=category_id)
+        )
 
 
 class EquipmentTypeDetailAPIView(EquipmentAPIView):
@@ -859,7 +864,9 @@ class EquipmentManufacturerListAPIView(AppListAPIView, EquipmentAPIView):
         if error is not None:
             return error
         return self.list_response_sync(
-            list_equipment_manufacturers(category_id=query.get("category_id") if query else None)
+            list_equipment_manufacturers(
+                search=query.get("q") if query else None, category_id=query.get("category_id") if query else None
+            )
         )
 
 
@@ -902,7 +909,11 @@ class EquipmentProductModelListAPIView(AppListAPIView, EquipmentAPIView):
             return error
         manufacturer_id = query.get("manufacturer_id") if query else None
         type_id = query.get("type_id") if query else None
-        return self.list_response_sync(list_equipment_product_models(manufacturer_id=manufacturer_id, type_id=type_id))
+        return self.list_response_sync(
+            list_equipment_product_models(
+                search=query.get("q") if query else None, manufacturer_id=manufacturer_id, type_id=type_id
+            )
+        )
 
 
 class EquipmentProductModelDetailAPIView(EquipmentAPIView):
@@ -983,7 +994,9 @@ class ResourceGroupListAPIView(AppListAPIView, EquipmentAPIView):
         if error is not None:
             return error
         department_id = query.get("department_id") if query else None
-        return self.list_response_sync(list_resource_groups(department_id=department_id))
+        return self.list_response_sync(
+            list_resource_groups(search=query.get("q") if query else None, department_id=department_id)
+        )
 
 
 class ResourceGroupDetailAPIView(EquipmentAPIView):

@@ -10,7 +10,18 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
-from core.labs.models import EquipmentCategory, EquipmentKind, Room
+from core.labs.models import (
+    Building,
+    City,
+    EquipmentCategory,
+    EquipmentKind,
+    EquipmentManufacturer,
+    EquipmentProductModel,
+    EquipmentType,
+    ResourceGroup,
+    Room,
+)
+from core.labs.models.resource.license.license import LicenseProduct
 
 pytestmark = pytest.mark.django_db
 
@@ -76,3 +87,53 @@ def test_catalog_list_pages_with_filters(admin_client):
     assert response.status_code == 200, response.data
     assert len(response.data["data"]) == 1
     assert response.data["meta"]["pagination"]["count"] == 3
+
+
+def _catalog_rows(path, names):
+    category = EquipmentCategory.objects.create(key=f"cat-{uuid.uuid4().hex[:6]}", name="Cat", definition="Cat")
+    kind = EquipmentKind.objects.create(category=category, name=f"Kind {uuid.uuid4().hex[:6]}")
+    manufacturer = EquipmentManufacturer.objects.create(name=f"Maker {uuid.uuid4().hex[:6]}")
+    category.manufacturers.add(manufacturer)
+    equipment_type = EquipmentType.objects.create(kind=kind, name=f"Type {uuid.uuid4().hex[:6]}")
+    create = {
+        "/api/labs/equipment-kinds": lambda name: EquipmentKind.objects.create(category=category, name=name),
+        "/api/labs/equipment-types": lambda name: EquipmentType.objects.create(kind=kind, name=name),
+        "/api/labs/equipment-manufacturers": lambda name: EquipmentManufacturer.objects.create(name=name),
+        "/api/labs/equipment-product-models": lambda name: EquipmentProductModel.objects.create(
+            manufacturer=manufacturer, equipment_type=equipment_type, name=name
+        ),
+        "/api/labs/resource-groups": lambda name: ResourceGroup.objects.create(name=name),
+        "/api/labs/cities": lambda name: City.objects.create(name=name),
+        "/api/labs/buildings": lambda name: Building.objects.create(name=name),
+        "/api/labs/license-products": lambda name: LicenseProduct.objects.create(name=name),
+    }[path]
+    return [create(name) for name in names]
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/labs/buildings",
+        "/api/labs/cities",
+        "/api/labs/equipment-kinds",
+        "/api/labs/equipment-manufacturers",
+        "/api/labs/equipment-product-models",
+        "/api/labs/equipment-types",
+        "/api/labs/license-products",
+        "/api/labs/resource-groups",
+    ],
+)
+def test_catalog_list_q_filters_by_name(admin_client, path):
+    token = uuid.uuid4().hex[:8]
+    match, _other = _catalog_rows(path, [f"Alpha {token} unit", f"Beta {uuid.uuid4().hex[:8]} unit"])
+    response = admin_client.get(path, {"q": token.upper()})
+    assert response.status_code == 200, response.data
+    assert [row["id"] for row in response.data["data"]] == [match.pk]
+    assert response.data["meta"]["pagination"]["count"] == 1
+
+
+@pytest.mark.parametrize("path", PAGED_LISTS)
+def test_page_beyond_the_last_is_not_found(admin_client, path):
+    response = admin_client.get(path, {"page": 9999})
+    assert response.status_code == 404, response.data
+    assert response.data["error"]["code"] == "not_found"

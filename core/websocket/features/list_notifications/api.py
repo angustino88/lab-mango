@@ -3,7 +3,7 @@
 from django.db.models import Q
 from django.utils import timezone
 from drf_api_contracts import ResponseContract, ResponseSchemaFactory
-from drf_spectacular.utils import extend_schema, extend_schema_serializer, extend_schema_view
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_serializer, extend_schema_view
 from rest_framework import generics
 
 from core.common.api.pagination import ResultsSetPagination
@@ -15,6 +15,22 @@ from .serializer import NotificationSerializer
 @extend_schema_view(
     get=extend_schema(
         tags=["Websocket Notifications"],
+        parameters=[
+            OpenApiParameter(
+                "page",
+                {"type": "integer", "minimum": 1},
+                OpenApiParameter.QUERY,
+                required=False,
+                description="A page number within the paginated result set.",
+            ),
+            OpenApiParameter(
+                "page_size",
+                {"type": "integer", "minimum": 1, "maximum": 100},
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Number of results to return per page.",
+            ),
+        ],
         responses={
             200: extend_schema_serializer(many=False)(
                 ResponseSchemaFactory.paginated("Notification", NotificationSerializer)
