@@ -2,8 +2,8 @@
 
 - Tier: T2 · Status: Draft, not approved, nothing implemented · Date: 2026-11-12
 - Scope: `core/labs/features/resource_audit`, a new audit-catalog read, `core/users/features/auth`
-  (new authentication class), changes to the existing frontend Entra app registration, frontend tag page
-  and label printing.
+  (new authentication class), changes to the existing frontend Entra app registration, frontend label
+  printing, and the tool guide `docs/proposals/resource-audit-scanner-tool.md`.
 - Basis: read-only review of the code at commit `f8af818`. No code was changed and no checks were run.
 
 ## Problem and acceptance criteria
@@ -13,7 +13,8 @@ the resources, scans a QR tag, shows the resource, and sends one audit result pe
 
 Owner decisions (2026-11-12):
 - New QR tags are printed now; old SKU-only QR tags are replaced (development phase).
-- The QR holds the resource `uid`. SKU, name and serial number are printed as text next to it.
+- The QR holds only the resource `uid` (plain UUID text, no host or URL). SKU, name and serial number are
+  printed as text next to it.
 - Every resource type is tagged and audited: equipment, bench, station, room, license.
 - A license gets its **own** tag (license `uid`) attached to its carrier hardware (option A). No carrier
   model is added. Licenses without hardware are audited on the web, not in the tool.
@@ -68,7 +69,7 @@ Tool workflow:
 1. Sign in with Microsoft. The tool is written in Python and uses MSAL for Python as a public client
    (Windows broker or system browser). No secret in the tool.
 2. Download the audit catalog; later runs request only rows changed since the last cursor.
-3. Scan a QR: `https://<lab-mango-host>/t/<uid>`. The tool reads the last path segment as `uid`. Fallback when
+3. Scan a QR: the content is the `uid` itself; the tool checks it is a valid UUID. Fallback when
    the tag is damaged: type the SKU and pick from the local matches (type shown).
 4. Look up the `uid` in the local catalog; not found → "Unknown tag". Online, fetch fresh detail.
 5. Record the result into a local outbox (SQLite) with a tool-generated `client_audit_id` (UUID) and the
@@ -81,7 +82,7 @@ Invariants:
 - I3 Audit result, lifecycle state, condition and booking/assignment status stay separate (AGENTS.md rule 2).
   A FAIL result never changes `lifecycle_state` or `condition`; marking a unit lost stays the manual command
   in `core/labs/features/equipment/application/change_state.py`.
-- I4 The catalog and tag page never include `License.identifier`.
+- I4 The catalog never includes `License.identifier`.
 
 ## Module ownership and allowed dependencies
 
@@ -90,7 +91,7 @@ Invariants:
 | Audit catalog read | `core/labs/features/resource_audit/queries` (new selector) and `api` | Labs resource models through the feature's existing model imports; other features only via `public.py` |
 | Idempotent record | `core/labs/features/resource_audit/application/commands.py` | none new |
 | Entra access-token authentication | `core/users/features/auth` (new `authentication` class) | `core.users.models.EntraIdentity` |
-| Tag page, label printing | frontend | the catalog and existing detail endpoints |
+| Label printing | frontend | the catalog endpoint |
 
 `core.common` gains no business imports.
 
@@ -166,7 +167,7 @@ Indexes on `(updated_at, id)` per resource table are needed if they do not exist
 - The tool is a public client: no client secret, PKCE, tokens cached encrypted by Windows (DPAPI or broker).
 - Local data: the catalog and outbox are internal data. The SQLite file is encrypted (or stored in a
   DPAPI-protected location) and can be wiped from the tool.
-- A QR tag is an identifier, not a credential; the tag page `/t/<uid>` requires login.
+- A QR tag is an identifier, not a credential. A phone camera shows only the UUID text; it opens nothing.
 
 ## Async/integration behavior
 
@@ -182,7 +183,7 @@ JWKS). JWKS unavailable → `503`, matching the routing sync behavior.
    - Optional: "Allow public client flows" = Yes, only if device-code sign-in is used.
 2. Backend: migration for the two columns and the constraint (additive); authentication class; catalog
    endpoint; idempotency in `record_resource_audit`; regenerated OpenAPI; updated `resource_audit/docs/spec.md`.
-3. Frontend: label printing page (QR with `uid` URL, SKU, name, serial) and `/t/<uid>` page. The QR library
+3. Frontend: label printing page (QR with the plain `uid`, plus SKU, name, serial as text). The QR library
    is a new frontend dependency (AGENTS.md rule 7: purpose, alternative, owner needed).
 4. Print and attach new tags for all five types; license tags go on the carrier hardware.
 5. Tool release.
@@ -201,7 +202,7 @@ Rollback: disable the new authentication class in settings; the columns are null
 |---|---|
 | AC1 | Valid access token with scope → audit has that user as `auditor`; missing scope → 403; unknown `oid` → 401; wrong audience or tenant → 401 |
 | AC2 | Catalog returns all five types; `changed_since` returns only changed rows; deleted rows returned with `deleted: true`; cursor paging stable |
-| AC3 | Each catalog row has a unique `uid`; tag URL parsing (tool-side test) |
+| AC3 | Each catalog row has a unique `uid`; tag parsing accepts a UUID and rejects other text (tool-side test) |
 | AC4 | Record by uid for each of the five types |
 | AC5 | Same key + body → one row, replay header; different body → 422; parallel same key → one row |
 | AC6 | Plain Labs user and no-role user → 403 on endpoints 1 and 3 |
@@ -215,6 +216,8 @@ Rollback: disable the new authentication class in settings; the columns are null
 - **Reuse `/api/aad-login` from the tool.** Needs CSRF cookie, nonce secret and refresh cookie built for a
   browser. Rejected as fragile.
 - **QR holds the SKU.** SKU is not unique across types, can be edited and reused. Rejected for new tags.
+- **QR holds a URL (`https://<host>/t/<uid>`).** Lets a phone open the resource page, but ties every printed
+  tag to a domain. Rejected by the owner (2026-11-12) in favor of the plain `uid`.
 - **Model license carriers as equipment (option B).** Handles several licenses per carrier and audits the
   carrier itself. The owner chose option A (one tag per license); B stays possible later.
 - **Audit sessions to detect missing items.** Out of scope by owner decision.
@@ -228,9 +231,9 @@ Rollback: disable the new authentication class in settings; the columns are null
 ## Open questions / decisions needed from the owner
 
 Decided (2026-11-12):
-1. Tag URL host: the frontend's public address, because `/t/<uid>` is a frontend page. The label page reads
-   it from frontend configuration (a tag base URL setting), never hard-coded. Print tags with the
-   production frontend address so phone scans keep working after go-live. The tool reads only the `uid`.
+1. Tag content: the plain `uid` only, no host or URL. Tags never depend on a domain, so no reprint when hosts
+   change. Trade-off accepted: a phone camera scan shows the UUID text and opens no page; there is no
+   frontend `/t/<uid>` route.
 2. Owners: the repository owner (full stack) owns the backend, the frontend and the QR dependency. Creating
    the Entra changes on the existing app registration needs rights in the Microsoft tenant; if the owner
    does not hold them, a
