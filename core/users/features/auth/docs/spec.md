@@ -45,8 +45,15 @@ The Authentication feature manages session establishment, token lifecycle, local
 - **Never In Body:** Refresh tokens are never accepted in, nor emitted to, request/response bodies.
 
 ### 3.2 Anti-CSRF & Replay Defense
-- **Cookie Mutations:** All endpoints that accept credentials or tokens via cookies enforce `CookieCSRFPermission` checking `X-CSRFToken` request headers.
-- **Entra Anti-Replay:** Azure AD authentication requires pre-flight challenge generation (`POST /api/aad-login/challenge`) issuing a cryptographically secure nonce stored in an HttpOnly challenge cookie (`AAD_LOGIN_CHALLENGE_COOKIE`).
+- **CSRF:** login, refresh and logout require the CSRF cookie and the `X-CSRFToken` header
+  (`CookieCSRFPermission`). The browser obtains both from `GET /api/csrf-token`, which writes nothing.
+- **Entra replay defense (browser-held secret, 2026-11-12):** before Microsoft sign-in the browser creates a
+  random `nonce_secret` and passes `nonce = base64url(SHA-256(nonce_secret))` (no padding) to MSAL
+  `loginRedirect`. `POST /api/aad-login` receives the ID token **and** the `nonce_secret`; the backend checks
+  the token's `nonce` against the secret, refuses tokens issued more than `ENTRA_LOGIN_MAX_TOKEN_AGE`
+  (10 minutes) ago, and records the nonce digest in `EntraLoginNonce` (unique), so each ID token logs in once.
+  No backend call is needed before Microsoft sign-in, so the flow works directly and behind the Router.
+  Frontend guide: [frontend-login.md](frontend-login.md).
 
 ### 3.3 Rate Limiting & Throttling
 - All public endpoints enforce `ScopedRateThrottle` (`auth_login`, `auth_refresh`, `auth_otp`).
@@ -61,8 +68,8 @@ The Authentication feature manages session establishment, token lifecycle, local
 | `POST /api/logout` | `UserLogoutView` | Empty | 200 `EmptyPayloadSerializer` | 403 (`forbidden`) |
 | `POST /api/refresh-token` | `UserRefreshTokenView` | Cookie only (`refresh_token`) | `RefreshTokenResponseSerializer` (`token`, `user`) | 401 (`invalid_refresh_token`), 403, 503 |
 | `POST /api/send-otp` | `SendUserOTPView` | `SendOTPSerializer` (`username`, `otp`) | `SendOTPResponseSerializer` (`message`) | 400, 403, 422, 503 (`service_unavailable`) |
-| `POST /api/aad-login/challenge` | `UserAADChallengeView` | Empty | `AADChallengeResponseSerializer` (`nonce`, `csrf_token`) | 503 |
-| `POST /api/aad-login` | `UserAADLoginView` | `AADLoginSerializer` (`id_token`) | `AADLoginResponseSerializer` (`token`, `user`) | 401 (`unauthorized`), 422, 503 |
+| `GET /api/csrf-token` | `CSRFTokenView` | Empty | `CSRFTokenResponseSerializer` (`csrf_token`) | — |
+| `POST /api/aad-login` | `UserAADLoginView` | `AADLoginSerializer` (`id_token`, `nonce_secret`) | `AADLoginResponseSerializer` (`token`, `user`) | 401 (`unauthorized`), 422, 503 |
 
 ---
 
@@ -72,24 +79,18 @@ The Authentication feature manages session establishment, token lifecycle, local
 sequenceDiagram
   autonumber
   actor User
-  participant Client as Web Frontend
-  participant API as UserAuth API
-  participant Service as Auth Application
+  participant Client as Web Frontend (MSAL)
+  participant MS as Microsoft Entra
+  participant API as Lab Mango backend
   participant DB as PostgreSQL
 
-  rect rgb(240, 248, 255)
-    note over User, DB: Entra ID SSO Flow
-    Client->>API: POST /api/aad-login/challenge
-    API->>Service: create_login_challenge()
-    Service-->>API: (nonce, challenge_id)
-    API-->>Client: 200 OK (nonce) + Set-Cookie: AAD_CHALLENGE
-    Client->>User: Redirect to Microsoft Login (with nonce)
-    User-->>Client: Returns ID Token
-    Client->>API: POST /api/aad-login (id_token) + Cookie: AAD_CHALLENGE
-    API->>Service: aad_login(id_token, challenge_id)
-    Service->>Service: Validate signature, aud, tid, and nonce
-    Service->>DB: Upsert User & EntraIdentity
-    Service-->>API: (access_jwt, refresh_jwt, user_dict)
-    API-->>Client: 200 OK (access_jwt) + Set-Cookie: refresh_token
-  end
+  Client->>API: GET /api/csrf-token
+  API-->>Client: csrf_token + CSRF cookie
+  Client->>Client: secret = random; nonce = base64url(SHA-256(secret)); keep secret in sessionStorage
+  Client->>MS: loginRedirect({ scopes, nonce })
+  MS-->>Client: ID token (contains nonce)
+  Client->>API: POST /api/aad-login { id_token, nonce_secret } + X-CSRFToken
+  API->>API: Validate signature, aud, iss, tid; SHA-256(secret) == nonce; token recent
+  API->>DB: Insert nonce digest (unique: single use); find or first-login-bind identity
+  API-->>Client: 200 (access token) + Set-Cookie: refresh_token
 ```

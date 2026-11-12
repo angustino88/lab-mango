@@ -1,4 +1,4 @@
-import hashlib
+import secrets
 import time
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
@@ -7,8 +7,8 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
-from django.utils import timezone
 
+from core.users.features.auth.aad_login.service import nonce_for_secret
 from core.users.models import EntraIdentity
 
 
@@ -46,14 +46,14 @@ async def test_aad_login_success(api_client, user, rsa_key_pair):
     user.username = "testuser"
     await user.asave()
 
-    challenge = await api_client.post("/api/aad-login/challenge")
+    secret = secrets.token_urlsafe(32)
     object_id = uuid4()
     await EntraIdentity.objects.acreate(user=user, tenant_id=settings.AAD_TENANT_ID, object_id=object_id)
     id_token = make_test_id_token(
         rsa_key_pair,
         username="testuser",
         name="Test User",
-        nonce=challenge.json()["data"]["nonce"],
+        nonce=nonce_for_secret(secret),
         object_id=object_id,
     )
 
@@ -67,7 +67,7 @@ async def test_aad_login_success(api_client, user, rsa_key_pair):
 
         resp = await api_client.post(
             "/api/aad-login",
-            data={"id_token": id_token},
+            data={"id_token": id_token, "nonce_secret": secret},
             content_type="application/json",
         )
 
@@ -89,7 +89,7 @@ async def test_aad_login_invalid_token_returns_400(api_client, rsa_key_pair):
 
         resp = await api_client.post(
             "/api/aad-login",
-            data={"id_token": "not.a.valid.token"},
+            data={"id_token": "not.a.valid.token", "nonce_secret": secrets.token_urlsafe(32)},
             content_type="application/json",
         )
 
@@ -114,7 +114,7 @@ async def test_aad_login_user_not_found_returns_400(api_client, rsa_key_pair):
 
         resp = await api_client.post(
             "/api/aad-login",
-            data={"id_token": id_token},
+            data={"id_token": id_token, "nonce_secret": secrets.token_urlsafe(32)},
             content_type="application/json",
         )
 
@@ -126,17 +126,10 @@ async def test_aad_login_user_not_found_returns_400(api_client, rsa_key_pair):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-async def test_aad_login_invalid_challenge_does_not_bind_identity(api_client, user, rsa_key_pair, settings):
-    from core.users.models import EntraLoginChallenge
-
+async def test_aad_login_wrong_nonce_secret_does_not_bind_identity(api_client, user, rsa_key_pair, settings):
     settings.ENTRA_BIND_BY_USERNAME = True
     user.username = "first-login-user"
     await user.asave()
-    invalid_nonce = "synthetic-nonce-not-matching-token"
-    challenge = await EntraLoginChallenge.objects.acreate(
-        nonce_digest=hashlib.sha256(invalid_nonce.encode()).hexdigest(),
-        expires_at=timezone.now() + settings.AAD_LOGIN_CHALLENGE_LIFETIME,
-    )
     id_token = make_test_id_token(
         rsa_key_pair,
         username="first-login-user",
@@ -152,9 +145,8 @@ async def test_aad_login_invalid_challenge_does_not_bind_identity(api_client, us
 
         response = await api_client.post(
             "/api/aad-login",
-            data={"id_token": id_token},
+            data={"id_token": id_token, "nonce_secret": secrets.token_urlsafe(32)},
             content_type="application/json",
-            headers={"Cookie": f"{settings.AAD_LOGIN_CHALLENGE_COOKIE}={challenge.pk}"},
         )
 
     assert response.status_code == 401

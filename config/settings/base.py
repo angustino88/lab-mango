@@ -104,8 +104,9 @@ AAD_JWKS_URL = env(
 )
 AAD_TENANT_ID = env("AAD_TENANT_ID", default="0ae51e19-07c8-4e4b-bb6d-648ee58410f4")
 AAD_ISSUER = f"https://login.microsoftonline.com/{AAD_TENANT_ID}/v2.0"
-AAD_LOGIN_CHALLENGE_LIFETIME = timedelta(minutes=5)
-AAD_LOGIN_CHALLENGE_COOKIE = "entra_login_challenge"
+# Entra login replay protection: the browser sends SHA-256(secret) as the nonce to Microsoft and the
+# secret to /api/aad-login. ID tokens older than this are refused; each nonce is accepted once.
+ENTRA_LOGIN_MAX_TOKEN_AGE = timedelta(minutes=10)
 # First login only: bind an unbound Entra object ID to the existing non-privileged user whose username
 # matches preferred_username (full UPN or local part). Never creates users.
 ENTRA_BIND_BY_USERNAME = env.bool("ENTRA_BIND_BY_USERNAME", default=True)

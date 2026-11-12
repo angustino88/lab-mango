@@ -4,8 +4,6 @@ Hand-written part: PostgreSQL triggers that make RoleAuditEvent append-only (no 
 DELETE). Retention, if ever needed, requires a reviewed migration that replaces the trigger.
 """
 
-import uuid
-
 import django.contrib.auth.models
 import django.contrib.auth.validators
 import django.db.models.deletion
@@ -58,20 +56,20 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="EntraLoginChallenge",
+            name="EntraLoginNonce",
             fields=[
                 (
                     "id",
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
+                    models.BigAutoField(
+                        auto_created=True,
                         primary_key=True,
                         serialize=False,
+                        verbose_name="ID",
                     ),
                 ),
-                ("nonce_digest", models.CharField(max_length=64)),
+                ("nonce_digest", models.CharField(max_length=64, unique=True)),
+                ("used_at", models.DateTimeField(auto_now_add=True)),
                 ("expires_at", models.DateTimeField(db_index=True)),
-                ("consumed_at", models.DateTimeField(blank=True, null=True)),
             ],
         ),
         migrations.CreateModel(

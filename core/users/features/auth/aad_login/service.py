@@ -1,18 +1,21 @@
+import base64
 import hashlib
 import logging
+import re
 import secrets
+from datetime import UTC, datetime
 from functools import lru_cache
 from uuid import UUID
 
 import jwt
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from jwt import PyJWKClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from core.users.models import EntraIdentity, EntraLoginChallenge, User
+from core.users.models import EntraIdentity, EntraLoginNonce, User
 from core.users.public import BindEntraIdentityInput, bind_entra_identity, has_ever_been_bound
 
 logger = logging.getLogger(__name__)
@@ -63,13 +66,41 @@ def _decode_id_token(id_token: str) -> dict:
         raise AADAuthError(INVALID_SSO_TOKEN) from exc
 
 
-def create_login_challenge() -> tuple[EntraLoginChallenge, str]:
-    nonce = secrets.token_urlsafe(32)
-    challenge = EntraLoginChallenge.objects.create(
-        nonce_digest=hashlib.sha256(nonce.encode()).hexdigest(),
-        expires_at=timezone.now() + settings.AAD_LOGIN_CHALLENGE_LIFETIME,
-    )
-    return challenge, nonce
+_NONCE_SECRET = re.compile(r"^[A-Za-z0-9_-]{43,128}$")
+
+
+def nonce_for_secret(nonce_secret: str) -> str:
+    """The nonce the browser must send to Microsoft: base64url(SHA-256(secret)) without padding."""
+    digest = hashlib.sha256(nonce_secret.encode("ascii")).digest()
+    return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+
+
+def _check_nonce(payload: dict, nonce_secret: str) -> None:
+    """The ID token must carry the nonce derived from the browser's secret, and be recent."""
+    if not isinstance(nonce_secret, str) or not _NONCE_SECRET.fullmatch(nonce_secret):
+        raise AADAuthError(INVALID_SSO_TOKEN)
+    if not secrets.compare_digest(payload["nonce"], nonce_for_secret(nonce_secret)):
+        raise AADAuthError(INVALID_SSO_TOKEN)
+    issued_at = datetime.fromtimestamp(int(payload["iat"]), tz=UTC)
+    if issued_at < timezone.now() - settings.ENTRA_LOGIN_MAX_TOKEN_AGE:
+        raise AADAuthError(INVALID_SSO_TOKEN)
+
+
+def _consume_nonce(payload: dict) -> None:
+    """Record the nonce as used; a second use of the same ID token fails on the unique digest."""
+    issued_at = datetime.fromtimestamp(int(payload["iat"]), tz=UTC)
+    try:
+        with transaction.atomic():
+            EntraLoginNonce.objects.create(
+                nonce_digest=hashlib.sha256(payload["nonce"].encode()).hexdigest(),
+                expires_at=issued_at + settings.ENTRA_LOGIN_MAX_TOKEN_AGE,
+            )
+    except IntegrityError as exc:
+        constraint = getattr(getattr(exc.__cause__, "diag", None), "constraint_name", None)
+        if constraint != "users_entraloginnonce_nonce_digest_key":
+            raise
+        logger.warning("Entra login refused: nonce already used")
+        raise AADAuthError(INVALID_SSO_TOKEN) from exc
 
 
 def _bind_identity_by_username(payload: dict) -> EntraIdentity | None:
@@ -124,26 +155,16 @@ def _bind_identity_by_username(payload: dict) -> EntraIdentity | None:
     return identity
 
 
-def aad_login(*, id_token: str, challenge_id: str) -> tuple[dict, User]:
-    """Consume one browser-bound nonce and authenticate only explicitly bound identities."""
+def aad_login(*, id_token: str, nonce_secret: str) -> tuple[dict, User]:
+    """Accept one fresh, browser-bound ID token once, and authenticate only bound identities.
+
+    Race guard: the unique nonce digest; two concurrent logins with the same token cannot both succeed.
+    """
     payload = _decode_id_token(id_token)
-    try:
-        challenge_uuid = UUID(challenge_id)
-    except (ValueError, TypeError, AttributeError) as exc:
-        raise AADAuthError(INVALID_SSO_TOKEN) from exc
-    # Keep challenge consumption, identity binding, and routing publication in one transaction.
+    _check_nonce(payload, nonce_secret)
+    now = timezone.now()
+    # Keep nonce consumption, identity binding, and routing publication in one transaction.
     with transaction.atomic():
-        challenge = EntraLoginChallenge.objects.select_for_update().filter(pk=challenge_uuid).first()
-        now = timezone.now()
-        if (
-            challenge is None
-            or challenge.consumed_at is not None
-            or challenge.expires_at <= now
-            or not secrets.compare_digest(
-                challenge.nonce_digest, hashlib.sha256(payload["nonce"].encode()).hexdigest()
-            )
-        ):
-            raise AADAuthError(INVALID_SSO_TOKEN)
         identity = (
             EntraIdentity.objects.select_for_update()
             .filter(tenant_id=payload["tid"], object_id=payload["oid"])
@@ -162,8 +183,7 @@ def aad_login(*, id_token: str, challenge_id: str) -> tuple[dict, User]:
         current_identity = EntraIdentity.objects.select_for_update().filter(pk=identity.pk, user_id=user.pk).first()
         if current_identity is None:
             raise AADAuthError(INVALID_SSO_TOKEN)
-        challenge.consumed_at = now
-        challenge.save(update_fields=["consumed_at"])
+        _consume_nonce(payload)
         # Recorded for the access review (dormant privileged accounts); the user row is already locked.
         User.objects.filter(pk=user.pk).update(last_login=now)
         refresh = RefreshToken.for_user(user)

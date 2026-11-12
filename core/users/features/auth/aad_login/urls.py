@@ -1,8 +1,8 @@
 from django.urls import path
 
-from .api import UserAADChallengeView, UserAADLoginView
+from .api import CSRFTokenView, UserAADLoginView
 
 urlpatterns = [
-    path("aad-login/challenge", UserAADChallengeView.as_view(), name="aad-login-challenge"),
+    path("csrf-token", CSRFTokenView.as_view(), name="csrf-token"),
     path("aad-login", UserAADLoginView.as_view(), name="aad-login"),
 ]

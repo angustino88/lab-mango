@@ -10,8 +10,14 @@ class AADLoginResponseSerializer(serializers.Serializer):
 
 class AADLoginSerializer(serializers.Serializer):
     id_token = serializers.CharField(write_only=True, max_length=16384, trim_whitespace=False)
+    nonce_secret = serializers.CharField(
+        write_only=True,
+        min_length=43,
+        max_length=128,
+        trim_whitespace=False,
+        help_text="The browser's random secret; the ID token's nonce is base64url(SHA-256(nonce_secret)).",
+    )
 
 
-class AADChallengeResponseSerializer(serializers.Serializer):
-    nonce = serializers.CharField()
+class CSRFTokenResponseSerializer(serializers.Serializer):
     csrf_token = serializers.CharField()

@@ -2,7 +2,7 @@
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
   "total_endpoints": 609,
-  "generated_at": "2026-11-11",
+  "generated_at": "2026-11-12",
   "endpoints": [
     {
       "endpoint": "/agent/enrollments",
@@ -677,7 +677,7 @@
       "method": "POST",
       "operation_id": "aad_login_create",
       "summary": "Azure AD Login",
-      "description": "Validate a body-supplied Azure AD ID token without a DRF authenticator.\n\nRequires the anti-replay challenge cookie obtained from the AAD challenge\nendpoint and a valid CSRF cookie/token (normally the X-CSRFToken header).\nDjango CSRF origin/referer checks apply. Success issues an HttpOnly refresh cookie.\nExplicit public OpenAPI security does not exempt this operation from CSRF.",
+      "description": "Validate a body-supplied Azure AD ID token without a DRF authenticator.\n\nThe body carries the ID token and the browser's ``nonce_secret``; the token's ``nonce`` must equal\nbase64url(SHA-256(nonce_secret)), the token must be recent, and each nonce is accepted once.\nRequires a valid CSRF cookie/token (``GET /api/csrf-token``; normally the X-CSRFToken header).\nDjango CSRF origin/referer checks apply. Success issues an HttpOnly refresh cookie.\nExplicit public OpenAPI security does not exempt this operation from CSRF.",
       "tags": [
         "User Authentication"
       ],
@@ -698,14 +698,23 @@
               "type": "string",
               "writeOnly": true,
               "maxLength": 16384
+            },
+            "nonce_secret": {
+              "type": "string",
+              "writeOnly": true,
+              "description": "The browser's random secret; the ID token's nonce is base64url(SHA-256(nonce_secret)).",
+              "maxLength": 128,
+              "minLength": 43
             }
           },
           "required": [
-            "id_token"
+            "id_token",
+            "nonce_secret"
           ]
         },
         "example_payload": {
-          "id_token": "string"
+          "id_token": "string",
+          "nonce_secret": "string"
         }
       },
       "responses": {
@@ -965,160 +974,6 @@
           }
         },
         "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/aad-login/challenge",
-      "method": "POST",
-      "operation_id": "aad_login_challenge_create",
-      "summary": "Azure AD Login Challenge",
-      "description": "Generate anti-replay nonce and CSRF challenge cookie for Azure AD SSO.",
-      "tags": [
-        "User Authentication"
-      ],
-      "parameters": [],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "properties": {
-                  "nonce": {
-                    "type": "string"
-                  },
-                  "csrf_token": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "csrf_token",
-                  "nonce"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "nonce": "string",
-              "csrf_token": "string"
-            }
-          }
-        },
-        "429": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "503": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -3153,6 +3008,49 @@
                 {}
               ],
               "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/csrf-token",
+      "method": "GET",
+      "operation_id": "csrf_token_retrieve",
+      "summary": "Get Csrf Token",
+      "description": "Issue the CSRF cookie and token that login, refresh and logout require. Writes nothing.",
+      "tags": [
+        "User Authentication"
+      ],
+      "parameters": [],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "csrf_token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "csrf_token"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "csrf_token": "string"
             }
           }
         }

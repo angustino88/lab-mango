@@ -162,7 +162,11 @@ proxy strips (`routing-sync.md:74`). The current authentication code was written
   login button calls `POST /api/aad-login/challenge`, passes the returned nonce to
   `instance.loginRedirect({ ..., nonce })` (MSAL React 5.3.2 / msal-browser 5.9.0, auth code + PKCE), then
   posts the ID token to `/api/aad-login`. No popup flow. This works with today's single-backend backend.
-- **Open decision for the Router flow:** who issues the nonce before Microsoft `authorize`, since the backend
+- **Decision and status (2026-11-12): option (a) implemented** (frontend and backend in development
+  in parallel; the old challenge endpoint is removed, not kept). Backend: `GET /api/csrf-token`,
+  `POST /api/aad-login { id_token, nonce_secret }`, `EntraLoginNonce` single-use table, 10-minute token
+  age limit. Frontend guide: `core/users/features/auth/docs/frontend-login.md`.
+- **Former open decision for the Router flow:** who issues the nonce before Microsoft `authorize`, since the backend
   is only known after the Router resolves the ID token. Options: (a) frontend-held secret, below
   (recommended: no backend call before login, no Router coupling); (b) the Router issues and checks the
   nonce (backends would have to trust the Router, against routing-sync dependency rule 1); (c) challenge
