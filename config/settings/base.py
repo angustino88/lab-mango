@@ -104,6 +104,11 @@ AAD_JWKS_URL = env(
 )
 AAD_TENANT_ID = env("AAD_TENANT_ID", default="0ae51e19-07c8-4e4b-bb6d-648ee58410f4")
 AAD_ISSUER = f"https://login.microsoftonline.com/{AAD_TENANT_ID}/v2.0"
+# Desktop clients (audit tool): Entra delegated access tokens for the scope exposed on the same app
+# registration. Accepted only on views that list EntraAccessTokenAuthentication; set False to turn off.
+ENTRA_API_ACCESS_TOKENS_ENABLED = env.bool("ENTRA_API_ACCESS_TOKENS_ENABLED", default=True)
+ENTRA_API_AUDIENCES = env.list("ENTRA_API_AUDIENCES", default=[f"api://{AAD_AUDIENCE}", AAD_AUDIENCE])
+ENTRA_API_AUDIT_SCOPE = env("ENTRA_API_AUDIT_SCOPE", default="LabMango.Audit")
 # Entra login replay protection: the browser sends SHA-256(secret) as the nonce to Microsoft and the
 # secret to /api/aad-login. ID tokens older than this are refused; each nonce is accepted once.
 ENTRA_LOGIN_MAX_TOKEN_AGE = timedelta(minutes=10)

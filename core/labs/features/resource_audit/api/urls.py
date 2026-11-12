@@ -27,6 +27,12 @@ urlpatterns = [
         views.TypedResourceAuditListCreateView.as_view(),
         name="typed-resource-audit-list-create",
     ),
+    # Offline catalog for the audit tool
+    path(
+        "audit-catalog",
+        views.AuditCatalogAPIView.as_view(),
+        name="resource-audit-catalog",
+    ),
     # Global audit log and detail
     path(
         "audits",

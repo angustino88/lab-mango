@@ -25,7 +25,7 @@ start tool
 ┌──────────────── Audit tool (Python, packaged as .exe) ─────────────┐
 │ auth.py     MSAL PublicClientApplication + encrypted token cache   │
 │ catalog.py  SQLite table: catalog (uid PK, resource_type, sku,     │
-│             name, serial_number, location, state, condition,       │
+│             name, serial_number, location, status, condition,      │
 │             updated_at) + sync cursor                              │
 │ scan.py     QR input (USB scanner = keyboard input, or camera)     │
 │ outbox.py   SQLite table: outbox (client_audit_id PK, uid, result, │
@@ -110,7 +110,7 @@ def parse_tag(raw: str) -> uuid.UUID | None:
 
 | Step | Call | Notes |
 |---|---|---|
-| Catalog sync | `GET /api/labs/audit-catalog?changed_since=<server_time>&cursor=<next_cursor>` | New endpoint. Loop until `next_cursor` is empty; save `server_time` as the next `changed_since`; delete rows with `deleted: true` |
+| Catalog sync | First page `GET /api/labs/audit-catalog?changed_since=<last server_time>` (omit on first run); next pages `GET /api/labs/audit-catalog?cursor=<meta.pagination.next_cursor>` only | Items in `data`. Loop until `next_cursor` is null; then save `meta.server_time` as the next `changed_since`; delete rows with `deleted: true` |
 | Equipment detail | `GET /api/labs/equipment/uid/{uid}` | Exists. Other types: show the catalog row |
 | Push audit | `POST /api/labs/resources/uid/{uid}/audits` | Exists; `Idempotency-Key` is the new extension |
 
@@ -135,7 +135,6 @@ Response handling in the sender:
 | `401` | Get a new token (silent, else interactive), retry |
 | `403` | Stop; the user lacks the coordinator/admin role |
 | `404` | Mark the row failed: the resource no longer exists; show it to the auditor |
-| `409 request_in_progress` | Retry later |
 | `422` | Mark failed and show the error (`idempotency_key_reuse` means a bug: same key, different body) |
 | network error / `5xx` | Keep the row, retry with backoff (e.g. 2s, 4s, 8s … max 5 min) |
 

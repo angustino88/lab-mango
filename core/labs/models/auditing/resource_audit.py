@@ -56,6 +56,9 @@ class ResourceAudit(TimeStampedModel, UserStampedModel):
         blank=True,
         default="",
     )
+    # Set only when the client sent an Idempotency-Key (RW-6); unique per auditor.
+    idempotency_key = models.CharField(max_length=128, null=True, blank=True, editable=False)
+    request_hash = models.CharField(max_length=64, blank=True, default="", editable=False)
 
     objects = ResourceAuditQuerySet.as_manager()
 
@@ -74,6 +77,13 @@ class ResourceAudit(TimeStampedModel, UserStampedModel):
             models.Index(
                 fields=("result", "-audited_at"),
                 name="resource_audit_result_idx",
+            ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("auditor", "idempotency_key"),
+                condition=models.Q(idempotency_key__isnull=False),
+                name="resource_audit_idempotency_uniq",
             ),
         ]
 

@@ -1,6 +1,7 @@
 # Design: Resource audit scanner (desktop tool)
 
-- Tier: T2 · Status: Draft, not approved, nothing implemented · Date: 2026-11-12
+- Tier: T2 · Status: Implemented on branch `claude/modest-edison-dchmd2`, awaiting owner review before merge · Date: 2026-11-12
+- Implementation notes (where the code differs from the first draft) are marked **Implemented:** below.
 - Scope: `core/labs/features/resource_audit`, a new audit-catalog read, `core/users/features/auth`
   (new authentication class), changes to the existing frontend Entra app registration, frontend label
   printing, and the tool guide `docs/proposals/resource-audit-scanner-tool.md`.
@@ -105,14 +106,19 @@ Invariants:
 
 **1. `GET /api/labs/audit-catalog`**
 - Query: `changed_since` (ISO 8601, optional), `cursor` (opaque, optional), `page_size` (default 500, max 1000).
-- Keyset order `(updated_at, resource_type, id)`; response `results`, `next_cursor`, `server_time`. The tool
-  stores `server_time` as its next `changed_since`.
-- Item: `uid`, `resource_type` (`equipment|bench|station|room|license`), `sku`, `name`, `serial_number`
-  (equipment only, else empty), `location` (id and name, when the type has one), `lifecycle_state` or the
-  type's status, `condition` (equipment only), `updated_at`, `deleted` (true for soft-deleted or retired rows
-  since `changed_since`, so the tool removes them).
-- Never: `License.identifier`, prices, user data beyond what the existing detail endpoints show.
-- Errors: `400 invalid_query`, `401`, `403`.
+- **Implemented:** first page takes `changed_since` and `page_size`; later pages take `cursor` alone (it carries
+  both); combining them is `400`. Order is `(resource_type, id)` with types in a fixed order, one query per type.
+  Response `{"data": [...], "meta": {"pagination": {"count": null, "page_size", "next_cursor",
+  "previous_cursor": null}, "server_time"}}` (COL-9 cursor style). `server_time` is the time the first page was
+  served; the tool stores it as its next `changed_since`.
+- **Implemented item:** `uid`, `resource_type`, `sku`, `name`, `serial_number` (equipment only), `status`
+  (equipment `lifecycle_state`, bench `lifecycle_status`; empty for station, room and license, whose status
+  lives in status-history records), `condition` (equipment only), `location` (a name: bench → setup station,
+  station → room, room → building; empty otherwise), `updated_at`, `deleted` (soft-deleted since
+  `changed_since`; a full download excludes deleted rows). Retired or lost equipment stays in the catalog with
+  its `status`.
+- Never: `License.identifier` (the query selects explicit columns only), prices, user data.
+- Errors: `400 invalid_query` / `invalid_cursor`, `401`, `403`.
 
 **2. Detail.** Unchanged. Bench, station, room and license have no `uid` detail route; the tool shows the
 catalog row for them. Adding those routes is out of scope.
@@ -123,7 +129,9 @@ existing callers so the web frontend is not broken). Per RW-6 and the golden exa
 - first request → `201` with the audit;
 - same key and same body → `201`, same body, header `Idempotency-Replayed: true`;
 - same key, different body → `422 idempotency_key_reuse`;
-- same key while the first is still running → `409 request_in_progress`.
+- same key while the first is still running: **Implemented:** the second request waits on the advisory lock and
+  then replays, so `409 request_in_progress` is not returned.
+- empty or longer than 128 characters → `400 invalid_idempotency_key`.
 - Existing errors stay: `401`, `403`, `404`, `422`.
 
 Breaking: no. Endpoint 1 is additive; the header on 3 is optional. The new authentication class is added
@@ -161,7 +169,11 @@ Indexes on `(updated_at, id)` per resource table are needed if they do not exist
   `scp` contains `LabMango.Audit`, token not expired. Maps `tid` + `oid` to `EntraIdentity` → user; no
   identity → `401`. No user is created from a token. Pattern follows `core/routing/api/authentication.py`
   for JWKS handling, but for delegated user tokens.
-- Enabled on endpoints 1-3 only, not globally, until the owner decides otherwise.
+- Enabled on endpoints 1-3 only, not globally, until the owner decides otherwise. **Implemented:** on
+  `GET /api/labs/equipment/uid/{uid}` the token is accepted for reads only (`PATCH` needs a Lab Mango JWT).
+  Both v2 (`login.microsoftonline.com/<tenant>/v2.0`) and v1 (`sts.windows.net/<tenant>/`) issuers of the
+  configured tenant are accepted; audiences come from `ENTRA_API_AUDIENCES` (default `api://<AAD_AUDIENCE>`
+  and `AAD_AUDIENCE`). App-only tokens are refused.
 - Authorization stays the Labs policy: coordinator or admin. API keys keep their current access; they still
   cannot record audits.
 - The tool is a public client: no client secret, PKCE, tokens cached encrypted by Windows (DPAPI or broker).
@@ -188,7 +200,8 @@ JWKS). JWKS unavailable → `503`, matching the routing sync behavior.
 4. Print and attach new tags for all five types; license tags go on the carrier hardware.
 5. Tool release.
 
-Rollback: disable the new authentication class in settings; the columns are nullable and can stay.
+Rollback: set `ENTRA_API_ACCESS_TOKENS_ENABLED=False` to stop accepting Entra access tokens; the columns are
+nullable and can stay. Migration: `core/labs/migrations/0002_resource_audit_idempotency.py` (additive).
 
 ## Observability
 

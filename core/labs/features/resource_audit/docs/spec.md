@@ -35,3 +35,24 @@ The Resource Audit feature manages formal compliance inspections, periodic physi
 | `POST /api/labs/resource-audits` | `ResourceAuditListCreateAPIView` | Record a formal compliance audit inspection. |
 | `GET /api/labs/resource-audits/{id}` | `ResourceAuditDetailAPIView` | Audit report detail with checklist criteria. |
 | `GET /api/labs/resource-audits/change-logs` | `ResourceChangeLogListAPIView` | Chronological field-level state change audit logs. |
+
+## 4. Audit tool endpoints (desktop scanner)
+
+Design: `docs/proposals/resource-audit-scanner.md`. Client guide: `docs/proposals/resource-audit-scanner-tool.md`.
+Section 3 above predates the current routes (`api/urls.py`); correcting it is a separate task.
+
+| Method & Path | View Class | Contract |
+|---|---|---|
+| `GET /api/labs/audit-catalog` | `AuditCatalogAPIView` | Cursor-paged list of every auditable resource (equipment, bench, station, room, license). First page: optional `changed_since`, `page_size` (default 500, max 1000). Next pages: `cursor` alone. `meta.server_time` is the next `changed_since`. Never returns `License.identifier`. |
+| `POST /api/labs/resources/uid/{uid}/audits` | `ResourceAuditByUidView` | Records one audit. Optional `Idempotency-Key` (1-128 chars): same key and body replays the stored audit with `Idempotency-Replayed: true`; a different body returns `422 idempotency_key_reuse`. |
+| `GET /api/labs/equipment/uid/{uid}` | `EquipmentByUIDAPIView` (equipment feature) | Equipment detail; accepts the Entra access token for reads only. |
+
+Invariants:
+- One audit per `(auditor, idempotency_key)`: constraint `resource_audit_idempotency_uniq`, plus a transaction-scoped
+  advisory lock on the same pair, so concurrent retries wait and replay instead of failing.
+- Audit results never change lifecycle state, condition, booking or assignment status.
+
+Authentication: these three views accept a Microsoft Entra delegated access token with scope
+`ENTRA_API_AUDIT_SCOPE` (`core.users.features.auth.access_token`) in addition to the Lab Mango JWT. The token's
+`tid`/`oid` must map to an active, already bound `EntraIdentity`. Authorization is unchanged: lab coordinators
+and admins. Settings: `ENTRA_API_ACCESS_TOKENS_ENABLED`, `ENTRA_API_AUDIENCES`, `ENTRA_API_AUDIT_SCOPE`.

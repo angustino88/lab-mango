@@ -1,17 +1,21 @@
 """Application write commands for resource auditing by ID, SKU, and UID."""
 
+import hashlib
+import json
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
+from django.db import connection, transaction
 from django.utils import timezone
 
 from core.labs.features.resource_audit.exceptions import (
     AuditPermissionDeniedError,
+    IdempotencyKeyReuseError,
     InvalidAuditResultError,
+    InvalidIdempotencyKeyError,
     ResourceAuditNotFoundError,
     ResourceNotFoundError,
 )
@@ -55,6 +59,17 @@ class RecordAuditByUidInput:
     result: str = "PASS"
     remarks: str = ""
     audited_at: datetime | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class RecordedAudit:
+    """Result of an idempotent record: the audit and whether it was stored by an earlier request."""
+
+    audit: ResourceAudit
+    replayed: bool = False
+
+
+MAX_IDEMPOTENCY_KEY_LENGTH = 128
 
 
 @dataclass(frozen=True, slots=True)
@@ -114,9 +129,22 @@ def _get_target_model(resource_type: str | None):
 @transaction.atomic
 def record_resource_audit(command: RecordResourceAuditInput, *, actor: Any) -> ResourceAudit:
     """Record an audit entry for a lab resource identified by ID, SKU, or UID."""
+    _ensure_authenticated(actor)
+    return _create_audit(command, actor=actor)
+
+
+def _ensure_authenticated(actor: Any) -> None:
     if not actor or not getattr(actor, "is_authenticated", False):
         raise AuditPermissionDeniedError("Authentication required to record a resource audit.")
 
+
+def _create_audit(
+    command: RecordResourceAuditInput,
+    *,
+    actor: Any,
+    idempotency_key: str | None = None,
+    request_hash: str = "",
+) -> ResourceAudit:
     resource = resolve_resource(
         command.identifier,
         identifier_type=command.identifier_type,
@@ -131,6 +159,8 @@ def record_resource_audit(command: RecordResourceAuditInput, *, actor: Any) -> R
             result=norm_result,
             remarks=command.remarks,
             audited_at=audited_at,
+            idempotency_key=idempotency_key,
+            request_hash=request_hash,
         )
     else:
         audit = ResourceAudit.objects.create(
@@ -139,6 +169,8 @@ def record_resource_audit(command: RecordResourceAuditInput, *, actor: Any) -> R
             result=norm_result,
             remarks=command.remarks.strip(),
             audited_at=audited_at,
+            idempotency_key=idempotency_key,
+            request_hash=request_hash,
             creator=actor,
             last_modified_by=actor,
         )
@@ -205,6 +237,68 @@ def record_audit_by_uid(command: RecordAuditByUidInput, *, actor: Any) -> Resour
         ),
         actor=actor,
     )
+
+
+def _request_hash(command: RecordAuditByUidInput) -> str:
+    body = {
+        "uid": str(command.uid),
+        "resource_type": command.resource_type,
+        "result": command.result,
+        "remarks": command.remarks,
+        "audited_at": command.audited_at.isoformat() if command.audited_at else None,
+    }
+    encoded = json.dumps(body, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode()).hexdigest()
+
+
+def _lock(key: str) -> None:
+    number = int.from_bytes(hashlib.sha256(key.encode()).digest()[:8], "big", signed=True)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_advisory_xact_lock(%s)", [number])
+
+
+def record_audit_by_uid_once(
+    command: RecordAuditByUidInput,
+    *,
+    actor: Any,
+    idempotency_key: str,
+) -> RecordedAudit:
+    """Record an audit by UID at most once per (auditor, Idempotency-Key) (RW-6).
+
+    Race guard: a transaction-scoped advisory lock on (auditor, key) serializes concurrent retries, and
+    ``resource_audit_idempotency_uniq`` backs it in PostgreSQL. A repeat with the same body returns the
+    stored audit; a repeat with a different body is refused with ``idempotency_key_reuse``.
+    """
+    _ensure_authenticated(actor)
+    key = (idempotency_key or "").strip()
+    if not key or len(key) > MAX_IDEMPOTENCY_KEY_LENGTH:
+        raise InvalidIdempotencyKeyError(f"Idempotency-Key must be 1 to {MAX_IDEMPOTENCY_KEY_LENGTH} characters.")
+    request_hash = _request_hash(command)
+    with transaction.atomic():
+        _lock(f"resource-audit:{actor.pk}:{key}")
+        existing = (
+            ResourceAudit.objects.select_related("auditor", "resource_content_type")
+            .filter(auditor=actor, idempotency_key=key)
+            .first()
+        )
+        if existing is not None:
+            if existing.request_hash != request_hash:
+                raise IdempotencyKeyReuseError("Idempotency-Key was already used with a different request.")
+            return RecordedAudit(audit=existing, replayed=True)
+        audit = _create_audit(
+            RecordResourceAuditInput(
+                identifier=str(command.uid),
+                identifier_type="uid",
+                resource_type=command.resource_type,
+                result=command.result,
+                remarks=command.remarks,
+                audited_at=command.audited_at,
+            ),
+            actor=actor,
+            idempotency_key=key,
+            request_hash=request_hash,
+        )
+        return RecordedAudit(audit=audit)
 
 
 @transaction.atomic

@@ -151,6 +151,8 @@ class ResourceModel(TimeStampedModel, UserStampedModel, TimestampedSoftDeleteMix
         result: str,
         remarks: str = "",
         audited_at=None,
+        idempotency_key: str | None = None,
+        request_hash: str = "",
     ):
         """Validate and append an audit event for this saved resource."""
         from core.labs.models.auditing.resource_audit import ResourceAudit
@@ -168,6 +170,8 @@ class ResourceModel(TimeStampedModel, UserStampedModel, TimestampedSoftDeleteMix
             result=result,
             remarks=remarks.strip(),
             audited_at=audited_at or timezone.now(),
+            idempotency_key=idempotency_key,
+            request_hash=request_hash,
         )
         audit.full_clean()
         audit.save(actor=auditor)

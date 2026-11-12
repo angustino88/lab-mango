@@ -31,11 +31,19 @@ def _imports(path: Path) -> set[str]:
 
 def test_public_surface_exports_commands_queries_and_exceptions():
     assert _exports(FEATURE_ROOT / "public.py") == {
+        "CATALOG_PAGE_SIZE_DEFAULT",
+        "CATALOG_PAGE_SIZE_MAX",
+        "CATALOG_RESOURCE_TYPES",
+        "AuditCatalogPage",
         "AuditPermissionDeniedError",
+        "IdempotencyKeyReuseError",
         "InvalidAuditResultError",
+        "InvalidCatalogCursorError",
+        "InvalidIdempotencyKeyError",
         "RecordAuditByIdInput",
         "RecordAuditBySkuInput",
         "RecordAuditByUidInput",
+        "RecordedAudit",
         "RecordResourceAuditInput",
         "ResourceAuditError",
         "ResourceAuditNotFoundError",
@@ -46,6 +54,7 @@ def test_public_surface_exports_commands_queries_and_exceptions():
         "get_latest_audit_by_resource",
         "get_resource_audit",
         "list_all_resource_audits",
+        "list_audit_catalog",
         "list_audits_by_id",
         "list_audits_by_sku",
         "list_audits_by_uid",
@@ -53,6 +62,7 @@ def test_public_surface_exports_commands_queries_and_exceptions():
         "record_audit_by_id",
         "record_audit_by_sku",
         "record_audit_by_uid",
+        "record_audit_by_uid_once",
         "record_resource_audit",
         "resolve_resource",
         "update_resource_audit",
@@ -73,7 +83,10 @@ def test_exception_contract_is_stable_and_implementation_free():
     exceptions = FEATURE_ROOT / "exceptions.py"
     assert _exports(exceptions) == {
         "AuditPermissionDeniedError",
+        "IdempotencyKeyReuseError",
         "InvalidAuditResultError",
+        "InvalidCatalogCursorError",
+        "InvalidIdempotencyKeyError",
         "ResourceAuditError",
         "ResourceAuditNotFoundError",
         "ResourceNotFoundError",
@@ -89,6 +102,7 @@ def test_commands_have_frozen_inputs_and_keyword_only_actor():
         "RecordAuditByIdInput",
         "RecordAuditBySkuInput",
         "RecordAuditByUidInput",
+        "RecordedAudit",
         "UpdateResourceAuditInput",
     }
     for cls in classes:
@@ -114,6 +128,7 @@ def test_commands_have_frozen_inputs_and_keyword_only_actor():
         "record_audit_by_id",
         "record_audit_by_sku",
         "record_audit_by_uid",
+        "record_audit_by_uid_once",
         "update_resource_audit",
         "delete_resource_audit",
     }
