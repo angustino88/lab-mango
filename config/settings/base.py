@@ -46,7 +46,7 @@ DJANGO_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.admin",
+    "config.admin_site.LabMangoAdminConfig",  # django.contrib.admin with the Lab Mango site
     "django.forms",
 ]
 THIRD_PARTY_APPS = [
