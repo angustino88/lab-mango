@@ -80,10 +80,10 @@ ADMIN_SECTIONS: tuple[AdminSection, ...] = (
     ),
     AdminSection(
         "reference-organisation",
-        "Reference data · Departments, teams, benches and projects",
+        "Reference data · Departments, groups, benches and projects",
         (
             "labs.Department",
-            "labs.Team",
+            "labs.Group",
             "labs.BenchGroup",
             "labs.BenchType",
             "labs.LabProject",

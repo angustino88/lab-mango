@@ -3,7 +3,7 @@
 * No Labs role: nothing.
 * Plain Labs user: reads the dashboard and the leaderboard (never writes there); reads and writes bench
   bookings (own bookings are enforced per object).
-* Plain Labs user also reads the organisation lookups (departments, teams) other screens need
+* Plain Labs user also reads the organisation lookups (departments, groups) other screens need
   (equipment R9, owner decision 2026-11-10).
 * Coordinator and admin: everything.
 

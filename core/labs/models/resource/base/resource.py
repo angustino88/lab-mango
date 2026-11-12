@@ -29,13 +29,16 @@ class Department(TimeStampedModel, UserStampedModel):
         ]
 
 
-class Team(TimeStampedModel, UserStampedModel):
-    """Team inside a department that owns resources. Not to be confused with BenchGroup (function)."""
+class Group(TimeStampedModel, UserStampedModel):
+    """Formal subdivision of a department that owns resources (e.g. EDS1 in EDS).
+
+    Not to be confused with ``auth.Group`` (URS role membership) or ``BenchGroup`` (what a bench is for).
+    """
 
     name = models.CharField(max_length=255, unique=True)
     department = models.ForeignKey(
         "labs.Department",
-        related_name="teams",
+        related_name="groups",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -70,8 +73,8 @@ class ResourceModel(TimeStampedModel, UserStampedModel, TimestampedSoftDeleteMix
         blank=True,
         help_text="Owning department.",
     )
-    team = models.ForeignKey(
-        "labs.Team",
+    group = models.ForeignKey(
+        "labs.Group",
         related_name="%(app_label)s_%(class)s_resources",
         on_delete=models.PROTECT,
         null=True,
@@ -99,16 +102,16 @@ class ResourceModel(TimeStampedModel, UserStampedModel, TimestampedSoftDeleteMix
         self.remark = self.remark.strip()
         if not self.sku:
             raise ValidationError({"sku": "SKU cannot be blank."})
-        if self.team_id:
-            team_department_id = self.team.department_id
-            if self.department_id is None and team_department_id:
-                self.department_id = team_department_id
+        if self.group_id:
+            group_department_id = self.group.department_id
+            if self.department_id is None and group_department_id:
+                self.department_id = group_department_id
             elif (
-                team_department_id
+                group_department_id
                 and self.department_id
-                and team_department_id != self.department_id
+                and group_department_id != self.department_id
             ):
-                raise ValidationError({"team": "The team belongs to a different department."})
+                raise ValidationError({"group": "The group belongs to a different department."})
 
     def save(self, *args, **kwargs):
         self.sku = self.sku.strip()

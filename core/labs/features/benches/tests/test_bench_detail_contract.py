@@ -128,34 +128,34 @@ def test_bench_create_missing_reference_returns_field_scoped_422(bench_api):
     ]
 
 
-def test_bench_create_missing_team_returns_field_scoped_422(bench_api):
+def test_bench_create_missing_group_returns_field_scoped_422(bench_api):
     client, _ = bench_api
 
     response = client.post(
         "/api/labs/benches",
-        {"sku": "MISSING-TEAM-CREATE", "name": "Test bench", "team_id": 999999},
+        {"sku": "MISSING-GROUP-CREATE", "name": "Test bench", "group_id": 999999},
         format="json",
     )
 
     assert response.status_code == 422
     assert response.data["error"]["details"] == [
         {
-            "field": "team_id",
+            "field": "group_id",
             "code": "does_not_exist",
             "message": "Select an existing reference.",
         }
     ]
 
 
-def test_bench_update_missing_team_returns_field_scoped_422(bench_api):
+def test_bench_update_missing_group_returns_field_scoped_422(bench_api):
     client, bench = bench_api
 
-    response = client.patch(f"/api/labs/benches/{bench.pk}", {"team_id": 999999}, format="json")
+    response = client.patch(f"/api/labs/benches/{bench.pk}", {"group_id": 999999}, format="json")
 
     assert response.status_code == 422
     assert response.data["error"]["details"] == [
         {
-            "field": "team_id",
+            "field": "group_id",
             "code": "does_not_exist",
             "message": "Select an existing reference.",
         }

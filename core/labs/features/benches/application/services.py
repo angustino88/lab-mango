@@ -19,9 +19,9 @@ from core.labs.models import (
     BenchFavorite,
     BenchGroup,
     BenchType,
+    Group,
     Station,
     StationSlot,
-    Team,
 )
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
@@ -30,7 +30,7 @@ from .policies import validate_capacity, validate_slot
 WRITE_FIELDS = (
     "sku",
     "name",
-    "team_id",
+    "group_id",
     "owner_id",
     "remark",
     "image",
@@ -93,12 +93,12 @@ def _lock_bench(bench_id, data):
 
 
 def _validate_references(bench, data):
-    if "team_id" in data and data["team_id"] is not None:
+    if "group_id" in data and data["group_id"] is not None:
         try:
-            Team.objects.get(pk=data["team_id"])
-        except Team.DoesNotExist as error:
+            Group.objects.get(pk=data["group_id"])
+        except Group.DoesNotExist as error:
             raise DRFValidationError(
-                {"team_id": [ErrorDetail("Select an existing reference.", code="does_not_exist")]}
+                {"group_id": [ErrorDetail("Select an existing reference.", code="does_not_exist")]}
             ) from error
 
     for field, model in (("type_id", BenchType), ("bench_group_id", BenchGroup)):

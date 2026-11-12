@@ -710,6 +710,12 @@ paths:
           type: string
           format: date-time
       - in: query
+        name: group_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: id
         schema:
           type: string
@@ -750,12 +756,6 @@ paths:
           maxLength: 255
       - in: query
         name: status
-        schema:
-          type: string
-          minLength: 1
-        description: Comma-separated values; OR within this filter.
-      - in: query
-        name: team_id
         schema:
           type: string
           minLength: 1

@@ -29,7 +29,7 @@ class Bench(ResourceModel):
         on_delete=models.PROTECT,
         null=True,
         blank=True,
-        help_text="Function of the bench (e.g. Radar, Video). The owning team is ResourceModel.team.",
+        help_text="Function of the bench (e.g. Radar, Video). The owning team is ResourceModel.group.",
     )
     description = models.TextField(blank=True, default="")
     documentation_url = models.URLField(max_length=500, blank=True, default="")

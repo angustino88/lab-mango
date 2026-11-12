@@ -199,7 +199,7 @@ class EquipmentAdmin(LabMangoModelAdmin):
     autocomplete_fields = (
         "owner",
         "department",
-        "team",
+        "group",
         "kind",
         "type",
         "manufacturer",

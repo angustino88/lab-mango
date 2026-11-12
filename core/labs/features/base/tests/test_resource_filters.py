@@ -38,7 +38,7 @@ def test_common_fields_work_for_every_resource(spec, selector):
     queryset = selector()
     assert issubclass(queryset.model, ResourceModel)
     serializer = spec.serializer("ResourceTestQuery")(
-        data=QueryDict("id=1,2&owner_id=3,4&team_id=5&q=abc&ordering=-name&created_at_after=2026-01-01T00:00:00Z")
+        data=QueryDict("id=1,2&owner_id=3,4&group_id=5&q=abc&ordering=-name&created_at_after=2026-01-01T00:00:00Z")
     )
     assert serializer.is_valid(), serializer.errors
     filtered = spec.apply(queryset, serializer.validated_data)
@@ -46,7 +46,7 @@ def test_common_fields_work_for_every_resource(spec, selector):
     assert filtered.query.order_by == ("-name", "pk")
     assert all(value in params for value in (1, 2, 3, 4, 5))
     assert "IN" in sql
-    assert {"id", "owner_id", "team_id", "status", "created_at_after", "created_at_before"} <= {
+    assert {"id", "owner_id", "group_id", "status", "created_at_after", "created_at_before"} <= {
         entry["name"] for entry in spec.metadata()["filters"]
     }
 
@@ -84,7 +84,7 @@ def test_equipment_assignment_and_room_and_bench_extensions_compile():
 def test_equipment_collection_inherits_resource_contract_and_typed_filters():
     """One collection for every category (step 6): shared and typed filters compile to SQL."""
     fields = EquipmentCollectionAPIView.ListQuerySerializer().fields
-    assert {"owner_id", "team_id", "q", "ordering", "status", "assigned", "category"} <= set(fields)
+    assert {"owner_id", "group_id", "q", "ordering", "status", "assigned", "category"} <= set(fields)
     assert {"material_id", "size_id", "resolution_id", "protocol_id", "customer_id", "technical_user_id"} <= set(fields)
     params = QueryDict("owner_id=7,8&technical_user_id=3&size_id=4&q=server")
     serializer = EquipmentCollectionAPIView.ListQuerySerializer(data=params)

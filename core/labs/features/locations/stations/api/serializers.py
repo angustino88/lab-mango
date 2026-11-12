@@ -67,7 +67,7 @@ class StationPlacementSerializer(ResourceWriteSerializerMixin, serializers.Seria
 
 class StationCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
     department_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
-    team_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    group_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     owner_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     type_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     room_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
@@ -84,7 +84,7 @@ class StationCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSer
             "sku",
             "name",
             "department_id",
-            "team_id",
+            "group_id",
             "owner_id",
             "remark",
             "label",
@@ -186,7 +186,7 @@ class StationSlotSerializer(AppModelSerializer):
 
 
 class StationSerializer(AppModelSerializer):
-    team = NamedReferenceSerializer(read_only=True, allow_null=True)
+    group = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
     owner = NamedReferenceSerializer(read_only=True, allow_null=True)
     type = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -212,7 +212,7 @@ class StationSerializer(AppModelSerializer):
             "sku",
             "name",
             "department",
-            "team",
+            "group",
             "owner",
             "remark",
             "label",

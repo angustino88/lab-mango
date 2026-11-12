@@ -1068,7 +1068,7 @@ components:
         name:
           type: string
           readOnly: true
-        team:
+        group:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -1185,6 +1185,7 @@ components:
       - documentation_url
       - equipment_count
       - equipment_url
+      - group
       - id
       - image
       - is_favorite
@@ -1202,7 +1203,6 @@ components:
       - sku
       - station_slot
       - status
-      - team
       - type
       - uid
       - updated_at
@@ -1446,7 +1446,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -2005,7 +2005,7 @@ components:
         name:
           type: string
           readOnly: true
-        team:
+        group:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -2122,6 +2122,7 @@ components:
       - documentation_url
       - equipment_count
       - equipment_url
+      - group
       - id
       - image
       - is_favorite
@@ -2139,7 +2140,6 @@ components:
       - sku
       - station_slot
       - status
-      - team
       - type
       - uid
       - updated_at
@@ -2378,7 +2378,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -5115,7 +5115,7 @@ components:
           type: integer
           nullable: true
           description: Owning department.
-        team_id:
+        group_id:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
@@ -5203,7 +5203,7 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        team:
+        group:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -5375,6 +5375,7 @@ components:
       - dimensions
       - display_status
       - firmware_version
+      - group
       - id
       - interfaces
       - kind
@@ -5400,7 +5401,6 @@ components:
       - serial_number
       - size
       - sku
-      - team
       - type
       - uid
       - updated_at
@@ -5784,7 +5784,7 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        team:
+        group:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -5946,6 +5946,7 @@ components:
       - dimensions
       - display_status
       - firmware_version
+      - group
       - id
       - interfaces
       - kind
@@ -5971,7 +5972,6 @@ components:
       - serial_number
       - size
       - sku
-      - team
       - type
       - uid
       - updated_at
@@ -7009,10 +7009,10 @@ components:
           items:
             $ref: '#/components/schemas/EquipmentProductModel'
           readOnly: true
-        teams:
+        groups:
           type: array
           items:
-            $ref: '#/components/schemas/LabsTeamReference'
+            $ref: '#/components/schemas/LabsGroupReference'
           readOnly: true
         owners:
           type: array
@@ -7068,6 +7068,7 @@ components:
       - categories
       - characteristics
       - customers
+      - groups
       - interfaces
       - kinds
       - manufacturers
@@ -7077,7 +7078,6 @@ components:
       - protocols
       - resolutions
       - sizes
-      - teams
       - technical_users
       - types
     EquipmentReferenceDataCollectionEquipmentReferenceDataDetailResponse:
@@ -7648,7 +7648,7 @@ components:
           type: integer
           nullable: true
           description: Owning department.
-        team_id:
+        group_id:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
@@ -8473,6 +8473,129 @@ components:
       - expense_type
       - paid_amount
       - pending_amount
+    GroupCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        active:
+          type: boolean
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+      required:
+      - name
+    GroupCatalogDetailSerializersGroupCatalogDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/GroupCatalogItem'
+      required:
+      - data
+    GroupCatalogItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        department:
+          allOf:
+          - $ref: '#/components/schemas/DepartmentCatalogItem'
+          readOnly: true
+        department_id:
+          type: integer
+          writeOnly: true
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - department
+      - id
+      - name
+      - updated_at
+    GroupCatalogListSerializersGroupCatalogPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/GroupCatalogListSerializersGroupCatalogPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupCatalogItem'
+      required:
+      - data
+      - meta
+    GroupCatalogListSerializersGroupCatalogPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    GroupCatalogListSerializersGroupCatalogPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/GroupCatalogListSerializersGroupCatalogPagination'
+      required:
+      - pagination
+    GroupCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        department_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        active:
+          type: boolean
+      required:
+      - department_id
+      - id
+      - name
     GroupPermission:
       type: object
       properties:
@@ -8485,6 +8608,66 @@ components:
       required:
       - id
       - name
+    GroupReferenceCreateSerializersGroupCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/GroupCatalogRecord'
+      required:
+      - data
+    GroupReferenceDetailSerializersGroupCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/GroupCatalogRecord'
+      required:
+      - data
+    GroupReferenceListSerializersGroupCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/GroupReferenceListSerializersGroupCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupCatalogRecord'
+      required:
+      - data
+      - meta
+    GroupReferenceListSerializersGroupCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    GroupReferenceListSerializersGroupCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/GroupReferenceListSerializersGroupCatalogRecordPagination'
+      required:
+      - pagination
     KeyAlgorithmEnum:
       enum:
       - Ed25519
@@ -8903,6 +9086,18 @@ components:
       - x
       - y
       - z
+    LabsGroupReference:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     LabsMoney:
       type: object
       description: Standard `{amount, currency}` representation for monetary values.
@@ -8966,18 +9161,6 @@ components:
       - id
       - name
       - sku
-    LabsTeamReference:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          readOnly: true
-      required:
-      - id
-      - name
     LabsUIDNamedReference:
       type: object
       description: Compact `{id, uid, name}` object representation when target defines
@@ -11576,7 +11759,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -11797,7 +11980,7 @@ components:
           type: integer
           nullable: true
           description: Owning department.
-        team_id:
+        group_id:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
@@ -11867,7 +12050,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -12061,7 +12244,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -13964,7 +14147,7 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        team:
+        group:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -14101,6 +14284,7 @@ components:
       - floor
       - floor_plan_revision
       - floor_plan_url
+      - group
       - id
       - image
       - label
@@ -14119,7 +14303,6 @@ components:
       - sku
       - slot_capacity
       - status
-      - team
       - uid
       - updated_at
       - usable_height_m
@@ -14145,7 +14328,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -14846,7 +15029,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -15378,7 +15561,7 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        team:
+        group:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -15522,6 +15705,7 @@ components:
       - created_at
       - department
       - depth_mm
+      - group
       - height_mm
       - id
       - image
@@ -15545,7 +15729,6 @@ components:
       - slot_count
       - slots_url
       - status
-      - team
       - type
       - uid
       - updated_at
@@ -15567,7 +15750,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -16436,7 +16619,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -16938,189 +17121,6 @@ components:
       - lead
       - members
       - name
-    TeamCatalogCreate:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 255
-        description:
-          type: string
-        active:
-          type: boolean
-        department_id:
-          type: integer
-          minimum: 1
-          nullable: true
-      required:
-      - name
-    TeamCatalogDetailSerializersTeamCatalogDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/TeamCatalogItem'
-      required:
-      - data
-    TeamCatalogItem:
-      type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          maxLength: 255
-        department:
-          allOf:
-          - $ref: '#/components/schemas/DepartmentCatalogItem'
-          readOnly: true
-        department_id:
-          type: integer
-          writeOnly: true
-        active:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - created_at
-      - department
-      - id
-      - name
-      - updated_at
-    TeamCatalogListSerializersTeamCatalogPaginatedResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        meta:
-          $ref: '#/components/schemas/TeamCatalogListSerializersTeamCatalogPaginationMeta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/TeamCatalogItem'
-      required:
-      - data
-      - meta
-    TeamCatalogListSerializersTeamCatalogPagination:
-      type: object
-      properties:
-        count:
-          type: integer
-          minimum: 0
-        page:
-          type: integer
-          minimum: 1
-        page_size:
-          type: integer
-          minimum: 1
-        next:
-          type: string
-          nullable: true
-        previous:
-          type: string
-          nullable: true
-      required:
-      - count
-      - next
-      - page
-      - page_size
-      - previous
-    TeamCatalogListSerializersTeamCatalogPaginationMeta:
-      type: object
-      properties:
-        pagination:
-          $ref: '#/components/schemas/TeamCatalogListSerializersTeamCatalogPagination'
-      required:
-      - pagination
-    TeamCatalogRecord:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          maxLength: 255
-        description:
-          type: string
-        department_id:
-          type: integer
-          readOnly: true
-          nullable: true
-        active:
-          type: boolean
-      required:
-      - department_id
-      - id
-      - name
-    TeamReferenceCreateSerializersTeamCatalogRecordDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/TeamCatalogRecord'
-      required:
-      - data
-    TeamReferenceDetailSerializersTeamCatalogRecordDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/TeamCatalogRecord'
-      required:
-      - data
-    TeamReferenceListSerializersTeamCatalogRecordPaginatedResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        meta:
-          $ref: '#/components/schemas/TeamReferenceListSerializersTeamCatalogRecordPaginationMeta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/TeamCatalogRecord'
-      required:
-      - data
-      - meta
-    TeamReferenceListSerializersTeamCatalogRecordPagination:
-      type: object
-      properties:
-        count:
-          type: integer
-          minimum: 0
-        page:
-          type: integer
-          minimum: 1
-        page_size:
-          type: integer
-          minimum: 1
-        next:
-          type: string
-          nullable: true
-        previous:
-          type: string
-          nullable: true
-      required:
-      - count
-      - next
-      - page
-      - page_size
-      - previous
-    TeamReferenceListSerializersTeamCatalogRecordPaginationMeta:
-      type: object
-      properties:
-        pagination:
-          $ref: '#/components/schemas/TeamReferenceListSerializersTeamCatalogRecordPagination'
-      required:
-      - pagination
     TeamSummary:
       type: object
       properties:

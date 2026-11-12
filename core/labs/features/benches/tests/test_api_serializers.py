@@ -57,7 +57,7 @@ def test_bench_create_serializer_accepts_relation_id_keys():
         data={
             "sku": "BN-TEST-01",
             "name": "Bench Test 01",
-            "team_id": 1,
+            "group_id": 1,
             "owner_id": 2,
             "type_id": 3,
             "bench_group_id": 4,
@@ -66,7 +66,7 @@ def test_bench_create_serializer_accepts_relation_id_keys():
         }
     )
     assert serializer.is_valid(), serializer.errors
-    assert serializer.validated_data["team_id"] == 1
+    assert serializer.validated_data["group_id"] == 1
     assert serializer.validated_data["owner_id"] == 2
     assert serializer.validated_data["type_id"] == 3
     assert serializer.validated_data["bench_group_id"] == 4

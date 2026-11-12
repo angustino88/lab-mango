@@ -950,7 +950,7 @@ class Migration(migrations.Migration):
             name="bench_group",
             field=models.ForeignKey(
                 blank=True,
-                help_text="Function of the bench (e.g. Radar, Video). The owning team is ResourceModel.team.",
+                help_text="Function of the bench (e.g. Radar, Video). The owning team is ResourceModel.group.",
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="benches",
@@ -5170,7 +5170,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="Team",
+            name="Group",
             fields=[
                 (
                     "id",
@@ -5218,7 +5218,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
-                        related_name="teams",
+                        related_name="groups",
                         to="labs.department",
                     ),
                 ),
@@ -5241,38 +5241,38 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="license",
-            name="team",
+            name="group",
             field=models.ForeignKey(
                 blank=True,
                 help_text="Owning team; must belong to the selected department.",
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="%(app_label)s_%(class)s_resources",
-                to="labs.team",
+                to="labs.group",
             ),
         ),
         migrations.AddField(
             model_name="equipment",
-            name="team",
+            name="group",
             field=models.ForeignKey(
                 blank=True,
                 help_text="Owning team; must belong to the selected department.",
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="%(app_label)s_%(class)s_resources",
-                to="labs.team",
+                to="labs.group",
             ),
         ),
         migrations.AddField(
             model_name="bench",
-            name="team",
+            name="group",
             field=models.ForeignKey(
                 blank=True,
                 help_text="Owning team; must belong to the selected department.",
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="%(app_label)s_%(class)s_resources",
-                to="labs.team",
+                to="labs.group",
             ),
         ),
         migrations.CreateModel(
@@ -5698,14 +5698,14 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "team",
+                    "group",
                     models.ForeignKey(
                         blank=True,
                         help_text="Owning team; must belong to the selected department.",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(app_label)s_%(class)s_resources",
-                        to="labs.team",
+                        to="labs.group",
                     ),
                 ),
                 (
@@ -6440,14 +6440,14 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "team",
+                    "group",
                     models.ForeignKey(
                         blank=True,
                         help_text="Owning team; must belong to the selected department.",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(app_label)s_%(class)s_resources",
-                        to="labs.team",
+                        to="labs.group",
                     ),
                 ),
                 (

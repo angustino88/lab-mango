@@ -32,7 +32,7 @@ from core.labs.models import (
     ProductModelSpecification,
     SpecificationDefinition,
 )
-from core.labs.models.resource.base.resource import Department, Team
+from core.labs.models.resource.base.resource import Department, Group
 from core.labs.models.resource.equipment.assignment import LOCATION_NOTE_MAX_LENGTH, EquipmentAssignment
 
 
@@ -324,7 +324,7 @@ class EquipmentSerializer(AppModelSerializer):
     product_model = NamedReferenceSerializer(read_only=True, allow_null=True)
     owner = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
-    team = NamedReferenceSerializer(read_only=True, allow_null=True)
+    group = NamedReferenceSerializer(read_only=True, allow_null=True)
     last_calibrated_at = serializers.DateTimeField(read_only=True, allow_null=True)
     next_calibration_due_at = serializers.DateTimeField(read_only=True, allow_null=True)
     calibration_overdue = serializers.BooleanField(read_only=True)
@@ -352,7 +352,7 @@ class EquipmentSerializer(AppModelSerializer):
             "log_label",
             "owner",
             "department",
-            "team",
+            "group",
             "placement",
             "loan",
             "reservations",
@@ -438,7 +438,7 @@ class EquipmentCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelS
     product_model_id = serializers.IntegerField(source="product_model", min_value=1, allow_null=True, required=False)
     owner_id = serializers.IntegerField(source="owner", min_value=1, allow_null=True, required=False)
     department_id = serializers.IntegerField(source="department", min_value=1, allow_null=True, required=False)
-    team_id = serializers.IntegerField(source="team", min_value=1, allow_null=True, required=False)
+    group_id = serializers.IntegerField(source="group", min_value=1, allow_null=True, required=False)
 
     class Meta:
         model = Equipment
@@ -449,7 +449,7 @@ class EquipmentCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelS
             "product_model_id",
             "owner_id",
             "department_id",
-            "team_id",
+            "group_id",
             "sku",
             "name",
             "serial_number",
@@ -609,14 +609,14 @@ class DepartmentSerializer(AppModelSerializer):
         ref_name = "DepartmentCatalogItem"
 
 
-class TeamCatalogSerializer(AppModelSerializer):
+class GroupCatalogSerializer(AppModelSerializer):
     department = DepartmentSerializer(read_only=True)
     department_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
-        model = Team
+        model = Group
         fields = ("id", "name", "department", "department_id", "active", "created_at", "updated_at")
-        ref_name = "TeamCatalogItem"
+        ref_name = "GroupCatalogItem"
 
 
 class EquipmentKindOptionsQuerySerializer(OptionsQueryMixin):
@@ -637,7 +637,7 @@ class EquipmentProductModelOptionsQuerySerializer(OptionsQueryMixin):
     type_id = serializers.IntegerField(required=False, min_value=1)
 
 
-class TeamOptionsQuerySerializer(OptionsQueryMixin):
+class GroupOptionsQuerySerializer(OptionsQueryMixin):
     department_id = serializers.IntegerField(required=False, min_value=1)
 
 

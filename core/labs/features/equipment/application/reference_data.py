@@ -16,7 +16,7 @@ def create_catalog_reference(
     resource: ReferenceResource, *, values: dict[str, Any], idempotency_key: str, actor: Any
 ) -> ReferenceResult:
     # Every equipment reference record (catalog and the lookups equipment points at by foreign key,
-    # such as departments, teams and materials) is written by lab administrators only
+    # such as departments, groups and materials) is written by lab administrators only
     # (redesign OD12, extended by the owner on 2026-11-10). The shared reference policy still
     # applies the Django model permission on top of this.
     if not has_labs_role(actor, LabsRole.ADMIN):

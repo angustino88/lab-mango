@@ -69,7 +69,7 @@ from core.labs.features.equipment.queries.reference_data import (
     get_equipment_manufacturer,
     get_equipment_product_model,
     get_equipment_type,
-    get_team,
+    get_group,
     list_department_options,
     list_departments,
     list_equipment_categories,
@@ -82,8 +82,8 @@ from core.labs.features.equipment.queries.reference_data import (
     list_equipment_product_models,
     list_equipment_type_options,
     list_equipment_types,
-    list_team_options,
-    list_teams,
+    list_group_options,
+    list_groups,
 )
 from core.labs.features.equipment.queries.reservations import list_reservations
 from core.labs.models import Equipment
@@ -126,8 +126,8 @@ from .serializers import (
     EquipmentReturnSerializer,
     EquipmentStatusSummarySerializer,
     EquipmentTypeOptionsQuerySerializer,
-    TeamCatalogSerializer,
-    TeamOptionsQuerySerializer,
+    GroupCatalogSerializer,
+    GroupOptionsQuerySerializer,
 )
 
 EquipmentListQuerySerializer = EQUIPMENT_FILTERS.serializer("EquipmentListQuerySerializer")
@@ -979,13 +979,13 @@ class DepartmentOptionsAPIView(OptionsAPIView):
         return list_department_options(actor=actor, **filters)
 
 
-# 7. Teams
-class TeamListAPIView(AppListAPIView, EquipmentAPIView):
+# 7. Groups
+class GroupListAPIView(AppListAPIView, EquipmentAPIView):
     permission_classes = ORGANIZATION_PERMISSIONS
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=with_page_query(TeamOptionsQuerySerializer),
-        success=ResponseContract.paginated("TeamCatalogList", TeamCatalogSerializer),
+        query=with_page_query(GroupOptionsQuerySerializer),
+        success=ResponseContract.paginated("GroupCatalogList", GroupCatalogSerializer),
         bad_request=ResponseContract.bad_request(),
     )
 
@@ -995,27 +995,27 @@ class TeamListAPIView(AppListAPIView, EquipmentAPIView):
             return error
         department_id = query.get("department_id") if query else None
         return self.list_response_sync(
-            list_teams(search=query.get("q") if query else None, department_id=department_id)
+            list_groups(search=query.get("q") if query else None, department_id=department_id)
         )
 
 
-class TeamDetailAPIView(EquipmentAPIView):
+class GroupDetailAPIView(EquipmentAPIView):
     permission_classes = ORGANIZATION_PERMISSIONS
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        success=ResponseContract.success("TeamCatalogDetail", TeamCatalogSerializer),
+        success=ResponseContract.success("GroupCatalogDetail", GroupCatalogSerializer),
         not_found=ResponseContract.not_found(),
     )
 
-    def handle_get(self, request: Request, team_id: int, *args: Any, **kwargs: Any) -> Response:
-        return self.respond(get_team(team_id=team_id))
+    def handle_get(self, request: Request, group_id: int, *args: Any, **kwargs: Any) -> Response:
+        return self.respond(get_group(group_id=group_id))
 
 
-class TeamOptionsAPIView(OptionsAPIView):
-    query_serializer = TeamOptionsQuerySerializer
+class GroupOptionsAPIView(OptionsAPIView):
+    query_serializer = GroupOptionsQuerySerializer
     size_class = SizeClass.SMALL
     owner = "equipment"
     schema_tags = ("Equipment",)
 
     def select(self, *, actor: Any, filters: dict[str, Any]) -> Any:
-        return list_team_options(actor=actor, **filters)
+        return list_group_options(actor=actor, **filters)

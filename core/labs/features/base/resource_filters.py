@@ -28,7 +28,7 @@ def resource_filter_spec(
     common = [
         Filter("id", PositiveIDField(), "pk", "reference", multiple=True),
         Filter("owner_id", PositiveIDField(), "owner_id", "reference", multiple=True),
-        Filter("team_id", PositiveIDField(), "team_id", "reference", multiple=True),
+        Filter("group_id", PositiveIDField(), "group_id", "reference", multiple=True),
         Filter("created_at_after", QueryDateTimeField(required=False), "created__gte", "datetime"),
         Filter("created_at_before", QueryDateTimeField(required=False), "created__lt", "datetime"),
     ]

@@ -33,7 +33,7 @@ class StrictWriteMixin(ResourceWriteSerializerMixin):
 
 class BenchCreateSerializer(StrictWriteMixin, serializers.ModelSerializer):
     department_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
-    team_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    group_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     owner_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     type_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     bench_group_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
@@ -47,7 +47,7 @@ class BenchCreateSerializer(StrictWriteMixin, serializers.ModelSerializer):
             "sku",
             "name",
             "department_id",
-            "team_id",
+            "group_id",
             "owner_id",
             "remark",
             "image",
@@ -130,7 +130,7 @@ class BenchEquipmentListQuerySerializer(serializers.Serializer):
 
 
 class BenchSerializer(AppModelSerializer):
-    team = NamedReferenceSerializer(read_only=True, allow_null=True)
+    group = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
     owner = NamedReferenceSerializer(read_only=True, allow_null=True)
     type = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -150,7 +150,7 @@ class BenchSerializer(AppModelSerializer):
             "uid",
             "sku",
             "name",
-            "team",
+            "group",
             "department",
             "owner",
             "remark",

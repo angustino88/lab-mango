@@ -24,7 +24,7 @@ from core.labs.models.resource.location.station import Station, StationStatusRec
 from core.labs.models.resource.location.station_slot import StationSlot
 
 STATION_WRITE_FIELDS = (
-    "sku", "name", "department_id", "team_id", "owner_id", "remark", "label", "type_id", "room_id", "slot_id",
+    "sku", "name", "department_id", "group_id", "owner_id", "remark", "label", "type_id", "room_id", "slot_id",
     "position", "height_mm", "width_mm", "depth_mm", "orientation_degrees", "max_load_kg",
     "bench_capacity", "max_concurrent_users", "usable_surface_mm2", "power_capacity_w",
     "power_reserved_w", "cooling_capacity_w", "network_port_capacity", "utilities",

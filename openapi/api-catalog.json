@@ -17447,6 +17447,16 @@
           }
         },
         {
+          "name": "group_id",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated values; OR within this filter.",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
           "name": "id",
           "in": "query",
           "required": false,
@@ -17539,16 +17549,6 @@
           }
         },
         {
-          "name": "team_id",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated values; OR within this filter.",
-          "schema": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        {
           "name": "type_id",
           "in": "query",
           "required": false,
@@ -17610,7 +17610,7 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "team": {
+                    "group": {
                       "allOf": [
                         {
                           "type": "object",
@@ -17786,6 +17786,7 @@
                     "documentation_url",
                     "equipment_count",
                     "equipment_url",
+                    "group",
                     "id",
                     "image",
                     "is_favorite",
@@ -17803,7 +17804,6 @@
                     "sku",
                     "station_slot",
                     "status",
-                    "team",
                     "type",
                     "uid",
                     "updated_at"
@@ -17829,7 +17829,7 @@
                 "uid": "123e4567-e89b-12d3-a456-426614174000",
                 "sku": "string",
                 "name": "string",
-                "team": {},
+                "group": {},
                 "department": {},
                 "owner": {},
                 "remark": "string",
@@ -18056,7 +18056,7 @@
               "minimum": 1,
               "nullable": true
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
@@ -18161,7 +18161,7 @@
           "sku": "string",
           "name": "string",
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "owner_id": 1,
           "remark": "string",
           "image": "https://example.com/resource",
@@ -18210,7 +18210,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -18386,6 +18386,7 @@
                   "documentation_url",
                   "equipment_count",
                   "equipment_url",
+                  "group",
                   "id",
                   "image",
                   "is_favorite",
@@ -18403,7 +18404,6 @@
                   "sku",
                   "station_slot",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at"
@@ -18420,7 +18420,7 @@
               "uid": "123e4567-e89b-12d3-a456-426614174000",
               "sku": "string",
               "name": "string",
-              "team": {},
+              "group": {},
               "department": {},
               "owner": {},
               "remark": "string",
@@ -20647,7 +20647,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -20823,6 +20823,7 @@
                   "documentation_url",
                   "equipment_count",
                   "equipment_url",
+                  "group",
                   "id",
                   "image",
                   "is_favorite",
@@ -20840,7 +20841,6 @@
                   "sku",
                   "station_slot",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at"
@@ -20857,7 +20857,7 @@
               "uid": "123e4567-e89b-12d3-a456-426614174000",
               "sku": "string",
               "name": "string",
-              "team": {},
+              "group": {},
               "department": {},
               "owner": {},
               "remark": "string",
@@ -21040,7 +21040,7 @@
               "minimum": 1,
               "nullable": true
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
@@ -21145,7 +21145,7 @@
           "sku": "string",
           "name": "string",
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "owner_id": 1,
           "remark": "string",
           "image": "https://example.com/resource",
@@ -21194,7 +21194,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -21370,6 +21370,7 @@
                   "documentation_url",
                   "equipment_count",
                   "equipment_url",
+                  "group",
                   "id",
                   "image",
                   "is_favorite",
@@ -21387,7 +21388,6 @@
                   "sku",
                   "station_slot",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at"
@@ -21404,7 +21404,7 @@
               "uid": "123e4567-e89b-12d3-a456-426614174000",
               "sku": "string",
               "name": "string",
-              "team": {},
+              "group": {},
               "department": {},
               "owner": {},
               "remark": "string",
@@ -21693,7 +21693,7 @@
               "minimum": 1,
               "nullable": true
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
@@ -21795,7 +21795,7 @@
           "sku": "string",
           "name": "string",
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "owner_id": 1,
           "remark": "string",
           "image": "https://example.com/resource",
@@ -21844,7 +21844,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -22020,6 +22020,7 @@
                   "documentation_url",
                   "equipment_count",
                   "equipment_url",
+                  "group",
                   "id",
                   "image",
                   "is_favorite",
@@ -22037,7 +22038,6 @@
                   "sku",
                   "station_slot",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at"
@@ -22054,7 +22054,7 @@
               "uid": "123e4567-e89b-12d3-a456-426614174000",
               "sku": "string",
               "name": "string",
-              "team": {},
+              "group": {},
               "department": {},
               "owner": {},
               "remark": "string",
@@ -22827,7 +22827,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -23003,6 +23003,7 @@
                   "documentation_url",
                   "equipment_count",
                   "equipment_url",
+                  "group",
                   "id",
                   "image",
                   "is_favorite",
@@ -23020,7 +23021,6 @@
                   "sku",
                   "station_slot",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at"
@@ -23037,7 +23037,7 @@
               "uid": "123e4567-e89b-12d3-a456-426614174000",
               "sku": "string",
               "name": "string",
-              "team": {},
+              "group": {},
               "department": {},
               "owner": {},
               "remark": "string",
@@ -23359,7 +23359,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -23535,6 +23535,7 @@
                   "documentation_url",
                   "equipment_count",
                   "equipment_url",
+                  "group",
                   "id",
                   "image",
                   "is_favorite",
@@ -23552,7 +23553,6 @@
                   "sku",
                   "station_slot",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at"
@@ -23569,7 +23569,7 @@
               "uid": "123e4567-e89b-12d3-a456-426614174000",
               "sku": "string",
               "name": "string",
-              "team": {},
+              "group": {},
               "department": {},
               "owner": {},
               "remark": "string",
@@ -28262,6 +28262,16 @@
           }
         },
         {
+          "name": "group_id",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated values; OR within this filter.",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
           "name": "id",
           "in": "query",
           "required": false,
@@ -28450,16 +28460,6 @@
           }
         },
         {
-          "name": "team_id",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated values; OR within this filter.",
-          "schema": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        {
           "name": "technical_user_id",
           "in": "query",
           "required": false,
@@ -28611,7 +28611,7 @@
                       "readOnly": true,
                       "nullable": true
                     },
-                    "team": {
+                    "group": {
                       "allOf": [
                         {
                           "type": "object",
@@ -28864,6 +28864,7 @@
                     "dimensions",
                     "display_status",
                     "firmware_version",
+                    "group",
                     "id",
                     "interfaces",
                     "kind",
@@ -28889,7 +28890,6 @@
                     "serial_number",
                     "size",
                     "sku",
-                    "team",
                     "type",
                     "uid",
                     "updated_at",
@@ -28926,7 +28926,7 @@
                 "log_label": "string",
                 "owner": {},
                 "department": {},
-                "team": {},
+                "group": {},
                 "placement": {},
                 "loan": {},
                 "reservations": [
@@ -29233,7 +29233,7 @@
               "nullable": true,
               "description": "Owning department."
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "nullable": true,
               "description": "Owning team; must belong to the selected department."
@@ -29303,7 +29303,7 @@
           "product_model_id": 1,
           "owner_id": 1,
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "material_id": 1,
           "size_id": 1,
           "resolution_id": 1,
@@ -29424,7 +29424,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -29693,6 +29693,7 @@
                   "dimensions",
                   "display_status",
                   "firmware_version",
+                  "group",
                   "id",
                   "interfaces",
                   "kind",
@@ -29718,7 +29719,6 @@
                   "serial_number",
                   "size",
                   "sku",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -29746,7 +29746,7 @@
               "log_label": "string",
               "owner": {},
               "department": {},
-              "team": {},
+              "group": {},
               "placement": {},
               "loan": {},
               "reservations": [
@@ -36888,7 +36888,7 @@
           "name": "dimension",
           "in": "query",
           "required": true,
-          "description": "* `category` - category\n* `kind` - kind\n* `type` - type\n* `manufacturer` - manufacturer\n* `product_model_id` - product_model_id\n* `department_id` - department_id\n* `team_id` - team_id",
+          "description": "* `category` - category\n* `kind` - kind\n* `type` - type\n* `manufacturer` - manufacturer\n* `product_model_id` - product_model_id\n* `department_id` - department_id\n* `group_id` - group_id",
           "schema": {
             "enum": [
               "category",
@@ -36897,8 +36897,18 @@
               "manufacturer",
               "product_model_id",
               "department_id",
-              "team_id"
+              "group_id"
             ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "group_id",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated values; OR within this filter.",
+          "schema": {
             "type": "string",
             "minLength": 1
           }
@@ -37075,16 +37085,6 @@
         },
         {
           "name": "status",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated values; OR within this filter.",
-          "schema": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        {
-          "name": "team_id",
           "in": "query",
           "required": false,
           "description": "Comma-separated values; OR within this filter.",
@@ -37836,7 +37836,7 @@
                     },
                     "readOnly": true
                   },
-                  "teams": {
+                  "groups": {
                     "type": "array",
                     "items": {
                       "type": "object",
@@ -37929,6 +37929,7 @@
                   "categories",
                   "characteristics",
                   "customers",
+                  "groups",
                   "interfaces",
                   "kinds",
                   "manufacturers",
@@ -37938,7 +37939,6 @@
                   "protocols",
                   "resolutions",
                   "sizes",
-                  "teams",
                   "technical_users",
                   "types"
                 ]
@@ -37962,7 +37962,7 @@
               "product_models": [
                 {}
               ],
-              "teams": [
+              "groups": [
                 {}
               ],
               "owners": [
@@ -40346,6 +40346,661 @@
               "id": 1,
               "size": "string",
               "diagonal_in": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/reference-data/groups",
+      "method": "GET",
+      "operation_id": "labs_equipment_reference_data_groups_retrieve",
+      "summary": "Get Equipment Reference Data Groups",
+      "description": "List Group reference records in a paginated data envelope. Validates the declared search, relation and pagination query parameters and delegates filtering and access checks to the owner-provided listing callback.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "active",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 255
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "department_id": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "active": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "department_id",
+                    "id",
+                    "name"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "name": "string",
+                "description": "string",
+                "department_id": 1,
+                "active": true
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "The requested page does not exist (page beyond the last page).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/reference-data/groups",
+      "method": "POST",
+      "operation_id": "labs_equipment_reference_data_groups_create",
+      "summary": "Create Equipment Reference Data Groups",
+      "description": "Create a Group reference record from the declared writable fields. Passes the validated values, authenticated user and Idempotency-Key to the owner-provided create callback. Returns a 201 data envelope with Location; a replay reported by the callback also includes Idempotency-Replayed: true.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "description": "Required replay key (max 128 characters); receipts retained until explicitly purged.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "description": {
+              "type": "string"
+            },
+            "active": {
+              "type": "boolean"
+            },
+            "department_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "example_payload": {
+          "name": "string",
+          "description": "string",
+          "active": true,
+          "department_id": 1
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "department_id": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "department_id",
+                  "id",
+                  "name"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "description": "string",
+              "department_id": 1,
+              "active": true
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/reference-data/groups/{reference_id}",
+      "method": "GET",
+      "operation_id": "labs_equipment_reference_data_groups_retrieve_by_reference_id",
+      "summary": "Get Equipment Reference Data Groups by Reference ID",
+      "description": "Retrieve one Group reference record by reference_id in a data envelope. Delegates lookup and access checks to the owner-provided retrieve callback; a missing or unavailable record is documented as 404.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "reference_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "department_id": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "department_id",
+                  "id",
+                  "name"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "description": "string",
+              "department_id": 1,
+              "active": true
             }
           }
         },
@@ -46638,661 +47293,6 @@
       }
     },
     {
-      "endpoint": "/api/labs/equipment/reference-data/teams",
-      "method": "GET",
-      "operation_id": "labs_equipment_reference_data_teams_retrieve",
-      "summary": "Get Equipment Reference Data Teams",
-      "description": "List Team reference records in a paginated data envelope. Validates the declared search, relation and pagination query parameters and delegates filtering and access checks to the owner-provided listing callback.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "active",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "boolean",
-            "nullable": true
-          }
-        },
-        {
-          "name": "department_id",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "page_size",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "maximum": 100,
-            "minimum": 1
-          }
-        },
-        {
-          "name": "search",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "meta": {
-                "type": "object",
-                "properties": {
-                  "pagination": {
-                    "type": "object",
-                    "properties": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "required": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    }
-                  }
-                },
-                "required": [
-                  "pagination"
-                ]
-              },
-              "data": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "name": {
-                      "type": "string",
-                      "maxLength": 255
-                    },
-                    "description": {
-                      "type": "string"
-                    },
-                    "department_id": {
-                      "type": "integer",
-                      "readOnly": true,
-                      "nullable": true
-                    },
-                    "active": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "department_id",
-                    "id",
-                    "name"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "data",
-              "meta"
-            ]
-          },
-          "example_payload": {
-            "meta": {
-              "pagination": {
-                "type": null,
-                "description": null
-              }
-            },
-            "data": [
-              {
-                "id": 1,
-                "name": "string",
-                "description": "string",
-                "department_id": 1,
-                "active": true
-              }
-            ]
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "404": {
-          "description": "The requested page does not exist (page beyond the last page).",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/equipment/reference-data/teams",
-      "method": "POST",
-      "operation_id": "labs_equipment_reference_data_teams_create",
-      "summary": "Create Equipment Reference Data Teams",
-      "description": "Create a Team reference record from the declared writable fields. Passes the validated values, authenticated user and Idempotency-Key to the owner-provided create callback. Returns a 201 data envelope with Location; a replay reported by the callback also includes Idempotency-Replayed: true.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "Idempotency-Key",
-          "in": "header",
-          "required": true,
-          "description": "Required replay key (max 128 characters); receipts retained until explicitly purged.",
-          "schema": {
-            "type": "string"
-          }
-        }
-      ],
-      "request_body": {
-        "content_type": "application/json",
-        "supported_content_types": [
-          "application/json",
-          "application/x-www-form-urlencoded",
-          "multipart/form-data"
-        ],
-        "required": true,
-        "description": "",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string",
-              "maxLength": 255
-            },
-            "description": {
-              "type": "string"
-            },
-            "active": {
-              "type": "boolean"
-            },
-            "department_id": {
-              "type": "integer",
-              "minimum": 1,
-              "nullable": true
-            }
-          },
-          "required": [
-            "name"
-          ]
-        },
-        "example_payload": {
-          "name": "string",
-          "description": "string",
-          "active": true,
-          "department_id": 1
-        }
-      },
-      "responses": {
-        "201": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "department_id": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "active": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "department_id",
-                  "id",
-                  "name"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "name": "string",
-              "description": "string",
-              "department_id": 1,
-              "active": true
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "409": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "422": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/equipment/reference-data/teams/{reference_id}",
-      "method": "GET",
-      "operation_id": "labs_equipment_reference_data_teams_retrieve_by_reference_id",
-      "summary": "Get Equipment Reference Data Teams by Reference ID",
-      "description": "Retrieve one Team reference record by reference_id in a data envelope. Delegates lookup and access checks to the owner-provided retrieve callback; a missing or unavailable record is documented as 404.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "reference_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "department_id": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "active": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "department_id",
-                  "id",
-                  "name"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "name": "string",
-              "description": "string",
-              "department_id": 1,
-              "active": true
-            }
-          }
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
       "endpoint": "/api/labs/equipment/reference-data/technical-users",
       "method": "GET",
       "operation_id": "labs_equipment_reference_data_technical_users_retrieve",
@@ -48632,7 +48632,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -48901,6 +48901,7 @@
                   "dimensions",
                   "display_status",
                   "firmware_version",
+                  "group",
                   "id",
                   "interfaces",
                   "kind",
@@ -48926,7 +48927,6 @@
                   "serial_number",
                   "size",
                   "sku",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -48954,7 +48954,7 @@
               "log_label": "string",
               "owner": {},
               "department": {},
-              "team": {},
+              "group": {},
               "placement": {},
               "loan": {},
               "reservations": [
@@ -49204,7 +49204,7 @@
               "nullable": true,
               "description": "Owning department."
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "nullable": true,
               "description": "Owning team; must belong to the selected department."
@@ -49270,7 +49270,7 @@
           "product_model_id": 1,
           "owner_id": 1,
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "material_id": 1,
           "size_id": 1,
           "resolution_id": 1,
@@ -49391,7 +49391,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -49660,6 +49660,7 @@
                   "dimensions",
                   "display_status",
                   "firmware_version",
+                  "group",
                   "id",
                   "interfaces",
                   "kind",
@@ -49685,7 +49686,6 @@
                   "serial_number",
                   "size",
                   "sku",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -49713,7 +49713,7 @@
               "log_label": "string",
               "owner": {},
               "department": {},
-              "team": {},
+              "group": {},
               "placement": {},
               "loan": {},
               "reservations": [
@@ -50227,7 +50227,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -50496,6 +50496,7 @@
                   "dimensions",
                   "display_status",
                   "firmware_version",
+                  "group",
                   "id",
                   "interfaces",
                   "kind",
@@ -50521,7 +50522,6 @@
                   "serial_number",
                   "size",
                   "sku",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -50549,7 +50549,7 @@
               "log_label": "string",
               "owner": {},
               "department": {},
-              "team": {},
+              "group": {},
               "placement": {},
               "loan": {},
               "reservations": [
@@ -50800,7 +50800,7 @@
               "nullable": true,
               "description": "Owning department."
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "nullable": true,
               "description": "Owning team; must belong to the selected department."
@@ -50866,7 +50866,7 @@
           "product_model_id": 1,
           "owner_id": 1,
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "material_id": 1,
           "size_id": 1,
           "resolution_id": 1,
@@ -50987,7 +50987,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -51256,6 +51256,7 @@
                   "dimensions",
                   "display_status",
                   "firmware_version",
+                  "group",
                   "id",
                   "interfaces",
                   "kind",
@@ -51281,7 +51282,6 @@
                   "serial_number",
                   "size",
                   "sku",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -51309,7 +51309,7 @@
               "log_label": "string",
               "owner": {},
               "department": {},
-              "team": {},
+              "group": {},
               "placement": {},
               "loan": {},
               "reservations": [
@@ -52291,7 +52291,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -52560,6 +52560,7 @@
                   "dimensions",
                   "display_status",
                   "firmware_version",
+                  "group",
                   "id",
                   "interfaces",
                   "kind",
@@ -52585,7 +52586,6 @@
                   "serial_number",
                   "size",
                   "sku",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -52613,7 +52613,7 @@
               "log_label": "string",
               "owner": {},
               "department": {},
-              "team": {},
+              "group": {},
               "placement": {},
               "loan": {},
               "reservations": [
@@ -53050,7 +53050,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -53319,6 +53319,7 @@
                   "dimensions",
                   "display_status",
                   "firmware_version",
+                  "group",
                   "id",
                   "interfaces",
                   "kind",
@@ -53344,7 +53345,6 @@
                   "serial_number",
                   "size",
                   "sku",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -53372,7 +53372,7 @@
               "log_label": "string",
               "owner": {},
               "department": {},
-              "team": {},
+              "group": {},
               "placement": {},
               "loan": {},
               "reservations": [
@@ -56611,7 +56611,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -56880,6 +56880,7 @@
                   "dimensions",
                   "display_status",
                   "firmware_version",
+                  "group",
                   "id",
                   "interfaces",
                   "kind",
@@ -56905,7 +56906,6 @@
                   "serial_number",
                   "size",
                   "sku",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -56933,7 +56933,7 @@
               "log_label": "string",
               "owner": {},
               "department": {},
-              "team": {},
+              "group": {},
               "placement": {},
               "loan": {},
               "reservations": [
@@ -57183,7 +57183,7 @@
               "nullable": true,
               "description": "Owning department."
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "nullable": true,
               "description": "Owning team; must belong to the selected department."
@@ -57253,7 +57253,7 @@
           "product_model_id": 1,
           "owner_id": 1,
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "material_id": 1,
           "size_id": 1,
           "resolution_id": 1,
@@ -57374,7 +57374,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -57643,6 +57643,7 @@
                   "dimensions",
                   "display_status",
                   "firmware_version",
+                  "group",
                   "id",
                   "interfaces",
                   "kind",
@@ -57668,7 +57669,6 @@
                   "serial_number",
                   "size",
                   "sku",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -57696,7 +57696,7 @@
               "log_label": "string",
               "owner": {},
               "department": {},
-              "team": {},
+              "group": {},
               "placement": {},
               "loan": {},
               "reservations": [
@@ -58105,7 +58105,7 @@
               "nullable": true,
               "description": "Owning department."
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "nullable": true,
               "description": "Owning team; must belong to the selected department."
@@ -58171,7 +58171,7 @@
           "product_model_id": 1,
           "owner_id": 1,
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "material_id": 1,
           "size_id": 1,
           "resolution_id": 1,
@@ -58292,7 +58292,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -58561,6 +58561,7 @@
                   "dimensions",
                   "display_status",
                   "firmware_version",
+                  "group",
                   "id",
                   "interfaces",
                   "kind",
@@ -58586,7 +58587,6 @@
                   "serial_number",
                   "size",
                   "sku",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -58614,7 +58614,7 @@
               "log_label": "string",
               "owner": {},
               "department": {},
-              "team": {},
+              "group": {},
               "placement": {},
               "loan": {},
               "reservations": [
@@ -60372,6 +60372,647 @@
           }
         },
         "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/groups",
+      "method": "GET",
+      "operation_id": "labs_groups_retrieve",
+      "summary": "Get Groups",
+      "description": "Equipment specialization of the shared feature API foundation.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "include_ids",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 50,
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Search text (1 to 100 characters).",
+          "schema": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 255
+                    },
+                    "department": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "department_id": {
+                      "type": "integer",
+                      "writeOnly": true
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    }
+                  },
+                  "required": [
+                    "created_at",
+                    "department",
+                    "id",
+                    "name",
+                    "updated_at"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "name": "string",
+                "department": {},
+                "department_id": 1,
+                "active": true,
+                "created_at": "2026-10-20T12:00:00Z",
+                "updated_at": "2026-10-20T12:00:00Z"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "The requested page does not exist (page beyond the last page).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/groups/options",
+      "method": "GET",
+      "operation_id": "labs_groups_options_retrieve",
+      "summary": "Get Groups Options",
+      "description": "Shared base view for dropdown selector endpoints (ADR 002).\n\nValidates query parameters, enforces the size class and result cap,\ncalls the feature's query selector, handles ETag generation / 304 Not Modified,\nand returns {\"data\": [{\"id\": ..., \"sku\": ..., \"name\": ...}]}.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "include_ids",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 50,
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Search text (1 to 100 characters).",
+          "schema": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "Standard selector options list",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Enveloped list of selector options.",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "Standard selector dropdown item: exactly {id, sku, name} (OPT-2, OPT-4).",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "sku": {
+                      "type": "string",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "readOnly": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "sku"
+                  ]
+                },
+                "readOnly": true
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": [
+              {
+                "id": 1,
+                "sku": "string",
+                "name": "string"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "Invalid selector query parameters (invalid_query) or result cap exceeded (too_many_results).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "304": {
+          "description": "Not modified",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "403": {
+          "description": "Access denied by the existing API-key or authenticated-user permission policy.",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/groups/{group_id}",
+      "method": "GET",
+      "operation_id": "labs_groups_retrieve_by_group_id",
+      "summary": "Get Groups by Group ID",
+      "description": "Equipment specialization of the shared feature API foundation.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "group_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "department": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "department_id": {
+                    "type": "integer",
+                    "writeOnly": true
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "created_at",
+                  "department",
+                  "id",
+                  "name",
+                  "updated_at"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "department": {},
+              "department_id": 1,
+              "active": true,
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -66452,6 +67093,16 @@
           }
         },
         {
+          "name": "group_id",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated values; OR within this filter.",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
           "name": "id",
           "in": "query",
           "required": false,
@@ -66525,16 +67176,6 @@
         },
         {
           "name": "status",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated values; OR within this filter.",
-          "schema": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        {
-          "name": "team_id",
           "in": "query",
           "required": false,
           "description": "Comma-separated values; OR within this filter.",
@@ -84080,6 +84721,16 @@
           }
         },
         {
+          "name": "group_id",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated values; OR within this filter.",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
           "name": "id",
           "in": "query",
           "required": false,
@@ -84160,16 +84811,6 @@
             "type": "string",
             "minLength": 1
           }
-        },
-        {
-          "name": "team_id",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated values; OR within this filter.",
-          "schema": {
-            "type": "string",
-            "minLength": 1
-          }
         }
       ],
       "request_body": null,
@@ -84239,7 +84880,7 @@
                       "readOnly": true,
                       "nullable": true
                     },
-                    "team": {
+                    "group": {
                       "allOf": [
                         {
                           "type": "object",
@@ -84434,6 +85075,7 @@
                     "floor",
                     "floor_plan_revision",
                     "floor_plan_url",
+                    "group",
                     "id",
                     "image",
                     "label",
@@ -84452,7 +85094,6 @@
                     "sku",
                     "slot_capacity",
                     "status",
-                    "team",
                     "uid",
                     "updated_at",
                     "usable_height_m",
@@ -84482,7 +85123,7 @@
                 "name": "string",
                 "label": "string",
                 "department": {},
-                "team": {},
+                "group": {},
                 "owner": {},
                 "remark": "string",
                 "image": "https://example.com/resource",
@@ -84665,7 +85306,7 @@
               "minimum": 1,
               "nullable": true
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
@@ -84796,7 +85437,7 @@
           "name": "string",
           "label": "string",
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "owner_id": 1,
           "remark": "string",
           "map_url": "https://example.com/resource",
@@ -84863,7 +85504,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -85058,6 +85699,7 @@
                   "floor",
                   "floor_plan_revision",
                   "floor_plan_url",
+                  "group",
                   "id",
                   "image",
                   "label",
@@ -85076,7 +85718,6 @@
                   "sku",
                   "slot_capacity",
                   "status",
-                  "team",
                   "uid",
                   "updated_at",
                   "usable_height_m",
@@ -85097,7 +85738,7 @@
               "name": "string",
               "label": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
@@ -86331,7 +86972,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -86526,6 +87167,7 @@
                   "floor",
                   "floor_plan_revision",
                   "floor_plan_url",
+                  "group",
                   "id",
                   "image",
                   "label",
@@ -86544,7 +87186,6 @@
                   "sku",
                   "slot_capacity",
                   "status",
-                  "team",
                   "uid",
                   "updated_at",
                   "usable_height_m",
@@ -86565,7 +87206,7 @@
               "name": "string",
               "label": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
@@ -86704,7 +87345,7 @@
               "minimum": 1,
               "nullable": true
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
@@ -86835,7 +87476,7 @@
           "name": "string",
           "label": "string",
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "owner_id": 1,
           "remark": "string",
           "map_url": "https://example.com/resource",
@@ -86902,7 +87543,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -87097,6 +87738,7 @@
                   "floor",
                   "floor_plan_revision",
                   "floor_plan_url",
+                  "group",
                   "id",
                   "image",
                   "label",
@@ -87115,7 +87757,6 @@
                   "sku",
                   "slot_capacity",
                   "status",
-                  "team",
                   "uid",
                   "updated_at",
                   "usable_height_m",
@@ -87136,7 +87777,7 @@
               "name": "string",
               "label": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
@@ -87434,7 +88075,7 @@
               "minimum": 1,
               "nullable": true
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
@@ -87562,7 +88203,7 @@
           "name": "string",
           "label": "string",
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "owner_id": 1,
           "remark": "string",
           "map_url": "https://example.com/resource",
@@ -87629,7 +88270,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -87824,6 +88465,7 @@
                   "floor",
                   "floor_plan_revision",
                   "floor_plan_url",
+                  "group",
                   "id",
                   "image",
                   "label",
@@ -87842,7 +88484,6 @@
                   "sku",
                   "slot_capacity",
                   "status",
-                  "team",
                   "uid",
                   "updated_at",
                   "usable_height_m",
@@ -87863,7 +88504,7 @@
               "name": "string",
               "label": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
@@ -88297,7 +88938,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -88492,6 +89133,7 @@
                   "floor",
                   "floor_plan_revision",
                   "floor_plan_url",
+                  "group",
                   "id",
                   "image",
                   "label",
@@ -88510,7 +89152,6 @@
                   "sku",
                   "slot_capacity",
                   "status",
-                  "team",
                   "uid",
                   "updated_at",
                   "usable_height_m",
@@ -88531,7 +89172,7 @@
               "name": "string",
               "label": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
@@ -92647,6 +93288,16 @@
           }
         },
         {
+          "name": "group_id",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated values; OR within this filter.",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
           "name": "id",
           "in": "query",
           "required": false,
@@ -92739,16 +93390,6 @@
           }
         },
         {
-          "name": "team_id",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated values; OR within this filter.",
-          "schema": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        {
           "name": "type_id",
           "in": "query",
           "required": false,
@@ -92820,7 +93461,7 @@
                       "readOnly": true,
                       "nullable": true
                     },
-                    "team": {
+                    "group": {
                       "allOf": [
                         {
                           "type": "object",
@@ -93031,6 +93672,7 @@
                     "created_at",
                     "department",
                     "depth_mm",
+                    "group",
                     "height_mm",
                     "id",
                     "image",
@@ -93054,7 +93696,6 @@
                     "slot_count",
                     "slots_url",
                     "status",
-                    "team",
                     "type",
                     "uid",
                     "updated_at",
@@ -93084,7 +93725,7 @@
                 "sku": "string",
                 "name": "string",
                 "department": {},
-                "team": {},
+                "group": {},
                 "owner": {},
                 "remark": "string",
                 "label": "string",
@@ -93266,7 +93907,7 @@
               "minimum": 1,
               "nullable": true
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
@@ -93392,7 +94033,7 @@
           "sku": "string",
           "name": "string",
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "owner_id": 1,
           "remark": "string",
           "label": "string",
@@ -93455,7 +94096,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -93666,6 +94307,7 @@
                   "created_at",
                   "department",
                   "depth_mm",
+                  "group",
                   "height_mm",
                   "id",
                   "image",
@@ -93689,7 +94331,6 @@
                   "slot_count",
                   "slots_url",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -93710,7 +94351,7 @@
               "sku": "string",
               "name": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "label": "string",
@@ -95094,7 +95735,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -95305,6 +95946,7 @@
                   "created_at",
                   "department",
                   "depth_mm",
+                  "group",
                   "height_mm",
                   "id",
                   "image",
@@ -95328,7 +95970,6 @@
                   "slot_count",
                   "slots_url",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -95349,7 +95990,7 @@
               "sku": "string",
               "name": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "label": "string",
@@ -95487,7 +96128,7 @@
               "minimum": 1,
               "nullable": true
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
@@ -95613,7 +96254,7 @@
           "sku": "string",
           "name": "string",
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "owner_id": 1,
           "remark": "string",
           "label": "string",
@@ -95676,7 +96317,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -95887,6 +96528,7 @@
                   "created_at",
                   "department",
                   "depth_mm",
+                  "group",
                   "height_mm",
                   "id",
                   "image",
@@ -95910,7 +96552,6 @@
                   "slot_count",
                   "slots_url",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -95931,7 +96572,7 @@
               "sku": "string",
               "name": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "label": "string",
@@ -96228,7 +96869,7 @@
               "minimum": 1,
               "nullable": true
             },
-            "team_id": {
+            "group_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
@@ -96351,7 +96992,7 @@
           "sku": "string",
           "name": "string",
           "department_id": 1,
-          "team_id": 1,
+          "group_id": 1,
           "owner_id": 1,
           "remark": "string",
           "label": "string",
@@ -96414,7 +97055,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -96625,6 +97266,7 @@
                   "created_at",
                   "department",
                   "depth_mm",
+                  "group",
                   "height_mm",
                   "id",
                   "image",
@@ -96648,7 +97290,6 @@
                   "slot_count",
                   "slots_url",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -96669,7 +97310,7 @@
               "sku": "string",
               "name": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "label": "string",
@@ -97102,7 +97743,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -97313,6 +97954,7 @@
                   "created_at",
                   "department",
                   "depth_mm",
+                  "group",
                   "height_mm",
                   "id",
                   "image",
@@ -97336,7 +97978,6 @@
                   "slot_count",
                   "slots_url",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -97357,7 +97998,7 @@
               "sku": "string",
               "name": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "label": "string",
@@ -97713,7 +98354,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -97924,6 +98565,7 @@
                   "created_at",
                   "department",
                   "depth_mm",
+                  "group",
                   "height_mm",
                   "id",
                   "image",
@@ -97947,7 +98589,6 @@
                   "slot_count",
                   "slots_url",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -97968,7 +98609,7 @@
               "sku": "string",
               "name": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "label": "string",
@@ -98324,7 +98965,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "team": {
+                  "group": {
                     "allOf": [
                       {
                         "type": "object",
@@ -98535,6 +99176,7 @@
                   "created_at",
                   "department",
                   "depth_mm",
+                  "group",
                   "height_mm",
                   "id",
                   "image",
@@ -98558,7 +99200,6 @@
                   "slot_count",
                   "slots_url",
                   "status",
-                  "team",
                   "type",
                   "uid",
                   "updated_at",
@@ -98579,7 +99220,7 @@
               "sku": "string",
               "name": "string",
               "department": {},
-              "team": {},
+              "group": {},
               "owner": {},
               "remark": "string",
               "label": "string",
@@ -101148,647 +101789,6 @@
           "content_type": null,
           "schema": null,
           "example_payload": null
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/teams",
-      "method": "GET",
-      "operation_id": "labs_teams_retrieve",
-      "summary": "Get Teams",
-      "description": "Equipment specialization of the shared feature API foundation.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "department_id",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "include_ids",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
-          "schema": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "maxItems": 50,
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "page_size",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "maximum": 100,
-            "minimum": 1
-          }
-        },
-        {
-          "name": "q",
-          "in": "query",
-          "required": false,
-          "description": "Search text (1 to 100 characters).",
-          "schema": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 1
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "meta": {
-                "type": "object",
-                "properties": {
-                  "pagination": {
-                    "type": "object",
-                    "properties": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "required": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    }
-                  }
-                },
-                "required": [
-                  "pagination"
-                ]
-              },
-              "data": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "name": {
-                      "type": "string",
-                      "maxLength": 255
-                    },
-                    "department": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "readOnly": true
-                    },
-                    "department_id": {
-                      "type": "integer",
-                      "writeOnly": true
-                    },
-                    "active": {
-                      "type": "boolean"
-                    },
-                    "created_at": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
-                    },
-                    "updated_at": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
-                    }
-                  },
-                  "required": [
-                    "created_at",
-                    "department",
-                    "id",
-                    "name",
-                    "updated_at"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "data",
-              "meta"
-            ]
-          },
-          "example_payload": {
-            "meta": {
-              "pagination": {
-                "type": null,
-                "description": null
-              }
-            },
-            "data": [
-              {
-                "id": 1,
-                "name": "string",
-                "department": {},
-                "department_id": 1,
-                "active": true,
-                "created_at": "2026-10-20T12:00:00Z",
-                "updated_at": "2026-10-20T12:00:00Z"
-              }
-            ]
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "404": {
-          "description": "The requested page does not exist (page beyond the last page).",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/teams/options",
-      "method": "GET",
-      "operation_id": "labs_teams_options_retrieve",
-      "summary": "Get Teams Options",
-      "description": "Shared base view for dropdown selector endpoints (ADR 002).\n\nValidates query parameters, enforces the size class and result cap,\ncalls the feature's query selector, handles ETag generation / 304 Not Modified,\nand returns {\"data\": [{\"id\": ..., \"sku\": ..., \"name\": ...}]}.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "department_id",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "include_ids",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
-          "schema": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "maxItems": 50,
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "q",
-          "in": "query",
-          "required": false,
-          "description": "Search text (1 to 100 characters).",
-          "schema": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 1
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "Standard selector options list",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Enveloped list of selector options.",
-            "properties": {
-              "data": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "description": "Standard selector dropdown item: exactly {id, sku, name} (OPT-2, OPT-4).",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "sku": {
-                      "type": "string",
-                      "readOnly": true,
-                      "nullable": true
-                    },
-                    "name": {
-                      "type": "string",
-                      "readOnly": true
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "sku"
-                  ]
-                },
-                "readOnly": true
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": [
-              {
-                "id": 1,
-                "sku": "string",
-                "name": "string"
-              }
-            ]
-          }
-        },
-        "400": {
-          "description": "Invalid selector query parameters (invalid_query) or result cap exceeded (too_many_results).",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "304": {
-          "description": "Not modified",
-          "content_type": null,
-          "schema": null,
-          "example_payload": null
-        },
-        "403": {
-          "description": "Access denied by the existing API-key or authenticated-user permission policy.",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/teams/{team_id}",
-      "method": "GET",
-      "operation_id": "labs_teams_retrieve_by_team_id",
-      "summary": "Get Teams by Team ID",
-      "description": "Equipment specialization of the shared feature API foundation.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "team_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "department": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "department_id": {
-                    "type": "integer",
-                    "writeOnly": true
-                  },
-                  "active": {
-                    "type": "boolean"
-                  },
-                  "created_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  },
-                  "updated_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  }
-                },
-                "required": [
-                  "created_at",
-                  "department",
-                  "id",
-                  "name",
-                  "updated_at"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "name": "string",
-              "department": {},
-              "department_id": 1,
-              "active": true,
-              "created_at": "2026-10-20T12:00:00Z",
-              "updated_at": "2026-10-20T12:00:00Z"
-            }
-          }
         },
         "404": {
           "description": "",

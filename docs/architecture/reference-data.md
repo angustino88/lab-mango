@@ -103,7 +103,7 @@ Append `/{id}` for single-record `GET`. All paths are slashless beneath `/api/la
 
 | Owner prefix | Catalog segments |
 |---|---|
-| `equipment/reference-data/` | `categories` *(read-only)*, `kinds`, `types`, `manufacturers`, `product-models`, `specification-definitions`, `product-model-specifications`, `interfaces`, `materials`, `display-sizes`, `display-resolutions`, `networking-protocols`, `sample-customers`, `sample-characteristics`, `technical-users`, `departments`, `teams` |
+| `equipment/reference-data/` | `categories` *(read-only)*, `kinds`, `types`, `manufacturers`, `product-models`, `specification-definitions`, `product-model-specifications`, `interfaces`, `materials`, `display-sizes`, `display-resolutions`, `networking-protocols`, `sample-customers`, `sample-characteristics`, `technical-users`, `departments`, `groups` |
 | `licenses/reference-data/` | `vendors`, `products`, `types`, `categories`, `restrictions` |
 | `locations/reference-data/` | `countries`, `cities`, `buildings`, `station-types` |
 | `benches/reference-data/` | `groups`, `types` |
@@ -111,7 +111,7 @@ Append `/{id}` for single-record `GET`. All paths are slashless beneath `/api/la
 
 Import parents first: kind (under a provisioned category) → type; manufacturer with category memberships →
 product model → specification values; license vendor → product; country → city → building;
-department → team. Look up category IDs with `GET equipment/reference-data/categories`. Use returned integer IDs in `*_id` input fields and category
+department → group. Look up category IDs with `GET equipment/reference-data/categories`. Use returned integer IDs in `*_id` input fields and category
 ID arrays in manufacturer input. OpenAPI documents the exact allowed fields for each catalog.
 Technical users are account identifiers only: there is no password/token import field.
 

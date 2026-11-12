@@ -14,9 +14,9 @@ Keep these concepts separate: a resource's soft-delete/lifecycle state, its stat
 
 ```mermaid
 erDiagram
-  DEPARTMENT o|--o{ TEAM : contains
+  DEPARTMENT o|--o{ GROUP : contains
   DEPARTMENT o|--o{ RESOURCE : owns
-  TEAM o|--o{ RESOURCE : owns
+  GROUP o|--o{ RESOURCE : owns
   USER o|--o{ RESOURCE : owns
   COUNTRY o|--o{ ROOM : locates
   CITY o|--o{ ROOM : locates
@@ -51,14 +51,14 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
 
 ### Shared resource identity and model bases
 
-**Models:** `Department`, `Team`; abstract `ResourceModel`, `ResourceStatusRecordModel`, `AgentReportedModel`, and `PhysicalLocationNode`.
+**Models:** `Department`, `Group`; abstract `ResourceModel`, `ResourceStatusRecordModel`, `AgentReportedModel`, and `PhysicalLocationNode`.
 
-- `ResourceModel` contributes a unique UUID `uid`, SKU, name, optional department, team and owner, remark, image, timestamps, and soft-delete behavior to concrete resources. Active SKU uniqueness is a conditional constraint inherited by concrete resource models.
+- `ResourceModel` contributes a unique UUID `uid`, SKU, name, optional group and owner, remark, image, timestamps, and soft-delete behavior to concrete resources. Active SKU uniqueness is a conditional constraint inherited by concrete resource models.
 - The default and all-object managers distinguish normal and soft-deleted rows; consult the soft-delete mixin for exact manager behavior.
 - `ResourceStatusRecordModel` provides status and metadata fields to status-history models. `AgentReportedModel` provides agent/event identity and report timestamp fields; idempotency depends on concrete model constraints.
-- `Team` (renamed from `ResourceGroup`) is the team inside a department that owns resources; `Team.department` is optional. `Team.name` is unique across all departments; deleting a team referenced by a resource is protected.
-- A resource's `team` must belong to its `department`; `ResourceModel.clean()` fills an empty department from the team and rejects a mismatch (Python only, not a database constraint).
-- Benches also have `bench_group` (`BenchGroup`): what the bench is for, independent of the owning team.
+- `Group` (formerly `ResourceGroup`) is a formal subdivision of a department (e.g. EDS1 in EDS); `Group.department` is optional. `Group.name` is unique across all departments; deleting a group referenced by a resource is protected. It is not `auth.Group`.
+- A resource's `group` must belong to its `department`; `ResourceModel.clean()` fills an empty department from the group and rejects a mismatch (Python only, not a database constraint).
+- Benches also have `bench_group` (`BenchGroup`): what the bench is for, independent of the owning group.
 
 ### Locations and physical placement
 

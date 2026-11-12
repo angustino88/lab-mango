@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from core.labs.features.base.serializers import ResourceWriteSerializerMixin
-from core.labs.models.resource.base.resource import Team
+from core.labs.models.resource.base.resource import Group
 
 from .serializers import (
     EquipmentKindSerializer,
@@ -27,7 +27,7 @@ EQUIPMENT_WRITE_FIELDS = (
     "replacement_date",
     "owner",
     "department",
-    "team",
+    "group",
     "firmware_version",
     "power_draw_w",
     "weight_kg",
@@ -94,13 +94,13 @@ class EquipmentWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSe
         return attrs
 
 
-class TeamSerializer(serializers.ModelSerializer):
+class GroupSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Team
+        model = Group
         fields = ("id", "name")
         read_only_fields = fields
-        # "Team" is already the support desk's team component; keep the two schemas apart.
-        ref_name = "LabsTeamReference"
+        # Distinct schema name: other apps (users, support desk) have their own group-like components.
+        ref_name = "LabsGroupReference"
 
 
 class EquipmentOwnerSerializer(serializers.ModelSerializer):
@@ -115,5 +115,5 @@ class EquipmentFormReferenceSerializer(serializers.Serializer):
     types = EquipmentTypeSerializer(many=True, read_only=True)
     manufacturers = EquipmentManufacturerSerializer(many=True, read_only=True)
     product_models = EquipmentProductModelSerializer(many=True, read_only=True)
-    teams = TeamSerializer(many=True, read_only=True)
+    groups = GroupSerializer(many=True, read_only=True)
     owners = EquipmentOwnerSerializer(many=True, read_only=True)

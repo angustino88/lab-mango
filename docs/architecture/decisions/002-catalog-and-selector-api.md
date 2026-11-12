@@ -111,7 +111,7 @@ The full row per resource (`sku` source, active field, size class, filters) is i
 | Root | Owner | Selectors (catalog + `/options`) | Status |
 | --- | --- | --- | --- |
 | labs | Equipment | `equipment` (existing), `equipment-categories`, `equipment-kinds`, `equipment-types`, `equipment-manufacturers`, `equipment-product-models` | build |
-| labs | Equipment (organization) | `departments`, `teams` | build |
+| labs | Equipment (organization) | `departments`, `groups` | build |
 | labs | Bench bookings | `lab-projects` | build |
 | labs | Benches | `benches` (existing), `bench-groups`, `bench-types` | build |
 | labs | Licenses | `license-vendors`, `license-products`, `license-types`, `license-categories`, `license-restrictions` | build |
@@ -467,7 +467,7 @@ Size: **S** = small, returns all active rows; **L** = large, requires `q` or a l
 | `equipment-manufacturers` | `EquipmentManufacturer` | reference | `null` | `active` | L | `category_id` (M2M, `Exists`) |
 | `equipment-product-models` | `EquipmentProductModel` | reference | `null` | `active` | L | `manufacturer_id`, `type_id` |
 | `departments` | `Department` | reference | `null` | `active` | S | — |
-| `teams` | `Team` (formerly `ResourceGroup`) | reference | `null` | `active` | S | `department_id` |
+| `groups` | `Group` | reference | `null` | `active` | S | `department_id` |
 | `lab-projects` | `LabProject` | reference | `code` (nullable) | `active` | L | `active_on` (date within `starts_on`..`ends_on`) |
 | `benches` | `Bench` | primary | `sku` | soft delete (`deleted_at`) | L | `bench_group_id`, `type_id`, `setup_location_id`, `lifecycle_status`, `favorite` |
 | `bench-groups` | `BenchGroup` | vocabulary | `null` | `active` | S | — |
@@ -489,7 +489,7 @@ Size: **S** = small, returns all active rows; **L** = large, requires `q` or a l
 | `teams` (support) | `SupportTeam` | vocabulary | `code` | `is_active` | S | — |
 | `labels` (support) | `SupportLabel` | reference | `null` | none | L | — |
 
-Not verified: whether catalog list routes already exist for `rooms`, `stations`, `departments`, `teams`, `countries`, `cities`, `buildings` under these names; Phase 2 adds any that are missing. Lookups without an active field cannot be retired; adding one is a separate data-model decision, not part of this ADR.
+Not verified: whether catalog list routes already exist for `rooms`, `stations`, `departments`, `groups`, `countries`, `cities`, `buildings` under these names; Phase 2 adds any that are missing. Lookups without an active field cannot be retired; adding one is a separate data-model decision, not part of this ADR.
 
 ### 20.4 Data changes
 
@@ -507,7 +507,7 @@ All three phases landed in one breaking backend/frontend release with no aliases
 - **Search indexes:** `core/labs/migrations/0007_trigram_search_indexes.py` and
   `core/support_desk/migrations/0005_support_label_trigram_index.py` (`pg_trgm` GIN).
 - **Selectors and catalogs:** equipment (categories, kinds, types, manufacturers, product models,
-  departments, teams), lab projects, benches (groups, types), licenses (vendors, products,
+  departments, groups), lab projects, benches (groups, types), licenses (vendors, products,
   types, categories, restrictions), locations (rooms, stations, station types, countries, cities,
   buildings) and Support Desk (categories, priorities, statuses, teams, labels) follow section 20.3.
 - **Removed:** trailing-slash and reverse `options/<resource>` routes, `<category>/filters`,

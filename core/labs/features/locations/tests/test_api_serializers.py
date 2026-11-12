@@ -34,7 +34,7 @@ def test_room_create_serializer_accepts_relation_ids():
         data={
             "sku": "RM-TEST-01",
             "name": "Room 01",
-            "team_id": 1,
+            "group_id": 1,
             "owner_id": 2,
             "country_id": 3,
             "city_id": 4,
@@ -42,7 +42,7 @@ def test_room_create_serializer_accepts_relation_ids():
         }
     )
     assert serializer.is_valid(), serializer.errors
-    assert serializer.validated_data["team_id"] == 1
+    assert serializer.validated_data["group_id"] == 1
     assert serializer.validated_data["owner_id"] == 2
     assert serializer.validated_data["country_id"] == 3
 
@@ -99,7 +99,7 @@ def test_station_create_serializer_accepts_relation_ids():
         data={
             "sku": "ST-TEST-01",
             "name": "Station 01",
-            "team_id": 1,
+            "group_id": 1,
             "owner_id": 2,
             "type_id": 3,
             "room_id": 4,
@@ -107,7 +107,7 @@ def test_station_create_serializer_accepts_relation_ids():
         }
     )
     assert serializer.is_valid(), serializer.errors
-    assert serializer.validated_data["team_id"] == 1
+    assert serializer.validated_data["group_id"] == 1
     assert serializer.validated_data["room_id"] == 4
 
 

@@ -376,6 +376,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1display-sizes
   /api/labs/equipment/reference-data/display-sizes/{reference_id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1display-sizes~1{reference_id}
+  /api/labs/equipment/reference-data/groups:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1groups
+  /api/labs/equipment/reference-data/groups/{reference_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1groups~1{reference_id}
   /api/labs/equipment/reference-data/interfaces:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1interfaces
   /api/labs/equipment/reference-data/interfaces/{reference_id}:
@@ -416,10 +420,6 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1specification-definitions
   /api/labs/equipment/reference-data/specification-definitions/{reference_id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1specification-definitions~1{reference_id}
-  /api/labs/equipment/reference-data/teams:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1teams
-  /api/labs/equipment/reference-data/teams/{reference_id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1teams~1{reference_id}
   /api/labs/equipment/reference-data/technical-users:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1reference-data~1technical-users
   /api/labs/equipment/reference-data/technical-users/{reference_id}:
@@ -434,12 +434,12 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1status-summary
   /api/labs/equipment/uid/{uid}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1uid~1{uid}
-  /api/labs/teams:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1teams
-  /api/labs/teams/{team_id}:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1teams~1{team_id}
-  /api/labs/teams/options:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1teams~1options
+  /api/labs/groups:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1groups
+  /api/labs/groups/{group_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1groups~1{group_id}
+  /api/labs/groups/options:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1groups~1options
   /api/labs/expenses/{expense_id}/payments:
     $ref: ./labs-expense.yml#/paths/~1api~1labs~1expenses~1{expense_id}~1payments
   /api/labs/expenses/report:

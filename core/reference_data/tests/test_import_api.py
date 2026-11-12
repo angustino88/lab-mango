@@ -39,7 +39,7 @@ PATHS = [
             "sample-characteristics",
             "technical-users",
             "departments",
-            "teams",
+            "groups",
         )
     ),
     *(f"licenses/reference-data/{key}" for key in ("vendors", "products", "types", "categories", "restrictions")),
@@ -208,8 +208,8 @@ def test_create_and_retrieve_every_reference_type(client):
         ("equipment/reference-data/technical-users", {"username": "synthetic-service-account"}),
         ("equipment/reference-data/departments", {"name": "Synthetic department"}),
         (
-            "equipment/reference-data/teams",
-            {"name": "Synthetic team", "department_id": "departments"},
+            "equipment/reference-data/groups",
+            {"name": "Synthetic group", "department_id": "departments"},
         ),
         ("licenses/reference-data/vendors", {"name": "Synthetic vendor"}),
         ("licenses/reference-data/products", {"name": "Synthetic product", "vendor_id": "vendors"}),

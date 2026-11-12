@@ -1052,6 +1052,12 @@ paths:
           type: string
           format: date-time
       - in: query
+        name: group_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: id
         schema:
           type: string
@@ -1092,12 +1098,6 @@ paths:
           maxLength: 255
       - in: query
         name: status
-        schema:
-          type: string
-          minLength: 1
-        description: Comma-separated values; OR within this filter.
-      - in: query
-        name: team_id
         schema:
           type: string
           minLength: 1
@@ -2041,6 +2041,12 @@ paths:
           type: string
           format: date-time
       - in: query
+        name: group_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: id
         schema:
           type: string
@@ -2087,12 +2093,6 @@ paths:
           maxLength: 255
       - in: query
         name: status
-        schema:
-          type: string
-          minLength: 1
-        description: Comma-separated values; OR within this filter.
-      - in: query
-        name: team_id
         schema:
           type: string
           minLength: 1
@@ -3674,7 +3674,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -3868,7 +3868,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -4018,7 +4018,7 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        team:
+        group:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -4155,6 +4155,7 @@ components:
       - floor
       - floor_plan_revision
       - floor_plan_url
+      - group
       - id
       - image
       - label
@@ -4173,7 +4174,6 @@ components:
       - sku
       - slot_capacity
       - status
-      - team
       - uid
       - updated_at
       - usable_height_m
@@ -4199,7 +4199,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -4840,7 +4840,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -4984,7 +4984,7 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
-        team:
+        group:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -5128,6 +5128,7 @@ components:
       - created_at
       - department
       - depth_mm
+      - group
       - height_mm
       - id
       - image
@@ -5151,7 +5152,6 @@ components:
       - slot_count
       - slots_url
       - status
-      - team
       - type
       - uid
       - updated_at
@@ -5173,7 +5173,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true
@@ -6042,7 +6042,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        team_id:
+        group_id:
           type: integer
           minimum: 1
           nullable: true

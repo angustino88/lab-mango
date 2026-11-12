@@ -29,7 +29,7 @@ from core.labs.models import (
     EquipmentProductModel,
     EquipmentType,
 )
-from core.labs.models.resource.base.resource import Department, Team
+from core.labs.models.resource.base.resource import Department, Group
 from core.labs.models.resource.equipment import EquipmentInterface
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
@@ -48,7 +48,7 @@ def cardinality_inventory():
     )
     EquipmentManufacturer.objects.filter(pk=maker.pk).update(active=False)
     department = Department.objects.create(name="Synthetic department", active=False)
-    team = Team.objects.create(name="Synthetic team", department=department, active=False)
+    group = Group.objects.create(name="Synthetic group", department=department, active=False)
     display = Equipment.objects.create(
         sku="SYN-DISPLAY",
         name="Synthetic match",
@@ -57,7 +57,7 @@ def cardinality_inventory():
         manufacturer=maker,
         product_model=product,
         department=department,
-        team=team,
+        group=group,
     )
     display.interfaces.add(*(EquipmentInterface.objects.create(name=f"Synthetic HDMI {i}") for i in range(3)))
     null = Equipment.objects.create(sku="SYN-NULL", name="Synthetic null", kind=kind)
@@ -251,7 +251,7 @@ def measure_synthetic_explain_capture(cardinality_inventory):
                 product_model_id=display.product_model_id if i % 4 else None,
                 type_id=display.type_id if i % 4 else None,
                 department_id=display.department_id if i % 4 else None,
-                team_id=display.team_id if i % 4 else None,
+                group_id=display.group_id if i % 4 else None,
             )
             for i in range(1600)
         ]
