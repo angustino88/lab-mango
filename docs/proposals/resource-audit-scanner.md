@@ -215,13 +215,13 @@ Rollback: disable the new authentication class in settings; the columns are null
 
 ## Open questions / decisions needed from the owner
 
-1. Tag URL host: open. Recommendation: print the final production domain from the start, because phone
-   scans open the full URL and printed tags are permanent. If no domain is fixed yet, use `LM:<uid>`
-   (tool scanning works the same; phone cameras open nothing). The tool reads only the `uid` either way.
-2. Owners: open. A Microsoft tenant admin must create the two Entra app registrations and hand over their
-   IDs as backend settings; the frontend QR dependency needs a named maintenance owner (AGENTS.md rule 7).
-
 Decided (2026-11-12):
+1. Tag URL host: the frontend's public address, because `/t/<uid>` is a frontend page. The label page reads
+   it from frontend configuration (a tag base URL setting), never hard-coded. Print tags with the
+   production frontend address so phone scans keep working after go-live. The tool reads only the `uid`.
+2. Owners: the repository owner (full stack) owns the backend, the frontend and the QR dependency. Creating
+   the Entra app registrations needs rights in the Microsoft tenant; if the owner does not hold them, a
+   tenant admin creates or approves them (not verified).
 3. `EntraAccessTokenAuthentication` is used for the scanner endpoints first and later also for the web
    frontend login. The frontend switch is a separate T2 change with its own design.
 4. The four drift items are fixed as separate tasks, not in this change.
