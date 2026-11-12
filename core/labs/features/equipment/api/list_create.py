@@ -1,6 +1,6 @@
 """Reusable HTTP list/create adapter for equipment models."""
 
-from typing import ClassVar
+from typing import Any, ClassVar, cast
 
 from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.core.exceptions import ValidationError
@@ -13,7 +13,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
-from core.common.api.pagination import ResultsSetPagination
+from core.common.api.pagination import ResultsSetPagination, with_page_query
 from core.labs.features.base.resource_change_log import ResourceChangeLogMixin
 from core.labs.features.equipment.application import CreateEquipmentInput, create_equipment
 from core.labs.features.equipment.exceptions import SkuAlreadyExists
@@ -68,7 +68,9 @@ class EquipmentListCreateAPIView(ResourceChangeLogMixin, AppListAPIView, Equipme
             cls.list_filters,
             distinct_search=cls.distinct_search,
         )
-        cls.ListQuerySerializer = cls.filter_spec.serializer(f"{cls.__name__}ListQuerySerializer")
+        cls.ListQuerySerializer = cast(
+            Any, with_page_query(cls.filter_spec.serializer(f"{cls.__name__}ListQuerySerializer"))
+        )
         cls.get_contract = OperationContract(
             query=cls.ListQuerySerializer,
             success=list_contract,

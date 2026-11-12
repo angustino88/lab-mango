@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.options import OptionsQueryMixin, SizeClass
-from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
 from core.labs.features.base import FeatureAPIView
 from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.locations.queries import (
@@ -71,7 +71,7 @@ class CountryOptionsAPIView(OptionsAPIView):
 class CityListAPIView(AppListAPIView, FeatureAPIView):
     schema_tags = ("Locations",)
     get_contract = OperationContract(
-        query=CityOptionsQuerySerializer,
+        query=with_page_query(CityOptionsQuerySerializer),
         success=ResponseContract.paginated("CityCatalogList", CitySerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -80,7 +80,8 @@ class CityListAPIView(AppListAPIView, FeatureAPIView):
         query, error = self.validate_query()
         if error is not None:
             return error
-        return self.list_response_sync(list_cities(country_id=query.get("country_id") if query else None))
+        country_id = query.get("country_id") if query else None
+        return self.list_response_sync(list_cities(search=query.get("q") if query else None, country_id=country_id))
 
 
 class CityDetailAPIView(FeatureAPIView):
@@ -107,7 +108,7 @@ class CityOptionsAPIView(OptionsAPIView):
 class BuildingListAPIView(AppListAPIView, FeatureAPIView):
     schema_tags = ("Locations",)
     get_contract = OperationContract(
-        query=BuildingOptionsQuerySerializer,
+        query=with_page_query(BuildingOptionsQuerySerializer),
         success=ResponseContract.paginated("BuildingCatalogList", BuildingSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -116,7 +117,8 @@ class BuildingListAPIView(AppListAPIView, FeatureAPIView):
         query, error = self.validate_query()
         if error is not None:
             return error
-        return self.list_response_sync(list_buildings(city_id=query.get("city_id") if query else None))
+        city_id = query.get("city_id") if query else None
+        return self.list_response_sync(list_buildings(search=query.get("q") if query else None, city_id=city_id))
 
 
 class BuildingDetailAPIView(FeatureAPIView):

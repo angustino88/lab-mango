@@ -38,6 +38,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Departments
   /api/labs/departments/{department_id}:
     get:
@@ -231,6 +237,17 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: product_model_id
         schema:
           type: string
@@ -305,6 +322,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment
     post:
       operationId: labs_equipment_create
@@ -386,6 +409,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Categories
   /api/labs/equipment-categories/{category_id}:
     get:
@@ -502,6 +531,17 @@ paths:
         style: form
         explode: false
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: q
         schema:
           type: string
@@ -526,6 +566,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Kinds
   /api/labs/equipment-kinds/{kind_id}:
     get:
@@ -718,6 +764,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Loans
     post:
       operationId: labs_equipment_loans_create
@@ -885,6 +937,17 @@ paths:
         style: form
         explode: false
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: q
         schema:
           type: string
@@ -909,6 +972,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Manufacturers
   /api/labs/equipment-manufacturers/{manufacturer_id}:
     get:
@@ -1023,6 +1092,17 @@ paths:
           type: integer
           minimum: 1
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: q
         schema:
           type: string
@@ -1052,6 +1132,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Product Models
   /api/labs/equipment-product-models/{model_id}:
     get:
@@ -1233,6 +1319,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reservations
     post:
       operationId: labs_equipment_reservations_create
@@ -1517,6 +1609,17 @@ paths:
           type: integer
           minimum: 1
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: q
         schema:
           type: string
@@ -1541,6 +1644,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Types
   /api/labs/equipment-types/{type_id}:
     get:
@@ -2770,6 +2879,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Facets
   /api/labs/equipment/filters:
     get:
@@ -3042,6 +3157,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Categories
     post:
       operationId: labs_equipment_reference_data_categories_create
@@ -3178,6 +3299,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Departments
     post:
       operationId: labs_equipment_reference_data_departments_create
@@ -3309,6 +3436,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Display Resolutions
     post:
       operationId: labs_equipment_reference_data_display_resolutions_create
@@ -3440,6 +3573,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Display Sizes
     post:
       operationId: labs_equipment_reference_data_display_sizes_create
@@ -3571,6 +3710,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Interfaces
     post:
       operationId: labs_equipment_reference_data_interfaces_create
@@ -3712,6 +3857,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Kinds
     post:
       operationId: labs_equipment_reference_data_kinds_create
@@ -3848,6 +3999,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Manufacturers
     post:
       operationId: labs_equipment_reference_data_manufacturers_create
@@ -3979,6 +4136,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Materials
     post:
       operationId: labs_equipment_reference_data_materials_create
@@ -4110,6 +4273,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Networking Protocols
     post:
       operationId: labs_equipment_reference_data_networking_protocols_create
@@ -4252,6 +4421,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Product Model Specifications
     post:
       operationId: labs_equipment_reference_data_product_model_specifications_create
@@ -4399,6 +4574,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Product Models
     post:
       operationId: labs_equipment_reference_data_product_models_create
@@ -4540,6 +4721,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Resource Groups
     post:
       operationId: labs_equipment_reference_data_resource_groups_create
@@ -4671,6 +4858,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Sample Characteristics
     post:
       operationId: labs_equipment_reference_data_sample_characteristics_create
@@ -4802,6 +4995,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Sample Customers
     post:
       operationId: labs_equipment_reference_data_sample_customers_create
@@ -4943,6 +5142,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Specification Definitions
     post:
       operationId: labs_equipment_reference_data_specification_definitions_create
@@ -5075,6 +5280,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Technical Users
     post:
       operationId: labs_equipment_reference_data_technical_users_create
@@ -5216,6 +5427,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Types
     post:
       operationId: labs_equipment_reference_data_types_create
@@ -5558,6 +5775,17 @@ paths:
         style: form
         explode: false
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: q
         schema:
           type: string
@@ -5582,6 +5810,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Resource Groups
   /api/labs/resource-groups/{group_id}:
     get:

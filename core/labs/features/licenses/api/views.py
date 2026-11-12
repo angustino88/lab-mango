@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from core.common.api.api_views import AppListAPIView
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
 from core.common.api.options import OptionsQueryMixin, SizeClass
-from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
 from core.labs.features.base import FeatureAPIView
 from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.licenses import public
@@ -93,7 +93,7 @@ class LicenseListAPIView(AppListAPIView, FeatureAPIView):
 
     schema_tags = ("Licenses",)
     get_contract = OperationContract(
-        query=LicenseListQuerySerializer,
+        query=with_page_query(LicenseListQuerySerializer),
         success=ResponseContract.paginated("LicenseList", LicenseSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -348,7 +348,7 @@ class LicenseVendorOptionsAPIView(OptionsAPIView):
 class LicenseProductListAPIView(AppListAPIView, FeatureAPIView):
     schema_tags = ("Licenses",)
     get_contract = OperationContract(
-        query=LicenseProductOptionsQuerySerializer,
+        query=with_page_query(LicenseProductOptionsQuerySerializer),
         success=ResponseContract.paginated("LicenseProductCatalogList", LicenseProductSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -357,7 +357,10 @@ class LicenseProductListAPIView(AppListAPIView, FeatureAPIView):
         query, error = self.validate_query()
         if error is not None:
             return error
-        return self.list_response_sync(list_license_products(vendor_id=query.get("vendor_id") if query else None))
+        vendor_id = query.get("vendor_id") if query else None
+        return self.list_response_sync(
+            list_license_products(search=query.get("q") if query else None, vendor_id=vendor_id)
+        )
 
 
 class LicenseProductDetailAPIView(FeatureAPIView):

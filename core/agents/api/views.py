@@ -119,8 +119,20 @@ class AgentListCreateAPIView(APIView):
         operation_id="list_agents",
         summary="List enrolled and pending agents",
         parameters=[
-            OpenApiParameter("page", int, OpenApiParameter.QUERY, required=False, description="Page number (>= 1)"),
-            OpenApiParameter("page_size", int, OpenApiParameter.QUERY, required=False, description="Page size (1..100, default 25)"),
+            OpenApiParameter(
+                "page",
+                {"type": "integer", "minimum": 1},
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Page number (>= 1)",
+            ),
+            OpenApiParameter(
+                "page_size",
+                {"type": "integer", "minimum": 1, "maximum": 100},
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Page size (1..100, default 25)",
+            ),
         ],
         responses={
             200: OpenApiResponse(response=AgentListResponseSerializer, description="Page of agents"),

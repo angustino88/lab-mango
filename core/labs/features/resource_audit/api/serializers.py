@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from core.common.api import AppModelSerializer
+from core.common.api.pagination import PageNumberQuerySerializer
 from core.labs.models.auditing.resource_audit import ResourceAudit
 
 User = get_user_model()
@@ -130,7 +131,7 @@ class AuditBySkuRequestSerializer(serializers.Serializer):
         ref_name = "AuditBySkuRequest"
 
 
-class ResourceAuditListQuerySerializer(serializers.Serializer):
+class ResourceAuditListQuerySerializer(PageNumberQuerySerializer):
     """Query filters for audits listing."""
 
     resource_type = serializers.CharField(required=False)
@@ -140,8 +141,6 @@ class ResourceAuditListQuerySerializer(serializers.Serializer):
     )
     auditor_id = serializers.IntegerField(required=False)
     search = serializers.CharField(required=False)
-    page = serializers.IntegerField(required=False, default=1)
-    page_size = serializers.IntegerField(required=False, default=20)
 
     class Meta:
         ref_name = "ResourceAuditListQuery"

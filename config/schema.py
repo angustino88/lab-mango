@@ -1,9 +1,9 @@
 import re
 
-from drf_api_contracts import ResponseSchemaFactory
+from drf_api_contracts import ResponseContract, ResponseSchemaFactory
 from drf_spectacular.openapi import AutoSchema
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse
 from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 
@@ -11,6 +11,21 @@ from core.common.api.options import IncludeIDsField
 
 
 class ProjectAutoSchema(AutoSchema):
+    def get_operation(self, *args, **kwargs):
+        operation = super().get_operation(*args, **kwargs)
+        responses = (operation or {}).get("responses", {})
+        contract = getattr(self.view, "get_contract", None) if self.method.upper() == "GET" else None
+        if contract is not None and contract.responses.success.is_paginated and "404" not in responses:
+            # The page-number paginator answers a page past the last one with 404 not_found.
+            responses["404"] = self._get_response_for_code(
+                OpenApiResponse(
+                    response=ResponseContract.not_found().document()[404],
+                    description="The requested page does not exist (page beyond the last page).",
+                ),
+                "404",
+            )
+        return operation
+
     def get_override_parameters(self):
         parameters = super().get_override_parameters()
         contract = getattr(self.view, f"{self.method.lower()}_contract", None)

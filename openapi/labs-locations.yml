@@ -28,6 +28,17 @@ paths:
         style: form
         explode: false
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: q
         schema:
           type: string
@@ -52,6 +63,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Buildings
   /api/labs/buildings/{building_id}:
     get:
@@ -173,6 +190,17 @@ paths:
         style: form
         explode: false
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: q
         schema:
           type: string
@@ -197,6 +225,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Cities
   /api/labs/cities/{city_id}:
     get:
@@ -328,6 +362,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Countries
   /api/labs/countries/{country_id}:
     get:
@@ -467,6 +507,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Locations Reference Data Buildings
     post:
       operationId: labs_locations_reference_data_buildings_create
@@ -603,6 +649,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Locations Reference Data Cities
     post:
       operationId: labs_locations_reference_data_cities_create
@@ -734,6 +786,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Locations Reference Data Countries
     post:
       operationId: labs_locations_reference_data_countries_create
@@ -865,6 +923,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Locations Reference Data Station Types
     post:
       operationId: labs_locations_reference_data_station_types_create
@@ -1010,6 +1074,17 @@ paths:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
       - in: query
         name: q
         schema:
@@ -1988,6 +2063,17 @@ paths:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
       - in: query
         name: q
         schema:
