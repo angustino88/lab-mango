@@ -246,5 +246,5 @@ usernames, duplicate URS ids or unknown roles. Check production-like data before
 ## Open questions for the owner
 
 1. **R1 limits.** Keep 50 % and 10 members, or choose other values?
-2. **Standards items** S2 (no self-approval of bookings), S5 (access review report), S6 (role-change audit):
-   implement now?
+2. **Standards items** S5 (access review report), S6 (role-change audit): implement now? S2 (no
+   self-approval of bookings) is done (2026-11-12).

@@ -429,3 +429,69 @@ class TestBookingApprovalActions:
         with patch(_PATCH_APIKEY, return_value=True):
             response = api_client.patch(_detail(booking.pk), {"status": "in_progress"}, format="json")
         assert response.status_code in (400, 422)
+
+
+@pytest.mark.django_db
+class TestSelfApprovalIsForbidden:
+    """Separation of duties: nobody decides a booking they created or that is for them."""
+
+    def _pending(self, make_booking, now):
+        booking = make_booking(starts_at=now + timedelta(hours=2), ends_at=now + timedelta(hours=7))
+        booking.approval_status = BookingApprovalStatus.PENDING
+        booking.save()
+        return booking
+
+    @pytest.mark.parametrize("action", ["approve", "reject"])
+    def test_coordinator_cannot_decide_own_booking(self, actor, make_booking, now, action):
+        _grant_role(actor, LabsRole.COORDINATOR)
+        booking = self._pending(make_booking, now)  # created by ``actor``
+        client = APIClient()
+        client.force_authenticate(user=actor)
+        body = {"reason": "Too long"} if action == "reject" else {}
+
+        response = client.post(_approval_action(booking.pk, action), body, format="json", **_idempotency_headers())
+
+        assert response.status_code == 403
+        assert response.json()["error"]["code"] == "self_approval_forbidden"
+        booking.refresh_from_db()
+        assert booking.approval_status == BookingApprovalStatus.PENDING
+        assert booking.approved_by_id is None
+
+    def test_coordinator_cannot_approve_booking_made_for_them(self, make_booking, now):
+        coordinator = _grant_role(UserFactory(username="api-booking-beneficiary"), LabsRole.COORDINATOR)
+        booking = self._pending(make_booking, now)
+        booking.requester = coordinator
+        booking.save()
+        client = APIClient()
+        client.force_authenticate(user=coordinator)
+
+        response = client.post(_approval_action(booking.pk, "approve"), {}, format="json", **_idempotency_headers())
+
+        assert response.status_code == 403
+        assert response.json()["error"]["code"] == "self_approval_forbidden"
+
+    def test_superuser_cannot_approve_own_booking(self, actor, make_booking, now):
+        actor.is_superuser = True
+        actor.save(update_fields=["is_superuser"])
+        booking = self._pending(make_booking, now)
+        client = APIClient()
+        client.force_authenticate(user=actor)
+
+        response = client.post(_approval_action(booking.pk, "approve"), {}, format="json", **_idempotency_headers())
+
+        assert response.status_code == 403
+        assert response.json()["error"]["code"] == "self_approval_forbidden"
+
+    def test_another_coordinator_can_approve(self, actor, make_booking, now):
+        _grant_role(actor, LabsRole.COORDINATOR)
+        booking = self._pending(make_booking, now)
+        other = _grant_role(UserFactory(username="api-booking-other-coordinator"), LabsRole.COORDINATOR)
+        client = APIClient()
+        client.force_authenticate(user=other)
+
+        response = client.post(_approval_action(booking.pk, "approve"), {}, format="json", **_idempotency_headers())
+
+        assert response.status_code == 200
+        booking.refresh_from_db()
+        assert booking.approved_by_id == other.pk
+
