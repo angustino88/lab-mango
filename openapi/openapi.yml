@@ -74,6 +74,8 @@ paths:
     $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1user-count
   /api/labs/analytics/user-lab-usage:
     $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1user-lab-usage
+  /api/labs/audit-catalog:
+    $ref: ./labs-resource-audit.yml#/paths/~1api~1labs~1audit-catalog
   /api/labs/audits:
     $ref: ./labs-resource-audit.yml#/paths/~1api~1labs~1audits
   /api/labs/audits/{audit_id}:

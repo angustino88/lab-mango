@@ -5,6 +5,11 @@ from rest_framework import serializers
 
 from core.common.api import AppModelSerializer
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.labs.features.resource_audit.public import (
+    CATALOG_PAGE_SIZE_DEFAULT,
+    CATALOG_PAGE_SIZE_MAX,
+    CATALOG_RESOURCE_TYPES,
+)
 from core.labs.models.auditing.resource_audit import ResourceAudit
 
 User = get_user_model()
@@ -144,3 +149,94 @@ class ResourceAuditListQuerySerializer(PageNumberQuerySerializer):
 
     class Meta:
         ref_name = "ResourceAuditListQuery"
+
+
+class AuditCatalogQuerySerializer(serializers.Serializer):
+    """Query for the audit catalog: start a sync with ``changed_since``/``page_size``, continue with ``cursor``."""
+
+    changed_since = serializers.DateTimeField(
+        required=False,
+        help_text="Return only rows created, changed or deleted at or after this time. Omit for a full download.",
+    )
+    cursor = serializers.CharField(
+        required=False,
+        max_length=2048,
+        help_text="Opaque next_cursor from the previous page. Send it alone; it carries the filter and page size.",
+    )
+    page_size = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=CATALOG_PAGE_SIZE_MAX,
+        default=CATALOG_PAGE_SIZE_DEFAULT,
+    )
+
+    class Meta:
+        ref_name = "AuditCatalogQuery"
+
+    def validate(self, attrs):
+        if "cursor" in self.initial_data and ({"changed_since", "page_size"} & set(self.initial_data)):
+            raise serializers.ValidationError(
+                {"cursor": ["Send cursor alone; changed_since and page_size come from the cursor."]}
+            )
+        return attrs
+
+
+class AuditCatalogItemSerializer(serializers.Serializer):
+    """One auditable resource as the audit tool stores it offline. Never carries license keys."""
+
+    uid = serializers.UUIDField()
+    resource_type = serializers.ChoiceField(choices=CATALOG_RESOURCE_TYPES)
+    sku = serializers.CharField(allow_blank=True)
+    name = serializers.CharField(allow_blank=True)
+    serial_number = serializers.CharField(allow_blank=True, help_text="Equipment only; empty for other types.")
+    status = serializers.CharField(
+        allow_blank=True,
+        help_text=(
+            "Equipment lifecycle_state, bench lifecycle_status, or the newest status record of a station, room "
+            "or license; empty when none exists."
+        ),
+    )
+    condition = serializers.CharField(allow_blank=True, help_text="Equipment only; empty for other types.")
+    location = serializers.CharField(
+        allow_blank=True,
+        help_text="Bench: setup station name. Station: room name. Room: building name. Otherwise empty.",
+    )
+    expiry_date = serializers.DateTimeField(allow_null=True, help_text="License expiry; null for other types.")
+    updated_at = serializers.DateTimeField()
+    deleted = serializers.BooleanField(help_text="True when the resource was deleted; remove it from the local copy.")
+
+    class Meta:
+        ref_name = "AuditCatalogItem"
+
+
+class AuditCatalogPaginationSerializer(serializers.Serializer):
+    count = serializers.IntegerField(allow_null=True, help_text="Always null: not computed for cursor pages.")
+    page_size = serializers.IntegerField(min_value=1)
+    next_cursor = serializers.CharField(allow_null=True)
+    previous_cursor = serializers.CharField(allow_null=True, help_text="Always null: the catalog pages forward only.")
+
+    class Meta:
+        ref_name = "AuditCatalogPagination"
+
+
+class AuditCatalogMetaSerializer(serializers.Serializer):
+    pagination = AuditCatalogPaginationSerializer()
+    server_time = serializers.DateTimeField(
+        help_text="Time the sync started. Store it and send it as changed_since on the next sync.",
+    )
+
+    class Meta:
+        ref_name = "AuditCatalogMeta"
+
+
+class AuditCatalogResponseSerializer(serializers.Serializer):
+    """Cursor-paged envelope; reserved keys are declared in get_fields for schema generation."""
+
+    class Meta:
+        ref_name = "AuditCatalogResponse"
+
+    def get_fields(self):
+        fields = super().get_fields()
+        fields["data"] = AuditCatalogItemSerializer(many=True)
+        fields["meta"] = AuditCatalogMetaSerializer()
+        return fields

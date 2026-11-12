@@ -40,3 +40,24 @@ def check_entra_configuration(app_configs, **kwargs):
     if not settings.REFRESH_TOKEN_COOKIE_SECURE:
         errors.append(Error("Production refresh cookies must be Secure.", id="users.E007"))
     return errors
+
+
+@register(Tags.security)
+def check_entra_access_token_configuration(app_configs, **kwargs):
+    """Desktop-client access tokens (audit tool): fail at deploy, not on every scan."""
+    if not getattr(settings, "ENTRA_API_ACCESS_TOKENS_ENABLED", False):
+        return []
+    errors = []
+    audiences = [audience for audience in settings.ENTRA_API_AUDIENCES if str(audience).strip()]
+    if not audiences:
+        errors.append(Error("ENTRA_API_AUDIENCES is required while Entra access tokens are on.", id="users.E010"))
+    scope = str(settings.ENTRA_API_AUDIT_SCOPE or "")
+    if not scope.strip() or " " in scope.strip():
+        errors.append(Error("ENTRA_API_AUDIT_SCOPE must be one scope name.", id="users.E011"))
+    try:
+        UUID(settings.AAD_TENANT_ID)
+    except (ValueError, TypeError, AttributeError):
+        errors.append(Error("AAD_TENANT_ID must be a UUID while Entra access tokens are on.", id="users.E012"))
+    if not str(settings.AAD_JWKS_URL).startswith("https://login.microsoftonline.com/"):
+        errors.append(Error("AAD_JWKS_URL must be a Microsoft login HTTPS URL.", id="users.E013"))
+    return errors

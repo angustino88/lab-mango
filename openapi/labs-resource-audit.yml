@@ -4,6 +4,54 @@ info:
   version: 1.0.0
   description: LabMango Backend REST API
 paths:
+  /api/labs/audit-catalog:
+    get:
+      operationId: labs_audit_catalog_retrieve
+      description: Cursor-paged catalog of every auditable resource for the offline
+        audit tool.
+      parameters:
+      - in: query
+        name: changed_since
+        schema:
+          type: string
+          format: date-time
+        description: Return only rows created, changed or deleted at or after this
+          time. Omit for a full download.
+      - in: query
+        name: cursor
+        schema:
+          type: string
+          maxLength: 2048
+          minLength: 1
+        description: Opaque next_cursor from the previous page. Send it alone; it
+          carries the filter and page size.
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          default: 500
+      tags:
+      - Resource Audit
+      security:
+      - entraAccessToken: []
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditCatalogResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Audit Catalog
   /api/labs/audits:
     get:
       operationId: labs_audits_retrieve
@@ -512,6 +560,7 @@ paths:
       tags:
       - Resource Audit
       security:
+      - entraAccessToken: []
       - jwtAuth: []
       - cookieAuth: []
       responses:
@@ -538,6 +587,15 @@ paths:
       operationId: labs_resources_uid_audits_create_by_uid
       description: List or record audits for a resource identified by system UUID.
       parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: 'Optional replay key, 1 to 128 characters (the audit tool sends
+          a UUID), scoped to the auditor. Same key and body returns the stored audit
+          with Idempotency-Replayed: true; same key with a different body returns
+          422 idempotency_key_reuse. Keys are kept with the audit for as long as the
+          audit exists.'
       - in: path
         name: uid
         schema:
@@ -559,6 +617,7 @@ paths:
               $ref: '#/components/schemas/RecordResourceAuditRequest'
         required: true
       security:
+      - entraAccessToken: []
       - jwtAuth: []
       - cookieAuth: []
       responses:
@@ -633,6 +692,124 @@ components:
           $ref: '#/components/schemas/AllResourceAuditListSerializersResourceAuditItemPagination'
       required:
       - pagination
+    AuditCatalogItem:
+      type: object
+      description: One auditable resource as the audit tool stores it offline. Never
+        carries license keys.
+      properties:
+        uid:
+          type: string
+          format: uuid
+        resource_type:
+          $ref: '#/components/schemas/AuditCatalogItemResourceTypeEnum'
+        sku:
+          type: string
+        name:
+          type: string
+        serial_number:
+          type: string
+          description: Equipment only; empty for other types.
+        status:
+          type: string
+          description: Equipment lifecycle_state, bench lifecycle_status, or the newest
+            status record of a station, room or license; empty when none exists.
+        condition:
+          type: string
+          description: Equipment only; empty for other types.
+        location:
+          type: string
+          description: 'Bench: setup station name. Station: room name. Room: building
+            name. Otherwise empty.'
+        expiry_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: License expiry; null for other types.
+        updated_at:
+          type: string
+          format: date-time
+        deleted:
+          type: boolean
+          description: True when the resource was deleted; remove it from the local
+            copy.
+      required:
+      - condition
+      - deleted
+      - expiry_date
+      - location
+      - name
+      - resource_type
+      - serial_number
+      - sku
+      - status
+      - uid
+      - updated_at
+    AuditCatalogItemResourceTypeEnum:
+      enum:
+      - equipment
+      - bench
+      - station
+      - room
+      - license
+      type: string
+      description: '* `equipment` - equipment
+
+        * `bench` - bench
+
+        * `station` - station
+
+        * `room` - room
+
+        * `license` - license'
+    AuditCatalogMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/AuditCatalogPagination'
+        server_time:
+          type: string
+          format: date-time
+          description: Time the sync started. Store it and send it as changed_since
+            on the next sync.
+      required:
+      - pagination
+      - server_time
+    AuditCatalogPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          nullable: true
+          description: 'Always null: not computed for cursor pages.'
+        page_size:
+          type: integer
+          minimum: 1
+        next_cursor:
+          type: string
+          nullable: true
+        previous_cursor:
+          type: string
+          nullable: true
+          description: 'Always null: the catalog pages forward only.'
+      required:
+      - count
+      - next_cursor
+      - page_size
+      - previous_cursor
+    AuditCatalogResponse:
+      type: object
+      description: Cursor-paged envelope; reserved keys are declared in get_fields
+        for schema generation.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditCatalogItem'
+        meta:
+          $ref: '#/components/schemas/AuditCatalogMeta'
+      required:
+      - data
+      - meta
     AuditResultInputEnum:
       enum:
       - PASS
@@ -1002,6 +1179,12 @@ components:
       type: apiKey
       in: cookie
       name: sessionid
+    entraAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Microsoft Entra delegated access token for the Lab Mango API scope
+        (api://<client-id>/LabMango.Audit), used by the desktop audit tool.
     jwtAuth:
       type: http
       scheme: bearer

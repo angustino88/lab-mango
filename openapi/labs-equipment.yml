@@ -5614,6 +5614,7 @@ paths:
       tags:
       - Equipment
       security:
+      - entraAccessTokenRead: []
       - jwtAuth: []
       - cookieAuth: []
       responses:
@@ -5660,6 +5661,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedEquipmentUpdate'
       security:
+      - entraAccessTokenRead: []
       - jwtAuth: []
       - cookieAuth: []
       responses:
@@ -10652,6 +10654,13 @@ components:
       type: apiKey
       in: cookie
       name: sessionid
+    entraAccessTokenRead:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Microsoft Entra delegated access token for the Lab Mango API scope
+        (api://<client-id>/LabMango.Audit). Accepted for GET only; writes need a Lab
+        Mango JWT.
     equipmentFacetsApiKey:
       type: apiKey
       in: header

@@ -21,6 +21,7 @@ from core.labs.features.base.serializers import NamedReferenceSerializer
 from core.labs.features.equipment.categories.computing.api import ComputingActivitySerializer
 from core.labs.features.equipment.queries import equipment_form_reference_data, equipment_queryset
 from core.labs.models import ComputingProfile, Equipment, TechnicalUser
+from core.users.public import with_entra_access_token
 
 from .category_serializers import (
     EQUIPMENT_CREATE_ONLY_FIELDS,
@@ -312,7 +313,7 @@ class EquipmentDetailAPIView(EquipmentRetrieveUpdateDeleteAPIView):
     schema_tags = ("Equipment",)
 
 
-def _by_key_view(label: str, lookup_field: str):
+def _by_key_view(label: str, lookup_field: str, **extra: Any):
     response = ResponseContract.success(f"EquipmentBy{label}", EquipmentDetailSerializer)
     return type(
         f"EquipmentBy{label}APIView",
@@ -330,12 +331,14 @@ def _by_key_view(label: str, lookup_field: str):
                 not_found=ResponseContract.not_found(),
                 conflict=ResponseContract.conflict(),
             ),
+            **extra,
         },
     )
 
 
 EquipmentBySKUAPIView = _by_key_view("SKU", "sku")
-EquipmentByUIDAPIView = _by_key_view("UID", "uid")
+# The desktop audit tool reads detail by uid with an Entra access token; PATCH still needs a Lab Mango JWT.
+EquipmentByUIDAPIView = _by_key_view("UID", "uid", authentication_classes=with_entra_access_token(read_only=True))
 
 
 def _state_view(action: str, label: str):

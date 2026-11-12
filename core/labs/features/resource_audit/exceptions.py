@@ -1,7 +1,7 @@
 """Domain exceptions for the resource audit feature."""
 
 
-from core.common.domain.errors import BadRequest, DomainError, Forbidden, NotFound
+from core.common.domain.errors import BadRequest, DomainError, Forbidden, InvalidQuery, NotFound, ValidationFailed
 
 
 class ResourceAuditError(DomainError):
@@ -27,6 +27,24 @@ class InvalidAuditResultError(BadRequest, ResourceAuditError):
     default_message = "Select a supported audit result."
 
 
+class InvalidIdempotencyKeyError(BadRequest, ResourceAuditError):
+    """Raised when the Idempotency-Key header is empty or too long."""
+
+    code = "invalid_idempotency_key"
+
+
+class IdempotencyKeyReuseError(ValidationFailed, ResourceAuditError):
+    """Raised when an Idempotency-Key is reused with a different request body (RW-6)."""
+
+    code = "idempotency_key_reuse"
+
+
+class InvalidCatalogCursorError(InvalidQuery, ResourceAuditError):
+    """Raised when an audit catalog cursor is tampered, expired or malformed (QRY-8)."""
+
+    code = "invalid_cursor"
+
+
 class AuditPermissionDeniedError(Forbidden, ResourceAuditError):
     """Raised when the actor lacks permission to audit the specified resource."""
 
@@ -35,7 +53,10 @@ class AuditPermissionDeniedError(Forbidden, ResourceAuditError):
 
 __all__ = (
     "AuditPermissionDeniedError",
+    "IdempotencyKeyReuseError",
     "InvalidAuditResultError",
+    "InvalidCatalogCursorError",
+    "InvalidIdempotencyKeyError",
     "ResourceAuditError",
     "ResourceAuditNotFoundError",
     "ResourceNotFoundError",

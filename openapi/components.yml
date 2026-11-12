@@ -1033,6 +1033,124 @@ components:
           default: false
       required:
       - file
+    AuditCatalogItem:
+      type: object
+      description: One auditable resource as the audit tool stores it offline. Never
+        carries license keys.
+      properties:
+        uid:
+          type: string
+          format: uuid
+        resource_type:
+          $ref: '#/components/schemas/AuditCatalogItemResourceTypeEnum'
+        sku:
+          type: string
+        name:
+          type: string
+        serial_number:
+          type: string
+          description: Equipment only; empty for other types.
+        status:
+          type: string
+          description: Equipment lifecycle_state, bench lifecycle_status, or the newest
+            status record of a station, room or license; empty when none exists.
+        condition:
+          type: string
+          description: Equipment only; empty for other types.
+        location:
+          type: string
+          description: 'Bench: setup station name. Station: room name. Room: building
+            name. Otherwise empty.'
+        expiry_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: License expiry; null for other types.
+        updated_at:
+          type: string
+          format: date-time
+        deleted:
+          type: boolean
+          description: True when the resource was deleted; remove it from the local
+            copy.
+      required:
+      - condition
+      - deleted
+      - expiry_date
+      - location
+      - name
+      - resource_type
+      - serial_number
+      - sku
+      - status
+      - uid
+      - updated_at
+    AuditCatalogItemResourceTypeEnum:
+      enum:
+      - equipment
+      - bench
+      - station
+      - room
+      - license
+      type: string
+      description: '* `equipment` - equipment
+
+        * `bench` - bench
+
+        * `station` - station
+
+        * `room` - room
+
+        * `license` - license'
+    AuditCatalogMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/AuditCatalogPagination'
+        server_time:
+          type: string
+          format: date-time
+          description: Time the sync started. Store it and send it as changed_since
+            on the next sync.
+      required:
+      - pagination
+      - server_time
+    AuditCatalogPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          nullable: true
+          description: 'Always null: not computed for cursor pages.'
+        page_size:
+          type: integer
+          minimum: 1
+        next_cursor:
+          type: string
+          nullable: true
+        previous_cursor:
+          type: string
+          nullable: true
+          description: 'Always null: the catalog pages forward only.'
+      required:
+      - count
+      - next_cursor
+      - page_size
+      - previous_cursor
+    AuditCatalogResponse:
+      type: object
+      description: Cursor-paged envelope; reserved keys are declared in get_fields
+        for schema generation.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditCatalogItem'
+        meta:
+          $ref: '#/components/schemas/AuditCatalogMeta'
+      required:
+      - data
+      - meta
     AuditResultInputEnum:
       enum:
       - PASS
@@ -18569,6 +18687,19 @@ components:
       type: apiKey
       in: cookie
       name: sessionid
+    entraAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Microsoft Entra delegated access token for the Lab Mango API scope
+        (api://<client-id>/LabMango.Audit), used by the desktop audit tool.
+    entraAccessTokenRead:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Microsoft Entra delegated access token for the Lab Mango API scope
+        (api://<client-id>/LabMango.Audit). Accepted for GET only; writes need a Lab
+        Mango JWT.
     equipmentFacetsApiKey:
       type: apiKey
       in: header
