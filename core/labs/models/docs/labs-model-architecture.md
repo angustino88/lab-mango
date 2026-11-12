@@ -177,16 +177,15 @@ existence in source does not establish that the migration was applied in any dat
 - This bounded producer coverage does not establish a complete writer inventory or backfill/reconciliation; R1 user
   stream readiness remains blocked until external/direct ORM/SQL paths are covered and population is reconciled. No API
   endpoint is mounted.
-- Schema compatibility: the owner reports migration 0011 applied, but its status is not independently verified in this workspace; it established `equipment` and `agent_keys`
-  stream constraints. A forward migration adds `users` and `agents` while temporarily allowing the legacy labels.
+- Schema compatibility: the routing tables are created by the squashed initial migrations (2026-11-12); the stream
+  constraint allows `users` and `agents` and temporarily the legacy `equipment` and `agent_keys` labels.
   Legacy labels are not enabled streams and must not be seeded or written; a future contraction requires verified zero
   legacy rows and no remaining writers.
 - `RoutingChange` must retain immutable upsert payload/hash so compacted deltas do not accidentally serialize a newer
   projection value for an older event. Per-stream `SyncState` locking serializes version assignment before projection
   row lookup/insertion. Detailed hash, pagination, retention, and security gates are in
   [the routing-sync spec](../../../../docs/agent-platform/routing-sync.md).
-- Migration `0011` creates these tables but does not seed `SyncState` rows; the forward migration changes allowed
-  stream labels but likewise does not seed state rows. Stream initialization/seeding, immutable
+- The initial migration creates these tables but does not seed `SyncState` rows. Stream initialization/seeding, immutable
   snapshot generation, retention, and consistent snapshot paging remain
   separate design/implementation gates; mutable live projection rows alone do not provide snapshot consistency.
   Schema or runtime behavior must not be treated as deployed or production-approved; the R2 endpoint remains blocked
@@ -244,7 +243,7 @@ Verified feature packages with `public.py` facades: locations, benches, equipmen
 2. Decide reservation overlap semantics and a PostgreSQL/transaction strategy that prevents concurrent conflicting bookings.
 3. Confirm whether cross-parent slot consistency, purchase allocation aggregates, and used-storage-versus-quota must be concurrency-safe invariants.
 4. Confirm generic-reference allowlists, orphan handling, retention, and audit immutability policy.
-5. Reconcile model source with the maintained Labs migration history (`0001`–`0011` in this worktree) and deployed database before schema changes; deployed migration parity remains unverified.
+5. Migrations were squashed into one initial migration per app on 2026-11-12, before any production deploy; every existing database must be recreated from them.
 6. Proposed enforcement: add an architecture test that fails when a class under `core/labs/models/` is absent from this document's inventory, so the coverage claim cannot drift silently.
 
 ## Coverage and verification

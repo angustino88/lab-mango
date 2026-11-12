@@ -1,13 +1,13 @@
-"""A unique disposable database; dependency tables plus the actual additive migration."""
+"""A unique disposable database with only the booking-notification tables and their dependencies.
 
-import importlib
+Migrations were squashed on 2026-11-12, so the notification table is created from the model.
+"""
+
 from uuid import uuid4
 
 import pytest
-from django.apps import apps
 from django.conf import settings
 from django.db import connection
-from django.db.migrations.state import ProjectState
 
 
 @pytest.fixture(scope="session")
@@ -43,11 +43,7 @@ def django_db_setup(django_db_blocker):
             with connection.schema_editor() as editor:
                 for model in sorted(models, key=lambda value: value._meta.label):
                     editor.create_model(model)
-            state = ProjectState.from_apps(apps)
-            state.remove_model("labs", "bookingnotification")
-            migration = importlib.import_module("core.labs.migrations.0005_booking_notification").Migration("0005", "labs")
-            with connection.schema_editor() as editor:
-                migration.apply(state, editor)
+                editor.create_model(BookingNotification)
             yield
         finally:
             connection.close()

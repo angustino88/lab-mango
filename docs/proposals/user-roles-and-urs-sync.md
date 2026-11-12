@@ -202,7 +202,7 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 | Item | Status | Where |
 | --- | --- | --- |
 | R1 safety brake, strict response check | Done | `urs_sync/sync_group/service.py`, settings `URS_SYNC_*` |
-| R2 case-insensitive matching, unmanaged accounts skipped, DB constraint | Done | service; `User` constraint `users_user_username_ci_unique` (migration 0005) |
+| R2 case-insensitive matching, unmanaged accounts skipped, DB constraint | Done | service; `User` constraint `users_user_username_ci_unique` (`users/0001_initial`) |
 | R3 role-granting fields superuser-only | Done | `core/users/admin.py` (users, URS groups, Django groups) |
 | R4 API keys on money endpoints | Not in this change | Authentication proposal M11 |
 | R5 single apply transaction with advisory lock; admin action queued | Done | service; `core/users/tasks.py` (`users.urs_sync.sync_selected_groups`) |
@@ -211,7 +211,7 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 | R8 group list admin-only | Done | `groups/list_groups/api.py`, OpenAPI regenerated |
 | R9 reads need a role | **Done (2026-11-11):** Labs-wide policy in `core/labs/features/base/access.py`; default coordinator and admin for every Labs endpoint; plain users read only the dashboard (including bench detail and its equipment mapping) and the leaderboard, and manage their own bench bookings; no role means no access. `core/labs/tests/test_access_policy.py` walks every `/api/labs/` route | `core/labs/features/base/`, Labs views, `core/common/api/reference_views.py` |
 | R10 one role system | **Done (option 1, 2026-11-11):** URS group is the only place roles are configured; its Django group is created and named automatically and only stores membership; support desk uses Labs roles only (admin -> support admin, coord -> support agent), group names grant nothing. Remaining: reference-data writes still use Django permissions (`core/reference_data/policies.py:13`) | `urs_sync/mapping.py`, `core/users/admin.py`, `support_desk/.../policies.py`, `notifications.py` |
-| R11 role check and unique URS id constraints | Done | `URSGroup` constraints (migration 0005) |
+| R11 role check and unique URS id constraints | Done | `URSGroup` constraints (`users/0001_initial`) |
 | L1 code uses settings value | Done (default still `False`, see authentication H5) | service |
 | L2 spec | Done | `urs_sync/docs/spec.md`, `groups/docs/spec.md` |
 | L3 timeout setting | Done (`URS_API_TIMEOUT_S=15`); calls still sequential | settings |
@@ -219,9 +219,8 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 | L5 admin error text | Done | admin |
 | L6 sync report and last status per group | Done | `URSGroup.last_sync_*`, admin list |
 
-Migration 0005 stops with a clear message before adding constraints when existing data has case-variant
-usernames, duplicate URS ids or unknown roles. Check production-like data before deploying.
-
+Migrations were squashed into one initial migration per app (2026-11-12, before production); the
+database is recreated from them, so no existing data needs checking.
 ## Labs access matrix (owner decision 2026-11-11)
 
 | Area | No role | Plain user (`user`) | Coordinator (`coord`) | Admin (`admin`) |

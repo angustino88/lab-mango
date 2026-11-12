@@ -96,5 +96,5 @@ Base `/api/support/`. All responses use the [standard envelope](../../../../../d
 `process_notification_outbox`, `auto_close_resolved_tickets` (moves to the `is_final` status), `scan_pending_attachments`, **`flag_sla_breaches`** (schedule every 1-5 minutes).
 
 ## 6. Operational notes
-- Migrations: `0001` initial, `0002` activity immutability triggers, `0003` (schema) and `0004` (backfill: `is_final` for statuses named "Closed", `pauses_sla` for `waiting` statuses, `last_activity_at`, slug codes). Existing tickets get **no retroactive SLA**. `0005` adds the `pg_trgm` label search index (ADR 002).
+- Migrations: one squashed `0001_initial` (2026-11-12, before production) creates the schema, the `pg_trgm` label search index, the ticket number sequence and the activity immutability triggers. Existing tickets get **no retroactive SLA**. `0005` adds the `pg_trgm` label search index (ADR 002).
 - Not yet implemented (deliberate follow-ups): business-hours calendars, automatic assignment (round-robin / load based), e-mail-to-ticket ingestion, automation rules.

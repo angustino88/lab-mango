@@ -62,23 +62,8 @@ reference data and should not be moved into the equipment package.
 period check and the `*_no_overlap` exclusion constraints. They reject a violating write even
 when it bypasses `clean()` (queryset `update()`, admin, scripts).
 
-Migration `0015` adds the three approval/cancellation constraints `NOT VALID`: every new or
-updated row is checked, but historical rows are neither scanned nor rejected, so the deploy
-cannot fail on old data. Cancellations recorded before `cancellation_reason` was written are
-expected to be blank. A historical violating row can no longer be updated until it is
-corrected. Before validating, an owner checks for violations:
-
-```sql
-SELECT 'bench' AS kind, count(*) FILTER (WHERE status = 'cancelled' AND cancellation_reason ~ '^\s*$') AS blank_cancellation,
-       count(*) FILTER (WHERE approval_status = 'rejected' AND rejection_reason ~ '^\s*$') AS blank_rejection,
-       count(*) FILTER (WHERE approval_status = 'pending' AND approved_by_id IS NOT NULL) AS pending_with_approver
-FROM labs_benchbooking
-UNION ALL
-SELECT 'equipment', count(*) FILTER (WHERE status = 'cancelled' AND cancellation_reason ~ '^\s*$'),
-       count(*) FILTER (WHERE approval_status = 'rejected' AND rejection_reason ~ '^\s*$'),
-       count(*) FILTER (WHERE approval_status = 'pending' AND approved_by_id IS NOT NULL)
-FROM labs_equipmentbooking;
-```
+Since migrations were squashed into `labs/0001_initial` (2026-11-12, before production), these
+constraints are created fully validated with the tables: every existing and new row is checked.
 
 Correcting historical rows is a production-data change and needs explicit authorization. Once a
 count is zero, `ALTER TABLE ... VALIDATE CONSTRAINT <name>` (which takes only a

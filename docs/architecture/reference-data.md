@@ -144,10 +144,8 @@ Technical users are account identifiers only: there is no password/token import 
 
 ### Migration and rollout
 
-`reference_data.0002_referenceimportreceipt` adds only the replay-receipt table. Apply it
-before serving import POSTs. Existing lookup tables/data are untouched. Roll back the code
-first, then reverse this migration only when losing replay receipts is acceptable; removing
-the table invalidates the retry history. No migration is automatically applied by this task.
+The replay-receipt table is part of the squashed `reference_data.0001_initial` (2026-11-12, before
+production). Removing the table invalidates the retry history.
 Authorization, API contracts, and the new table require owner approval before merge/release.
 
 ### Extending the catalogs

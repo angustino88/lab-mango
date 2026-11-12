@@ -107,7 +107,7 @@ Agent-platform terms (grants, assertions, booking codes, sessions) are defined i
 | C4 | Agent routing key is `agent_uid`. Only an active `AgentIdentity` is eligible |
 | C5 | Leaving eligibility (deactivation, unlink, deletion, revoke, decommission) publishes a tombstone for the old key. Replacing a user's Entra binding tombstones the old key and publishes the new one |
 | C6 | Claim payload is the route key plus active state; `data` is `{}`. No names, usernames, emails, equipment UIDs, public keys or token material |
-| C7 | `equipment` and `agent_keys` labels remain accepted by the database schema temporarily (migration 0011 compatibility). They are never seeded, written, advertised or served |
+| C7 | `equipment` and `agent_keys` labels remain accepted by the database schema temporarily (compatibility kept in the squashed initial migration). They are never seeded, written, advertised or served |
 | C8 | Router and Gateway store state in PostgreSQL with an in-memory cache (old O4) |
 | C9 | There is no shared per-backend API key for agents; agents use per-agent tokens (old O5). The sync token in section 10 is a different, Router-to-Backend service credential |
 | C10 | Separation of credentials: Router sync credentials are not Agent credentials. Provisioning them requires no `AgentIdentity`, Computing resource or other Lab Mango entity. Agent credentials cannot access Router-only APIs and Router credentials cannot impersonate agents. Sync never distributes agent keys or certificates and never authorizes immediate agent revocation (carried over from the 2026-11-08 boundary) |
@@ -614,7 +614,7 @@ The R0 migration changes database checks and choices and needs a coordinated, ex
 
 Review finding of the worktree, 2026-11-08, carried over unchanged in substance:
 
-- R0 routing models and migration 0011 exist. Source-specific publisher commands exist for agents (enrollment upsert, active-to-terminal tombstone, atomically with the agent mutation) and for the bounded user lifecycle (active flips, Entra bind, replace, unlink and delete, first-login binding, operator binding, URS activity changes), with rollback and idempotency tests.
+- R0 routing models exist (created by the initial migrations, squashed 2026-11-12). Source-specific publisher commands exist for agents (enrollment upsert, active-to-terminal tombstone, atomically with the agent mutation) and for the bounded user lifecycle (active flips, Entra bind, replace, unlink and delete, first-login binding, operator binding, URS activity changes), with rollback and idempotency tests.
 - This does **not** establish a complete user stream. External and direct ORM/SQL writers are not comprehensively inventoried or blocked, and data reconciliation and backfill are missing. R1 must not be described as a ready user stream.
 - No `/internal/*` endpoint or generated sync contract is mounted or verified. The browser-facing resource-mapping, equipment and user-profile APIs are not route-ownership feeds and cannot substitute for this API. `config/urls.py` mounts the public API under `/api/`; routing is not mounted there and must not be (section 8.1).
 - Router and Gateway behavior in other repositories was not verified.
@@ -623,7 +623,7 @@ Baseline of what exists versus what this spec adds:
 
 | Area | Current (as reported) | This spec |
 |---|---|---|
-| Routing persistence | R0 models and migration 0011 in the worktree; none in deployed behavior | `SyncState`, `RoutingChange`, `RoutingEntity` (section 5) |
+| Routing persistence | R0 models and the squashed initial migration in the worktree; none in deployed behavior | `SyncState`, `RoutingChange`, `RoutingEntity` (section 5) |
 | Internal sync endpoints | None | Section 8 (R2) |
 | User key | `EntraIdentity` stores a unique tenant/object UUID pair; no generic per-user key | Derive `user_key`; users without an Entra binding are omitted |
 | Agent identity | `AgentIdentity` and `EnrollmentGrant` exist: Ed25519, one public key plus digest, states pending/active/revoked/decommissioned, at most one pending-or-active identity per equipment | Source of the `agents` stream; only `agent_uid` and active state; public keys excluded |

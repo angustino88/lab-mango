@@ -81,7 +81,7 @@ deactivated user. See section 6.
 
 ## 6. Role audit log and access review (owner decision 2026-11-12)
 - **Role audit log** (Django admin, superusers only: *Role audit events*). Append-only: PostgreSQL rejects
-  UPDATE and DELETE (migration 0006). People are stored as id plus username, so deleting a user keeps their
+  UPDATE and DELETE (trigger in `users/0001_initial`). People are stored as id plus username, so deleting a user keeps their
   history. Recorded events:
 
   | Event | When | Actor |
