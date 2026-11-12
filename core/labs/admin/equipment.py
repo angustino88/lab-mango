@@ -47,6 +47,19 @@ class ProductModelSpecificationInline(admin.TabularInline):
 
 @admin.register(EquipmentCategory)
 class EquipmentCategoryAdmin(ProtectedReferenceAdmin):
+    """View-only: categories are provisioned defaults (``core/labs/features/equipment/defaults.py``).
+
+    Code depends on their keys and capability flags, so the admin cannot add, change or delete them;
+    change the declaration and run ``provision_reference_data`` instead. The kinds inline is shown
+    read-only as an overview; kinds are edited on the Equipment kinds page.
+    """
+
+    def has_add_permission(self, request) -> bool:
+        return False
+
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
     list_display = ("name", "kind_count", "bookable", "placeable_on_bench", "calibratable", "monitored", "active")
     list_filter = ("active", "bookable", "monitored")
     search_fields = ("name",)

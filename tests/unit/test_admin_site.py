@@ -177,3 +177,45 @@ def test_admin_inline_rows_are_stamped_and_deleted(client):
     created = EquipmentType.objects.get(kind=kind, name="Workstation")
     assert created.creator == user
     assert EquipmentKind.objects.get(pk=kind.pk).last_modified_by == user
+
+
+@pytest.mark.django_db
+def test_equipment_categories_are_view_only_even_for_superusers(client):
+    client, _ = _superuser_client(client)
+    category = EquipmentCategory.objects.create(name="Computing", definition="Computers")
+    EquipmentKind.objects.create(category=category, name="Laptop")
+    change_url = reverse("admin:labs_equipmentcategory_change", args=[category.pk])
+
+    add = client.get(reverse("admin:labs_equipmentcategory_add"))
+    view = client.get(change_url)
+    post = client.post(change_url, {"name": "Renamed", "definition": "x"})
+
+    assert add.status_code == 403
+    assert view.status_code == 200
+    assert view.context["has_change_permission"] is False
+    assert view.context["has_add_permission"] is False
+    kinds_inline = view.context["inline_admin_formsets"][0]
+    assert not (kinds_inline.has_add_permission or kinds_inline.has_change_permission)
+    assert post.status_code == 403
+    category.refresh_from_db()
+    assert category.name == "Computing"
+
+
+@pytest.mark.django_db
+def test_kinds_can_still_be_added_under_a_provisioned_category(client):
+    client, user = _superuser_client(client)
+    category = EquipmentCategory.objects.create(name="Computing", definition="Computers")
+
+    response = client.post(
+        reverse("admin:labs_equipmentkind_add"),
+        {
+            "category": category.pk,
+            "name": "Laptop",
+            "active": "on",
+            "types-TOTAL_FORMS": "0",
+            "types-INITIAL_FORMS": "0",
+        },
+    )
+
+    assert response.status_code == 302
+    assert EquipmentKind.objects.get(category=category, name="Laptop").creator == user
