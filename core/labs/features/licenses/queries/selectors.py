@@ -86,7 +86,7 @@ def list_licenses(*, search: str | None = None) -> QuerySet[License]:
     )
     queryset = (
         License.objects.filter(deleted_at__isnull=True)
-        .select_related("product", "vendor", "type", "category", "restriction", "owner")
+        .select_related("product", "vendor", "type", "category", "restriction", "owner", "department", "group")
         .annotate(
             # Read by License.seats_in_use; one correlated subquery instead of a COUNT per row.
             active_seat_count=Coalesce(Subquery(active_seats, output_field=IntegerField()), 0),

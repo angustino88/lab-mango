@@ -67486,6 +67486,16 @@
                       "readOnly": true,
                       "nullable": true
                     },
+                    "group": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "nullable": true
+                    },
                     "remark": {
                       "type": "string",
                       "readOnly": true
@@ -67596,6 +67606,7 @@
                     "created_at",
                     "department",
                     "expiry_date",
+                    "group",
                     "id",
                     "max_version",
                     "name",
@@ -67635,6 +67646,7 @@
                 "name": "string",
                 "owner": {},
                 "department": {},
+                "group": {},
                 "remark": "string",
                 "product": {},
                 "vendor": {},
@@ -71249,6 +71261,16 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "group": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "remark": {
                     "type": "string",
                     "readOnly": true
@@ -71359,6 +71381,7 @@
                   "created_at",
                   "department",
                   "expiry_date",
+                  "group",
                   "id",
                   "max_version",
                   "name",
@@ -71389,6 +71412,7 @@
               "name": "string",
               "owner": {},
               "department": {},
+              "group": {},
               "remark": "string",
               "product": {},
               "vendor": {},
@@ -72082,6 +72106,16 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "group": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "remark": {
                     "type": "string",
                     "readOnly": true
@@ -72192,6 +72226,7 @@
                   "created_at",
                   "department",
                   "expiry_date",
+                  "group",
                   "id",
                   "max_version",
                   "name",
@@ -72222,6 +72257,7 @@
               "name": "string",
               "owner": {},
               "department": {},
+              "group": {},
               "remark": "string",
               "product": {},
               "vendor": {},

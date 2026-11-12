@@ -49119,6 +49119,15 @@
             "readOnly": true,
             "nullable": true
           },
+          "group": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
           "remark": {
             "type": "string",
             "readOnly": true
@@ -49222,6 +49231,7 @@
           "created_at",
           "department",
           "expiry_date",
+          "group",
           "id",
           "max_version",
           "name",
