@@ -1,4 +1,4 @@
-"""PostgreSQL guards for booking approval and cancellation invariants (migration 0015).
+"""PostgreSQL guards for booking approval and cancellation invariants (labs/0001_initial).
 
 Each rule mirrors Booking.clean(); the database must reject a violating write even when
 it bypasses clean() (queryset.update, admin, raw ORM saves).
@@ -75,8 +75,8 @@ def test_valid_states_are_accepted(booking):
     BenchBooking.objects.filter(pk=booking.pk).update(approved_by=None)
 
 
-def test_constraints_are_not_validated_against_history():
-    """Added NOT VALID so deploys never fail or scan on historical rows."""
+def test_constraints_exist_and_are_validated():
+    """Migrations were squashed before production, so the constraints are created fully validated."""
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT conname, convalidated FROM pg_constraint "
@@ -88,4 +88,4 @@ def test_constraints_are_not_validated_against_history():
         for model in ("benchbooking", "equipmentbooking")
         for rule in ("rejection_has_reason", "pending_has_no_approver", "cancellation_has_reason")
     }
-    assert not any(rows.values())
+    assert all(rows.values())
