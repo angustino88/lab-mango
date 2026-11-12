@@ -3164,63 +3164,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: The requested page does not exist (page beyond the last page).
       summary: Get Equipment Reference Data Categories
-    post:
-      operationId: labs_equipment_reference_data_categories_create
-      description: 'Create a EquipmentCategory reference record from the declared
-        writable fields. Passes the validated values, authenticated user and Idempotency-Key
-        to the owner-provided create callback. Returns a 201 data envelope with Location;
-        a replay reported by the callback also includes Idempotency-Replayed: true.'
-      parameters:
-      - in: header
-        name: Idempotency-Key
-        schema:
-          type: string
-        description: Required replay key (max 128 characters); receipts retained until
-          explicitly purged.
-        required: true
-      tags:
-      - Equipment
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EquipmentCategoryCatalogCreate'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/EquipmentCategoryCatalogCreate'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/EquipmentCategoryCatalogCreate'
-        required: true
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EquipmentCategoryReferenceCreateSerializersEquipmentCategoryCatalogRecordDetailResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Create Equipment Reference Data Categories
   /api/labs/equipment/reference-data/categories/{reference_id}:
     get:
       operationId: labs_equipment_reference_data_categories_retrieve_by_reference_id
@@ -6585,42 +6528,6 @@ components:
       - definition
       - id
       - name
-    EquipmentCategoryCatalogCreate:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 120
-        key:
-          nullable: true
-          description: Stable code used by the code base (e.g. 'computing'). Filled
-            from the name when empty. Renaming the category never changes it.
-          oneOf:
-          - type: string
-            maxLength: 32
-            pattern: ^[-a-zA-Z0-9_]+$
-          - type: string
-            maxLength: 0
-        definition:
-          type: string
-        bookable:
-          type: boolean
-          description: Units can be lent and reserved.
-        placeable_on_bench:
-          type: boolean
-          description: Units can be assigned to a bench.
-        calibratable:
-          type: boolean
-          description: Units may require calibration.
-        monitored:
-          type: boolean
-          description: Units carry computing columns and may run the monitoring agent
-            (ComputingProfile).
-        active:
-          type: boolean
-      required:
-      - definition
-      - name
     EquipmentCategoryCatalogRecord:
       type: object
       properties:
@@ -6661,14 +6568,6 @@ components:
       - definition
       - id
       - name
-    EquipmentCategoryReferenceCreateSerializersEquipmentCategoryCatalogRecordDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/EquipmentCategoryCatalogRecord'
-      required:
-      - data
     EquipmentCategoryReferenceDetailSerializersEquipmentCategoryCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.

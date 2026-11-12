@@ -17,6 +17,8 @@ from core.reference_data.models import ReferenceImportReceipt
 from tests.factories import grant_labs_role
 
 ROOT = "/api/labs/"
+# Listed and retrieved only; rows come from provisioned defaults.
+READ_ONLY_PATHS = frozenset({"equipment/reference-data/categories"})
 PATHS = [
     *(
         f"equipment/reference-data/{key}"
@@ -73,7 +75,11 @@ def test_catalog_list_detail_and_authentication(client, catalog):
     assert client.get(url, {"unknown": "1"}).status_code == 400
     assert APIClient().get(url).status_code in (401, 403)
     view = getattr(resolve(url).func, "view_class")
-    assert view.post_contract.request is not None
+    if catalog in READ_ONLY_PATHS:
+        assert not hasattr(view, "post_contract")
+        assert not hasattr(view, "handle_post")
+    else:
+        assert view.post_contract.request is not None
 
 
 @pytest.mark.django_db
@@ -170,12 +176,10 @@ def test_create_and_retrieve_every_reference_type(client):
     """Breaks if any registry field, parent relation or output projection is wrong."""
     importer = get_user_model().objects.get(username="synthetic-importer")
     reader = get_user_model().objects.create(username="synthetic-catalog-reader")
-    ids: dict[str, int] = {}
+    # Equipment categories are provisioned defaults: readable, not importable.
+    category = EquipmentCategory.objects.create(name="Synthetic category", key="synthetic", definition="Test")
+    ids: dict[str, int] = {"categories": category.pk}
     payloads: list[tuple[str, dict[str, Any]]] = [
-        (
-            "equipment/reference-data/categories",
-            {"name": "Synthetic category", "key": "synthetic", "definition": "Test"},
-        ),
         ("equipment/reference-data/kinds", {"name": "Synthetic kind", "category_id": "categories"}),
         ("equipment/reference-data/types", {"name": "Synthetic type", "kind_id": "kinds"}),
         ("equipment/reference-data/manufacturers", {"name": "Synthetic maker", "categories": ["categories"]}),
@@ -243,6 +247,31 @@ def test_create_and_retrieve_every_reference_type(client):
         assert denied.status_code == 403, (catalog, denied.data)
         grant_labs_role(importer, "coord")
         client.force_authenticate(importer)
+
+
+@pytest.mark.django_db
+def test_equipment_categories_are_read_only_through_the_import_api(client):
+    """Categories come from provisioned defaults; the catalog lists and retrieves but never creates."""
+    category = EquipmentCategory.objects.create(name="Provisioned", key="provisioned", definition="Default")
+    url = ROOT + "equipment/reference-data/categories"
+
+    created = client.post(
+        url,
+        {"name": "Imported", "key": "imported", "definition": "Not allowed"},
+        format="json",
+        HTTP_IDEMPOTENCY_KEY="category-import",
+    )
+    listed = client.get(url)
+    detail = client.get(f"{url}/{category.pk}")
+
+    assert created.status_code == 405
+    assert "POST" not in created["Allow"]
+    assert not EquipmentCategory.objects.filter(key="imported").exists()
+    assert not ReferenceImportReceipt.objects.exists()
+    assert listed.status_code == 200
+    assert [row["key"] for row in listed.data["data"]] == ["provisioned"]
+    assert detail.status_code == 200
+    assert detail.data["data"]["id"] == category.pk
 
 
 @pytest.mark.django_db

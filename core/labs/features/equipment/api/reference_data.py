@@ -69,6 +69,8 @@ RESOURCES = (
 # Organisation lookups stay readable by every Labs role (R9); all other equipment catalogs are for
 # coordinators and admins. Creates need the Labs admin role (application/reference_data.py).
 ORGANIZATION_SEGMENTS = frozenset({"departments", "resource-groups"})
+# Categories are provisioned defaults (features/equipment/defaults.py): readable, never imported.
+READ_ONLY_SEGMENTS = frozenset({"categories"})
 
 urlpatterns = []
 for segment, model, fields, identity, label in RESOURCES:
@@ -82,4 +84,5 @@ for segment, model, fields, identity, label in RESOURCES:
         create=create_catalog_reference,
         listing=list_catalog_references,
         retrieve=get_catalog_reference,
+        read_only=segment in READ_ONLY_SEGMENTS,
     )

@@ -30,11 +30,13 @@ def reference_urlpatterns(
     retrieve: Callable,
     permission_classes: Sequence[Any] | None = None,
     can_write: Callable[[Any], bool] | None = None,
+    read_only: bool = False,
 ) -> list:
     """Bind one explicitly declared resource to owner commands and queries.
 
     ``permission_classes`` lets the owning app set its access policy; the default is authenticated users.
     ``can_write`` is the owner's write rule ``(actor) -> bool``; the default is the model's ``add_`` permission.
+    ``read_only`` publishes list and detail only: the collection has no POST (405), and ``create`` is unused.
     """
     access = list(permission_classes) if permission_classes is not None else [IsAuthenticated]
     if can_write is not None:
@@ -100,13 +102,6 @@ def reference_urlpatterns(
             success=ResponseContract.paginated(f"{name}ReferenceList", output_serializer),
             bad_request=ResponseContract.bad_request(),
         )
-        post_contract = OperationContract(
-            request=input_serializer,
-            success=ResponseContract.created(f"{name}ReferenceCreate", output_serializer),
-            bad_request=ResponseContract.bad_request(),
-            conflict=ResponseContract.problem(409),
-            validation_error=ResponseContract.problem(422),
-        )
 
         def handle_get(self, request, **kwargs):
             filters, error = self.validate_query()
@@ -114,23 +109,32 @@ def reference_urlpatterns(
                 return error
             return self.list_response_sync(listing(resource, actor=request.user, filters=dict(filters or {})))
 
-        def handle_post(self, request, **kwargs):
-            serializer, error = self.validate_request()
-            if error is not None:
-                return error
-            if serializer is None:
-                raise TypeError("Request validation returned no serializer.")
-            result = create(
-                resource,
-                values=dict(serializer.validated_data),
-                idempotency_key=request.headers.get("Idempotency-Key", ""),
-                actor=request.user,
+        if not read_only:
+            post_contract = OperationContract(
+                request=input_serializer,
+                success=ResponseContract.created(f"{name}ReferenceCreate", output_serializer),
+                bad_request=ResponseContract.bad_request(),
+                conflict=ResponseContract.problem(409),
+                validation_error=ResponseContract.problem(422),
             )
-            response = Response({"data": result.data}, status=201)
-            response["Location"] = request.build_absolute_uri(f"{request.path}/{result.data['id']}")
-            if result.replayed:
-                response["Idempotency-Replayed"] = "true"
-            return response
+
+            def handle_post(self, request, **kwargs):
+                serializer, error = self.validate_request()
+                if error is not None:
+                    return error
+                if serializer is None:
+                    raise TypeError("Request validation returned no serializer.")
+                result = create(
+                    resource,
+                    values=dict(serializer.validated_data),
+                    idempotency_key=request.headers.get("Idempotency-Key", ""),
+                    actor=request.user,
+                )
+                response = Response({"data": result.data}, status=201)
+                response["Location"] = request.build_absolute_uri(f"{request.path}/{result.data['id']}")
+                if result.replayed:
+                    response["Idempotency-Replayed"] = "true"
+                return response
 
     class Detail(AppAPIView):
         permission_classes = access
@@ -146,15 +150,17 @@ def reference_urlpatterns(
     Collection.__module__ = Detail.__module__ = module
     Collection.__name__ = f"{name}ReferenceCollectionAPIView"
     Detail.__name__ = f"{name}ReferenceDetailAPIView"
-    extend_schema_view(
-        get=extend_schema(
+    collection_schemas: dict[str, Any] = {
+        "get": extend_schema(
             description=(
                 f"List {name} reference records in a paginated data envelope. "
                 "Validates the declared search, relation and pagination query parameters "
                 "and delegates filtering and access checks to the owner-provided listing callback."
             ),
         ),
-        post=extend_schema(
+    }
+    if not read_only:
+        collection_schemas["post"] = extend_schema(
             description=(
                 f"Create a {name} reference record from the declared writable fields. "
                 "Passes the validated values, authenticated user and Idempotency-Key to the "
@@ -170,8 +176,8 @@ def reference_urlpatterns(
                     description="Required replay key (max 128 characters); receipts retained until explicitly purged.",
                 )
             ],
-        ),
-    )(Collection)
+        )
+    extend_schema_view(**collection_schemas)(Collection)
     extend_schema_view(
         get=extend_schema(
             description=(
