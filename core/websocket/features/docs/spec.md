@@ -54,5 +54,5 @@ have no owner and cannot be watched.
 
 | Method & Path | View Class | Parameters | Purpose & Contract |
 |---|---|---|---|
-| `GET /api/notifications` | `NotificationListCreateView` | `since=<id>`, `user_id=<id>` | Reconnection cursor poll. Enforces IDOR guard (`user_id == caller.id`). |
+| `GET /api/notifications` | `NotificationListCreateView` | `since=<id>`, `user_id=<id>`, `page`, `page_size` | Reconnection cursor poll. Enforces IDOR guard (`user_id == caller.id`; another id returns an empty page). Unknown or repeated parameters, and `since` / `user_id` that are not non-negative integers, return `400 invalid_query`. |
 | `POST /api/notifications` | `NotificationListCreateView` | `NotificationSerializer` | Dispatch notification event into persistence and channel layer; returns `201` with `{"data": <notification>}`. |
