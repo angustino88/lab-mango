@@ -335,6 +335,10 @@ SOCIALACCOUNT_ADAPTER = "core.users.adapters.SocialAccountAdapter"
 
 # DJANGO REST FRAMEWORK
 # ------------------------------------------------------------------------------
+# API keys (djangorestframework-api-key): one switch for every API-key path. Keys stay valid while off;
+# requests that rely only on a key are rejected (core.common.api.permissions.HasAPIKeyAccess).
+API_KEY_ACCESS_ENABLED = env.bool("API_KEY_ACCESS_ENABLED", default=True)
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",

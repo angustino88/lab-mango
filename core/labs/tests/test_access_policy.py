@@ -109,3 +109,15 @@ def test_coordinator_sees_benches():
     client.force_authenticate(user=_user("policy-http-coord", "coord"))
 
     assert client.get("/api/labs/benches").status_code == 200
+
+
+@pytest.mark.parametrize("enabled, expected", [(True, 200), (False, 401)])
+def test_api_key_access_follows_the_setting(settings, enabled, expected):
+    from rest_framework_api_key.models import APIKey
+
+    settings.API_KEY_ACCESS_ENABLED = enabled
+    _, key = APIKey.objects.create_key(name="policy-test-key")
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Api-Key {key}")
+
+    assert client.get("/api/labs/dashboard/summary").status_code == expected

@@ -98,7 +98,7 @@ def test_create_retrieve_replay_and_mismatched_key(client):
 def test_permissions_input_and_foreign_keys(client):
     url = ROOT + "equipment/reference-data/departments"
     reader = get_user_model().objects.create(username="synthetic-no-permissions")
-    grant_labs_role(reader, "coord")
+    grant_labs_role(reader, "user")  # plain Labs users may not import reference data
     client.force_authenticate(reader)
     denied = client.post(url, {"name": "Denied"}, format="json", HTTP_IDEMPOTENCY_KEY="denied")
     assert denied.status_code == 403, denied.data
@@ -237,7 +237,7 @@ def test_create_and_retrieve_every_reference_type(client):
         assert replay.status_code == 201, (catalog, replay.data)
         assert replay.data == response.data
         assert replay["Idempotency-Replayed"] == "true"
-        grant_labs_role(reader, "coord")
+        grant_labs_role(reader, "user")  # can read catalogs through the dashboard, may not import
         client.force_authenticate(reader)
         denied = client.post(ROOT + catalog, payload, format="json", HTTP_IDEMPOTENCY_KEY=f"denied-{index}")
         assert denied.status_code == 403, (catalog, denied.data)
@@ -246,25 +246,29 @@ def test_create_and_retrieve_every_reference_type(client):
 
 
 @pytest.mark.django_db
-def test_add_permission_without_staff_is_sufficient(client):
+def test_lab_role_decides_reference_imports_not_django_permissions(client):
+    """Labs reference data follows Labs roles: coordinators import; a Django add_ permission alone does not."""
     from django.contrib.auth.models import Permission
 
-    user = get_user_model().objects.create(username="synthetic-scoped-importer")
-    user.user_permissions.add(Permission.objects.get(content_type__app_label="labs", codename="add_department"))
-    grant_labs_role(user, "coord")
-    client.force_authenticate(user)
+    coordinator = grant_labs_role(get_user_model().objects.create(username="synthetic-coordinator"), "coord")
+    client.force_authenticate(coordinator)
     created = client.post(
-        ROOT + "equipment/reference-data/departments",
-        {"name": "Scoped department"},
+        ROOT + "equipment/reference-data/materials",
+        {"name": "Coordinator material"},
         format="json",
-        HTTP_IDEMPOTENCY_KEY="scoped",
+        HTTP_IDEMPOTENCY_KEY="coordinator",
     )
     assert created.status_code == 201, created.data
+
+    scoped = get_user_model().objects.create(username="synthetic-scoped-importer")
+    scoped.user_permissions.add(Permission.objects.get(content_type__app_label="labs", codename="add_department"))
+    grant_labs_role(scoped, "user")
+    client.force_authenticate(scoped)
     denied = client.post(
-        ROOT + "equipment/reference-data/materials",
+        ROOT + "equipment/reference-data/departments",
         {"name": "Not permitted"},
         format="json",
-        HTTP_IDEMPOTENCY_KEY="other",
+        HTTP_IDEMPOTENCY_KEY="scoped",
     )
     assert denied.status_code == 403
 

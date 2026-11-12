@@ -8,10 +8,10 @@ from drf_api_contracts import OperationContract, ResponseContract
 from drf_spectacular.utils import extend_schema
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_api_key.permissions import HasAPIKey
 
 from core.common.api.correlation import REQUEST_ID_HEADER, get_request_id
 from core.common.api.exceptions import api_exception_handler
+from core.common.api.permissions import HasAPIKeyAccess
 from core.labs.features.base.common import FeatureAPIView
 from core.users.public import IsLabCoordinatorReadWrite
 
@@ -29,7 +29,7 @@ from .throttles import FinanceCallerThrottle
 
 @extend_schema(parameters=[FinanceQuerySerializer])
 class _FinanceAPIView(FeatureAPIView):
-    permission_classes = [HasAPIKey | IsLabCoordinatorReadWrite]
+    permission_classes = [HasAPIKeyAccess | IsLabCoordinatorReadWrite]
     throttle_classes = [FinanceCallerThrottle]
     schema = FinanceAutoSchema()
     schema_tags = ("Analytics",)

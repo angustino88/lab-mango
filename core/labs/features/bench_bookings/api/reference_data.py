@@ -1,7 +1,7 @@
 """Project import API alongside the compatible existing project read routes."""
 
 from core.common.api.reference_views import reference_urlpatterns
-from core.labs.features.base.access import LABS_MEMBER_ACCESS
+from core.labs.features.base.access import LABS_MEMBER_ACCESS, can_import_lab_reference_data
 from core.labs.models import LabProject
 from core.reference_data.contracts import ReferenceResource
 
@@ -20,6 +20,7 @@ urlpatterns = reference_urlpatterns(
     tag="Bench Bookings",
     module=__name__,
     permission_classes=LABS_MEMBER_ACCESS,
+    can_write=can_import_lab_reference_data,
     create=create_catalog_reference,
     listing=list_catalog_references,
     retrieve=get_catalog_reference,

@@ -2,7 +2,7 @@
 
 ``FeatureAPIView`` declares the one authentication policy every feature inherits: an API key
 (agent, API test client) or an authenticated user. A feature that needs stricter access overrides
-``permission_classes`` explicitly; it never combines ``HasAPIKey`` ad hoc.
+``permission_classes`` explicitly; it never combines ``HasAPIKeyAccess`` ad hoc.
 
 ``CommandAPIView`` runs one command or selector per handler. Business errors are not caught here:
 ``DomainError`` subclasses and ``ObjectDoesNotExist`` propagate to ``api_exception_handler``, the
@@ -19,10 +19,9 @@ from drf_spectacular.utils import extend_schema_view
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_api_key.permissions import HasAPIKey
 
 from .api_views import AppAPIView
-from .permissions import is_authenticated
+from .permissions import HasAPIKeyAccess, is_authenticated
 
 
 def actor_from_request(request: Any) -> Any:
@@ -34,7 +33,7 @@ def actor_from_request(request: Any) -> Any:
 class FeatureAPIView(AppAPIView):
     """Cross-feature API foundation without domain-specific behavior."""
 
-    permission_classes = [HasAPIKey | IsAuthenticated]
+    permission_classes = [HasAPIKeyAccess | IsAuthenticated]
     required_attributes: ClassVar[tuple[str, ...]] = ()
 
     @classmethod

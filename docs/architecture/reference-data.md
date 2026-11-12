@@ -115,8 +115,11 @@ Technical users are account identifiers only: there is no password/token import 
 
 ### Safety and retry semantics
 
-- Authentication is required. New import routes require the model's Django `add_*` permission
-  for writes. `is_staff` alone is not sufficient; API-key-only requests cannot import.
+- Authentication is required. Writes follow the owner's rule (`ReferenceResource.can_write`), passed
+  through `reference_urlpatterns(..., can_write=...)`; without one, the model's Django `add_*`
+  permission is required. Labs passes `can_import_lab_reference_data`: lab coordinators and admins
+  import, whatever Django permissions a user holds (owner decision 2026-11-12). `is_staff` alone is
+  not sufficient; API-key-only requests cannot import.
   Reads are shared reference catalogs available to active authenticated users.
 - Each POST requires a non-empty `Idempotency-Key` of at most 128 characters. Keep the same
   key and JSON payload when retrying a failed connection. A successful replay returns the

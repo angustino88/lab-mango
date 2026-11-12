@@ -4,6 +4,7 @@ No business app imports or automatic model discovery. Input fields derive from
 an explicit owner allowlist; model validation remains in the create command.
 """
 
+import dataclasses
 from collections.abc import Sequence
 from typing import Any, Callable
 
@@ -28,12 +29,17 @@ def reference_urlpatterns(
     listing: Callable,
     retrieve: Callable,
     permission_classes: Sequence[Any] | None = None,
+    can_write: Callable[[Any], bool] | None = None,
 ) -> list:
     """Bind one explicitly declared resource to owner commands and queries.
 
     ``permission_classes`` lets the owning app set its access policy; the default is authenticated users.
+    ``can_write`` is the owner's write rule ``(actor) -> bool``; the default is the model's ``add_`` permission.
     """
     access = list(permission_classes) if permission_classes is not None else [IsAuthenticated]
+    if can_write is not None:
+        # The owner's write rule travels with the resource into the import command's policy check.
+        resource = dataclasses.replace(resource, can_write=can_write)
     name = resource.model.__name__
     meta = type("Meta", (), {"model": resource.model, "fields": resource.fields, "validators": []})
     shape = type(f"{name}ImportShape", (serializers.ModelSerializer,), {"Meta": meta})()
