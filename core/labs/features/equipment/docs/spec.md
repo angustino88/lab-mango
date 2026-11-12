@@ -64,7 +64,7 @@ Three separate facts describe a unit. They are stored and changed independently;
 | 6 | calibration required and overdue | `calibration_overdue` |
 | 7 | otherwise | `available` |
 
-**Who sees equipment:** only lab coordinators and administrators (and API keys) can read or change equipment, its catalog, placements and loans. Engineers cannot see equipment at all; the coordinator records everything for them. Departments and resource groups stay readable by every signed-in user.
+**Who sees equipment:** only lab coordinators and administrators (and API keys) can read or change equipment, its catalog, placements and loans. Engineers cannot see equipment at all; the coordinator records everything for them. Departments and groups stay readable by every signed-in user.
 
 **Loans** (custody, not a booking). A **loan slip** (`EquipmentLoanBatch`) holds the borrower and purpose for one or more items handed over together; each item is its own loan line, so items can come back at different times. The borrower is a user account **or**, for people without one, a name with an optional contact (email or phone).
 - Lend several items in one request (`POST /api/labs/equipment-loans`, `Idempotency-Key` required): all or nothing; the 409 lists each unavailable item with its reasons.

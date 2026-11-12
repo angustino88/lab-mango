@@ -128,7 +128,7 @@ def test_bench_create_missing_reference_returns_field_scoped_422(bench_api):
     ]
 
 
-def test_bench_create_missing_resource_group_returns_field_scoped_422(bench_api):
+def test_bench_create_missing_group_returns_field_scoped_422(bench_api):
     client, _ = bench_api
 
     response = client.post(
@@ -147,7 +147,7 @@ def test_bench_create_missing_resource_group_returns_field_scoped_422(bench_api)
     ]
 
 
-def test_bench_update_missing_resource_group_returns_field_scoped_422(bench_api):
+def test_bench_update_missing_group_returns_field_scoped_422(bench_api):
     client, bench = bench_api
 
     response = client.patch(f"/api/labs/benches/{bench.pk}", {"group_id": 999999}, format="json")

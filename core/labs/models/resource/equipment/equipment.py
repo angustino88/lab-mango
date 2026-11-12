@@ -253,6 +253,7 @@ class Equipment(ResourceModel):
 
     class Meta:
         app_label = "labs"
+        verbose_name_plural = "equipment"
         constraints = [
             models.UniqueConstraint(
                 fields=("sku",), condition=models.Q(deleted_at__isnull=True),

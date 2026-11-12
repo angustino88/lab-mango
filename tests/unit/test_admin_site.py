@@ -219,3 +219,19 @@ def test_kinds_can_still_be_added_under_a_provisioned_category(client):
 
     assert response.status_code == 302
     assert EquipmentKind.objects.get(category=category, name="Laptop").creator == user
+
+
+@pytest.mark.parametrize(
+    ("model_name", "plural"),
+    [
+        ("Bench", "benches"),
+        ("Equipment", "equipment"),
+        ("EquipmentCategory", "equipment categories"),
+        ("ComputingActivity", "computing activities"),
+        ("PurchasePriority", "purchase priorities"),
+    ],
+)
+def test_admin_list_names_use_correct_plurals(model_name, plural):
+    from django.apps import apps
+
+    assert str(apps.get_model("labs", model_name)._meta.verbose_name_plural) == plural

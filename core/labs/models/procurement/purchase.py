@@ -46,6 +46,7 @@ class PurchasePriority(models.Model):
 
     class Meta:
         app_label = "labs"
+        verbose_name_plural = "purchase priorities"
         ordering = ("-rank", "id")
         constraints = [models.UniqueConstraint(Lower("name"), name="purchasepriority_name_ci_uniq")]
 

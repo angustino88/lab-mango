@@ -50,6 +50,7 @@ class EquipmentCategory(ProtectedReferenceMixin, EquipmentBase):
 
     class Meta:
         app_label = "labs"
+        verbose_name_plural = "equipment categories"
         ordering = ("name",)
         constraints = [
             models.UniqueConstraint(Lower("name"), name="equipment_category_name_uniq"),

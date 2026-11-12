@@ -11,6 +11,8 @@ cannot verify in code or from the owner. Owner: fill in and keep current.
 | Stable global resource identifier | <confirm> | Distinct from database primary key |
 | Room / Station / Bench | <confirm> | |
 | Equipment | <confirm> | |
+| Department / Group | `Department` is the organisation unit that owns resources (e.g. EDS); `Group` (formerly `ResourceGroup`) is a formal subdivision of a department (e.g. EDS1, EDS2). Every resource has optional `department` and `group`; the group must belong to the department. Owner: labs resource base (`core/labs/models/resource/base/resource.py`) | Not `auth.Group` (URS role membership). API: `department_id`, `group_id`; routes `/api/labs/departments`, `/api/labs/groups` |
+| Bench group | `BenchGroup`: the function of a bench (e.g. Radar, Video), stored as `Bench.bench_group`. Not ownership; distinct from *Group* | Verified in code: `core/labs/models/resource/bench/bench_group.py` |
 | Assignment | A **bench placement** of equipment (`EquipmentAssignment.objects` returns only these); see *Placement*. License assignments are a separate concept (`LicenseAssignment`). | Verified in code: `core/labs/models/resource/equipment/assignment.py` |
 | License | <confirm> | Agreement vs payment are different concepts |
 | Expense / Purchase | <confirm> | Commitment vs actual payment |

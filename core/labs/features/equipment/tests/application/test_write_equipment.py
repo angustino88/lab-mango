@@ -14,7 +14,7 @@ from core.labs.features.equipment.application.update_equipment import (
     update_equipment,
 )
 from core.labs.models import Equipment
-from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.base.resource import Department, Group
 from tests.factories import create_computing_equipment
 
 
@@ -42,7 +42,7 @@ def test_create_equipment_rejects_invalid_model_data(equipment):
 @pytest.mark.django_db
 def test_create_equipment_resolves_group_and_infers_its_department(equipment):
     department = Department.objects.create(name="Equipment Department")
-    group = ResourceGroup.objects.create(name="Equipment Group", department=department)
+    group = Group.objects.create(name="Equipment Group", department=department)
 
     created = create_equipment(
         CreateEquipmentInput(
@@ -59,7 +59,7 @@ def test_create_equipment_resolves_group_and_infers_its_department(equipment):
 def test_create_equipment_rejects_inactive_or_cross_department_group(equipment):
     department = Department.objects.create(name="Equipment Department")
     other_department = Department.objects.create(name="Other Equipment Department")
-    group = ResourceGroup.objects.create(name="Inactive Group", department=department, active=False)
+    group = Group.objects.create(name="Inactive Group", department=department, active=False)
     with pytest.raises(ValidationError, match="active"):
         create_equipment(
             CreateEquipmentInput(
@@ -68,7 +68,7 @@ def test_create_equipment_rejects_inactive_or_cross_department_group(equipment):
             actor=None,
         )
 
-    active_group = ResourceGroup.objects.create(name="Active Group", department=department)
+    active_group = Group.objects.create(name="Active Group", department=department)
     with pytest.raises(ValidationError, match="different department"):
         create_equipment(
             CreateEquipmentInput(

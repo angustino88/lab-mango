@@ -38,6 +38,7 @@ class ComputingActivity(TimeStampedModel):
 
     class Meta:
         app_label = "labs"
+        verbose_name_plural = "computing activities"
         constraints = [
             models.CheckConstraint(
                 condition=(~Q(status=ComputingActivityStatus.OFFLINE) | Q(offline_at__isnull=False)),

@@ -24,6 +24,7 @@ from core.labs.models import (
     EquipmentBooking,
     EquipmentCategory,
     EquipmentKind,
+    EquipmentManufacturer,
     LicenseAssignment,
     Room,
 )
@@ -104,7 +105,7 @@ def test_plain_user_cannot_read_or_write_equipment(plain_user, computing_kind, c
         assert client.get(ROOT + path).status_code == 403, path
     # Organisation lookups stay readable (R9).
     assert client.get(ROOT + "departments").status_code == 200
-    assert client.get(ROOT + "resource-groups").status_code == 200
+    assert client.get(ROOT + "groups").status_code == 200
 
 
 @pytest.mark.django_db
@@ -123,28 +124,40 @@ def test_coordinator_can_create_and_delete_equipment(coordinator, computing_kind
 
 @pytest.mark.django_db
 def test_catalog_writes_are_admin_only(coordinator, lab_admin):
-    coordinator.user_permissions.add(
-        Permission.objects.get(content_type__app_label="labs", codename="add_equipmentcategory")
-    )
+    permission = Permission.objects.get(content_type__app_label="labs", codename="add_equipmentmanufacturer")
+    coordinator.user_permissions.add(permission)
     denied = _client(coordinator).post(
-        ROOT + "equipment/reference-data/categories",
-        {"name": "Optics", "key": "optics", "definition": "Optics"},
+        ROOT + "equipment/reference-data/manufacturers",
+        {"name": "Optics Inc"},
         format="json",
         HTTP_IDEMPOTENCY_KEY="s0-coord",
     )
     assert denied.status_code == 403
-    assert not EquipmentCategory.objects.filter(key="optics").exists()
+    assert not EquipmentManufacturer.objects.filter(name="Optics Inc").exists()
 
-    lab_admin.user_permissions.add(
-        Permission.objects.get(content_type__app_label="labs", codename="add_equipmentcategory")
-    )
+    lab_admin.user_permissions.add(permission)
     created = _client(lab_admin).post(
-        ROOT + "equipment/reference-data/categories",
-        {"name": "Optics", "key": "optics", "definition": "Optics"},
+        ROOT + "equipment/reference-data/manufacturers",
+        {"name": "Optics Inc"},
         format="json",
         HTTP_IDEMPOTENCY_KEY="s0-admin",
     )
     assert created.status_code == 201, created.data
+
+
+@pytest.mark.django_db
+def test_lab_admin_cannot_create_categories_they_are_provisioned(lab_admin):
+    lab_admin.user_permissions.add(
+        Permission.objects.get(content_type__app_label="labs", codename="add_equipmentcategory")
+    )
+    response = _client(lab_admin).post(
+        ROOT + "equipment/reference-data/categories",
+        {"name": "Optics", "key": "optics", "definition": "Optics"},
+        format="json",
+        HTTP_IDEMPOTENCY_KEY="s0-admin-category",
+    )
+    assert response.status_code == 405
+    assert not EquipmentCategory.objects.filter(key="optics").exists()
 
 
 @pytest.mark.django_db

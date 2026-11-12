@@ -19,7 +19,7 @@ from core.labs.models import (
     BenchFavorite,
     BenchGroup,
     BenchType,
-    ResourceGroup,
+    Group,
     Station,
     StationSlot,
 )
@@ -95,8 +95,8 @@ def _lock_bench(bench_id, data):
 def _validate_references(bench, data):
     if "group_id" in data and data["group_id"] is not None:
         try:
-            ResourceGroup.objects.get(pk=data["group_id"])
-        except ResourceGroup.DoesNotExist as error:
+            Group.objects.get(pk=data["group_id"])
+        except Group.DoesNotExist as error:
             raise DRFValidationError(
                 {"group_id": [ErrorDetail("Select an existing reference.", code="does_not_exist")]}
             ) from error

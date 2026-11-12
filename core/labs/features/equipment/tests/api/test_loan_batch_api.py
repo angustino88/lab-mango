@@ -135,5 +135,5 @@ def test_engineers_cannot_read_equipment_but_can_read_organisation(items):
         "equipment/status-summary",
     ):
         assert engineer.get(ROOT + path).status_code == 403, path
-    for path in ("departments", "resource-groups", "equipment/reference-data/departments"):
+    for path in ("departments", "groups", "equipment/reference-data/departments"):
         assert engineer.get(ROOT + path).status_code == 200, path

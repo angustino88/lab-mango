@@ -1,8 +1,8 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 448,
-  "generated_at": "2026-11-12",
+  "total_endpoints": 447,
+  "generated_at": "2026-11-13",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -38381,339 +38381,6 @@
       }
     },
     {
-      "endpoint": "/api/labs/equipment/reference-data/categories",
-      "method": "POST",
-      "operation_id": "labs_equipment_reference_data_categories_create",
-      "summary": "Create Equipment Reference Data Categories",
-      "description": "Create a EquipmentCategory reference record from the declared writable fields. Passes the validated values, authenticated user and Idempotency-Key to the owner-provided create callback. Returns a 201 data envelope with Location; a replay reported by the callback also includes Idempotency-Replayed: true.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "Idempotency-Key",
-          "in": "header",
-          "required": true,
-          "description": "Required replay key (max 128 characters); receipts retained until explicitly purged.",
-          "schema": {
-            "type": "string"
-          }
-        }
-      ],
-      "request_body": {
-        "content_type": "application/json",
-        "supported_content_types": [
-          "application/json",
-          "application/x-www-form-urlencoded",
-          "multipart/form-data"
-        ],
-        "required": true,
-        "description": "",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string",
-              "maxLength": 120
-            },
-            "key": {
-              "nullable": true,
-              "description": "Stable code used by the code base (e.g. 'computing'). Filled from the name when empty. Renaming the category never changes it.",
-              "oneOf": [
-                {
-                  "type": "string",
-                  "maxLength": 32,
-                  "pattern": "^[-a-zA-Z0-9_]+$"
-                },
-                {
-                  "type": "string",
-                  "maxLength": 0
-                }
-              ]
-            },
-            "definition": {
-              "type": "string"
-            },
-            "bookable": {
-              "type": "boolean",
-              "description": "Units can be lent and reserved."
-            },
-            "placeable_on_bench": {
-              "type": "boolean",
-              "description": "Units can be assigned to a bench."
-            },
-            "calibratable": {
-              "type": "boolean",
-              "description": "Units may require calibration."
-            },
-            "monitored": {
-              "type": "boolean",
-              "description": "Units carry computing columns and may run the monitoring agent (ComputingProfile)."
-            },
-            "active": {
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "definition",
-            "name"
-          ]
-        },
-        "example_payload": {
-          "name": "string",
-          "key": "string",
-          "definition": "string",
-          "bookable": true,
-          "placeable_on_bench": true,
-          "calibratable": true,
-          "monitored": true,
-          "active": true
-        }
-      },
-      "responses": {
-        "201": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "maxLength": 120
-                  },
-                  "key": {
-                    "nullable": true,
-                    "description": "Stable code used by the code base (e.g. 'computing'). Filled from the name when empty. Renaming the category never changes it.",
-                    "oneOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 32,
-                        "pattern": "^[-a-zA-Z0-9_]+$"
-                      },
-                      {
-                        "type": "string",
-                        "maxLength": 0
-                      }
-                    ]
-                  },
-                  "definition": {
-                    "type": "string"
-                  },
-                  "bookable": {
-                    "type": "boolean",
-                    "description": "Units can be lent and reserved."
-                  },
-                  "placeable_on_bench": {
-                    "type": "boolean",
-                    "description": "Units can be assigned to a bench."
-                  },
-                  "calibratable": {
-                    "type": "boolean",
-                    "description": "Units may require calibration."
-                  },
-                  "monitored": {
-                    "type": "boolean",
-                    "description": "Units carry computing columns and may run the monitoring agent (ComputingProfile)."
-                  },
-                  "active": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "definition",
-                  "id",
-                  "name"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "name": "string",
-              "key": "string",
-              "definition": "string",
-              "bookable": true,
-              "placeable_on_bench": true,
-              "calibratable": true,
-              "monitored": true,
-              "active": true
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "409": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "422": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
       "endpoint": "/api/labs/equipment/reference-data/categories/{reference_id}",
       "method": "GET",
       "operation_id": "labs_equipment_reference_data_categories_retrieve_by_reference_id",
@@ -40679,6 +40346,661 @@
               "id": 1,
               "size": "string",
               "diagonal_in": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/reference-data/groups",
+      "method": "GET",
+      "operation_id": "labs_equipment_reference_data_groups_retrieve",
+      "summary": "Get Equipment Reference Data Groups",
+      "description": "List Group reference records in a paginated data envelope. Validates the declared search, relation and pagination query parameters and delegates filtering and access checks to the owner-provided listing callback.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "active",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 255
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "department_id": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "active": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "department_id",
+                    "id",
+                    "name"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "name": "string",
+                "description": "string",
+                "department_id": 1,
+                "active": true
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "The requested page does not exist (page beyond the last page).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/reference-data/groups",
+      "method": "POST",
+      "operation_id": "labs_equipment_reference_data_groups_create",
+      "summary": "Create Equipment Reference Data Groups",
+      "description": "Create a Group reference record from the declared writable fields. Passes the validated values, authenticated user and Idempotency-Key to the owner-provided create callback. Returns a 201 data envelope with Location; a replay reported by the callback also includes Idempotency-Replayed: true.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "description": "Required replay key (max 128 characters); receipts retained until explicitly purged.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "description": {
+              "type": "string"
+            },
+            "active": {
+              "type": "boolean"
+            },
+            "department_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "example_payload": {
+          "name": "string",
+          "description": "string",
+          "active": true,
+          "department_id": 1
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "department_id": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "department_id",
+                  "id",
+                  "name"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "description": "string",
+              "department_id": 1,
+              "active": true
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/reference-data/groups/{reference_id}",
+      "method": "GET",
+      "operation_id": "labs_equipment_reference_data_groups_retrieve_by_reference_id",
+      "summary": "Get Equipment Reference Data Groups by Reference ID",
+      "description": "Retrieve one Group reference record by reference_id in a data envelope. Delegates lookup and access checks to the owner-provided retrieve callback; a missing or unavailable record is documented as 404.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "reference_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "department_id": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "department_id",
+                  "id",
+                  "name"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "description": "string",
+              "department_id": 1,
+              "active": true
             }
           }
         },
@@ -45067,661 +45389,6 @@
               "equipment_type_id": 1,
               "default_power_draw_w": 1,
               "default_weight_kg": "string",
-              "active": true
-            }
-          }
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/equipment/reference-data/resource-groups",
-      "method": "GET",
-      "operation_id": "labs_equipment_reference_data_resource_groups_retrieve",
-      "summary": "Get Equipment Reference Data Resource Groups",
-      "description": "List ResourceGroup reference records in a paginated data envelope. Validates the declared search, relation and pagination query parameters and delegates filtering and access checks to the owner-provided listing callback.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "active",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "boolean",
-            "nullable": true
-          }
-        },
-        {
-          "name": "department_id",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "page_size",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "maximum": 100,
-            "minimum": 1
-          }
-        },
-        {
-          "name": "search",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "meta": {
-                "type": "object",
-                "properties": {
-                  "pagination": {
-                    "type": "object",
-                    "properties": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "required": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    }
-                  }
-                },
-                "required": [
-                  "pagination"
-                ]
-              },
-              "data": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "name": {
-                      "type": "string",
-                      "maxLength": 255
-                    },
-                    "description": {
-                      "type": "string"
-                    },
-                    "department_id": {
-                      "type": "integer",
-                      "readOnly": true,
-                      "nullable": true
-                    },
-                    "active": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "department_id",
-                    "id",
-                    "name"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "data",
-              "meta"
-            ]
-          },
-          "example_payload": {
-            "meta": {
-              "pagination": {
-                "type": null,
-                "description": null
-              }
-            },
-            "data": [
-              {
-                "id": 1,
-                "name": "string",
-                "description": "string",
-                "department_id": 1,
-                "active": true
-              }
-            ]
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "404": {
-          "description": "The requested page does not exist (page beyond the last page).",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/equipment/reference-data/resource-groups",
-      "method": "POST",
-      "operation_id": "labs_equipment_reference_data_resource_groups_create",
-      "summary": "Create Equipment Reference Data Resource Groups",
-      "description": "Create a ResourceGroup reference record from the declared writable fields. Passes the validated values, authenticated user and Idempotency-Key to the owner-provided create callback. Returns a 201 data envelope with Location; a replay reported by the callback also includes Idempotency-Replayed: true.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "Idempotency-Key",
-          "in": "header",
-          "required": true,
-          "description": "Required replay key (max 128 characters); receipts retained until explicitly purged.",
-          "schema": {
-            "type": "string"
-          }
-        }
-      ],
-      "request_body": {
-        "content_type": "application/json",
-        "supported_content_types": [
-          "application/json",
-          "application/x-www-form-urlencoded",
-          "multipart/form-data"
-        ],
-        "required": true,
-        "description": "",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string",
-              "maxLength": 255
-            },
-            "description": {
-              "type": "string"
-            },
-            "active": {
-              "type": "boolean"
-            },
-            "department_id": {
-              "type": "integer",
-              "minimum": 1,
-              "nullable": true
-            }
-          },
-          "required": [
-            "name"
-          ]
-        },
-        "example_payload": {
-          "name": "string",
-          "description": "string",
-          "active": true,
-          "department_id": 1
-        }
-      },
-      "responses": {
-        "201": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "department_id": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "active": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "department_id",
-                  "id",
-                  "name"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "name": "string",
-              "description": "string",
-              "department_id": 1,
-              "active": true
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "409": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "422": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/equipment/reference-data/resource-groups/{reference_id}",
-      "method": "GET",
-      "operation_id": "labs_equipment_reference_data_resource_groups_retrieve_by_reference_id",
-      "summary": "Get Equipment Reference Data Resource Groups by Reference ID",
-      "description": "Retrieve one ResourceGroup reference record by reference_id in a data envelope. Delegates lookup and access checks to the owner-provided retrieve callback; a missing or unavailable record is documented as 404.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "reference_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "department_id": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "active": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "department_id",
-                  "id",
-                  "name"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "name": "string",
-              "description": "string",
-              "department_id": 1,
               "active": true
             }
           }
@@ -60705,6 +60372,647 @@
           }
         },
         "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/groups",
+      "method": "GET",
+      "operation_id": "labs_groups_retrieve",
+      "summary": "Get Groups",
+      "description": "Equipment specialization of the shared feature API foundation.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "include_ids",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 50,
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Search text (1 to 100 characters).",
+          "schema": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 255
+                    },
+                    "department": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "department_id": {
+                      "type": "integer",
+                      "writeOnly": true
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    }
+                  },
+                  "required": [
+                    "created_at",
+                    "department",
+                    "id",
+                    "name",
+                    "updated_at"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "name": "string",
+                "department": {},
+                "department_id": 1,
+                "active": true,
+                "created_at": "2026-10-20T12:00:00Z",
+                "updated_at": "2026-10-20T12:00:00Z"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "The requested page does not exist (page beyond the last page).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/groups/options",
+      "method": "GET",
+      "operation_id": "labs_groups_options_retrieve",
+      "summary": "Get Groups Options",
+      "description": "Shared base view for dropdown selector endpoints (ADR 002).\n\nValidates query parameters, enforces the size class and result cap,\ncalls the feature's query selector, handles ETag generation / 304 Not Modified,\nand returns {\"data\": [{\"id\": ..., \"sku\": ..., \"name\": ...}]}.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "include_ids",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 50,
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Search text (1 to 100 characters).",
+          "schema": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "Standard selector options list",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Enveloped list of selector options.",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "Standard selector dropdown item: exactly {id, sku, name} (OPT-2, OPT-4).",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "sku": {
+                      "type": "string",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "readOnly": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "sku"
+                  ]
+                },
+                "readOnly": true
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": [
+              {
+                "id": 1,
+                "sku": "string",
+                "name": "string"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "Invalid selector query parameters (invalid_query) or result cap exceeded (too_many_results).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "304": {
+          "description": "Not modified",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "403": {
+          "description": "Access denied by the existing API-key or authenticated-user permission policy.",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/groups/{group_id}",
+      "method": "GET",
+      "operation_id": "labs_groups_retrieve_by_group_id",
+      "summary": "Get Groups by Group ID",
+      "description": "Equipment specialization of the shared feature API foundation.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "group_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "department": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "department_id": {
+                    "type": "integer",
+                    "writeOnly": true
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "created_at",
+                  "department",
+                  "id",
+                  "name",
+                  "updated_at"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "department": {},
+              "department_id": 1,
+              "active": true,
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -81902,647 +82210,6 @@
                 {}
               ],
               "request_id": "string"
-            }
-          }
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/resource-groups",
-      "method": "GET",
-      "operation_id": "labs_resource_groups_retrieve",
-      "summary": "Get Resource Groups",
-      "description": "Equipment specialization of the shared feature API foundation.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "department_id",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "include_ids",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
-          "schema": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "maxItems": 50,
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "page_size",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "maximum": 100,
-            "minimum": 1
-          }
-        },
-        {
-          "name": "q",
-          "in": "query",
-          "required": false,
-          "description": "Search text (1 to 100 characters).",
-          "schema": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 1
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "meta": {
-                "type": "object",
-                "properties": {
-                  "pagination": {
-                    "type": "object",
-                    "properties": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "required": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    }
-                  }
-                },
-                "required": [
-                  "pagination"
-                ]
-              },
-              "data": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "name": {
-                      "type": "string",
-                      "maxLength": 255
-                    },
-                    "department": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "readOnly": true
-                    },
-                    "department_id": {
-                      "type": "integer",
-                      "writeOnly": true
-                    },
-                    "active": {
-                      "type": "boolean"
-                    },
-                    "created_at": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
-                    },
-                    "updated_at": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
-                    }
-                  },
-                  "required": [
-                    "created_at",
-                    "department",
-                    "id",
-                    "name",
-                    "updated_at"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "data",
-              "meta"
-            ]
-          },
-          "example_payload": {
-            "meta": {
-              "pagination": {
-                "type": null,
-                "description": null
-              }
-            },
-            "data": [
-              {
-                "id": 1,
-                "name": "string",
-                "department": {},
-                "department_id": 1,
-                "active": true,
-                "created_at": "2026-10-20T12:00:00Z",
-                "updated_at": "2026-10-20T12:00:00Z"
-              }
-            ]
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "404": {
-          "description": "The requested page does not exist (page beyond the last page).",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/resource-groups/options",
-      "method": "GET",
-      "operation_id": "labs_resource_groups_options_retrieve",
-      "summary": "Get Resource Groups Options",
-      "description": "Shared base view for dropdown selector endpoints (ADR 002).\n\nValidates query parameters, enforces the size class and result cap,\ncalls the feature's query selector, handles ETag generation / 304 Not Modified,\nand returns {\"data\": [{\"id\": ..., \"sku\": ..., \"name\": ...}]}.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "department_id",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "include_ids",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
-          "schema": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "maxItems": 50,
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "q",
-          "in": "query",
-          "required": false,
-          "description": "Search text (1 to 100 characters).",
-          "schema": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 1
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "Standard selector options list",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Enveloped list of selector options.",
-            "properties": {
-              "data": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "description": "Standard selector dropdown item: exactly {id, sku, name} (OPT-2, OPT-4).",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "sku": {
-                      "type": "string",
-                      "readOnly": true,
-                      "nullable": true
-                    },
-                    "name": {
-                      "type": "string",
-                      "readOnly": true
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "sku"
-                  ]
-                },
-                "readOnly": true
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": [
-              {
-                "id": 1,
-                "sku": "string",
-                "name": "string"
-              }
-            ]
-          }
-        },
-        "400": {
-          "description": "Invalid selector query parameters (invalid_query) or result cap exceeded (too_many_results).",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "304": {
-          "description": "Not modified",
-          "content_type": null,
-          "schema": null,
-          "example_payload": null
-        },
-        "403": {
-          "description": "Access denied by the existing API-key or authenticated-user permission policy.",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/resource-groups/{group_id}",
-      "method": "GET",
-      "operation_id": "labs_resource_groups_retrieve_by_group_id",
-      "summary": "Get Resource Groups by Group ID",
-      "description": "Equipment specialization of the shared feature API foundation.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "group_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "department": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "department_id": {
-                    "type": "integer",
-                    "writeOnly": true
-                  },
-                  "active": {
-                    "type": "boolean"
-                  },
-                  "created_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  },
-                  "updated_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  }
-                },
-                "required": [
-                  "created_at",
-                  "department",
-                  "id",
-                  "name",
-                  "updated_at"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "name": "string",
-              "department": {},
-              "department_id": 1,
-              "active": true,
-              "created_at": "2026-10-20T12:00:00Z",
-              "updated_at": "2026-10-20T12:00:00Z"
             }
           }
         },

@@ -23,7 +23,7 @@ from core.labs.models import (
     EquipmentProductModel,
     EquipmentType,
 )
-from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.base.resource import Department, Group
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 BASE = "/api/labs/equipment"
@@ -53,7 +53,7 @@ def inventory(db):
         for i in range(2)
     ]
     departments = [Department.objects.create(name=f"Facet department {i}") for i in range(2)]
-    groups = [ResourceGroup.objects.create(name=f"Facet group {i}", department=departments[i]) for i in range(2)]
+    groups = [Group.objects.create(name=f"Facet group {i}", department=departments[i]) for i in range(2)]
     rows = []
     for i in range(3):
         index = 0 if i < 2 else 1
@@ -345,7 +345,7 @@ def test_parent_only_siblings_crossed_relationships_and_csv_conjunction(inventor
     client, categories, kinds, types, makers, models, departments, groups, rows = inventory
     sibling_kind = EquipmentKind.objects.create(category=categories[0], name="Sibling kind")
     sibling_type = EquipmentType.objects.create(kind=sibling_kind, name="Sibling type")
-    sibling_group = ResourceGroup.objects.create(department=departments[0], name="Sibling group")
+    sibling_group = Group.objects.create(department=departments[0], name="Sibling group")
     categories[0].manufacturers.add(makers[1])
     sibling_model = EquipmentProductModel.objects.create(
         name="Sibling model", equipment_type=sibling_type, manufacturer=makers[1]

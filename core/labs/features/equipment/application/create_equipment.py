@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from core.labs.models import Equipment, EquipmentKind, EquipmentLifecycleState
-from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.base.resource import Department, Group
 
 from ._category import TYPED_FIELDS, validate_category_fields
 from .change_state import record_initial_lifecycle
@@ -85,7 +85,7 @@ def create_equipment(command: CreateEquipmentInput, *, actor):
         raise ValidationError({"kind": "Select an active equipment kind and category."})
     if computing and not category.monitored:
         raise ValidationError({"computing": f"Units of the {category.name} category have no computing profile."})
-    for field_name, model_class in (("department", Department), ("group", ResourceGroup)):
+    for field_name, model_class in (("department", Department), ("group", Group)):
         if field_name in values:
             values[field_name] = _resolve_reference(model_class, values[field_name], field_name=field_name)
     from core.labs import models as labs_models  # Ensure models are imported

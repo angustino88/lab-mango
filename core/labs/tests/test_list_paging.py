@@ -18,7 +18,7 @@ from core.labs.models import (
     EquipmentManufacturer,
     EquipmentProductModel,
     EquipmentType,
-    ResourceGroup,
+    Group,
     Room,
 )
 from core.labs.models.resource.license.license import LicenseProduct
@@ -36,7 +36,7 @@ PAGED_LISTS = (
     "/api/labs/equipment-types",
     "/api/labs/license-products",
     "/api/labs/licenses",
-    "/api/labs/resource-groups",
+    "/api/labs/groups",
     "/api/labs/rooms",
     "/api/labs/stations",
 )
@@ -102,7 +102,7 @@ def _catalog_rows(path, names):
         "/api/labs/equipment-product-models": lambda name: EquipmentProductModel.objects.create(
             manufacturer=manufacturer, equipment_type=equipment_type, name=name
         ),
-        "/api/labs/resource-groups": lambda name: ResourceGroup.objects.create(name=name),
+        "/api/labs/groups": lambda name: Group.objects.create(name=name),
         "/api/labs/cities": lambda name: City.objects.create(name=name),
         "/api/labs/buildings": lambda name: Building.objects.create(name=name),
         "/api/labs/license-products": lambda name: LicenseProduct.objects.create(name=name),
@@ -120,7 +120,7 @@ def _catalog_rows(path, names):
         "/api/labs/equipment-product-models",
         "/api/labs/equipment-types",
         "/api/labs/license-products",
-        "/api/labs/resource-groups",
+        "/api/labs/groups",
     ],
 )
 def test_catalog_list_q_filters_by_name(admin_client, path):
