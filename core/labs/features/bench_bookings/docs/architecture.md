@@ -25,7 +25,7 @@ The activity-to-booking association is resolved through the existing chain:
 
 ```mermaid
 flowchart LR
-    Activity["ComputingActivity"] --> Computing["ComputingEquipment"]
+    Activity["ComputingActivity"] --> Computing["Equipment (with ComputingProfile)"]
     Computing --> Assignment["EquipmentAssignment"]
     Assignment --> Bench["Bench"]
     Activity --> Code["booking_code"]
@@ -82,10 +82,54 @@ An unchanged end time is a no-op for persistence and notification intent creatio
 changed requests idempotent, and `request_id` is not persisted as an audit record here. No durable
 audit or notification-delivery guarantee is claimed.
 
+### Agent booking login check
+
+`check_agent_booking_login(CheckAgentBookingLoginInput(equipment_id, booking_code), now=None)` answers
+`POST /agent/bookings/actions/validate`. It is a read-only use case: no transaction, lock, check-in or
+status change. `equipment_id` is the signing agent's computer, set by the agent view, never the body.
+
+It returns an `AgentBookingLogin` (`booking_code`, `starts_at`, `ends_at`, `booked_for`) when the pure rule
+`policies.is_agent_login_eligible` holds, otherwise `None` for every failure:
+
+- the booking is approved and on the computer's active bench
+  (`equipment.public.active_equipment_bench_assignment`);
+- a `reserved` booking is inside `scheduled_start_is_due` (start to start + 10 minutes, the moment
+  reconciliation would expire it); an `in_progress` booking is before its end.
+
+Two queries: the booking with `requester` and `creator`, and the computer's active bench. `booked_for`
+is the requester's username, or the creator's when no requester is set. Design and tests:
+[lab sessions architecture](../../lab_sessions/docs/architecture.md#6-booking-validation-a1b-owned-by-bench_bookings).
+
+### Agent check-in
+
+`check_in_agent_booking(CheckInAgentBookingInput(agent_uid, booking_code), actor=..., now=None)` answers
+`POST /agent/bookings/actions/check-in`. It applies `policies.is_agent_login_eligible`, then moves a
+`reserved` booking to `in_progress` through `ensure_booking_status_transition`; an `in_progress` booking is
+returned unchanged. Lock order is **agent identity → equipment → bench → booking**, the same as the agent
+end-time command. Every failure returns `None`, and no notification is recorded (owner decision O24).
+
+### Agent end booking
+
+`complete_agent_booking(CompleteAgentBookingInput(agent_uid, booking_code), actor=...)` answers
+`POST /agent/bookings/actions/complete`, called only when the user chooses to end the booking (owner
+decision O25). An approved `in_progress` booking on the agent's bench moves to `completed` and records an
+`updated` notification; a `completed` booking is returned unchanged; anything else returns `None`.
+`ends_at` is kept. Check-in and end share `application/agent_booking_locks.py::lock_agent_booking`
+(identity → equipment → bench → booking). Completion at the end time stays with
+`reconcile_bench_booking_statuses`, scheduled as `labs.bench_bookings.reconcile_statuses` (O26).
+
+### Agent extend
+
+`extend_agent_booking(ExtendAgentBookingInput(agent_uid, booking_code, ends_at), actor=..., now=None)` answers
+`POST /agent/bookings/actions/extend` (owner decision O28). Rules, responses and tests:
+[agent-extend.md](agent-extend.md). It uses the shared `lock_agent_booking`; the bench lock makes it and
+`create_bench_booking` serialise on the overlap check. The older `update_agent_booking_end_time` has no
+caller and can be removed in a separate change.
+
 `application/state_transitions.py` exposes the supported lifecycle commands:
 
 - `activate_bench_booking_for_computing_activity(computing_id, now)`: resolves the activity-to-bench relationship and activates the matching booking.
-- `activate_bench_bookings(bench_id, booking_code, now)`: smaller verified-facts command that performs the `reserved -> in_progress` transition.
+- `activate_bench_bookings(bench_id, booking_code, now)`: smaller verified-facts command that performs the `reserved -> in_progress` transition. Only approved bookings are activated; pending and rejected bookings stay `reserved` (owner decision O21, 2026-11-11). Neither activation command has a production caller yet; agent check-in uses `check_in_agent_booking`.
 - `reconcile_bench_booking_statuses(now)`: expires overdue reserved bookings and completes elapsed in-progress bookings.
 
 Each command uses an atomic database transaction and locks the booking rows before updating their status.
@@ -107,9 +151,11 @@ Creation requires a nonblank `reason` and a valid `project`. PATCH accepts parti
 
 ## Scheduled Reconciliation
 
-`tasks.py` defines the Celery task name `labs.bench_bookings.reconcile_statuses`. It must run at least once per minute for timely lifecycle transitions.
+`tasks.py` defines the Celery task name `labs.bench_bookings.reconcile_statuses`. It must run at least once per minute for timely lifecycle transitions: it expires reservations nobody checked in to (10 minutes after start) and completes bookings whose end time has passed (owner decision O26).
 
-**Current implementation gap:** Celery `app.autodiscover_tasks()` discovers app-level `tasks.py` modules, but the task is nested under `core.labs.features.bench_bookings`. The task must be explicitly imported or included in Celery configuration before it can be consumed by a worker. The repository's static Beat schedule is commented out; the deployment owner must create a `django-celery-beat` periodic task or explicitly enable an equivalent schedule.
+- **Discovery:** `core/labs/tasks.py` imports the task, so worker autodiscovery registers it.
+- **Schedule (code-owned, 2026-11-11):** `CELERY_BEAT_SCHEDULE["bench-booking-status-reconciliation"]` in `config/settings/base.py`, every 60 seconds (`BENCH_BOOKING_RECONCILE_INTERVAL_SECONDS`). django-celery-beat's database scheduler copies the entry into its Periodic Tasks each time beat starts, so no manual step is needed per environment. An admin may disable it in Django admin; beat keeps it disabled.
+- **Tests:** `tests/unit/test_celery_beat_schedule.py`.
 
 ## Guarantees and Constraints
 

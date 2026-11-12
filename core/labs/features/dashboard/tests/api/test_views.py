@@ -15,10 +15,11 @@ from core.labs.models import (
     BookingStatus,
     ComputingActivity,
     ComputingActivityStatus,
+    Equipment,
     LicenseAssignment,
 )
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
-from core.labs.models.resource.equipment.sample import SampleCustomer, SampleEquipment
+from core.labs.models.resource.equipment.sample import SampleCustomer
 from core.labs.models.resource.license.license import (
     License,
     LicenseCategory,
@@ -99,7 +100,7 @@ class TestDashboardOverviewAPI:
         group = make_bench_group(description="Robotics testbeds")
         bench = make_bench(
             bench_group=group,
-            lifecycle_status="available",
+            lifecycle_status="in_service",
         )
         BenchFavorite.objects.create(user=user, bench=bench)
 
@@ -112,7 +113,7 @@ class TestDashboardOverviewAPI:
         assert item["id"] == bench.id
         assert item["name"] == bench.name
         assert item["sku"] == bench.sku
-        assert item["lifecycle_status"] == "available"
+        assert item["lifecycle_status"] == "in_service"
         assert item["bench_group"]["id"] == group.id
         assert item["bench_group"]["name"] == group.name
         assert item["is_favorite"] is True
@@ -194,7 +195,7 @@ class TestDashboardOverviewAPI:
         sample_cat = EquipmentCategoryFactory(name="Sample")
         sample_kind = EquipmentKindFactory(category=sample_cat, name="Sample DUT")
         customer = SampleCustomer.objects.create(name=f"Customer-{uuid.uuid4().hex[:6]}")
-        sample = SampleEquipment.objects.create(
+        sample = Equipment.objects.create(
             name="Sample Radar v2",
             sku=f"SMP-{uuid.uuid4().hex[:6]}",
             customer=customer,
@@ -381,8 +382,8 @@ class TestDashboardSummaryAPI:
         client, user = client_and_user
         now = timezone.now()
 
-        bench_1 = make_bench(lifecycle_status="available")
-        bench_2 = make_bench(lifecycle_status="active")
+        bench_1 = make_bench(lifecycle_status="in_service")
+        bench_2 = make_bench(lifecycle_status="in_service")
 
         BenchFavorite.objects.create(user=user, bench=bench_1)
 
@@ -403,8 +404,7 @@ class TestDashboardSummaryAPI:
         assert data["total_benches"] >= 2
         assert data["active_bookings_count"] >= 1
         assert data["favorited_benches_count"] >= 1
-        assert "available" in data["lifecycle_distribution"]
-        assert "active" in data["lifecycle_distribution"]
+        assert set(data["lifecycle_distribution"]) == {"planned", "in_service", "out_of_service", "retired"}
         assert isinstance(data["utilization_rate"], float)
 
 

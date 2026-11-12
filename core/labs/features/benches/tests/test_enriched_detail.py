@@ -12,9 +12,8 @@ from rest_framework.test import APIClient
 from core.labs.features.benches.api.serializers import BenchDetailSerializer, BenchSerializer
 from core.labs.models import Bench, BenchBooking, ComputingActivity, Equipment, EquipmentAssignment
 from core.labs.models.booking.reference_data import LabProject
-from core.labs.models.resource.equipment.computing import ComputingEquipment
 from core.labs.models.resource.equipment.reference_data import EquipmentCategory, EquipmentKind
-from tests.factories import grant_labs_role
+from tests.factories import create_computing_equipment, grant_labs_role
 
 pytestmark = pytest.mark.django_db
 NOW = datetime(2026, 10, 20, 12, tzinfo=timezone.utc)
@@ -39,13 +38,13 @@ def detail(monkeypatch, settings):
 
 
 def assign(bench, index, *, computing=False, **kwargs):
-    model = ComputingEquipment if computing else Equipment
     category, _ = EquipmentCategory.objects.get_or_create(
         name="Computing" if computing else "Laboratory",
         defaults={"definition": "Synthetic test category"},
     )
     kind, _ = EquipmentKind.objects.get_or_create(category=category, name="Synthetic kind")
-    equipment = model.objects.create(sku=f"DETAIL-EQ-{index}", name=f"Equipment {index}", kind=kind, **kwargs)
+    create = create_computing_equipment if computing else Equipment.objects.create
+    equipment = create(sku=f"DETAIL-EQ-{index}", name=f"Equipment {index}", kind=kind, **kwargs)
     return EquipmentAssignment.objects.create(
         bench=bench,
         equipment=equipment,

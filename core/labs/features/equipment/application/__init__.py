@@ -1,23 +1,76 @@
 """Equipment write commands and immutable command inputs."""
 
 from .assign_equipment import AssignEquipmentInput, assign_equipment
-from .change_equipment_status import ChangeEquipmentStatusInput, change_equipment_status
+from .change_state import ChangeConditionInput, ChangeLifecycleInput, change_condition, change_lifecycle
 from .create_equipment import CreateEquipmentInput, create_equipment
 from .delete_equipment import DeleteEquipmentInput, delete_equipment
+from .loans import (
+    ExtendLoanInput,
+    ExtendLoansInput,
+    HandOverEquipmentInput,
+    LendEquipmentBatchInput,
+    ReturnEquipmentBatchInput,
+    ReturnEquipmentInput,
+    extend_loan,
+    extend_loans,
+    hand_over_equipment,
+    lend_equipment_batch,
+    return_equipment,
+    return_equipment_batch,
+)
+from .place_equipment import PlaceEquipmentInput, RemovePlacementInput, place_equipment, remove_placement
+from .reservations import (
+    CancelReservationInput,
+    HandOverReservationInput,
+    ReserveEquipmentBatchInput,
+    UpdateReservationInput,
+    cancel_reservation,
+    expire_uncollected_reservations,
+    hand_over_reservation,
+    reserve_equipment_batch,
+    update_reservation,
+)
 from .unassign_equipment import UnassignEquipmentInput, unassign_equipment
 from .update_equipment import UpdateEquipmentInput, update_equipment
 
 __all__ = (
+    "CancelReservationInput",
+    "HandOverReservationInput",
+    "ReserveEquipmentBatchInput",
+    "UpdateReservationInput",
+    "cancel_reservation",
+    "expire_uncollected_reservations",
+    "hand_over_reservation",
+    "reserve_equipment_batch",
+    "update_reservation",
     "AssignEquipmentInput",
-    "ChangeEquipmentStatusInput",
+    "ChangeConditionInput",
+    "ChangeLifecycleInput",
     "CreateEquipmentInput",
     "DeleteEquipmentInput",
+    "ExtendLoanInput",
+    "ExtendLoansInput",
+    "LendEquipmentBatchInput",
+    "ReturnEquipmentBatchInput",
+    "extend_loans",
+    "lend_equipment_batch",
+    "return_equipment_batch",
+    "HandOverEquipmentInput",
+    "ReturnEquipmentInput",
+    "PlaceEquipmentInput",
+    "RemovePlacementInput",
     "UnassignEquipmentInput",
     "UpdateEquipmentInput",
     "assign_equipment",
-    "change_equipment_status",
+    "change_condition",
+    "change_lifecycle",
     "create_equipment",
     "delete_equipment",
+    "extend_loan",
+    "hand_over_equipment",
+    "return_equipment",
+    "place_equipment",
+    "remove_placement",
     "unassign_equipment",
     "update_equipment",
 )

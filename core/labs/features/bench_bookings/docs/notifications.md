@@ -161,7 +161,9 @@ connected or migrated, no live notifications, no schedule provisioning, no stagi
 - `python -m mypy --config-file tests/notification_mypy.ini --follow-imports=silent` across
   13 implementation files: passed. Initial optional-type diagnostics fixed. Isolated config
   retains Django/DRF plugins; follows untyped Requests because stubs are absent; no dependency added.
-- Migrations were later squashed into `labs/0001_initial` (2026-11-12); the additive-migration check no longer applies.
+- Offline `MigrationLoader(None)` confirmed sole Labs leaf `0005_booking_notification` at the time.
+  Since the migration reset ([ADR 005](../../../../../docs/architecture/decisions/005-migration-reset.md)) the
+  test compares the projected migration graph with the live model.
 - `git diff --check` on modified existing implementation boundaries: passed.
 - `python -m ruff format --check` on new implementation/test files: **failed**, nine files
   require formatting. No mass formatter was applied to avoid unrelated-file changes;

@@ -15,15 +15,14 @@ from core.labs.features.equipment.application.update_equipment import (
 )
 from core.labs.models import Equipment
 from core.labs.models.resource.base.resource import Department, ResourceGroup
+from tests.factories import create_computing_equipment
 
 
 def test_many_to_many_fields_are_extracted_before_model_construction():
     from core.labs.features.equipment.application.update_equipment import _pop_many_to_many
-    from core.labs.models.resource.equipment.display import DisplayEquipment
-
     values = {"interfaces": [1, 2], "size": 1}
 
-    result = _pop_many_to_many(DisplayEquipment, values)
+    result = _pop_many_to_many(values)
 
     assert result == {"interfaces": [1, 2]}
     assert values == {"size": 1}
@@ -37,7 +36,6 @@ def test_create_equipment_rejects_invalid_model_data(equipment):
                 fields=(("kind", equipment.kind), ("sku", "EQ-01"), ("name", "Duplicate")),
             ),
             actor=None,
-            model=Equipment,
         )
 
 
@@ -51,7 +49,6 @@ def test_create_equipment_resolves_group_and_infers_its_department(equipment):
             fields=(("kind", equipment.kind), ("sku", "EQ-GROUP-01"), ("name", "Grouped"), ("group", group.pk)),
         ),
         actor=None,
-        model=Equipment,
     )
 
     assert created.group_id == group.pk
@@ -88,13 +85,10 @@ def test_create_equipment_rejects_inactive_or_cross_department_group(equipment):
 
 @pytest.mark.django_db
 def test_update_and_delete_equipment_use_application_commands(equipment):
-    from core.labs.models.resource.equipment.computing import ComputingEquipment
-
-    comp = ComputingEquipment.objects.create(sku="COMP-WRITE-01", kind=equipment.kind, name="Base Name")
+    comp = create_computing_equipment(sku="COMP-WRITE-01", kind=equipment.kind, name="Base Name")
     updated = update_equipment(
         UpdateEquipmentInput(
             equipment_id=comp.pk,
-            model=ComputingEquipment,
             fields=(("name", "Updated asset"),),
         ),
         actor=None,
@@ -102,7 +96,7 @@ def test_update_and_delete_equipment_use_application_commands(equipment):
     assert updated.name == "Updated asset"
 
     delete_equipment(
-        DeleteEquipmentInput(equipment_id=comp.pk, model=ComputingEquipment),
+        DeleteEquipmentInput(equipment_id=comp.pk),
         actor=None,
     )
-    assert ComputingEquipment.objects.filter(pk=comp.pk, deleted_at__isnull=True).count() == 0
+    assert Equipment.objects.filter(pk=comp.pk, deleted_at__isnull=True).count() == 0

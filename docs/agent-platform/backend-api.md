@@ -16,15 +16,22 @@ and is unchanged. Model definitions remain in the [Labs model architecture](../.
 | --- | --- | --- |
 | Agent identity / hash-only grants | [models](../../core/labs/models/agents/agent_identity.py#L13-L117), [public commands](../../core/agents/public.py) | Current `pending/active/revoked/decommissioned`, single Ed25519 key; not certificate generations |
 | Enrollment commands | [grant creation](../../core/agents/application.py), [proof verification](../../core/agents/application.py) | Foundation only, not mounted CSR/challenge or mTLS API |
-| Computing snapshot | [ComputingEquipment](../../core/labs/models/resource/equipment/computing.py#L23-L43) | Owns `hostname`, `os_name`, `ip_address`, `disk_usage`, `system_info`; no snapshot ordering metadata established here |
+| Computing snapshot | [ComputingProfile](../../core/labs/models/resource/equipment/computing.py) | Owns `hostname`, `os_name`, `ip_address`, `disk_usage`, `system_info`; no snapshot ordering metadata established here |
 | Separate live activity | [model](../../core/labs/models/activity/computing_activity.py#L7-L38), [command](../../core/labs/features/equipment/categories/computing/application.py#L69-L107) | Reports refresh activity `last_agent_report_at`, not identity liveness |
 | Monitoring command | [public facade](../../core/labs/features/monitoring/public.py#L1-L15), [persistence](../../core/labs/features/monitoring/application/commands.py#L34-L98) | Duplicate insertion conflicts; no same-content replay acknowledgment, snapshot or liveness side effects |
 | Narrow Agent booking end-time update | [command](../../core/labs/features/bench_bookings/application/update_agent_booking_end_time.py#L29-L108) | Active identity → Computing assignment → bench → booking; no Agent session or durable request-key idempotency |
-| Existing activity HTTP adapter | [routes](../../core/labs/features/equipment/api/urls.py#L37-L41), [adapter](../../core/labs/features/equipment/categories/computing/api.py#L61-L100) | SKU-based existing API, not the proposed installation-authenticated surface |
+| Activity HTTP adapters | [agent report](../../core/agents/api/views.py) (`PATCH /agent/equipment/activity`), [equipment read](../../core/labs/features/equipment/categories/computing/api.py) (`GET /api/labs/equipment/{equipment_id}/activity`) | Agent writes are signed-request authenticated (interim); the equipment route is read-only (2026-11-11) |
+| Session-log ingestion | [agent route](../../core/agents/api/views.py) (`POST /agent/session-logs`), [command](../../core/labs/features/lab_sessions/application.py) | One completed session per push after logout; idempotent on computer, agent and event id; signed-request authenticated (interim). Design: [lab sessions](../../core/labs/features/lab_sessions/docs/architecture.md) (branch, pending approval) |
+| Booking extend | [agent route](../../core/agents/api/views.py) (`POST /agent/bookings/actions/extend`), [command](../../core/labs/features/bench_bookings/application/extend_agent_booking.py) | In-progress only, +10 minutes or more, at most 4 hours in total, no overlap; refusals say why (`extension_not_allowed`, `bench_not_free`) (owner decision O28) |
+| Booking end | [agent route](../../core/agents/api/views.py) (`POST /agent/bookings/actions/complete`), [command](../../core/labs/features/bench_bookings/application/complete_agent_booking.py) | Only on the user's request (O25); in progress → completed, repeat-safe; uniform `completed: false`. Completion at end time stays with the scheduled reconciliation job (O26) |
+| Booking check-in | [agent route](../../core/agents/api/views.py) (`POST /agent/bookings/actions/check-in`), [command](../../core/labs/features/bench_bookings/application/check_in_agent_booking.py) | Same rule as validation; moves a reserved booking to in progress, repeat-safe; uniform `checked_in: false` (owner decision O24) |
+| Booking-code validation | [agent route](../../core/agents/api/views.py) (`POST /agent/bookings/actions/validate`), [use case](../../core/labs/features/bench_bookings/application/check_agent_booking_login.py) | Read-only; no check-in or session; uniform `eligible: false`. Used instead of the planned `GET /agent/bookings/code/{booking_code}` (owner decision O15) |
 
 **Verified discovery limits:** scoped searches of backend models/features/routes found no `AgentInventory`,
 `MetricSample`, separate hardware inventory domain, mounted new Agent lifecycle surface or dedicated raw-session
 ingestion. This is a source-search result, not a deployment audit. External Agent implementations were not inspected.
+Update 2026-11-11: dedicated session-log ingestion now exists on a review branch (table above); the field list,
+retention and correction decisions are recorded as O8–O19 in `docs/proposals/finance-and-lab-analytics.md`.
 
 **Proposed target scope:** operator lifecycle, bootstrap, installation mTLS, computing state, activity,
 monitoring, heartbeat, and booking-code lookup/check-in with backend booking-session actions. The owner
@@ -181,7 +188,18 @@ reads the ACTIVE identity on every request (no positive cache, so revocation app
 rejects timestamps outside `AGENT_REQUEST_MAX_SKEW_S` (default 300 s) and nonces seen within twice that
 window (`cache.add` on the shared cache, after the signature verifies). Every failure is the same `401`
 (`WWW-Authenticate: LabMango-Agent-Signature`). `/agent/info` advertises `request_signature_v1`. This is
-not a shared API key; mTLS replaces it when phase 3 lands. Operator writes under `/api/agents` require the
+not a shared API key; mTLS replaces it when phase 3 lands.
+
+**Implemented interim (2026-11-11, owner decision):** `PATCH /agent/equipment/activity` uses the same
+signed-request authentication. The computer is `AgentIdentity.equipment` of the signing agent; the body
+never names equipment, and unknown fields (including `equipment_id`) are `422`. Fields: `status`,
+`remote_user`, `remote_user_display_name`, `remote_computer`, `remote_ip`, `booking_code`; timestamps and
+counters are server-managed. It calls the equipment owner command `sync_computing_activity` through
+`core.labs.features.equipment.public` (activity row lock; a report refreshes `last_agent_report_at`). A
+deleted unit, or one without a computing profile, is `409 equipment_unavailable`. The former shared-API-key
+and coordinator writes (`PATCH /api/labs/equipment/.../activity`) are removed; that route is read-only.
+`/agent/info` advertises `activity`. For manual testing, `tools/stub_agent.py` enrolls a stub agent and
+signs requests (or prints one-use signed headers to paste into an API client). Operator writes under `/api/agents` require the
 Labs coordinator role (admin implies it); reads require authentication only.
 
 ### 4.4 Booking capability (design scope; implementation still gated)

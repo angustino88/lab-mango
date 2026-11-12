@@ -1,7 +1,7 @@
-"""Initial Labs schema (squashed 2026-11-12; the database had not reached production).
+"""Initial Labs schema: one migration (ADR 005, consolidated 2026-11-12; no deployed database).
 
-Hand-written parts: the pg_trgm and btree_gist extensions (trigram indexes, booking exclusion
-constraints) and the four default purchase priorities.
+Hand-written: the pg_trgm and btree_gist extensions (first; reverse is a no-op because extensions are
+database-wide) and the four default purchase priorities (last).
 """
 
 import uuid
@@ -14,26 +14,15 @@ import django.contrib.postgres.indexes
 import django.core.validators
 import django.db.models.deletion
 import django.db.models.functions.text
+import django.db.models.manager
 import django.utils.timezone
 import model_utils.fields
 from django.conf import settings
-from django.contrib.postgres.operations import BtreeGistExtension, TrigramExtension
 from django.db import migrations, models
 
 import core.infrastructure.storage.uploads
 import core.labs.models.booking.base
 import core.labs.models.finance.billing
-
-
-class SafeTrigramExtension(TrigramExtension):
-    """Create pg_trgm when the database role may; an existing extension is enough otherwise."""
-
-    def database_forwards(self, app_label, schema_editor, from_state, to_state):
-        try:
-            super().database_forwards(app_label, schema_editor, from_state, to_state)
-        except Exception:
-            pass
-
 
 PURCHASE_PRIORITIES = (("low", "Low", 10), ("normal", "Normal", 20), ("high", "High", 30), ("urgent", "Urgent", 40))
 
@@ -48,7 +37,8 @@ def seed_purchase_priorities(apps, schema_editor):
 def unseed_purchase_priorities(apps, schema_editor):
     PurchasePriority = apps.get_model("labs", "PurchasePriority")
     PurchasePriority.objects.using(schema_editor.connection.alias).filter(
-        code__in=[code for code, _, _ in PURCHASE_PRIORITIES]
+        code__in=[code for code, _, _ in PURCHASE_PRIORITIES],
+        purchase_items__isnull=True,
     ).delete()
 
 
@@ -61,8 +51,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        SafeTrigramExtension(),
-        BtreeGistExtension(),
+        migrations.RunSQL("CREATE EXTENSION IF NOT EXISTS pg_trgm;", reverse_sql=migrations.RunSQL.noop),
+        migrations.RunSQL("CREATE EXTENSION IF NOT EXISTS btree_gist;", reverse_sql=migrations.RunSQL.noop),
         migrations.CreateModel(
             name="Equipment",
             fields=[
@@ -139,6 +129,36 @@ class Migration(migrations.Migration):
                 ("details", models.TextField(blank=True, default="")),
                 ("metadata", models.JSONField(blank=True, default=dict)),
                 (
+                    "lifecycle_state",
+                    models.CharField(
+                        choices=[
+                            ("planned", "Planned"),
+                            ("in_service", "In service"),
+                            ("transferred_out", "Transferred out"),
+                            ("retired", "Retired"),
+                            ("lost", "Lost"),
+                        ],
+                        db_index=True,
+                        default="in_service",
+                        help_text="Changed only by the change_lifecycle command; history is in EquipmentEvent.",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "condition",
+                    models.CharField(
+                        choices=[
+                            ("operational", "Operational"),
+                            ("in_maintenance", "In maintenance"),
+                            ("out_of_service", "Out of service"),
+                        ],
+                        db_index=True,
+                        default="operational",
+                        help_text="Changed only by the change_condition command; operational unless in service.",
+                        max_length=32,
+                    ),
+                ),
+                (
                     "replacement_date",
                     models.DateField(
                         blank=True,
@@ -170,6 +190,40 @@ class Migration(migrations.Migration):
                     models.BooleanField(
                         default=False,
                         help_text="History and due dates are kept as ResourceServiceRecord (kind=calibration).",
+                    ),
+                ),
+                (
+                    "mac_address",
+                    models.CharField(
+                        blank=True,
+                        default="",
+                        max_length=17,
+                        validators=[
+                            django.core.validators.RegexValidator(
+                                message="Enter a MAC address like AA:BB:CC:DD:EE:FF.",
+                                regex="^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$",
+                            )
+                        ],
+                    ),
+                ),
+                (
+                    "channels",
+                    models.PositiveSmallIntegerField(blank=True, help_text="Output channels (power).", null=True),
+                ),
+                (
+                    "power_rating",
+                    models.PositiveIntegerField(
+                        blank=True,
+                        help_text="Output capacity in watts (power).",
+                        null=True,
+                    ),
+                ),
+                (
+                    "dimensions",
+                    models.JSONField(
+                        blank=True,
+                        default=dict,
+                        help_text="Keys length_mm, width_mm, height_mm (mechanical, furniture).",
                     ),
                 ),
                 (
@@ -269,122 +323,147 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="AccessoryEquipment",
+            name="DisplayResolution",
             fields=[
                 (
-                    "equipment_ptr",
-                    models.OneToOneField(
+                    "id",
+                    models.BigAutoField(
                         auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
                         primary_key=True,
                         serialize=False,
-                        to="labs.equipment",
-                    ),
-                ),
-            ],
-            bases=("labs.equipment",),
-        ),
-        migrations.CreateModel(
-            name="ComputingEquipment",
-            fields=[
-                (
-                    "equipment_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="labs.equipment",
+                        verbose_name="ID",
                     ),
                 ),
                 (
-                    "hostname",
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "resolution",
                     models.CharField(
-                        blank=True,
-                        db_index=True,
-                        default="",
-                        help_text="DNS name used for remote access; falls back to the SKU when empty.",
+                        help_text="Label shown in the select, e.g. QHD.",
                         max_length=255,
+                        unique=True,
                     ),
                 ),
+                ("width_px", models.PositiveSmallIntegerField(blank=True, null=True)),
+                ("height_px", models.PositiveSmallIntegerField(blank=True, null=True)),
                 (
-                    "mac_address",
-                    models.CharField(
+                    "creator",
+                    models.ForeignKey(
                         blank=True,
-                        default="",
-                        max_length=17,
-                        validators=[
-                            django.core.validators.RegexValidator(
-                                message="Enter a MAC address like AA:BB:CC:DD:EE:FF.",
-                                regex="^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$",
-                            )
-                        ],
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_creator",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Created by",
                     ),
                 ),
-                ("ip_address", models.GenericIPAddressField(blank=True, null=True)),
-                ("os_name", models.CharField(blank=True, default="", max_length=255)),
-                ("disk_usage", models.JSONField(blank=True, default=list)),
-                ("system_info", models.JSONField(blank=True, default=dict)),
-                ("monitored_devices", models.JSONField(blank=True, default=dict)),
                 (
-                    "rdp_file",
-                    models.FileField(blank=True, null=True, upload_to="rdp_file/"),
+                    "last_modified_by",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_last_modified_by",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Last modified by",
+                    ),
                 ),
             ],
-            bases=("labs.equipment",),
+            options={
+                "ordering": ("resolution",),
+            },
         ),
         migrations.CreateModel(
-            name="DebuggingEquipment",
+            name="DisplaySize",
             fields=[
                 (
-                    "equipment_ptr",
-                    models.OneToOneField(
+                    "id",
+                    models.BigAutoField(
                         auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
                         primary_key=True,
                         serialize=False,
-                        to="labs.equipment",
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "size",
+                    models.CharField(
+                        help_text='Label shown in the select, e.g. 27".',
+                        max_length=255,
+                        unique=True,
+                    ),
+                ),
+                (
+                    "diagonal_in",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=1,
+                        help_text="Diagonal in inches.",
+                        max_digits=4,
+                        null=True,
+                        unique=True,
+                    ),
+                ),
+                (
+                    "creator",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_creator",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Created by",
+                    ),
+                ),
+                (
+                    "last_modified_by",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_last_modified_by",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Last modified by",
                     ),
                 ),
             ],
-            bases=("labs.equipment",),
-        ),
-        migrations.CreateModel(
-            name="LaboratoryEquipment",
-            fields=[
-                (
-                    "equipment_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="labs.equipment",
-                    ),
-                ),
-            ],
-            bases=("labs.equipment",),
-        ),
-        migrations.CreateModel(
-            name="OtherEquipment",
-            fields=[
-                (
-                    "equipment_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="labs.equipment",
-                    ),
-                ),
-            ],
-            bases=("labs.equipment",),
+            options={
+                "ordering": ("size",),
+            },
         ),
         migrations.CreateModel(
             name="ActiveLaboratoryObservation",
@@ -610,14 +689,11 @@ class Migration(migrations.Migration):
                     models.CharField(
                         choices=[
                             ("planned", "Planned"),
-                            ("available", "Available"),
-                            ("reserved", "Reserved"),
-                            ("active", "Active"),
-                            ("maintenance", "Maintenance"),
+                            ("in_service", "In service"),
                             ("out_of_service", "Out of service"),
                             ("retired", "Retired"),
                         ],
-                        default="planned",
+                        default="in_service",
                         max_length=32,
                     ),
                 ),
@@ -1280,6 +1356,130 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
+            name="ComputingProfile",
+            fields=[
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "equipment",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        primary_key=True,
+                        related_name="computing_profile",
+                        serialize=False,
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "hostname",
+                    models.CharField(
+                        blank=True,
+                        db_index=True,
+                        default="",
+                        help_text="DNS name used for remote access; falls back to the SKU when empty.",
+                        max_length=255,
+                    ),
+                ),
+                ("ip_address", models.GenericIPAddressField(blank=True, null=True)),
+                ("os_name", models.CharField(blank=True, default="", max_length=255)),
+                ("disk_usage", models.JSONField(blank=True, default=list)),
+                ("system_info", models.JSONField(blank=True, default=dict)),
+                ("monitored_devices", models.JSONField(blank=True, default=dict)),
+                (
+                    "rdp_file",
+                    models.FileField(blank=True, null=True, upload_to="rdp_file/"),
+                ),
+            ],
+        ),
+        migrations.CreateModel(
+            name="ComputingActivity",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("offline", "Offline"),
+                            ("free", "Free"),
+                            ("active", "Active"),
+                            ("inactive", "Inactive"),
+                            ("maintaining", "Maintaining"),
+                        ],
+                        db_index=True,
+                        default="offline",
+                        max_length=16,
+                    ),
+                ),
+                (
+                    "remote_user",
+                    models.CharField(blank=True, default="", max_length=255),
+                ),
+                (
+                    "remote_user_display_name",
+                    models.CharField(blank=True, default="", max_length=255),
+                ),
+                (
+                    "remote_computer",
+                    models.CharField(blank=True, default="", max_length=255),
+                ),
+                ("remote_ip", models.GenericIPAddressField(blank=True, null=True)),
+                (
+                    "booking_code",
+                    models.CharField(blank=True, default="", max_length=255),
+                ),
+                ("last_agent_report_at", models.DateTimeField(blank=True, null=True)),
+                ("offline_at", models.DateTimeField(blank=True, null=True)),
+                ("inactive_at", models.DateTimeField(blank=True, null=True)),
+                ("inactive_reminder_count", models.PositiveIntegerField(default=0)),
+                (
+                    "computing",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="activity",
+                        to="labs.equipment",
+                    ),
+                ),
+            ],
+        ),
+        migrations.CreateModel(
             name="Country",
             fields=[
                 (
@@ -1373,148 +1573,27 @@ class Migration(migrations.Migration):
                 to="labs.department",
             ),
         ),
-        migrations.CreateModel(
-            name="DisplayResolution",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created",
-                    model_utils.fields.AutoCreatedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="created",
-                    ),
-                ),
-                (
-                    "modified",
-                    model_utils.fields.AutoLastModifiedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="modified",
-                    ),
-                ),
-                (
-                    "resolution",
-                    models.CharField(
-                        help_text="Label shown in the select, e.g. QHD.",
-                        max_length=255,
-                        unique=True,
-                    ),
-                ),
-                ("width_px", models.PositiveSmallIntegerField(blank=True, null=True)),
-                ("height_px", models.PositiveSmallIntegerField(blank=True, null=True)),
-                (
-                    "creator",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_creator",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Created by",
-                    ),
-                ),
-                (
-                    "last_modified_by",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_last_modified_by",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Last modified by",
-                    ),
-                ),
-            ],
-            options={
-                "ordering": ("resolution",),
-            },
+        migrations.AddField(
+            model_name="equipment",
+            name="resolution",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="equipment",
+                to="labs.displayresolution",
+            ),
         ),
-        migrations.CreateModel(
-            name="DisplaySize",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created",
-                    model_utils.fields.AutoCreatedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="created",
-                    ),
-                ),
-                (
-                    "modified",
-                    model_utils.fields.AutoLastModifiedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="modified",
-                    ),
-                ),
-                (
-                    "size",
-                    models.CharField(
-                        help_text='Label shown in the select, e.g. 27".',
-                        max_length=255,
-                        unique=True,
-                    ),
-                ),
-                (
-                    "diagonal_in",
-                    models.DecimalField(
-                        blank=True,
-                        decimal_places=1,
-                        help_text="Diagonal in inches.",
-                        max_digits=4,
-                        null=True,
-                        unique=True,
-                    ),
-                ),
-                (
-                    "creator",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_creator",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Created by",
-                    ),
-                ),
-                (
-                    "last_modified_by",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_last_modified_by",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Last modified by",
-                    ),
-                ),
-            ],
-            options={
-                "ordering": ("size",),
-            },
+        migrations.AddField(
+            model_name="equipment",
+            name="size",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="equipment",
+                to="labs.displaysize",
+            ),
         ),
         migrations.CreateModel(
             name="EquipmentAssignment",
@@ -1544,6 +1623,15 @@ class Migration(migrations.Migration):
                         verbose_name="modified",
                     ),
                 ),
+                (
+                    "location_note",
+                    models.CharField(
+                        blank=True,
+                        default="",
+                        help_text="Required when no bench, station or room is set; otherwise an optional detail such as a shelf.",
+                        max_length=255,
+                    ),
+                ),
                 ("role", models.CharField(default="default", max_length=64)),
                 (
                     "position",
@@ -1558,6 +1646,8 @@ class Migration(migrations.Migration):
                 (
                     "bench",
                     models.ForeignKey(
+                        blank=True,
+                        null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="equipment_assignments",
                         to="labs.bench",
@@ -1595,6 +1685,29 @@ class Migration(migrations.Migration):
                         verbose_name="Last modified by",
                     ),
                 ),
+            ],
+            options={
+                "base_manager_name": "all_placements",
+                "default_manager_name": "objects",
+            },
+            managers=[
+                ("objects", django.db.models.manager.Manager()),
+                ("all_placements", django.db.models.manager.Manager()),
+            ],
+        ),
+        migrations.CreateModel(
+            name="EquipmentPlacement",
+            fields=[],
+            options={
+                "proxy": True,
+                "default_manager_name": "objects",
+                "indexes": [],
+                "constraints": [],
+            },
+            bases=("labs.equipmentassignment",),
+            managers=[
+                ("objects", django.db.models.manager.Manager()),
+                ("all_placements", django.db.models.manager.Manager()),
             ],
         ),
         migrations.CreateModel(
@@ -1826,6 +1939,25 @@ class Migration(migrations.Migration):
                 ),
                 ("definition", models.TextField()),
                 (
+                    "bookable",
+                    models.BooleanField(default=True, help_text="Units can be lent and reserved."),
+                ),
+                (
+                    "placeable_on_bench",
+                    models.BooleanField(default=True, help_text="Units can be assigned to a bench."),
+                ),
+                (
+                    "calibratable",
+                    models.BooleanField(default=True, help_text="Units may require calibration."),
+                ),
+                (
+                    "monitored",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Units carry computing columns and may run the monitoring agent (ComputingProfile).",
+                    ),
+                ),
+                (
                     "creator",
                     models.ForeignKey(
                         blank=True,
@@ -1852,6 +1984,74 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("name",),
+            },
+        ),
+        migrations.CreateModel(
+            name="EquipmentEvent",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "axis",
+                    models.CharField(
+                        choices=[
+                            ("lifecycle", "Lifecycle"),
+                            ("condition", "Condition"),
+                        ],
+                        max_length=16,
+                    ),
+                ),
+                (
+                    "from_value",
+                    models.CharField(
+                        blank=True,
+                        default="",
+                        help_text="Empty for the initial state.",
+                        max_length=32,
+                    ),
+                ),
+                ("to_value", models.CharField(max_length=32)),
+                ("reason", models.CharField(blank=True, default="", max_length=500)),
+                (
+                    "details",
+                    models.JSONField(
+                        blank=True,
+                        default=dict,
+                        help_text="Structured facts, e.g. receiving_organisation and transfer_date.",
+                    ),
+                ),
+                (
+                    "occurred_at",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                (
+                    "actor",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="equipment_events",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "equipment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="events",
+                        to="labs.equipment",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("occurred_at", "id"),
             },
         ),
         migrations.CreateModel(
@@ -1911,6 +2111,11 @@ class Migration(migrations.Migration):
             options={
                 "ordering": ("name",),
             },
+        ),
+        migrations.AddField(
+            model_name="equipment",
+            name="interfaces",
+            field=models.ManyToManyField(blank=True, related_name="equipment", to="labs.equipmentinterface"),
         ),
         migrations.CreateModel(
             name="EquipmentKind",
@@ -1987,6 +2192,232 @@ class Migration(migrations.Migration):
                 related_name="equipment",
                 to="labs.equipmentkind",
             ),
+        ),
+        migrations.CreateModel(
+            name="EquipmentLoanBatch",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "borrower_name",
+                    models.CharField(blank=True, default="", max_length=255),
+                ),
+                (
+                    "borrower_contact",
+                    models.CharField(
+                        blank=True,
+                        default="",
+                        help_text="Email or phone of a borrower without an account.",
+                        max_length=255,
+                    ),
+                ),
+                ("purpose", models.CharField(blank=True, default="", max_length=2000)),
+                (
+                    "idempotency_key",
+                    models.CharField(blank=True, default="", max_length=128),
+                ),
+                (
+                    "request_hash",
+                    models.CharField(blank=True, default="", max_length=64),
+                ),
+                (
+                    "borrower",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="equipment_loan_batches",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="equipment_loan_batches_created",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("-created", "-id"),
+            },
+        ),
+        migrations.CreateModel(
+            name="EquipmentLoan",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                ("handed_over_at", models.DateTimeField()),
+                ("due_at", models.DateTimeField()),
+                ("returned_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "condition_out",
+                    models.CharField(blank=True, default="", max_length=255),
+                ),
+                (
+                    "condition_in",
+                    models.CharField(blank=True, default="", max_length=255),
+                ),
+                (
+                    "close_reason",
+                    models.CharField(
+                        blank=True,
+                        choices=[("returned", "Returned"), ("lost", "Lost")],
+                        max_length=16,
+                        null=True,
+                    ),
+                ),
+                (
+                    "booking",
+                    models.OneToOneField(
+                        blank=True,
+                        help_text="The booking this loan fulfils; empty for custody that is not a booking.",
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="loan",
+                        to="labs.equipmentbooking",
+                    ),
+                ),
+                (
+                    "equipment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="loans",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "handed_over_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="equipment_loans_handed_over",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "received_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="equipment_loans_received",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "batch",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="loans",
+                        to="labs.equipmentloanbatch",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("-handed_over_at", "-id"),
+            },
+        ),
+        migrations.AddField(
+            model_name="equipmentbooking",
+            name="batch",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="The loan slip this reservation belongs to (borrower, purpose).",
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="reservations",
+                to="labs.equipmentloanbatch",
+            ),
+        ),
+        migrations.CreateModel(
+            name="EquipmentLoanReminder",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("slot", models.PositiveSmallIntegerField()),
+                ("recipient_email", models.EmailField(max_length=254)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("expires_at", models.DateTimeField()),
+                (
+                    "available_at",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                ("state", models.CharField(default="pending", max_length=12)),
+                ("attempts", models.PositiveSmallIntegerField(default=0)),
+                ("lease_token", models.UUIDField(blank=True, null=True)),
+                ("lease_until", models.DateTimeField(blank=True, null=True)),
+                ("finished_at", models.DateTimeField(blank=True, null=True)),
+                ("outcome", models.CharField(blank=True, default="", max_length=32)),
+                (
+                    "batch",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="reminders",
+                        to="labs.equipmentloanbatch",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("batch", "slot"),
+            },
         ),
         migrations.CreateModel(
             name="EquipmentManufacturer",
@@ -2161,89 +2592,6 @@ class Migration(migrations.Migration):
                 related_name="%(app_label)s_%(class)s_equipment",
                 to="labs.equipmentproductmodel",
             ),
-        ),
-        migrations.CreateModel(
-            name="EquipmentStatusRecord",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created",
-                    model_utils.fields.AutoCreatedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="created",
-                    ),
-                ),
-                (
-                    "modified",
-                    model_utils.fields.AutoLastModifiedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="modified",
-                    ),
-                ),
-                ("metadata", models.JSONField(blank=True, default=dict)),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("in_use", "In-use"),
-                            ("available", "Available"),
-                            ("in_storage", "In-storage"),
-                            ("transferred", "Transferred"),
-                            ("borrowed", "Borrowed"),
-                            ("maintenance", "Maintenance"),
-                            ("broken", "Broken"),
-                            ("lost", "Lost"),
-                            ("on_order", "On Order"),
-                        ],
-                        max_length=255,
-                    ),
-                ),
-                (
-                    "creator",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_creator",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Created by",
-                    ),
-                ),
-                (
-                    "equipment",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="status_records",
-                        to="labs.equipment",
-                    ),
-                ),
-                (
-                    "last_modified_by",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_last_modified_by",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Last modified by",
-                    ),
-                ),
-            ],
-            options={
-                "ordering": ("-created", "-id"),
-            },
         ),
         migrations.CreateModel(
             name="EquipmentType",
@@ -2831,6 +3179,153 @@ class Migration(migrations.Migration):
                 related_name="%(class)ss",
                 to="labs.labproject",
             ),
+        ),
+        migrations.CreateModel(
+            name="LabSessionLog",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                ("agent_id", models.CharField(max_length=128)),
+                (
+                    "agent_version",
+                    models.CharField(blank=True, default="", max_length=64),
+                ),
+                ("event_id", models.UUIDField()),
+                (
+                    "reported_at",
+                    models.DateTimeField(help_text="Timestamp at which the agent emitted the report."),
+                ),
+                ("login_time", models.DateTimeField(blank=True, null=True)),
+                ("logout_time", models.DateTimeField(blank=True, null=True)),
+                ("host_name", models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    "remote_host",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "remote_user",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "remote_user_display_name",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                ("remote_ip", models.GenericIPAddressField(blank=True, null=True)),
+                (
+                    "booking_code",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                ("active_duration_seconds", models.FloatField(blank=True, null=True)),
+                (
+                    "access_type",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("booked", "Booked"),
+                            ("ad_hoc", "Ad hoc (no booking)"),
+                            ("unverified_booking", "Booking not verified"),
+                        ],
+                        help_text="How the user got access. Null only on rows stored before access types existed.",
+                        max_length=32,
+                        null=True,
+                    ),
+                ),
+                (
+                    "bench",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="The bench the computer was placed on at login time.",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="session_logs",
+                        to="labs.bench",
+                    ),
+                ),
+                (
+                    "booking",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="The verified booking; set only when the access type is booked.",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="session_logs",
+                        to="labs.benchbooking",
+                    ),
+                ),
+                (
+                    "computing_equipment",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="session_logs",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "creator",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_creator",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Created by",
+                    ),
+                ),
+                (
+                    "last_modified_by",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_last_modified_by",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Last modified by",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="The app user whose username matches the remote login name.",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="lab_session_logs",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+            ],
+            options={
+                "verbose_name": "Lab session log",
+                "verbose_name_plural": "Lab session logs",
+                "ordering": ("-login_time", "-created"),
+            },
         ),
         migrations.CreateModel(
             name="License",
@@ -3708,6 +4203,104 @@ class Migration(migrations.Migration):
                 "ordering": ("name",),
             },
         ),
+        migrations.AddField(
+            model_name="equipment",
+            name="material",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="equipment",
+                to="labs.material",
+            ),
+        ),
+        migrations.CreateModel(
+            name="MonitoringEvent",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                ("agent_id", models.CharField(max_length=128)),
+                (
+                    "agent_version",
+                    models.CharField(blank=True, default="", max_length=64),
+                ),
+                ("event_id", models.UUIDField()),
+                (
+                    "reported_at",
+                    models.DateTimeField(help_text="Timestamp at which the agent emitted the report."),
+                ),
+                ("occurred_at", models.DateTimeField()),
+                (
+                    "action",
+                    models.CharField(
+                        choices=[
+                            ("heartbeat", "Heartbeat"),
+                            ("device_inserted", "Device inserted"),
+                            ("device_removed", "Device removed"),
+                            ("device_changed", "Device changed"),
+                            ("device_status_changed", "Device status changed"),
+                            ("inventory_snapshot", "Inventory snapshot"),
+                            ("metric_reported", "Metric reported"),
+                            ("alert_raised", "Alert raised"),
+                            ("alert_resolved", "Alert resolved"),
+                            ("custom", "Custom"),
+                        ],
+                        max_length=64,
+                    ),
+                ),
+                (
+                    "action_name",
+                    models.CharField(blank=True, default="", max_length=128),
+                ),
+                (
+                    "subject_type",
+                    models.CharField(blank=True, default="", max_length=128),
+                ),
+                (
+                    "subject_id",
+                    models.CharField(blank=True, default="", max_length=255),
+                ),
+                (
+                    "subject_name",
+                    models.CharField(blank=True, default="", max_length=255),
+                ),
+                ("payload", models.JSONField(blank=True, default=dict)),
+                (
+                    "computer",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="monitoring_events",
+                        to="labs.equipment",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("-occurred_at", "-id"),
+            },
+        ),
         migrations.CreateModel(
             name="NetworkingProtocol",
             fields=[
@@ -3765,6 +4358,17 @@ class Migration(migrations.Migration):
             options={
                 "ordering": ("name",),
             },
+        ),
+        migrations.AddField(
+            model_name="equipment",
+            name="protocol",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="equipment",
+                to="labs.networkingprotocol",
+            ),
         ),
         migrations.CreateModel(
             name="ProjectUsageObservation",
@@ -5123,14 +5727,13 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.AddField(
-            model_name="equipment",
-            name="storage_room",
+            model_name="equipmentassignment",
+            name="room",
             field=models.ForeignKey(
                 blank=True,
-                help_text="Where the asset is kept while it is In-storage.",
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
-                related_name="stored_equipment",
+                related_name="equipment_placements",
                 to="labs.room",
             ),
         ),
@@ -5459,6 +6062,11 @@ class Migration(migrations.Migration):
                 "ordering": ("name",),
             },
         ),
+        migrations.AddField(
+            model_name="equipment",
+            name="characteristics",
+            field=models.ManyToManyField(blank=True, related_name="equipment", to="labs.samplecharacteristic"),
+        ),
         migrations.CreateModel(
             name="SampleCustomer",
             fields=[
@@ -5516,6 +6124,17 @@ class Migration(migrations.Migration):
             options={
                 "ordering": ("name",),
             },
+        ),
+        migrations.AddField(
+            model_name="equipment",
+            name="customer",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="equipment",
+                to="labs.samplecustomer",
+            ),
         ),
         migrations.CreateModel(
             name="SpecificationDefinition",
@@ -5865,6 +6484,17 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+        ),
+        migrations.AddField(
+            model_name="equipmentassignment",
+            name="station",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="equipment_placements",
+                to="labs.station",
+            ),
         ),
         migrations.AddField(
             model_name="bench",
@@ -6394,534 +7024,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="MonitoringEvent",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created",
-                    model_utils.fields.AutoCreatedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="created",
-                    ),
-                ),
-                (
-                    "modified",
-                    model_utils.fields.AutoLastModifiedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="modified",
-                    ),
-                ),
-                ("agent_id", models.CharField(max_length=128)),
-                (
-                    "agent_version",
-                    models.CharField(blank=True, default="", max_length=64),
-                ),
-                ("event_id", models.UUIDField()),
-                (
-                    "reported_at",
-                    models.DateTimeField(help_text="Timestamp at which the agent emitted the report."),
-                ),
-                ("occurred_at", models.DateTimeField()),
-                (
-                    "action",
-                    models.CharField(
-                        choices=[
-                            ("heartbeat", "Heartbeat"),
-                            ("device_inserted", "Device inserted"),
-                            ("device_removed", "Device removed"),
-                            ("device_changed", "Device changed"),
-                            ("device_status_changed", "Device status changed"),
-                            ("inventory_snapshot", "Inventory snapshot"),
-                            ("metric_reported", "Metric reported"),
-                            ("alert_raised", "Alert raised"),
-                            ("alert_resolved", "Alert resolved"),
-                            ("custom", "Custom"),
-                        ],
-                        max_length=64,
-                    ),
-                ),
-                (
-                    "action_name",
-                    models.CharField(blank=True, default="", max_length=128),
-                ),
-                (
-                    "subject_type",
-                    models.CharField(blank=True, default="", max_length=128),
-                ),
-                (
-                    "subject_id",
-                    models.CharField(blank=True, default="", max_length=255),
-                ),
-                (
-                    "subject_name",
-                    models.CharField(blank=True, default="", max_length=255),
-                ),
-                ("payload", models.JSONField(blank=True, default=dict)),
-                (
-                    "computer",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="monitoring_events",
-                        to="labs.computingequipment",
-                    ),
-                ),
-            ],
-            options={
-                "ordering": ("-occurred_at", "-id"),
-            },
-        ),
-        migrations.CreateModel(
-            name="LabSessionLog",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created",
-                    model_utils.fields.AutoCreatedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="created",
-                    ),
-                ),
-                (
-                    "modified",
-                    model_utils.fields.AutoLastModifiedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="modified",
-                    ),
-                ),
-                ("agent_id", models.CharField(max_length=128)),
-                (
-                    "agent_version",
-                    models.CharField(blank=True, default="", max_length=64),
-                ),
-                ("event_id", models.UUIDField()),
-                (
-                    "reported_at",
-                    models.DateTimeField(help_text="Timestamp at which the agent emitted the report."),
-                ),
-                ("login_time", models.DateTimeField(blank=True, null=True)),
-                ("logout_time", models.DateTimeField(blank=True, null=True)),
-                ("host_name", models.CharField(blank=True, max_length=255, null=True)),
-                (
-                    "remote_host",
-                    models.CharField(blank=True, max_length=255, null=True),
-                ),
-                (
-                    "remote_user",
-                    models.CharField(blank=True, max_length=255, null=True),
-                ),
-                (
-                    "remote_user_display_name",
-                    models.CharField(blank=True, max_length=255, null=True),
-                ),
-                ("remote_ip", models.GenericIPAddressField(blank=True, null=True)),
-                (
-                    "booking_code",
-                    models.CharField(blank=True, max_length=255, null=True),
-                ),
-                ("active_duration_seconds", models.FloatField(blank=True, null=True)),
-                (
-                    "creator",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_creator",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Created by",
-                    ),
-                ),
-                (
-                    "last_modified_by",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_last_modified_by",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Last modified by",
-                    ),
-                ),
-                (
-                    "computing_equipment",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="session_logs",
-                        to="labs.computingequipment",
-                    ),
-                ),
-            ],
-            options={
-                "verbose_name": "Lab session log",
-                "verbose_name_plural": "Lab session logs",
-                "ordering": ("-login_time", "-created"),
-            },
-        ),
-        migrations.AddField(
-            model_name="computingequipment",
-            name="technical_user",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.PROTECT,
-                related_name="computing_equipment",
-                to="labs.technicaluser",
-            ),
-        ),
-        migrations.CreateModel(
-            name="ComputingActivity",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created",
-                    model_utils.fields.AutoCreatedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="created",
-                    ),
-                ),
-                (
-                    "modified",
-                    model_utils.fields.AutoLastModifiedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="modified",
-                    ),
-                ),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("offline", "Offline"),
-                            ("free", "Free"),
-                            ("active", "Active"),
-                            ("inactive", "Inactive"),
-                            ("maintaining", "Maintaining"),
-                        ],
-                        db_index=True,
-                        default="offline",
-                        max_length=16,
-                    ),
-                ),
-                (
-                    "remote_user",
-                    models.CharField(blank=True, default="", max_length=255),
-                ),
-                (
-                    "remote_user_display_name",
-                    models.CharField(blank=True, default="", max_length=255),
-                ),
-                (
-                    "remote_computer",
-                    models.CharField(blank=True, default="", max_length=255),
-                ),
-                ("remote_ip", models.GenericIPAddressField(blank=True, null=True)),
-                (
-                    "booking_code",
-                    models.CharField(blank=True, default="", max_length=255),
-                ),
-                ("last_agent_report_at", models.DateTimeField(blank=True, null=True)),
-                ("offline_at", models.DateTimeField(blank=True, null=True)),
-                ("inactive_at", models.DateTimeField(blank=True, null=True)),
-                ("inactive_reminder_count", models.PositiveIntegerField(default=0)),
-                (
-                    "computing",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="activity",
-                        to="labs.computingequipment",
-                    ),
-                ),
-            ],
-        ),
-        migrations.CreateModel(
-            name="DisplayEquipment",
-            fields=[
-                (
-                    "equipment_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="labs.equipment",
-                    ),
-                ),
-                (
-                    "interfaces",
-                    models.ManyToManyField(
-                        blank=True,
-                        related_name="%(app_label)s_%(class)s_interfaces",
-                        to="labs.equipmentinterface",
-                    ),
-                ),
-                (
-                    "resolution",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="%(app_label)s_%(class)s_resolution",
-                        to="labs.displayresolution",
-                    ),
-                ),
-                (
-                    "size",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="%(app_label)s_%(class)s_size",
-                        to="labs.displaysize",
-                    ),
-                ),
-            ],
-            bases=("labs.equipment",),
-        ),
-        migrations.CreateModel(
-            name="FurnitureEquipment",
-            fields=[
-                (
-                    "equipment_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="labs.equipment",
-                    ),
-                ),
-                (
-                    "dimensions",
-                    models.JSONField(
-                        blank=True,
-                        default=dict,
-                        help_text="Keys length_mm, width_mm, height_mm.",
-                    ),
-                ),
-                (
-                    "material",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="%(app_label)s_%(class)s_material",
-                        to="labs.material",
-                    ),
-                ),
-            ],
-            bases=("labs.equipment",),
-        ),
-        migrations.CreateModel(
-            name="InstrumentEquipment",
-            fields=[
-                (
-                    "equipment_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="labs.equipment",
-                    ),
-                ),
-                (
-                    "interfaces",
-                    models.ManyToManyField(
-                        blank=True,
-                        related_name="%(app_label)s_%(class)s_instruments",
-                        to="labs.equipmentinterface",
-                    ),
-                ),
-            ],
-            bases=("labs.equipment",),
-        ),
-        migrations.CreateModel(
-            name="MechanicalEquipment",
-            fields=[
-                (
-                    "equipment_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="labs.equipment",
-                    ),
-                ),
-                (
-                    "dimensions",
-                    models.JSONField(
-                        blank=True,
-                        default=dict,
-                        help_text="Keys length_mm, width_mm, height_mm.",
-                    ),
-                ),
-                (
-                    "material",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="%(app_label)s_%(class)s_material",
-                        to="labs.material",
-                    ),
-                ),
-            ],
-            bases=("labs.equipment",),
-        ),
-        migrations.CreateModel(
-            name="NetworkingEquipment",
-            fields=[
-                (
-                    "equipment_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="labs.equipment",
-                    ),
-                ),
-                (
-                    "mac_address",
-                    models.CharField(
-                        blank=True,
-                        default="",
-                        max_length=17,
-                        validators=[
-                            django.core.validators.RegexValidator(
-                                message="Enter a MAC address like AA:BB:CC:DD:EE:FF.",
-                                regex="^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$",
-                            )
-                        ],
-                    ),
-                ),
-                (
-                    "protocol",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="%(app_label)s_%(class)s_protocol",
-                        to="labs.networkingprotocol",
-                    ),
-                ),
-            ],
-            bases=("labs.equipment",),
-        ),
-        migrations.CreateModel(
-            name="PowerEquipment",
-            fields=[
-                (
-                    "equipment_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="labs.equipment",
-                    ),
-                ),
-                ("channels", models.PositiveSmallIntegerField(blank=True, null=True)),
-                (
-                    "power_rating",
-                    models.PositiveIntegerField(blank=True, help_text="Output capacity in watts.", null=True),
-                ),
-                (
-                    "interface",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="%(app_label)s_%(class)s_interface",
-                        to="labs.equipmentinterface",
-                    ),
-                ),
-            ],
-            bases=("labs.equipment",),
-        ),
-        migrations.CreateModel(
-            name="SampleEquipment",
-            fields=[
-                (
-                    "equipment_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="labs.equipment",
-                    ),
-                ),
-                (
-                    "characteristics",
-                    models.ManyToManyField(
-                        blank=True,
-                        related_name="%(app_label)s_%(class)s_characteristics",
-                        to="labs.samplecharacteristic",
-                    ),
-                ),
-                (
-                    "customer",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="%(app_label)s_%(class)s_customer",
-                        to="labs.samplecustomer",
-                    ),
-                ),
-                (
-                    "interfaces",
-                    models.ManyToManyField(
-                        blank=True,
-                        related_name="%(app_label)s_%(class)s_interfaces",
-                        to="labs.equipmentinterface",
-                    ),
-                ),
-            ],
-            bases=("labs.equipment",),
-        ),
-        migrations.CreateModel(
             name="BenchBookingDecisionReceipt",
             fields=[
                 (
@@ -7069,6 +7171,39 @@ class Migration(migrations.Migration):
                 name="building_name_without_city_uniq",
             ),
         ),
+        migrations.AddField(
+            model_name="computingprofile",
+            name="technical_user",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="computing_profiles",
+                to="labs.technicaluser",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="computingactivity",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    models.Q(("status", "offline"), _negated=True),
+                    ("offline_at__isnull", False),
+                    _connector="OR",
+                ),
+                name="labs_comp_activity_offline_at_required",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="computingactivity",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    models.Q(("status", "inactive"), _negated=True),
+                    ("inactive_at__isnull", False),
+                    _connector="OR",
+                ),
+                name="labs_comp_activity_inactive_at_required",
+            ),
+        ),
         migrations.AddIndex(
             model_name="city",
             index=django.contrib.postgres.indexes.GinIndex(
@@ -7114,33 +7249,6 @@ class Migration(migrations.Migration):
             model_name="displaysize",
             index=django.contrib.postgres.indexes.GinIndex(
                 fields=["size"], name="display_size_idx", opclasses=("gin_trgm_ops",)
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="equipmentassignment",
-            index=models.Index(
-                condition=models.Q(("unassigned_at__isnull", True)),
-                fields=["bench", "position"],
-                name="equipment_assign_bench_idx",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="equipmentassignment",
-            constraint=models.UniqueConstraint(
-                condition=models.Q(("unassigned_at__isnull", True)),
-                fields=("equipment",),
-                name="one_active_bench_per_equipment",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="equipmentassignment",
-            constraint=models.CheckConstraint(
-                condition=models.Q(
-                    ("unassigned_at__isnull", True),
-                    ("unassigned_at__gte", models.F("assigned_at")),
-                    _connector="OR",
-                ),
-                name="assignment_end_after_start",
             ),
         ),
         migrations.AddIndex(
@@ -7211,6 +7319,49 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddIndex(
+            model_name="equipmentevent",
+            index=models.Index(
+                fields=["equipment", "occurred_at", "id"],
+                name="equipment_event_history_idx",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentevent",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("from_value", models.F("to_value")), _negated=True),
+                name="equipment_event_changes",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentevent",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    models.Q(
+                        ("axis", "lifecycle"),
+                        (
+                            "to_value__in",
+                            [
+                                "planned",
+                                "in_service",
+                                "transferred_out",
+                                "retired",
+                                "lost",
+                            ],
+                        ),
+                    ),
+                    models.Q(
+                        ("axis", "condition"),
+                        (
+                            "to_value__in",
+                            ["operational", "in_maintenance", "out_of_service"],
+                        ),
+                    ),
+                    _connector="OR",
+                ),
+                name="equipment_event_value_valid",
+            ),
+        ),
+        migrations.AddIndex(
             model_name="equipmentinterface",
             index=django.contrib.postgres.indexes.GinIndex(
                 fields=["name"],
@@ -7227,6 +7378,132 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddIndex(
+            model_name="equipmentloanbatch",
+            index=models.Index(fields=["borrower", "-created"], name="equipment_loan_batch_borr_idx"),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloanbatch",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("borrower__isnull", False),
+                    models.Q(("borrower_name", ""), _negated=True),
+                    _connector="OR",
+                ),
+                name="equipment_loan_batch_has_borrower",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloanbatch",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("idempotency_key", ""), _negated=True),
+                fields=("created_by", "idempotency_key"),
+                name="equipment_loan_batch_idempotency_uniq",
+                nulls_distinct=False,
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="equipmentloan",
+            index=models.Index(
+                condition=models.Q(("returned_at__isnull", True)),
+                fields=["due_at"],
+                name="equipment_loan_open_due_idx",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloan",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("returned_at__isnull", True)),
+                fields=("equipment",),
+                name="one_active_loan_per_equipment",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloan",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    models.Q(("close_reason__isnull", True), ("returned_at__isnull", True)),
+                    models.Q(("close_reason__isnull", False), ("returned_at__isnull", False)),
+                    _connector="OR",
+                ),
+                name="equipment_loan_closed_has_reason",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloan",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("close_reason__isnull", True),
+                    ("close_reason__in", ["returned", "lost"]),
+                    _connector="OR",
+                ),
+                name="equipment_loan_close_reason_valid",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloan",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("due_at__gt", models.F("handed_over_at"))),
+                name="equipment_loan_due_after_handover",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloan",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("returned_at__isnull", True),
+                    ("returned_at__gte", models.F("handed_over_at")),
+                    _connector="OR",
+                ),
+                name="equipment_loan_returned_after_handover",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="equipmentloanreminder",
+            index=models.Index(fields=["state", "available_at"], name="equipment_reminder_ready_idx"),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloanreminder",
+            constraint=models.UniqueConstraint(fields=("batch", "slot"), name="equipment_loan_reminder_once_per_slot"),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloanreminder",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("slot__lte", 7)),
+                name="equipment_loan_reminder_slot_range",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloanreminder",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    (
+                        "state__in",
+                        ("pending", "leased", "sent", "failed", "skipped", "expired"),
+                    )
+                ),
+                name="equipment_loan_reminder_state",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentloanreminder",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    models.Q(
+                        ("lease_token__isnull", False),
+                        ("lease_until__isnull", False),
+                        ("state", "leased"),
+                    ),
+                    models.Q(
+                        models.Q(("state", "leased"), _negated=True),
+                        ("lease_token__isnull", True),
+                        ("lease_until__isnull", True),
+                    ),
+                    _connector="OR",
+                ),
+                name="equipment_loan_reminder_lease",
+            ),
+        ),
+        migrations.AddIndex(
             model_name="equipmentmanufacturer",
             index=django.contrib.postgres.indexes.GinIndex(
                 fields=["name"],
@@ -7239,13 +7516,6 @@ class Migration(migrations.Migration):
             constraint=models.UniqueConstraint(
                 django.db.models.functions.text.Lower("name"),
                 name="equipment_manufacturer_name_uniq",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="equipmentstatusrecord",
-            index=models.Index(
-                fields=["equipment", "-created", "-id"],
-                name="equipment_status_latest_idx",
             ),
         ),
         migrations.AddIndex(
@@ -7530,6 +7800,96 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddIndex(
+            model_name="labsessionlog",
+            index=models.Index(
+                fields=["computing_equipment", "login_time"],
+                name="session_equipment_login_idx",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="labsessionlog",
+            index=models.Index(
+                fields=["remote_user", "login_time"],
+                name="session_remote_user_login_idx",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="labsessionlog",
+            index=models.Index(fields=["booking_code"], name="session_booking_code_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="labsessionlog",
+            index=models.Index(fields=["host_name", "login_time"], name="session_host_login_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="labsessionlog",
+            index=models.Index(fields=["bench", "login_time"], name="session_bench_login_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="labsessionlog",
+            index=models.Index(fields=["user", "login_time"], name="session_user_login_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="labsessionlog",
+            index=models.Index(fields=["access_type", "login_time"], name="session_access_login_idx"),
+        ),
+        migrations.AddConstraint(
+            model_name="labsessionlog",
+            constraint=models.UniqueConstraint(
+                fields=("computing_equipment", "agent_id", "event_id"),
+                name="unique_session_report_per_agent",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="labsessionlog",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("login_time__isnull", True),
+                    ("logout_time__isnull", True),
+                    ("logout_time__gt", models.F("login_time")),
+                    _connector="OR",
+                ),
+                name="labsess_valid_period",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="labsessionlog",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("active_duration_seconds__isnull", True),
+                    ("active_duration_seconds__gte", 0),
+                    _connector="OR",
+                ),
+                name="labsess_active_duration_nonnegative",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="labsessionlog",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("access_type__isnull", True),
+                    models.Q(("access_type", "ad_hoc"), ("booking_code__isnull", True)),
+                    models.Q(
+                        ("access_type__in", ("booked", "unverified_booking")),
+                        ("booking_code__isnull", False),
+                    ),
+                    _connector="OR",
+                ),
+                name="labsess_access_type_matches_code",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="labsessionlog",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("booking__isnull", True),
+                    models.Q(("access_type", "booked"), ("access_type__isnull", False)),
+                    _connector="OR",
+                ),
+                name="labsess_booking_only_when_booked",
+            ),
+        ),
+        migrations.AddIndex(
             model_name="licenseagreement",
             index=models.Index(fields=["license", "valid_from"], name="license_agreement_start_idx"),
         ),
@@ -7666,6 +8026,28 @@ class Migration(migrations.Migration):
             model_name="material",
             index=django.contrib.postgres.indexes.GinIndex(
                 fields=["name"], name="material_name_idx", opclasses=("gin_trgm_ops",)
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="monitoringevent",
+            index=models.Index(fields=["computer", "-occurred_at"], name="monitor_computer_time_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="monitoringevent",
+            index=models.Index(fields=["action", "-occurred_at"], name="monitor_action_time_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="monitoringevent",
+            index=models.Index(
+                fields=["subject_type", "subject_id", "-occurred_at"],
+                name="monitor_subject_time_idx",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="monitoringevent",
+            constraint=models.UniqueConstraint(
+                fields=("computer", "agent_id", "event_id"),
+                name="unique_monitoring_event_per_agent",
             ),
         ),
         migrations.AddIndex(
@@ -7877,22 +8259,6 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddIndex(
-            model_name="equipment",
-            index=models.Index(fields=["kind", "deleted_at"], name="equipment_kind_deleted_idx"),
-        ),
-        migrations.AddIndex(
-            model_name="equipment",
-            index=models.Index(fields=["kind", "name"], name="equipment_kind_name_idx"),
-        ),
-        migrations.AddConstraint(
-            model_name="equipment",
-            constraint=models.UniqueConstraint(
-                condition=models.Q(("deleted_at__isnull", True)),
-                fields=("sku",),
-                name="equipment_active_sku_unique",
-            ),
-        ),
-        migrations.AddIndex(
             model_name="roomobservation",
             index=models.Index(fields=["room", "-observed_at"], name="room_observation_time_idx"),
         ),
@@ -7958,6 +8324,57 @@ class Migration(migrations.Migration):
                 opclasses=("gin_trgm_ops",),
             ),
         ),
+        migrations.AddIndex(
+            model_name="equipment",
+            index=models.Index(fields=["kind", "deleted_at"], name="equipment_kind_deleted_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="equipment",
+            index=models.Index(fields=["kind", "name"], name="equipment_kind_name_idx"),
+        ),
+        migrations.AddConstraint(
+            model_name="equipment",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("deleted_at__isnull", True)),
+                fields=("sku",),
+                name="equipment_active_sku_unique",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipment",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    (
+                        "lifecycle_state__in",
+                        ["planned", "in_service", "transferred_out", "retired", "lost"],
+                    )
+                ),
+                name="equipment_lifecycle_valid",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipment",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    (
+                        "condition__in",
+                        ["operational", "in_maintenance", "out_of_service"],
+                    )
+                ),
+                name="equipment_condition_valid",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipment",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("lifecycle_state", "in_service"),
+                    ("condition", "operational"),
+                    _connector="OR",
+                ),
+                name="equipment_condition_only_in_service",
+            ),
+        ),
         migrations.AddConstraint(
             model_name="specificationdefinition",
             constraint=models.UniqueConstraint(
@@ -7970,6 +8387,74 @@ class Migration(migrations.Migration):
             constraint=models.UniqueConstraint(
                 fields=("product_model", "definition"),
                 name="product_model_specification_uniq",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="equipmentassignment",
+            index=models.Index(
+                condition=models.Q(("unassigned_at__isnull", True)),
+                fields=["bench", "position"],
+                name="equipment_assign_bench_idx",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentassignment",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("unassigned_at__isnull", True)),
+                fields=("equipment",),
+                name="one_active_bench_per_equipment",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentassignment",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("unassigned_at__isnull", True),
+                    ("unassigned_at__gte", models.F("assigned_at")),
+                    _connector="OR",
+                ),
+                name="assignment_end_after_start",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentassignment",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    models.Q(
+                        ("bench__isnull", False),
+                        ("room__isnull", True),
+                        ("station__isnull", True),
+                    ),
+                    models.Q(
+                        ("bench__isnull", True),
+                        ("room__isnull", True),
+                        ("station__isnull", False),
+                    ),
+                    models.Q(
+                        ("bench__isnull", True),
+                        ("room__isnull", False),
+                        ("station__isnull", True),
+                    ),
+                    models.Q(
+                        ("bench__isnull", True),
+                        ("room__isnull", True),
+                        ("station__isnull", True),
+                        models.Q(("location_note", ""), _negated=True),
+                    ),
+                    _connector="OR",
+                ),
+                name="equipment_placement_one_target",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="equipmentassignment",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("bench__isnull", False),
+                    models.Q(("monitor", False), ("position", 0), ("role", "default")),
+                    _connector="OR",
+                ),
+                name="equipment_placement_bench_fields",
             ),
         ),
         migrations.AddConstraint(
@@ -8005,6 +8490,18 @@ class Migration(migrations.Migration):
                 name="labs_bench_active_sku_uniq",
             ),
         ),
+        migrations.AddConstraint(
+            model_name="bench",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    (
+                        "lifecycle_status__in",
+                        ("planned", "in_service", "out_of_service", "retired"),
+                    )
+                ),
+                name="bench_lifecycle_valid",
+            ),
+        ),
         migrations.AddIndex(
             model_name="stationstatusrecord",
             index=models.Index(fields=["station", "-created", "-id"], name="station_status_latest_idx"),
@@ -8034,116 +8531,12 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddIndex(
-            model_name="monitoringevent",
-            index=models.Index(fields=["computer", "-occurred_at"], name="monitor_computer_time_idx"),
-        ),
-        migrations.AddIndex(
-            model_name="monitoringevent",
-            index=models.Index(fields=["action", "-occurred_at"], name="monitor_action_time_idx"),
-        ),
-        migrations.AddIndex(
-            model_name="monitoringevent",
-            index=models.Index(
-                fields=["subject_type", "subject_id", "-occurred_at"],
-                name="monitor_subject_time_idx",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="monitoringevent",
-            constraint=models.UniqueConstraint(
-                fields=("computer", "agent_id", "event_id"),
-                name="unique_monitoring_event_per_agent",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="labsessionlog",
-            index=models.Index(
-                fields=["computing_equipment", "login_time"],
-                name="session_equipment_login_idx",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="labsessionlog",
-            index=models.Index(
-                fields=["remote_user", "login_time"],
-                name="session_remote_user_login_idx",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="labsessionlog",
-            index=models.Index(fields=["booking_code"], name="session_booking_code_idx"),
-        ),
-        migrations.AddIndex(
-            model_name="labsessionlog",
-            index=models.Index(fields=["host_name", "login_time"], name="session_host_login_idx"),
-        ),
-        migrations.AddConstraint(
-            model_name="labsessionlog",
-            constraint=models.UniqueConstraint(
-                fields=("computing_equipment", "agent_id", "event_id"),
-                name="unique_session_report_per_agent",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="labsessionlog",
-            constraint=models.CheckConstraint(
-                condition=models.Q(
-                    ("login_time__isnull", True),
-                    ("logout_time__isnull", True),
-                    ("logout_time__gt", models.F("login_time")),
-                    _connector="OR",
-                ),
-                name="labsess_valid_period",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="labsessionlog",
-            constraint=models.CheckConstraint(
-                condition=models.Q(
-                    ("active_duration_seconds__isnull", True),
-                    ("active_duration_seconds__gte", 0),
-                    _connector="OR",
-                ),
-                name="labsess_active_duration_nonnegative",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="computingequipment",
+            model_name="computingprofile",
             index=django.contrib.postgres.indexes.GinIndex(
                 fields=["os_name"],
                 name="computing_os_name_idx",
                 opclasses=("gin_trgm_ops",),
             ),
-        ),
-        migrations.AddConstraint(
-            model_name="computingactivity",
-            constraint=models.CheckConstraint(
-                condition=models.Q(
-                    models.Q(("status", "offline"), _negated=True),
-                    ("offline_at__isnull", False),
-                    _connector="OR",
-                ),
-                name="labs_comp_activity_offline_at_required",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="computingactivity",
-            constraint=models.CheckConstraint(
-                condition=models.Q(
-                    models.Q(("status", "inactive"), _negated=True),
-                    ("inactive_at__isnull", False),
-                    _connector="OR",
-                ),
-                name="labs_comp_activity_inactive_at_required",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="powerequipment",
-            index=models.Index(fields=["channels"], name="power_channels_idx"),
-        ),
-        migrations.AddIndex(
-            model_name="powerequipment",
-            index=models.Index(fields=["power_rating"], name="power_rating_idx"),
         ),
         migrations.RunPython(seed_purchase_priorities, unseed_purchase_priorities),
     ]

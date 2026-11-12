@@ -137,6 +137,10 @@ class IsLabCoordinatorReadWrite(LabsRolePermission):
     write_roles = (LabsRole.COORDINATOR,)
 
 
+# Same policy, earlier name used by the equipment feature.
+IsLabCoordinatorOnly = IsLabCoordinatorReadWrite
+
+
 class IsLabAdminReadWrite(LabsRolePermission):
     """Reads and writes: lab administrators only (user directory and group membership)."""
 
@@ -150,6 +154,7 @@ __all__ = [
     "IsLabAdminReadWrite",
     "IsLabCoordinator",
     "IsLabCoordinatorReadWrite",
+    "IsLabCoordinatorOnly",
     "IsLabMember",
     "IsLabMemberReadOnly",
     "LabsRole",

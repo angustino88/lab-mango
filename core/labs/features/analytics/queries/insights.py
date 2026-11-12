@@ -8,13 +8,11 @@ from typing import Any
 from django.db.models import Sum
 from django.utils import timezone
 
+from core.labs.features.equipment.public import equipment_state_timelines
 from core.labs.models import (
     Bench,
     BenchBooking,
     BookingStatus,
-    Equipment,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     LaboratoryVisitEvent,
     LabSessionLog,
 )
@@ -25,7 +23,7 @@ from .calculations import calculate_official_working_hours, calculate_period_tre
 _HOLDING_STATUSES = (BookingStatus.RESERVED, BookingStatus.IN_PROGRESS, BookingStatus.COMPLETED)
 
 # Equipment statuses that mean the item is not available for use.
-_UNAVAILABLE_STATUSES = frozenset({EquipmentStatus.MAINTENANCE, EquipmentStatus.BROKEN, EquipmentStatus.LOST})
+_UNAVAILABLE_STATUSES = frozenset({"maintenance", "broken", "lost"})
 
 
 def _previous_window(from_date_time: datetime, to_date_time: datetime) -> tuple[datetime, datetime]:
@@ -140,34 +138,22 @@ def get_booked_vs_used(*, from_date_time: datetime, to_date_time: datetime) -> d
 
 
 def get_equipment_availability(*, from_date_time: datetime, to_date_time: datetime) -> dict[str, Any]:
-    """Estimate equipment availability from status history over the requested range.
+    """Estimate equipment availability from lifecycle and condition history over the range.
 
-    For each non-deleted equipment item, status is the last record at or before each change
-    inside the window. Time in unavailable statuses counts against uptime. Items with no record
-    before the window end are excluded because their status is unknown for that interval.
+    Equipment owns the history (``equipment_state_timelines``): each non-deleted unit created
+    before the window end has a known state from its creation onwards. Time in maintenance,
+    out of service (broken) or lost counts against uptime.
     """
     total_seconds = (to_date_time - from_date_time).total_seconds()
     if total_seconds <= 0:
         return {"period_start": from_date_time, "period_end": to_date_time, "equipment_count": 0,
                 "average_uptime_percent": None, "items": []}
 
-    records = (
-        EquipmentStatusRecord.objects.filter(
-            equipment__deleted_at__isnull=True,
-            created__lt=to_date_time,
-        )
-        .order_by("equipment_id", "created", "id")
-        .values("equipment_id", "status", "created")
-    )
-
-    by_equipment: dict[int, list[tuple[datetime, str]]] = defaultdict(list)
-    for row in records:
-        by_equipment[row["equipment_id"]].append((row["created"], row["status"]))
-
-    names = dict(Equipment.objects.filter(pk__in=by_equipment.keys()).values_list("pk", "name"))
+    timelines = equipment_state_timelines(until=to_date_time)
 
     items = []
-    for equipment_id, history in by_equipment.items():
+    for equipment_id, entry in timelines.items():
+        history = entry["timeline"]
         # Status in force at window start is the last record created before the window.
         before = [(ts, st) for ts, st in history if ts <= from_date_time]
         inside = [(ts, st) for ts, st in history if from_date_time < ts < to_date_time]
@@ -194,7 +180,7 @@ def get_equipment_availability(*, from_date_time: datetime, to_date_time: dateti
         uptime = max(0.0, 1.0 - unavailable_seconds / total_seconds)
         items.append({
             "equipment_id": equipment_id,
-            "equipment_name": names.get(equipment_id) or str(equipment_id),
+            "equipment_name": entry["name"] or str(equipment_id),
             "uptime_percent": round(uptime * 100, 2),
             "unavailable_hours": round(unavailable_seconds / 3600.0, 2),
             "outage_count": outage_count,

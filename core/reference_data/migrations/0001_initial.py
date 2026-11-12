@@ -1,4 +1,4 @@
-"""Initial reference_data schema (squashed 2026-11-12; the database had not reached production)."""
+"""Initial reference_data schema: one migration (ADR 005, consolidated 2026-11-12; no deployed database)."""
 
 from django.db import migrations, models
 

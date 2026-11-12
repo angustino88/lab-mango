@@ -11,27 +11,29 @@ from core.labs.features.monitoring.application.commands import (
     create_monitoring_event,
 )
 from core.labs.features.monitoring.exceptions import ComputerNotFound
-from core.labs.models.resource.equipment.computing import ComputingEquipment
+from core.labs.models import Equipment
 
 
 @pytest.mark.django_db
 class TestCreateMonitoringEvent:
     def test_missing_computer_raises_not_found(self):
-        with patch("core.labs.models.resource.equipment.computing.ComputingEquipment.objects") as mock_objects:
+        with patch("core.labs.features.monitoring.application.commands.Equipment.objects") as mock_objects:
             mock_filter = MagicMock()
             mock_filter.first.return_value = None
-            mock_objects.filter.return_value = mock_filter
+            # Computers are units with a computing profile; lookups filter that queryset again.
+            mock_objects.filter.return_value.filter.return_value = mock_filter
 
             command = CreateMonitoringEventInput(computer_sku="MISSING-PC")
             with pytest.raises(ComputerNotFound):
                 create_monitoring_event(command)
 
     def test_create_event_success(self):
-        with patch("core.labs.models.resource.equipment.computing.ComputingEquipment.objects") as mock_objects:
-            mock_computer = ComputingEquipment(id=1, sku="COMP-1", name="COMP-1")
+        with patch("core.labs.features.monitoring.application.commands.Equipment.objects") as mock_objects:
+            mock_computer = Equipment(id=1, sku="COMP-1", name="COMP-1")
             mock_filter = MagicMock()
             mock_filter.first.return_value = mock_computer
-            mock_objects.filter.return_value = mock_filter
+            # Computers are units with a computing profile; lookups filter that queryset again.
+            mock_objects.filter.return_value.filter.return_value = mock_filter
 
             with patch("core.labs.models.MonitoringEvent.full_clean") as mock_clean, \
                  patch("core.labs.models.MonitoringEvent.save") as mock_save:

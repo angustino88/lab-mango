@@ -115,11 +115,8 @@ Technical users are account identifiers only: there is no password/token import 
 
 ### Safety and retry semantics
 
-- Authentication is required. Writes follow the owner's rule (`ReferenceResource.can_write`), passed
-  through `reference_urlpatterns(..., can_write=...)`; without one, the model's Django `add_*`
-  permission is required. Labs passes `can_import_lab_reference_data`: lab coordinators and admins
-  import, whatever Django permissions a user holds (owner decision 2026-11-12). `is_staff` alone is
-  not sufficient; API-key-only requests cannot import.
+- Authentication is required. New import routes require the model's Django `add_*` permission
+  for writes. `is_staff` alone is not sufficient; API-key-only requests cannot import.
   Reads are shared reference catalogs available to active authenticated users.
 - Each POST requires a non-empty `Idempotency-Key` of at most 128 characters. Keep the same
   key and JSON payload when retrying a failed connection. A successful replay returns the
@@ -144,8 +141,12 @@ Technical users are account identifiers only: there is no password/token import 
 
 ### Migration and rollout
 
-The replay-receipt table is part of the squashed `reference_data.0001_initial` (2026-11-12, before
-production). Removing the table invalidates the retry history.
+Since the migration reset ([ADR 005](decisions/005-migration-reset.md)) the replay-receipt table is part of `reference_data.0001_initial`; the text below describes the original rollout of `0002_referenceimportreceipt`.
+
+`reference_data.0002_referenceimportreceipt` adds only the replay-receipt table. Apply it
+before serving import POSTs. Existing lookup tables/data are untouched. Roll back the code
+first, then reverse this migration only when losing replay receipts is acceptable; removing
+the table invalidates the retry history. No migration is automatically applied by this task.
 Authorization, API contracts, and the new table require owner approval before merge/release.
 
 ### Extending the catalogs

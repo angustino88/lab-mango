@@ -92,3 +92,17 @@ def test_hash_derived_booking_codes_are_unique_per_generation():
     assert first_code.startswith("BOOKING-")
     assert len(first_code) == len("BOOKING-") + 14
     assert first_code != second_code
+
+
+@pytest.mark.parametrize("lifecycle_status", ["planned", "out_of_service", "retired"])
+def test_only_in_service_benches_accept_bookings(lifecycle_status):
+    """Redesign step 5: a bench that is not in service accepts no bookings."""
+    from types import SimpleNamespace
+
+    from django.core.exceptions import ValidationError
+
+    from core.labs.features.bench_bookings.application import policies
+
+    with pytest.raises(ValidationError):
+        policies.ensure_bench_accepts_bookings(SimpleNamespace(deleted_at=None, lifecycle_status=lifecycle_status))
+    policies.ensure_bench_accepts_bookings(SimpleNamespace(deleted_at=None, lifecycle_status="in_service"))

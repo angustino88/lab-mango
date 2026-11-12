@@ -37,13 +37,13 @@ erDiagram
   PURCHASE_ITEM ||--o{ PURCHASE_ITEM_RESOURCE : allocates
   PURCHASE ||--o{ PURCHASE_TRANSACTION : records
   EXPENSE ||--o{ EXPENSE_PAYMENT : paid_by
-  EQUIPMENT ||--o| COMPUTING_EQUIPMENT : subtype_of
-  COMPUTING_EQUIPMENT ||--o| COMPUTING_ACTIVITY : reports
-  COMPUTING_EQUIPMENT ||--o{ MONITORING_EVENT : emits
-  COMPUTING_EQUIPMENT o|--o{ LAB_SESSION_LOG : records
+  EQUIPMENT ||--o| COMPUTING_PROFILE : computing
+  EQUIPMENT ||--o| COMPUTING_ACTIVITY : reports
+  EQUIPMENT ||--o{ MONITORING_EVENT : emits
+  EQUIPMENT o|--o{ LAB_SESSION_LOG : records
 ```
 
-`COMPUTING_EQUIPMENT` is a multi-table subtype of `EQUIPMENT` (`ComputingEquipment(Equipment)`), so its primary key is the parent's key. The diagram omits abstract bases and non-relational identifiers. `RESOURCE` and `BOOKING` are abstract concepts, while purchase allocations use generic content-type links; these are not ordinary FK-backed relationships. Analytics frequently retains identifiers rather than foreign keys. The optional one-to-one `STATION_SLOT`–`BENCH` relationship is modeled as one slot having zero or one bench and one bench having zero or one slot. See each section below for actual relation behavior.
+Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE` is one-to-one with `EQUIPMENT` and uses the equipment id as its primary key; it exists for units of a `monitored` category. The diagram omits abstract bases and non-relational identifiers. `RESOURCE` and `BOOKING` are abstract concepts, while purchase allocations use generic content-type links; these are not ordinary FK-backed relationships. Analytics frequently retains identifiers rather than foreign keys. The optional one-to-one `STATION_SLOT`–`BENCH` relationship is modeled as one slot having zero or one bench and one bench having zero or one slot. See each section below for actual relation behavior.
 
 ## Models
 
@@ -75,7 +75,7 @@ erDiagram
 
 ### Equipment, categories, and assignments
 
-**Models:** `Equipment`, `EquipmentStatusRecord`, `EquipmentAssignment`; references `EquipmentCategory`, `EquipmentKind`, `EquipmentType`, `EquipmentManufacturer`, `EquipmentProductModel`; subtypes `AccessoryEquipment`, `ComputingEquipment`, `DebuggingEquipment`, `DisplayEquipment`, `FurnitureEquipment`, `InstrumentEquipment`, `LaboratoryEquipment`, `MechanicalEquipment`, `NetworkingEquipment`, `OtherEquipment`, `PowerEquipment`, `SampleEquipment`; related reference models `TechnicalUser`, `EquipmentInterface`, `DisplayResolution`, `DisplaySize`, `Material`, `NetworkingProtocol`, `SampleCharacteristic`, `SampleCustomer`.
+**Models:** `Equipment`, `EquipmentEvent`, `EquipmentAssignment`, `ComputingProfile`; references `EquipmentCategory`, `EquipmentKind`, `EquipmentType`, `EquipmentManufacturer`, `EquipmentProductModel`; no category subtypes (step 6: typed columns on `Equipment`, capability flags on `EquipmentCategory`); related reference models `TechnicalUser`, `EquipmentInterface`, `DisplayResolution`, `DisplaySize`, `Material`, `NetworkingProtocol`, `SampleCharacteristic`, `SampleCustomer`.
 
 - `Equipment` extends resource identity and references a required kind plus optional type, manufacturer, and product model. Validation aligns type and kind. Concrete category models add category-specific fields and relationships.
 - `EquipmentAssignment` connects equipment to a bench over an interval. Both FKs are protected. A conditional unique constraint permits at most one active bench assignment per equipment; a check enforces `unassigned_at >= assigned_at` when ended. There is no reciprocal active-capacity constraint per bench in this model.
@@ -136,15 +136,18 @@ Both models refer to resource targets with generic content-type/object-id associ
 
 ### Monitoring, live activity, and sessions
 
-- `MonitoringEvent` extends `AgentReportedModel`, protects its `ComputingEquipment` relation, and has an idempotency key on computer/agent/event ID plus time-oriented indexes. Custom-action naming and JSON-object validation are model-level behavior.
-- `ComputingActivity` is one-to-one with `ComputingEquipment` and stores current remote-access/activity state. Its `offline`, `free`, `active`, `inactive`, and `maintaining` choices are live activity, not equipment lifecycle or booking status. Equipment deletion cascades to this row.
+- `MonitoringEvent` extends `AgentReportedModel`, protects its `Equipment` relation (a unit with a computing profile), and has an idempotency key on computer/agent/event ID plus time-oriented indexes. Custom-action naming and JSON-object validation are model-level behavior.
+- `ComputingActivity` is one-to-one with `Equipment` (computing units only) and stores current remote-access/activity state. Its `offline`, `free`, `active`, `inactive`, and `maintaining` choices are live activity, not equipment lifecycle or booking status. Equipment deletion cascades to this row.
 - `LabSessionLog` retains remote session identifiers/times and optionally references computing equipment with `SET_NULL`. It enforces agent/event uniqueness per equipment, a valid login/logout interval, and nonnegative duration; history can remain if equipment is deleted.
+  - Derived fields (owner: `lab_sessions`, set at ingestion and by `backfill_session_links`): `access_type` (`SessionAccessType`: `booked`, `ad_hoc`, `unverified_booking`; null only on rows not yet backfilled), and nullable `SET_NULL` links `booking` (`BenchBooking`), `bench` (the computer's bench at login time) and `user` (the active user whose username matches the remote login name). The pushed values stay unchanged; the derived fields can be recomputed.
+  - `labsess_access_type_matches_code`: `ad_hoc` has no booking code; `booked` and `unverified_booking` have one. `labsess_booking_only_when_booked`: only `booked` rows link a booking (null access type explicitly excluded). A `booked` row may lose its booking link when the booking is deleted.
+  - Indexes `(bench, login_time)`, `(user, login_time)`, `(access_type, login_time)` serve the planned utilisation reports. Design: `core/labs/features/lab_sessions/docs/architecture.md` section 11.
 
 ### Agent identity and enrollment
 
 **Models:** `AgentIdentity`, `EnrollmentGrant`.
 
-- `AgentIdentity` belongs to one `ComputingEquipment` and has a server-generated `agent_uid`. The device-generated
+- `AgentIdentity` belongs to one `Equipment` with a computing profile and has a server-generated `agent_uid`. The device-generated
   Ed25519 public key is stored for proof verification; no private key is accepted or persisted by the backend.
 - An identity is pending, active, revoked, or decommissioned. A conditional unique constraint permits at most one
   pending or active identity per equipment, and a check requires an active identity to have a public key and digest.

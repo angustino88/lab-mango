@@ -21,11 +21,13 @@ from core.labs.models import (
     BookingVolumeObservation,
     ComputingActivity,
     ComputingActivityStatus,
+    Equipment,
     EquipmentAssignment,
     EquipmentCategory,
+    EquipmentCondition,
+    EquipmentEvent,
+    EquipmentEventAxis,
     EquipmentKind,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     LaboratoryVisitEvent,
     LabProject,
     LabSessionLog,
@@ -34,7 +36,7 @@ from core.labs.models import (
     StorageQuotaMeasurement,
     VisitorVolumeObservation,
 )
-from core.labs.models.resource.equipment.computing import ComputingEquipment, TechnicalUser
+from core.labs.models.resource.equipment.computing import ComputingProfile, TechnicalUser
 from core.users.models import URSGroup, User
 
 _LABS_ROLE_URS_IDS = iter(range(700000, 799999))
@@ -92,6 +94,8 @@ class EquipmentCategoryFactory(factory.django.DjangoModelFactory):
 
     name = "Computing"
     definition = "Computing devices and computers"
+    # Computing units carry a ComputingProfile (redesign step 6).
+    monitored = factory.LazyAttribute(lambda category: category.name == "Computing")
 
 
 class EquipmentKindFactory(factory.django.DjangoModelFactory):
@@ -103,22 +107,47 @@ class EquipmentKindFactory(factory.django.DjangoModelFactory):
     name = "Computer"
 
 
+PROFILE_FIELDS = frozenset(
+    {"hostname", "ip_address", "os_name", "disk_usage", "system_info", "monitored_devices", "rdp_file", "technical_user"}
+)
+
+
+def create_computing_equipment(**values) -> Equipment:
+    """An ``Equipment`` row of a monitored category plus its ``ComputingProfile`` (no .rdp file)."""
+    profile_values = {name: values.pop(name) for name in list(values) if name in PROFILE_FIELDS}
+    if "kind" not in values:
+        values["kind"] = EquipmentKindFactory()
+    equipment = Equipment.objects.create(**values)
+    ComputingProfile.objects.create(equipment=equipment, **profile_values)
+    return equipment
+
+
 class ComputingEquipmentFactory(factory.django.DjangoModelFactory):
+    """A computing unit: ``Equipment`` with a profile. Profile fields may be passed as keywords."""
+
     class Meta:
-        model = ComputingEquipment
+        model = Equipment
 
     sku = factory.Sequence(lambda n: f"COMP-{n:04d}")
     name = factory.Sequence(lambda n: f"Computing Station {n}")
     kind = factory.SubFactory(EquipmentKindFactory)
     os_name = "Ubuntu 22.04"
 
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        return create_computing_equipment(**kwargs)
 
-class EquipmentStatusRecordFactory(factory.django.DjangoModelFactory):
+
+class EquipmentEventFactory(factory.django.DjangoModelFactory):
+    """A history row only. Also set the unit's column when the current state matters."""
+
     class Meta:
-        model = EquipmentStatusRecord
+        model = EquipmentEvent
 
     equipment = factory.SubFactory(ComputingEquipmentFactory)
-    status = EquipmentStatus.AVAILABLE
+    axis = EquipmentEventAxis.CONDITION
+    from_value = EquipmentCondition.OPERATIONAL
+    to_value = EquipmentCondition.OUT_OF_SERVICE
 
 
 class LabProjectFactory(factory.django.DjangoModelFactory):
@@ -333,9 +362,10 @@ __all__ = [
     "BenchGroupFactory",
     "BookingVolumeObservationFactory",
     "ComputingEquipmentFactory",
+    "create_computing_equipment",
     "EquipmentCategoryFactory",
     "EquipmentKindFactory",
-    "EquipmentStatusRecordFactory",
+    "EquipmentEventFactory",
     "LabComputerFactory",
     "LabEquipmentFactory",
     "LabMonitoringFactory",

@@ -12,6 +12,7 @@ from core.users.access import (
     IsLabAdmin,
     IsLabAdminReadWrite,
     IsLabCoordinator,
+    IsLabCoordinatorOnly,
     IsLabCoordinatorReadWrite,
     IsLabMember,
     IsLabMemberReadOnly,
@@ -134,6 +135,19 @@ def resolve_notification_recipient(
     )
 
 
+def resolve_user_id_for_login_name(*, login_name: str | None) -> int | None:
+    """The active user whose username is this login name, or None (owner decision O23).
+
+    Case is ignored and a Windows ``DOMAIN\\`` prefix is dropped. No match, or more than one user
+    differing only by case, returns None: a session is never attributed to a guessed person.
+    """
+    name = (login_name or "").strip().rsplit("\\", 1)[-1].strip()
+    if not name:
+        return None
+    matches = list(User.objects.filter(username__iexact=name, is_active=True).values_list("pk", flat=True)[:2])
+    return matches[0] if len(matches) == 1 else None
+
+
 __all__ = [
     "BindEntraIdentityInput",
     "DeleteUserInput",
@@ -144,6 +158,7 @@ __all__ = [
     "IsLabAdminReadWrite",
     "IsLabCoordinator",
     "IsLabCoordinatorReadWrite",
+    "IsLabCoordinatorOnly",
     "IsLabMember",
     "IsLabMemberReadOnly",
     "LabsRole",
@@ -162,6 +177,7 @@ __all__ = [
     "effective_labs_roles",
     "has_labs_role",
     "resolve_notification_recipient",
+    "resolve_user_id_for_login_name",
     "resolve_teams_recipient",
     "users_holding_labs_role",
 ]

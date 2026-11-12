@@ -31,13 +31,12 @@ Status responses use the existing success envelope with `data.total_count`,
 `data.unknown_status_count`, and `data.statuses`. Each bucket has
 `status: {value, label}` and `resource_count`. All declared choices are included,
 even with zero inventory. Clients must tolerate future status values.
-No query parameters are accepted. Invalid queries return 400 `invalid_query`.
+No query parameters are accepted, except `category` on the equipment summary. Invalid queries return 400 `invalid_query`.
 
-Each registered equipment category has an independent route under its existing
-category namespace, for example `/api/labs/equipment/computing/summary` and
-`/api/labs/equipment/debugging/summary`. Each route counts only its registered
-equipment subtype and returns lifecycle status buckets in the standard success
-envelope. These fixed-size summaries accept no query parameters. The generic
+Equipment has one summary route for every category (redesign step 6):
+`/api/labs/equipment/status-summary` counts display-status buckets and accepts one
+optional query parameter, `category=<id>`, to count a single category. The former
+per-category routes (`/api/labs/equipment/<category>/summary`) are removed. The generic
 `equipment/categories/summary` route is not provided. License category counts
 remain a separate paginated collection at `/api/labs/licenses/categories/summary`.
 

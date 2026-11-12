@@ -1,18 +1,16 @@
 """One wire contract across ResourceModel descendants and equipment subtypes."""
 
-from dataclasses import replace
 
 import pytest
 from django.http import QueryDict
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 
-from core.common.api.filtering import Filter, PositiveIDField
 from core.labs.features.benches.api.filters import BENCH_FILTERS
 from core.labs.features.benches.api.views import BenchFiltersAPIView
 from core.labs.features.benches.queries.selectors import list_benches
+from core.labs.features.equipment.api.collection import EquipmentCollectionAPIView, EquipmentFiltersAPIView
 from core.labs.features.equipment.api.resource_filters import EQUIPMENT_FILTERS
-from core.labs.features.equipment.api.views import EquipmentFiltersAPIView
 from core.labs.features.equipment.queries.equipment import list_equipment
 from core.labs.features.licenses.api.filters import LICENSE_FILTERS
 from core.labs.features.licenses.api.views import LicenseFiltersAPIView
@@ -59,7 +57,7 @@ def test_common_fields_work_for_every_resource(spec, selector):
         (RoomFiltersAPIView, ROOM_FILTERS),
         (StationFiltersAPIView, STATION_FILTERS),
         (BenchFiltersAPIView, BENCH_FILTERS),
-        (EquipmentFiltersAPIView, EQUIPMENT_FILTERS),
+        (EquipmentFiltersAPIView, EquipmentCollectionAPIView.filter_spec),
         (LicenseFiltersAPIView, LICENSE_FILTERS),
     ],
 )
@@ -83,57 +81,22 @@ def test_equipment_assignment_and_room_and_bench_extensions_compile():
         spec.apply(selector(), serializer.validated_data).query.sql_with_params()
 
 
-def test_category_equipment_views_inherit_resource_contract():
-    from core.labs.features.equipment.api.categories import build_category_urlpatterns
-    from core.labs.features.equipment.api.category_definitions import CATEGORY_DEFINITIONS
-
-    for definition in CATEGORY_DEFINITIONS.values():
-        patterns = build_category_urlpatterns(definition, module=__name__)
-        list_view = patterns[0].callback.view_class
-        fields = list_view.ListQuerySerializer().fields
-        assert {"owner_id", "group_id", "q", "ordering", "status", "assigned"} <= set(fields)
-        params = "owner_id=1,2&assigned=false"
-        if definition.key == "computing":
-            params += "&technical_user_id=1"
-        serializer = list_view.ListQuerySerializer(data=QueryDict(params))
-        assert serializer.is_valid(), serializer.errors
-        list_view.filter_spec.apply(list_view.queryset_provider(), serializer.validated_data).query.sql_with_params()
-
-
-def test_computing_category_has_its_own_validated_filters_and_shared_owner_filter():
-    from core.labs.features.equipment.api.categories import build_category_urlpatterns
-    from core.labs.features.equipment.api.category_definitions import CATEGORY_DEFINITIONS
-
-    patterns = build_category_urlpatterns(CATEGORY_DEFINITIONS["computing"], module=__name__)
-    list_view = patterns[0].callback.view_class
-    filters_view = next(pattern.callback.view_class for pattern in patterns if pattern.name == "computing-filters")
-    serializer = list_view.ListQuerySerializer(data=QueryDict("owner_id=7,8&technical_user_id=3&q=server"))
+def test_equipment_collection_inherits_resource_contract_and_typed_filters():
+    """One collection for every category (step 6): shared and typed filters compile to SQL."""
+    fields = EquipmentCollectionAPIView.ListQuerySerializer().fields
+    assert {"owner_id", "group_id", "q", "ordering", "status", "assigned", "category"} <= set(fields)
+    assert {"material_id", "size_id", "resolution_id", "protocol_id", "customer_id", "technical_user_id"} <= set(fields)
+    params = QueryDict("owner_id=7,8&technical_user_id=3&size_id=4&q=server")
+    serializer = EquipmentCollectionAPIView.ListQuerySerializer(data=params)
     assert serializer.is_valid(), serializer.errors
-    queryset = list_view.filter_spec.apply(list_view.queryset_provider(), serializer.validated_data)
-    sql, params = queryset.query.sql_with_params()
-    assert "owner_id" in sql and "technical_user_id" in sql
-    assert 7 in params and 8 in params and 3 in params and "%server%" in params
-    metadata = filters_view.filter_spec.metadata()
-    assert {item["name"] for item in metadata["filters"]} >= {"owner_id", "technical_user_id"}
-    other_patterns = build_category_urlpatterns(CATEGORY_DEFINITIONS["accessory"], module=__name__)
-    other_view = other_patterns[0].callback.view_class
-    assert "technical_user_id" not in other_view.ListQuerySerializer().fields
-
-
-@pytest.mark.parametrize(
-    "filter_name,lookup",
-    [("os_name", "os_name"), ("interfaces", "interfaces")],
-)
-def test_category_filters_reject_non_foreign_key_fields(filter_name, lookup):
-    from core.labs.features.equipment.api.categories import build_category_urlpatterns
-    from core.labs.features.equipment.api.category_definitions import CATEGORY_DEFINITIONS
-
-    definition = replace(
-        CATEGORY_DEFINITIONS["computing" if filter_name == "os_name" else "display"],
-        list_filters=(Filter(filter_name, PositiveIDField(), lookup, "reference"),),
+    queryset = EquipmentCollectionAPIView.filter_spec.apply(
+        EquipmentCollectionAPIView.queryset_provider(), serializer.validated_data
     )
-    with pytest.raises(ValueError, match="direct foreign-key"):
-        build_category_urlpatterns(definition, module=__name__)
+    sql, query_params = queryset.query.sql_with_params()
+    assert "owner_id" in sql and "technical_user_id" in sql and "size_id" in sql
+    assert 7 in query_params and 8 in query_params and 3 in query_params and "%server%" in query_params
+    metadata = EquipmentFiltersAPIView.filter_spec.metadata()
+    assert {item["name"] for item in metadata["filters"]} >= {"owner_id", "technical_user_id", "category"}
 
 
 def test_all_resource_openapi_contracts_validate():
@@ -157,7 +120,7 @@ def test_all_resource_openapi_contracts_validate():
         assert parameters["owner_id"]["schema"]["type"] == "string"
         assert {"q", "ordering", "status"} <= parameters.keys()
         assert "get" in schema["paths"][f"/{collection}/filters"]
-    category_path = schema["paths"]["/equipment/computing"]["get"]
+    category_path = schema["paths"]["/equipment"]["get"]
     category_parameters = {item["name"]: item for item in category_path["parameters"]}
     assert {"owner_id", "technical_user_id"} <= category_parameters.keys()
 

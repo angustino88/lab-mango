@@ -27,7 +27,7 @@ from core.agents.exceptions import (
     EnrollmentGrantInvalid,
 )
 from core.agents.models import AgentIdentity, EnrollmentGrant
-from core.labs.models import ComputingEquipment
+from core.labs.models import Equipment
 from core.routing.public import publish_agent_identity
 
 GRANT_PREFIX = "eg_"
@@ -190,10 +190,10 @@ def create_enrollment_grant(
         raise ValueError("Enrollment grant TTL must be between 1 and 60 minutes.")
 
     try:
-        equipment = ComputingEquipment.objects.select_for_update().get(
-            uid=command.equipment_uid, deleted_at__isnull=True
+        equipment = Equipment.objects.select_for_update(of=("self",)).get(
+            uid=command.equipment_uid, deleted_at__isnull=True, computing_profile__isnull=False
         )
-    except ComputingEquipment.DoesNotExist as error:
+    except Equipment.DoesNotExist as error:
         raise AgentEquipmentNotFound("Computing equipment was not found.") from error
     # Expired bootstrap identities are never valid credentials and should not strand re-enrollment.
     now = timezone.now()

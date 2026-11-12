@@ -13,24 +13,8 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 
 from config.features.schema.urls import SchemaAPIView
 
-CATEGORIES = (
-    "accessory",
-    "computing",
-    "debugging",
-    "display",
-    "furniture",
-    "instrument",
-    "laboratory",
-    "mechanical",
-    "networking",
-    "other",
-    "power",
-    "sample",
-)
-REFERENCE_PATHS = (
-    "/api/labs/equipment/reference-data",
-    *(f"/api/labs/equipment/{category}/reference-data" for category in CATEGORIES),
-)
+# One reference-data route for every category since redesign step 6.
+REFERENCE_PATHS = ("/api/labs/equipment/reference-data",)
 SCHEMA_MEDIA_TYPES = (
     "application/vnd.oai.openapi",
     "application/yaml",
@@ -57,7 +41,8 @@ def test_equipment_reference_docs_match_anonymous_denial(endpoint):
     view_class = getattr(callback, "view_class")
     document = SchemaGenerator(patterns=[path(endpoint.lstrip("/"), view_class.as_view())]).get_schema(public=True)
     operation = document["paths"][endpoint]["get"]
-    assert set(operation["responses"]) == {"200", "401"}
+    # 400 documents an invalid optional ``category`` query parameter.
+    assert set(operation["responses"]) == {"200", "400", "401"}
     assert_error(document, operation["responses"]["401"])
     request = APIRequestFactory().get(endpoint)
     response = async_to_sync(callback)(request)

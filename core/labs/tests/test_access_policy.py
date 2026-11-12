@@ -3,6 +3,8 @@
 * No Labs role: nothing.
 * Plain Labs user: reads the dashboard and the leaderboard (never writes there); reads and writes bench
   bookings (own bookings are enforced per object).
+* Plain Labs user also reads the organisation lookups (departments, resource groups) other screens need
+  (equipment R9, owner decision 2026-11-10).
 * Coordinator and admin: everything.
 
 The test walks the URL configuration, so a new Labs route that is not covered fails here.
@@ -16,6 +18,7 @@ from django.urls import get_resolver
 from django.urls.resolvers import URLPattern, URLResolver
 from rest_framework.test import APIClient, APIRequestFactory
 
+from core.labs.features.equipment.api.common import ORGANIZATION_PERMISSIONS
 from core.users.models import URSGroup
 from tests.factories import UserFactory
 
@@ -78,7 +81,7 @@ def test_every_labs_route_follows_the_policy():
         read = "GET" in methods
         writes = [m for m in methods if m != "GET"]
         if read:
-            expected_plain = feature in MEMBER_READ_FEATURES
+            expected_plain = feature in MEMBER_READ_FEATURES or view_class.permission_classes == ORGANIZATION_PERMISSIONS
             if _permits(view_class, no_role, "GET"):
                 problems.append(f"{route}: no-role user can read")
             if _permits(view_class, plain, "GET") is not expected_plain:

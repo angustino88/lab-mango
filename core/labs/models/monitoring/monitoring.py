@@ -22,7 +22,7 @@ class MonitoringEvent(AgentReportedModel, TimeStampedModel):
     """Immutable event received from one monitored computer agent."""
 
     computer = models.ForeignKey(
-        "labs.ComputingEquipment",
+        "labs.Equipment",
         related_name="monitoring_events",
         on_delete=models.PROTECT,
     )
@@ -100,14 +100,9 @@ class MonitoringEvent(AgentReportedModel, TimeStampedModel):
     def technical_user(self) -> str:
         if isinstance(self.payload, dict) and "technical_user" in self.payload:
             return str(self.payload["technical_user"])
-        if (
-            self.computer_id
-            and hasattr(self, "computer")
-            and self.computer
-            and getattr(self.computer, "technical_user", None)
-        ):
-            return self.computer.technical_user.username
-        return ""
+        computer = self.computer if self.computer_id and hasattr(self, "computer") else None
+        technical_user = getattr(getattr(computer, "computing_profile", None), "technical_user", None)
+        return technical_user.username if technical_user is not None else ""
 
     @property
     def remote_user(self) -> str:

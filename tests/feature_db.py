@@ -27,7 +27,7 @@ def django_db_setup(django_db_blocker):
         BenchType,
         BookingVolumeObservation,
         EquipmentAssignment,
-        EquipmentStatusRecord,
+        EquipmentEvent,
         ExpensePayment,
         LaboratoryVisitEvent,
         LabSessionLog,
@@ -42,7 +42,7 @@ def django_db_setup(django_db_blocker):
     )
 
     pending = [
-        Bench, BenchFavorite, BenchGroup, BenchType, EquipmentAssignment, EquipmentStatusRecord,
+        Bench, BenchFavorite, BenchGroup, BenchType, EquipmentAssignment, EquipmentEvent,
         Station, StationSlot, StationStatusRecord, StationType,
         ActiveLaboratoryObservation, ActiveUserObservation, BookingVolumeObservation,
         ExpensePayment, LaboratoryVisitEvent, LabSessionLog, PurchaseItemResource,

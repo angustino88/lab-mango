@@ -19,7 +19,7 @@
 | Station/room slots and physical status | Locations | Benches calls location behavior when a location-owned mutation is required |
 | Booking/availability | Bookings | A bench's lifecycle field is not a reservation |
 
-**Verified model location:** [bench models](../../../models/resource/bench/bench.py). `Bench.LIFECYCLE_STATUSES` defines `planned`, `available`, `reserved`, `active`, `maintenance`, `out_of_service`, and `retired`. `Bench.clean()` checks station-slot ownership, slot status, bench-type compatibility, and power/load capacity. Bench has an optional `setup_location` station relation and an optional one-to-one station-slot relation. Its query selector currently prefetches active equipment assignments for projections.
+**Verified model location:** [bench models](../../../models/resource/bench/bench.py). `Bench.LIFECYCLE_STATUSES` defines `planned`, `in_service`, `out_of_service`, and `retired` (check `bench_lifecycle_valid`; redesign step 5). "Reserved" and "active" are computed from bookings and computing activity, never stored. Only an `in_service` bench accepts bookings. `Bench.clean()` checks station-slot ownership, slot status, bench-type compatibility, and power/load capacity. Bench has an optional `setup_location` station relation and an optional one-to-one station-slot relation. Its query selector currently prefetches active equipment assignments for projections.
 
 ## 3. Public interface and dependencies
 

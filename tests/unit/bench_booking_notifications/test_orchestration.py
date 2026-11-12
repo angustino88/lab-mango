@@ -1,8 +1,9 @@
-"""Exercise use-case hooks, collectors and beat provisioning offline."""
+"""Exercise use-case hooks, collectors, beat provisioning and migration state offline."""
 
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
+from django.db.migrations.state import ModelState
 from django.test import override_settings
 
 from core.labs.features.bench_bookings.application import create_booking as create_module
@@ -17,6 +18,7 @@ from core.labs.features.bench_bookings.tasks import (
 from core.labs.features.equipment.contracts import InactiveEquipmentSnapshot
 from core.labs.features.equipment.queries.inactivity_notifications import inactive_equipment_candidates
 from core.labs.management.commands import provision_booking_notification_schedules as schedules
+from core.labs.models import BookingNotification
 
 from .test_notifications import FLAGS, NOW, TEAMS_RECIPIENT, booking, notice
 
@@ -174,6 +176,29 @@ def test_beat_provision_disabled_and_idempotent_keys():
         assert tasks.call_count == 4
         assert all(not call.kwargs["defaults"]["enabled"] for call in tasks.call_args_list)
         assert [call.kwargs["name"] for call in tasks.call_args_list[:2]] == [row[0] for row in schedules.SCHEDULES]
+
+
+def test_migration_graph_matches_current_booking_notification_model_without_connection():
+    # Compare the model against the state projected from the whole migration graph.
+    from django.db.migrations.loader import MigrationLoader
+
+    projected = MigrationLoader(None, ignore_no_migrations=True).project_state()
+    expected = ModelState.from_model(BookingNotification)
+    actual = projected.models[("labs", "bookingnotification")]
+
+    # Compare by meaning: AddField/AddConstraint append, so declaration order differs harmlessly.
+    def fields(state):
+        return {name: field.deconstruct()[1:] for name, field in state.fields.items()}
+
+    def constraints(state):
+        return {constraint.name: constraint.deconstruct() for constraint in state.options.get("constraints", [])}
+
+    def other_options(state):
+        return {key: value for key, value in state.options.items() if key != "constraints"}
+
+    assert fields(expected) == fields(actual)
+    assert constraints(expected) == constraints(actual)
+    assert other_options(expected) == other_options(actual)
 
 
 def test_real_orm_projection_builds_without_database_access():

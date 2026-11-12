@@ -3,19 +3,22 @@
 from typing import Any
 
 from django.contrib.auth import get_user_model
-from django.db import models
-from django.db.models import CharField, Exists, OuterRef, Q, QuerySet, Subquery
-from django.db.models.functions import Cast
+from django.db.models import Case, CharField, Exists, OuterRef, Prefetch, Q, QuerySet, Subquery, Value, When
+from django.db.models.functions import Cast, Now
 
 from core.labs.features.equipment.contracts import ActiveEquipmentBenchAssignment
 from core.labs.models import (
+    BookingStatus,
     Equipment,
+    EquipmentBooking,
     EquipmentCategory,
+    EquipmentCondition,
+    EquipmentDisplayStatus,
     EquipmentKind,
+    EquipmentLifecycleState,
+    EquipmentLoan,
     EquipmentManufacturer,
     EquipmentProductModel,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     EquipmentType,
     PurchaseItemResource,
     ResourceServiceRecord,
@@ -24,7 +27,53 @@ from core.labs.models.resource.base.generic_links import resource_root_model
 from core.labs.models.resource.base.resource import ResourceGroup
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
-LATEST_STATUS = EquipmentStatusRecord.objects.filter(equipment_id=OuterRef("pk")).order_by("-created", "-id")
+
+def display_status_expression() -> Case:
+    """``display_status`` from the stored facts; first matching row wins (redesign, display status).
+
+    Needs ``latest_calibration_due_at`` on the queryset.
+    """
+    on_loan = Exists(EquipmentLoan.objects.filter(equipment_id=OuterRef("pk"), returned_at__isnull=True))
+    on_bench = Exists(EquipmentAssignment.objects.filter(equipment_id=OuterRef("pk"), unassigned_at__isnull=True))
+    calibration_overdue = Q(calibration_required=True) & (
+        Q(latest_calibration_due_at__isnull=True) | Q(latest_calibration_due_at__lt=Now())
+    )
+    status = EquipmentDisplayStatus
+    # Q() wraps `condition` lookups: When() has its own `condition` parameter.
+    return Case(
+        When(lifecycle_state=EquipmentLifecycleState.PLANNED, then=Value(status.ON_ORDER)),
+        When(lifecycle_state=EquipmentLifecycleState.TRANSFERRED_OUT, then=Value(status.TRANSFERRED)),
+        When(lifecycle_state=EquipmentLifecycleState.RETIRED, then=Value(status.RETIRED)),
+        When(lifecycle_state=EquipmentLifecycleState.LOST, then=Value(status.LOST)),
+        When(Q(condition=EquipmentCondition.OUT_OF_SERVICE), then=Value(status.BROKEN)),
+        When(Q(condition=EquipmentCondition.IN_MAINTENANCE), then=Value(status.MAINTENANCE)),
+        When(on_loan, then=Value(status.BORROWED)),
+        When(on_bench, then=Value(status.IN_USE)),
+        When(calibration_overdue, then=Value(status.CALIBRATION_OVERDUE)),
+        default=Value(status.AVAILABLE),
+        output_field=CharField(),
+    )
+
+
+def _latest_calibration(queryset) -> QuerySet:
+    # Latest calibration, matched exactly like ResourceModel.service_records (root and own
+    # content types). Filter by app_label/model (joined in SQL) so building it needs no DB access.
+    linked_models = {resource_root_model(queryset.model), queryset.model._meta.concrete_model}
+    return ResourceServiceRecord.objects.filter(
+        resource_content_type__app_label=Equipment._meta.app_label,
+        resource_content_type__model__in=sorted(model._meta.model_name for model in linked_models),
+        resource_object_id=Cast(OuterRef("pk"), CharField()),
+        kind=ResourceServiceRecord.Kind.CALIBRATION,
+    ).order_by("-performed_at", "-id")
+
+
+def with_display_status(queryset):
+    """Annotate ``display_status`` (and the calibration due date it needs) for filters and counts."""
+    if "latest_calibration_due_at" not in queryset.query.annotations:
+        queryset = queryset.annotate(
+            latest_calibration_due_at=Subquery(_latest_calibration(queryset).values("next_due_at")[:1])
+        )
+    return queryset.annotate(display_status=display_status_expression())
 
 
 def with_equipment_info(queryset):
@@ -34,22 +83,12 @@ def with_equipment_info(queryset):
         resource_type__model=Equipment._meta.model_name,
         resource_id=OuterRef("pk"),
     )
-    # Latest calibration, matched exactly like ResourceModel.service_records (root and own
-    # content types). Read by Equipment.last_calibrated_at / next_calibration_due_at /
-    # calibration_overdue, which otherwise run a query each per serialized row.
-    # Filter by app_label/model (joined in SQL) so building the queryset needs no DB access.
-    linked_models = {resource_root_model(queryset.model), queryset.model._meta.concrete_model}
-    calibration = ResourceServiceRecord.objects.filter(
-        resource_content_type__app_label=Equipment._meta.app_label,
-        resource_content_type__model__in=sorted(model._meta.model_name for model in linked_models),
-        resource_object_id=Cast(OuterRef("pk"), CharField()),
-        kind=ResourceServiceRecord.Kind.CALIBRATION,
-    ).order_by("-performed_at", "-id")
-    return queryset.annotate(
+    # Read by Equipment.last_calibrated_at / next_calibration_due_at / calibration_overdue,
+    # which otherwise run a query each per serialized row.
+    calibration = _latest_calibration(queryset)
+    queryset = queryset.annotate(
         latest_calibration_at=Subquery(calibration.values("performed_at")[:1]),
         latest_calibration_due_at=Subquery(calibration.values("next_due_at")[:1]),
-        current_status=Subquery(LATEST_STATUS.values("status")[:1]),
-        current_status_metadata=Subquery(LATEST_STATUS.values("metadata")[:1]),
         acquisition_price=Subquery(acquisition.values("acquisition_price")[:1]),
         acquisition_currency=Subquery(acquisition.values("purchase_item__purchase__currency")[:1]),
         has_active_assignment=Exists(
@@ -58,6 +97,55 @@ def with_equipment_info(queryset):
                 unassigned_at__isnull=True,
             )
         ),
+        on_loan=Exists(EquipmentLoan.objects.filter(equipment_id=OuterRef("pk"), returned_at__isnull=True)),
+        loan_overdue=Exists(
+            EquipmentLoan.objects.filter(equipment_id=OuterRef("pk"), returned_at__isnull=True, due_at__lt=Now())
+        ),
+    )
+    return with_display_status(queryset)
+
+
+ACTIVE_PLACEMENT_ATTR = "active_placements"
+ACTIVE_LOAN_ATTR = "active_loans"
+UPCOMING_RESERVATIONS_ATTR = "upcoming_reservations"
+
+
+def with_active_placement(queryset: QuerySet) -> QuerySet:
+    """Prefetch each unit's active placement (bench, station, room, or note) in one query per page."""
+    return queryset.prefetch_related(
+        Prefetch(
+            "bench_assignments",
+            queryset=EquipmentAssignment.all_placements.filter(unassigned_at__isnull=True).select_related(
+                "bench", "station", "room"
+            ),
+            to_attr=ACTIVE_PLACEMENT_ATTR,
+        )
+    )
+
+
+def with_active_loan(queryset: QuerySet) -> QuerySet:
+    """Prefetch each unit's open loan with its borrower in one query per page."""
+    return queryset.prefetch_related(
+        Prefetch(
+            "loans",
+            queryset=EquipmentLoan.objects.filter(returned_at__isnull=True).select_related(
+                "batch", "batch__borrower", "equipment"
+            ),
+            to_attr=ACTIVE_LOAN_ATTR,
+        )
+    )
+
+
+def with_upcoming_reservations(queryset: QuerySet) -> QuerySet:
+    """Prefetch each item's reserved, not yet ended reservations in one query per page."""
+    return queryset.prefetch_related(
+        Prefetch(
+            "bookings",
+            queryset=EquipmentBooking.objects.filter(status=BookingStatus.RESERVED, ends_at__gt=Now())
+            .select_related("batch", "batch__borrower")
+            .order_by("starts_at", "pk"),
+            to_attr=UPCOMING_RESERVATIONS_ATTR,
+        )
     )
 
 
@@ -85,7 +173,7 @@ def list_equipment(
         )
         .order_by("kind__category__name", "kind__name", "name", "id")
     )
-    queryset = with_equipment_info(queryset)
+    queryset = with_upcoming_reservations(with_active_loan(with_active_placement(with_equipment_info(queryset))))
 
     if category:
         queryset = queryset.filter(kind__category_id=category)
@@ -97,7 +185,7 @@ def list_equipment(
     if manufacturer:
         queryset = queryset.filter(manufacturer_id=manufacturer)
     if status:
-        queryset = queryset.filter(current_status=status)
+        queryset = queryset.filter(display_status=status)
     if assigned is not None:
         active_assignment = EquipmentAssignment.objects.filter(
             equipment_id=OuterRef("pk"),
@@ -121,8 +209,8 @@ def list_equipment(
 
 
 def get_equipment(equipment_id: int) -> Equipment:
-    """Return one visible equipment record with the list projection applied."""
-    return list_equipment().get(id=equipment_id)
+    """Return one visible equipment record with the collection projection applied."""
+    return equipment_queryset().get(id=equipment_id)
 
 
 def get_equipment_for_mapping(*, equipment_id: int) -> Equipment | None:
@@ -223,89 +311,63 @@ def active_bench_assignment_mapping_rows(*, bench_ids=(), equipment_ids=(), stat
     )
 
 
-def equipment_reference_data() -> dict[str, QuerySet]:
-    """Return active reference rows used by the generic equipment form."""
-    return {
-        "categories": EquipmentCategory.objects.filter(active=True),
-        "kinds": EquipmentKind.objects.filter(active=True, category__active=True),
-        "types": EquipmentType.objects.filter(active=True, kind__active=True),
-        "manufacturers": EquipmentManufacturer.objects.filter(active=True),
-        "product_models": EquipmentProductModel.objects.filter(active=True, manufacturer__active=True),
-    }
+# Typed foreign keys and the computing profile read by the equipment collection (step 6).
+TYPED_JOINS = ("material", "size", "resolution", "protocol", "customer", "computing_profile__technical_user", "activity")
+TYPED_PREFETCHES = ("interfaces", "characteristics")
 
 
-def category_queryset(model: type[models.Model], fields: tuple[str, ...], *, related: tuple[str, ...] = ()):
-    """Build a category list projection using its declared relation fields.
+def equipment_queryset() -> QuerySet[Equipment]:
+    """List and detail projection of the single equipment collection.
 
-    ``related`` names extra reverse one-to-one relations to join for detail projections.
+    ``list_equipment`` plus the typed references, the computing profile and its activity (one
+    joined query) and two prefetches for interfaces and characteristics.
     """
-    joins = [
-        "kind",
-        "kind__category",
-        "type",
-        "manufacturer",
-        "product_model",
-        "owner",
-        "department",
-        "group",
-        *related,
-    ]
-    prefetches = []
-    for name in fields:
-        field = model._meta.get_field(name)
-        if field.many_to_many:
-            prefetches.append(name)
-        elif field.many_to_one:
-            joins.append(name)
-    return with_equipment_info(
-        model.objects.filter(deleted_at__isnull=True)
-        .select_related(*joins)
-        .prefetch_related(*prefetches)
-        .order_by("name", "sku", "pk")
-    )
+    return list_equipment().select_related(*TYPED_JOINS).prefetch_related(*TYPED_PREFETCHES)
 
 
-def category_reference_data(
-    category_key: str,
-    lookups: tuple[tuple[str, type[models.Model], str], ...],
-) -> dict[str, QuerySet]:
-    """Return reference rows needed to create or edit category equipment."""
-    # Match the stable category key; rows not migrated to a key fall back to the name,
-    # mirroring EquipmentCategory.effective_key. Renaming a category must not hide its kinds.
-    by_key = Q(key=category_key) | Q(key__isnull=True, name__iexact=category_key)
-    kinds = EquipmentKind.objects.filter(
-        Q(category__key=category_key) | Q(category__key__isnull=True, category__name__iexact=category_key),
-        active=True,
-        category__active=True,
-    ).select_related("category")
-    active_category = EquipmentCategory.objects.filter(by_key, active=True)
-    types = EquipmentType.objects.filter(
-        active=True,
-        kind__active=True,
-        kind__in=kinds,
+def equipment_form_reference_data(*, category_id: int | None = None) -> dict[str, QuerySet]:
+    """Reference rows for the create and edit form, narrowed to one category when given."""
+    kinds = EquipmentKind.objects.filter(active=True, category__active=True).select_related("category")
+    categories = EquipmentCategory.objects.filter(active=True)
+    manufacturers = EquipmentManufacturer.objects.filter(active=True)
+    product_models = EquipmentProductModel.objects.filter(
+        active=True, manufacturer__active=True, equipment_type__active=True, equipment_type__kind__active=True
     )
-    manufacturers = EquipmentManufacturer.objects.filter(
-        active=True,
-        categories__in=active_category,
-    ).distinct()
-    payload = {
+    if category_id is not None:
+        categories = categories.filter(pk=category_id)
+        kinds = kinds.filter(category_id=category_id)
+        manufacturers = manufacturers.filter(categories__in=categories).distinct()
+        product_models = product_models.filter(
+            manufacturer__categories__in=categories, equipment_type__kind__in=kinds
+        ).distinct()
+    from core.labs.models.resource.equipment import (
+        DisplayResolution,
+        DisplaySize,
+        EquipmentInterface,
+        Material,
+        NetworkingProtocol,
+        SampleCharacteristic,
+        SampleCustomer,
+        TechnicalUser,
+    )
+
+    return {
+        "categories": categories,
         "kinds": kinds,
-        "types": types,
+        "types": EquipmentType.objects.filter(active=True, kind__active=True, kind__in=kinds),
         "manufacturers": manufacturers,
-        "product_models": EquipmentProductModel.objects.filter(
-            active=True,
-            manufacturer__active=True,
-            manufacturer__categories__in=active_category,
-            equipment_type__active=True,
-            equipment_type__kind__active=True,
-            equipment_type__kind__in=kinds,
-            equipment_type__kind__category__in=active_category,
-        ).distinct(),
+        "product_models": product_models,
         "groups": ResourceGroup.objects.filter(active=True),
         "owners": get_user_model().objects.filter(is_active=True).order_by("username", "pk"),
+        "materials": Material.objects.all(),
+        "sizes": DisplaySize.objects.all(),
+        "resolutions": DisplayResolution.objects.all(),
+        "protocols": NetworkingProtocol.objects.all(),
+        "customers": SampleCustomer.objects.all(),
+        "interfaces": EquipmentInterface.objects.all(),
+        "characteristics": SampleCharacteristic.objects.all(),
+        "technical_users": TechnicalUser.objects.all(),
     }
-    payload.update({key: model.objects.all() for key, model, _ in lookups})
-    return payload
 
 
 def list_equipment_options(
@@ -319,7 +381,7 @@ def list_equipment_options(
     equipment_type: int | None = None,
     manufacturer_id: int | None = None,
     manufacturer: int | None = None,
-    lifecycle_status: str | None = None,
+    lifecycle_state: str | None = None,
     status: str | None = None,
     assigned: bool | None = None,
     q: str | None = None,
@@ -343,7 +405,6 @@ def list_equipment_options(
     kind_val = kind_id if kind_id is not None else kind
     type_val = type_id if type_id is not None else equipment_type
     mfr_val = manufacturer_id if manufacturer_id is not None else manufacturer
-    status_val = lifecycle_status if lifecycle_status is not None else status
     search_val = q or search
 
     cond = Q(deleted_at__isnull=True)
@@ -375,18 +436,18 @@ def list_equipment_options(
         else:
             cond &= ~Exists(active_assignment)
 
-    # Assignable filter: unassigned + available status
+    # Assignable: available right now (in service, operational, not on a bench, calibrated).
+    if assignable is not None or status:
+        queryset = with_display_status(queryset)
     if assignable is not None:
-        queryset = queryset.annotate(current_status=Subquery(LATEST_STATUS.values("status")[:1]))
-        if assignable:
-            cond &= ~Exists(active_assignment) & Q(current_status=EquipmentStatus.AVAILABLE)
-        else:
-            cond &= Exists(active_assignment) | ~Q(current_status=EquipmentStatus.AVAILABLE)
+        available = Q(display_status=EquipmentDisplayStatus.AVAILABLE)
+        cond &= available if assignable else ~available
 
-    if status_val:
-        if "current_status" not in queryset.query.annotations:
-            queryset = queryset.annotate(current_status=Subquery(LATEST_STATUS.values("status")[:1]))
-        cond &= Q(current_status=status_val)
+    if status:
+        cond &= Q(display_status=status)
+
+    if lifecycle_state:
+        cond &= Q(lifecycle_state=lifecycle_state)
 
     if search_val:
         cond &= (
@@ -397,93 +458,6 @@ def list_equipment_options(
             | Q(kind__name__icontains=search_val)
             | Q(manufacturer__name__icontains=search_val)
             | Q(product_model__name__icontains=search_val)
-        )
-
-    query_filter = cond
-    if include_ids:
-        query_filter |= Q(pk__in=include_ids, deleted_at__isnull=True)
-
-    return queryset.filter(query_filter).only("id", "sku", "name").order_by("name", "id")
-
-
-def category_options_queryset(
-    model: type[models.Model],
-    fields: tuple[str, ...] = (),
-    *,
-    assignable: bool | None = None,
-    kind_id: int | None = None,
-    kind: str | int | None = None,
-    type_id: int | None = None,
-    equipment_type: int | None = None,
-    manufacturer_id: int | None = None,
-    manufacturer: int | None = None,
-    lifecycle_status: str | None = None,
-    status: str | None = None,
-    assigned: bool | None = None,
-    q: str | None = None,
-    search: str | None = None,
-    include_ids: Any = None,
-    actor: Any = None,
-) -> QuerySet:
-    """Return category equipment options for selectors, projecting only id, sku, and name.
-
-    Reserved for selector data: GET /api/<resource>/options/.
-    Ordered stably by name. Uses Exists(...) for has/has-not filters.
-    """
-    queryset = model.objects.filter(deleted_at__isnull=True)
-
-    active_assignment = EquipmentAssignment.objects.filter(
-        equipment_id=OuterRef("pk"),
-        unassigned_at__isnull=True,
-    )
-
-    kind_val = kind_id if kind_id is not None else kind
-    type_val = type_id if type_id is not None else equipment_type
-    mfr_val = manufacturer_id if manufacturer_id is not None else manufacturer
-    status_val = lifecycle_status if lifecycle_status is not None else status
-    search_val = q or search
-
-    cond = Q(deleted_at__isnull=True)
-
-    if kind_val:
-        kind_filter = (
-            Q(kind_id=kind_val) if isinstance(kind_val, int) or str(kind_val).isdigit() else Q(kind__key=kind_val)
-        )
-        cond &= kind_filter
-
-    if type_val:
-        cond &= Q(type_id=type_val)
-
-    if mfr_val:
-        cond &= Q(manufacturer_id=mfr_val)
-
-    # Has / has-not filter using Exists(...)
-    if assigned is not None:
-        if assigned:
-            cond &= Exists(active_assignment)
-        else:
-            cond &= ~Exists(active_assignment)
-
-    # Assignable filter: unassigned + available status
-    if assignable is not None:
-        queryset = queryset.annotate(current_status=Subquery(LATEST_STATUS.values("status")[:1]))
-        if assignable:
-            cond &= ~Exists(active_assignment) & Q(current_status=EquipmentStatus.AVAILABLE)
-        else:
-            cond &= Exists(active_assignment) | ~Q(current_status=EquipmentStatus.AVAILABLE)
-
-    if status_val:
-        if "current_status" not in queryset.query.annotations:
-            queryset = queryset.annotate(current_status=Subquery(LATEST_STATUS.values("status")[:1]))
-        cond &= Q(current_status=status_val)
-
-    if search_val:
-        cond &= (
-            Q(sku__icontains=search_val)
-            | Q(name__icontains=search_val)
-            | Q(serial_number__icontains=search_val)
-            | Q(log_label__icontains=search_val)
-            | Q(kind__name__icontains=search_val)
         )
 
     query_filter = cond

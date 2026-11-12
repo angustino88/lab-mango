@@ -1,7 +1,4 @@
-"""A unique disposable database with only the booking-notification tables and their dependencies.
-
-Migrations were squashed on 2026-11-12, so the notification table is created from the model.
-"""
+"""A unique disposable database; dependency tables plus the booking notification table."""
 
 from uuid import uuid4
 
@@ -43,6 +40,8 @@ def django_db_setup(django_db_blocker):
             with connection.schema_editor() as editor:
                 for model in sorted(models, key=lambda value: value._meta.label):
                     editor.create_model(model)
+            # Migrations were reset to a single initial set; build the table from the model.
+            with connection.schema_editor() as editor:
                 editor.create_model(BookingNotification)
             yield
         finally:

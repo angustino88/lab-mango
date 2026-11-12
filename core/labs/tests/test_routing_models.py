@@ -172,5 +172,3 @@ def test_routing_entity_enforces_live_and_tombstone_payload_shape():
         deleted_at=timezone.now(),
     )
     assert tombstone.pk is not None
-
-

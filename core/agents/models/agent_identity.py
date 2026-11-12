@@ -29,7 +29,7 @@ class AgentIdentity(TimeStampedModel, UserStampedModel):
 
     agent_uid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     equipment = models.ForeignKey(
-        "labs.ComputingEquipment",
+        "labs.Equipment",
         related_name="agent_identities",
         on_delete=models.PROTECT,
     )

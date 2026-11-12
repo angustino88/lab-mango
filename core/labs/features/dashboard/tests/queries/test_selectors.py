@@ -18,10 +18,11 @@ from core.labs.models import (
     BookingStatus,
     ComputingActivity,
     ComputingActivityStatus,
+    Equipment,
     LicenseAssignment,
 )
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
-from core.labs.models.resource.equipment.sample import SampleCustomer, SampleEquipment
+from core.labs.models.resource.equipment.sample import SampleCustomer
 from core.labs.models.resource.license.license import (
     License,
     LicenseCategory,
@@ -80,10 +81,10 @@ class TestListDashboardBenches:
         assert bench_2.id not in ids
 
     def test_filter_by_lifecycle_status(self):
-        bench_avail = BenchFactory(lifecycle_status="available")
-        bench_maint = BenchFactory(lifecycle_status="maintenance")
+        bench_avail = BenchFactory(lifecycle_status="in_service")
+        bench_maint = BenchFactory(lifecycle_status="out_of_service")
 
-        results = list(list_dashboard_benches(lifecycle_status="available"))
+        results = list(list_dashboard_benches(lifecycle_status="in_service"))
         ids = [b.id for b in results]
 
         assert bench_avail.id in ids
@@ -141,7 +142,7 @@ class TestListDashboardBenches:
         sample_cat = EquipmentCategoryFactory(name="Sample")
         sample_kind = EquipmentKindFactory(category=sample_cat, name="Sample Kind")
         customer = SampleCustomer.objects.create(name="Acme Corp")
-        sample = SampleEquipment.objects.create(
+        sample = Equipment.objects.create(
             name="Sample Radar",
             sku="SMP-RADAR-01",
             customer=customer,
@@ -177,8 +178,8 @@ class TestListDashboardBenches:
         assert len(assignments) == 2
 
         eq_map = {a.equipment.sku: a.equipment for a in assignments}
-        assert hasattr(eq_map["SMP-RADAR-01"], "sampleequipment")
-        assert hasattr(eq_map["PC-RIG-01"], "computingequipment")
+        assert eq_map["SMP-RADAR-01"].kind.category.name == "Sample"
+        assert eq_map["PC-RIG-01"].computing_profile is not None
 
         comp_eq = eq_map["PC-RIG-01"]
         lic_assignments = getattr(comp_eq, "_active_license_assignments", [])
@@ -192,9 +193,9 @@ class TestGetDashboardSummary:
         now = timezone.now()
         user = UserFactory()
 
-        bench_1 = BenchFactory(lifecycle_status="available")
-        bench_2 = BenchFactory(lifecycle_status="active")
-        BenchFactory(lifecycle_status="maintenance")
+        bench_1 = BenchFactory(lifecycle_status="in_service")
+        bench_2 = BenchFactory(lifecycle_status="in_service")
+        BenchFactory(lifecycle_status="out_of_service")
 
         BenchFavorite.objects.create(user=user, bench=bench_1)
 
@@ -227,9 +228,8 @@ class TestGetDashboardSummary:
         assert summary["total_benches"] == 3
         assert summary["active_bookings_count"] == 1
         assert summary["favorited_benches_count"] == 1
-        assert summary["lifecycle_distribution"]["available"] == 1
-        assert summary["lifecycle_distribution"]["active"] == 1
-        assert summary["lifecycle_distribution"]["maintenance"] == 1
+        # Four stored values (redesign step 5); "active" is computed from bookings, not stored.
+        assert summary["lifecycle_distribution"] == {"planned": 0, "in_service": 2, "out_of_service": 1, "retired": 0}
         assert summary["activity_distribution"][ComputingActivityStatus.ACTIVE] == 1
         assert summary["utilization_rate"] == round((1 / 3) * 100.0, 2)
 

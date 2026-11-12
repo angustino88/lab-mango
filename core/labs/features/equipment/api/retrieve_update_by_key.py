@@ -14,10 +14,9 @@ from .common import EquipmentAPIView
 
 
 class EquipmentByKeyRetrieveUpdateAPIView(ResourceChangeLogMixin, EquipmentAPIView):
-    """Retrieve or partially update one category equipment record by SKU or UID.
+    """Retrieve or partially update one equipment record by SKU or UID.
 
-    The key is resolved against the category queryset, so only active records of
-    that category are visible. SKU and UID are immutable, so the resolved primary
+    The key is resolved against the equipment queryset, so only active records are visible. SKU and UID are immutable, so the resolved primary
     key stays valid for the write.
     """
 
@@ -53,7 +52,6 @@ class EquipmentByKeyRetrieveUpdateAPIView(ResourceChangeLogMixin, EquipmentAPIVi
                 updated = update_equipment(
                     UpdateEquipmentInput(
                         equipment_id=instance.pk,
-                        model=self.model,
                         fields=tuple(serializer.validated_data.items()),
                     ),
                     actor=actor,

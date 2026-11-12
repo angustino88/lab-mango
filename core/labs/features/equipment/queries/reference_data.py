@@ -13,14 +13,29 @@ from core.labs.models.resource.equipment.reference_data import (
     EquipmentType,
 )
 from core.reference_data.contracts import ReferenceResource
+from core.reference_data.exceptions import ReferencePermissionDenied
 from core.reference_data.public import get_reference, list_references
+from core.users.public import LabsRole, has_labs_role
+
+# Organisation lookups other screens use; every other equipment reference list is visible to
+# coordinators and administrators only (owner decisions R4, R9).
+OPEN_REFERENCE_MODELS = frozenset({"department", "resourcegroup"})
+
+
+def _ensure_can_read(resource: ReferenceResource, actor: Any) -> None:
+    if resource.model._meta.model_name in OPEN_REFERENCE_MODELS:
+        return
+    if not has_labs_role(actor, LabsRole.COORDINATOR):
+        raise ReferencePermissionDenied()
 
 
 def list_catalog_references(resource: ReferenceResource, *, actor: Any, filters: dict[str, Any]) -> QuerySet:
+    _ensure_can_read(resource, actor)
     return list_references(resource, actor=actor, filters=filters)
 
 
 def get_catalog_reference(resource: ReferenceResource, *, actor: Any, reference_id: int) -> Any:
+    _ensure_can_read(resource, actor)
     return get_reference(resource, actor=actor, reference_id=reference_id)
 
 

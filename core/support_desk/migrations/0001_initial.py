@@ -1,7 +1,7 @@
-"""Initial Support Desk schema (squashed 2026-11-12; the database had not reached production).
+"""Initial Support Desk schema: one migration (ADR 005, consolidated 2026-11-12; no deployed database).
 
-Hand-written parts: pg_trgm for the label search index, the ticket number sequence, and the
-PostgreSQL triggers that make TicketActivity append-only.
+Hand-written: pg_trgm for the label search index (first); the ticket number sequence and the
+insert-only TicketActivity trigger (last).
 """
 
 import django.contrib.postgres.indexes
@@ -10,18 +10,7 @@ import django.db.models.deletion
 import django.db.models.functions.text
 import django.utils.timezone
 from django.conf import settings
-from django.contrib.postgres.operations import TrigramExtension
 from django.db import migrations, models
-
-
-class SafeTrigramExtension(TrigramExtension):
-    """Create pg_trgm when the database role may; an existing extension is enough otherwise."""
-
-    def database_forwards(self, app_label, schema_editor, from_state, to_state):
-        try:
-            super().database_forwards(app_label, schema_editor, from_state, to_state)
-        except Exception:
-            pass
 
 
 def create_ticket_number_sequence(apps, schema_editor):
@@ -35,7 +24,8 @@ def drop_ticket_number_sequence(apps, schema_editor):
         schema_editor.execute("DROP SEQUENCE IF EXISTS support_ticket_number_seq;")
 
 
-def create_activity_trigger(apps, schema_editor):
+def create_activity_immutability_trigger(apps, schema_editor):
+    """TicketActivity rows are insert-only."""
     if schema_editor.connection.vendor == "postgresql":
         schema_editor.execute("""
             CREATE OR REPLACE FUNCTION prevent_ticket_activity_modification()
@@ -57,7 +47,7 @@ def create_activity_trigger(apps, schema_editor):
         """)
 
 
-def drop_activity_trigger(apps, schema_editor):
+def drop_activity_immutability_trigger(apps, schema_editor):
     if schema_editor.connection.vendor == "postgresql":
         schema_editor.execute("""
             DROP TRIGGER IF EXISTS trg_prevent_ticket_activity_update ON support_desk_ticketactivity;
@@ -74,7 +64,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        SafeTrigramExtension(),
+        migrations.RunSQL("CREATE EXTENSION IF NOT EXISTS pg_trgm;", reverse_sql=migrations.RunSQL.noop),
         migrations.CreateModel(
             name="SupportStatus",
             fields=[
@@ -1401,5 +1391,5 @@ class Migration(migrations.Migration):
             constraint=models.UniqueConstraint(fields=("ticket", "user"), name="unique_ticket_watcher"),
         ),
         migrations.RunPython(create_ticket_number_sequence, drop_ticket_number_sequence),
-        migrations.RunPython(create_activity_trigger, drop_activity_trigger),
+        migrations.RunPython(create_activity_immutability_trigger, drop_activity_immutability_trigger),
     ]

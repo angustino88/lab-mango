@@ -14,16 +14,16 @@ from core.labs.features.equipment.categories.computing.application import (
     mark_stale_computing_activities_offline,
     sync_computing_activity,
 )
-from core.labs.models import ComputingActivity, ComputingActivityStatus
-from core.labs.models.resource.equipment.computing import ComputingEquipment
+from core.labs.models import ComputingActivity, ComputingActivityStatus, Equipment
 from core.labs.models.resource.equipment.reference_data import EquipmentCategory, EquipmentKind
+from tests.factories import create_computing_equipment
 
 
 @pytest.fixture()
 def computing(db):
-    category = EquipmentCategory.objects.create(name="Computing", definition="Computing equipment")
+    category = EquipmentCategory.objects.create(name="Computing", definition="Computing equipment", monitored=True)
     kind = EquipmentKind.objects.create(category=category, name="Computer")
-    return ComputingEquipment.objects.create(sku="COMP-ACT-1", name="Host 1", kind=kind)
+    return create_computing_equipment(sku="COMP-ACT-1", name="Host 1", kind=kind)
 
 
 def _sync(target, /, **fields):
@@ -38,7 +38,6 @@ def test_create_computing_equipment_creates_offline_activity(computing):
     created = create_equipment(
         CreateEquipmentInput(fields=(("kind", computing.kind), ("sku", "COMP-NEW"), ("name", "New host"))),
         actor=None,
-        model=ComputingEquipment,
     )
 
     assert category.name == "Computing"
@@ -187,7 +186,7 @@ def test_stale_agent_activity_becomes_offline_only_after_strict_timeout(computin
     assert exactly_ten_minutes.status == ComputingActivityStatus.ACTIVE
 
     stale = ComputingActivity.objects.create(
-        computing=ComputingEquipment.objects.create(sku="COMP-ACT-STALE", name="Stale host", kind=computing.kind),
+        computing=create_computing_equipment(sku="COMP-ACT-STALE", name="Stale host", kind=computing.kind),
         status=ComputingActivityStatus.ACTIVE,
         last_agent_report_at=now - timedelta(minutes=10, microseconds=1),
     )
@@ -203,7 +202,7 @@ def test_stale_sweep_offlines_every_stale_status_except_offline(computing, statu
     now = timezone.now()
     target = computing
     if status != ComputingActivityStatus.FREE:
-        target = ComputingEquipment.objects.create(sku=f"COMP-{status.upper()}", name=status, kind=computing.kind)
+        target = create_computing_equipment(sku=f"COMP-{status.upper()}", name=status, kind=computing.kind)
     activity = ComputingActivity.objects.create(
         computing=target,
         status=status,
@@ -231,7 +230,7 @@ def test_stale_agent_activity_sweep_ignores_null_heartbeat_and_offline_rows(comp
         status=ComputingActivityStatus.ACTIVE,
         last_agent_report_at=None,
     )
-    computing_two = ComputingEquipment.objects.create(sku="COMP-ACT-2", name="Host 2", kind=computing.kind)
+    computing_two = create_computing_equipment(sku="COMP-ACT-2", name="Host 2", kind=computing.kind)
     already_offline = ComputingActivity.objects.create(
         computing=computing_two,
         status=ComputingActivityStatus.OFFLINE,
@@ -301,11 +300,11 @@ def test_invalid_status_is_rejected(computing):
 def test_missing_or_deleted_computer_raises_does_not_exist(computing):
     from django.utils import timezone
 
-    with pytest.raises(ComputingEquipment.DoesNotExist):
+    with pytest.raises(Equipment.DoesNotExist):
         sync_computing_activity(SyncComputingActivityInput(computing_id=0, fields=(("status", "free"),)))
 
-    ComputingEquipment.objects.filter(pk=computing.pk).update(deleted_at=timezone.now())
-    with pytest.raises(ComputingEquipment.DoesNotExist):
+    Equipment.objects.filter(pk=computing.pk).update(deleted_at=timezone.now())
+    with pytest.raises(Equipment.DoesNotExist):
         _sync(computing, status="free")
 
 

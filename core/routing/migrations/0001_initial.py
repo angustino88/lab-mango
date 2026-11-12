@@ -1,4 +1,4 @@
-"""Initial routing schema (squashed 2026-11-12; the database had not reached production)."""
+"""Initial routing schema: one migration (ADR 005, consolidated 2026-11-12; no deployed database)."""
 
 import uuid
 

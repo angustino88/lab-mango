@@ -15,8 +15,9 @@ from rest_framework.test import APIClient
 from core.agents.application import ENROLLMENT_CONTEXT
 from core.agents.models import AgentIdentity
 from core.agents.tests.signing import signed_headers
-from core.labs.models import ComputingEquipment, EquipmentCategory, EquipmentKind
+from core.labs.models import EquipmentCategory, EquipmentKind
 from core.users.models import URSGroup
+from tests.factories import create_computing_equipment
 
 
 def _b64(data: bytes) -> str:
@@ -58,7 +59,7 @@ def computing_equipment(db):
         defaults={"name": "Computing", "definition": "Computing", "active": True},
     )
     kind = EquipmentKind.objects.create(category=category, name=f"Computer-{uuid.uuid4()}")
-    return ComputingEquipment.objects.create(sku=f"AGENT-{uuid.uuid4()}", kind=kind, name="Agent host")
+    return create_computing_equipment(sku=f"AGENT-{uuid.uuid4()}", kind=kind, name="Agent host")
 
 
 @pytest.mark.django_db

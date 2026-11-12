@@ -21,14 +21,13 @@ from core.labs.models import (
     Station,
     StationSlot,
 )
-from core.labs.models.resource.equipment.computing import ComputingEquipment
 from core.labs.models.resource.license.license import (
     LicenseCategory,
     LicenseProduct,
     LicenseType,
     LicenseVendor,
 )
-from tests.factories import UserFactory, grant_labs_role
+from tests.factories import UserFactory, create_computing_equipment, grant_labs_role
 
 
 @pytest.fixture()
@@ -190,7 +189,7 @@ def test_room_and_station_mapping_include_all_configured_descendants(client, pla
 def test_unplaced_equipment_and_soft_deleted_descendants_are_excluded(client, placement):
     category = EquipmentCategory.objects.create(name="Computing", definition="Synthetic computing fixture")
     kind = EquipmentKind.objects.create(category=category, name="Mapping computer")
-    equipment = ComputingEquipment.objects.create(
+    equipment = create_computing_equipment(
         sku="MAP-E-UNPLACED",
         name="Unplaced equipment",
         kind=kind,

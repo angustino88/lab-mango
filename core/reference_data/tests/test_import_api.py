@@ -247,25 +247,36 @@ def test_create_and_retrieve_every_reference_type(client):
 
 @pytest.mark.django_db
 def test_lab_role_decides_reference_imports_not_django_permissions(client):
-    """Labs reference data follows Labs roles: coordinators import; a Django add_ permission alone does not."""
+    """Labs reference data follows Labs roles, not Django add_ permissions.
+
+    Equipment reference data needs the Labs admin role (owner decision 2026-11-10); the other Labs
+    catalogs need a lab coordinator or admin (owner decision 2026-11-12).
+    """
     from django.contrib.auth.models import Permission
 
     coordinator = grant_labs_role(get_user_model().objects.create(username="synthetic-coordinator"), "coord")
     client.force_authenticate(coordinator)
     created = client.post(
-        ROOT + "equipment/reference-data/materials",
-        {"name": "Coordinator material"},
+        ROOT + "licenses/reference-data/vendors",
+        {"name": "Coordinator vendor"},
         format="json",
         HTTP_IDEMPOTENCY_KEY="coordinator",
     )
     assert created.status_code == 201, created.data
+    equipment_denied = client.post(
+        ROOT + "equipment/reference-data/materials",
+        {"name": "Coordinator material"},
+        format="json",
+        HTTP_IDEMPOTENCY_KEY="coordinator-equipment",
+    )
+    assert equipment_denied.status_code == 403
 
     scoped = get_user_model().objects.create(username="synthetic-scoped-importer")
-    scoped.user_permissions.add(Permission.objects.get(content_type__app_label="labs", codename="add_department"))
+    scoped.user_permissions.add(Permission.objects.get(content_type__app_label="labs", codename="add_licensetype"))
     grant_labs_role(scoped, "user")
     client.force_authenticate(scoped)
     denied = client.post(
-        ROOT + "equipment/reference-data/departments",
+        ROOT + "licenses/reference-data/types",
         {"name": "Not permitted"},
         format="json",
         HTTP_IDEMPOTENCY_KEY="scoped",

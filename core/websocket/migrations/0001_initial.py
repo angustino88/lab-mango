@@ -1,4 +1,4 @@
-"""Initial websocket schema (squashed 2026-11-12; the database had not reached production)."""
+"""Initial websocket schema: one migration (ADR 005, consolidated 2026-11-12; no deployed database)."""
 
 import django.db.models.deletion
 import django.utils.timezone

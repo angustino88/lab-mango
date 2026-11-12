@@ -8,6 +8,7 @@ capacity reductions with bench placement/edits without nullable lock joins.
 from django.core.exceptions import ValidationError
 
 from core.common.db.transactions import apply_fields, atomic_command
+from core.labs.features.equipment.public import has_active_placements
 from core.labs.features.locations.exceptions import LocationConflict
 from core.labs.features.locations.stations.application.policies import (
     validate_occupied_slot,
@@ -130,6 +131,8 @@ def delete_station(*, station_id, actor):
     station, _ = _lock_station_with_rooms(station_id, {})
     if Bench.objects.filter(setup_location_id=station.pk).exists():
         raise LocationConflict("Move or detach configured benches before deleting the station.")
+    if has_active_placements(station_id=station.pk):
+        raise LocationConflict("Move the equipment kept at this station before deleting it.")
     old_slot = None
     if station.slot_id is not None:
         old_slot = RoomSlot.objects.select_for_update().get(pk=station.slot_id)

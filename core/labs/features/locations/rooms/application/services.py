@@ -3,6 +3,7 @@
 from django.core.exceptions import ValidationError
 
 from core.common.db.transactions import apply_fields, atomic_command
+from core.labs.features.equipment.public import has_active_placements
 from core.labs.features.locations.rooms.application.policies import RoomConflict, grid_positions
 from core.labs.models.resource.location.room import Room, RoomStatusRecord
 from core.labs.models.resource.location.room_observation import RoomObservation
@@ -75,6 +76,8 @@ def delete_room(*, room_id, actor):
     room = _lock_room(room_id)
     if Station.objects.filter(room=room).exists():
         raise RoomConflict("Move or detach stations before deleting the room.")
+    if has_active_placements(room_id=room.pk):
+        raise RoomConflict("Move the equipment kept in this room before deleting it.")
     room.soft_delete(actor=actor)
 
 

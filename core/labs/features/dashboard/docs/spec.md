@@ -12,7 +12,7 @@ The Dashboard feature is the primary mission-control deck for lab coordinators a
   - Base metadata: `id`, `sku`, `name`, `lifecycle_status`, `criticality`.
   - Docking location: `setup_location` (Station), `station_slot`.
   - Active reservation: Current active `BenchBooking` and booking user.
-  - Hardware status: Attached `ComputingEquipment` and recent heartbeat status.
+  - Hardware status: Attached computing equipment (`Equipment` with a `ComputingProfile`) and recent heartbeat status.
 
 ### 2.2 Canonical Headline Metrics (`/summary`)
 - Serves as the single source of truth for dashboard KPI cards:

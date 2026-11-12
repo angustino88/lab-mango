@@ -605,6 +605,7 @@ The R0 migration changes database checks and choices and needs a coordinated, ex
 
 ## 15. Stubs and tooling
 
+- **Stub agent** (`tools/stub_agent.py`): enrolls a stub agent with a grant and sends signed `/agent/...` requests, or prints one-use signed headers for an API client; development and test only.
 - **Stub router** (`tools/stub_router.py`): snapshot scan, replay, long-poll, epoch and digest checks for enabled entities; fault modes: lost response, restart mid-scan, epoch change, concurrent writes during a scan, `401` on rotation.
 - **Stub producer** (`tools/stub_producer.py`): scripted publish sequences (enrollment, activation, revocation, binding replacement) to exercise ordering and no-op suppression.
 

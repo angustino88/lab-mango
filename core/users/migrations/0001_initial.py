@@ -1,7 +1,7 @@
-"""Initial users schema (squashed 2026-11-12; the database had not reached production).
+"""Initial users schema: one migration (ADR 005, consolidated 2026-11-12; no deployed database).
 
-Hand-written part: PostgreSQL triggers that make RoleAuditEvent append-only (no UPDATE or
-DELETE). Retention, if ever needed, requires a reviewed migration that replaces the trigger.
+Hand-written: PostgreSQL triggers that make RoleAuditEvent append-only (no UPDATE or DELETE).
+Retention, if ever needed, requires a reviewed migration that replaces the trigger.
 """
 
 import django.contrib.auth.models

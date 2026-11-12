@@ -1,176 +1,86 @@
-"""Tests for automatic RDP file creation and lifecycle on ComputingEquipment."""
+"""The .rdp file of a computing unit, written by the equipment commands (redesign step 6)."""
 
 import pytest
 
-from core.labs.features.equipment.application import CreateEquipmentInput, create_equipment
-from core.labs.models.resource.equipment.computing import ComputingEquipment, TechnicalUser
+from core.labs.features.equipment.application import (
+    CreateEquipmentInput,
+    UpdateEquipmentInput,
+    create_equipment,
+    update_equipment,
+)
+from core.labs.features.equipment.application.computing_profile import sync_rdp_file
+from core.labs.models import ComputingProfile
+from core.labs.models.resource.equipment.computing import TechnicalUser
 from core.labs.models.resource.equipment.reference_data import EquipmentCategory, EquipmentKind
+from tests.factories import create_computing_equipment
 
 
 @pytest.fixture()
-def computing_category(db):
-    category = EquipmentCategory.objects.create(name="Computing", definition="Computing equipment")
-    kind = EquipmentKind.objects.create(category=category, name="Computer")
-    return category, kind
+def kind(db, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    category = EquipmentCategory.objects.create(name="Computing", definition="Computing equipment", monitored=True)
+    return EquipmentKind.objects.create(category=category, name="Computer")
 
 
-@pytest.mark.django_db
-def test_create_computing_equipment_generates_rdp_file(computing_category):
-    _, kind = computing_category
-    computing = ComputingEquipment.objects.create(
-        sku="COMP-TEST-001",
-        name="Host Alpha",
-        kind=kind,
-    )
+def _create(kind, sku, **computing):
+    fields = [("kind", kind), ("sku", sku), ("name", f"Host {sku}")]
+    if computing:
+        fields.append(("computing", computing))
+    unit = create_equipment(CreateEquipmentInput(fields=tuple(fields)), actor=None)
+    return unit, ComputingProfile.objects.get(equipment=unit)
 
-    assert bool(computing.rdp_file)
-    assert computing.rdp_file.name.endswith("COMP-TEST-001.rdp")
 
-    content = computing.rdp_file.read()
+def _update(unit, **fields):
+    update_equipment(UpdateEquipmentInput(equipment_id=unit.pk, fields=tuple(fields.items())), actor=None)
+    return ComputingProfile.objects.get(equipment=unit)
+
+
+def test_create_generates_rdp_file_for_the_sku(kind):
+    _, profile = _create(kind, "COMP-TEST-001")
+    assert profile.rdp_file.name.endswith("COMP-TEST-001.rdp")
+    content = profile.rdp_file.read()
     assert b"full address:s:COMP-TEST-001" in content
     assert b"username:s:\n" in content or content.endswith(b"username:s:")
 
 
-@pytest.mark.django_db
-def test_create_computing_equipment_with_technical_user(computing_category):
-    _, kind = computing_category
-    tech_user = TechnicalUser.objects.create(username="svc_lab_admin")
-    computing = ComputingEquipment.objects.create(
-        sku="COMP-TECH-002",
-        name="Host Beta",
-        kind=kind,
-        technical_user=tech_user,
-    )
-
-    assert bool(computing.rdp_file)
-    assert computing.rdp_file.name.endswith("COMP-TECH-002.rdp")
-
-    content = computing.rdp_file.read()
-    assert b"full address:s:COMP-TECH-002" in content
-    assert b"username:s:svc_lab_admin" in content
+def test_hostname_wins_over_the_sku(kind):
+    _, profile = _create(kind, "COMP-HOST-001", hostname="pc-1.lab")
+    assert b"full address:s:pc-1.lab" in profile.rdp_file.read()
 
 
-@pytest.mark.django_db
-def test_update_computing_equipment_sku_regenerates_rdp_file(computing_category):
-    _, kind = computing_category
-    computing = ComputingEquipment.objects.create(
-        sku="COMP-OLD-SKU",
-        name="Host Gamma",
-        kind=kind,
-    )
-
-    old_file_name = computing.rdp_file.name
-    storage = computing.rdp_file.storage
-    assert storage.exists(old_file_name)
-
-    computing.sku = "COMP-NEW-SKU"
-    computing.save()
-
-    assert computing.rdp_file.name.endswith("COMP-NEW-SKU.rdp")
-    assert not storage.exists(old_file_name)
-    assert storage.exists(computing.rdp_file.name)
-
-    content = computing.rdp_file.read()
-    assert b"full address:s:COMP-NEW-SKU" in content
+def test_sku_change_regenerates_rdp_file(kind):
+    unit, profile = _create(kind, "COMP-OLD-SKU")
+    old_name, storage = profile.rdp_file.name, profile.rdp_file.storage
+    profile = _update(unit, sku="COMP-NEW-SKU")
+    assert profile.rdp_file.name.endswith("COMP-NEW-SKU.rdp")
+    assert not storage.exists(old_name) and storage.exists(profile.rdp_file.name)
+    assert b"full address:s:COMP-NEW-SKU" in profile.rdp_file.read()
 
 
-@pytest.mark.django_db
-def test_update_technical_user_regenerates_rdp_file(computing_category):
-    _, kind = computing_category
-    computing = ComputingEquipment.objects.create(
-        sku="COMP-TECH-UPDATE",
-        name="Host Delta",
-        kind=kind,
-    )
-
-    content_initial = computing.rdp_file.read()
-    assert b"username:s:tech_engineer" not in content_initial
-
-    # Refresh instance from DB to verify from_db state tracking
-    computing = ComputingEquipment.objects.get(pk=computing.pk)
+def test_technical_user_change_regenerates_rdp_file(kind):
+    unit, profile = _create(kind, "COMP-TECH-UPDATE")
+    assert b"username:s:tech_engineer" not in profile.rdp_file.read()
     tech_user = TechnicalUser.objects.create(username="tech_engineer")
-    computing.technical_user = tech_user
-    computing.save()
-
-    computing.refresh_from_db()
-    content_updated = computing.rdp_file.read()
-    assert b"full address:s:COMP-TECH-UPDATE" in content_updated
-    assert b"username:s:tech_engineer" in content_updated
+    profile = _update(unit, computing={"technical_user": tech_user})
+    content = profile.rdp_file.read()
+    assert b"full address:s:COMP-TECH-UPDATE" in content
+    assert b"username:s:tech_engineer" in content
 
 
-@pytest.mark.django_db
-def test_non_identity_partial_update_does_not_regenerate_rdp_file(computing_category):
-    _, kind = computing_category
-    computing = ComputingEquipment.objects.create(
-        sku="COMP-STABLE",
-        name="Host Epsilon",
-        kind=kind,
-    )
-
-    original_file_name = computing.rdp_file.name
-
-    # Fetch fresh instance from DB and do a partial update on unrelated field
-    computing = ComputingEquipment.objects.get(pk=computing.pk)
-    computing.os_name = "Debian 12"
-    computing.save(update_fields=["os_name"])
-
-    computing.refresh_from_db()
-    assert computing.os_name == "Debian 12"
-    assert computing.rdp_file.name == original_file_name
+def test_unrelated_update_keeps_the_rdp_file(kind):
+    unit, profile = _create(kind, "COMP-STABLE")
+    original = profile.rdp_file.name
+    profile = _update(unit, name="Renamed host")
+    assert profile.rdp_file.name == original
 
 
-@pytest.mark.django_db
-def test_soft_delete_preserves_rdp_file(computing_category):
-    _, kind = computing_category
-    computing = ComputingEquipment.objects.create(
-        sku="COMP-SOFT-DEL",
-        name="Host Eta",
-        kind=kind,
-    )
-
-    file_name = computing.rdp_file.name
-    storage = computing.rdp_file.storage
-    assert storage.exists(file_name)
-
-    computing.delete()
-    assert computing.deleted_at is not None
-    assert storage.exists(file_name)
-
-
-@pytest.mark.django_db
-def test_hard_delete_cleans_up_rdp_file(computing_category):
-    _, kind = computing_category
-    computing = ComputingEquipment.objects.create(
-        sku="COMP-HARD-DEL",
-        name="Host Zeta",
-        kind=kind,
-    )
-
-    file_name = computing.rdp_file.name
-    storage = computing.rdp_file.storage
-    assert storage.exists(file_name)
-
-    computing.hard_delete()
-    assert not storage.exists(file_name)
-
-
-@pytest.mark.django_db
-def test_create_equipment_application_command_generates_rdp_file(computing_category):
-    _, kind = computing_category
-    created = create_equipment(
-        CreateEquipmentInput(
-            fields=(
-                ("kind", kind),
-                ("sku", "COMP-APP-001"),
-                ("name", "App Created Host"),
-            )
-        ),
-        actor=None,
-        model=ComputingEquipment,
-    )
-
-    assert bool(created.rdp_file)
-    assert created.rdp_file.name.endswith("COMP-APP-001.rdp")
-
-    content = created.rdp_file.read()
-    assert b"full address:s:COMP-APP-001" in content
+def test_soft_delete_preserves_and_hard_delete_removes_the_file(kind):
+    # A unit with no state history (EquipmentEvent protects units that have one).
+    unit = create_computing_equipment(sku="COMP-DEL", name="Host", kind=kind)
+    profile = ComputingProfile.objects.get(equipment=unit)
+    sync_rdp_file(profile)
+    name, storage = profile.rdp_file.name, profile.rdp_file.storage
+    unit.delete()
+    assert unit.deleted_at is not None and storage.exists(name)
+    unit.hard_delete()
+    assert not storage.exists(name)

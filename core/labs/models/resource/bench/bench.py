@@ -14,12 +14,11 @@ class Bench(ResourceModel):
 
     IMAGE_UPLOAD_FOLDER = "bench"
 
+    # Bench is virtual (redesign OD3): four values only. "Reserved" and "active" are computed from
+    # bookings and computing activity, never stored. Only an in-service bench accepts bookings.
     LIFECYCLE_STATUSES = (
         ("planned", "Planned"),
-        ("available", "Available"),
-        ("reserved", "Reserved"),
-        ("active", "Active"),
-        ("maintenance", "Maintenance"),
+        ("in_service", "In service"),
         ("out_of_service", "Out of service"),
         ("retired", "Retired"),
     )
@@ -58,7 +57,7 @@ class Bench(ResourceModel):
     lifecycle_status = models.CharField(
         max_length=32,
         choices=LIFECYCLE_STATUSES,
-        default="planned",
+        default="in_service",
     )
     criticality = models.CharField(max_length=32, blank=True, default="")
     requested_power_w = models.PositiveIntegerField(null=True, blank=True)
@@ -117,7 +116,13 @@ class Bench(ResourceModel):
     class Meta:
         app_label = "labs"
         ordering = ("sku",)
-        constraints = ResourceModel.Meta.constraints
+        constraints = [
+            *ResourceModel.Meta.constraints,
+            models.CheckConstraint(
+                condition=models.Q(lifecycle_status__in=("planned", "in_service", "out_of_service", "retired")),
+                name="bench_lifecycle_valid",
+            ),
+        ]
         indexes = [
             models.Index(fields=("setup_location", "deleted_at"), name="bench_location_deleted_idx"),
             models.Index(fields=("bench_group", "deleted_at"), name="bench_group_deleted_idx"),

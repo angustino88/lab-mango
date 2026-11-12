@@ -55,19 +55,26 @@ from .resource.bench import Bench, BenchFavorite, BenchGroup, BenchType
 from .resource.equipment import (
     Equipment,
     EquipmentCategory,
+    EquipmentCondition,
+    EquipmentDisplayStatus,
+    EquipmentEvent,
+    EquipmentEventAxis,
     EquipmentInterface,
     EquipmentKind,
+    EquipmentLifecycleState,
+    EquipmentLoan,
+    EquipmentLoanBatch,
+    EquipmentLoanReminder,
     EquipmentManufacturer,
     EquipmentProductModel,
-    EquipmentStatus,
-    EquipmentStatusRecord,
     EquipmentType,
+    LoanCloseReason,
     Material,
     ProductModelSpecification,
     SpecificationDefinition,
 )
-from .resource.equipment.assignment import EquipmentAssignment
-from .resource.equipment.computing import ComputingEquipment, TechnicalUser
+from .resource.equipment.assignment import EquipmentAssignment, EquipmentPlacement
+from .resource.equipment.computing import ComputingProfile, TechnicalUser
 from .resource.license.agreement import LicenseAgreement
 from .resource.license.assignment import LicenseAssignment
 from .resource.license.license import License, LicenseStatus, LicenseStatusRecord
@@ -88,6 +95,7 @@ from .resource.location import (
     StationType,
 )
 from .routing import RoutingChange, RoutingEntity, SyncState
+from .session import SessionAccessType
 
 __all__ = [
     "ActiveLaboratoryObservation",
@@ -112,19 +120,27 @@ __all__ = [
     "City",
     "ComputingActivity",
     "ComputingActivityStatus",
-    "ComputingEquipment",
+    "ComputingProfile",
     "Country",
     "Department",
     "Equipment",
     "EquipmentAssignment",
+    "EquipmentPlacement",
     "EquipmentCategory",
     "EquipmentBooking",
     "EquipmentInterface",
     "EquipmentKind",
     "EquipmentManufacturer",
     "EquipmentProductModel",
-    "EquipmentStatus",
-    "EquipmentStatusRecord",
+    "EquipmentCondition",
+    "EquipmentDisplayStatus",
+    "EquipmentEvent",
+    "EquipmentEventAxis",
+    "EquipmentLifecycleState",
+    "EquipmentLoan",
+    "EquipmentLoanBatch",
+    "EquipmentLoanReminder",
+    "LoanCloseReason",
     "EquipmentType",
     "ensure_booking_status_transition",
     "Expense",
@@ -134,6 +150,7 @@ __all__ = [
     "EnrollmentGrant",
     "LabProject",
     "LabSessionLog",
+    "SessionAccessType",
     "Material",
     "License",
     "LicenseAssignment",
