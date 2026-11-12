@@ -123,10 +123,13 @@ def test_admin_index_starts_with_people_and_access():
     client = Client()
     client.force_login(UserFactory(username="index_root", is_staff=True, is_superuser=True))
 
-    page = client.get("/admin/").content.decode()
+    response = client.get("/admin/")
+    page = response.content.decode()
 
     assert "Lab Mango administration" in page
-    assert page.index("People and access") < page.index("Authentication and Authorization") < page.index("Labs")
+    first_section = response.context["app_list"][0]
+    assert first_section["name"] == "People and access"
+    assert {"User", "URSGroup", "Group"} <= {model["object_name"] for model in first_section["models"]}
 
 
 def test_admin_sync_action_queues_and_records_outcome(settings):
