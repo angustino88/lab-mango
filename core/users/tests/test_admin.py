@@ -135,19 +135,22 @@ def test_change_pages_render_for_superuser_and_read_only_for_staff():
     assert 'name="labs_role"' not in page
 
 
-def test_saving_a_urs_group_in_admin_creates_its_django_group():
+def test_saving_a_urs_group_in_admin_creates_its_django_group_and_syncs_it(django_capture_on_commit_callbacks):
     superuser = UserFactory(username="save_root", is_staff=True, is_superuser=True)
     client = Client()
     client.force_login(superuser)
 
-    response = client.post(
-        "/admin/users/ursgroup/add/",
-        {"urs_group_name": "Admin Created", "urs_group_id": 66001, "labs_role": "coord", "active": "on"},
-    )
+    with patch("core.users.admin.sync_selected_urs_groups.delay") as queued:
+        with django_capture_on_commit_callbacks(execute=True):
+            response = client.post(
+                "/admin/users/ursgroup/add/",
+                {"urs_group_name": "Admin Created", "urs_group_id": 66001, "labs_role": "coord", "active": "on"},
+            )
 
     assert response.status_code == 302, response.content
     urs_group = URSGroup.objects.get(urs_group_id=66001)
     assert urs_group.group is not None and urs_group.group.name == "Admin Created"
+    queued.assert_called_once_with([urs_group.pk], force=False)
 
 
 def test_django_group_screen_is_hidden_from_staff():
@@ -156,3 +159,13 @@ def test_django_group_screen_is_hidden_from_staff():
 
     assert not group_admin.has_module_permission(_request(staff))
     assert not group_admin.has_view_permission(_request(staff))
+
+
+def test_forced_sync_action_only_exists_with_the_safety_brake(settings):
+    superuser = UserFactory(username="actions_root", is_staff=True, is_superuser=True)
+    urs_admin = URSGroupAdmin(URSGroup, site)
+
+    settings.URS_SYNC_SAFETY_BRAKE = False
+    assert "queue_forced_sync" not in urs_admin.get_actions(_request(superuser))
+    settings.URS_SYNC_SAFETY_BRAKE = True
+    assert "queue_forced_sync" in urs_admin.get_actions(_request(superuser))

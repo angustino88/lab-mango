@@ -18,6 +18,7 @@ _POST = "core.users.features.urs_sync.sync_group.service.requests.post"
 @pytest.fixture(autouse=True)
 def _urs_settings(settings):
     settings.URS_API_URL = "https://urs.example.test/service/info"
+    settings.URS_SYNC_SAFETY_BRAKE = True
     settings.URS_SYNC_BRAKE_MIN_MEMBERS = 4
     settings.URS_SYNC_MAX_REMOVAL_RATIO = 0.5
 
@@ -198,3 +199,26 @@ def test_database_rejects_case_variant_usernames_and_duplicate_urs_ids():
     existing = URSGroupFactory()
     with pytest.raises(IntegrityError), transaction.atomic():
         URSGroup.objects.create(urs_group_id=existing.urs_group_id)
+
+
+def test_without_the_safety_brake_everything_applies_at_once(settings):
+    settings.URS_SYNC_SAFETY_BRAKE = False
+    urs_group, group, users = _group_with_members("no-brake", "nb_a", "nb_b", "nb_c", "nb_d", "nb_e")
+
+    report = _sync(urs_group, _answer())
+
+    assert report.applied == [str(urs_group)] and report.blocked == []
+    assert group.user_set.count() == 0
+    for user in users:
+        user.refresh_from_db()
+        assert user.is_active is False
+
+
+def test_without_the_safety_brake_a_failed_answer_still_changes_nothing(settings):
+    settings.URS_SYNC_SAFETY_BRAKE = False
+    urs_group, group, _ = _group_with_members("no-brake-error", "ne_a")
+
+    report = _sync(urs_group, _answer(status=503))
+
+    assert report.failed == [str(urs_group)]
+    assert group.user_set.count() == 1

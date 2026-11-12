@@ -255,8 +255,11 @@ URS_API_VERIFY_SSL = env.bool("URS_API_VERIFY_SSL", default=False)
 # Service token sent to the URS API. Empty by default: sync fails closed when unset.
 URS_ACCESS_TOKEN = env("URS_ACCESS_TOKEN", default="")
 URS_API_TIMEOUT_S = env.int("URS_API_TIMEOUT_S", default=15)
-# Safety check: a group sync that removes every member, or more than this share of a group with at
-# least URS_SYNC_BRAKE_MIN_MEMBERS members, is blocked until an operator forces it in Django admin.
+# URS is the source of truth and every sync applies all changes at once (owner decision 2026-11-12).
+# Optional safety check, off by default: when on, a group sync that removes every member, or more than
+# URS_SYNC_MAX_REMOVAL_RATIO of a group with at least URS_SYNC_BRAKE_MIN_MEMBERS members, is blocked
+# until an operator forces it in Django admin.
+URS_SYNC_SAFETY_BRAKE = env.bool("URS_SYNC_SAFETY_BRAKE", default=False)
 URS_SYNC_MAX_REMOVAL_RATIO = env.float("URS_SYNC_MAX_REMOVAL_RATIO", default=0.5)
 URS_SYNC_BRAKE_MIN_MEMBERS = env.int("URS_SYNC_BRAKE_MIN_MEMBERS", default=10)
 

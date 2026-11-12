@@ -16,6 +16,7 @@ from django.contrib import admin, messages
 from django.contrib.auth import admin as auth_admin
 from django.contrib.auth import decorators, get_user_model
 from django.contrib.auth.models import Group
+from django.db import transaction
 from django.db.models import Count
 from django.utils.translation import gettext_lazy as _
 
@@ -165,6 +166,16 @@ class URSGroupAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         ensure_urs_group_linked(urs_group_id=obj.pk)
+        if obj.active:
+            # Members follow URS immediately; the sync runs after this save commits.
+            transaction.on_commit(lambda: _queue_sync(request, URSGroup.objects.filter(pk=obj.pk), force=False))
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not settings.URS_SYNC_SAFETY_BRAKE:
+            # Without the safety check nothing is ever blocked, so there is nothing to force.
+            actions.pop("queue_forced_sync", None)
+        return actions
 
     @admin.action(description=_("Sync selected URS groups"), permissions=["change"])
     def queue_sync(self, request, queryset):

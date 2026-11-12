@@ -190,7 +190,7 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 
 | Question | Answer | Effect |
 | --- | --- | --- |
-| Safety brake share (R1) | Unknown | Default: block an empty answer, and removal of more than 50 % of a group with at least 10 members; both settings are configurable |
+| Safety brake (R1) | Sync everything, immediately (2026-11-12) | Brake off by default (`URS_SYNC_SAFETY_BRAKE`); failed or malformed URS answers still change nothing; saving a URS group syncs it at once |
 | Same account name in two domains (R7) | One account name is the same person | Keep dropping the domain; documented in the sync spec |
 | Reads without a Labs role; plain users reading procurement and expenses (R9) | No | Labs permission classes require a role to read; procurement, expenses and finance reports require coordinator |
 | Who may list groups and members (R8) | Admin | Group endpoints require the Labs `admin` role |
@@ -245,6 +245,5 @@ usernames, duplicate URS ids or unknown roles. Check production-like data before
 
 ## Open questions for the owner
 
-1. **R1 limits.** Keep 50 % and 10 members, or choose other values?
-2. **Standards items** S5 (access review report), S6 (role-change audit): implement now? S2 (no
+1. **Standards items** S5 (access review report), S6 (role-change audit): implement now? S2 (no
    self-approval of bookings) is done (2026-11-12).

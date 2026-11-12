@@ -9,9 +9,10 @@ Phases:
    second run with the same URS data converges to the same state. Activity changes go through the
    users lifecycle command, which locks the user row before the Entra identity row.
 
-Safety check: a group that would lose all of its members, or more than
-``URS_SYNC_MAX_REMOVAL_RATIO`` of them when it has at least ``URS_SYNC_BRAKE_MIN_MEMBERS``, is not
-applied (``blocked``) unless the run is forced by an operator.
+URS is the source of truth: every successfully fetched group is applied in full, at once (owner
+decision 2026-11-12). Optional safety check, off unless ``URS_SYNC_SAFETY_BRAKE`` is on: a group that
+would lose all of its members, or more than ``URS_SYNC_MAX_REMOVAL_RATIO`` of them when it has at least
+``URS_SYNC_BRAKE_MIN_MEMBERS``, is not applied (``blocked``) unless the run is forced by an operator.
 
 URS member names are ``domain\\account``. The domain is dropped: the owner confirmed that one account
 name identifies one person across domains. Names are matched case-insensitively; the database enforces
@@ -221,7 +222,8 @@ def _apply(fetched: list[_FetchedGroup], failures: dict[int, str], *, report: Sy
                     logger.warning("URS sync skipped account %s: it is not URS-managed", user.pk)
             keep = known_members | (existing & superuser_ids)
             removals = existing - keep
-            blocked_reason = None if force else _blocked_reason(existing, removals, item.usernames)
+            brake_on = settings.URS_SYNC_SAFETY_BRAKE and not force
+            blocked_reason = _blocked_reason(existing, removals, item.usernames) if brake_on else None
             if blocked_reason is not None:
                 _record(item.urs_group_pk, URSGroup.SyncStatus.BLOCKED, blocked_reason, now)
                 report.blocked.append(item.name)

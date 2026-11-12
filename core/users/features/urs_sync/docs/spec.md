@@ -12,6 +12,7 @@ stub accounts for new members, and activates or deactivates URS-managed users. L
 | `URS_ACCESS_TOKEN` | empty | Sync is skipped when empty (fails closed). |
 | `URS_API_VERIFY_SSL` | `False` (see authentication proposal H5) | TLS certificate verification. |
 | `URS_API_TIMEOUT_S` | `15` | Timeout per URS call. |
+| `URS_SYNC_SAFETY_BRAKE` | `False` | Optional safety check, see 3.3. Off: every sync applies in full. |
 | `URS_SYNC_MAX_REMOVAL_RATIO` | `0.5` | Safety check, see 3.3. |
 | `URS_SYNC_BRAKE_MIN_MEMBERS` | `10` | Safety check applies to groups at least this large. |
 
@@ -40,14 +41,15 @@ stub accounts for new members, and activates or deactivates URS-managed users. L
   group are deactivated. Changes go through the users lifecycle command, which also publishes routing
   updates. Reconciliation runs only when at least one group was applied.
 
-### 3.3 Safety check
-A fetched group is **blocked** (nothing changed) when:
-- URS returned no members while the group has members, or
-- the group has at least `URS_SYNC_BRAKE_MIN_MEMBERS` members and the sync would remove more than
-  `URS_SYNC_MAX_REMOVAL_RATIO` of them.
+### 3.3 Full, immediate sync (safety check optional)
+URS is the source of truth: every successfully fetched group is applied in full, in the same run
+(owner decision 2026-11-12). Failed or malformed URS answers (3.1) still change nothing.
 
-A superuser can apply blocked groups with the admin action "Sync selected URS groups and apply blocked
-removals" (`force=True`). A blocked group does not stop other groups from being applied.
+The optional safety check is off by default (`URS_SYNC_SAFETY_BRAKE=False`). When it is on, a fetched
+group is **blocked** (nothing changed) when URS returned no members while the group has members, or when
+the group has at least `URS_SYNC_BRAKE_MIN_MEMBERS` members and the sync would remove more than
+`URS_SYNC_MAX_REMOVAL_RATIO` of them. A superuser can then apply it with the admin action "Sync selected
+URS groups and apply blocked removals" (shown only while the check is on).
 
 ### 3.4 Outcome recording
 Each run writes `last_sync_at`, `last_sync_status` (`applied`, `blocked`, `failed`) and `last_sync_message`
@@ -62,7 +64,7 @@ activated, deactivated, skipped, unusable names).
 
 ## 5. Django admin workflow
 - **One place to configure roles: the URS group** (URS id, name, Labs role, active). Saving it creates and
-  names its Django group; the Django group only stores membership. A URS group without a Django group gets
+  names its Django group and, for an active group, queues a sync of that group right away; the Django group only stores membership. A URS group without a Django group gets
   one at its next sync. The Django group screen is visible to superusers only.
 - **URS groups** list shows the linked group, Labs role, active flag, member count, and the last sync time,
   status and message, with filters on role, active and last status.
