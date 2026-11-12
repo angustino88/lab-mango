@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 class UsersConfig(AppConfig):
     name = "core.users"
-    verbose_name = _("Users")
+    verbose_name = _("People and access")
 
     def ready(self):
         # Signal wiring is loaded if present. Other import errors must surface at startup.

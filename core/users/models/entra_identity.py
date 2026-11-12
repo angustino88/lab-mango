@@ -11,6 +11,8 @@ class EntraIdentity(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        verbose_name = "Microsoft (Entra) identity"
+        verbose_name_plural = "Microsoft (Entra) identities"
         constraints = [
             models.UniqueConstraint(fields=["tenant_id", "object_id"], name="users_entra_unique_subject"),
         ]
@@ -30,3 +32,7 @@ class EntraLoginNonce(models.Model):
     nonce_digest = models.CharField(max_length=64, unique=True)
     used_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        verbose_name = "used login nonce"
+        verbose_name_plural = "used login nonces"
