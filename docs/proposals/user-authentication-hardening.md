@@ -158,6 +158,16 @@ proxy strips (`routing-sync.md:74`). The current authentication code was written
   - **First login.** The Router has no claim for an unbound user, so it returns no prefix
     (`routing-sync.md` CNS-6).
   - **Cookies.** Nginx strips the prefix, so cookies set for `/api` reach every department (H6).
+- **Current frontend (verified from frontend source, 2026-11-12; not from live traffic):** the Microsoft
+  login button calls `POST /api/aad-login/challenge`, passes the returned nonce to
+  `instance.loginRedirect({ ..., nonce })` (MSAL React 5.3.2 / msal-browser 5.9.0, auth code + PKCE), then
+  posts the ID token to `/api/aad-login`. No popup flow. This works with today's single-backend backend.
+- **Open decision for the Router flow:** who issues the nonce before Microsoft `authorize`, since the backend
+  is only known after the Router resolves the ID token. Options: (a) frontend-held secret, below
+  (recommended: no backend call before login, no Router coupling); (b) the Router issues and checks the
+  nonce (backends would have to trust the Router, against routing-sync dependency rule 1); (c) challenge
+  from the last-used backend (fails on first login and when switching departments); (d) a challenge signed
+  with a key shared by all backends (conflicts with per-department secrets).
 - **Target flow:**
   1. Frontend creates a random secret `S` and keeps it in memory (or `sessionStorage` for the redirect).
   2. Frontend signs in with Entra, passing `nonce = SHA-256(S)` (base64url) in the sign-in request.
