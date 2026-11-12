@@ -306,6 +306,8 @@ class Migration(migrations.Migration):
                             ("group_permissions_changed", "Group permissions changed"),
                             ("urs_sync_membership", "URS sync changed group members"),
                             ("user_activity_changed", "User activated or deactivated"),
+                            ("entra_identity_bound", "Entra identity linked"),
+                            ("entra_identity_unlinked", "Entra identity unlinked"),
                         ],
                         editable=False,
                         max_length=40,
@@ -358,6 +360,8 @@ class Migration(migrations.Migration):
                                     "group_permissions_changed",
                                     "urs_sync_membership",
                                     "user_activity_changed",
+                                    "entra_identity_bound",
+                                    "entra_identity_unlinked",
                                 ],
                             )
                         ),
