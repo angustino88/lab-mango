@@ -215,9 +215,13 @@ Rollback: disable the new authentication class in settings; the columns are null
 
 ## Open questions / decisions needed from the owner
 
-1. Tag URL host: which host goes into the QR during development, and will it change for production? The
-   tool reads only the last segment, so a host change does not break tags.
-2. Who maintains the Entra app registrations and the new frontend QR dependency?
-3. Should `EntraAccessTokenAuthentication` later replace the browser JWT flow, or stay limited to these
-   endpoints?
-4. Should the four drift items above be fixed as separate tasks?
+1. Tag URL host: open. Recommendation: print the final production domain from the start, because phone
+   scans open the full URL and printed tags are permanent. If no domain is fixed yet, use `LM:<uid>`
+   (tool scanning works the same; phone cameras open nothing). The tool reads only the `uid` either way.
+2. Owners: open. A Microsoft tenant admin must create the two Entra app registrations and hand over their
+   IDs as backend settings; the frontend QR dependency needs a named maintenance owner (AGENTS.md rule 7).
+
+Decided (2026-11-12):
+3. `EntraAccessTokenAuthentication` is used for the scanner endpoints first and later also for the web
+   frontend login. The frontend switch is a separate T2 change with its own design.
+4. The four drift items are fixed as separate tasks, not in this change.
