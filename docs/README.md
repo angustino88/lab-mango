@@ -93,5 +93,6 @@ Accepted constraints are recorded in [ADR 004](architecture/decisions/004-agent-
 | Proposal | Status |
 | --- | --- |
 | [Equipment booking](proposals/equipment-booking.md) | Draft; `equipment_bookings` feature not created |
+| [Booking feedback and bench rating](proposals/feedback-and-rating.md) | Draft; `feedback` feature not created |
 | [All-feature faceted filtering](proposals/faceted-filtering.md) | Proposed; Equipment facets pilot implemented |
 | [API error details audit](proposals/api-error-details-audit.md) | Not started |
