@@ -11,7 +11,7 @@ from core.labs.models.resource.location.room_slot import RoomSlot
 from core.labs.models.resource.location.station import Station
 
 ROOM_WRITE_FIELDS = (
-    "sku", "name", "label", "department_id", "group_id", "owner_id", "remark", "map_url", "length_m", "width_m",
+    "sku", "name", "label", "department_id", "team_id", "owner_id", "remark", "map_url", "length_m", "width_m",
     "country_id", "city_id", "building_id", "floor", "layout_rows", "layout_columns",
     "usable_height_m", "floor_plan_revision", "floor_plan_url",
     "max_occupancy", "power_capacity_w", "cooling_capacity_w", "network_port_capacity", "utilities",

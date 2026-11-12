@@ -261,6 +261,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+            options={
+                "verbose_name_plural": "equipment",
+            },
         ),
         migrations.CreateModel(
             name="Department",
@@ -753,6 +756,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
+                "verbose_name_plural": "benches",
                 "ordering": ("sku",),
             },
         ),
@@ -946,7 +950,7 @@ class Migration(migrations.Migration):
             name="bench_group",
             field=models.ForeignKey(
                 blank=True,
-                help_text="Function of the bench (e.g. Radar, Video). The owning team is ResourceModel.group.",
+                help_text="Function of the bench (e.g. Radar, Video). The owning team is ResourceModel.team.",
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="benches",
@@ -1478,6 +1482,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+            options={
+                "verbose_name_plural": "computing activities",
+            },
         ),
         migrations.CreateModel(
             name="Country",
@@ -1983,6 +1990,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
+                "verbose_name_plural": "equipment categories",
                 "ordering": ("name",),
             },
         ),
@@ -4878,6 +4886,7 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
+                "verbose_name_plural": "purchase priorities",
                 "ordering": ("-rank", "id"),
                 "constraints": [
                     models.UniqueConstraint(
@@ -5161,7 +5170,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="ResourceGroup",
+            name="Team",
             fields=[
                 (
                     "id",
@@ -5209,7 +5218,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
-                        related_name="groups",
+                        related_name="teams",
                         to="labs.department",
                     ),
                 ),
@@ -5232,38 +5241,38 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="license",
-            name="group",
+            name="team",
             field=models.ForeignKey(
                 blank=True,
                 help_text="Owning team; must belong to the selected department.",
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="%(app_label)s_%(class)s_resources",
-                to="labs.resourcegroup",
+                to="labs.team",
             ),
         ),
         migrations.AddField(
             model_name="equipment",
-            name="group",
+            name="team",
             field=models.ForeignKey(
                 blank=True,
                 help_text="Owning team; must belong to the selected department.",
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="%(app_label)s_%(class)s_resources",
-                to="labs.resourcegroup",
+                to="labs.team",
             ),
         ),
         migrations.AddField(
             model_name="bench",
-            name="group",
+            name="team",
             field=models.ForeignKey(
                 blank=True,
                 help_text="Owning team; must belong to the selected department.",
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="%(app_label)s_%(class)s_resources",
-                to="labs.resourcegroup",
+                to="labs.team",
             ),
         ),
         migrations.CreateModel(
@@ -5689,14 +5698,14 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "group",
+                    "team",
                     models.ForeignKey(
                         blank=True,
                         help_text="Owning team; must belong to the selected department.",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(app_label)s_%(class)s_resources",
-                        to="labs.resourcegroup",
+                        to="labs.team",
                     ),
                 ),
                 (
@@ -6431,14 +6440,14 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "group",
+                    "team",
                     models.ForeignKey(
                         blank=True,
                         help_text="Owning team; must belong to the selected department.",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(app_label)s_%(class)s_resources",
-                        to="labs.resourcegroup",
+                        to="labs.team",
                     ),
                 ),
                 (

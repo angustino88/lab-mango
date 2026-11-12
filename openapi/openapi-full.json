@@ -5346,15 +5346,6 @@
           },
           {
             "in": "query",
-            "name": "group_id",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
-          },
-          {
-            "in": "query",
             "name": "id",
             "schema": {
               "type": "string",
@@ -5425,6 +5416,15 @@
           {
             "in": "query",
             "name": "status",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "team_id",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -8546,15 +8546,6 @@
           },
           {
             "in": "query",
-            "name": "group_id",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
-          },
-          {
-            "in": "query",
             "name": "id",
             "schema": {
               "type": "string",
@@ -8706,6 +8697,15 @@
           {
             "in": "query",
             "name": "status",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "team_id",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -12732,22 +12732,13 @@
                 "manufacturer",
                 "product_model_id",
                 "department_id",
-                "group_id"
+                "team_id"
               ],
               "type": "string",
               "minLength": 1
             },
-            "description": "* `category` - category\n* `kind` - kind\n* `type` - type\n* `manufacturer` - manufacturer\n* `product_model_id` - product_model_id\n* `department_id` - department_id\n* `group_id` - group_id",
+            "description": "* `category` - category\n* `kind` - kind\n* `type` - type\n* `manufacturer` - manufacturer\n* `product_model_id` - product_model_id\n* `department_id` - department_id\n* `team_id` - team_id",
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "group_id",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
           },
           {
             "in": "query",
@@ -12896,6 +12887,15 @@
           {
             "in": "query",
             "name": "status",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "team_id",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -15640,239 +15640,6 @@
         "summary": "Get Equipment Reference Data Product Models by Reference ID"
       }
     },
-    "/api/labs/equipment/reference-data/resource-groups": {
-      "get": {
-        "operationId": "labs_equipment_reference_data_resource_groups_retrieve",
-        "description": "List ResourceGroup reference records in a paginated data envelope. Validates the declared search, relation and pagination query parameters and delegates filtering and access checks to the owner-provided listing callback.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "active",
-            "schema": {
-              "type": "boolean",
-              "nullable": true
-            }
-          },
-          {
-            "in": "query",
-            "name": "department_id",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "page_size",
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "search",
-            "schema": {
-              "type": "string",
-              "maxLength": 255,
-              "minLength": 1
-            }
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginatedResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": "The requested page does not exist (page beyond the last page)."
-          }
-        },
-        "summary": "Get Equipment Reference Data Resource Groups"
-      },
-      "post": {
-        "operationId": "labs_equipment_reference_data_resource_groups_create",
-        "description": "Create a ResourceGroup reference record from the declared writable fields. Passes the validated values, authenticated user and Idempotency-Key to the owner-provided create callback. Returns a 201 data envelope with Location; a replay reported by the callback also includes Idempotency-Replayed: true.",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "Idempotency-Key",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Required replay key (max 128 characters); receipts retained until explicitly purged.",
-            "required": true
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResourceGroupCatalogCreate"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ResourceGroupCatalogCreate"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ResourceGroupCatalogCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceGroupReferenceCreateSerializersResourceGroupCatalogRecordDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Create Equipment Reference Data Resource Groups"
-      }
-    },
-    "/api/labs/equipment/reference-data/resource-groups/{reference_id}": {
-      "get": {
-        "operationId": "labs_equipment_reference_data_resource_groups_retrieve_by_reference_id",
-        "description": "Retrieve one ResourceGroup reference record by reference_id in a data envelope. Delegates lookup and access checks to the owner-provided retrieve callback; a missing or unavailable record is documented as 404.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "reference_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceGroupReferenceDetailSerializersResourceGroupCatalogRecordDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Get Equipment Reference Data Resource Groups by Reference ID"
-      }
-    },
     "/api/labs/equipment/reference-data/sample-characteristics": {
       "get": {
         "operationId": "labs_equipment_reference_data_sample_characteristics_retrieve",
@@ -16538,6 +16305,239 @@
           }
         },
         "summary": "Get Equipment Reference Data Specification Definitions by Reference ID"
+      }
+    },
+    "/api/labs/equipment/reference-data/teams": {
+      "get": {
+        "operationId": "labs_equipment_reference_data_teams_retrieve",
+        "description": "List Team reference records in a paginated data envelope. Validates the declared search, relation and pagination query parameters and delegates filtering and access checks to the owner-provided listing callback.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "active",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "in": "query",
+            "name": "department_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string",
+              "maxLength": 255,
+              "minLength": 1
+            }
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamReferenceListSerializersTeamCatalogRecordPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
+          }
+        },
+        "summary": "Get Equipment Reference Data Teams"
+      },
+      "post": {
+        "operationId": "labs_equipment_reference_data_teams_create",
+        "description": "Create a Team reference record from the declared writable fields. Passes the validated values, authenticated user and Idempotency-Key to the owner-provided create callback. Returns a 201 data envelope with Location; a replay reported by the callback also includes Idempotency-Replayed: true.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required replay key (max 128 characters); receipts retained until explicitly purged.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamCatalogCreate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamCatalogCreate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamCatalogCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamReferenceCreateSerializersTeamCatalogRecordDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Equipment Reference Data Teams"
+      }
+    },
+    "/api/labs/equipment/reference-data/teams/{reference_id}": {
+      "get": {
+        "operationId": "labs_equipment_reference_data_teams_retrieve_by_reference_id",
+        "description": "Retrieve one Team reference record by reference_id in a data envelope. Delegates lookup and access checks to the owner-provided retrieve callback; a missing or unavailable record is documented as 404.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reference_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamReferenceDetailSerializersTeamCatalogRecordDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Reference Data Teams by Reference ID"
       }
     },
     "/api/labs/equipment/reference-data/technical-users": {
@@ -19679,15 +19679,6 @@
           },
           {
             "in": "query",
-            "name": "group_id",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
-          },
-          {
-            "in": "query",
             "name": "id",
             "schema": {
               "type": "string",
@@ -19749,6 +19740,15 @@
           {
             "in": "query",
             "name": "status",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "team_id",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -24133,249 +24133,6 @@
         "summary": "Create Purchases Transactions by Purchase ID"
       }
     },
-    "/api/labs/resource-groups": {
-      "get": {
-        "operationId": "labs_resource_groups_retrieve",
-        "description": "Equipment specialization of the shared feature API foundation.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "department_id",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "include_ids",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "minimum": 1
-              },
-              "maxItems": 50,
-              "uniqueItems": true
-            },
-            "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
-            "style": "form",
-            "explode": false
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "page_size",
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "q",
-            "schema": {
-              "type": "string",
-              "maxLength": 100,
-              "minLength": 1
-            },
-            "description": "Search text (1 to 100 characters)."
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceGroupCatalogListSerializersResourceGroupCatalogPaginatedResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": "The requested page does not exist (page beyond the last page)."
-          }
-        },
-        "summary": "Get Resource Groups"
-      }
-    },
-    "/api/labs/resource-groups/{group_id}": {
-      "get": {
-        "operationId": "labs_resource_groups_retrieve_by_group_id",
-        "description": "Equipment specialization of the shared feature API foundation.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceGroupCatalogDetailSerializersResourceGroupCatalogDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Get Resource Groups by Group ID"
-      }
-    },
-    "/api/labs/resource-groups/options": {
-      "get": {
-        "operationId": "labs_resource_groups_options_retrieve",
-        "description": "Shared base view for dropdown selector endpoints (ADR 002).\n\nValidates query parameters, enforces the size class and result cap,\ncalls the feature's query selector, handles ETag generation / 304 Not Modified,\nand returns {\"data\": [{\"id\": ..., \"sku\": ..., \"name\": ...}]}.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "department_id",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "include_ids",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "minimum": 1
-              },
-              "maxItems": 50,
-              "uniqueItems": true
-            },
-            "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
-            "style": "form",
-            "explode": false
-          },
-          {
-            "in": "query",
-            "name": "q",
-            "schema": {
-              "type": "string",
-              "maxLength": 100,
-              "minLength": 1
-            },
-            "description": "Search text (1 to 100 characters)."
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CatalogOptionList"
-                }
-              }
-            },
-            "description": "Standard selector options list"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": "Invalid selector query parameters (invalid_query) or result cap exceeded (too_many_results)."
-          },
-          "304": {
-            "description": "Not modified"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": "Access denied by the existing API-key or authenticated-user permission policy."
-          }
-        },
-        "x-owner": "equipment",
-        "summary": "Get Resource Groups Options"
-      }
-    },
     "/api/labs/resources/{resource_type}/{resource_id}/audits": {
       "get": {
         "operationId": "labs_resources_audits_retrieve_by_resource_type_resource_id",
@@ -25104,15 +24861,6 @@
           },
           {
             "in": "query",
-            "name": "group_id",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
-          },
-          {
-            "in": "query",
             "name": "id",
             "schema": {
               "type": "string",
@@ -25174,6 +24922,15 @@
           {
             "in": "query",
             "name": "status",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "team_id",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -27162,15 +26919,6 @@
           },
           {
             "in": "query",
-            "name": "group_id",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
-          },
-          {
-            "in": "query",
             "name": "id",
             "schema": {
               "type": "string",
@@ -27241,6 +26989,15 @@
           {
             "in": "query",
             "name": "status",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "team_id",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -28921,6 +28678,249 @@
           }
         },
         "summary": "Get Stations Status Summary"
+      }
+    },
+    "/api/labs/teams": {
+      "get": {
+        "operationId": "labs_teams_retrieve",
+        "description": "Equipment specialization of the shared feature API foundation.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "department_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_ids",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxItems": 50,
+              "uniqueItems": true
+            },
+            "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+            "style": "form",
+            "explode": false
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "description": "Search text (1 to 100 characters)."
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamCatalogListSerializersTeamCatalogPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
+          }
+        },
+        "summary": "Get Teams"
+      }
+    },
+    "/api/labs/teams/{team_id}": {
+      "get": {
+        "operationId": "labs_teams_retrieve_by_team_id",
+        "description": "Equipment specialization of the shared feature API foundation.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "team_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamCatalogDetailSerializersTeamCatalogDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Teams by Team ID"
+      }
+    },
+    "/api/labs/teams/options": {
+      "get": {
+        "operationId": "labs_teams_options_retrieve",
+        "description": "Shared base view for dropdown selector endpoints (ADR 002).\n\nValidates query parameters, enforces the size class and result cap,\ncalls the feature's query selector, handles ETag generation / 304 Not Modified,\nand returns {\"data\": [{\"id\": ..., \"sku\": ..., \"name\": ...}]}.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "department_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_ids",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxItems": 50,
+              "uniqueItems": true
+            },
+            "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+            "style": "form",
+            "explode": false
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "description": "Search text (1 to 100 characters)."
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogOptionList"
+                }
+              }
+            },
+            "description": "Standard selector options list"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "Invalid selector query parameters (invalid_query) or result cap exceeded (too_many_results)."
+          },
+          "304": {
+            "description": "Not modified"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "Access denied by the existing API-key or authenticated-user permission policy."
+          }
+        },
+        "x-owner": "equipment",
+        "summary": "Get Teams Options"
       }
     },
     "/api/labs/users/profile/{id}": {
@@ -37533,7 +37533,7 @@
             "type": "string",
             "readOnly": true
           },
-          "group": {
+          "team": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/LabsNamedReference"
@@ -37701,7 +37701,6 @@
           "documentation_url",
           "equipment_count",
           "equipment_url",
-          "group",
           "id",
           "image",
           "is_favorite",
@@ -37719,6 +37718,7 @@
           "sku",
           "station_slot",
           "status",
+          "team",
           "type",
           "uid",
           "updated_at"
@@ -38069,7 +38069,7 @@
             "minimum": 1,
             "nullable": true
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
@@ -38854,7 +38854,7 @@
             "type": "string",
             "readOnly": true
           },
-          "group": {
+          "team": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/LabsNamedReference"
@@ -39022,7 +39022,6 @@
           "documentation_url",
           "equipment_count",
           "equipment_url",
-          "group",
           "id",
           "image",
           "is_favorite",
@@ -39040,6 +39039,7 @@
           "sku",
           "station_slot",
           "status",
+          "team",
           "type",
           "uid",
           "updated_at"
@@ -39368,7 +39368,7 @@
             "minimum": 1,
             "nullable": true
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
@@ -43143,7 +43143,7 @@
             "nullable": true,
             "description": "Owning department."
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
@@ -43278,7 +43278,7 @@
             "readOnly": true,
             "nullable": true
           },
-          "group": {
+          "team": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/LabsNamedReference"
@@ -43530,7 +43530,6 @@
           "dimensions",
           "display_status",
           "firmware_version",
-          "group",
           "id",
           "interfaces",
           "kind",
@@ -43556,6 +43555,7 @@
           "serial_number",
           "size",
           "sku",
+          "team",
           "type",
           "uid",
           "updated_at",
@@ -44098,7 +44098,7 @@
             "readOnly": true,
             "nullable": true
           },
-          "group": {
+          "team": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/LabsNamedReference"
@@ -44335,7 +44335,6 @@
           "dimensions",
           "display_status",
           "firmware_version",
-          "group",
           "id",
           "interfaces",
           "kind",
@@ -44361,6 +44360,7 @@
           "serial_number",
           "size",
           "sku",
+          "team",
           "type",
           "uid",
           "updated_at",
@@ -45764,10 +45764,10 @@
             },
             "readOnly": true
           },
-          "groups": {
+          "teams": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ResourceGroup"
+              "$ref": "#/components/schemas/LabsTeamReference"
             },
             "readOnly": true
           },
@@ -45846,7 +45846,6 @@
           "categories",
           "characteristics",
           "customers",
-          "groups",
           "interfaces",
           "kinds",
           "manufacturers",
@@ -45856,6 +45855,7 @@
           "protocols",
           "resolutions",
           "sizes",
+          "teams",
           "technical_users",
           "types"
         ]
@@ -46645,7 +46645,7 @@
             "nullable": true,
             "description": "Owning department."
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
@@ -48367,6 +48367,23 @@
           "id",
           "name",
           "sku"
+        ]
+      },
+      "LabsTeamReference": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "name"
         ]
       },
       "LabsUIDNamedReference": {
@@ -51985,7 +52002,7 @@
             "minimum": 1,
             "nullable": true
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
@@ -52277,7 +52294,7 @@
             "nullable": true,
             "description": "Owning department."
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
@@ -52370,7 +52387,7 @@
             "minimum": 1,
             "nullable": true
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
@@ -52621,7 +52638,7 @@
             "minimum": 1,
             "nullable": true
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
@@ -54905,281 +54922,6 @@
           "username"
         ]
       },
-      "ResourceGroup": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "id",
-          "name"
-        ]
-      },
-      "ResourceGroupCatalogCreate": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "description": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "department_id": {
-            "type": "integer",
-            "minimum": 1,
-            "nullable": true
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "ResourceGroupCatalogDetailSerializersResourceGroupCatalogDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ResourceGroupCatalogItem"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "ResourceGroupCatalogItem": {
-        "type": "object",
-        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "department": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DepartmentCatalogItem"
-              }
-            ],
-            "readOnly": true
-          },
-          "department_id": {
-            "type": "integer",
-            "writeOnly": true
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "created_at",
-          "department",
-          "id",
-          "name",
-          "updated_at"
-        ]
-      },
-      "ResourceGroupCatalogListSerializersResourceGroupCatalogPaginatedResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "meta": {
-            "$ref": "#/components/schemas/ResourceGroupCatalogListSerializersResourceGroupCatalogPaginationMeta"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ResourceGroupCatalogItem"
-            }
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
-      "ResourceGroupCatalogListSerializersResourceGroupCatalogPagination": {
-        "type": "object",
-        "properties": {
-          "count": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "page": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "page_size": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "next": {
-            "type": "string",
-            "nullable": true
-          },
-          "previous": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "count",
-          "next",
-          "page",
-          "page_size",
-          "previous"
-        ]
-      },
-      "ResourceGroupCatalogListSerializersResourceGroupCatalogPaginationMeta": {
-        "type": "object",
-        "properties": {
-          "pagination": {
-            "$ref": "#/components/schemas/ResourceGroupCatalogListSerializersResourceGroupCatalogPagination"
-          }
-        },
-        "required": [
-          "pagination"
-        ]
-      },
-      "ResourceGroupCatalogRecord": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "description": {
-            "type": "string"
-          },
-          "department_id": {
-            "type": "integer",
-            "readOnly": true,
-            "nullable": true
-          },
-          "active": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "department_id",
-          "id",
-          "name"
-        ]
-      },
-      "ResourceGroupReferenceCreateSerializersResourceGroupCatalogRecordDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ResourceGroupCatalogRecord"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "ResourceGroupReferenceDetailSerializersResourceGroupCatalogRecordDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ResourceGroupCatalogRecord"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginatedResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "meta": {
-            "$ref": "#/components/schemas/ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginationMeta"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ResourceGroupCatalogRecord"
-            }
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
-      "ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPagination": {
-        "type": "object",
-        "properties": {
-          "count": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "page": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "page_size": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "next": {
-            "type": "string",
-            "nullable": true
-          },
-          "previous": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "count",
-          "next",
-          "page",
-          "page_size",
-          "previous"
-        ]
-      },
-      "ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginationMeta": {
-        "type": "object",
-        "properties": {
-          "pagination": {
-            "$ref": "#/components/schemas/ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPagination"
-          }
-        },
-        "required": [
-          "pagination"
-        ]
-      },
       "ResourceKindEnum": {
         "enum": [
           "bench",
@@ -55444,7 +55186,7 @@
             "readOnly": true,
             "nullable": true
           },
-          "group": {
+          "team": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/LabsNamedReference"
@@ -55632,7 +55374,6 @@
           "floor",
           "floor_plan_revision",
           "floor_plan_url",
-          "group",
           "id",
           "image",
           "label",
@@ -55651,6 +55392,7 @@
           "sku",
           "slot_capacity",
           "status",
+          "team",
           "uid",
           "updated_at",
           "usable_height_m",
@@ -55681,7 +55423,7 @@
             "minimum": 1,
             "nullable": true
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
@@ -56615,7 +56357,7 @@
             "minimum": 1,
             "nullable": true
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
@@ -57316,7 +57058,7 @@
             "readOnly": true,
             "nullable": true
           },
-          "group": {
+          "team": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/LabsNamedReference"
@@ -57519,7 +57261,6 @@
           "created_at",
           "department",
           "depth_mm",
-          "group",
           "height_mm",
           "id",
           "image",
@@ -57543,6 +57284,7 @@
           "slot_count",
           "slots_url",
           "status",
+          "team",
           "type",
           "uid",
           "updated_at",
@@ -57568,7 +57310,7 @@
             "minimum": 1,
             "nullable": true
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
@@ -58728,7 +58470,7 @@
             "minimum": 1,
             "nullable": true
           },
-          "group_id": {
+          "team_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
@@ -59366,6 +59108,264 @@
           "lead",
           "members",
           "name"
+        ]
+      },
+      "TeamCatalogCreate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "department_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "TeamCatalogDetailSerializersTeamCatalogDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TeamCatalogItem"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TeamCatalogItem": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "department": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepartmentCatalogItem"
+              }
+            ],
+            "readOnly": true
+          },
+          "department_id": {
+            "type": "integer",
+            "writeOnly": true
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "department",
+          "id",
+          "name",
+          "updated_at"
+        ]
+      },
+      "TeamCatalogListSerializersTeamCatalogPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/TeamCatalogListSerializersTeamCatalogPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamCatalogItem"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "TeamCatalogListSerializersTeamCatalogPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "TeamCatalogListSerializersTeamCatalogPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/TeamCatalogListSerializersTeamCatalogPagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "TeamCatalogRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string"
+          },
+          "department_id": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "department_id",
+          "id",
+          "name"
+        ]
+      },
+      "TeamReferenceCreateSerializersTeamCatalogRecordDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TeamCatalogRecord"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TeamReferenceDetailSerializersTeamCatalogRecordDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TeamCatalogRecord"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TeamReferenceListSerializersTeamCatalogRecordPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/TeamReferenceListSerializersTeamCatalogRecordPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamCatalogRecord"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "TeamReferenceListSerializersTeamCatalogRecordPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "TeamReferenceListSerializersTeamCatalogRecordPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/TeamReferenceListSerializersTeamCatalogRecordPagination"
+          }
+        },
+        "required": [
+          "pagination"
         ]
       },
       "TeamSummary": {

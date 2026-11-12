@@ -24,7 +24,7 @@ from core.labs.models import (
     ResourceServiceRecord,
 )
 from core.labs.models.resource.base.generic_links import resource_root_model
-from core.labs.models.resource.base.resource import ResourceGroup
+from core.labs.models.resource.base.resource import Team
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 
@@ -169,7 +169,7 @@ def list_equipment(
             "product_model",
             "owner",
             "department",
-            "group",
+            "team",
         )
         .order_by("kind__category__name", "kind__name", "name", "id")
     )
@@ -357,7 +357,7 @@ def equipment_form_reference_data(*, category_id: int | None = None) -> dict[str
         "types": EquipmentType.objects.filter(active=True, kind__active=True, kind__in=kinds),
         "manufacturers": manufacturers,
         "product_models": product_models,
-        "groups": ResourceGroup.objects.filter(active=True),
+        "teams": Team.objects.filter(active=True),
         "owners": get_user_model().objects.filter(is_active=True).order_by("username", "pk"),
         "materials": Material.objects.all(),
         "sizes": DisplaySize.objects.all(),

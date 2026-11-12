@@ -49,7 +49,7 @@ from .procurement import (
     PurchaseStatus,
     PurchaseTransaction,
 )
-from .resource.base.resource import Department, ResourceGroup
+from .resource.base.resource import Department, Team
 from .resource.base.service_record import ResourceServiceRecord
 from .resource.bench import Bench, BenchFavorite, BenchGroup, BenchType
 from .resource.equipment import (
@@ -175,7 +175,6 @@ __all__ = [
     "PurchaseTransaction",
     "ResourceAudit",
     "ResourceChangeLog",
-    "ResourceGroup",
     "ResourceServiceRecord",
     "ResourceUtilizationObservation",
     "RoutingChange",
@@ -193,6 +192,7 @@ __all__ = [
     "StationType",
     "SyncState",
     "StorageQuotaMeasurement",
+    "Team",
     "TechnicalUser",
     "VisitorVolumeObservation",
 ]

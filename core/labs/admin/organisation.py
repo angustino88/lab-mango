@@ -1,17 +1,17 @@
-"""Organisation reference data: departments, resource groups, projects, purchase priorities."""
+"""Organisation reference data: departments, teams, projects, purchase priorities."""
 
 from django.contrib import admin
 
 from core.common.admin import LabMangoModelAdmin
 from core.labs.admin._base import ActiveNamedLookupAdmin
-from core.labs.models import Department, LabProject, PurchasePriority, ResourceGroup, TechnicalUser
+from core.labs.models import Department, LabProject, PurchasePriority, Team, TechnicalUser
 from core.reference_data.admin import ProtectedReferenceAdmin
 
 admin.site.register(Department, ActiveNamedLookupAdmin)
 
 
-@admin.register(ResourceGroup)
-class ResourceGroupAdmin(LabMangoModelAdmin):
+@admin.register(Team)
+class TeamAdmin(LabMangoModelAdmin):
     list_display = ("name", "department", "active", "modified")
     list_select_related = ("department",)
     list_filter = ("department", "active")

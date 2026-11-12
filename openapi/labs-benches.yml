@@ -582,12 +582,6 @@ paths:
         schema:
           type: boolean
       - in: query
-        name: group_id
-        schema:
-          type: string
-          minLength: 1
-        description: Comma-separated values; OR within this filter.
-      - in: query
         name: id
         schema:
           type: string
@@ -634,6 +628,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: status
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: team_id
         schema:
           type: string
           minLength: 1
@@ -1643,7 +1643,7 @@ components:
         name:
           type: string
           readOnly: true
-        group:
+        team:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -1760,7 +1760,6 @@ components:
       - documentation_url
       - equipment_count
       - equipment_url
-      - group
       - id
       - image
       - is_favorite
@@ -1778,6 +1777,7 @@ components:
       - sku
       - station_slot
       - status
+      - team
       - type
       - uid
       - updated_at
@@ -1795,7 +1795,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        group_id:
+        team_id:
           type: integer
           minimum: 1
           nullable: true
@@ -2324,7 +2324,7 @@ components:
         name:
           type: string
           readOnly: true
-        group:
+        team:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -2441,7 +2441,6 @@ components:
       - documentation_url
       - equipment_count
       - equipment_url
-      - group
       - id
       - image
       - is_favorite
@@ -2459,6 +2458,7 @@ components:
       - sku
       - station_slot
       - status
+      - team
       - type
       - uid
       - updated_at
@@ -2697,7 +2697,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        group_id:
+        team_id:
           type: integer
           minimum: 1
           nullable: true
@@ -2927,7 +2927,7 @@ components:
           type: integer
           minimum: 1
           nullable: true
-        group_id:
+        team_id:
           type: integer
           minimum: 1
           nullable: true

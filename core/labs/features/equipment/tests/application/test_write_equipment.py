@@ -14,7 +14,7 @@ from core.labs.features.equipment.application.update_equipment import (
     update_equipment,
 )
 from core.labs.models import Equipment
-from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.base.resource import Department, Team
 from tests.factories import create_computing_equipment
 
 
@@ -42,16 +42,16 @@ def test_create_equipment_rejects_invalid_model_data(equipment):
 @pytest.mark.django_db
 def test_create_equipment_resolves_group_and_infers_its_department(equipment):
     department = Department.objects.create(name="Equipment Department")
-    group = ResourceGroup.objects.create(name="Equipment Group", department=department)
+    team = Team.objects.create(name="Equipment Group", department=department)
 
     created = create_equipment(
         CreateEquipmentInput(
-            fields=(("kind", equipment.kind), ("sku", "EQ-GROUP-01"), ("name", "Grouped"), ("group", group.pk)),
+            fields=(("kind", equipment.kind), ("sku", "EQ-GROUP-01"), ("name", "Grouped"), ("team", team.pk)),
         ),
         actor=None,
     )
 
-    assert created.group_id == group.pk
+    assert created.team_id == team.pk
     assert created.department_id == department.pk
 
 
@@ -59,16 +59,16 @@ def test_create_equipment_resolves_group_and_infers_its_department(equipment):
 def test_create_equipment_rejects_inactive_or_cross_department_group(equipment):
     department = Department.objects.create(name="Equipment Department")
     other_department = Department.objects.create(name="Other Equipment Department")
-    group = ResourceGroup.objects.create(name="Inactive Group", department=department, active=False)
+    team = Team.objects.create(name="Inactive Group", department=department, active=False)
     with pytest.raises(ValidationError, match="active"):
         create_equipment(
             CreateEquipmentInput(
-                fields=(("kind", equipment.kind), ("sku", "EQ-GROUP-INACTIVE"), ("group", group.pk)),
+                fields=(("kind", equipment.kind), ("sku", "EQ-GROUP-INACTIVE"), ("team", team.pk)),
             ),
             actor=None,
         )
 
-    active_group = ResourceGroup.objects.create(name="Active Group", department=department)
+    active_group = Team.objects.create(name="Active Group", department=department)
     with pytest.raises(ValidationError, match="different department"):
         create_equipment(
             CreateEquipmentInput(
@@ -76,7 +76,7 @@ def test_create_equipment_rejects_inactive_or_cross_department_group(equipment):
                     ("kind", equipment.kind),
                     ("sku", "EQ-GROUP-MISMATCH"),
                     ("department", other_department),
-                    ("group", active_group.pk),
+                    ("team", active_group.pk),
                 ),
             ),
             actor=None,

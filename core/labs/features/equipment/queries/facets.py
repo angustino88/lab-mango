@@ -28,7 +28,7 @@ EQUIPMENT_DIMENSIONS = MappingProxyType(
         "manufacturer": RelationshipDimension("manufacturer_id", "manufacturer__name", ("category",)),
         "product_model_id": RelationshipDimension("product_model_id", "product_model__name", ("type", "manufacturer")),
         "department_id": RelationshipDimension("department_id", "department__name"),
-        "group_id": RelationshipDimension("group_id", "group__name", ("department_id",)),
+        "team_id": RelationshipDimension("team_id", "team__name", ("department_id",)),
     }
 )
 

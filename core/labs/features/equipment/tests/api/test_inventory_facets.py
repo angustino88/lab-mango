@@ -23,11 +23,11 @@ from core.labs.models import (
     EquipmentProductModel,
     EquipmentType,
 )
-from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.base.resource import Department, Team
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 BASE = "/api/labs/equipment"
-DIMENSIONS = ("category", "kind", "type", "manufacturer", "product_model_id", "department_id", "group_id")
+DIMENSIONS = ("category", "kind", "type", "manufacturer", "product_model_id", "department_id", "team_id")
 
 
 @pytest.fixture
@@ -53,7 +53,7 @@ def inventory(db):
         for i in range(2)
     ]
     departments = [Department.objects.create(name=f"Facet department {i}") for i in range(2)]
-    groups = [ResourceGroup.objects.create(name=f"Facet group {i}", department=departments[i]) for i in range(2)]
+    teams = [Team.objects.create(name=f"Facet team {i}", department=departments[i]) for i in range(2)]
     rows = []
     for i in range(3):
         index = 0 if i < 2 else 1
@@ -66,20 +66,20 @@ def inventory(db):
                 manufacturer=makers[index],
                 product_model=models[index],
                 department=departments[index],
-                group=groups[index],
+                team=teams[index],
             )
         )
     Equipment.objects.create(sku="FACET-NULL", name="Null inventory", kind=kinds[0])
     Equipment.objects.create(
         sku="FACET-DELETED", name="Deleted inventory", kind=kinds[0], type=types[0], deleted_at=timezone.now()
     )
-    return client, categories, kinds, types, makers, models, departments, groups, rows
+    return client, categories, kinds, types, makers, models, departments, teams, rows
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("dimension", DIMENSIONS)
 def test_counts_match_filtered_inventory(inventory, dimension):
-    client, categories, kinds, types, makers, models, departments, groups, rows = inventory
+    client, categories, kinds, types, makers, models, departments, teams, rows = inventory
     response = client.get(
         f"{BASE}/facets",
         {"dimension": dimension, "category": categories[0].pk, "q": "Facet inventory", "page_size": 1},
@@ -94,7 +94,7 @@ def test_counts_match_filtered_inventory(inventory, dimension):
 
 @pytest.mark.django_db
 def test_taxonomy_and_organization_dependencies(inventory):
-    client, categories, kinds, types, makers, models, departments, groups, rows = inventory
+    client, categories, kinds, types, makers, models, departments, teams, rows = inventory
     selections = {
         "category": categories[0].pk,
         "kind": kinds[0].pk,
@@ -102,7 +102,7 @@ def test_taxonomy_and_organization_dependencies(inventory):
         "manufacturer": makers[0].pk,
         "product_model_id": models[0].pk,
         "department_id": departments[0].pk,
-        "group_id": groups[0].pk,
+        "team_id": teams[0].pk,
     }
     for dimension in DIMENSIONS:
         response = client.get(f"{BASE}/facets", {**selections, "dimension": dimension})
@@ -115,9 +115,9 @@ def test_taxonomy_and_organization_dependencies(inventory):
         {"manufacturer": makers[1].pk},
         {"product_model_id": models[1].pk},
         {"department_id": departments[1].pk},
-        {"group_id": groups[1].pk},
+        {"team_id": teams[1].pk},
     ):
-        response = client.get(f"{BASE}/facets", {**selections, **incompatible, "dimension": "group_id"})
+        response = client.get(f"{BASE}/facets", {**selections, **incompatible, "dimension": "team_id"})
         assert response.status_code == 200
         assert response.data["data"] == []
     combined = client.get(
@@ -133,7 +133,7 @@ def test_taxonomy_and_organization_dependencies(inventory):
 
 @pytest.mark.django_db
 def test_null_retired_buckets_pagination_and_unknown_ids(inventory):
-    client, categories, kinds, types, makers, models, departments, groups, rows = inventory
+    client, categories, kinds, types, makers, models, departments, teams, rows = inventory
     EquipmentManufacturer.objects.filter(pk=makers[0].pk).update(active=False)
     EquipmentCategory.objects.filter(pk=categories[0].pk).update(active=False)
     response = client.get(f"{BASE}/facets", {"dimension": "manufacturer", "page_size": 1})
@@ -231,7 +231,7 @@ def test_authorization(inventory):
 @pytest.mark.django_db
 @pytest.mark.parametrize("path", (BASE,))
 def test_bounded_queries(inventory, django_assert_num_queries, path):
-    client, categories, kinds, types, makers, models, departments, groups, rows = inventory
+    client, categories, kinds, types, makers, models, departments, teams, rows = inventory
     for i in range(3):
         Equipment.objects.create(
             sku=f"BUDGET-{i}",
@@ -239,7 +239,7 @@ def test_bounded_queries(inventory, django_assert_num_queries, path):
             kind=kinds[0],
             manufacturer=makers[0],
             department=departments[0],
-            group=groups[0],
+            team=teams[0],
         )
     # Warm permission and content-type machinery before measuring database reads.
     client.get(f"{path}/facets", {"dimension": "manufacturer"})
@@ -321,7 +321,7 @@ def assert_bucket_parity(client, path, query, dimension, expected_ids):
         "manufacturer": "manufacturer_id",
         "product_model_id": "product_model_id",
         "department_id": "department_id",
-        "group_id": "group_id",
+        "team_id": "team_id",
     }[dimension]
     expected = Counter(Equipment.objects.filter(pk__in=expected_ids).values_list(lookup, flat=True))
     actual = {row["value"]["id"] if row["value"] else None: row["equipment_count"] for row in facets.data["data"]}
@@ -331,8 +331,8 @@ def assert_bucket_parity(client, path, query, dimension, expected_ids):
 @pytest.mark.django_db
 @pytest.mark.parametrize("dimension", DIMENSIONS)
 def test_individual_csv_or_on_every_dimension(inventory, dimension):
-    client, categories, kinds, types, makers, models, departments, groups, rows = inventory
-    references = dict(zip(DIMENSIONS, (categories, kinds, types, makers, models, departments, groups), strict=True))
+    client, categories, kinds, types, makers, models, departments, teams, rows = inventory
+    references = dict(zip(DIMENSIONS, (categories, kinds, types, makers, models, departments, teams), strict=True))
     query = {dimension: ",".join(str(item.pk) for item in references[dimension]), "q": "Facet inventory"}
     assert_bucket_parity(client, BASE, query, dimension, [row.pk for row in rows])
     assert_bucket_parity(
@@ -342,10 +342,10 @@ def test_individual_csv_or_on_every_dimension(inventory, dimension):
 
 @pytest.mark.django_db
 def test_parent_only_siblings_crossed_relationships_and_csv_conjunction(inventory):
-    client, categories, kinds, types, makers, models, departments, groups, rows = inventory
+    client, categories, kinds, types, makers, models, departments, teams, rows = inventory
     sibling_kind = EquipmentKind.objects.create(category=categories[0], name="Sibling kind")
     sibling_type = EquipmentType.objects.create(kind=sibling_kind, name="Sibling type")
-    sibling_group = ResourceGroup.objects.create(department=departments[0], name="Sibling group")
+    sibling_team = Team.objects.create(department=departments[0], name="Sibling team")
     categories[0].manufacturers.add(makers[1])
     sibling_model = EquipmentProductModel.objects.create(
         name="Sibling model", equipment_type=sibling_type, manufacturer=makers[1]
@@ -358,7 +358,7 @@ def test_parent_only_siblings_crossed_relationships_and_csv_conjunction(inventor
         manufacturer=makers[1],
         product_model=sibling_model,
         department=departments[0],
-        group=sibling_group,
+        team=sibling_team,
     )
     crossed = Equipment.objects.create(
         sku="PARENT-CROSSED",
@@ -368,7 +368,7 @@ def test_parent_only_siblings_crossed_relationships_and_csv_conjunction(inventor
         manufacturer=makers[1],
         product_model=models[1],
         department=departments[1],
-        group=groups[1],
+        team=teams[1],
     )
     Equipment.objects.filter(pk=crossed.pk).update(kind=kinds[0], department=departments[0])
     # Historical crossed FK values are intentional: facets mirror stored list
@@ -390,10 +390,10 @@ def test_parent_only_siblings_crossed_relationships_and_csv_conjunction(inventor
         ),
         ({"type": types[1].pk}, "product_model_id", [rows[2].pk, crossed.pk]),
         ({"manufacturer": makers[1].pk}, "product_model_id", [rows[2].pk, sibling.pk, crossed.pk]),
-        ({"department_id": departments[0].pk}, "group_id", selected),
+        ({"department_id": departments[0].pk}, "team_id", selected),
     ):
         assert_bucket_parity(client, BASE, parent, dimension, ids)
-    query = {"category": f"{categories[0].pk},{categories[1].pk}", "group_id": f"{groups[0].pk},{sibling_group.pk}"}
+    query = {"category": f"{categories[0].pk},{categories[1].pk}", "team_id": f"{teams[0].pk},{sibling_team.pk}"}
     assert_bucket_parity(client, BASE, query, "type", [rows[0].pk, rows[1].pk, sibling.pk])
     assert_bucket_parity(client, BASE, {**query, "type": types[1].pk}, "type", [])
 
@@ -402,7 +402,7 @@ def test_parent_only_siblings_crossed_relationships_and_csv_conjunction(inventor
 @pytest.mark.parametrize("path", (BASE,))
 @pytest.mark.parametrize("filter_name", ("status", "assigned", "owner", "date", "combined"))
 def test_inherited_filters_exact_bucket_parity(inventory, path, filter_name):
-    client, categories, kinds, types, makers, models, departments, groups, rows = inventory
+    client, categories, kinds, types, makers, models, departments, teams, rows = inventory
     now = timezone.now()
     actor = get_user_model().objects.get(username="facets_actor")
     Equipment.objects.filter(pk=rows[0].pk).update(owner=actor, created=now - timedelta(days=1))
@@ -435,7 +435,7 @@ def test_inherited_filters_exact_bucket_parity(inventory, path, filter_name):
 def test_category_subtype_filter_bucket_parity(inventory):
     from core.labs.models.resource.equipment import DisplaySize
 
-    client, categories, kinds, types, makers, models, departments, groups, rows = inventory
+    client, categories, kinds, types, makers, models, departments, teams, rows = inventory
     size = DisplaySize.objects.create(size="Facet 24 inch")
     Equipment.objects.filter(pk=rows[2].pk).update(size=size)
     Equipment.objects.create(sku="SUBTYPE-OTHER", name="Other display", kind=kinds[1])
@@ -444,7 +444,7 @@ def test_category_subtype_filter_bucket_parity(inventory):
 
 @pytest.mark.django_db
 def test_maximum_page_size_duplicate_names_and_links(inventory):
-    client, categories, kinds, types, makers, models, departments, groups, rows = inventory
+    client, categories, kinds, types, makers, models, departments, teams, rows = inventory
     first = EquipmentType.objects.create(kind=kinds[0], name="Duplicate")
     second = EquipmentType.objects.create(kind=kinds[1], name="Duplicate")
     Equipment.objects.create(sku="DUP-FIRST", name="Duplicate inventory", kind=kinds[0], type=first)

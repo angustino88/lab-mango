@@ -47,7 +47,7 @@ class RoomAdmin(LabMangoModelAdmin):
     # Building names repeat across cities, so buildings are searched, not offered as a filter.
     list_filter = ("country", "department")
     search_fields = ("name", "label", "sku", "building__name", "city__name")
-    autocomplete_fields = ("owner", "department", "group", "country", "city", "building")
+    autocomplete_fields = ("owner", "department", "team", "country", "city", "building")
     readonly_fields = ("uid",)
     label_select_related = ROOM_LABEL_RELATED
 
@@ -68,7 +68,7 @@ class StationAdmin(LabMangoModelAdmin):
     list_select_related = ("type", "department", *room_label_related("room"))
     list_filter = ("type", "department")
     search_fields = ("name", "label", "sku", "room__name")
-    autocomplete_fields = ("owner", "department", "group", "type", "room", "slot")
+    autocomplete_fields = ("owner", "department", "team", "type", "room", "slot")
     readonly_fields = ("uid",)
 
 

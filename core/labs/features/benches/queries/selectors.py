@@ -9,7 +9,7 @@ from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 def list_benches(*, actor=None, setup_location=None, bench_group=None, type=None,
                  lifecycle_status=None, favorite=None, search=None):
     queryset = Bench.objects.select_related(
-        "type", "bench_group", "owner", "group", "department", "station_slot", "setup_location",
+        "type", "bench_group", "owner", "team", "department", "station_slot", "setup_location",
         "setup_location__room__country", "setup_location__room__city", "setup_location__room__building",
     )
     if actor is not None and getattr(actor, "is_authenticated", False):

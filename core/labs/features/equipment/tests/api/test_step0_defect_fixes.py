@@ -105,7 +105,7 @@ def test_plain_user_cannot_read_or_write_equipment(plain_user, computing_kind, c
         assert client.get(ROOT + path).status_code == 403, path
     # Organisation lookups stay readable (R9).
     assert client.get(ROOT + "departments").status_code == 200
-    assert client.get(ROOT + "resource-groups").status_code == 200
+    assert client.get(ROOT + "teams").status_code == 200
 
 
 @pytest.mark.django_db

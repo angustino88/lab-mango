@@ -133,9 +133,9 @@ urlpatterns = [
     path("departments/options", views.DepartmentOptionsAPIView.as_view(), name="department-options"),
     path("departments/<int:department_id>", views.DepartmentDetailAPIView.as_view(), name="department-detail"),
 
-    path("resource-groups", views.ResourceGroupListAPIView.as_view(), name="resource-group-list"),
-    path("resource-groups/options", views.ResourceGroupOptionsAPIView.as_view(), name="resource-group-options"),
-    path("resource-groups/<int:group_id>", views.ResourceGroupDetailAPIView.as_view(), name="resource-group-detail"),
+    path("teams", views.TeamListAPIView.as_view(), name="team-list"),
+    path("teams/options", views.TeamOptionsAPIView.as_view(), name="team-options"),
+    path("teams/<int:team_id>", views.TeamDetailAPIView.as_view(), name="team-detail"),
 ]
 
 urlpatterns += reference_urlpatterns

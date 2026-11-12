@@ -25,7 +25,7 @@ class RoomStatusSummarySerializer(StatusSummarySerializer):
 
 class RoomCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
     department_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
-    group_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    team_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     owner_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     country_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     city_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
@@ -39,7 +39,7 @@ class RoomCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerial
             "name",
             "label",
             "department_id",
-            "group_id",
+            "team_id",
             "owner_id",
             "remark",
             "map_url",
@@ -147,7 +147,7 @@ class RoomObservationSerializer(AppModelSerializer):
 
 
 class RoomSerializer(AppModelSerializer):
-    group = NamedReferenceSerializer(read_only=True, allow_null=True)
+    team = NamedReferenceSerializer(read_only=True, allow_null=True)
     owner = NamedReferenceSerializer(read_only=True, allow_null=True)
     country = NamedReferenceSerializer(read_only=True, allow_null=True)
     city = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -168,7 +168,7 @@ class RoomSerializer(AppModelSerializer):
             "name",
             "label",
             "department",
-            "group",
+            "team",
             "owner",
             "remark",
             "image",

@@ -17,7 +17,7 @@ def test_equipment_serializer_canonical_fields():
     assert "created" not in fields
     assert "modified" not in fields
     assert "deleted_at" not in fields
-    assert "group" in fields
+    assert "team" in fields
     assert "department" in fields
     assert "current_status" not in fields
     assert "acquisition" not in fields
@@ -41,11 +41,11 @@ def test_equipment_serializer_canonical_fields():
 def test_equipment_serializer_renders_group_as_named_reference_or_null():
     serializer = EquipmentSerializer()
 
-    assert serializer.fields["group"].to_representation(SimpleNamespace(id=12, name="Optics")) == {
+    assert serializer.fields["team"].to_representation(SimpleNamespace(id=12, name="Optics")) == {
         "id": 12,
         "name": "Optics",
     }
-    assert serializer.fields["group"].to_representation(None) == {}
+    assert serializer.fields["team"].to_representation(None) == {}
 
 
 def test_equipment_create_serializer_accepts_relation_ids():
@@ -59,12 +59,12 @@ def test_equipment_create_serializer_accepts_relation_ids():
             "product_model_id": 4,
             "owner_id": 5,
             "department_id": 6,
-            "group_id": 7,
+            "team_id": 7,
         }
     )
     assert serializer.is_valid(), serializer.errors
     assert serializer.validated_data["kind"] == 1
     assert serializer.validated_data["manufacturer"] == 3
     assert serializer.validated_data["department"] == 6
-    assert serializer.validated_data["group"] == 7
+    assert serializer.validated_data["team"] == 7
 

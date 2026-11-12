@@ -24,7 +24,7 @@ class BenchAdmin(LabMangoModelAdmin):
     list_select_related = ("bench_group", "type", "setup_location", "department")
     list_filter = ("lifecycle_status", "bench_group", "type")
     search_fields = ("name", "sku", "setup_location__name")
-    autocomplete_fields = ("owner", "department", "group", "bench_group", "type", "setup_location", "station_slot")
+    autocomplete_fields = ("owner", "department", "team", "bench_group", "type", "setup_location", "station_slot")
     readonly_fields = ("uid",)
 
 
