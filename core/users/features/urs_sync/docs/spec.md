@@ -55,6 +55,10 @@ URS groups and apply blocked removals" (shown only while the check is on).
 Each run writes `last_sync_at`, `last_sync_status` (`applied`, `blocked`, `failed`) and `last_sync_message`
 on every selected group, and logs one summary line (applied, blocked, failed, created, added, removed,
 activated, deactivated, skipped, unusable names).
+Every applied change to group membership is also written to the append-only role audit log
+(`RoleAuditEvent`, actor `system:urs-sync`): one `urs_sync_membership` event per changed group (Labs role,
+added and removed usernames, forced flag) and one `user_activity_changed` event per activated or
+deactivated user. See section 6.
 
 ## 4. Entry points
 | Entry point | Name | Selects |
@@ -74,3 +78,22 @@ activated, deactivated, skipped, unusable names).
   superusers only; `is_active` is read-only (managed by sync) and the effective Labs roles are shown.
 - Actions: "Sync selected URS groups" queues a sync; "... and apply blocked removals" queues a forced sync.
   Refresh the list to see the outcome.
+
+## 6. Role audit log and access review (owner decision 2026-11-12)
+- **Role audit log** (Django admin, superusers only: *Role audit events*). Append-only: PostgreSQL rejects
+  UPDATE and DELETE (migration 0006). People are stored as id plus username, so deleting a user keeps their
+  history. Recorded events:
+
+  | Event | When | Actor |
+  |---|---|---|
+  | `urs_group_created`, `urs_group_changed`, `urs_group_deleted` | A URS group is added, its name, URS id, Labs role or active flag changes, or it is deleted in admin | admin user |
+  | `user_privileges_changed` | `is_staff`, `is_superuser`, `is_urs_managed`, groups or user permissions change in admin | admin user |
+  | `group_permissions_changed` | Django permissions on a group change in admin | admin user |
+  | `urs_sync_membership` | URS sync adds or removes members of a group | `system:urs-sync` |
+  | `user_activity_changed` | URS sync activates or deactivates a user | `system:urs-sync` |
+
+  Each event stores who, when, the subject (user or group) and the values before and after.
+- **Access review** (Django admin, superusers only: *Access review: privileged users*). Lists every
+  superuser, staff user, Labs admin and Labs coordinator, with the URS groups that grant the role, active
+  flag, last login (recorded at each Entra sign-in) and whether an Entra identity is linked; filter by
+  privilege; "Export selected to CSV" for periodic reviews (ISO 27001 A.5.18).

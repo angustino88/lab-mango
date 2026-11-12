@@ -37,8 +37,9 @@ from django.db.models import Count
 from django.db.models.functions import Lower
 from django.utils import timezone
 
+from core.users.audit import SYSTEM_URS_SYNC, record_role_event
 from core.users.features.urs_sync.mapping import ensure_linked_group
-from core.users.models import URSGroup, User
+from core.users.models import RoleAuditEvent, URSGroup, User
 from core.users.public import SetUserActiveInput, set_user_active
 
 logger = logging.getLogger(__name__)
@@ -250,6 +251,8 @@ def _apply(fetched: list[_FetchedGroup], failures: dict[int, str], *, report: Sy
             if item.invalid_members:
                 message += f", {item.invalid_members} unusable member name(s)"
             _record(item.urs_group_pk, URSGroup.SyncStatus.APPLIED, message, now)
+            if additions or removals:
+                _audit_membership(item, additions=additions, removals=removals, forced=force)
             report.applied.append(item.name)
             any_applied = True
 
@@ -305,15 +308,48 @@ def _reconcile_activity(affected_ids: set[int], superuser_ids: set[int], *, repo
     rows = (
         User.objects.filter(pk__in=affected_ids, is_urs_managed=True)
         .annotate(num_groups=Count("groups"))
-        .values_list("pk", "is_active", "num_groups")
+        .values_list("pk", "username", "is_active", "num_groups")
     )
-    for user_id, is_active, num_groups in sorted(rows):
+    for user_id, username, is_active, num_groups in sorted(rows):
         if num_groups > 0 and not is_active:
             set_user_active(data=SetUserActiveInput(user_id=user_id, is_active=True))
             report.users_activated += 1
+            _audit_activity(user_id, username, is_active=True)
         elif num_groups == 0 and is_active and user_id not in superuser_ids:
             set_user_active(data=SetUserActiveInput(user_id=user_id, is_active=False))
             report.users_deactivated += 1
+            _audit_activity(user_id, username, is_active=False)
+
+
+def _audit_membership(item: _FetchedGroup, *, additions: set[int], removals: set[int], forced: bool) -> None:
+    names = dict(User.objects.filter(pk__in=additions | removals).values_list("pk", "username"))
+    labs_role = URSGroup.objects.filter(pk=item.urs_group_pk).values_list("labs_role", flat=True).first() or ""
+    record_role_event(
+        RoleAuditEvent.EventType.URS_SYNC_MEMBERSHIP,
+        actor_label=SYSTEM_URS_SYNC,
+        subject=item.name,
+        changes={
+            "labs_role": labs_role,
+            "added": sorted(names[pk] for pk in additions),
+            "removed": sorted(names[pk] for pk in removals),
+            "forced": forced,
+        },
+    )
+
+
+def _audit_activity(user_id: int, username: str, *, is_active: bool) -> None:
+    record_role_event(
+        RoleAuditEvent.EventType.USER_ACTIVITY_CHANGED,
+        actor_label=SYSTEM_URS_SYNC,
+        target=_UserRef(user_id, username),
+        changes={"is_active": {"before": not is_active, "after": is_active}},
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class _UserRef:
+    pk: int
+    username: str
 
 
 def _record(urs_group_pk: int, status: str, message: str, now) -> None:

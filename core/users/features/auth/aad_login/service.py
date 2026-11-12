@@ -139,6 +139,8 @@ def aad_login(*, id_token: str, challenge_id: str) -> tuple[dict, User]:
             raise AADAuthError(INVALID_SSO_TOKEN)
         challenge.consumed_at = now
         challenge.save(update_fields=["consumed_at"])
+        # Recorded for the access review (dormant privileged accounts); the user row is already locked.
+        User.objects.filter(pk=user.pk).update(last_login=now)
         refresh = RefreshToken.for_user(user)
         refresh["auth_source"] = "entra"
         refresh["entra_tid"] = str(current_identity.tenant_id)
