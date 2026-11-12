@@ -29,7 +29,7 @@ from core.labs.models import (
     EquipmentProductModel,
     EquipmentType,
 )
-from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.base.resource import Department, Group
 from core.labs.models.resource.equipment import EquipmentInterface
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
@@ -48,7 +48,7 @@ def cardinality_inventory():
     )
     EquipmentManufacturer.objects.filter(pk=maker.pk).update(active=False)
     department = Department.objects.create(name="Synthetic department", active=False)
-    group = ResourceGroup.objects.create(name="Synthetic group", department=department, active=False)
+    group = Group.objects.create(name="Synthetic group", department=department, active=False)
     display = Equipment.objects.create(
         sku="SYN-DISPLAY",
         name="Synthetic match",

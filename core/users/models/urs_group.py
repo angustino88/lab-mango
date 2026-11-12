@@ -35,6 +35,8 @@ class URSGroup(models.Model):
     last_sync_message = models.CharField(max_length=500, blank=True, default="", editable=False)
 
     class Meta:
+        verbose_name = "URS group"
+        verbose_name_plural = "URS groups (roles)"
         constraints = [
             models.UniqueConstraint(fields=["urs_group_id"], name="users_ursgroup_unique_urs_group_id"),
             models.CheckConstraint(

@@ -212,3 +212,50 @@ def test_list_query_count_does_not_grow_with_rows(client, coordinator, django_as
         unit.interfaces.add(interface)
     with django_assert_max_num_queries(len(few.captured_queries)):
         assert client.get(ROOT).status_code == 200
+
+
+@pytest.mark.django_db
+def test_list_pages_with_page_and_page_size(client):
+    kind = _kind("sample")
+    for index in range(5):
+        Equipment.objects.create(sku=f"COL-P-{index}", name=f"Page {index}", kind=kind)
+    response = client.get(ROOT, {"ordering": "name", "page": 2, "page_size": 2})
+    assert response.status_code == 200, response.data
+    assert [row["sku"] for row in response.data["data"]] == ["COL-P-2", "COL-P-3"]
+    pagination = response.data["meta"]["pagination"]
+    assert (pagination["count"], pagination["page"], pagination["page_size"]) == (5, 2, 2)
+    assert "page=3" in pagination["next"] and "page_size=2" in pagination["next"]
+    assert "page_size=2" in pagination["previous"]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("query", "code"),
+    [
+        ({"page": 0}, "invalid_query"),
+        ({"page": "abc"}, "invalid_query"),
+        ({"page_size": 0}, "invalid_query"),
+        ({"page_size": 101}, "max_value"),
+    ],
+)
+def test_list_rejects_invalid_paging(client, query, code):
+    response = client.get(ROOT, query)
+    assert response.status_code == 400
+    assert response.data["error"]["code"] == "invalid_query"
+    [detail] = response.data["error"]["details"]
+    assert (detail["field"], detail["code"]) == (next(iter(query)), code)
+
+
+def test_list_documents_page_and_page_size():
+    from drf_spectacular.generators import SchemaGenerator
+
+    from core.labs.features.equipment.api.urls import urlpatterns
+
+    schema = SchemaGenerator(patterns=urlpatterns).get_schema(public=True)
+    parameters = {item["name"]: item for item in schema["paths"]["/equipment"]["get"]["parameters"]}
+    for name in ("page", "page_size"):
+        assert parameters[name]["in"] == "query"
+        assert not parameters[name].get("required", False)
+        assert parameters[name]["schema"]["type"] == "integer"
+        assert parameters[name]["schema"]["minimum"] == 1
+    assert parameters["page_size"]["schema"]["maximum"] == 100

@@ -3,7 +3,7 @@
 from core.common.api.reference_views import reference_urlpatterns
 from core.labs.features.base.access import LABS_STAFF_ACCESS, can_import_lab_reference_data
 from core.labs.features.equipment.api.common import ORGANIZATION_PERMISSIONS
-from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.base.resource import Department, Group
 from core.labs.models.resource.equipment.computing import TechnicalUser
 from core.labs.models.resource.equipment.display import DisplayResolution, DisplaySize
 from core.labs.models.resource.equipment.lookups import EquipmentInterface, Material
@@ -63,12 +63,14 @@ RESOURCES = (
     ("sample-characteristics", SampleCharacteristic, ("name",), ("name",), "name"),
     ("technical-users", TechnicalUser, ("username",), ("username",), "username"),
     ("departments", Department, ("name", "description", "active"), ("name",), "name"),
-    ("resource-groups", ResourceGroup, ("name", "description", "department", "active"), ("name",), "name"),
+    ("groups", Group, ("name", "description", "department", "active"), ("name",), "name"),
 )
 
 # Organisation lookups stay readable by every Labs role (R9); all other equipment catalogs are for
 # coordinators and admins. Creates need the Labs admin role (application/reference_data.py).
-ORGANIZATION_SEGMENTS = frozenset({"departments", "resource-groups"})
+ORGANIZATION_SEGMENTS = frozenset({"departments", "groups"})
+# Categories are provisioned defaults (features/equipment/defaults.py): readable, never imported.
+READ_ONLY_SEGMENTS = frozenset({"categories"})
 
 urlpatterns = []
 for segment, model, fields, identity, label in RESOURCES:
@@ -82,4 +84,5 @@ for segment, model, fields, identity, label in RESOURCES:
         create=create_catalog_reference,
         listing=list_catalog_references,
         retrieve=get_catalog_reference,
+        read_only=segment in READ_ONLY_SEGMENTS,
     )

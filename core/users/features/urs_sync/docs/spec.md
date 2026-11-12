@@ -67,6 +67,13 @@ deactivated user. See section 6.
 | Celery task queued by the admin actions | `users.urs_sync.sync_selected_groups` | selected groups, optional `force` |
 
 ## 5. Django admin workflow
+- **Layout (2026-11-12):** the admin index starts with *People and access* (users, URS groups, access
+  review, role audit log). The URS group list shows each group's role as a coloured badge, members as a link
+  to the filtered user list, and the last sync as one readable line. The URS group page shows what the role
+  can do, the members (read-only, from URS) and the last sync. The user list shows Labs roles, the URS groups
+  granting them, last sign-in and whether a Microsoft account is linked, with a *Labs role* filter. The user
+  page groups fields into Profile, Access (role and its URS source), Admin rights, and collapsed advanced and
+  legacy sections.
 - **One place to configure roles: the URS group** (URS id, name, Labs role, active). Saving it creates and
   names its Django group and, for an active group, queues a sync of that group right away; the Django group only stores membership. A URS group without a Django group gets
   one at its next sync. The Django group screen is visible to superusers only.

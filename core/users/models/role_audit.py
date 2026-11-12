@@ -32,6 +32,8 @@ class RoleAuditEvent(models.Model):
     changes = models.JSONField(default=dict, blank=True, editable=False)
 
     class Meta:
+        verbose_name = "role change"
+        verbose_name_plural = "role audit log"
         ordering = ("-occurred_at", "-id")
         indexes = [models.Index(fields=["event_type", "occurred_at"], name="users_roleaudit_type_time")]
         constraints = [
@@ -62,5 +64,5 @@ class PrivilegedUser(User):
 
     class Meta:
         proxy = True
-        verbose_name = "privileged user (access review)"
-        verbose_name_plural = "access review: privileged users"
+        verbose_name = "privileged user"
+        verbose_name_plural = "access review"

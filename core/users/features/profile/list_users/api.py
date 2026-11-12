@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_api_key.permissions import KeyParser
 
 from core.common.api.api_views import AppDetailAPIView, AppListAPIView
+from core.common.api.pagination import with_page_query
 from core.common.api.permissions import HasAPIKeyAccess, api_key_access_enabled
 from core.users.features.profile.application import UpdateUserInput, update_user
 from core.users.features.profile.contracts import ActorContext
@@ -41,7 +42,7 @@ class ListUsersView(AppListAPIView):
     schema_tags = ("User Profiles",)
     permission_classes = [HasAPIKeyAccess | IsAuthenticated]
     get_contract = OperationContract(
-        query=UsersListQuerySerializer,
+        query=with_page_query(UsersListQuerySerializer),
         success=ResponseContract.paginated("Users", UserSerializer),
         bad_request=ResponseContract.bad_request(),
     )

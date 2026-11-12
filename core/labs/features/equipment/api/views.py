@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.options import OptionsQueryMixin, SizeClass
-from core.common.api.pagination import PageNumberQuerySerializer, ResultsSetPagination
+from core.common.api.pagination import PageNumberQuerySerializer, ResultsSetPagination, with_page_query
 from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.equipment.api.serializers import (
     EquipmentCategorySerializer,
@@ -69,7 +69,7 @@ from core.labs.features.equipment.queries.reference_data import (
     get_equipment_manufacturer,
     get_equipment_product_model,
     get_equipment_type,
-    get_resource_group,
+    get_group,
     list_department_options,
     list_departments,
     list_equipment_categories,
@@ -82,8 +82,8 @@ from core.labs.features.equipment.queries.reference_data import (
     list_equipment_product_models,
     list_equipment_type_options,
     list_equipment_types,
-    list_resource_group_options,
-    list_resource_groups,
+    list_group_options,
+    list_groups,
 )
 from core.labs.features.equipment.queries.reservations import list_reservations
 from core.labs.models import Equipment
@@ -126,8 +126,8 @@ from .serializers import (
     EquipmentReturnSerializer,
     EquipmentStatusSummarySerializer,
     EquipmentTypeOptionsQuerySerializer,
-    ResourceGroupCatalogSerializer,
-    ResourceGroupOptionsQuerySerializer,
+    GroupCatalogSerializer,
+    GroupOptionsQuerySerializer,
 )
 
 EquipmentListQuerySerializer = EQUIPMENT_FILTERS.serializer("EquipmentListQuerySerializer")
@@ -769,7 +769,7 @@ class EquipmentCategoriesOptionsAPIView(OptionsAPIView):
 class EquipmentKindListAPIView(AppListAPIView, EquipmentAPIView):
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=EquipmentKindOptionsQuerySerializer,
+        query=with_page_query(EquipmentKindOptionsQuerySerializer),
         success=ResponseContract.paginated("EquipmentKindCatalogList", EquipmentKindSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -778,7 +778,10 @@ class EquipmentKindListAPIView(AppListAPIView, EquipmentAPIView):
         query, error = self.validate_query()
         if error is not None:
             return error
-        return self.list_response_sync(list_equipment_kinds(category_id=query.get("category_id") if query else None))
+        category_id = query.get("category_id") if query else None
+        return self.list_response_sync(
+            list_equipment_kinds(search=query.get("q") if query else None, category_id=category_id)
+        )
 
 
 class EquipmentKindDetailAPIView(EquipmentAPIView):
@@ -807,7 +810,7 @@ class EquipmentKindOptionsAPIView(OptionsAPIView):
 class EquipmentTypeListAPIView(AppListAPIView, EquipmentAPIView):
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=EquipmentTypeOptionsQuerySerializer,
+        query=with_page_query(EquipmentTypeOptionsQuerySerializer),
         success=ResponseContract.paginated("EquipmentTypeCatalogList", EquipmentTypeSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -818,7 +821,9 @@ class EquipmentTypeListAPIView(AppListAPIView, EquipmentAPIView):
             return error
         kind_id = query.get("kind_id") if query else None
         category_id = query.get("category_id") if query else None
-        return self.list_response_sync(list_equipment_types(kind_id=kind_id, category_id=category_id))
+        return self.list_response_sync(
+            list_equipment_types(search=query.get("q") if query else None, kind_id=kind_id, category_id=category_id)
+        )
 
 
 class EquipmentTypeDetailAPIView(EquipmentAPIView):
@@ -849,7 +854,7 @@ class EquipmentTypeOptionsAPIView(OptionsAPIView):
 class EquipmentManufacturerListAPIView(AppListAPIView, EquipmentAPIView):
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=EquipmentManufacturerOptionsQuerySerializer,
+        query=with_page_query(EquipmentManufacturerOptionsQuerySerializer),
         success=ResponseContract.paginated("EquipmentManufacturerCatalogList", EquipmentManufacturerSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -859,7 +864,9 @@ class EquipmentManufacturerListAPIView(AppListAPIView, EquipmentAPIView):
         if error is not None:
             return error
         return self.list_response_sync(
-            list_equipment_manufacturers(category_id=query.get("category_id") if query else None)
+            list_equipment_manufacturers(
+                search=query.get("q") if query else None, category_id=query.get("category_id") if query else None
+            )
         )
 
 
@@ -891,7 +898,7 @@ class EquipmentManufacturerOptionsAPIView(OptionsAPIView):
 class EquipmentProductModelListAPIView(AppListAPIView, EquipmentAPIView):
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=EquipmentProductModelOptionsQuerySerializer,
+        query=with_page_query(EquipmentProductModelOptionsQuerySerializer),
         success=ResponseContract.paginated("EquipmentProductModelCatalogList", EquipmentProductModelSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -902,7 +909,11 @@ class EquipmentProductModelListAPIView(AppListAPIView, EquipmentAPIView):
             return error
         manufacturer_id = query.get("manufacturer_id") if query else None
         type_id = query.get("type_id") if query else None
-        return self.list_response_sync(list_equipment_product_models(manufacturer_id=manufacturer_id, type_id=type_id))
+        return self.list_response_sync(
+            list_equipment_product_models(
+                search=query.get("q") if query else None, manufacturer_id=manufacturer_id, type_id=type_id
+            )
+        )
 
 
 class EquipmentProductModelDetailAPIView(EquipmentAPIView):
@@ -968,13 +979,13 @@ class DepartmentOptionsAPIView(OptionsAPIView):
         return list_department_options(actor=actor, **filters)
 
 
-# 7. Resource Groups
-class ResourceGroupListAPIView(AppListAPIView, EquipmentAPIView):
+# 7. Groups
+class GroupListAPIView(AppListAPIView, EquipmentAPIView):
     permission_classes = ORGANIZATION_PERMISSIONS
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=ResourceGroupOptionsQuerySerializer,
-        success=ResponseContract.paginated("ResourceGroupCatalogList", ResourceGroupCatalogSerializer),
+        query=with_page_query(GroupOptionsQuerySerializer),
+        success=ResponseContract.paginated("GroupCatalogList", GroupCatalogSerializer),
         bad_request=ResponseContract.bad_request(),
     )
 
@@ -983,26 +994,28 @@ class ResourceGroupListAPIView(AppListAPIView, EquipmentAPIView):
         if error is not None:
             return error
         department_id = query.get("department_id") if query else None
-        return self.list_response_sync(list_resource_groups(department_id=department_id))
+        return self.list_response_sync(
+            list_groups(search=query.get("q") if query else None, department_id=department_id)
+        )
 
 
-class ResourceGroupDetailAPIView(EquipmentAPIView):
+class GroupDetailAPIView(EquipmentAPIView):
     permission_classes = ORGANIZATION_PERMISSIONS
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        success=ResponseContract.success("ResourceGroupCatalogDetail", ResourceGroupCatalogSerializer),
+        success=ResponseContract.success("GroupCatalogDetail", GroupCatalogSerializer),
         not_found=ResponseContract.not_found(),
     )
 
     def handle_get(self, request: Request, group_id: int, *args: Any, **kwargs: Any) -> Response:
-        return self.respond(get_resource_group(group_id=group_id))
+        return self.respond(get_group(group_id=group_id))
 
 
-class ResourceGroupOptionsAPIView(OptionsAPIView):
-    query_serializer = ResourceGroupOptionsQuerySerializer
+class GroupOptionsAPIView(OptionsAPIView):
+    query_serializer = GroupOptionsQuerySerializer
     size_class = SizeClass.SMALL
     owner = "equipment"
     schema_tags = ("Equipment",)
 
     def select(self, *, actor: Any, filters: dict[str, Any]) -> Any:
-        return list_resource_group_options(actor=actor, **filters)
+        return list_group_options(actor=actor, **filters)

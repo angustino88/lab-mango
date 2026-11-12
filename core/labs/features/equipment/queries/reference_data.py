@@ -4,7 +4,7 @@ from typing import Any
 
 from django.db.models import CharField, Exists, F, OuterRef, Q, QuerySet, Value
 
-from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.base.resource import Department, Group
 from core.labs.models.resource.equipment.reference_data import (
     EquipmentCategory,
     EquipmentKind,
@@ -19,7 +19,7 @@ from core.users.public import LabsRole, has_labs_role
 
 # Organisation lookups other screens use; every other equipment reference list is visible to
 # coordinators and administrators only (owner decisions R4, R9).
-OPEN_REFERENCE_MODELS = frozenset({"department", "resourcegroup"})
+OPEN_REFERENCE_MODELS = frozenset({"department", "group"})
 
 
 def _ensure_can_read(resource: ReferenceResource, actor: Any) -> None:
@@ -243,9 +243,9 @@ def list_department_options(*, actor: Any = None, q: str | None = None, include_
     )
 
 
-# 7. ResourceGroup
-def list_resource_groups(*, search: str | None = None, department_id: int | None = None) -> QuerySet[ResourceGroup]:
-    qs = ResourceGroup.objects.select_related("department").order_by("name", "pk")
+# 7. Group
+def list_groups(*, search: str | None = None, department_id: int | None = None) -> QuerySet[Group]:
+    qs = Group.objects.select_related("department").order_by("name", "pk")
     if department_id is not None:
         qs = qs.filter(department_id=department_id)
     if search:
@@ -253,11 +253,11 @@ def list_resource_groups(*, search: str | None = None, department_id: int | None
     return qs
 
 
-def get_resource_group(*, group_id: int) -> ResourceGroup:
-    return ResourceGroup.objects.select_related("department").get(pk=group_id)
+def get_group(*, group_id: int) -> Group:
+    return Group.objects.select_related("department").get(pk=group_id)
 
 
-def list_resource_group_options(
+def list_group_options(
     *, actor: Any = None, q: str | None = None, department_id: int | None = None, include_ids: list[int] | None = None
 ) -> QuerySet:
     cond = Q(active=True)
@@ -268,7 +268,7 @@ def list_resource_group_options(
     if include_ids:
         cond |= Q(pk__in=include_ids)
     return (
-        ResourceGroup.objects.filter(cond)
+        Group.objects.filter(cond)
         .annotate(sku=Value(None, output_field=CharField()))
         .values("id", "sku", "name")
         .order_by("name", "id")

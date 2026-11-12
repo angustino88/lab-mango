@@ -4,7 +4,7 @@ from drf_api_contracts import OperationContract, ResponseContract
 
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
 from core.common.api.options import OptionsQueryMixin, SizeClass
-from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
 from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.locations.api.schema import operation
 from core.labs.features.locations.api.views import LocationAPIView
@@ -56,7 +56,7 @@ class StationStatusSummaryAPIView(StationAPIView):
 
 
 class StationListCreateAPIView(StationAPIView):
-    get_contract = operation("StationList", StationSerializer, query=StationListQuerySerializer, many=True)
+    get_contract = operation("StationList", StationSerializer, query=with_page_query(StationListQuerySerializer), many=True)
     post_contract = operation("StationCreate", StationSerializer, request=StationCreateSerializer, created=True)
 
     def handle_get(self, request, **kwargs):

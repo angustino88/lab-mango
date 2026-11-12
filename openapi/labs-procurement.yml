@@ -43,6 +43,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Purchase Items Resources by Purchase Item ID
     post:
       operationId: labs_purchase_items_resources_create_by_purchase_item_id
@@ -166,6 +172,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Purchases
     post:
       operationId: labs_purchases_create
@@ -333,6 +345,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Purchases Items by Purchase ID
     post:
       operationId: labs_purchases_items_create_by_purchase_id
@@ -653,6 +671,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
       summary: Get Purchases Transactions by Purchase ID
     post:
       operationId: labs_purchases_transactions_create_by_purchase_id

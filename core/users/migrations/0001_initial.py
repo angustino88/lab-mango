@@ -71,6 +71,10 @@ class Migration(migrations.Migration):
                 ("used_at", models.DateTimeField(auto_now_add=True)),
                 ("expires_at", models.DateTimeField(db_index=True)),
             ],
+            options={
+                "verbose_name": "used login nonce",
+                "verbose_name_plural": "used login nonces",
+            },
         ),
         migrations.CreateModel(
             name="LabManagementEmail",
@@ -91,6 +95,10 @@ class Migration(migrations.Migration):
                 ("email", models.EmailField(max_length=254)),
                 ("is_active", models.BooleanField(default=True)),
             ],
+            options={
+                "verbose_name": "lab management email",
+                "verbose_name_plural": "lab management emails",
+            },
         ),
         migrations.CreateModel(
             name="User",
@@ -241,8 +249,8 @@ class Migration(migrations.Migration):
             name="PrivilegedUser",
             fields=[],
             options={
-                "verbose_name": "privileged user (access review)",
-                "verbose_name_plural": "access review: privileged users",
+                "verbose_name": "privileged user",
+                "verbose_name_plural": "access review",
                 "proxy": True,
                 "indexes": [],
                 "constraints": [],
@@ -276,6 +284,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+            options={
+                "verbose_name": "Microsoft (Entra) identity",
+                "verbose_name_plural": "Microsoft (Entra) identities",
+            },
         ),
         migrations.CreateModel(
             name="RoleAuditEvent",
@@ -338,6 +350,8 @@ class Migration(migrations.Migration):
                 ("changes", models.JSONField(blank=True, default=dict, editable=False)),
             ],
             options={
+                "verbose_name": "role change",
+                "verbose_name_plural": "role audit log",
                 "ordering": ("-occurred_at", "-id"),
                 "indexes": [
                     models.Index(
@@ -433,6 +447,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+            options={
+                "verbose_name": "URS group",
+                "verbose_name_plural": "URS groups (roles)",
+            },
         ),
         migrations.AddConstraint(
             model_name="user",

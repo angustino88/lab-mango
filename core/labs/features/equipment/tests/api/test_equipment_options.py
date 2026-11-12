@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from core.labs.features.equipment.tests.roles import grant_labs_role
 from core.labs.models import Bench
-from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.base.resource import Department, Group
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 from core.labs.models.resource.equipment.computing import TechnicalUser
 from core.labs.models.resource.equipment.equipment import Equipment
@@ -404,7 +404,7 @@ def test_category_reference_data_excludes_inactive_category_descendants(api_clie
 def test_category_reference_data_preserves_groups_owners_and_category_lookups(api_client, actor, computing_category):
     api_client.force_authenticate(user=actor)
     category, _kind = computing_category
-    group = ResourceGroup.objects.create(name="Reference Form Group")
+    group = Group.objects.create(name="Reference Form Group")
     technical_user = TechnicalUser.objects.create(username="reference-tech")
     category.manufacturers.add(EquipmentManufacturer.objects.create(name="Lookup Preservation Maker"))
 
@@ -664,7 +664,7 @@ def test_new_equipment_selectors_and_catalogs(api_client, actor, computing_categ
     mfr.categories.add(category)
     EquipmentProductModel.objects.create(manufacturer=mfr, equipment_type=etype, name="ThinkPad T14")
     dept = Department.objects.create(name="Engineering")
-    ResourceGroup.objects.create(department=dept, name="Embedded Systems")
+    Group.objects.create(department=dept, name="Embedded Systems")
 
     # Categories
     resp_cats = api_client.get("/api/labs/equipment-categories/options")
@@ -696,7 +696,7 @@ def test_new_equipment_selectors_and_catalogs(api_client, actor, computing_categ
     assert resp_depts.status_code == status.HTTP_200_OK
     assert any(d["name"] == "Engineering" for d in resp_depts.data["data"])
 
-    # Resource Groups
-    resp_rgs = api_client.get(f"/api/labs/resource-groups/options?department_id={dept.pk}")
+    # Groups
+    resp_rgs = api_client.get(f"/api/labs/groups/options?department_id={dept.pk}")
     assert resp_rgs.status_code == status.HTTP_200_OK
     assert any(r["name"] == "Embedded Systems" for r in resp_rgs.data["data"])

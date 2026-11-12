@@ -7,6 +7,7 @@ from django.http import QueryDict
 from rest_framework import serializers
 
 from core.common.api.filtering import Filter, FilterSpec, PositiveIDField, QueryDateTimeField, StrictBooleanField
+from core.common.api.pagination import with_page_query
 
 
 @pytest.fixture
@@ -104,6 +105,18 @@ def test_metadata_has_public_fields_without_orm_lookups(spec):
 def test_apply_rejects_unvalidated_keys(spec):
     with pytest.raises(ValueError):
         spec.apply(Mock(), {"status__regex": ".*"})
+
+
+def test_paged_query_documents_paging_and_apply_ignores_it(spec):
+    serializer = with_page_query(spec.serializer("PagedQuery"))(data=QueryDict("status=active&page=2&page_size=10"))
+    assert serializer.is_valid(), serializer.errors
+    assert {"page", "page_size", "status", "q", "ordering"} <= set(serializer.fields)
+    assert serializer.validated_data["page"] == 2
+    queryset = Mock()
+    queryset.filter.return_value = queryset
+    queryset.order_by.return_value = queryset
+    assert spec.apply(queryset, serializer.validated_data) is queryset
+    assert queryset.filter.call_args_list[0].kwargs == {"status__in": ["active"]}
 
 
 def test_general_filter_spec_has_no_resource_fields():

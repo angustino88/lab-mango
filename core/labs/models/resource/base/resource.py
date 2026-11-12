@@ -29,8 +29,11 @@ class Department(TimeStampedModel, UserStampedModel):
         ]
 
 
-class ResourceGroup(TimeStampedModel, UserStampedModel):
-    """Team inside a department. Not to be confused with BenchGroup (function)."""
+class Group(TimeStampedModel, UserStampedModel):
+    """Formal subdivision of a department that owns resources (e.g. EDS1 in EDS).
+
+    Not to be confused with ``auth.Group`` (URS role membership) or ``BenchGroup`` (what a bench is for).
+    """
 
     name = models.CharField(max_length=255, unique=True)
     department = models.ForeignKey(
@@ -71,7 +74,7 @@ class ResourceModel(TimeStampedModel, UserStampedModel, TimestampedSoftDeleteMix
         help_text="Owning department.",
     )
     group = models.ForeignKey(
-        "labs.ResourceGroup",
+        "labs.Group",
         related_name="%(app_label)s_%(class)s_resources",
         on_delete=models.PROTECT,
         null=True,

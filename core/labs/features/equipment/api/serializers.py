@@ -32,7 +32,7 @@ from core.labs.models import (
     ProductModelSpecification,
     SpecificationDefinition,
 )
-from core.labs.models.resource.base.resource import Department, ResourceGroup
+from core.labs.models.resource.base.resource import Department, Group
 from core.labs.models.resource.equipment.assignment import LOCATION_NOTE_MAX_LENGTH, EquipmentAssignment
 
 
@@ -609,14 +609,14 @@ class DepartmentSerializer(AppModelSerializer):
         ref_name = "DepartmentCatalogItem"
 
 
-class ResourceGroupCatalogSerializer(AppModelSerializer):
+class GroupCatalogSerializer(AppModelSerializer):
     department = DepartmentSerializer(read_only=True)
     department_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
-        model = ResourceGroup
+        model = Group
         fields = ("id", "name", "department", "department_id", "active", "created_at", "updated_at")
-        ref_name = "ResourceGroupCatalogItem"
+        ref_name = "GroupCatalogItem"
 
 
 class EquipmentKindOptionsQuerySerializer(OptionsQueryMixin):
@@ -637,7 +637,7 @@ class EquipmentProductModelOptionsQuerySerializer(OptionsQueryMixin):
     type_id = serializers.IntegerField(required=False, min_value=1)
 
 
-class ResourceGroupOptionsQuerySerializer(OptionsQueryMixin):
+class GroupOptionsQuerySerializer(OptionsQueryMixin):
     department_id = serializers.IntegerField(required=False, min_value=1)
 
 

@@ -868,7 +868,8 @@
             "in": "query",
             "name": "page",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1
             },
             "description": "Page number (>= 1)"
           },
@@ -876,7 +877,9 @@
             "in": "query",
             "name": "page_size",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
             },
             "description": "Page size (1..100, default 25)"
           }
@@ -2952,7 +2955,7 @@
             "name": "page",
             "schema": {
               "type": "integer",
-              "default": 1
+              "minimum": 1
             }
           },
           {
@@ -2960,7 +2963,8 @@
             "name": "page_size",
             "schema": {
               "type": "integer",
-              "default": 20
+              "maximum": 100,
+              "minimum": 1
             }
           },
           {
@@ -3027,6 +3031,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Audits"
@@ -3374,6 +3388,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Bench Bookings"
@@ -4290,6 +4314,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Bench Bookings Reference Data Projects"
@@ -5418,6 +5452,23 @@
               "minLength": 1
             },
             "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
           },
           {
             "in": "query",
@@ -6933,6 +6984,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Benches Reference Data Groups"
@@ -7148,6 +7209,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Benches Reference Data Types"
@@ -7363,6 +7434,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -7403,6 +7491,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Buildings"
@@ -7579,6 +7677,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -7619,6 +7734,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Cities"
@@ -7818,6 +7943,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Countries"
@@ -8102,6 +8237,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Dashboard"
@@ -8261,6 +8406,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Departments"
@@ -8551,6 +8706,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "product_model_id",
             "schema": {
               "type": "string",
@@ -8665,6 +8837,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment"
@@ -8802,6 +8984,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Categories"
@@ -8970,6 +9162,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -9010,6 +9219,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Kinds"
@@ -9308,6 +9527,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Loans"
@@ -9582,6 +9811,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -9622,6 +9868,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Manufacturers"
@@ -9798,6 +10054,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -9846,6 +10119,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Product Models"
@@ -10111,6 +10394,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reservations"
@@ -10579,6 +10872,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -10619,6 +10929,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Types"
@@ -12710,6 +13030,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Facets"
@@ -13077,98 +13407,19 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Categories"
-      },
-      "post": {
-        "operationId": "labs_equipment_reference_data_categories_create",
-        "description": "Create a EquipmentCategory reference record from the declared writable fields. Passes the validated values, authenticated user and Idempotency-Key to the owner-provided create callback. Returns a 201 data envelope with Location; a replay reported by the callback also includes Idempotency-Replayed: true.",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "Idempotency-Key",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Required replay key (max 128 characters); receipts retained until explicitly purged.",
-            "required": true
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EquipmentCategoryCatalogCreate"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/EquipmentCategoryCatalogCreate"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/EquipmentCategoryCatalogCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EquipmentCategoryReferenceCreateSerializersEquipmentCategoryCatalogRecordDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Create Equipment Reference Data Categories"
       }
     },
     "/api/labs/equipment/reference-data/categories/{reference_id}": {
@@ -13292,6 +13543,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Departments"
@@ -13499,6 +13760,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Display Resolutions"
@@ -13706,6 +13977,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Display Sizes"
@@ -13850,6 +14131,239 @@
         "summary": "Get Equipment Reference Data Display Sizes by Reference ID"
       }
     },
+    "/api/labs/equipment/reference-data/groups": {
+      "get": {
+        "operationId": "labs_equipment_reference_data_groups_retrieve",
+        "description": "List Group reference records in a paginated data envelope. Validates the declared search, relation and pagination query parameters and delegates filtering and access checks to the owner-provided listing callback.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "active",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "in": "query",
+            "name": "department_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string",
+              "maxLength": 255,
+              "minLength": 1
+            }
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupReferenceListSerializersGroupCatalogRecordPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
+          }
+        },
+        "summary": "Get Equipment Reference Data Groups"
+      },
+      "post": {
+        "operationId": "labs_equipment_reference_data_groups_create",
+        "description": "Create a Group reference record from the declared writable fields. Passes the validated values, authenticated user and Idempotency-Key to the owner-provided create callback. Returns a 201 data envelope with Location; a replay reported by the callback also includes Idempotency-Replayed: true.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required replay key (max 128 characters); receipts retained until explicitly purged.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupCatalogCreate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupCatalogCreate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupCatalogCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupReferenceCreateSerializersGroupCatalogRecordDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Equipment Reference Data Groups"
+      }
+    },
+    "/api/labs/equipment/reference-data/groups/{reference_id}": {
+      "get": {
+        "operationId": "labs_equipment_reference_data_groups_retrieve_by_reference_id",
+        "description": "Retrieve one Group reference record by reference_id in a data envelope. Delegates lookup and access checks to the owner-provided retrieve callback; a missing or unavailable record is documented as 404.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reference_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupReferenceDetailSerializersGroupCatalogRecordDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Reference Data Groups by Reference ID"
+      }
+    },
     "/api/labs/equipment/reference-data/interfaces": {
       "get": {
         "operationId": "labs_equipment_reference_data_interfaces_retrieve",
@@ -13913,6 +14427,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Interfaces"
@@ -14136,6 +14660,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Kinds"
@@ -14351,6 +14885,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Manufacturers"
@@ -14558,6 +15102,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Materials"
@@ -14765,6 +15319,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Networking Protocols"
@@ -14988,6 +15552,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Product Model Specifications"
@@ -15219,6 +15793,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Product Models"
@@ -15363,229 +15947,6 @@
         "summary": "Get Equipment Reference Data Product Models by Reference ID"
       }
     },
-    "/api/labs/equipment/reference-data/resource-groups": {
-      "get": {
-        "operationId": "labs_equipment_reference_data_resource_groups_retrieve",
-        "description": "List ResourceGroup reference records in a paginated data envelope. Validates the declared search, relation and pagination query parameters and delegates filtering and access checks to the owner-provided listing callback.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "active",
-            "schema": {
-              "type": "boolean",
-              "nullable": true
-            }
-          },
-          {
-            "in": "query",
-            "name": "department_id",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "page_size",
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "search",
-            "schema": {
-              "type": "string",
-              "maxLength": 255,
-              "minLength": 1
-            }
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginatedResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Get Equipment Reference Data Resource Groups"
-      },
-      "post": {
-        "operationId": "labs_equipment_reference_data_resource_groups_create",
-        "description": "Create a ResourceGroup reference record from the declared writable fields. Passes the validated values, authenticated user and Idempotency-Key to the owner-provided create callback. Returns a 201 data envelope with Location; a replay reported by the callback also includes Idempotency-Replayed: true.",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "Idempotency-Key",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Required replay key (max 128 characters); receipts retained until explicitly purged.",
-            "required": true
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResourceGroupCatalogCreate"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ResourceGroupCatalogCreate"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ResourceGroupCatalogCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceGroupReferenceCreateSerializersResourceGroupCatalogRecordDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Create Equipment Reference Data Resource Groups"
-      }
-    },
-    "/api/labs/equipment/reference-data/resource-groups/{reference_id}": {
-      "get": {
-        "operationId": "labs_equipment_reference_data_resource_groups_retrieve_by_reference_id",
-        "description": "Retrieve one ResourceGroup reference record by reference_id in a data envelope. Delegates lookup and access checks to the owner-provided retrieve callback; a missing or unavailable record is documented as 404.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "reference_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceGroupReferenceDetailSerializersResourceGroupCatalogRecordDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Get Equipment Reference Data Resource Groups by Reference ID"
-      }
-    },
     "/api/labs/equipment/reference-data/sample-characteristics": {
       "get": {
         "operationId": "labs_equipment_reference_data_sample_characteristics_retrieve",
@@ -15649,6 +16010,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Sample Characteristics"
@@ -15856,6 +16227,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Sample Customers"
@@ -16079,6 +16460,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Specification Definitions"
@@ -16286,6 +16677,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Technical Users"
@@ -16509,6 +16910,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Equipment Reference Data Types"
@@ -17368,6 +17779,249 @@
         "summary": "Get Financial Report"
       }
     },
+    "/api/labs/groups": {
+      "get": {
+        "operationId": "labs_groups_retrieve",
+        "description": "Equipment specialization of the shared feature API foundation.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "department_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_ids",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxItems": 50,
+              "uniqueItems": true
+            },
+            "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+            "style": "form",
+            "explode": false
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "description": "Search text (1 to 100 characters)."
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupCatalogListSerializersGroupCatalogPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
+          }
+        },
+        "summary": "Get Groups"
+      }
+    },
+    "/api/labs/groups/{group_id}": {
+      "get": {
+        "operationId": "labs_groups_retrieve_by_group_id",
+        "description": "Equipment specialization of the shared feature API foundation.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupCatalogDetailSerializersGroupCatalogDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Groups by Group ID"
+      }
+    },
+    "/api/labs/groups/options": {
+      "get": {
+        "operationId": "labs_groups_options_retrieve",
+        "description": "Shared base view for dropdown selector endpoints (ADR 002).\n\nValidates query parameters, enforces the size class and result cap,\ncalls the feature's query selector, handles ETag generation / 304 Not Modified,\nand returns {\"data\": [{\"id\": ..., \"sku\": ..., \"name\": ...}]}.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "department_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_ids",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxItems": 50,
+              "uniqueItems": true
+            },
+            "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+            "style": "form",
+            "explode": false
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "description": "Search text (1 to 100 characters)."
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogOptionList"
+                }
+              }
+            },
+            "description": "Standard selector options list"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "Invalid selector query parameters (invalid_query) or result cap exceeded (too_many_results)."
+          },
+          "304": {
+            "description": "Not modified"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "Access denied by the existing API-key or authenticated-user permission policy."
+          }
+        },
+        "x-owner": "equipment",
+        "summary": "Get Groups Options"
+      }
+    },
     "/api/labs/lab-dashboard": {
       "get": {
         "operationId": "labs_lab_dashboard_retrieve",
@@ -17504,6 +18158,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Lab Monitoring"
@@ -17788,6 +18452,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Lab Projects"
@@ -18312,6 +18986,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get License Categories"
@@ -18472,6 +19156,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -18520,6 +19221,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get License Products"
@@ -18719,6 +19430,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get License Restrictions"
@@ -18910,6 +19631,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get License Types"
@@ -19101,6 +19832,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get License Vendors"
@@ -19296,6 +20037,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -19352,6 +20110,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Licenses"
@@ -19971,6 +20739,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Licenses Categories Summary"
@@ -20098,6 +20876,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Licenses Reference Data Categories"
@@ -20313,6 +21101,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Licenses Reference Data Products"
@@ -20520,6 +21318,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Licenses Reference Data Restrictions"
@@ -20727,6 +21535,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Licenses Reference Data Types"
@@ -20934,6 +21752,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Licenses Reference Data Vendors"
@@ -21189,6 +22017,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Locations Reference Data Buildings"
@@ -21404,6 +22242,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Locations Reference Data Cities"
@@ -21611,6 +22459,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Locations Reference Data Countries"
@@ -21818,6 +22676,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Locations Reference Data Station Types"
@@ -22016,6 +22884,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Monitoring Events"
@@ -22416,6 +23294,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Purchase Items Resources by Purchase Item ID"
@@ -22619,6 +23507,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Purchases"
@@ -22903,6 +23801,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Purchases Items by Purchase ID"
@@ -23445,6 +24353,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Purchases Transactions by Purchase ID"
@@ -23536,222 +24454,6 @@
           }
         },
         "summary": "Create Purchases Transactions by Purchase ID"
-      }
-    },
-    "/api/labs/resource-groups": {
-      "get": {
-        "operationId": "labs_resource_groups_retrieve",
-        "description": "Equipment specialization of the shared feature API foundation.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "department_id",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "include_ids",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "minimum": 1
-              },
-              "maxItems": 50,
-              "uniqueItems": true
-            },
-            "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
-            "style": "form",
-            "explode": false
-          },
-          {
-            "in": "query",
-            "name": "q",
-            "schema": {
-              "type": "string",
-              "maxLength": 100,
-              "minLength": 1
-            },
-            "description": "Search text (1 to 100 characters)."
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceGroupCatalogListSerializersResourceGroupCatalogPaginatedResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Get Resource Groups"
-      }
-    },
-    "/api/labs/resource-groups/{group_id}": {
-      "get": {
-        "operationId": "labs_resource_groups_retrieve_by_group_id",
-        "description": "Equipment specialization of the shared feature API foundation.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceGroupCatalogDetailSerializersResourceGroupCatalogDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Get Resource Groups by Group ID"
-      }
-    },
-    "/api/labs/resource-groups/options": {
-      "get": {
-        "operationId": "labs_resource_groups_options_retrieve",
-        "description": "Shared base view for dropdown selector endpoints (ADR 002).\n\nValidates query parameters, enforces the size class and result cap,\ncalls the feature's query selector, handles ETag generation / 304 Not Modified,\nand returns {\"data\": [{\"id\": ..., \"sku\": ..., \"name\": ...}]}.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "department_id",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "include_ids",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "minimum": 1
-              },
-              "maxItems": 50,
-              "uniqueItems": true
-            },
-            "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
-            "style": "form",
-            "explode": false
-          },
-          {
-            "in": "query",
-            "name": "q",
-            "schema": {
-              "type": "string",
-              "maxLength": 100,
-              "minLength": 1
-            },
-            "description": "Search text (1 to 100 characters)."
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CatalogOptionList"
-                }
-              }
-            },
-            "description": "Standard selector options list"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": "Invalid selector query parameters (invalid_query) or result cap exceeded (too_many_results)."
-          },
-          "304": {
-            "description": "Not modified"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": "Access denied by the existing API-key or authenticated-user permission policy."
-          }
-        },
-        "x-owner": "equipment",
-        "summary": "Get Resource Groups Options"
       }
     },
     "/api/labs/resources/{resource_type}/{resource_id}/audits": {
@@ -24528,6 +25230,23 @@
               "minLength": 1
             },
             "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
           },
           {
             "in": "query",
@@ -26572,6 +27291,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -28592,25 +29328,44 @@
     "/api/notifications": {
       "get": {
         "operationId": "notifications_list",
-        "description": "List visible, unexpired notifications in data with meta.pagination (count, page, page_size, next, previous). Page size defaults to 25 and is limited to 100. An invalid page_size returns 400; a nonexistent or invalid page returns 404.",
+        "description": "List visible, unexpired notifications in data with meta.pagination (count, page, page_size, next, previous). Page size defaults to 25 and is limited to 100. An invalid page_size returns 400; a nonexistent or invalid page returns 404. An unknown or repeated query parameter, or a since / user_id that is not a non-negative integer, returns 400 invalid_query.",
         "parameters": [
           {
-            "name": "page",
-            "required": false,
             "in": "query",
-            "description": "A page number within the paginated result set.",
+            "name": "page",
             "schema": {
-              "type": "integer"
-            }
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "A page number within the paginated result set."
           },
           {
-            "name": "page_size",
-            "required": false,
             "in": "query",
-            "description": "Number of results to return per page.",
+            "name": "page_size",
             "schema": {
-              "type": "integer"
-            }
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "description": "Number of results to return per page."
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Reconnection cursor: return only notifications whose id is greater than this value. Pass the highest id already received."
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Return only notifications targeted at this user; broadcasts are excluded. Only the caller's own id is honoured: any other id returns an empty page."
           }
         ],
         "tags": [
@@ -34482,6 +35237,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get User Groups"
@@ -34591,6 +35356,23 @@
         "parameters": [
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "username",
             "schema": {
               "type": "string",
@@ -34629,6 +35411,16 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
           }
         },
         "summary": "Get Users"
@@ -42128,56 +42920,6 @@
           "name"
         ]
       },
-      "EquipmentCategoryCatalogCreate": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "key": {
-            "nullable": true,
-            "description": "Stable code used by the code base (e.g. 'computing'). Filled from the name when empty. Renaming the category never changes it.",
-            "oneOf": [
-              {
-                "type": "string",
-                "maxLength": 32,
-                "pattern": "^[-a-zA-Z0-9_]+$"
-              },
-              {
-                "type": "string",
-                "maxLength": 0
-              }
-            ]
-          },
-          "definition": {
-            "type": "string"
-          },
-          "bookable": {
-            "type": "boolean",
-            "description": "Units can be lent and reserved."
-          },
-          "placeable_on_bench": {
-            "type": "boolean",
-            "description": "Units can be assigned to a bench."
-          },
-          "calibratable": {
-            "type": "boolean",
-            "description": "Units may require calibration."
-          },
-          "monitored": {
-            "type": "boolean",
-            "description": "Units carry computing columns and may run the monitoring agent (ComputingProfile)."
-          },
-          "active": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "definition",
-          "name"
-        ]
-      },
       "EquipmentCategoryCatalogRecord": {
         "type": "object",
         "properties": {
@@ -42231,18 +42973,6 @@
           "definition",
           "id",
           "name"
-        ]
-      },
-      "EquipmentCategoryReferenceCreateSerializersEquipmentCategoryCatalogRecordDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/EquipmentCategoryCatalogRecord"
-          }
-        },
-        "required": [
-          "data"
         ]
       },
       "EquipmentCategoryReferenceDetailSerializersEquipmentCategoryCatalogRecordDetailResponse": {
@@ -45269,7 +45999,7 @@
           "groups": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ResourceGroup"
+              "$ref": "#/components/schemas/LabsGroupReference"
             },
             "readOnly": true
           },
@@ -47182,6 +47912,178 @@
           "pending_amount"
         ]
       },
+      "GroupCatalogCreate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "department_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "GroupCatalogDetailSerializersGroupCatalogDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/GroupCatalogItem"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "GroupCatalogItem": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "department": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepartmentCatalogItem"
+              }
+            ],
+            "readOnly": true
+          },
+          "department_id": {
+            "type": "integer",
+            "writeOnly": true
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "department",
+          "id",
+          "name",
+          "updated_at"
+        ]
+      },
+      "GroupCatalogListSerializersGroupCatalogPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/GroupCatalogListSerializersGroupCatalogPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupCatalogItem"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "GroupCatalogListSerializersGroupCatalogPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "GroupCatalogListSerializersGroupCatalogPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/GroupCatalogListSerializersGroupCatalogPagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "GroupCatalogRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string"
+          },
+          "department_id": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "department_id",
+          "id",
+          "name"
+        ]
+      },
       "GroupPermission": {
         "type": "object",
         "properties": {
@@ -47197,6 +48099,92 @@
         "required": [
           "id",
           "name"
+        ]
+      },
+      "GroupReferenceCreateSerializersGroupCatalogRecordDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/GroupCatalogRecord"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "GroupReferenceDetailSerializersGroupCatalogRecordDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/GroupCatalogRecord"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "GroupReferenceListSerializersGroupCatalogRecordPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/GroupReferenceListSerializersGroupCatalogRecordPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupCatalogRecord"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "GroupReferenceListSerializersGroupCatalogRecordPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "GroupReferenceListSerializersGroupCatalogRecordPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/GroupReferenceListSerializersGroupCatalogRecordPagination"
+          }
+        },
+        "required": [
+          "pagination"
         ]
       },
       "KeyAlgorithmEnum": {
@@ -47786,6 +48774,23 @@
           "x",
           "y",
           "z"
+        ]
+      },
+      "LabsGroupReference": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "name"
         ]
       },
       "LabsMoney": {
@@ -54405,281 +55410,6 @@
         "required": [
           "id",
           "username"
-        ]
-      },
-      "ResourceGroup": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "id",
-          "name"
-        ]
-      },
-      "ResourceGroupCatalogCreate": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "description": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "department_id": {
-            "type": "integer",
-            "minimum": 1,
-            "nullable": true
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "ResourceGroupCatalogDetailSerializersResourceGroupCatalogDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ResourceGroupCatalogItem"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "ResourceGroupCatalogItem": {
-        "type": "object",
-        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "department": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DepartmentCatalogItem"
-              }
-            ],
-            "readOnly": true
-          },
-          "department_id": {
-            "type": "integer",
-            "writeOnly": true
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "created_at",
-          "department",
-          "id",
-          "name",
-          "updated_at"
-        ]
-      },
-      "ResourceGroupCatalogListSerializersResourceGroupCatalogPaginatedResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "meta": {
-            "$ref": "#/components/schemas/ResourceGroupCatalogListSerializersResourceGroupCatalogPaginationMeta"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ResourceGroupCatalogItem"
-            }
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
-      "ResourceGroupCatalogListSerializersResourceGroupCatalogPagination": {
-        "type": "object",
-        "properties": {
-          "count": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "page": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "page_size": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "next": {
-            "type": "string",
-            "nullable": true
-          },
-          "previous": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "count",
-          "next",
-          "page",
-          "page_size",
-          "previous"
-        ]
-      },
-      "ResourceGroupCatalogListSerializersResourceGroupCatalogPaginationMeta": {
-        "type": "object",
-        "properties": {
-          "pagination": {
-            "$ref": "#/components/schemas/ResourceGroupCatalogListSerializersResourceGroupCatalogPagination"
-          }
-        },
-        "required": [
-          "pagination"
-        ]
-      },
-      "ResourceGroupCatalogRecord": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "description": {
-            "type": "string"
-          },
-          "department_id": {
-            "type": "integer",
-            "readOnly": true,
-            "nullable": true
-          },
-          "active": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "department_id",
-          "id",
-          "name"
-        ]
-      },
-      "ResourceGroupReferenceCreateSerializersResourceGroupCatalogRecordDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ResourceGroupCatalogRecord"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "ResourceGroupReferenceDetailSerializersResourceGroupCatalogRecordDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ResourceGroupCatalogRecord"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginatedResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "meta": {
-            "$ref": "#/components/schemas/ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginationMeta"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ResourceGroupCatalogRecord"
-            }
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
-      "ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPagination": {
-        "type": "object",
-        "properties": {
-          "count": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "page": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "page_size": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "next": {
-            "type": "string",
-            "nullable": true
-          },
-          "previous": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "count",
-          "next",
-          "page",
-          "page_size",
-          "previous"
-        ]
-      },
-      "ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginationMeta": {
-        "type": "object",
-        "properties": {
-          "pagination": {
-            "$ref": "#/components/schemas/ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPagination"
-          }
-        },
-        "required": [
-          "pagination"
         ]
       },
       "ResourceKindEnum": {

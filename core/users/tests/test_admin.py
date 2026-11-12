@@ -46,7 +46,7 @@ def test_superuser_can_edit_role_granting_user_fields():
     readonly = set(user_admin.get_readonly_fields(_request(superuser), UserFactory(username="t2")))
 
     assert not (_ROLE_FIELDS & readonly)
-    assert {"is_active", "labs_roles"} <= readonly
+    assert {"is_active", "access_summary", "entra_status"} <= readonly
 
 
 def test_only_superusers_change_urs_groups_and_group_permissions():
@@ -63,14 +63,73 @@ def test_only_superusers_change_urs_groups_and_group_permissions():
     assert urs_admin.has_view_permission(_request(staff))
 
 
-def test_labs_roles_display_shows_effective_roles():
-    group = GroupFactory(name="display-coord")
-    URSGroup.objects.create(group=group, urs_group_id=98001, labs_role="coord")
-    user = UserFactory(username="display_user")
-    user.groups.add(group)
+def test_user_list_shows_roles_and_their_urs_groups(django_assert_max_num_queries):
+    coord_group = GroupFactory(name="display-coord")
+    urs_coord = URSGroup.objects.create(
+        group=coord_group, urs_group_id=98001, urs_group_name="Coordinators", labs_role="coord"
+    )
+    for index in range(5):
+        UserFactory(username=f"display_user_{index}").groups.add(coord_group)
+    UserFactory(username="display_no_role")
+    client = Client()
+    client.force_login(UserFactory(username="display_root", is_staff=True, is_superuser=True))
 
-    assert UserAdmin(User, site).labs_roles(user) == "coord, user"
-    assert UserAdmin(User, site).labs_roles(UserFactory(username="no_roles")) == "none"
+    with django_assert_max_num_queries(12):  # constant: groups and URS groups are prefetched
+        page = client.get("/admin/users/user/").content.decode()
+
+    assert "Lab coordinator" in page and "No role" in page and "Superuser" in page
+    assert f"/admin/users/ursgroup/{urs_coord.pk}/change/" in page
+
+
+def test_labs_role_filter_lists_only_that_role():
+    group = GroupFactory(name="filter-user-group")
+    URSGroup.objects.create(group=group, urs_group_id=98002, labs_role="user")
+    UserFactory(username="filter_plain").groups.add(group)
+    UserFactory(username="filter_nobody")
+    client = Client()
+    client.force_login(UserFactory(username="filter_root", is_staff=True, is_superuser=True))
+
+    plain = client.get("/admin/users/user/?labs_role=user").content.decode()
+    nobody = client.get("/admin/users/user/?labs_role=none").content.decode()
+
+    assert "filter_plain" in plain and "filter_nobody" not in plain
+    assert "filter_nobody" in nobody and "filter_plain" not in nobody
+
+
+def test_urs_group_page_lists_members_role_rights_and_readable_sync_result():
+    group = GroupFactory(name="members-group")
+    urs_group = URSGroup.objects.create(
+        group=group,
+        urs_group_id=98003,
+        urs_group_name="Members group",
+        labs_role="coord",
+        last_sync_status="applied",
+        last_sync_message="+3 -1",
+    )
+    UserFactory(username="member_one", display_name="Member One").groups.add(group)
+    client = Client()
+    client.force_login(UserFactory(username="members_root", is_staff=True, is_superuser=True))
+
+    page = client.get(f"/admin/users/ursgroup/{urs_group.pk}/change/").content.decode()
+    listing = client.get("/admin/users/ursgroup/").content.decode()
+
+    assert "member_one" in page and "Member One" in page
+    assert "What this role can do" in page and "URS service ID" in page
+    assert "3 added, 1 removed" in page and "3 added, 1 removed" in listing
+    assert f"?groups__id__exact={group.pk}" in listing
+
+
+def test_admin_index_starts_with_people_and_access():
+    client = Client()
+    client.force_login(UserFactory(username="index_root", is_staff=True, is_superuser=True))
+
+    response = client.get("/admin/")
+    page = response.content.decode()
+
+    assert "Lab Mango administration" in page
+    first_section = response.context["app_list"][0]
+    assert first_section["name"] == "People and access"
+    assert {"User", "URSGroup", "Group"} <= {model["object_name"] for model in first_section["models"]}
 
 
 def test_admin_sync_action_queues_and_records_outcome(settings):

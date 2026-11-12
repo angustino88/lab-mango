@@ -115,6 +115,7 @@ class Bench(ResourceModel):
 
     class Meta:
         app_label = "labs"
+        verbose_name_plural = "benches"
         ordering = ("sku",)
         constraints = [
             *ResourceModel.Meta.constraints,

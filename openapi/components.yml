@@ -4881,42 +4881,6 @@ components:
       - definition
       - id
       - name
-    EquipmentCategoryCatalogCreate:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 120
-        key:
-          nullable: true
-          description: Stable code used by the code base (e.g. 'computing'). Filled
-            from the name when empty. Renaming the category never changes it.
-          oneOf:
-          - type: string
-            maxLength: 32
-            pattern: ^[-a-zA-Z0-9_]+$
-          - type: string
-            maxLength: 0
-        definition:
-          type: string
-        bookable:
-          type: boolean
-          description: Units can be lent and reserved.
-        placeable_on_bench:
-          type: boolean
-          description: Units can be assigned to a bench.
-        calibratable:
-          type: boolean
-          description: Units may require calibration.
-        monitored:
-          type: boolean
-          description: Units carry computing columns and may run the monitoring agent
-            (ComputingProfile).
-        active:
-          type: boolean
-      required:
-      - definition
-      - name
     EquipmentCategoryCatalogRecord:
       type: object
       properties:
@@ -4957,14 +4921,6 @@ components:
       - definition
       - id
       - name
-    EquipmentCategoryReferenceCreateSerializersEquipmentCategoryCatalogRecordDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/EquipmentCategoryCatalogRecord'
-      required:
-      - data
     EquipmentCategoryReferenceDetailSerializersEquipmentCategoryCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -7174,7 +7130,7 @@ components:
         groups:
           type: array
           items:
-            $ref: '#/components/schemas/ResourceGroup'
+            $ref: '#/components/schemas/LabsGroupReference'
           readOnly: true
         owners:
           type: array
@@ -8635,6 +8591,129 @@ components:
       - expense_type
       - paid_amount
       - pending_amount
+    GroupCatalogCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        active:
+          type: boolean
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+      required:
+      - name
+    GroupCatalogDetailSerializersGroupCatalogDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/GroupCatalogItem'
+      required:
+      - data
+    GroupCatalogItem:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        department:
+          allOf:
+          - $ref: '#/components/schemas/DepartmentCatalogItem'
+          readOnly: true
+        department_id:
+          type: integer
+          writeOnly: true
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - department
+      - id
+      - name
+      - updated_at
+    GroupCatalogListSerializersGroupCatalogPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/GroupCatalogListSerializersGroupCatalogPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupCatalogItem'
+      required:
+      - data
+      - meta
+    GroupCatalogListSerializersGroupCatalogPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    GroupCatalogListSerializersGroupCatalogPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/GroupCatalogListSerializersGroupCatalogPagination'
+      required:
+      - pagination
+    GroupCatalogRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        department_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        active:
+          type: boolean
+      required:
+      - department_id
+      - id
+      - name
     GroupPermission:
       type: object
       properties:
@@ -8647,6 +8726,66 @@ components:
       required:
       - id
       - name
+    GroupReferenceCreateSerializersGroupCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/GroupCatalogRecord'
+      required:
+      - data
+    GroupReferenceDetailSerializersGroupCatalogRecordDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/GroupCatalogRecord'
+      required:
+      - data
+    GroupReferenceListSerializersGroupCatalogRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/GroupReferenceListSerializersGroupCatalogRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupCatalogRecord'
+      required:
+      - data
+      - meta
+    GroupReferenceListSerializersGroupCatalogRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    GroupReferenceListSerializersGroupCatalogRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/GroupReferenceListSerializersGroupCatalogRecordPagination'
+      required:
+      - pagination
     KeyAlgorithmEnum:
       enum:
       - Ed25519
@@ -9065,6 +9204,18 @@ components:
       - x
       - y
       - z
+    LabsGroupReference:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     LabsMoney:
       type: object
       description: Standard `{amount, currency}` representation for monetary values.
@@ -13909,201 +14060,6 @@ components:
       required:
       - id
       - username
-    ResourceGroup:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          readOnly: true
-      required:
-      - id
-      - name
-    ResourceGroupCatalogCreate:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 255
-        description:
-          type: string
-        active:
-          type: boolean
-        department_id:
-          type: integer
-          minimum: 1
-          nullable: true
-      required:
-      - name
-    ResourceGroupCatalogDetailSerializersResourceGroupCatalogDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/ResourceGroupCatalogItem'
-      required:
-      - data
-    ResourceGroupCatalogItem:
-      type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          maxLength: 255
-        department:
-          allOf:
-          - $ref: '#/components/schemas/DepartmentCatalogItem'
-          readOnly: true
-        department_id:
-          type: integer
-          writeOnly: true
-        active:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - created_at
-      - department
-      - id
-      - name
-      - updated_at
-    ResourceGroupCatalogListSerializersResourceGroupCatalogPaginatedResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        meta:
-          $ref: '#/components/schemas/ResourceGroupCatalogListSerializersResourceGroupCatalogPaginationMeta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResourceGroupCatalogItem'
-      required:
-      - data
-      - meta
-    ResourceGroupCatalogListSerializersResourceGroupCatalogPagination:
-      type: object
-      properties:
-        count:
-          type: integer
-          minimum: 0
-        page:
-          type: integer
-          minimum: 1
-        page_size:
-          type: integer
-          minimum: 1
-        next:
-          type: string
-          nullable: true
-        previous:
-          type: string
-          nullable: true
-      required:
-      - count
-      - next
-      - page
-      - page_size
-      - previous
-    ResourceGroupCatalogListSerializersResourceGroupCatalogPaginationMeta:
-      type: object
-      properties:
-        pagination:
-          $ref: '#/components/schemas/ResourceGroupCatalogListSerializersResourceGroupCatalogPagination'
-      required:
-      - pagination
-    ResourceGroupCatalogRecord:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          maxLength: 255
-        description:
-          type: string
-        department_id:
-          type: integer
-          readOnly: true
-          nullable: true
-        active:
-          type: boolean
-      required:
-      - department_id
-      - id
-      - name
-    ResourceGroupReferenceCreateSerializersResourceGroupCatalogRecordDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/ResourceGroupCatalogRecord'
-      required:
-      - data
-    ResourceGroupReferenceDetailSerializersResourceGroupCatalogRecordDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/ResourceGroupCatalogRecord'
-      required:
-      - data
-    ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginatedResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        meta:
-          $ref: '#/components/schemas/ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginationMeta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResourceGroupCatalogRecord'
-      required:
-      - data
-      - meta
-    ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPagination:
-      type: object
-      properties:
-        count:
-          type: integer
-          minimum: 0
-        page:
-          type: integer
-          minimum: 1
-        page_size:
-          type: integer
-          minimum: 1
-        next:
-          type: string
-          nullable: true
-        previous:
-          type: string
-          nullable: true
-      required:
-      - count
-      - next
-      - page
-      - page_size
-      - previous
-    ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPaginationMeta:
-      type: object
-      properties:
-        pagination:
-          $ref: '#/components/schemas/ResourceGroupReferenceListSerializersResourceGroupCatalogRecordPagination'
-      required:
-      - pagination
     ResourceKindEnum:
       enum:
       - bench

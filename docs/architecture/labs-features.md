@@ -25,7 +25,7 @@ Scope: feature responsibilities, model ownership, dependencies, workflow boundar
 
 | Feature | Owns | Does not own |
 | --- | --- | --- |
-| `resources` (app-owned foundation, not generic CRUD) | Cross-resource identity conventions and genuinely shared resource projections/policies; shared `ResourceGroup` ownership should be confirmed | Domain-specific lifecycle decisions, universal write endpoints, other feature models |
+| `resources` (app-owned foundation, not generic CRUD) | Cross-resource identity conventions and genuinely shared resource projections/policies; shared `Group` ownership should be confirmed | Domain-specific lifecycle decisions, universal write endpoints, other feature models |
 | `locations` | Country/city/building reference data as adopted; rooms, room slots, stations, station slots, location placement and location status/observations | Bench setup lifecycle, equipment assignment, booking lifecycle |
 | `benches` | Bench lifecycle/setup, bench placement into station slots, bench groups/types/favorites, capacity and utility checks | Physical location layout, direct equipment-assignment writes, booking lifecycle |
 | `equipment` | Equipment identity/lifecycle, equipment reference data and category behavior, assignment history, equipment status | Bench placement, license lifecycle, procurement/payment truth |
@@ -186,7 +186,7 @@ Any schema migration, access-control change, public contract change, or cross-fe
 1. Should the `base` API abstractions remain compatibility-only, or may feature-local adapters continue using them where they are HTTP-neutral? Verify their consumers before deciding.
 2. Confirm whether procurement should be enabled at the current Labs API aggregator, since a procurement URL facade exists but is not included there.
 3. Confirm which of booking, monitoring, finance, activity, session, auditing, and analytics are active product capabilities versus intentionally dormant models.
-4. Confirm ownership of cross-resource `ResourceGroup`, resource audit recording, and acquisition/expense reconciliation if those workflows cross feature boundaries.
+4. Confirm ownership of cross-resource `Group`, resource audit recording, and acquisition/expense reconciliation if those workflows cross feature boundaries.
 5. Keep LicensePayment (payments against a license agreement) distinct from ExpensePayment (payments/refunds against an expense); only introduce reconciliation if a documented business workflow requires it.
 6. Identify the authorization policy/actor abstraction that the Labs feature commands must consume; this document does not assume it is fully implemented.
 

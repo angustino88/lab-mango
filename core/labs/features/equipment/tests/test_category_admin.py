@@ -40,3 +40,12 @@ class EquipmentKindAdminTests(SimpleTestCase):
         self.assertFalse(model_admin.has_delete_permission(request))
         self.assertIsInstance(model_admin, ProtectedReferenceAdmin)
         self.assertIsNone(model_admin.actions)
+
+    def test_category_cannot_be_added_or_changed_through_admin(self):
+        model_admin = admin.site._registry[EquipmentCategory]
+
+        request = HttpRequest()
+        self.assertFalse(model_admin.has_add_permission(request))
+        self.assertFalse(model_admin.has_change_permission(request))
+        self.assertFalse(model_admin.has_change_permission(request, EquipmentCategory(name="Computing")))
+        self.assertIsNone(model_admin.actions)

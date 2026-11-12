@@ -261,6 +261,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+            options={
+                "verbose_name_plural": "equipment",
+            },
         ),
         migrations.CreateModel(
             name="Department",
@@ -753,6 +756,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
+                "verbose_name_plural": "benches",
                 "ordering": ("sku",),
             },
         ),
@@ -1478,6 +1482,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+            options={
+                "verbose_name_plural": "computing activities",
+            },
         ),
         migrations.CreateModel(
             name="Country",
@@ -1983,6 +1990,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
+                "verbose_name_plural": "equipment categories",
                 "ordering": ("name",),
             },
         ),
@@ -4878,6 +4886,7 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
+                "verbose_name_plural": "purchase priorities",
                 "ordering": ("-rank", "id"),
                 "constraints": [
                     models.UniqueConstraint(
@@ -5161,7 +5170,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="ResourceGroup",
+            name="Group",
             fields=[
                 (
                     "id",
@@ -5239,7 +5248,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="%(app_label)s_%(class)s_resources",
-                to="labs.resourcegroup",
+                to="labs.group",
             ),
         ),
         migrations.AddField(
@@ -5251,7 +5260,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="%(app_label)s_%(class)s_resources",
-                to="labs.resourcegroup",
+                to="labs.group",
             ),
         ),
         migrations.AddField(
@@ -5263,7 +5272,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name="%(app_label)s_%(class)s_resources",
-                to="labs.resourcegroup",
+                to="labs.group",
             ),
         ),
         migrations.CreateModel(
@@ -5696,7 +5705,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(app_label)s_%(class)s_resources",
-                        to="labs.resourcegroup",
+                        to="labs.group",
                     ),
                 ),
                 (
@@ -6438,7 +6447,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(app_label)s_%(class)s_resources",
-                        to="labs.resourcegroup",
+                        to="labs.group",
                     ),
                 ),
                 (

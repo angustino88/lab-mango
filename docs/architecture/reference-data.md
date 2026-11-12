@@ -19,9 +19,10 @@ Foreign-key defaults are out of scope. Creating a baseline row does not make it 
 
 ## 2. Current equipment behavior (verified)
 
-- `EquipmentCategory` in `core/labs/models/resource/equipment/reference_data.py` uses a string `key` primary key and opts into `ProtectedReferenceMixin`; its admin uses `ProtectedReferenceAdmin`.
+- `EquipmentCategory` in `core/labs/models/resource/equipment/reference_data.py` uses a string `key` primary key and opts into `ProtectedReferenceMixin`; its admin uses `ProtectedReferenceAdmin` and is view-only (no add, change or delete).
 - Standard categories are declared in `core/labs/features/equipment/defaults.py`. The local and production start scripts call `provision_reference_data` after `migrate`.
 - A legacy `provision_equipment_categories` command remains as an alias to the shared command.
+- Categories cannot be created through the import API either: `equipment/reference-data/categories` is list/retrieve only (`POST` returns 405). To add or change a category, edit the declaration and run `provision_reference_data`.
 
 This is the `ENSURE_PRESENT` pattern implemented for one Labs model using the shared framework. Other apps can register declarations through their own `AppConfig` without being imported by the framework.
 
@@ -96,20 +97,21 @@ are preserved. This implementation is create/list/retrieve only, not an upsert o
 
 ### Routes and import order
 
-Every collection below accepts `GET` (page-number pagination) and `POST` (one JSON record).
+Every collection below accepts `GET` (page-number pagination) and `POST` (one JSON record),
+except read-only catalogs marked *(read-only)*, which accept `GET` only (`POST` returns 405).
 Append `/{id}` for single-record `GET`. All paths are slashless beneath `/api/labs/`.
 
 | Owner prefix | Catalog segments |
 |---|---|
-| `equipment/reference-data/` | `categories`, `kinds`, `types`, `manufacturers`, `product-models`, `specification-definitions`, `product-model-specifications`, `interfaces`, `materials`, `display-sizes`, `display-resolutions`, `networking-protocols`, `sample-customers`, `sample-characteristics`, `technical-users`, `departments`, `resource-groups` |
+| `equipment/reference-data/` | `categories` *(read-only)*, `kinds`, `types`, `manufacturers`, `product-models`, `specification-definitions`, `product-model-specifications`, `interfaces`, `materials`, `display-sizes`, `display-resolutions`, `networking-protocols`, `sample-customers`, `sample-characteristics`, `technical-users`, `departments`, `groups` |
 | `licenses/reference-data/` | `vendors`, `products`, `types`, `categories`, `restrictions` |
 | `locations/reference-data/` | `countries`, `cities`, `buildings`, `station-types` |
 | `benches/reference-data/` | `groups`, `types` |
 | `bench-bookings/reference-data/` | `projects` |
 
-Import parents first: category → kind → type; manufacturer with category memberships →
+Import parents first: kind (under a provisioned category) → type; manufacturer with category memberships →
 product model → specification values; license vendor → product; country → city → building;
-department → resource group. Use returned integer IDs in `*_id` input fields and category
+department → group. Look up category IDs with `GET equipment/reference-data/categories`. Use returned integer IDs in `*_id` input fields and category
 ID arrays in manufacturer input. OpenAPI documents the exact allowed fields for each catalog.
 Technical users are account identifiers only: there is no password/token import field.
 
