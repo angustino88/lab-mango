@@ -36,6 +36,12 @@ Severity: **High** = fix before production; **Medium** = fix before or shortly a
 
 #### H1. First-login binding by username can bind the wrong person
 
+**Status (2026-11-12): implemented (owner chose option A).** Domain allow-list
+(`ENTRA_BIND_ALLOWED_DOMAINS`, production check `users.E009`), guests refused (`#EXT#` UPN or
+`acct=1`), staff and superusers never auto-linked, an account that was ever linked is never re-linked
+automatically, and every link and unlink is in the append-only role audit log. Binding an account
+older than `ENTRA_BIND_DORMANT_WARNING_DAYS` is logged as a warning.
+
 - **Evidence:** `aad_login/service.py:75-99` binds an unbound Entra identity to the local user whose
   username equals `preferred_username` *or only its local part* (`:81-83`). The switch
   `ENTRA_BIND_BY_USERNAME` defaults to on (`config/settings/base.py:111`). `preferred_username` is mutable

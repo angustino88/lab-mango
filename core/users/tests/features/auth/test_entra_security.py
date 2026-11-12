@@ -383,3 +383,63 @@ def test_concurrent_refresh_has_only_one_winner():
 
     with ThreadPoolExecutor(max_workers=2) as pool:
         assert sorted(pool.map(lambda _: attempt(), range(2))) == [False, True]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "case, preferred, extra",
+    [
+        ("foreign_domain", "uah3hc@partner.example", {}),
+        ("guest_upn", "uah3hc_partner.example#EXT#@bosch.com", {}),
+        ("guest_claim", "uah3hc@bosch.com", {"acct": 1}),
+        ("no_domain", "uah3hc", {}),
+    ],
+)
+def test_first_login_binding_refuses_guests_and_foreign_domains(signing_key, settings, case, preferred, extra):
+    settings.ENTRA_BIND_BY_USERNAME = True
+    settings.ENTRA_BIND_ALLOWED_DOMAINS = ["bosch.com"]
+    user = User.objects.create_user(username="uah3hc", password=None)
+    challenge, nonce = create_login_challenge()
+    token, _ = signed_token(signing_key, settings, nonce, preferred_username=preferred, **extra)
+
+    with mock_jwks(signing_key), pytest.raises(AADAuthError):
+        aad_login(id_token=token, challenge_id=str(challenge.pk))
+    assert not EntraIdentity.objects.filter(user=user).exists()
+
+
+@pytest.mark.django_db
+def test_first_login_binding_is_audited_and_never_repeated_after_unlink(signing_key, settings):
+    from core.users.models import RoleAuditEvent
+    from core.users.public import UnlinkEntraIdentityInput, unlink_entra_identity
+
+    settings.ENTRA_BIND_BY_USERNAME = True
+    settings.ENTRA_BIND_ALLOWED_DOMAINS = ["bosch.com"]
+    user = User.objects.create_user(username="uah4hc", password=None)
+
+    challenge, nonce = create_login_challenge()
+    token, payload = signed_token(signing_key, settings, nonce, preferred_username="uah4hc@bosch.com")
+    with mock_jwks(signing_key):
+        aad_login(id_token=token, challenge_id=str(challenge.pk))
+    bound = RoleAuditEvent.objects.get(event_type="entra_identity_bound", target_user_id=user.pk)
+    assert bound.actor_label == "system:aad-login"
+    assert bound.changes["object_id"] == payload["oid"].lower()
+
+    unlink_entra_identity(data=UnlinkEntraIdentityInput(user_id=user.pk))
+    assert RoleAuditEvent.objects.filter(event_type="entra_identity_unlinked", target_user_id=user.pk).exists()
+
+    # A different Microsoft account with the same username must not take over the unlinked account.
+    challenge, nonce = create_login_challenge()
+    token, _ = signed_token(signing_key, settings, nonce, preferred_username="uah4hc@bosch.com")
+    with mock_jwks(signing_key), pytest.raises(AADAuthError):
+        aad_login(id_token=token, challenge_id=str(challenge.pk))
+    assert not EntraIdentity.objects.filter(user=user).exists()
+
+
+def test_production_requires_allowed_domains_for_username_binding(settings):
+    from core.users.checks import check_entra_configuration
+
+    settings.ENTRA_SSO_ONLY = True
+    settings.ENTRA_BIND_BY_USERNAME = True
+    settings.ENTRA_BIND_ALLOWED_DOMAINS = []
+
+    assert "users.E009" in {error.id for error in check_entra_configuration(None)}

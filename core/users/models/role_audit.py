@@ -19,6 +19,8 @@ class RoleAuditEvent(models.Model):
         GROUP_PERMISSIONS_CHANGED = "group_permissions_changed", "Group permissions changed"
         URS_SYNC_MEMBERSHIP = "urs_sync_membership", "URS sync changed group members"
         USER_ACTIVITY_CHANGED = "user_activity_changed", "User activated or deactivated"
+        ENTRA_IDENTITY_BOUND = "entra_identity_bound", "Entra identity linked"
+        ENTRA_IDENTITY_UNLINKED = "entra_identity_unlinked", "Entra identity unlinked"
 
     occurred_at = models.DateTimeField(default=timezone.now, db_index=True, editable=False)
     event_type = models.CharField(max_length=40, choices=EventType.choices, editable=False)
@@ -43,6 +45,8 @@ class RoleAuditEvent(models.Model):
                         "group_permissions_changed",
                         "urs_sync_membership",
                         "user_activity_changed",
+                        "entra_identity_bound",
+                        "entra_identity_unlinked",
                     ]
                 ),
                 name="users_roleaudit_valid_event_type",

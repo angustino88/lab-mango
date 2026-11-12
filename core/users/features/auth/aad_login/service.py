@@ -13,7 +13,7 @@ from jwt import PyJWKClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.users.models import EntraIdentity, EntraLoginChallenge, User
-from core.users.public import BindEntraIdentityInput, bind_entra_identity
+from core.users.public import BindEntraIdentityInput, bind_entra_identity, has_ever_been_bound
 
 logger = logging.getLogger(__name__)
 
@@ -73,12 +73,27 @@ def create_login_challenge() -> tuple[EntraLoginChallenge, str]:
 
 
 def _bind_identity_by_username(payload: dict) -> EntraIdentity | None:
-    """Bind an unbound Entra subject to the one matching non-privileged user (first login only)."""
+    """Bind an unbound Entra subject to the one matching non-privileged user (first login only).
+
+    Safeguards (owner decision 2026-11-12, option A); any failed check means no binding:
+    * the UPN domain is in ``ENTRA_BIND_ALLOWED_DOMAINS``;
+    * the account is a tenant member, not a guest (``#EXT#`` UPN or ``acct`` claim 1);
+    * exactly one active local user matches, and it is not staff or superuser;
+    * that user was never bound before (an unlinked account is re-bound only by an operator).
+    Every binding is recorded in the role audit log by the lifecycle command; binding an old account
+    is also logged as a warning for review.
+    """
     preferred = payload.get("preferred_username")
     if not settings.ENTRA_BIND_BY_USERNAME or not isinstance(preferred, str) or not preferred.strip():
         return None
     preferred = preferred.strip()
-    local_part = preferred.split("@", 1)[0]
+    local_part, separator, domain = preferred.rpartition("@")
+    if not separator or not local_part or domain.lower() not in set(settings.ENTRA_BIND_ALLOWED_DOMAINS):
+        logger.info("Entra username binding refused: domain not allowed")
+        return None
+    if "#ext#" in preferred.lower() or payload.get("acct") == 1:
+        logger.info("Entra username binding refused: guest account")
+        return None
     users = list(
         User.objects.select_for_update().filter(Q(username__iexact=preferred) | Q(username__iexact=local_part))[:2]
     )
@@ -86,6 +101,9 @@ def _bind_identity_by_username(payload: dict) -> EntraIdentity | None:
         return None
     user = users[0]
     if not user.is_active or user.is_staff or user.is_superuser:
+        return None
+    if has_ever_been_bound(user.pk):
+        logger.warning("Entra username binding refused: account was bound before", extra={"user_id": user.pk})
         return None
     result = bind_entra_identity(
         data=BindEntraIdentityInput(
@@ -95,7 +113,14 @@ def _bind_identity_by_username(payload: dict) -> EntraIdentity | None:
         ),
     )
     identity = EntraIdentity.objects.get(pk=result.identity_id)
-    logger.info("Entra identity bound by username", extra={"user_id": user.pk})
+    account_age = timezone.now() - user.date_joined
+    if account_age.days >= settings.ENTRA_BIND_DORMANT_WARNING_DAYS:
+        logger.warning(
+            "Entra identity bound by username to an account older than the review threshold",
+            extra={"user_id": user.pk, "account_age_days": account_age.days},
+        )
+    else:
+        logger.info("Entra identity bound by username", extra={"user_id": user.pk})
     return identity
 
 

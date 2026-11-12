@@ -91,6 +91,7 @@ deactivated user. See section 6.
   | `group_permissions_changed` | Django permissions on a group change in admin | admin user |
   | `urs_sync_membership` | URS sync adds or removes members of a group | `system:urs-sync` |
   | `user_activity_changed` | URS sync activates or deactivates a user | `system:urs-sync` |
+  | `entra_identity_bound`, `entra_identity_unlinked` | A Microsoft (Entra) account is linked to or unlinked from a user, at first login or by the operator command | `system:<caller>` |
 
   Each event stores who, when, the subject (user or group) and the values before and after.
 - **Access review** (Django admin, superusers only: *Access review: privileged users*). Lists every

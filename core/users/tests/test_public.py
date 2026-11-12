@@ -124,6 +124,7 @@ def test_lifecycle_command_boundary_has_explicit_exports():
         "UserLifecycleResult",
         "bind_entra_identity",
         "delete_user",
+        "has_ever_been_bound",
         "replace_entra_identity",
         "set_user_active",
         "unlink_entra_identity",

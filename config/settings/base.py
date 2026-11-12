@@ -109,6 +109,16 @@ AAD_LOGIN_CHALLENGE_COOKIE = "entra_login_challenge"
 # First login only: bind an unbound Entra object ID to the existing non-privileged user whose username
 # matches preferred_username (full UPN or local part). Never creates users.
 ENTRA_BIND_BY_USERNAME = env.bool("ENTRA_BIND_BY_USERNAME", default=True)
+# Safeguards for that first-login binding (owner decision 2026-11-12, option A):
+# only these UPN domains are accepted; guests (#EXT# UPNs, acct=1) never are; an account that was ever
+# bound before is never re-bound automatically. Binding an account older than the warning age is logged
+# as a warning for review.
+ENTRA_BIND_ALLOWED_DOMAINS = [
+    domain.strip().lower()
+    for domain in env.list("ENTRA_BIND_ALLOWED_DOMAINS", default=[env("EMAIL_USER_DOMAIN", default="bosch.com")])
+    if domain.strip()
+]
+ENTRA_BIND_DORMANT_WARNING_DAYS = env.int("ENTRA_BIND_DORMANT_WARNING_DAYS", default=180)
 ENTRA_FRONTEND_LOGIN_URL = env("ENTRA_FRONTEND_LOGIN_URL", default="/")
 
 AUTH_USER_MODEL = "users.User"

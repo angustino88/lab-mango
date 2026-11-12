@@ -34,6 +34,7 @@ from core.users.features.lifecycle.public import (
     SetUserActiveInput,
     UnlinkEntraIdentityInput,
     UserLifecycleResult,
+    has_ever_been_bound,
 )
 from core.users.features.lifecycle.public import (
     bind_entra_identity as _bind_entra_identity,
@@ -153,6 +154,7 @@ __all__ = [
     "bind_entra_identity_from_operator",
     "delete_user",
     "ensure_urs_group_linked",
+    "has_ever_been_bound",
     "replace_entra_identity",
     "set_user_active",
     "unlink_entra_identity",
