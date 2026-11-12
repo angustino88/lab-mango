@@ -14,6 +14,8 @@ from typing import Any
 from django.db.models import Q, QuerySet
 from rest_framework import serializers
 
+from core.common.api.pagination import PAGE_QUERY_PARAMS
+
 
 class CSVField(serializers.CharField):
     """Bounded set encoded as one comma-separated query parameter."""
@@ -185,6 +187,8 @@ class FilterSpec:
         return type(name, (FilterQuerySerializer,), fields)
 
     def apply(self, queryset: QuerySet, values: Mapping[str, Any]) -> QuerySet:
+        # page / page_size are reserved names consumed by the paginator, not filters.
+        values = {key: value for key, value in values.items() if key not in PAGE_QUERY_PARAMS}
         allowed = {item.name for item in self.filters} | {"q", "ordering"}
         if self.search_alias:
             allowed |= {"search"}

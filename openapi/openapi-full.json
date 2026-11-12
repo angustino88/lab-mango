@@ -5347,6 +5347,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -7289,6 +7306,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -7502,6 +7536,23 @@
             "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
             "style": "form",
             "explode": false
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
           },
           {
             "in": "query",
@@ -8913,6 +8964,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -9525,6 +9593,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -9736,6 +9821,23 @@
             "name": "manufacturer_id",
             "schema": {
               "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
               "minimum": 1
             }
           },
@@ -10517,6 +10619,23 @@
             "name": "kind_id",
             "schema": {
               "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
               "minimum": 1
             }
           },
@@ -18409,6 +18528,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -19230,6 +19366,23 @@
               "minLength": 1
             },
             "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
           },
           {
             "in": "query",
@@ -23506,6 +23659,23 @@
           },
           {
             "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string",
@@ -24451,6 +24621,23 @@
               "minLength": 1
             },
             "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
           },
           {
             "in": "query",
@@ -26492,6 +26679,23 @@
               "minLength": 1
             },
             "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
           },
           {
             "in": "query",
@@ -34512,6 +34716,23 @@
         "operationId": "users_retrieve",
         "description": "List visible system users with optional username filtering.",
         "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
           {
             "in": "query",
             "name": "username",

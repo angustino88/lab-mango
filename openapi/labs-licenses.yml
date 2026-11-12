@@ -149,6 +149,17 @@ paths:
         style: form
         explode: false
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: q
         schema:
           type: string
@@ -691,6 +702,17 @@ paths:
           type: string
           minLength: 1
         description: Comma-separated values; OR within this filter.
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
       - in: query
         name: q
         schema:

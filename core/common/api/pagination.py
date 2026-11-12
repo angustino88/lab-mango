@@ -11,6 +11,23 @@ class PageNumberQuerySerializer(serializers.Serializer):
     page_size = serializers.IntegerField(required=False, min_value=1, max_value=100)
 
 
+PAGE_QUERY_PARAMS = frozenset(PageNumberQuerySerializer().fields)
+
+
+def with_page_query(query_serializer: type[serializers.Serializer]) -> type[serializers.Serializer]:
+    """Add the documented ``page`` and ``page_size`` parameters to a paginated list's query.
+
+    The paginator reads both from the request; declaring them puts them in the OpenAPI
+    contract beside the paginated response. Option selectors never page (ADR 002), so
+    wrap the list contract, not a serializer shared with an options endpoint.
+    """
+    return type(
+        f"{query_serializer.__name__}WithPage",
+        (query_serializer, PageNumberQuerySerializer),
+        {"__module__": query_serializer.__module__},
+    )
+
+
 class ResultsSetPagination(PageNumberPagination):
     """Canonical bounded page-number pagination for the redesigned API."""
 

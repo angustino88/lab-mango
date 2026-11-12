@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.options import OptionsQueryMixin, SizeClass
-from core.common.api.pagination import PageNumberQuerySerializer, ResultsSetPagination
+from core.common.api.pagination import PageNumberQuerySerializer, ResultsSetPagination, with_page_query
 from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.equipment.api.serializers import (
     EquipmentCategorySerializer,
@@ -769,7 +769,7 @@ class EquipmentCategoriesOptionsAPIView(OptionsAPIView):
 class EquipmentKindListAPIView(AppListAPIView, EquipmentAPIView):
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=EquipmentKindOptionsQuerySerializer,
+        query=with_page_query(EquipmentKindOptionsQuerySerializer),
         success=ResponseContract.paginated("EquipmentKindCatalogList", EquipmentKindSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -807,7 +807,7 @@ class EquipmentKindOptionsAPIView(OptionsAPIView):
 class EquipmentTypeListAPIView(AppListAPIView, EquipmentAPIView):
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=EquipmentTypeOptionsQuerySerializer,
+        query=with_page_query(EquipmentTypeOptionsQuerySerializer),
         success=ResponseContract.paginated("EquipmentTypeCatalogList", EquipmentTypeSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -849,7 +849,7 @@ class EquipmentTypeOptionsAPIView(OptionsAPIView):
 class EquipmentManufacturerListAPIView(AppListAPIView, EquipmentAPIView):
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=EquipmentManufacturerOptionsQuerySerializer,
+        query=with_page_query(EquipmentManufacturerOptionsQuerySerializer),
         success=ResponseContract.paginated("EquipmentManufacturerCatalogList", EquipmentManufacturerSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -891,7 +891,7 @@ class EquipmentManufacturerOptionsAPIView(OptionsAPIView):
 class EquipmentProductModelListAPIView(AppListAPIView, EquipmentAPIView):
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=EquipmentProductModelOptionsQuerySerializer,
+        query=with_page_query(EquipmentProductModelOptionsQuerySerializer),
         success=ResponseContract.paginated("EquipmentProductModelCatalogList", EquipmentProductModelSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -973,7 +973,7 @@ class ResourceGroupListAPIView(AppListAPIView, EquipmentAPIView):
     permission_classes = ORGANIZATION_PERMISSIONS
     schema_tags = ("Equipment",)
     get_contract = OperationContract(
-        query=ResourceGroupOptionsQuerySerializer,
+        query=with_page_query(ResourceGroupOptionsQuerySerializer),
         success=ResponseContract.paginated("ResourceGroupCatalogList", ResourceGroupCatalogSerializer),
         bad_request=ResponseContract.bad_request(),
     )

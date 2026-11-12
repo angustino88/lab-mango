@@ -7,7 +7,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from core.common.api.api_views import AppListAPIView
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
 from core.common.api.options import OptionsQueryMixin, SizeClass
-from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
 from core.labs.features.base import CommandAPIView, operation
 from core.labs.features.base.access import LABS_STAFF_ACCESS
 from core.labs.features.base.common import OptionsAPIView
@@ -65,7 +65,7 @@ class BenchStatusSummaryAPIView(BenchAPIView):
 
 
 class BenchListCreateAPIView(BenchAPIView):
-    get_contract = operation("BenchList", BenchSerializer, query=BenchListQuerySerializer, many=True)
+    get_contract = operation("BenchList", BenchSerializer, query=with_page_query(BenchListQuerySerializer), many=True)
     post_contract = operation("BenchCreate", BenchSerializer, request=BenchCreateSerializer, created=True)
 
     def handle_get(self, request, **kwargs):

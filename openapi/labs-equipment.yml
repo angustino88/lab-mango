@@ -513,6 +513,17 @@ paths:
         style: form
         explode: false
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: q
         schema:
           type: string
@@ -896,6 +907,17 @@ paths:
         style: form
         explode: false
       - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
         name: q
         schema:
           type: string
@@ -1032,6 +1054,17 @@ paths:
         name: manufacturer_id
         schema:
           type: integer
+          minimum: 1
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
           minimum: 1
       - in: query
         name: q
@@ -1526,6 +1559,17 @@ paths:
         name: kind_id
         schema:
           type: integer
+          minimum: 1
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
           minimum: 1
       - in: query
         name: q
@@ -5568,6 +5612,17 @@ paths:
           to include.
         style: form
         explode: false
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
       - in: query
         name: q
         schema:

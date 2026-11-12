@@ -13,15 +13,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
-from core.common.api.pagination import PageNumberQuerySerializer, ResultsSetPagination
+from core.common.api.pagination import ResultsSetPagination, with_page_query
 from core.labs.features.base.resource_change_log import ResourceChangeLogMixin
 from core.labs.features.equipment.application import CreateEquipmentInput, create_equipment
 from core.labs.features.equipment.exceptions import SkuAlreadyExists
 
 from .common import EquipmentAPIView, is_active_sku_unique_error, sku_exists
 from .resource_filters import equipment_filter_spec
-
-PAGE_QUERY_KEYS = frozenset(PageNumberQuerySerializer().fields)
 
 
 class EquipmentListCreateAPIView(ResourceChangeLogMixin, AppListAPIView, EquipmentAPIView):
@@ -70,15 +68,8 @@ class EquipmentListCreateAPIView(ResourceChangeLogMixin, AppListAPIView, Equipme
             cls.list_filters,
             distinct_search=cls.distinct_search,
         )
-        # The paginator reads page/page_size from the request; declaring them here
-        # puts them in the OpenAPI contract next to the paginated response.
         cls.ListQuerySerializer = cast(
-            Any,
-            type(
-                f"{cls.__name__}ListQuerySerializer",
-                (cls.filter_spec.serializer(f"{cls.__name__}ListFilters"), PageNumberQuerySerializer),
-                {"__module__": __name__},
-            ),
+            Any, with_page_query(cls.filter_spec.serializer(f"{cls.__name__}ListQuerySerializer"))
         )
         cls.get_contract = OperationContract(
             query=cls.ListQuerySerializer,
@@ -137,7 +128,6 @@ class EquipmentListCreateAPIView(ResourceChangeLogMixin, AppListAPIView, Equipme
         filters, error = self.validate_query()
         if error is not None:
             return error
-        filters = {key: value for key, value in (filters or {}).items() if key not in PAGE_QUERY_KEYS}
         queryset = self.filter_spec.apply(self.get_queryset(request), filters)
         prepared = self.prepare_list_results(queryset)
         return self.list_response_sync(prepared)

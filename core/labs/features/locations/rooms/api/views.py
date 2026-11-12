@@ -4,7 +4,7 @@ from drf_api_contracts import OperationContract, ResponseContract
 
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
 from core.common.api.options import SizeClass
-from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
 from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.locations.api.schema import operation
 from core.labs.features.locations.api.views import LocationAPIView
@@ -52,7 +52,7 @@ class RoomStatusSummaryAPIView(RoomAPIView):
 
 
 class RoomListCreateAPIView(RoomAPIView):
-    get_contract = operation("RoomList", RoomSerializer, query=RoomListQuerySerializer, many=True)
+    get_contract = operation("RoomList", RoomSerializer, query=with_page_query(RoomListQuerySerializer), many=True)
     post_contract = operation("RoomCreate", RoomSerializer, request=RoomCreateSerializer, created=True)
 
     def handle_get(self, request, **kwargs):

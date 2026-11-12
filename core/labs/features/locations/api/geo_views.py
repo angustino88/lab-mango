@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.options import OptionsQueryMixin, SizeClass
-from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
 from core.labs.features.base import FeatureAPIView
 from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.locations.queries import (
@@ -71,7 +71,7 @@ class CountryOptionsAPIView(OptionsAPIView):
 class CityListAPIView(AppListAPIView, FeatureAPIView):
     schema_tags = ("Locations",)
     get_contract = OperationContract(
-        query=CityOptionsQuerySerializer,
+        query=with_page_query(CityOptionsQuerySerializer),
         success=ResponseContract.paginated("CityCatalogList", CitySerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -107,7 +107,7 @@ class CityOptionsAPIView(OptionsAPIView):
 class BuildingListAPIView(AppListAPIView, FeatureAPIView):
     schema_tags = ("Locations",)
     get_contract = OperationContract(
-        query=BuildingOptionsQuerySerializer,
+        query=with_page_query(BuildingOptionsQuerySerializer),
         success=ResponseContract.paginated("BuildingCatalogList", BuildingSerializer),
         bad_request=ResponseContract.bad_request(),
     )

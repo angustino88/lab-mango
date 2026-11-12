@@ -429,3 +429,41 @@ def test_modules_prune_unreferenced_components(monkeypatch):
     assert "UnrelatedSchema" not in components["schemas"]
     assert "jwtAuth" in components["securitySchemes"]
     assert "unusedAuth" not in components["securitySchemes"]
+
+
+def _is_page_number_envelope(schema, components):
+    while "$ref" in schema:
+        schema = components[schema["$ref"].rsplit("/", 1)[-1]]
+    pagination = schema.get("properties", {}).get("meta", {})
+    while "$ref" in pagination:
+        pagination = components[pagination["$ref"].rsplit("/", 1)[-1]]
+    pagination = pagination.get("properties", {}).get("pagination", {})
+    while "$ref" in pagination:
+        pagination = components[pagination["$ref"].rsplit("/", 1)[-1]]
+    return {"page", "page_size"} <= set(pagination.get("properties", {}))
+
+
+def test_every_page_number_list_documents_page_and_page_size():
+    """A paginated envelope without documented paging parameters leaves clients paging locally."""
+    schema = SchemaGenerator().get_schema(request=None, public=True)
+    components = schema["components"]["schemas"]
+    paged = []
+    missing = []
+    for path, item in schema["paths"].items():
+        operation = item.get("get")
+        if operation is None:
+            continue
+        body = operation["responses"].get("200", {}).get("content", {}).get("application/json", {})
+        if not body or not _is_page_number_envelope(body["schema"], components):
+            continue
+        paged.append(path)
+        parameters = {parameter["name"]: parameter for parameter in _query_parameters(operation)}
+        for name in ("page", "page_size"):
+            parameter = parameters.get(name)
+            if parameter is None:
+                missing.append(f"{path} {name}")
+                continue
+            assert not parameter.get("required", False), (path, name)
+            assert parameter["schema"]["type"] == "integer", (path, name)
+    assert "/api/labs/equipment" in paged
+    assert missing == []
