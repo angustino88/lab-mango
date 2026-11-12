@@ -2,13 +2,12 @@ from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_api_key.permissions import HasAPIKey
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.correlation import get_request_id
-from core.common.api.command_views import FeatureAPIView
 from core.common.api.pagination import PageNumberQuerySerializer
-from core.labs.features.base import CommandAPIView
+from core.common.api.permissions import HasAPIKeyAccess
+from core.labs.features.base import CommandAPIView, FeatureAPIView
 from core.labs.features.procurement import public
 from core.labs.features.procurement.api.serializers import (
     DraftLineInputSerializer,
@@ -16,8 +15,8 @@ from core.labs.features.procurement.api.serializers import (
     PurchaseDetailSerializer,
     PurchaseDraftHeaderInputSerializer,
     PurchaseDraftHeaderOutputSerializer,
-    PurchaseItemReadSerializer,
     PurchaseItemDetailSerializer,
+    PurchaseItemReadSerializer,
     PurchaseItemResourceCreateSerializer,
     PurchaseItemResourceSerializer,
     PurchaseItemSerializer,
@@ -26,30 +25,30 @@ from core.labs.features.procurement.api.serializers import (
     PurchaseSerializer,
     PurchaseTransactionSerializer,
 )
+from core.labs.features.procurement.exceptions import PurchaseETagRequired, PurchaseMachineWriteForbidden
 from core.labs.features.procurement.public import (
     CreateDraftLineInput,
     CreatePurchaseInput,
     CreatePurchaseItemInput,
     CreatePurchaseItemResourceInput,
     CreatePurchaseTransactionInput,
-    PurchaseLineInput,
     DeleteDraftLineInput,
     DraftLineInput,
+    PurchaseLineInput,
     UpdateDraftLineInput,
     UpdatePurchaseDraftInput,
 )
-from core.labs.features.procurement.exceptions import PurchaseETagRequired, PurchaseMachineWriteForbidden
-from core.users.public import IsLabCoordinator
+from core.users.public import IsLabCoordinatorReadWrite
 
 
 class ProcurementAPIView(AppListAPIView, CommandAPIView):
-    # Reads: any authenticated user (existing rule, open question). Writes: lab admins, coordinators, and API keys.
-    permission_classes = [HasAPIKey | IsLabCoordinator]
+    # Reads and writes: lab coordinators and admins (owner decision 2026-11-11), and API keys.
+    permission_classes = [HasAPIKeyAccess | IsLabCoordinatorReadWrite]
 
 
 class PurchasePriorityOptionsAPIView(FeatureAPIView):
     schema_tags = ("Procurement",)
-    permission_classes = [HasAPIKey | IsLabCoordinator]
+    permission_classes = [HasAPIKeyAccess | IsLabCoordinatorReadWrite]
     get_contract = OperationContract(
         query=PurchasePriorityQuerySerializer,
         success=ResponseContract.success("PurchasePriorityOptions", PurchasePriorityOptionSerializer, many=True),
@@ -60,10 +59,7 @@ class PurchasePriorityOptionsAPIView(FeatureAPIView):
         query = PurchasePriorityQuerySerializer(data=request.query_params, context={"request": request})
         if not query.is_valid():
             return self.respond_problem("bad_request", code="invalid_query", errors=query.errors)
-        serializer = query
-        if error is not None:
-            return error
-        include_inactive = serializer.validated_data.get("include_inactive") == "true"
+        include_inactive = query.validated_data.get("include_inactive") == "true"
         return self.respond(PurchasePriorityOptionSerializer(
             public.list_purchase_priorities(include_inactive=include_inactive), many=True
         ).data)

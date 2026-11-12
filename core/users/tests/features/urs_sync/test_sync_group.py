@@ -44,11 +44,12 @@ def test_sync_urs_group_removes_user_no_longer_in_urs(db):
     grp = GroupFactory(name="lab-staff")
     urs_group = URSGroupFactory(group=grp)
     user = UserFactory(username="removed_user", is_urs_managed=True)
-    grp.user_set.add(user)
+    stays = UserFactory(username="staying_user", is_urs_managed=True)
+    grp.user_set.add(user, stays)
 
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.text = '{"Info": {"UserMembers": []}}'
+    mock_response.text = '{"Info": {"UserMembers": ["apac\\\\staying_user"]}}'
 
     with (
         patch("core.users.features.urs_sync.sync_group.service.requests.post", return_value=mock_response),
@@ -72,13 +73,13 @@ def test_sync_urs_group_deactivates_users_with_no_groups(db):
     grp = GroupFactory(name="grp-dactivate")
     urs_group = URSGroupFactory(group=grp)
     user = UserFactory(username="lonely_user", is_urs_managed=True, is_active=True)
-    # user is in the group
-    grp.user_set.add(user)
+    stays = UserFactory(username="other_member", is_urs_managed=True, is_active=True)
+    grp.user_set.add(user, stays)
 
     mock_response = MagicMock()
     mock_response.status_code = 200
-    # URS returns empty → user removed from group → no groups → deactivated
-    mock_response.text = '{"Info": {"UserMembers": []}}'
+    # URS no longer lists the user → removed from group → no groups → deactivated
+    mock_response.text = '{"Info": {"UserMembers": ["apac\\\\other_member"]}}'
 
     with (
         patch("core.users.features.urs_sync.sync_group.service.requests.post", return_value=mock_response),
@@ -113,7 +114,8 @@ def test_urs_active_flip_publishes_user_routing_tombstone(db, settings):
     response = MagicMock(status_code=200, text='{"Info": {"UserMembers": []}}')
 
     with patch("core.users.features.urs_sync.sync_group.service.requests.post", return_value=response):
-        sync_urs_group(URSGroup.objects.filter(pk=urs_group.pk))
+        # An empty URS answer is blocked by default; the operator forces it.
+        sync_urs_group(URSGroup.objects.filter(pk=urs_group.pk), force=True)
 
     user.refresh_from_db()
     key = f"entra:{tenant_id}:{object_id}"

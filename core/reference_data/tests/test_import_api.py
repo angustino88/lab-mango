@@ -14,6 +14,7 @@ from core.labs.models import Department, EquipmentCategory, EquipmentKind
 from core.reference_data.application import create_reference
 from core.reference_data.contracts import CreateReferenceInput, ReferenceResource
 from core.reference_data.models import ReferenceImportReceipt
+from tests.factories import grant_labs_role
 
 ROOT = "/api/labs/"
 PATHS = [
@@ -55,6 +56,7 @@ def importer(db):
 @pytest.fixture
 def client(importer):
     result = APIClient()
+    grant_labs_role(importer, "coord")
     result.force_authenticate(importer)
     return result
 
@@ -96,11 +98,14 @@ def test_create_retrieve_replay_and_mismatched_key(client):
 def test_permissions_input_and_foreign_keys(client):
     url = ROOT + "equipment/reference-data/departments"
     reader = get_user_model().objects.create(username="synthetic-no-permissions")
+    grant_labs_role(reader, "user")  # plain Labs users may not import reference data
     client.force_authenticate(reader)
     denied = client.post(url, {"name": "Denied"}, format="json", HTTP_IDEMPOTENCY_KEY="denied")
     assert denied.status_code == 403, denied.data
     assert not Department.objects.filter(name="Denied").exists()
-    client.force_authenticate(get_user_model().objects.get(username="synthetic-importer"))
+    client.force_authenticate(
+        user=grant_labs_role(get_user_model().objects.get(username="synthetic-importer"), "coord")
+    )
     for payload in ({"name": "Valid", "creator": 1}, {"name": ""}, {"name": 123}):
         assert client.post(url, payload, format="json", HTTP_IDEMPOTENCY_KEY="invalid").status_code == 422
     assert client.post(url, {"name": "No key"}, format="json").status_code == 422
@@ -232,33 +237,49 @@ def test_create_and_retrieve_every_reference_type(client):
         assert replay.status_code == 201, (catalog, replay.data)
         assert replay.data == response.data
         assert replay["Idempotency-Replayed"] == "true"
+        grant_labs_role(reader, "user")  # can read catalogs through the dashboard, may not import
         client.force_authenticate(reader)
         denied = client.post(ROOT + catalog, payload, format="json", HTTP_IDEMPOTENCY_KEY=f"denied-{index}")
         assert denied.status_code == 403, (catalog, denied.data)
+        grant_labs_role(importer, "coord")
         client.force_authenticate(importer)
 
 
 @pytest.mark.django_db
-def test_add_permission_without_staff_is_sufficient(client):
+def test_lab_role_decides_reference_imports_not_django_permissions(client):
+    """Labs reference data follows Labs roles, not Django add_ permissions.
+
+    Equipment reference data needs the Labs admin role (owner decision 2026-11-10); the other Labs
+    catalogs need a lab coordinator or admin (owner decision 2026-11-12).
+    """
     from django.contrib.auth.models import Permission
 
-    user = get_user_model().objects.create(username="synthetic-scoped-importer")
-    # Equipment reference data additionally requires the Labs admin role, so this owner-neutral
-    # property is checked on a licence catalog.
-    user.user_permissions.add(Permission.objects.get(content_type__app_label="labs", codename="add_licensevendor"))
-    client.force_authenticate(user)
+    coordinator = grant_labs_role(get_user_model().objects.create(username="synthetic-coordinator"), "coord")
+    client.force_authenticate(coordinator)
     created = client.post(
         ROOT + "licenses/reference-data/vendors",
-        {"name": "Scoped vendor"},
+        {"name": "Coordinator vendor"},
         format="json",
-        HTTP_IDEMPOTENCY_KEY="scoped",
+        HTTP_IDEMPOTENCY_KEY="coordinator",
     )
     assert created.status_code == 201, created.data
+    equipment_denied = client.post(
+        ROOT + "equipment/reference-data/materials",
+        {"name": "Coordinator material"},
+        format="json",
+        HTTP_IDEMPOTENCY_KEY="coordinator-equipment",
+    )
+    assert equipment_denied.status_code == 403
+
+    scoped = get_user_model().objects.create(username="synthetic-scoped-importer")
+    scoped.user_permissions.add(Permission.objects.get(content_type__app_label="labs", codename="add_licensetype"))
+    grant_labs_role(scoped, "user")
+    client.force_authenticate(scoped)
     denied = client.post(
         ROOT + "licenses/reference-data/types",
         {"name": "Not permitted"},
         format="json",
-        HTTP_IDEMPOTENCY_KEY="other",
+        HTTP_IDEMPOTENCY_KEY="scoped",
     )
     assert denied.status_code == 403
 

@@ -1,19 +1,22 @@
+import base64
 import hashlib
 import logging
+import re
 import secrets
+from datetime import UTC, datetime
 from functools import lru_cache
 from uuid import UUID
 
 import jwt
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from jwt import PyJWKClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from core.users.models import EntraIdentity, EntraLoginChallenge, User
-from core.users.public import BindEntraIdentityInput, bind_entra_identity
+from core.users.models import EntraIdentity, EntraLoginNonce, User
+from core.users.public import BindEntraIdentityInput, bind_entra_identity, has_ever_been_bound
 
 logger = logging.getLogger(__name__)
 
@@ -63,22 +66,65 @@ def _decode_id_token(id_token: str) -> dict:
         raise AADAuthError(INVALID_SSO_TOKEN) from exc
 
 
-def create_login_challenge() -> tuple[EntraLoginChallenge, str]:
-    nonce = secrets.token_urlsafe(32)
-    challenge = EntraLoginChallenge.objects.create(
-        nonce_digest=hashlib.sha256(nonce.encode()).hexdigest(),
-        expires_at=timezone.now() + settings.AAD_LOGIN_CHALLENGE_LIFETIME,
-    )
-    return challenge, nonce
+_NONCE_SECRET = re.compile(r"^[A-Za-z0-9_-]{43,128}$")
+
+
+def nonce_for_secret(nonce_secret: str) -> str:
+    """The nonce the browser must send to Microsoft: base64url(SHA-256(secret)) without padding."""
+    digest = hashlib.sha256(nonce_secret.encode("ascii")).digest()
+    return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+
+
+def _check_nonce(payload: dict, nonce_secret: str) -> None:
+    """The ID token must carry the nonce derived from the browser's secret, and be recent."""
+    if not isinstance(nonce_secret, str) or not _NONCE_SECRET.fullmatch(nonce_secret):
+        raise AADAuthError(INVALID_SSO_TOKEN)
+    if not secrets.compare_digest(payload["nonce"], nonce_for_secret(nonce_secret)):
+        raise AADAuthError(INVALID_SSO_TOKEN)
+    issued_at = datetime.fromtimestamp(int(payload["iat"]), tz=UTC)
+    if issued_at < timezone.now() - settings.ENTRA_LOGIN_MAX_TOKEN_AGE:
+        raise AADAuthError(INVALID_SSO_TOKEN)
+
+
+def _consume_nonce(payload: dict) -> None:
+    """Record the nonce as used; a second use of the same ID token fails on the unique digest."""
+    issued_at = datetime.fromtimestamp(int(payload["iat"]), tz=UTC)
+    try:
+        with transaction.atomic():
+            EntraLoginNonce.objects.create(
+                nonce_digest=hashlib.sha256(payload["nonce"].encode()).hexdigest(),
+                expires_at=issued_at + settings.ENTRA_LOGIN_MAX_TOKEN_AGE,
+            )
+    except IntegrityError as exc:
+        constraint = getattr(getattr(exc.__cause__, "diag", None), "constraint_name", None)
+        if constraint != "users_entraloginnonce_nonce_digest_key":
+            raise
+        logger.warning("Entra login refused: nonce already used")
+        raise AADAuthError(INVALID_SSO_TOKEN) from exc
 
 
 def _bind_identity_by_username(payload: dict) -> EntraIdentity | None:
-    """Bind an unbound Entra subject to the one matching non-privileged user (first login only)."""
+    """Bind an unbound Entra subject to the one matching non-privileged user (first login only).
+
+    Safeguards (owner decision 2026-11-12, option A); any failed check means no binding:
+    * the UPN domain is in ``ENTRA_BIND_ALLOWED_DOMAINS``;
+    * the account is a tenant member, not a guest (``#EXT#`` UPN or ``acct`` claim 1);
+    * exactly one active local user matches, and it is not staff or superuser;
+    * that user was never bound before (an unlinked account is re-bound only by an operator).
+    Every binding is recorded in the role audit log by the lifecycle command; binding an old account
+    is also logged as a warning for review.
+    """
     preferred = payload.get("preferred_username")
     if not settings.ENTRA_BIND_BY_USERNAME or not isinstance(preferred, str) or not preferred.strip():
         return None
     preferred = preferred.strip()
-    local_part = preferred.split("@", 1)[0]
+    local_part, separator, domain = preferred.rpartition("@")
+    if not separator or not local_part or domain.lower() not in set(settings.ENTRA_BIND_ALLOWED_DOMAINS):
+        logger.info("Entra username binding refused: domain not allowed")
+        return None
+    if "#ext#" in preferred.lower() or payload.get("acct") == 1:
+        logger.info("Entra username binding refused: guest account")
+        return None
     users = list(
         User.objects.select_for_update().filter(Q(username__iexact=preferred) | Q(username__iexact=local_part))[:2]
     )
@@ -86,6 +132,9 @@ def _bind_identity_by_username(payload: dict) -> EntraIdentity | None:
         return None
     user = users[0]
     if not user.is_active or user.is_staff or user.is_superuser:
+        return None
+    if has_ever_been_bound(user.pk):
+        logger.warning("Entra username binding refused: account was bound before", extra={"user_id": user.pk})
         return None
     result = bind_entra_identity(
         data=BindEntraIdentityInput(
@@ -95,30 +144,27 @@ def _bind_identity_by_username(payload: dict) -> EntraIdentity | None:
         ),
     )
     identity = EntraIdentity.objects.get(pk=result.identity_id)
-    logger.info("Entra identity bound by username", extra={"user_id": user.pk})
+    account_age = timezone.now() - user.date_joined
+    if account_age.days >= settings.ENTRA_BIND_DORMANT_WARNING_DAYS:
+        logger.warning(
+            "Entra identity bound by username to an account older than the review threshold",
+            extra={"user_id": user.pk, "account_age_days": account_age.days},
+        )
+    else:
+        logger.info("Entra identity bound by username", extra={"user_id": user.pk})
     return identity
 
 
-def aad_login(*, id_token: str, challenge_id: str) -> tuple[dict, User]:
-    """Consume one browser-bound nonce and authenticate only explicitly bound identities."""
+def aad_login(*, id_token: str, nonce_secret: str) -> tuple[dict, User]:
+    """Accept one fresh, browser-bound ID token once, and authenticate only bound identities.
+
+    Race guard: the unique nonce digest; two concurrent logins with the same token cannot both succeed.
+    """
     payload = _decode_id_token(id_token)
-    try:
-        challenge_uuid = UUID(challenge_id)
-    except (ValueError, TypeError, AttributeError) as exc:
-        raise AADAuthError(INVALID_SSO_TOKEN) from exc
-    # Keep challenge consumption, identity binding, and routing publication in one transaction.
+    _check_nonce(payload, nonce_secret)
+    now = timezone.now()
+    # Keep nonce consumption, identity binding, and routing publication in one transaction.
     with transaction.atomic():
-        challenge = EntraLoginChallenge.objects.select_for_update().filter(pk=challenge_uuid).first()
-        now = timezone.now()
-        if (
-            challenge is None
-            or challenge.consumed_at is not None
-            or challenge.expires_at <= now
-            or not secrets.compare_digest(
-                challenge.nonce_digest, hashlib.sha256(payload["nonce"].encode()).hexdigest()
-            )
-        ):
-            raise AADAuthError(INVALID_SSO_TOKEN)
         identity = (
             EntraIdentity.objects.select_for_update()
             .filter(tenant_id=payload["tid"], object_id=payload["oid"])
@@ -137,8 +183,9 @@ def aad_login(*, id_token: str, challenge_id: str) -> tuple[dict, User]:
         current_identity = EntraIdentity.objects.select_for_update().filter(pk=identity.pk, user_id=user.pk).first()
         if current_identity is None:
             raise AADAuthError(INVALID_SSO_TOKEN)
-        challenge.consumed_at = now
-        challenge.save(update_fields=["consumed_at"])
+        _consume_nonce(payload)
+        # Recorded for the access review (dormant privileged accounts); the user row is already locked.
+        User.objects.filter(pk=user.pk).update(last_login=now)
         refresh = RefreshToken.for_user(user)
         refresh["auth_source"] = "entra"
         refresh["entra_tid"] = str(current_identity.tenant_id)

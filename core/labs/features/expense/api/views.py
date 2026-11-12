@@ -2,10 +2,10 @@
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_api_key.permissions import HasAPIKey
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.permissions import HasAPIKeyAccess
 from core.labs.features.base import CommandAPIView
 from core.labs.features.expense import public
 from core.labs.features.expense.api.serializers import (
@@ -18,12 +18,12 @@ from core.labs.features.expense.public import (
     CreateExpenseInput,
     CreateExpensePaymentInput,
 )
-from core.users.public import IsLabCoordinator
+from core.users.public import IsLabCoordinatorReadWrite
 
 
 class ExpenseAPIView(AppListAPIView, CommandAPIView):
-    # Reads: any authenticated user (existing rule, open question). Writes: lab admins, coordinators, and API keys.
-    permission_classes = [HasAPIKey | IsLabCoordinator]
+    # Reads and writes: lab coordinators and admins (owner decision 2026-11-11), and API keys.
+    permission_classes = [HasAPIKeyAccess | IsLabCoordinatorReadWrite]
 
 
 class RoomExpenseListCreateAPIView(ExpenseAPIView):

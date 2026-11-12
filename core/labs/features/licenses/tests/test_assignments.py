@@ -18,6 +18,7 @@ from core.labs.models.resource.license.license import (
     LicenseType,
     LicenseVendor,
 )
+from tests.factories import grant_labs_role
 
 User = get_user_model()
 
@@ -99,6 +100,7 @@ def test_delete_action_assign_unassigns_license(equipment, license_record, test_
     from rest_framework.test import APIClient
 
     client = APIClient()
+    grant_labs_role(test_user, "coord")
     client.force_authenticate(user=test_user)
 
     cmd_assign = AssignLicenseInput(equipment_id=equipment.pk, license_id=license_record.pk)
@@ -118,6 +120,7 @@ def test_post_action_unassign_returns_deprecation_headers(equipment, license_rec
     from rest_framework.test import APIClient
 
     client = APIClient()
+    grant_labs_role(test_user, "coord")
     client.force_authenticate(user=test_user)
 
     cmd_assign = AssignLicenseInput(equipment_id=equipment.pk, license_id=license_record.pk)

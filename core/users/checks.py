@@ -33,6 +33,10 @@ def check_entra_configuration(app_configs, **kwargs):
         errors.append(Error("The frontend login URL must be HTTPS or a local absolute path.", id="users.E006"))
     if not frontend.netloc and not settings.ENTRA_FRONTEND_LOGIN_URL.startswith("/"):
         errors.append(Error("The frontend login URL must be an absolute path.", id="users.E006"))
+    if settings.ENTRA_BIND_BY_USERNAME and not settings.ENTRA_BIND_ALLOWED_DOMAINS:
+        errors.append(
+            Error("ENTRA_BIND_ALLOWED_DOMAINS is required while ENTRA_BIND_BY_USERNAME is on.", id="users.E009")
+        )
     if not settings.REFRESH_TOKEN_COOKIE_SECURE:
         errors.append(Error("Production refresh cookies must be Secure.", id="users.E007"))
     return errors

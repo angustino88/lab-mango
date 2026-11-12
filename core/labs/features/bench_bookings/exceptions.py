@@ -17,6 +17,15 @@ class BenchBookingPermissionDenied(Forbidden):
     code = "permission_denied"
 
 
+class BenchBookingSelfApprovalForbidden(Forbidden):
+    """Raised when the decider created the booking or the booking is for them (separation of duties)."""
+
+    code = "self_approval_forbidden"
+    default_message = (
+        "You cannot approve or reject your own booking; another coordinator or administrator must decide."
+    )
+
+
 class BenchBookingIdempotencyKeyReuse(ValidationFailed):
     """Raised when a decision replay key is reused with a different request."""
 
@@ -61,5 +70,6 @@ __all__ = [
     "BenchBookingConflict",
     "BenchBookingIdempotencyKeyReuse",
     "BenchBookingPermissionDenied",
+    "BenchBookingSelfApprovalForbidden",
     "LabProjectNotFound",
 ]

@@ -53,7 +53,7 @@ class PurchaseItemSerializer(AppModelSerializer):
 def _validate_priority_ids(attrs):
     priority_id = attrs.get("priority_id")
     if priority_id is not None and not PurchasePriority.objects.filter(pk=priority_id, is_active=True).exists():
-        raise DRFValidationError({"priority_id": "Select an active purchase priority."})
+        raise serializers.ValidationError({"priority_id": "Select an active purchase priority."})
     return attrs
 
 

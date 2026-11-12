@@ -1,7 +1,5 @@
 """Explicit, administratively provisioned Entra account binding. No email-based linking."""
 
-import uuid
-
 from django.conf import settings
 from django.db import models
 
@@ -21,10 +19,14 @@ class EntraIdentity(models.Model):
         return f"Entra identity for user {self.user_id}"
 
 
-class EntraLoginChallenge(models.Model):
-    """Short-lived browser-bound nonce; only its digest is persisted."""
+class EntraLoginNonce(models.Model):
+    """Nonces already used for an Entra login on this backend; the unique digest makes each one single-use.
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    nonce_digest = models.CharField(max_length=64)
+    The browser keeps a random secret and sends SHA-256(secret) to Microsoft as the ``nonce``; at login it
+    presents the secret. Only the digest of the nonce is stored. Rows can be purged after ``expires_at``,
+    because older ID tokens are refused anyway (``ENTRA_LOGIN_MAX_TOKEN_AGE``).
+    """
+
+    nonce_digest = models.CharField(max_length=64, unique=True)
+    used_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(db_index=True)
-    consumed_at = models.DateTimeField(null=True, blank=True)

@@ -185,12 +185,11 @@ class TestLinksAtIngestion:
         assert stored.user_id == booker.pk
         assert stored.remote_user == login_name.strip()  # the pushed value is kept as sent
 
-    def test_user_link_skips_unknown_inactive_and_ambiguous(self, computer, booker):
+    def test_user_link_skips_unknown_and_inactive(self, computer, booker):
+        # Case-variant duplicate usernames cannot exist (users_user_username_ci_unique).
         UserFactory(username="gone.user", is_active=False)
-        UserFactory(username="Twin")
-        UserFactory(username="twin")
 
-        for login_name in ("nobody", "gone.user", "TWIN"):
+        for login_name in ("nobody", "gone.user"):
             _, stored = push(computer, booking_code=None, remote_user=login_name)
             assert stored.user_id is None, login_name
 

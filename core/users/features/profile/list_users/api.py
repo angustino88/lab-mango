@@ -3,9 +3,10 @@ from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework import serializers as drf_serializers
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_api_key.permissions import HasAPIKey, KeyParser
+from rest_framework_api_key.permissions import KeyParser
 
 from core.common.api.api_views import AppDetailAPIView, AppListAPIView
+from core.common.api.permissions import HasAPIKeyAccess, api_key_access_enabled
 from core.users.features.profile.application import UpdateUserInput, update_user
 from core.users.features.profile.contracts import ActorContext
 from core.users.features.profile.exceptions import UserNotFound
@@ -18,12 +19,12 @@ User = get_user_model()
 def _is_api_client(request) -> bool:
     """True when the caller presents an API key and is not a logged-in user.
 
-    HasAPIKey does not attach the key object to the request, so the key header is checked directly.
+    HasAPIKeyAccess does not attach the key object to the request, so the key header is checked directly.
     A JWT-authenticated user is always scoped as a normal user, even if a key header is also sent.
     """
     if request.user and request.user.is_authenticated:
         return False
-    return bool(KeyParser().get(request))
+    return api_key_access_enabled() and bool(KeyParser().get(request))
 
 
 def _actor(request) -> ActorContext:
@@ -38,7 +39,7 @@ class ListUsersView(AppListAPIView):
     """List visible system users with optional username filtering."""
 
     schema_tags = ("User Profiles",)
-    permission_classes = [HasAPIKey | IsAuthenticated]
+    permission_classes = [HasAPIKeyAccess | IsAuthenticated]
     get_contract = OperationContract(
         query=UsersListQuerySerializer,
         success=ResponseContract.paginated("Users", UserSerializer),
@@ -70,7 +71,7 @@ class RetrieveUserView(AppDetailAPIView):
     """Retrieve or partially update a specific user profile."""
 
     schema_tags = ("User Profiles",)
-    permission_classes = [HasAPIKey | IsAuthenticated]
+    permission_classes = [HasAPIKeyAccess | IsAuthenticated]
     success_response = ResponseContract.success("User", UserSerializer)
     not_found_response = ResponseContract.problem(status.HTTP_404_NOT_FOUND)
     get_contract = OperationContract(

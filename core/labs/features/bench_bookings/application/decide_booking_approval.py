@@ -16,6 +16,7 @@ from core.labs.features.bench_bookings.exceptions import (
     BenchBookingConflict,
     BenchBookingIdempotencyKeyReuse,
     BenchBookingPermissionDenied,
+    BenchBookingSelfApprovalForbidden,
 )
 from core.labs.models import (
     BenchBooking,
@@ -45,6 +46,9 @@ def decide_bench_booking_approval(
 
     Race guard: lock the bench before the booking, matching every schedule writer. The second
     booking read under lock validates the observed bench and current state before mutation.
+
+    Separation of duties: nobody decides a booking they created or that is for them, superusers
+    included (owner decision 2026-11-12). Another coordinator or an administrator decides it.
     """
     if not is_authenticated(actor) or not has_labs_role(actor, LabsRole.COORDINATOR):
         raise BenchBookingPermissionDenied("Only a lab coordinator or administrator can decide booking approval.")
@@ -111,6 +115,8 @@ def decide_bench_booking_approval(
         booking = BenchBooking.objects.select_for_update().get(pk=data.booking_id)
         if booking.bench_id != observed_bench_id:
             raise BenchBookingConflict("The booking moved concurrently; reload it and retry.")
+        if actor.pk in {booking.creator_id, booking.requester_id}:
+            raise BenchBookingSelfApprovalForbidden()
         if booking.status != BookingStatus.RESERVED or booking.approval_status != BookingApprovalStatus.PENDING:
             raise BenchBookingConflict("Only pending reserved bookings can be approved or rejected.")
 

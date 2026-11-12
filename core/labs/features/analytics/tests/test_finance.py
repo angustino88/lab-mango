@@ -33,6 +33,21 @@ from core.labs.models import (
     Room,
 )
 
+
+@pytest.fixture()
+def user(db):
+    """Finance reports are for lab coordinators and admins: the default caller holds ``coord``."""
+    from django.contrib.auth.models import Group
+
+    from core.users.models import URSGroup
+    from tests.factories import UserFactory
+
+    caller = UserFactory(username="finance-coordinator")
+    group = Group.objects.create(name="finance-coordinators")
+    URSGroup.objects.create(group=group, urs_group_id=320001, labs_role="coord")
+    caller.groups.add(group)
+    return caller
+
 PARAMS = {"currency": "EUR", "start_month": "2026-01", "end_month": "2026-03"}
 WINDOW = {"currency": "EUR", "start_month": date(2026, 1, 1), "end_month": date(2026, 3, 1)}
 BASE = "/api/labs/analytics/finance/"
@@ -495,3 +510,24 @@ def test_finance_openapi_declares_required_inputs_and_money_schema():
     money = schema["components"]["schemas"]["FinanceMoney"]["properties"]
     assert money["amount"]["type"] == "string"
     assert "pattern" in money["amount"]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("role", ["", "user"])
+@pytest.mark.parametrize("endpoint", ENDPOINTS)
+def test_finance_requires_coordinator(endpoint, role):
+    from django.contrib.auth.models import Group
+
+    from core.users.models import URSGroup
+    from tests.factories import UserFactory
+
+    caller = UserFactory(username=f"finance-plain-{role or 'none'}")
+    if role:
+        group = Group.objects.create(name=f"finance-{role}")
+        URSGroup.objects.create(group=group, urs_group_id=320100, labs_role=role)
+        caller.groups.add(group)
+    client = APIClient()
+    client.force_authenticate(user=caller)
+    response = client.get(BASE + endpoint, PARAMS)
+    assert response.status_code == 403
+    assert "data" not in response.json()

@@ -768,7 +768,7 @@
     "/api/aad-login": {
       "post": {
         "operationId": "aad_login_create",
-        "description": "Validate a body-supplied Azure AD ID token without a DRF authenticator.\n\nRequires the anti-replay challenge cookie obtained from the AAD challenge\nendpoint and a valid CSRF cookie/token (normally the X-CSRFToken header).\nDjango CSRF origin/referer checks apply. Success issues an HttpOnly refresh cookie.\nExplicit public OpenAPI security does not exempt this operation from CSRF.",
+        "description": "Validate a body-supplied Azure AD ID token without a DRF authenticator.\n\nThe body carries the ID token and the browser's ``nonce_secret``; the token's ``nonce`` must equal\nbase64url(SHA-256(nonce_secret)), the token must be recent, and each nonce is accepted once.\nRequires a valid CSRF cookie/token (``GET /api/csrf-token``; normally the X-CSRFToken header).\nDjango CSRF origin/referer checks apply. Success issues an HttpOnly refresh cookie.\nExplicit public OpenAPI security does not exempt this operation from CSRF.",
         "tags": [
           "User Authentication"
         ],
@@ -856,51 +856,6 @@
         },
         "security": [],
         "summary": "Azure AD Login"
-      }
-    },
-    "/api/aad-login/challenge": {
-      "post": {
-        "operationId": "aad_login_challenge_create",
-        "description": "Generate anti-replay nonce and CSRF challenge cookie for Azure AD SSO.",
-        "tags": [
-          "User Authentication"
-        ],
-        "security": [
-          {}
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AADChallengeSerializerAADChallengeResponseDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Azure AD Login Challenge"
       }
     },
     "/api/agents": {
@@ -1432,6 +1387,29 @@
             "description": "Enrollment conflict"
           }
         }
+      }
+    },
+    "/api/csrf-token": {
+      "get": {
+        "operationId": "csrf_token_retrieve",
+        "description": "Issue the CSRF cookie and token that login, refresh and logout require. Writes nothing.",
+        "tags": [
+          "User Authentication"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CSRFTokenSerializerCSRFTokenResponseDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Csrf Token"
       }
     },
     "/api/labs/analytics/bench-group": {
@@ -34390,6 +34368,26 @@
               }
             },
             "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
           }
         },
         "summary": "Get User Groups"
@@ -34449,6 +34447,26 @@
             "description": ""
           },
           "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
             "content": {
               "application/json": {
                 "schema": {
@@ -35263,33 +35281,6 @@
   },
   "components": {
     "schemas": {
-      "AADChallengeResponse": {
-        "type": "object",
-        "properties": {
-          "nonce": {
-            "type": "string"
-          },
-          "csrf_token": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "csrf_token",
-          "nonce"
-        ]
-      },
-      "AADChallengeSerializerAADChallengeResponseDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/AADChallengeResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "AADLogin": {
         "type": "object",
         "properties": {
@@ -35297,10 +35288,18 @@
             "type": "string",
             "writeOnly": true,
             "maxLength": 16384
+          },
+          "nonce_secret": {
+            "type": "string",
+            "writeOnly": true,
+            "description": "The browser's random secret; the ID token's nonce is base64url(SHA-256(nonce_secret)).",
+            "maxLength": 128,
+            "minLength": 43
           }
         },
         "required": [
-          "id_token"
+          "id_token",
+          "nonce_secret"
         ]
       },
       "AADLoginResponse": {
@@ -39048,6 +39047,29 @@
         },
         "required": [
           "pagination"
+        ]
+      },
+      "CSRFTokenResponse": {
+        "type": "object",
+        "properties": {
+          "csrf_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "csrf_token"
+        ]
+      },
+      "CSRFTokenSerializerCSRFTokenResponseDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CSRFTokenResponse"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "CannedResponse": {

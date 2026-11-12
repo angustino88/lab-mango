@@ -43,8 +43,9 @@ def isolated_finance_throttle():
 
 @pytest.fixture
 def caller() -> APIClient:
+    # Superuser holds every Labs role without a database query (finance needs ``coord``).
     client = APIClient()
-    client.force_authenticate(user=get_user_model()(pk=10001, username="synthetic-finance-caller"))
+    client.force_authenticate(user=get_user_model()(pk=10001, username="synthetic-finance-caller", is_superuser=True))
     return client
 
 
@@ -130,7 +131,7 @@ def test_shared_throttle_returns_standard_429_before_sources(caller, finance_sch
         expense.assert_not_called()
         procurement.assert_not_called()
         if access == "user":
-            caller.force_authenticate(user=get_user_model()(pk=10002, username="synthetic-finance-other"))
+            caller.force_authenticate(user=get_user_model()(pk=10002, username="synthetic-finance-other", is_superuser=True))
             other = caller.get(BASE + endpoint, PARAMS)
         else:
             other = caller.get(BASE + endpoint, PARAMS, REMOTE_ADDR="192.0.2.2")

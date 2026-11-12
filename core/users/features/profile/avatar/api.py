@@ -3,9 +3,9 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_api_key.permissions import HasAPIKey
 
 from core.common.api.api_views import AppAPIView
+from core.common.api.permissions import HasAPIKeyAccess
 from core.users.features.profile.application import UploadAvatarInput, delete_avatar, upload_avatar
 from core.users.features.profile.contracts import ActorContext
 from core.users.features.profile.exceptions import AvatarInvalid, AvatarNotFound
@@ -17,7 +17,7 @@ class UserAvatarView(AppAPIView):
     """Retrieve, upload, or delete current authenticated user profile avatar image."""
 
     schema_tags = ("User Profiles",)
-    permission_classes = [HasAPIKey | IsAuthenticated]
+    permission_classes = [HasAPIKeyAccess | IsAuthenticated]
     parser_classes = [MultiPartParser]
     avatar_response = ResponseContract.success("UserAvatar", UserAvatarReadSerializer)
     bad_request_response = ResponseContract.problem(400)

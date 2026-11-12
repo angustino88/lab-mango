@@ -27,13 +27,13 @@ from core.labs.models.resource.license.license import (
     LicenseType,
     LicenseVendor,
 )
-from tests.factories import UserFactory, create_computing_equipment
+from tests.factories import UserFactory, create_computing_equipment, grant_labs_role
 
 
 @pytest.fixture()
 def client(db):
     api_client = APIClient()
-    api_client.force_authenticate(user=UserFactory())
+    api_client.force_authenticate(user=grant_labs_role(UserFactory(), "coord"))
     return api_client
 
 
@@ -377,7 +377,7 @@ def test_mapping_rejects_unknown_repeated_and_invalid_cursor_parameters(client, 
 def test_mapping_requires_authentication_and_hides_missing_resources(placement):
     client = APIClient()
     assert client.get(f"/api/labs/rooms/{placement['room'].pk}/mapping").status_code == 401
-    client.force_authenticate(user=UserFactory())
+    client.force_authenticate(user=grant_labs_role(UserFactory(), "coord"))
     assert client.get("/api/labs/equipment/999999/mapping").status_code == 404
 
 

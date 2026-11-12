@@ -1,6 +1,8 @@
 """Explicit equipment catalog import surface; no asset or credential writes."""
 
 from core.common.api.reference_views import reference_urlpatterns
+from core.labs.features.base.access import LABS_STAFF_ACCESS, can_import_lab_reference_data
+from core.labs.features.equipment.api.common import ORGANIZATION_PERMISSIONS
 from core.labs.models.resource.base.resource import Department, ResourceGroup
 from core.labs.models.resource.equipment.computing import TechnicalUser
 from core.labs.models.resource.equipment.display import DisplayResolution, DisplaySize
@@ -64,6 +66,10 @@ RESOURCES = (
     ("resource-groups", ResourceGroup, ("name", "description", "department", "active"), ("name",), "name"),
 )
 
+# Organisation lookups stay readable by every Labs role (R9); all other equipment catalogs are for
+# coordinators and admins. Creates need the Labs admin role (application/reference_data.py).
+ORGANIZATION_SEGMENTS = frozenset({"departments", "resource-groups"})
+
 urlpatterns = []
 for segment, model, fields, identity, label in RESOURCES:
     urlpatterns += reference_urlpatterns(
@@ -71,6 +77,8 @@ for segment, model, fields, identity, label in RESOURCES:
         prefix=f"equipment/reference-data/{segment}",
         tag="Equipment",
         module=__name__,
+        permission_classes=ORGANIZATION_PERMISSIONS if segment in ORGANIZATION_SEGMENTS else LABS_STAFF_ACCESS,
+        can_write=can_import_lab_reference_data,
         create=create_catalog_reference,
         listing=list_catalog_references,
         retrieve=get_catalog_reference,

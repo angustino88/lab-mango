@@ -136,7 +136,7 @@ sequenceDiagram
 
 ## 7. Security and authorization
 
-- **Authentication:** All analytics endpoints require `HasAPIKey | IsAuthenticated` via `FeatureAPIView`.
+- **Authentication:** Analytics endpoints require `HasAPIKey | IsAuthenticated` via `FeatureAPIView`, except the finance reports, which require `HasAPIKey | IsLabCoordinatorReadWrite` (lab coordinators and admins; owner decision 2026-11-11).
 - **Query Parameter Validation:** Date strings, sort order, and limit values are strictly validated via DRF serializers with explicit bounds.
 
 ---

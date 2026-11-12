@@ -34,8 +34,8 @@ paths:
     $ref: ./agents.yml#/paths/~1api~1agents~1{id}~1enrollment-grants
   /api/aad-login:
     $ref: ./users-auth-aad-login.yml#/paths/~1api~1aad-login
-  /api/aad-login/challenge:
-    $ref: ./users-auth-aad-login.yml#/paths/~1api~1aad-login~1challenge
+  /api/csrf-token:
+    $ref: ./users-auth-aad-login.yml#/paths/~1api~1csrf-token
   /api/labs/analytics/bench-group:
     $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1bench-group
   /api/labs/analytics/booked-vs-used:

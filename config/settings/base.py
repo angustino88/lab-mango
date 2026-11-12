@@ -104,11 +104,22 @@ AAD_JWKS_URL = env(
 )
 AAD_TENANT_ID = env("AAD_TENANT_ID", default="0ae51e19-07c8-4e4b-bb6d-648ee58410f4")
 AAD_ISSUER = f"https://login.microsoftonline.com/{AAD_TENANT_ID}/v2.0"
-AAD_LOGIN_CHALLENGE_LIFETIME = timedelta(minutes=5)
-AAD_LOGIN_CHALLENGE_COOKIE = "entra_login_challenge"
+# Entra login replay protection: the browser sends SHA-256(secret) as the nonce to Microsoft and the
+# secret to /api/aad-login. ID tokens older than this are refused; each nonce is accepted once.
+ENTRA_LOGIN_MAX_TOKEN_AGE = timedelta(minutes=10)
 # First login only: bind an unbound Entra object ID to the existing non-privileged user whose username
 # matches preferred_username (full UPN or local part). Never creates users.
 ENTRA_BIND_BY_USERNAME = env.bool("ENTRA_BIND_BY_USERNAME", default=True)
+# Safeguards for that first-login binding (owner decision 2026-11-12, option A):
+# only these UPN domains are accepted; guests (#EXT# UPNs, acct=1) never are; an account that was ever
+# bound before is never re-bound automatically. Binding an account older than the warning age is logged
+# as a warning for review.
+ENTRA_BIND_ALLOWED_DOMAINS = [
+    domain.strip().lower()
+    for domain in env.list("ENTRA_BIND_ALLOWED_DOMAINS", default=[env("EMAIL_USER_DOMAIN", default="bosch.com")])
+    if domain.strip()
+]
+ENTRA_BIND_DORMANT_WARNING_DAYS = env.int("ENTRA_BIND_DORMANT_WARNING_DAYS", default=180)
 ENTRA_FRONTEND_LOGIN_URL = env("ENTRA_FRONTEND_LOGIN_URL", default="/")
 
 AUTH_USER_MODEL = "users.User"
@@ -254,6 +265,14 @@ URS_API_URL = env("URS_API_URL", default="https://rb-pandora-n1.bosch.com:15000/
 URS_API_VERIFY_SSL = env.bool("URS_API_VERIFY_SSL", default=False)
 # Service token sent to the URS API. Empty by default: sync fails closed when unset.
 URS_ACCESS_TOKEN = env("URS_ACCESS_TOKEN", default="")
+URS_API_TIMEOUT_S = env.int("URS_API_TIMEOUT_S", default=15)
+# URS is the source of truth and every sync applies all changes at once (owner decision 2026-11-12).
+# Optional safety check, off by default: when on, a group sync that removes every member, or more than
+# URS_SYNC_MAX_REMOVAL_RATIO of a group with at least URS_SYNC_BRAKE_MIN_MEMBERS members, is blocked
+# until an operator forces it in Django admin.
+URS_SYNC_SAFETY_BRAKE = env.bool("URS_SYNC_SAFETY_BRAKE", default=False)
+URS_SYNC_MAX_REMOVAL_RATIO = env.float("URS_SYNC_MAX_REMOVAL_RATIO", default=0.5)
+URS_SYNC_BRAKE_MIN_MEMBERS = env.int("URS_SYNC_BRAKE_MIN_MEMBERS", default=10)
 
 # ADMIN
 # ------------------------------------------------------------------------------
@@ -338,6 +357,10 @@ SOCIALACCOUNT_ADAPTER = "core.users.adapters.SocialAccountAdapter"
 
 # DJANGO REST FRAMEWORK
 # ------------------------------------------------------------------------------
+# API keys (djangorestframework-api-key): one switch for every API-key path. Keys stay valid while off;
+# requests that rely only on a key are rejected (core.common.api.permissions.HasAPIKeyAccess).
+API_KEY_ACCESS_ENABLED = env.bool("API_KEY_ACCESS_ENABLED", default=True)
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",

@@ -46,7 +46,7 @@ Models used but owned elsewhere: resource models referenced by `PurchaseItemReso
 
 **Approved additive contract.** Allocation create accepts `resource_kind` (`bench`, `equipment`, `license`, or `station`) as the stable public resource identifier. The server maps each value to the corresponding canonical Labs `ContentType`; clients do not discover these values through a GET endpoint. The legacy `resource_type_id` input remains accepted. At least one identifier is required, and when both are present they must resolve to the same content type. Allocation reads expose the read-only `resource_kind`; storage remains the existing generic relation (`resource_type` plus `resource_id`).
 
-**Verified (permissions).** `ProcurementAPIView` sets `permission_classes = [HasAPIKey | IsLabCoordinator]`. Writes: lab admins (who inherit the coordinator role), coordinators, and API keys. Plain-user writes and unauthenticated requests without an API key get 403. Reads: any authenticated user, because `RolePermission` (`core.common.api.permissions`) allows all safe methods unless `read_roles` is set; restricting reads to coordinators is an open decision. API-key writes record no creator because the actor is `None`. Roles resolve from `URSGroup.labs_role` (`core/users/access.py`). Access-control change: requires human approval before merge (T2).
+**Verified (permissions).** `ProcurementAPIView` sets `permission_classes = [HasAPIKey | IsLabCoordinatorReadWrite]`. Writes: lab admins (who inherit the coordinator role), coordinators, and API keys. Plain-user writes and unauthenticated requests without an API key get 403. Reads: lab coordinators and admins only (`IsLabCoordinatorReadWrite`, owner decision 2026-11-11); plain users and users without a Labs role get 403. API-key writes record no creator because the actor is `None`. Roles resolve from `URSGroup.labs_role` (`core/users/access.py`). Access-control change: requires human approval before merge (T2).
 
 **Verified (OpenAPI).** Responses are declared with `drf_api_contracts`. The allocation-create schema publishes the supported `resource_kind` enum, documents legacy `resource_type_id`, and applies `anyOf` to require at least one identifier. Runtime validation additionally requires both identifiers to agree when both are supplied; this data-dependent comparison is documented on the schema but is not expressible as a static schema constraint.
 
@@ -55,7 +55,7 @@ Models used but owned elsewhere: resource models referenced by `PurchaseItemReso
 | Depends on | Through | Direction rule |
 | --- | --- | --- |
 | `core.common.api` (`AppListAPIView`) | Import | Shared code, no feature imports |
-| `core.users.access` (`IsLabCoordinator`) | Import | Users app; owns the Labs role mapping |
+| `core.users.public` (`IsLabCoordinatorReadWrite`) | Import | Users app; owns the Labs role mapping |
 | `core.labs.features.base` (`CommandAPIView`) | Import | Shared Labs base |
 | `core.labs.models` (procurement models) | Import | Models are centralized |
 | Resource models (generic link) | Content type and object ID | No ordinary FK protection |
@@ -130,13 +130,13 @@ sequenceDiagram
 
 ## 8. Security and authorization
 
-**Verified.** Writes: lab admins, coordinators, and API keys, enforced by `HasAPIKey | IsLabCoordinator` at the view level. Reads: any authenticated user (open decision, see above). Deny by default: plain-user writes get 403, and unauthenticated requests without an API key are rejected for writes. Object scoping is not applicable because access is role-wide.
+**Verified.** Writes: lab admins, coordinators, and API keys, enforced by `HasAPIKey | IsLabCoordinatorReadWrite` at the view level. Reads: lab coordinators and admins (see above). Deny by default: plain-user reads and writes get 403, and unauthenticated requests without an API key are rejected for writes. Object scoping is not applicable because access is role-wide.
 
 **Open.** The permission comment and behavior disagree on whether non-admin reads are allowed (see section 3). Decide, then align the code and comment.
 
 ## 9. Observability and operations
 
-**Not verified.** No logging or metrics specific to procurement were inspected. Migration state for the procurement models was not part of this document's scope. The Labs migration check reports no pending changes (2026-11-11, after ADR 006).
+**Not verified.** No logging or metrics specific to procurement were inspected. Migration state for the procurement models was not part of this document's scope; the Labs migration check currently reports an unrelated `computingequipment.rdp_file` change.
 
 ## 10. Tests and enforcement
 

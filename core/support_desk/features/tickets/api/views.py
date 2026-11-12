@@ -10,9 +10,9 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_api_key.permissions import HasAPIKey
 
 from core.common.api.options import OptionsAPIView, OptionsQueryMixin, SizeClass
+from core.common.api.permissions import HasAPIKeyAccess
 from core.support_desk.contracts import (
     ActivityEventType,
     AttachmentScanStatus,
@@ -717,7 +717,7 @@ class AdminSupportAPIView(SupportAPIView):
 
     def get_permissions(self):
         if self.request.method in ("GET", "HEAD", "OPTIONS"):
-            return [permission() for permission in (HasAPIKey | IsAuthenticated,)]
+            return [permission() for permission in (HasAPIKeyAccess | IsAuthenticated,)]
         return [permission() for permission in self.permission_classes]
 
 

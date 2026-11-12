@@ -527,3 +527,19 @@ class TestAdminConfiguration:
 
         with pytest.raises(ConfigurationInUseError):
             delete_category(cat.id, actor=admin_user)
+
+
+@pytest.mark.django_db
+def test_group_names_grant_no_support_role():
+    from django.contrib.auth.models import Group
+
+    from core.support_desk.contracts import SupportRole
+    from core.support_desk.features.tickets.application.policies import resolve_support_role
+    from tests.factories import UserFactory
+
+    user = UserFactory(username="named-group-only")
+    for name in ("Support Agent", "Support Administrator", "Coordinator", "admin"):
+        group, _ = Group.objects.get_or_create(name=name)
+        user.groups.add(group)
+
+    assert resolve_support_role(user) == SupportRole.REQUESTER

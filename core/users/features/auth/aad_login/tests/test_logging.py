@@ -13,14 +13,14 @@ from rest_framework.test import APIClient
 from core.users.features.auth.aad_login import service
 
 TOKEN = "synthetic-secret-id-token"
-CHALLENGE = "synthetic-secret-malformed-challenge"
+NONCE_SECRET = "synthetic-secret-malformed-nonce-secret"
 NONCE = "synthetic-secret-nonce"
 SUBJECT = "synthetic-secret-subject"
 DEPENDENCY_SECRET = "synthetic-secret-proxy-credential"
 TUNNEL_ERROR = "Tunnel connection failed: 501 Not Implemented"
 DEPENDENCY_MESSAGE = "Entra JWKS connection failed"
 REJECTION_MESSAGE = "Entra authentication rejected"
-SENSITIVE_TEXT = (TOKEN, CHALLENGE, NONCE, SUBJECT, DEPENDENCY_SECRET, TUNNEL_ERROR)
+SENSITIVE_TEXT = (TOKEN, NONCE_SECRET, NONCE, SUBJECT, DEPENDENCY_SECRET, TUNNEL_ERROR)
 
 
 @pytest.fixture(autouse=True)
@@ -142,7 +142,7 @@ def test_invalid_token_logs_one_safe_info_and_preserves_chaining(
     assert_safe_diagnostics(caplog, capsys, [(logging.INFO, REJECTION_MESSAGE)])
 
 
-def test_aad_login_failed_decode_never_prints_token_or_challenge(
+def test_aad_login_failed_decode_never_prints_token_or_nonce_secret(
     jwks_connection_error: jwt.PyJWKClientConnectionError,
     caplog: pytest.LogCaptureFixture,
     capsys: pytest.CaptureFixture[str],
@@ -150,14 +150,14 @@ def test_aad_login_failed_decode_never_prints_token_or_challenge(
     caplog.set_level(logging.DEBUG, logger=service.logger.name)
 
     with pytest.raises(service.AADAuthError) as raised:
-        service.aad_login(id_token=TOKEN, challenge_id=CHALLENGE)
+        service.aad_login(id_token=TOKEN, nonce_secret=NONCE_SECRET)
 
     assert_connection_chaining(raised.value, jwks_connection_error)
     # Check printing first so the token-print regression is independent of log classification.
     assert_safe_diagnostics(caplog, capsys, [(logging.WARNING, DEPENDENCY_MESSAGE)])
 
 
-def test_aad_login_decoded_payload_never_prints_before_malformed_challenge(
+def test_aad_login_decoded_payload_never_prints_before_malformed_nonce_secret(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
     capsys: pytest.CaptureFixture[str],
@@ -167,10 +167,9 @@ def test_aad_login_decoded_payload_never_prints_before_malformed_challenge(
     monkeypatch.setattr(service, "_decode_id_token", Mock(return_value=payload))
 
     with pytest.raises(service.AADAuthError) as raised:
-        service.aad_login(id_token=TOKEN, challenge_id=CHALLENGE)
+        service.aad_login(id_token=TOKEN, nonce_secret=NONCE_SECRET)
 
     assert raised.value.code == "invalid_sso_token"
-    assert isinstance(raised.value.__cause__, ValueError)
     assert_safe_diagnostics(caplog, capsys, [])
 
 
@@ -183,7 +182,7 @@ def test_endpoint_jwks_failure_keeps_401_contract_without_detail_leaks(
     caplog.set_level(logging.DEBUG, logger=service.logger.name)
     cache.clear()
     try:
-        response = api_client.post("/api/aad-login", {"id_token": TOKEN}, format="json")
+        response = api_client.post("/api/aad-login", {"id_token": TOKEN, "nonce_secret": "s" * 43}, format="json")
     finally:
         cache.clear()
 

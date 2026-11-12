@@ -8,9 +8,10 @@ from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
-from core.common.api.options import OptionsAPIView, OptionsQueryMixin, SizeClass
+from core.common.api.options import OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer
 from core.labs.features.base import FeatureAPIView
+from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.licenses import public
 from core.labs.features.licenses.api.serializers import (
     LicenseAgreementSerializer,

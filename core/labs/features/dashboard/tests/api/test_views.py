@@ -34,6 +34,7 @@ from tests.factories import (
     EquipmentCategoryFactory,
     EquipmentKindFactory,
     UserFactory,
+    grant_labs_role,
 )
 
 
@@ -66,6 +67,7 @@ def make_license(**kwargs):
 def client_and_user(db):
     user = UserFactory()
     client = APIClient()
+    grant_labs_role(user, "user")
     client.force_authenticate(user=user)
     return client, user
 
@@ -356,6 +358,8 @@ class TestDashboardOverviewAPI:
         client, _ = client_and_user
         for _ in range(5):
             make_bench()
+        # Warm the per-user Labs role cache (one query on the first request) before measuring.
+        client.get("/api/labs/dashboard/summary")
 
         with django_assert_num_queries(4):
             # 1: count query for pagination

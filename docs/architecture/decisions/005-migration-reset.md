@@ -35,3 +35,21 @@ fails at the operation that needs it instead of at a later index.
   `0007_trigram_search_indexes`, `0005_booking_notification`, `0002_referenceimportreceipt`) describe
   history; those files no longer exist.
 - Tests that exercised a specific old migration were removed or now build tables from the model.
+
+## Addendum (2026-11-12): one migration per app
+
+On the owner's request ("only one migration; the database is blank"), the set was regenerated again after
+merging the roles, URS and authentication work: every app now has exactly one `0001_initial`
+(generated app by app in dependency order, so no `0002_initial` split is needed). The additive
+`labs.0002_lab_session_access_links` is folded into `labs.0001_initial`.
+
+Hand-written operations, in addition to the table above:
+
+| App | Operation | Where |
+|---|---|---|
+| labs | Seed purchase priorities | `0001_initial`, last (previously `0002_initial`) |
+| support_desk | Ticket number sequence; insert-only `TicketActivity` trigger | `0001_initial`, last (previously `0002_initial`) |
+| users | Append-only `RoleAuditEvent` trigger (no UPDATE or DELETE) | `0001_initial`, last |
+
+Verified on a blank database: 7 migrations apply; the four triggers, the sequence, both extensions and the
+four priorities exist. Every existing database must be dropped and recreated again.

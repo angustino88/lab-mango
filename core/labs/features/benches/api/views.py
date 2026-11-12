@@ -3,13 +3,14 @@
 from django.utils import timezone  # noqa: F401
 from drf_api_contracts import OperationContract, ResponseContract
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework.permissions import IsAuthenticated
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
-from core.common.api.options import OptionsAPIView, OptionsQueryMixin, SizeClass
+from core.common.api.options import OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer
 from core.labs.features.base import CommandAPIView, operation
+from core.labs.features.base.access import LABS_STAFF_ACCESS
+from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.benches.application import services
 from core.labs.features.benches.queries import selectors
 
@@ -42,7 +43,7 @@ from .serializers import (
 
 
 class BenchAPIView(AppListAPIView, CommandAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = LABS_STAFF_ACCESS
     schema_tags = ("Benches",)
 
     def project_result(self, result):

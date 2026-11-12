@@ -10,7 +10,15 @@ from core.support_desk.models.priority import SupportPriority
 from core.support_desk.models.settings import SupportSettings
 from core.support_desk.models.status import SupportStatus
 from core.support_desk.models.transition import SupportStatusTransition
+from core.users.models import URSGroup
 from tests.factories import UserFactory
+
+
+def _grant_labs_role(user, role: str, urs_group_id: int) -> None:
+    """Support roles come from Labs roles: coordinator -> agent, admin -> support admin."""
+    group, _ = Group.objects.get_or_create(name=f"labs-{role}")
+    URSGroup.objects.get_or_create(group=group, defaults={"urs_group_id": urs_group_id, "labs_role": role})
+    user.groups.add(group)
 
 
 @pytest.fixture
@@ -21,16 +29,14 @@ def requester_user(db):
 @pytest.fixture
 def agent_user(db):
     user = UserFactory(username="agent1", email="agent1@example.com")
-    group, _ = Group.objects.get_or_create(name="Support Agent")
-    user.groups.add(group)
+    _grant_labs_role(user, "coord", 410001)
     return user
 
 
 @pytest.fixture
 def admin_user(db):
     user = UserFactory(username="admin1", email="admin1@example.com", is_staff=True)
-    group, _ = Group.objects.get_or_create(name="Support Administrator")
-    user.groups.add(group)
+    _grant_labs_role(user, "admin", 410002)
     return user
 
 

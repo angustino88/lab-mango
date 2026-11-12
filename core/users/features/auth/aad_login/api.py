@@ -7,41 +7,27 @@ from rest_framework.request import Request
 from rest_framework.throttling import ScopedRateThrottle
 
 from core.users.features.auth.aad_login.serializer import AADLoginSerializer
-from core.users.features.auth.aad_login.service import AADAuthError, aad_login, create_login_challenge
+from core.users.features.auth.aad_login.service import AADAuthError, aad_login
 from core.users.features.auth.api import AuthAPIView, PublicAuthAutoSchema
 from core.users.features.auth.cookies import set_refresh_cookie
 from core.users.features.auth.permissions import CookieCSRFPermission
 
-from .serializer import AADChallengeResponseSerializer, AADLoginResponseSerializer
+from .serializer import AADLoginResponseSerializer, CSRFTokenResponseSerializer
 
 
-class UserAADChallengeView(AuthAPIView):
-    """Generate anti-replay nonce and CSRF challenge cookie for Azure AD SSO."""
+class CSRFTokenView(AuthAPIView):
+    """Issue the CSRF cookie and token that login, refresh and logout require. Writes nothing."""
 
+    schema = PublicAuthAutoSchema()
     schema_tags = ("User Authentication",)
     permission_classes = [AllowAny]
     authentication_classes = []
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth_login"
-    post_contract = OperationContract(
-        request=None,
-        success=ResponseContract.success("AADChallenge", AADChallengeResponseSerializer),
-        rate_limited=ResponseContract.problem(429),
-        service_unavailable=ResponseContract.problem(503),
+    get_contract = OperationContract(
+        success=ResponseContract.success("CSRFToken", CSRFTokenResponseSerializer),
     )
 
-    def handle_post(self, request: Request, *args, **kwargs):
-        challenge, nonce = create_login_challenge()
-        response = self.respond_data({"nonce": nonce, "csrf_token": get_token(request._request)})
-        response.set_cookie(
-            settings.AAD_LOGIN_CHALLENGE_COOKIE,
-            str(challenge.pk),
-            max_age=int(settings.AAD_LOGIN_CHALLENGE_LIFETIME.total_seconds()),
-            secure=settings.REFRESH_TOKEN_COOKIE_SECURE,
-            httponly=True,
-            samesite="Lax",
-            path="/api",
-        )
+    def handle_get(self, request: Request, *args, **kwargs):
+        response = self.respond_data({"csrf_token": get_token(request._request)})
         response["Cache-Control"] = "no-store"
         return response
 
@@ -49,8 +35,9 @@ class UserAADChallengeView(AuthAPIView):
 class UserAADLoginView(AuthAPIView):
     """Validate a body-supplied Azure AD ID token without a DRF authenticator.
 
-    Requires the anti-replay challenge cookie obtained from the AAD challenge
-    endpoint and a valid CSRF cookie/token (normally the X-CSRFToken header).
+    The body carries the ID token and the browser's ``nonce_secret``; the token's ``nonce`` must equal
+    base64url(SHA-256(nonce_secret)), the token must be recent, and each nonce is accepted once.
+    Requires a valid CSRF cookie/token (``GET /api/csrf-token``; normally the X-CSRFToken header).
     Django CSRF origin/referer checks apply. Success issues an HttpOnly refresh cookie.
     Explicit public OpenAPI security does not exempt this operation from CSRF.
     """
@@ -76,12 +63,10 @@ class UserAADLoginView(AuthAPIView):
         if error is not None:
             return error
 
-        id_token = serializer.validated_data["id_token"]
-
         try:
             data, user = aad_login(
-                id_token=id_token,
-                challenge_id=request.COOKIES.get(settings.AAD_LOGIN_CHALLENGE_COOKIE, ""),
+                id_token=serializer.validated_data["id_token"],
+                nonce_secret=serializer.validated_data["nonce_secret"],
             )
         except AADAuthError:
             return self.respond_problem(
@@ -96,6 +81,5 @@ class UserAADLoginView(AuthAPIView):
             data["csrf_token"] = get_token(request._request)
         response = self.respond_data(data)
         set_refresh_cookie(response, refresh_token)
-        response.delete_cookie(settings.AAD_LOGIN_CHALLENGE_COOKIE, path="/api", samesite="Lax")
         response["Cache-Control"] = "no-store"
         return response

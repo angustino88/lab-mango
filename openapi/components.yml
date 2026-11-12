@@ -1,23 +1,5 @@
 components:
   schemas:
-    AADChallengeResponse:
-      type: object
-      properties:
-        nonce:
-          type: string
-        csrf_token:
-          type: string
-      required:
-      - csrf_token
-      - nonce
-    AADChallengeSerializerAADChallengeResponseDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/AADChallengeResponse'
-      required:
-      - data
     AADLogin:
       type: object
       properties:
@@ -25,8 +7,15 @@ components:
           type: string
           writeOnly: true
           maxLength: 16384
+        nonce_secret:
+          type: string
+          writeOnly: true
+          description: The browser's random secret; the ID token's nonce is base64url(SHA-256(nonce_secret)).
+          maxLength: 128
+          minLength: 43
       required:
       - id_token
+      - nonce_secret
     AADLoginResponse:
       type: object
       properties:
@@ -2732,6 +2721,21 @@ components:
           $ref: '#/components/schemas/BuildingReferenceListSerializersBuildingCatalogRecordPagination'
       required:
       - pagination
+    CSRFTokenResponse:
+      type: object
+      properties:
+        csrf_token:
+          type: string
+      required:
+      - csrf_token
+    CSRFTokenSerializerCSRFTokenResponseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/CSRFTokenResponse'
+      required:
+      - data
     CannedResponse:
       type: object
       properties:

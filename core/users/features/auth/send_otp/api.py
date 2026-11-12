@@ -3,9 +3,9 @@ from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.throttling import ScopedRateThrottle
-from rest_framework_api_key.permissions import HasAPIKey
 
 from core.common.api.api_views import AppAPIView
+from core.common.api.permissions import HasAPIKeyAccess
 from core.users.features.auth.send_otp.serializer import SendOTPResponseSerializer, SendOTPSerializer
 from core.users.features.auth.send_otp.service import OTPDeliveryError, send_otp
 
@@ -14,7 +14,7 @@ class SendUserOTPView(AppAPIView):
     """Deliver a one-time verification password to the requested user."""
 
     schema_tags = ("User Authentication",)
-    permission_classes = [HasAPIKey | IsAuthenticated]
+    permission_classes = [HasAPIKeyAccess | IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth_otp"
 

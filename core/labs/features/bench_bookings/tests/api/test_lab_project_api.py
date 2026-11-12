@@ -44,6 +44,8 @@ class TestListApi:
 
     def test_list_query_count_is_constant(self, api_client, db):
         LabProject.objects.create(project_name="One")
+        # Warm the per-user Labs role cache (one query on the first request) before measuring.
+        api_client.get(URL)
         with CaptureQueriesContext(connection) as small:
             api_client.get(URL)
         for index in range(10):

@@ -5,6 +5,7 @@ from __future__ import annotations
 from django.db import IntegrityError, transaction
 
 from core.routing.public import publish_user_identity
+from core.users.audit import record_role_event
 from core.users.features.lifecycle.contracts import (
     BindEntraIdentityInput,
     DeleteUserInput,
@@ -13,7 +14,7 @@ from core.users.features.lifecycle.contracts import (
     UnlinkEntraIdentityInput,
     UserLifecycleResult,
 )
-from core.users.models import EntraIdentity, User
+from core.users.models import EntraIdentity, RoleAuditEvent, User
 
 
 def set_user_active(*, caller: str, data: SetUserActiveInput) -> UserLifecycleResult:
@@ -54,6 +55,7 @@ def bind_entra_identity(*, caller: str, data: BindEntraIdentityInput) -> UserLif
             _raise_identity_conflict(exc)
         if user.is_active:
             publish_user_identity(key=_routing_key(identity), user_is_active=True)
+        _audit_binding(RoleAuditEvent.EventType.ENTRA_IDENTITY_BOUND, caller, user, identity)
         return UserLifecycleResult(changed=True, user_id=user.pk, identity_id=identity.pk)
 
 
@@ -73,6 +75,7 @@ def replace_entra_identity(*, caller: str, data: ReplaceEntraIdentityInput) -> U
                 _raise_identity_conflict(exc)
             if user.is_active:
                 publish_user_identity(key=_routing_key(replacement), user_is_active=True)
+            _audit_binding(RoleAuditEvent.EventType.ENTRA_IDENTITY_BOUND, caller, user, replacement)
             return UserLifecycleResult(changed=True, user_id=user.pk, identity_id=replacement.pk)
         if (identity.tenant_id, identity.object_id) == (data.tenant_id, data.object_id):
             if user.is_active:
@@ -80,6 +83,7 @@ def replace_entra_identity(*, caller: str, data: ReplaceEntraIdentityInput) -> U
             return UserLifecycleResult(changed=False, user_id=user.pk, identity_id=identity.pk)
         old_key = _routing_key(identity)
         publish_user_identity(key=old_key, user_is_active=False)
+        _audit_binding(RoleAuditEvent.EventType.ENTRA_IDENTITY_UNLINKED, caller, user, identity)
         identity.delete()
         try:
             with transaction.atomic():
@@ -90,6 +94,7 @@ def replace_entra_identity(*, caller: str, data: ReplaceEntraIdentityInput) -> U
             _raise_identity_conflict(exc)
         if user.is_active:
             publish_user_identity(key=_routing_key(replacement), user_is_active=True)
+        _audit_binding(RoleAuditEvent.EventType.ENTRA_IDENTITY_BOUND, caller, user, replacement)
         return UserLifecycleResult(changed=True, user_id=user.pk, identity_id=replacement.pk)
 
 
@@ -103,6 +108,7 @@ def unlink_entra_identity(*, caller: str, data: UnlinkEntraIdentityInput) -> Use
             return UserLifecycleResult(changed=False, user_id=user.pk)
         key = _routing_key(identity)
         publish_user_identity(key=key, user_is_active=False)
+        _audit_binding(RoleAuditEvent.EventType.ENTRA_IDENTITY_UNLINKED, caller, user, identity)
         identity.delete()
         return UserLifecycleResult(changed=True, user_id=user.pk, identity_id=identity.pk)
 
@@ -117,6 +123,7 @@ def delete_user(*, caller: str, data: DeleteUserInput) -> UserLifecycleResult:
         if identity is not None:
             key = _routing_key(identity)
             publish_user_identity(key=key, user_is_active=False)
+            _audit_binding(RoleAuditEvent.EventType.ENTRA_IDENTITY_UNLINKED, caller, user, identity)
             identity.delete()
         user.delete()
         return UserLifecycleResult(changed=True, user_id=data.user_id, identity_id=identity_id)
@@ -136,6 +143,23 @@ def _unlink_entra_identity_from_operator(data: UnlinkEntraIdentityInput) -> User
 
 def _delete_user_from_operator(data: DeleteUserInput) -> UserLifecycleResult:
     return delete_user(caller="bind-entra-identity-command", data=data)
+
+
+def has_ever_been_bound(user_id: int) -> bool:
+    """True when the audit log shows this user was linked to an Entra identity at any time."""
+    return RoleAuditEvent.objects.filter(
+        event_type=RoleAuditEvent.EventType.ENTRA_IDENTITY_BOUND, target_user_id=user_id
+    ).exists()
+
+
+def _audit_binding(event_type: str, caller: str, user: User, identity: EntraIdentity) -> None:
+    """Record a link or unlink in the append-only audit log, inside the caller's transaction."""
+    record_role_event(
+        event_type,
+        actor_label=f"system:{caller}",
+        target=user,
+        changes={"tenant_id": str(identity.tenant_id), "object_id": str(identity.object_id)},
+    )
 
 
 def _routing_key(identity: EntraIdentity) -> str:

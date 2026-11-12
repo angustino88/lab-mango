@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from core.labs.models import Building, City, Country, Room, Station, StationType
+from tests.factories import grant_labs_role
 
 
 @pytest.fixture()
@@ -16,6 +17,7 @@ def actor(db):
 @pytest.fixture()
 def client(actor):
     c = APIClient()
+    grant_labs_role(actor, "coord")
     c.force_authenticate(user=actor)
     return c
 

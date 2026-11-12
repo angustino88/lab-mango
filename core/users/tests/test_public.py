@@ -125,6 +125,7 @@ def test_lifecycle_command_boundary_has_explicit_exports():
         "UserLifecycleResult",
         "bind_entra_identity",
         "delete_user",
+        "has_ever_been_bound",
         "replace_entra_identity",
         "set_user_active",
         "unlink_entra_identity",
@@ -135,10 +136,9 @@ def test_lifecycle_command_boundary_has_explicit_exports():
 def test_resolve_user_id_for_login_name(django_user_model):
     user = django_user_model.objects.create_user(username="nguyen.an", password="x")
     django_user_model.objects.create_user(username="gone", password="x", is_active=False)
-    django_user_model.objects.create_user(username="Twin", password="x")
-    django_user_model.objects.create_user(username="twin", password="x")
+    # Case-variant duplicates cannot exist (users_user_username_ci_unique), so no ambiguity case here.
 
     for login_name in ("nguyen.an", "Nguyen.An", "CORP\\nguyen.an", " corp\\NGUYEN.AN "):
         assert resolve_user_id_for_login_name(login_name=login_name) == user.pk, login_name
-    for unmatched in (None, "", "  ", "CORP\\", "nobody", "gone", "twin", "nguyen"):
+    for unmatched in (None, "", "  ", "CORP\\", "nobody", "gone", "nguyen"):
         assert resolve_user_id_for_login_name(login_name=unmatched) is None, unmatched

@@ -11,7 +11,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.common.domain.errors import InvalidQuery
-from core.labs.features.base.common import FeatureAPIView
+from core.labs.features.base import LABS_MEMBER_READ_ACCESS, FeatureAPIView
 
 from ..helpers import parse_date_range
 from ..public import (
@@ -49,6 +49,7 @@ def _date_range(request: Request):
 
 class LeaderboardPersonaAPIView(FeatureAPIView):
     """User performance rankings and operational metrics."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -65,6 +66,7 @@ class LeaderboardPersonaAPIView(FeatureAPIView):
 
 class LeaderboardLabAPIView(FeatureAPIView):
     """Laboratory and bench utilization rankings."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -81,6 +83,7 @@ class LeaderboardLabAPIView(FeatureAPIView):
 
 class LeaderboardExportAPIView(FeatureAPIView):
     """Export leaderboard performance data."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -101,6 +104,7 @@ class LeaderboardExportAPIView(FeatureAPIView):
 
 class LabProfileAPIView(FeatureAPIView):
     """Retrieve laboratory bench performance profile."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -117,6 +121,7 @@ class LabProfileAPIView(FeatureAPIView):
 
 class LabWeeklyUsageHeatmapAPIView(FeatureAPIView):
     """Weekly utilization heatmap for a specific laboratory bench."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -131,6 +136,7 @@ class LabWeeklyUsageHeatmapAPIView(FeatureAPIView):
 
 class UserProfileAPIView(FeatureAPIView):
     """User profile ranking and session summary."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -147,6 +153,7 @@ class UserProfileAPIView(FeatureAPIView):
 
 class UserWeeklyUsageHeatmapAPIView(FeatureAPIView):
     """Weekly usage heatmap for an individual user."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -161,6 +168,7 @@ class UserWeeklyUsageHeatmapAPIView(FeatureAPIView):
 
 class DashboardSummaryAPIView(FeatureAPIView):
     """High-level asset count and status distribution summary."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -175,6 +183,7 @@ class DashboardSummaryAPIView(FeatureAPIView):
 
 class LabDashboardAPIView(FeatureAPIView):
     """Laboratory dashboard overview with polymorphic paginated or unpaginated list."""
+    permission_classes = LABS_MEMBER_READ_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(

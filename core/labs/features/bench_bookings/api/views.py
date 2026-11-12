@@ -12,8 +12,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
-from core.common.api.options import OptionsAPIView, SizeClass
-from core.labs.features.base import CommandAPIView, FeatureAPIView, operation
+from core.common.api.options import SizeClass
+from core.labs.features.base import LABS_MEMBER_ACCESS, CommandAPIView, FeatureAPIView, OptionsAPIView, operation
 from core.labs.features.bench_bookings.application import (
     CreateBenchBookingInput,
     DecideBenchBookingApprovalInput,
@@ -50,6 +50,7 @@ from .serializers import (
 
 
 class BenchBookingAPIView(CommandAPIView):
+    permission_classes = LABS_MEMBER_ACCESS
     schema_tags = ("Bench Bookings",)
 
     def project_result(self, result):
@@ -328,6 +329,7 @@ class BenchBookingCancelByCodeActionAPIView(BenchBookingAPIView):
 
 class LabProjectListAPIView(AppListAPIView, FeatureAPIView):
     """List the lab projects a booking can be charged to."""
+    permission_classes = LABS_MEMBER_ACCESS
 
     schema_tags = ("Bench Bookings",)
     get_contract = OperationContract(
@@ -347,6 +349,7 @@ class LabProjectListAPIView(AppListAPIView, FeatureAPIView):
 
 class LabProjectOptionsAPIView(OptionsAPIView):
     """Selector options for lab projects."""
+    permission_classes = LABS_MEMBER_ACCESS
 
     query_serializer = LabProjectOptionsQuerySerializer
     size_class = SizeClass.LARGE
@@ -359,6 +362,7 @@ class LabProjectOptionsAPIView(OptionsAPIView):
 
 class LabProjectDetailAPIView(FeatureAPIView):
     """Retrieve one lab project."""
+    permission_classes = LABS_MEMBER_ACCESS
 
     schema_tags = ("Bench Bookings",)
     get_contract = OperationContract(
