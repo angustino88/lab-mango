@@ -180,7 +180,9 @@ def test_booking_temporal_approval_boundaries_and_minimal_projection(detail):
     assert row["approval_status"] == {"value": "pending", "label": "Pending"}
     assert summary["next_reservation"]["id"] == future.pk
     sql = [q["sql"] for q in queries if "labs_benchbooking" in q["sql"]]
-    assert not any(field in " ".join(sql) for field in ("reason", "approved_by", "remote_user"))
+    # Booking columns only: the bench query also reads the downtime window's own "reason" column.
+    booking_columns = (f'"labs_benchbooking"."{field}' for field in ("reason", "approved_by", "remote_user"))
+    assert not any(column in " ".join(sql) for column in booking_columns)
 
 
 def test_current_bookings_cap_count_and_deterministic_order(detail, monkeypatch):

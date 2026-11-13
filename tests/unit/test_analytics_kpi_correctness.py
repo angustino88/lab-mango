@@ -15,12 +15,13 @@ from core.labs.features.analytics.queries.utilization import (
     get_equipment_status_distribution,
     get_user_booking_compliance,
 )
-from core.labs.models import ActiveLaboratoryObservation, Equipment
+from core.labs.models import ActiveLaboratoryObservation
 from tests.factories import (
     BenchBookingFactory,
     ComputingEquipmentFactory,
     LabSessionLogFactory,
     StorageQuotaMeasurementFactory,
+    set_condition,
 )
 
 UTC = dt_timezone.utc
@@ -60,7 +61,7 @@ class TestEquipmentStatusDistribution:
     def test_counts_each_equipment_once_by_current_state(self):
         equipment = ComputingEquipmentFactory()
         ComputingEquipmentFactory(lifecycle_state="planned")
-        Equipment.objects.filter(pk=equipment.pk).update(condition="in_maintenance")
+        set_condition(equipment, "in_maintenance")
 
         counts = {row["status"]: row["count"] for row in get_equipment_status_distribution()}
 

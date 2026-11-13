@@ -163,13 +163,25 @@ class TestRefusals:
         assert error.value.details == {"available_until": next_start}
         assert extend(agent, next_start) is not None  # ending exactly when the next one starts is fine
 
-    def test_bench_out_of_service(self, agent, running, start, bench):
-        Bench.all_objects.filter(pk=bench.pk).update(lifecycle_status="out_of_service")
+    def test_bench_not_in_service(self, agent, running, start, bench):
+        Bench.all_objects.filter(pk=bench.pk).update(lifecycle_status="retired")
 
         with pytest.raises(AgentExtensionNotAllowed) as error:
             extend(agent, start + timedelta(hours=2))
 
         assert refusal(error) == ("bench_not_in_service", None)
+
+    def test_bench_downtime_in_the_extension(self, agent, running, start, bench):
+        from core.labs.models import ResourceDowntime
+
+        ResourceDowntime.for_new_resource(
+            bench, condition="out_of_service", starts_at=start + timedelta(hours=1, minutes=30)
+        ).save()
+
+        with pytest.raises(AgentExtensionNotAllowed) as error:
+            extend(agent, start + timedelta(hours=2))
+
+        assert refusal(error) == ("bench_unavailable", None)
 
 
 @pytest.mark.django_db

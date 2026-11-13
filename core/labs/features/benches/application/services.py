@@ -20,9 +20,12 @@ from core.labs.models import (
     BenchGroup,
     BenchType,
     Group,
+    ResourceDowntime,
+    ResourceLifecycleStatus,
     Station,
     StationSlot,
 )
+from core.labs.models.resource.base.status import ensure_lifecycle_transition
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 from .policies import validate_capacity, validate_slot
@@ -143,23 +146,34 @@ def _save(bench, stations, *, old_slot_id, data, actor):
             raise ValidationError({"type": "Select a bench type compatible with the station slot."})
         if Bench.all_objects.filter(station_slot_id=bench.station_slot_id).exclude(pk=bench.pk).exists():
             raise BenchConflict("The station slot is already assigned.")
+    # Slot occupancy is Bench.station_slot (one-to-one), never stored on the slot.
     bench.save(actor=actor)
-    if old_slot_id is not None and old_slot_id != bench.station_slot_id:
-        old_slot = slots[old_slot_id]
-        if old_slot.status == "occupied":
-            old_slot.status = "available"
-            old_slot.save(actor=actor)
-    if bench.station_slot_id is not None:
-        slot = slots[bench.station_slot_id]
-        if slot.status != "occupied":
-            slot.status = "occupied"
-            slot.save(actor=actor)
     return bench
+
+
+def _take_lifecycle(bench, data) -> None:
+    """Apply the lifecycle transition rule to a ``lifecycle_status`` passed to create or update."""
+    if "lifecycle_status" not in data:
+        return
+    target = data.pop("lifecycle_status")
+    if bench.pk is not None:
+        ensure_lifecycle_transition(current=bench.lifecycle_status, target=target)
+    elif target not in ResourceLifecycleStatus.values:
+        ensure_lifecycle_transition(current=ResourceLifecycleStatus.PLANNED, target=target)
+    bench.lifecycle_status = target
+
+
+def _after_lifecycle(bench, *, previous, actor) -> None:
+    """Retiring ends the current downtime window and cancels windows planned for later."""
+    if bench.lifecycle_status == ResourceLifecycleStatus.RETIRED and previous != ResourceLifecycleStatus.RETIRED:
+        ResourceDowntime.objects.close_all(bench, actor=actor)
 
 
 @_command
 def create_bench(*, actor, **data):
     bench = Bench()
+    data = dict(data)
+    _take_lifecycle(bench, data)
     _apply(bench, data, WRITE_FIELDS)
     stations = _lock_stations((bench.setup_location_id,))
     return _save(bench, stations, old_slot_id=None, data=data, actor=actor)
@@ -169,8 +183,30 @@ def create_bench(*, actor, **data):
 def update_bench(*, bench_id, actor, **data):
     bench, stations = _lock_bench(bench_id, data)
     old_slot_id = bench.station_slot_id
+    previous = bench.lifecycle_status
+    data = dict(data)
+    _take_lifecycle(bench, data)
     _apply(bench, data, WRITE_FIELDS)
-    return _save(bench, stations, old_slot_id=old_slot_id, data=data, actor=actor)
+    bench = _save(bench, stations, old_slot_id=old_slot_id, data=data, actor=actor)
+    _after_lifecycle(bench, previous=previous, actor=actor)
+    return bench
+
+
+@_command
+def change_bench_lifecycle(*, bench_id, actor, lifecycle_status):
+    """Set ``lifecycle_status`` (planned, in_service, retired). Race guard: the bench lock protocol.
+
+    Idempotent: the current value returns the bench unchanged. Out of service is a downtime window.
+    """
+    bench, _ = _lock_bench(bench_id, {})
+    previous = bench.lifecycle_status
+    ensure_lifecycle_transition(current=previous, target=lifecycle_status)
+    if lifecycle_status == previous:
+        return bench
+    bench.lifecycle_status = lifecycle_status
+    bench.save(actor=actor, update_fields=("lifecycle_status", "modified"))
+    _after_lifecycle(bench, previous=previous, actor=actor)
+    return bench
 
 
 def place_bench(*, bench_id, actor, **data):
@@ -189,16 +225,12 @@ def delete_bench(*, bench_id, actor):
 
     if BenchBooking.objects.filter(bench_id=bench.pk, status__in=Booking.ACTIVE_STATUSES).exists():
         raise BenchConflict("Cancel active bookings before deleting this bench.")
-    slot = None
     if bench.station_slot_id is not None:
-        slot = StationSlot.objects.select_for_update().get(pk=bench.station_slot_id)
+        StationSlot.objects.select_for_update().get(pk=bench.station_slot_id)
     bench.station_slot = None
     bench.setup_location = None
     bench.save(actor=actor)
     bench.soft_delete(actor=actor)
-    if slot is not None and slot.status == "occupied":
-        slot.status = "available"
-        slot.save(actor=actor)
 
 
 @_command
@@ -246,6 +278,7 @@ def _reference_model(model):
 
 __all__ = [
     "add_favorite",
+    "change_bench_lifecycle",
     "create_bench",
     "delete_bench",
     "place_bench",

@@ -101,7 +101,7 @@ def test_license_seats_in_use_counts_only_active_assignments(admin_client):
 
 def test_station_slot_count_matches_slots(admin_client):
     station = _station()
-    StationSlot.objects.create(station=station, position_index=2, slot_code="A2", is_active=False)
+    StationSlot.objects.create(station=station, position_index=2, slot_code="A2", status="out_of_service")
 
     rows = admin_client.get("/api/labs/stations").json()["data"]
 

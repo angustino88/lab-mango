@@ -113,6 +113,29 @@ class Coordinate3DSerializer(serializers.Serializer):
         ref_name = "LabsCoordinate3D"
 
 
+class AvailabilitySourceSerializer(serializers.Serializer):
+    type = serializers.CharField(read_only=True)
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+
+    class Meta:
+        ref_name = "LabsAvailabilitySource"
+
+
+class AvailabilitySerializer(serializers.Serializer):
+    """Computed ``availability``: problems pass down from room to station to bench (never stored)."""
+
+    value = serializers.ChoiceField(choices=("available", "unavailable"), read_only=True)
+    blocked_by = AvailabilitySourceSerializer(read_only=True, allow_null=True, help_text="The resource that blocks.")
+    condition = serializers.CharField(read_only=True, allow_null=True)
+    reason = serializers.CharField(
+        read_only=True, allow_null=True, help_text="Lifecycle status, or the downtime reason, of blocked_by."
+    )
+
+    class Meta:
+        ref_name = "LabsAvailability"
+
+
 def to_choice_reference(value: str | None, choices=None) -> dict[str, str] | None:
     if value is None:
         return None
@@ -155,6 +178,7 @@ class ResourceWriteSerializerMixin:
 
 
 __all__ = (
+    "AvailabilitySerializer",
     "AppModelSerializer",
     "ChoiceReferenceSerializer",
     "Coordinate3DSerializer",

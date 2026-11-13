@@ -36,6 +36,7 @@ from core.labs.models import (
     EquipmentLifecycleState,
     EquipmentLoan,
     EquipmentLoanBatch,
+    ResourceDowntime,
     ensure_booking_status_transition,
 )
 from core.labs.models.resource.equipment.loan import IDEMPOTENCY_KEY_MAX_LENGTH
@@ -294,6 +295,19 @@ def reservation_problems(
         reasons.append("category is not bookable")
     if equipment.lifecycle_state != EquipmentLifecycleState.IN_SERVICE:
         reasons.append(f"lifecycle state is {equipment.lifecycle_state}")
+    # A window with a known end blocks the period. An open-ended window (repair of unknown length) is
+    # checked at hand-over, like the condition always was (resource-status-and-downtime.md).
+    downtime = (
+        ResourceDowntime.objects.for_resource(equipment)
+        .overlapping(starts_at, ends_at)
+        .filter(ends_at__isnull=False)
+        .order_by("starts_at")
+        .first()
+    )
+    if downtime is not None:
+        reasons.append(
+            f"{downtime.get_condition_display().lower()} from {timezone.localtime(downtime.starts_at):%Y-%m-%d %H:%M}"
+        )
     placement = lock_active_placement(equipment)
     if placement is not None and placement.bench_id is not None:
         reasons.append("placed on a bench")

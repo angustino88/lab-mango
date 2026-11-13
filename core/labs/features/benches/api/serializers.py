@@ -12,23 +12,37 @@ from core.common.api.options import OptionsQueryMixin
 from core.common.api.summary_serializers import StatusSummarySerializer
 from core.labs.features.base.serializers import (
     AppModelSerializer,
+    AvailabilitySerializer,
     ChoiceReferenceSerializer,
     NamedReferenceSerializer,
     ResourceWriteSerializerMixin,
     UIDNamedReferenceSerializer,
     to_choice_reference,
 )
-from core.labs.models import Bench, BenchFavorite, BenchGroup, BenchType
+from core.labs.models import (
+    Bench,
+    BenchFavorite,
+    BenchGroup,
+    BenchType,
+    ResourceActivityStatus,
+    ResourceCondition,
+    ResourceLifecycleStatus,
+)
+from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES, bench_availability
 
 from .filters import BENCH_FILTERS
 
 
 class BenchStatusSummarySerializer(StatusSummarySerializer):
-    """Lifecycle status, not booking status or live activity."""
+    """The deprecated four-value status (lifecycle, with out_of_service from downtime), not bookings."""
 
 
 class StrictWriteMixin(ResourceWriteSerializerMixin):
     """Preserve the benches module's established strict-write helper."""
+
+
+class BenchLifecycleWriteSerializer(StrictWriteMixin, serializers.Serializer):
+    lifecycle_status = serializers.ChoiceField(choices=ResourceLifecycleStatus.choices)
 
 
 class BenchCreateSerializer(StrictWriteMixin, serializers.ModelSerializer):
@@ -137,7 +151,13 @@ class BenchSerializer(AppModelSerializer):
     bench_group = NamedReferenceSerializer(read_only=True, allow_null=True)
     setup_location = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
     station_slot = NamedReferenceSerializer(read_only=True, allow_null=True)
-    status = serializers.SerializerMethodField(read_only=True)
+    status = serializers.SerializerMethodField(
+        read_only=True, help_text="Deprecated: use lifecycle_status, condition, availability and activity_status."
+    )
+    lifecycle_status = serializers.SerializerMethodField()
+    condition = serializers.SerializerMethodField()
+    availability = serializers.SerializerMethodField()
+    activity_status = serializers.SerializerMethodField()
     setup_location_path = serializers.CharField(read_only=True)
     is_favorite = serializers.BooleanField(read_only=True)
     equipment_count = serializers.SerializerMethodField(read_only=True)
@@ -162,6 +182,10 @@ class BenchSerializer(AppModelSerializer):
             "setup_location",
             "station_slot",
             "status",
+            "lifecycle_status",
+            "condition",
+            "availability",
+            "activity_status",
             "criticality",
             "requested_power_w",
             "requested_load_kg",
@@ -187,8 +211,26 @@ class BenchSerializer(AppModelSerializer):
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
     def get_status(self, obj) -> dict[str, str] | None:
-        raw_status = getattr(obj, "lifecycle_status", None)
-        return to_choice_reference(raw_status, Bench.LIFECYCLE_STATUSES)
+        raw_status = getattr(obj, "legacy_status", None) or getattr(obj, "lifecycle_status", None)
+        return to_choice_reference(raw_status, LEGACY_BENCH_STATUSES)
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_lifecycle_status(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(obj.lifecycle_status, ResourceLifecycleStatus.choices)
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_condition(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(getattr(obj, "condition", ResourceCondition.OPERATIONAL), ResourceCondition.choices)
+
+    @extend_schema_field(AvailabilitySerializer)
+    def get_availability(self, obj) -> dict:
+        return bench_availability(obj)
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_activity_status(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(
+            getattr(obj, "activity_status", ResourceActivityStatus.IDLE), ResourceActivityStatus.choices
+        )
 
 
 class BenchResourceDetailSerializer(BenchSerializer):
@@ -341,3 +383,4 @@ class BenchReferenceDataSerializer(serializers.Serializer):
     groups = BenchGroupSerializer(many=True, read_only=True)
     stations = BenchStationReferenceSerializer(many=True, read_only=True)
     lifecycle_statuses = ChoiceReferenceSerializer(many=True, read_only=True)
+    statuses = ChoiceReferenceSerializer(many=True, read_only=True, help_text="Deprecated four-value status.")

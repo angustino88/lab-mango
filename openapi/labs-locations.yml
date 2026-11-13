@@ -1024,6 +1024,18 @@ paths:
       description: HTTP mapping for domain commands and selector projections.
       parameters:
       - in: query
+        name: access_policy
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: activity_status
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: building_id
         schema:
           type: string
@@ -1031,6 +1043,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: city_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -1059,6 +1077,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_status
         schema:
           type: string
           minLength: 1
@@ -1347,6 +1371,65 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Rooms by Room ID
+  /api/labs/rooms/{room_id}/actions/change-lifecycle:
+    post:
+      operationId: labs_rooms_actions_change_lifecycle_create_by_room_id
+      description: Set ``lifecycle_status`` and/or ``access_policy``. Downtime is
+        recorded at ``/api/labs/downtimes``.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomLifecycleWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoomLifecycleWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoomLifecycleWrite'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomLifecycleChangeSerializersRoomDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Rooms by Room ID
   /api/labs/rooms/{room_id}/actions/change-status:
     post:
       operationId: labs_rooms_actions_change_status_create_by_room_id
@@ -2030,6 +2113,24 @@ paths:
       description: HTTP mapping for domain commands and selector projections.
       parameters:
       - in: query
+        name: access_policy
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: activity_status
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: created_at_after
         schema:
           type: string
@@ -2047,6 +2148,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_status
         schema:
           type: string
           minLength: 1
@@ -2347,6 +2454,65 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Stations by Station ID
+  /api/labs/stations/{station_id}/actions/change-lifecycle:
+    post:
+      operationId: labs_stations_actions_change_lifecycle_create_by_station_id
+      description: Set ``lifecycle_status`` and/or ``access_policy``. Downtime is
+        recorded at ``/api/labs/downtimes``.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationLifecycleWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationLifecycleWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationLifecycleWrite'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationLifecycleChangeSerializersStationDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Stations by Station ID
   /api/labs/stations/{station_id}/actions/change-status:
     post:
       operationId: labs_stations_actions_change_status_create_by_station_id
@@ -3012,6 +3178,14 @@ paths:
       summary: Get Stations Status Summary
 components:
   schemas:
+    AccessPolicyEnum:
+      enum:
+      - open
+      - restricted
+      type: string
+      description: '* `open` - Open
+
+        * `restricted` - Restricted'
     BuildingCatalogCreate:
       type: object
       properties:
@@ -3569,6 +3743,51 @@ components:
       - ordering
       - search
       - separator
+    LabsAvailability:
+      type: object
+      description: 'Computed ``availability``: problems pass down from room to station
+        to bench (never stored).'
+      properties:
+        value:
+          allOf:
+          - $ref: '#/components/schemas/ValueEnum'
+          readOnly: true
+        blocked_by:
+          allOf:
+          - $ref: '#/components/schemas/LabsAvailabilitySource'
+          readOnly: true
+          nullable: true
+          description: The resource that blocks.
+        condition:
+          type: string
+          readOnly: true
+          nullable: true
+        reason:
+          type: string
+          readOnly: true
+          nullable: true
+          description: Lifecycle status, or the downtime reason, of blocked_by.
+      required:
+      - blocked_by
+      - condition
+      - reason
+      - value
+    LabsAvailabilitySource:
+      type: object
+      properties:
+        type:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - type
     LabsChoiceReference:
       type: object
       description: Standard `{value, label}` representation for enum and lifecycle
@@ -3672,6 +3891,40 @@ components:
       - id
       - name
       - uid
+    LegacyStationSlotStatusEnum:
+      enum:
+      - available
+      - in_service
+      - maintenance
+      - occupied
+      - out_of_service
+      - reserved
+      - retired
+      type: string
+      description: '* `available` - available
+
+        * `in_service` - in_service
+
+        * `maintenance` - maintenance
+
+        * `occupied` - occupied
+
+        * `out_of_service` - out_of_service
+
+        * `reserved` - reserved
+
+        * `retired` - retired'
+    LifecycleStatusEnum:
+      enum:
+      - planned
+      - in_service
+      - retired
+      type: string
+      description: '* `planned` - Planned
+
+        * `in_service` - In service
+
+        * `retired` - Retired'
     PatchedRoomUpdate:
       type: object
       description: Reject unsupported keys and return a stable error when SKU is supplied
@@ -3823,7 +4076,27 @@ components:
           maxLength: 100
         is_active:
           type: boolean
+          description: 'Deprecated: use service_status.'
         status:
+          allOf:
+          - $ref: '#/components/schemas/LegacyStationSlotStatusEnum'
+          description: 'Deprecated: use service_status.
+
+
+            * `available` - available
+
+            * `in_service` - in_service
+
+            * `maintenance` - maintenance
+
+            * `occupied` - occupied
+
+            * `out_of_service` - out_of_service
+
+            * `reserved` - reserved
+
+            * `retired` - retired'
+        service_status:
           $ref: '#/components/schemas/StationSlotStatusEnum'
         width_mm:
           type: integer
@@ -4010,8 +4283,11 @@ components:
       - error
     Room:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: 'Separate state fields of a room or station (design: resource-status-and-downtime.md).
+
+
+        Reads annotations from ``with_location_state``; ``status`` is the deprecated
+        seven-value field.'
       properties:
         id:
           type: integer
@@ -4127,6 +4403,28 @@ components:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
           readOnly: true
+          description: 'Deprecated: computed from lifecycle_status, condition, access_policy
+            and activity_status.'
+        lifecycle_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        access_policy:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        availability:
+          allOf:
+          - $ref: '#/components/schemas/LabsAvailability'
+          readOnly: true
+        activity_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         max_occupancy:
           type: integer
           readOnly: true
@@ -4157,9 +4455,13 @@ components:
           format: date-time
           readOnly: true
       required:
+      - access_policy
+      - activity_status
       - area_m2
+      - availability
       - building
       - city
+      - condition
       - cooling_capacity_w
       - coordinate_unit
       - country
@@ -4175,6 +4477,7 @@ components:
       - layout_columns
       - layout_rows
       - length_m
+      - lifecycle_status
       - location_path
       - map_url
       - max_occupancy
@@ -4372,6 +4675,26 @@ components:
           $ref: '#/components/schemas/RoomHistorySerializersRoomStatusRecordPagination'
       required:
       - pagination
+    RoomLifecycleChangeSerializersRoomDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Room'
+      required:
+      - data
+    RoomLifecycleWrite:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        lifecycle_status:
+          $ref: '#/components/schemas/LifecycleStatusEnum'
+        access_policy:
+          $ref: '#/components/schemas/AccessPolicyEnum'
+        metadata:
+          type: object
+          additionalProperties: {}
     RoomListSerializersRoomPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -4580,6 +4903,16 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
+          description: 'Deprecated: available, occupied, blocked or retired (occupied
+            is computed).'
+        service_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        occupied:
+          type: boolean
+          readOnly: true
+          default: false
         x_mm:
           type: integer
           readOnly: true
@@ -4632,10 +4965,12 @@ components:
       - id
       - is_accessible
       - max_load_kg
+      - occupied
       - orientation_degrees
       - power_capacity_w
       - room
       - row_index
+      - service_status
       - slot_code
       - slot_type
       - status
@@ -4798,7 +5133,8 @@ components:
       - status
     RoomStatusSummary:
       type: object
-      description: Recorded lifecycle state, distinct from operational configuration.
+      description: The deprecated seven-value status, computed from lifecycle, condition,
+        access and activity.
       properties:
         total_count:
           type: integer
@@ -4828,8 +5164,8 @@ components:
       - data
     RoomStatusWrite:
       type: object
-      description: Reject unsupported keys and return a stable error when SKU is supplied
-        on update.
+      description: 'Deprecated: mapped onto lifecycle, access policy and downtime.
+        ``reserved`` cannot be set.'
       properties:
         status:
           $ref: '#/components/schemas/RoomStatusEnum'
@@ -4981,8 +5317,11 @@ components:
         * `reserved` - Reserved'
     Station:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: 'Separate state fields of a room or station (design: resource-status-and-downtime.md).
+
+
+        Reads annotations from ``with_location_state``; ``status`` is the deprecated
+        seven-value field.'
       properties:
         id:
           type: integer
@@ -5093,6 +5432,28 @@ components:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
           readOnly: true
+          description: 'Deprecated: computed from lifecycle_status, condition, access_policy
+            and activity_status.'
+        lifecycle_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        access_policy:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        availability:
+          allOf:
+          - $ref: '#/components/schemas/LabsAvailability'
+          readOnly: true
+        activity_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         safety_classification:
           type: string
           readOnly: true
@@ -5132,11 +5493,15 @@ components:
           format: date-time
           readOnly: true
       required:
+      - access_policy
       - active_bench_count
+      - activity_status
       - allocated_power_w
+      - availability
       - available_power_w
       - available_slot_count
       - bench_capacity
+      - condition
       - cooling_capacity_w
       - created_at
       - department
@@ -5146,6 +5511,7 @@ components:
       - id
       - image
       - label
+      - lifecycle_status
       - location_path
       - max_concurrent_users
       - max_load_kg
@@ -5350,6 +5716,26 @@ components:
           $ref: '#/components/schemas/StationHistorySerializersStationStatusRecordPagination'
       required:
       - pagination
+    StationLifecycleChangeSerializersStationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Station'
+      required:
+      - data
+    StationLifecycleWrite:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        lifecycle_status:
+          $ref: '#/components/schemas/LifecycleStatusEnum'
+        access_policy:
+          $ref: '#/components/schemas/AccessPolicyEnum'
+        metadata:
+          type: object
+          additionalProperties: {}
     StationListSerializersStationPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -5456,13 +5842,27 @@ components:
           items:
             $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
+          description: Deprecated seven-value status.
+        lifecycle_statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        access_policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         slot_statuses:
           type: array
           items:
             $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
+          description: Slot service_status values.
       required:
+      - access_policies
       - bench_types
+      - lifecycle_statuses
       - rooms
       - slot_statuses
       - statuses
@@ -5506,7 +5906,14 @@ components:
         is_active:
           type: boolean
           readOnly: true
+          description: 'Deprecated: service_status is in_service.'
         status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: 'Deprecated: available, occupied, out_of_service or retired
+            (occupied is computed).'
+        service_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
@@ -5541,6 +5948,10 @@ components:
           items:
             type: integer
           readOnly: true
+        occupied:
+          type: boolean
+          readOnly: true
+          default: false
         created_at:
           type: string
           format: date-time
@@ -5559,8 +5970,10 @@ components:
       - label
       - max_load_kg
       - network_port_count
+      - occupied
       - position_index
       - power_capacity_w
+      - service_status
       - slot_code
       - station
       - status
@@ -5584,7 +5997,27 @@ components:
           maxLength: 100
         is_active:
           type: boolean
+          description: 'Deprecated: use service_status.'
         status:
+          allOf:
+          - $ref: '#/components/schemas/LegacyStationSlotStatusEnum'
+          description: 'Deprecated: use service_status.
+
+
+            * `available` - available
+
+            * `in_service` - in_service
+
+            * `maintenance` - maintenance
+
+            * `occupied` - occupied
+
+            * `out_of_service` - out_of_service
+
+            * `reserved` - reserved
+
+            * `retired` - retired'
+        service_status:
           $ref: '#/components/schemas/StationSlotStatusEnum'
         width_mm:
           type: integer
@@ -5697,20 +6130,11 @@ components:
       - data
     StationSlotStatusEnum:
       enum:
-      - available
-      - occupied
-      - reserved
-      - maintenance
+      - in_service
       - out_of_service
       - retired
       type: string
-      description: '* `available` - Available
-
-        * `occupied` - Occupied
-
-        * `reserved` - Reserved
-
-        * `maintenance` - Maintenance
+      description: '* `in_service` - In service
 
         * `out_of_service` - Out of service
 
@@ -5732,7 +6156,27 @@ components:
           maxLength: 100
         is_active:
           type: boolean
+          description: 'Deprecated: use service_status.'
         status:
+          allOf:
+          - $ref: '#/components/schemas/LegacyStationSlotStatusEnum'
+          description: 'Deprecated: use service_status.
+
+
+            * `available` - available
+
+            * `in_service` - in_service
+
+            * `maintenance` - maintenance
+
+            * `occupied` - occupied
+
+            * `out_of_service` - out_of_service
+
+            * `reserved` - reserved
+
+            * `retired` - retired'
+        service_status:
           $ref: '#/components/schemas/StationSlotStatusEnum'
         width_mm:
           type: integer
@@ -5823,7 +6267,8 @@ components:
       - status
     StationStatusSummary:
       type: object
-      description: Recorded lifecycle state, distinct from operational configuration.
+      description: The deprecated seven-value status, computed from lifecycle, condition,
+        access and activity.
       properties:
         total_count:
           type: integer
@@ -5853,8 +6298,8 @@ components:
       - data
     StationStatusWrite:
       type: object
-      description: Reject unsupported keys and return a stable error when SKU is supplied
-        on update.
+      description: 'Deprecated: mapped onto lifecycle, access policy and downtime.
+        ``reserved`` cannot be set.'
       properties:
         status:
           $ref: '#/components/schemas/RoomStatusEnum'
@@ -6186,6 +6631,14 @@ components:
       required:
       - resource_count
       - status
+    ValueEnum:
+      enum:
+      - available
+      - unavailable
+      type: string
+      description: '* `available` - available
+
+        * `unavailable` - unavailable'
   securitySchemes:
     cookieAuth:
       type: apiKey

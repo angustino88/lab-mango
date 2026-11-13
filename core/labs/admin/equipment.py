@@ -185,7 +185,6 @@ class EquipmentAdmin(LabMangoModelAdmin):
         "product_model",
         "serial_number",
         "lifecycle_state",
-        "condition",
         "department",
     )
     list_select_related = (
@@ -194,7 +193,7 @@ class EquipmentAdmin(LabMangoModelAdmin):
         "product_model__manufacturer",
         "department",
     )
-    list_filter = ("lifecycle_state", "condition", "kind__category", "calibration_required")
+    list_filter = ("lifecycle_state", "kind__category", "calibration_required")
     search_fields = ("name", "sku", "serial_number", "mac_address")
     autocomplete_fields = (
         "owner",

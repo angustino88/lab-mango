@@ -4,11 +4,11 @@ from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from core.common.models import UserStampedModel
 from core.labs.models.resource.base.resource import ResourceModel, ResourceStatusRecordModel
+from core.labs.models.resource.base.status import LegacyLocationStatus, ResourceAccessPolicy, ResourceLifecycleStatus
 from core.labs.models.resource.location.physical_location import PhysicalLocationNode
 
 
@@ -88,14 +88,8 @@ class Building(TimeStampedModel, UserStampedModel):
         ]
 
 
-class RoomStatus(models.TextChoices):
-    AVAILABLE = "available", _("Available")
-    RESERVED = "reserved", _("Reserved")
-    ISSUE = "issue", _("Issue")
-    RESTRICTED = "restricted", _("Restricted")
-    CLOSED = "closed", _("Closed")
-    MAINTENANCE = "maintenance", _("Maintenance")
-    RETIRED = "retired", _("Retired")
+# Deprecated seven-value status, now computed for old clients (never stored).
+RoomStatus = LegacyLocationStatus
 
 
 class Room(ResourceModel, PhysicalLocationNode):
@@ -155,12 +149,18 @@ class Room(ResourceModel, PhysicalLocationNode):
     coordinate_unit = models.CharField(max_length=8, default="mm", editable=False)
     floor_plan_revision = models.CharField(max_length=64, blank=True, default="")
     floor_plan_url = models.URLField(max_length=500, blank=True, default="")
-    status = models.CharField(
+    lifecycle_status = models.CharField(
         max_length=32,
-        choices=RoomStatus.choices,
-        default=RoomStatus.AVAILABLE,
+        choices=ResourceLifecycleStatus.choices,
+        default=ResourceLifecycleStatus.IN_SERVICE,
         db_index=True,
-        help_text="Current lifecycle status. Changed only by the record status command; history is in status_records.",
+        help_text="Whether the lab runs it. Changed only by the change-lifecycle command; history is in status_records.",
+    )
+    access_policy = models.CharField(
+        max_length=16,
+        choices=ResourceAccessPolicy.choices,
+        default=ResourceAccessPolicy.OPEN,
+        help_text="Who may use it. Not a status: a restricted resource can be fully working.",
     )
     max_occupancy = models.PositiveSmallIntegerField(null=True, blank=True)
     power_capacity_w = models.PositiveIntegerField(null=True, blank=True)
@@ -226,8 +226,12 @@ class Room(ResourceModel, PhysicalLocationNode):
         constraints = [
             *ResourceModel.Meta.constraints,
             models.CheckConstraint(
-                condition=models.Q(status__in=RoomStatus.values),
-                name="room_status_valid",
+                condition=models.Q(lifecycle_status__in=ResourceLifecycleStatus.values),
+                name="room_lifecycle_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(access_policy__in=ResourceAccessPolicy.values),
+                name="room_access_policy_valid",
             ),
             models.CheckConstraint(
                 condition=(
@@ -260,7 +264,7 @@ class RoomStatusRecord(ResourceStatusRecordModel):
     )
     status = models.CharField(
         max_length=255,
-        choices=RoomStatus.choices,
+        choices=ResourceLifecycleStatus.choices,
     )
 
     class Meta:

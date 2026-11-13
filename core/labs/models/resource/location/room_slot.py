@@ -15,11 +15,10 @@ class RoomSlot(TimeStampedModel, UserStampedModel):
         ("utility", "Utility"),
         ("reserved", "Reserved"),
     )
+    # Whether the cell may hold a station. "Occupied" is computed from Station.slot, never stored.
     STATUSES = (
-        ("available", "Available"),
-        ("occupied", "Occupied"),
+        ("usable", "Usable"),
         ("blocked", "Blocked"),
-        ("maintenance", "Maintenance"),
         ("retired", "Retired"),
     )
 
@@ -32,7 +31,7 @@ class RoomSlot(TimeStampedModel, UserStampedModel):
     col_index = models.PositiveIntegerField()
     slot_code = models.CharField(max_length=16)
     slot_type = models.CharField(max_length=16, choices=SLOT_TYPES, default="station")
-    status = models.CharField(max_length=16, choices=STATUSES, default="available")
+    status = models.CharField(max_length=16, choices=STATUSES, default="usable")
     x_mm = models.IntegerField(null=True, blank=True)
     y_mm = models.IntegerField(null=True, blank=True)
     width_mm = models.PositiveIntegerField(null=True, blank=True)
@@ -92,6 +91,10 @@ class RoomSlot(TimeStampedModel, UserStampedModel):
             models.UniqueConstraint(
                 fields=("room", "slot_code"),
                 name="uniq_room_slot_code",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(status__in=("usable", "blocked", "retired")),
+                name="room_slot_status_valid",
             ),
         ]
 

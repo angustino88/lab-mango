@@ -16,6 +16,7 @@ from core.labs.features.locations.stations.queries.summaries import get_station_
 from .filters import STATION_FILTERS
 from .serializers import (
     StationCreateSerializer,
+    StationLifecycleWriteSerializer,
     StationListQuerySerializer,
     StationOptionsQuerySerializer,
     StationPlacementSerializer,
@@ -39,6 +40,11 @@ class StationAPIView(LocationAPIView):
 
 def _station_projection(station):
     return selectors.get_station(station_id=station.pk)
+
+
+def _slot_projection(slot):
+    """Re-read the slot with its computed ``occupied`` flag."""
+    return selectors.list_station_slots(station_id=slot.station_id).get(pk=slot.pk)
 
 
 class StationStatusSummaryAPIView(StationAPIView):
@@ -125,7 +131,7 @@ class StationSlotListCreateAPIView(StationAPIView):
         return self._execute(read)
 
     def handle_post(self, request, station_id, **kwargs):
-        return self._write(services.create_station_slot, lookup={"station_id": station_id})
+        return self._write(services.create_station_slot, lookup={"station_id": station_id}, project=_slot_projection)
 
 
 class StationSlotDetailAPIView(StationAPIView):
@@ -142,17 +148,37 @@ class StationSlotDetailAPIView(StationAPIView):
         return self._execute(read)
 
     def handle_put(self, request, station_id, slot_id, **kwargs):
-        return self._write(services.update_station_slot, lookup={"station_id": station_id, "slot_id": slot_id})
+        return self._write(
+            services.update_station_slot,
+            lookup={"station_id": station_id, "slot_id": slot_id},
+            project=_slot_projection,
+        )
 
     def handle_patch(self, request, station_id, slot_id, **kwargs):
         return self._write(
-            services.update_station_slot, lookup={"station_id": station_id, "slot_id": slot_id}, partial=True
+            services.update_station_slot,
+            lookup={"station_id": station_id, "slot_id": slot_id},
+            partial=True,
+            project=_slot_projection,
         )
 
     def handle_delete(self, request, station_id, slot_id, **kwargs):
         return self._execute(
             lambda: services.delete_station_slot(station_id=station_id, slot_id=slot_id, actor=request.user),
             delete=True,
+        )
+
+
+class StationLifecycleAPIView(StationAPIView):
+    """Set ``lifecycle_status`` and/or ``access_policy``. Downtime is recorded at ``/api/labs/downtimes``."""
+
+    post_contract = operation("StationLifecycleChange", StationSerializer, request=StationLifecycleWriteSerializer)
+
+    def handle_post(self, request, station_id, **kwargs):
+        return self._write(
+            services.change_station_lifecycle,
+            lookup={"station_id": station_id},
+            project=_station_projection,
         )
 
 

@@ -1,9 +1,12 @@
-"""Change an equipment unit's lifecycle state or condition (redesign step 2).
+"""Change an equipment unit's lifecycle state or condition (redesign step 2, RS2).
+
+Condition is not stored: it is the ``ResourceDowntime`` window covering now. ``change_condition`` is the
+compatibility write path (design rule 5): it opens an unplanned window starting now, or ends the current
+one, without checking reservations; scheduled windows go through the downtime API.
 
 Race guard: the ``Equipment`` row lock, then placement rows, then equipment booking rows (the
-feature lock order). Database guards: ``equipment_lifecycle_valid``, ``equipment_condition_valid``,
-``equipment_condition_only_in_service``. Idempotency: the target state already current returns the
-unit unchanged and writes no event.
+feature lock order); downtime overlap is guarded by ``downtime_no_overlap``. Idempotency: the target
+state already current returns the unit unchanged and writes nothing.
 """
 
 from dataclasses import dataclass
@@ -17,12 +20,14 @@ from django.utils import timezone
 from core.labs.features.equipment.exceptions import EquipmentAlreadyPlaced, EquipmentOnLoan, InvalidEquipmentStatus
 from core.labs.models import (
     BookingStatus,
+    DowntimeReason,
     Equipment,
     EquipmentBooking,
     EquipmentCondition,
     EquipmentEvent,
     EquipmentEventAxis,
     EquipmentLifecycleState,
+    ResourceDowntime,
     ensure_booking_status_transition,
 )
 from core.labs.models.resource.equipment.equipment import GONE_LIFECYCLE_STATES, LIFECYCLE_TRANSITIONS
@@ -56,12 +61,24 @@ def change_condition(command: ChangeConditionInput, *, actor) -> Equipment:
         raise ValidationError({"condition": "Select a valid condition."})
     reason = _clean(command.reason, field="reason", limit=REASON_MAX_LENGTH)
     equipment = _lock(command.equipment_id)
-    if equipment.condition == command.condition:
+    if ResourceDowntime.objects.condition_of(equipment) == command.condition:
         return equipment
     if equipment.lifecycle_state != EquipmentLifecycleState.IN_SERVICE:
         raise InvalidEquipmentStatus("The condition can change only while the equipment is in service.")
-    _record(equipment, EquipmentEventAxis.CONDITION, command.condition, reason=reason, details={}, actor=actor)
+    set_condition_now(equipment, command.condition, notes=reason, actor=actor)
     return equipment
+
+
+def set_condition_now(equipment: Equipment, condition: str, *, notes: str, actor) -> None:
+    """Open a window with ``condition`` starting now, or end the current one for ``operational``.
+
+    The caller holds the ``Equipment`` row lock.
+    """
+    if condition == EquipmentCondition.OPERATIONAL:
+        ResourceDowntime.objects.end_current(equipment, actor=_user(actor))
+        return
+    reason = DowntimeReason.MAINTENANCE if condition == EquipmentCondition.IN_MAINTENANCE else DowntimeReason.FAULT
+    ResourceDowntime.objects.start_now(equipment, condition=condition, reason=reason, notes=notes, actor=_user(actor))
 
 
 @transaction.atomic
@@ -69,10 +86,10 @@ def change_lifecycle(command: ChangeLifecycleInput, *, actor) -> Equipment:
     """Move a unit along ``LIFECYCLE_TRANSITIONS``.
 
     Entering ``transferred_out``, ``retired`` or ``lost`` refuses a unit on a bench, closes any
-    other placement, and cancels its reserved equipment bookings. Leaving ``in_service`` resets the
-    condition to ``operational`` (its own event). Marking a unit lost is always this manual command.
-    A found unit (``lost`` to ``in_service``) returns ``in_maintenance`` (its own event) so it is
-    inspected before it is used or lent.
+    other placement, and cancels its reserved equipment bookings. Marking a unit lost is always this manual command.
+    A found unit (``lost`` to ``in_service``) returns ``in_maintenance`` (a downtime window) so it is
+    inspected before it is used or lent. Leaving service ends the current downtime window and cancels
+    windows planned for later.
     """
     target = command.lifecycle_state
     if target not in EquipmentLifecycleState.values:
@@ -110,24 +127,12 @@ def change_lifecycle(command: ChangeLifecycleInput, *, actor) -> Equipment:
         cancelled = _cancel_reserved_bookings(equipment, reason=reason or f"Equipment is {target}.")
         if cancelled:
             details["cancelled_booking_ids"] = cancelled
-    if target != EquipmentLifecycleState.IN_SERVICE and equipment.condition != EquipmentCondition.OPERATIONAL:
-        _record(
-            equipment,
-            EquipmentEventAxis.CONDITION,
-            EquipmentCondition.OPERATIONAL,
-            reason="Reset because the equipment left service.",
-            details={},
-            actor=actor,
-        )
+    if target != EquipmentLifecycleState.IN_SERVICE:
+        ResourceDowntime.objects.close_all(equipment, actor=_user(actor))
     _record(equipment, EquipmentEventAxis.LIFECYCLE, target, reason=reason, details=details, actor=actor)
     if current == EquipmentLifecycleState.LOST and target == EquipmentLifecycleState.IN_SERVICE:
-        _record(
-            equipment,
-            EquipmentEventAxis.CONDITION,
-            EquipmentCondition.IN_MAINTENANCE,
-            reason="Inspect after being found.",
-            details={},
-            actor=actor,
+        set_condition_now(
+            equipment, EquipmentCondition.IN_MAINTENANCE, notes="Inspect after being found.", actor=actor
         )
     return equipment
 
@@ -156,7 +161,7 @@ def _clean(value: str, *, field: str, limit: int) -> str:
 
 
 def _record(equipment: Equipment, axis: str, value: str, *, reason: str, details: dict, actor) -> None:
-    field = "lifecycle_state" if axis == EquipmentEventAxis.LIFECYCLE else "condition"
+    field = "lifecycle_state"
     previous = getattr(equipment, field)
     now = timezone.now()
     Equipment.objects.filter(pk=equipment.pk).update(
@@ -175,17 +180,46 @@ def _record(equipment: Equipment, axis: str, value: str, *, reason: str, details
     )
 
 
+@dataclass(frozen=True, slots=True)
+class CancelEquipmentBookingsForDowntimeInput:
+    booking_ids: tuple[int, ...]
+    reason: str
+
+
+@transaction.atomic
+def cancel_equipment_bookings_for_downtime(command: CancelEquipmentBookingsForDowntimeInput, *, actor) -> list[int]:
+    """Cancel reserved or in-progress equipment bookings that overlap a downtime window (RS4).
+
+    Race guard: the ``Equipment`` rows in PK order, then the booking rows. Idempotent: bookings that
+    are no longer reserved or in progress are skipped. A handed-over item keeps its loan; the loan is
+    returned through the loan commands.
+    """
+    equipment_ids = sorted(
+        set(EquipmentBooking.objects.filter(pk__in=command.booking_ids).values_list("equipment_id", flat=True))
+    )
+    list(
+        Equipment.objects.select_for_update().filter(pk__in=equipment_ids).order_by("pk").values_list("pk", flat=True)
+    )
+    return _cancel_bookings(
+        EquipmentBooking.objects.filter(pk__in=command.booking_ids), reason=command.reason, actor=actor
+    )
+
+
 def _cancel_reserved_bookings(equipment: Equipment, *, reason: str) -> list[int]:
+    return _cancel_bookings(EquipmentBooking.objects.filter(equipment=equipment), reason=reason)
+
+
+def _cancel_bookings(queryset, *, reason: str, actor=None) -> list[int]:
     bookings = list(
-        EquipmentBooking.objects.select_for_update()
-        .filter(equipment=equipment, status__in=(BookingStatus.RESERVED, BookingStatus.IN_PROGRESS))
+        queryset.select_for_update()
+        .filter(status__in=(BookingStatus.RESERVED, BookingStatus.IN_PROGRESS))
         .order_by("pk")
     )
     for booking in bookings:
         ensure_booking_status_transition(current_status=booking.status, target_status=BookingStatus.CANCELLED)
         booking.status = BookingStatus.CANCELLED
         booking.cancellation_reason = reason
-        booking.save(update_fields=("status", "cancellation_reason", "modified"))
+        booking.save(update_fields=("status", "cancellation_reason", "modified"), actor=actor)
     return [booking.pk for booking in bookings]
 
 
@@ -194,9 +228,12 @@ def _user(actor):
 
 
 __all__ = (
+    "CancelEquipmentBookingsForDowntimeInput",
     "ChangeConditionInput",
     "ChangeLifecycleInput",
     "change_condition",
+    "cancel_equipment_bookings_for_downtime",
     "change_lifecycle",
     "record_initial_lifecycle",
+    "set_condition_now",
 )

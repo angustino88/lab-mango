@@ -1,14 +1,17 @@
-"""Room projections; ``status`` is a stored column, history lives in status records."""
+"""Room projections: lifecycle and access policy are stored; condition, activity, availability and the
+deprecated ``status`` are computed (``with_location_state``). History lives in status records."""
 
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 
+from core.labs.models.resource.base.availability import with_location_state
 from core.labs.models.resource.location.room import Room, RoomStatusRecord
 from core.labs.models.resource.location.room_observation import RoomObservation
 from core.labs.models.resource.location.room_slot import RoomSlot
+from core.labs.models.resource.location.station import Station
 
 
 def list_rooms(*, search=None):
-    queryset = Room.objects.select_related("country", "city", "building").order_by("sku", "pk")
+    queryset = with_location_state(Room.objects.select_related("country", "city", "building"), "room").order_by("sku", "pk")
     if search:
         queryset = queryset.filter(Q(sku__icontains=search) | Q(name__icontains=search) | Q(label__icontains=search))
     return queryset
@@ -38,7 +41,10 @@ def room_slot_mapping_rows(*, room_ids):
 
 def list_room_slots(*, room_id):
     Room.objects.only("pk").get(pk=room_id)
-    return RoomSlot.objects.filter(room_id=room_id).order_by("row_index", "col_index", "pk")
+    occupied = Station.objects.filter(slot_id=OuterRef("pk"), deleted_at__isnull=True)
+    return RoomSlot.objects.filter(room_id=room_id).annotate(occupied=Exists(occupied)).order_by(
+        "row_index", "col_index", "pk"
+    )
 
 
 def room_status_history(*, room_id):

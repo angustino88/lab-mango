@@ -37,6 +37,7 @@ from tests.factories import (
     EquipmentCategoryFactory,
     EquipmentKindFactory,
     UserFactory,
+    set_condition,
 )
 
 
@@ -82,7 +83,8 @@ class TestListDashboardBenches:
 
     def test_filter_by_lifecycle_status(self):
         bench_avail = BenchFactory(lifecycle_status="in_service")
-        bench_maint = BenchFactory(lifecycle_status="out_of_service")
+        bench_maint = BenchFactory(lifecycle_status="in_service")
+        set_condition(bench_maint, "out_of_service")  # the four-value status reads out_of_service from downtime
 
         results = list(list_dashboard_benches(lifecycle_status="in_service"))
         ids = [b.id for b in results]
@@ -195,7 +197,7 @@ class TestGetDashboardSummary:
 
         bench_1 = BenchFactory(lifecycle_status="in_service")
         bench_2 = BenchFactory(lifecycle_status="in_service")
-        BenchFactory(lifecycle_status="out_of_service")
+        set_condition(BenchFactory(lifecycle_status="in_service"), "out_of_service")
 
         BenchFavorite.objects.create(user=user, bench=bench_1)
 
@@ -228,7 +230,7 @@ class TestGetDashboardSummary:
         assert summary["total_benches"] == 3
         assert summary["active_bookings_count"] == 1
         assert summary["favorited_benches_count"] == 1
-        # Four stored values (redesign step 5); "active" is computed from bookings, not stored.
+        # The four-value status: out_of_service is an in-service bench with downtime (computed, RS3).
         assert summary["lifecycle_distribution"] == {"planned": 0, "in_service": 2, "out_of_service": 1, "retired": 0}
         assert summary["activity_distribution"][ComputingActivityStatus.ACTIVE] == 1
         assert summary["utilization_rate"] == round((1 / 3) * 100.0, 2)

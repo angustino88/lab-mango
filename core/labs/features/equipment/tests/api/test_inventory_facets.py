@@ -25,6 +25,7 @@ from core.labs.models import (
 )
 from core.labs.models.resource.base.resource import Department, Group
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
+from tests.factories import set_condition
 
 BASE = "/api/labs/equipment"
 DIMENSIONS = ("category", "kind", "type", "manufacturer", "product_model_id", "department_id", "group_id")
@@ -408,7 +409,7 @@ def test_inherited_filters_exact_bucket_parity(inventory, path, filter_name):
     Equipment.objects.filter(pk=rows[0].pk).update(owner=actor, created=now - timedelta(days=1))
     Equipment.objects.filter(pk__in=[rows[1].pk, rows[2].pk]).update(created=now - timedelta(days=3))
     # rows[0] is on a bench (display_status in_use); rows[1] is out of service (broken).
-    Equipment.objects.filter(pk=rows[1].pk).update(condition="out_of_service")
+    set_condition(rows[1], "out_of_service")
     bench = Bench.objects.create(sku="FACET-BENCH", name="Synthetic facet bench")
     EquipmentAssignment.objects.create(equipment=rows[0], bench=bench, assigned_at=now)
     EquipmentAssignment.objects.create(

@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from core.labs.features.resource_audit.exceptions import InvalidCatalogCursorError
+from core.labs.models.resource.base.downtime import condition_expression, outer_windows
 from core.labs.models.resource.bench.bench import Bench
 from core.labs.models.resource.equipment.equipment import Equipment
 from core.labs.models.resource.license.license import License, LicenseStatusRecord
@@ -41,7 +42,8 @@ def _base_values(queryset: QuerySet) -> QuerySet:
 
 
 # License status is the newest status-history record (index ``license_status_latest_idx``).
-# Station and room status are stored columns, like bench ``lifecycle_status``.
+# Room, station and bench status is the stored ``lifecycle_status``; condition (all but licenses) is
+# computed from the downtime window covering now (resource-status-and-downtime.md).
 _STATUS_RECORDS: dict[str, tuple[type[Model], str]] = {
     "license": (LicenseStatusRecord, "license"),
 }
@@ -61,28 +63,28 @@ def _typed_querysets() -> dict[str, QuerySet]:
         "equipment": _base_values(Equipment.all_objects.all()).annotate(
             serial=F("serial_number"),
             state=F("lifecycle_state"),
-            item_condition=F("condition"),
+            item_condition=condition_expression(Equipment),
             location_name=blank,
             expires=no_expiry,
         ),
         "bench": _base_values(Bench.all_objects.all()).annotate(
             serial=blank,
             state=F("lifecycle_status"),
-            item_condition=blank,
+            item_condition=condition_expression(Bench),
             location_name=Coalesce(F("setup_location__name"), blank),
             expires=no_expiry,
         ),
         "station": _base_values(Station.all_objects.all()).annotate(
             serial=blank,
-            state=F("status"),
-            item_condition=blank,
+            state=F("lifecycle_status"),
+            item_condition=condition_expression(Station),
             location_name=Coalesce(F("room__name"), blank),
             expires=no_expiry,
         ),
         "room": _base_values(Room.all_objects.all()).annotate(
             serial=blank,
-            state=F("status"),
-            item_condition=blank,
+            state=F("lifecycle_status"),
+            item_condition=condition_expression(Room),
             location_name=Coalesce(F("building__name"), blank),
             expires=no_expiry,
         ),
@@ -100,8 +102,9 @@ def _changed_since(resource_type: str, since: datetime) -> Q:
     """The row itself changed or was deleted, its location parent was renamed, or it got a new status record.
 
     Parent renames and license status records do not touch the row's own ``modified``, so without these
-    terms a delta sync would keep a stale location name or status. Room and station status is a column,
-    so a status change is caught by ``modified``.
+    terms a delta sync would keep a stale location name or status. Lifecycle is a column, so a change
+    is caught by ``modified``. Condition is computed from downtime windows, so a window written, started
+    or ended since ``since`` also counts.
     """
     condition = Q(modified__gte=since) | Q(deleted_at__gte=since)
     if resource_type == "bench":
@@ -113,7 +116,18 @@ def _changed_since(resource_type: str, since: datetime) -> Q:
     if resource_type in _STATUS_RECORDS:
         model, owner = _STATUS_RECORDS[resource_type]
         condition |= Q(Exists(model._default_manager.filter(**{owner: OuterRef("pk"), "created__gte": since})))
+    if resource_type in _DOWNTIME_MODELS:
+        now = timezone.now()
+        windows = outer_windows(_DOWNTIME_MODELS[resource_type]).filter(
+            Q(modified__gte=since)
+            | Q(starts_at__gte=since, starts_at__lte=now)
+            | Q(ends_at__gte=since, ends_at__lte=now)
+        )
+        condition |= Q(Exists(windows))
     return condition
+
+
+_DOWNTIME_MODELS: dict[str, type[Model]] = {"equipment": Equipment, "bench": Bench, "station": Station, "room": Room}
 
 
 def _project(resource_type: str, row: dict[str, Any]) -> dict[str, Any]:

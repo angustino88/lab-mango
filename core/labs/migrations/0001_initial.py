@@ -1,5 +1,8 @@
 """Initial Labs schema: one migration (ADR 005, consolidated 2026-11-12; no deployed database).
 
+Folded 2026-11-13 (owner decision RS5): resource lifecycle, access policy and downtime windows
+(docs/proposals/resource-status-and-downtime.md).
+
 Hand-written: the pg_trgm and btree_gist extensions (first; reverse is a no-op because extensions are
 database-wide) and the four default purchase priorities (last).
 """
@@ -141,20 +144,6 @@ class Migration(migrations.Migration):
                         db_index=True,
                         default="in_service",
                         help_text="Changed only by the change_lifecycle command; history is in EquipmentEvent.",
-                        max_length=32,
-                    ),
-                ),
-                (
-                    "condition",
-                    models.CharField(
-                        choices=[
-                            ("operational", "Operational"),
-                            ("in_maintenance", "In maintenance"),
-                            ("out_of_service", "Out of service"),
-                        ],
-                        db_index=True,
-                        default="operational",
-                        help_text="Changed only by the change_condition command; operational unless in service.",
                         max_length=32,
                     ),
                 ),
@@ -693,7 +682,6 @@ class Migration(migrations.Migration):
                         choices=[
                             ("planned", "Planned"),
                             ("in_service", "In service"),
-                            ("out_of_service", "Out of service"),
                             ("retired", "Retired"),
                         ],
                         default="in_service",
@@ -2009,10 +1997,7 @@ class Migration(migrations.Migration):
                 (
                     "axis",
                     models.CharField(
-                        choices=[
-                            ("lifecycle", "Lifecycle"),
-                            ("condition", "Condition"),
-                        ],
+                        choices=[("lifecycle", "Lifecycle")],
                         max_length=16,
                     ),
                 ),
@@ -5636,21 +5621,26 @@ class Migration(migrations.Migration):
                     models.URLField(blank=True, default="", max_length=500),
                 ),
                 (
-                    "status",
+                    "lifecycle_status",
                     models.CharField(
                         choices=[
-                            ("available", "Available"),
-                            ("reserved", "Reserved"),
-                            ("issue", "Issue"),
-                            ("restricted", "Restricted"),
-                            ("closed", "Closed"),
-                            ("maintenance", "Maintenance"),
+                            ("planned", "Planned"),
+                            ("in_service", "In service"),
                             ("retired", "Retired"),
                         ],
                         db_index=True,
-                        default="available",
-                        help_text="Current lifecycle status. Changed only by the record status command; history is in status_records.",
+                        default="in_service",
+                        help_text="Whether the lab runs it. Changed only by the change-lifecycle command; history is in status_records.",
                         max_length=32,
+                    ),
+                ),
+                (
+                    "access_policy",
+                    models.CharField(
+                        choices=[("open", "Open"), ("restricted", "Restricted")],
+                        default="open",
+                        help_text="Who may use it. Not a status: a restricted resource can be fully working.",
+                        max_length=16,
                     ),
                 ),
                 (
@@ -5889,13 +5879,11 @@ class Migration(migrations.Migration):
                     "status",
                     models.CharField(
                         choices=[
-                            ("available", "Available"),
-                            ("occupied", "Occupied"),
+                            ("usable", "Usable"),
                             ("blocked", "Blocked"),
-                            ("maintenance", "Maintenance"),
                             ("retired", "Retired"),
                         ],
-                        default="available",
+                        default="usable",
                         max_length=16,
                     ),
                 ),
@@ -5991,12 +5979,8 @@ class Migration(migrations.Migration):
                     "status",
                     models.CharField(
                         choices=[
-                            ("available", "Available"),
-                            ("reserved", "Reserved"),
-                            ("issue", "Issue"),
-                            ("restricted", "Restricted"),
-                            ("closed", "Closed"),
-                            ("maintenance", "Maintenance"),
+                            ("planned", "Planned"),
+                            ("in_service", "In service"),
                             ("retired", "Retired"),
                         ],
                         max_length=255,
@@ -6439,21 +6423,26 @@ class Migration(migrations.Migration):
                 ),
                 ("utilities", models.JSONField(blank=True, default=dict)),
                 (
-                    "status",
+                    "lifecycle_status",
                     models.CharField(
                         choices=[
-                            ("available", "Available"),
-                            ("reserved", "Reserved"),
-                            ("issue", "Issue"),
-                            ("restricted", "Restricted"),
-                            ("closed", "Closed"),
-                            ("maintenance", "Maintenance"),
+                            ("planned", "Planned"),
+                            ("in_service", "In service"),
                             ("retired", "Retired"),
                         ],
                         db_index=True,
-                        default="available",
-                        help_text="Current lifecycle status. Changed only by the record status command; history is in status_records.",
+                        default="in_service",
+                        help_text="Whether the lab runs it. Changed only by the change-lifecycle command; history is in status_records.",
                         max_length=32,
+                    ),
+                ),
+                (
+                    "access_policy",
+                    models.CharField(
+                        choices=[("open", "Open"), ("restricted", "Restricted")],
+                        default="open",
+                        help_text="Who may use it. Not a status: a restricted resource can be fully working.",
+                        max_length=16,
                     ),
                 ),
                 (
@@ -6591,19 +6580,15 @@ class Migration(migrations.Migration):
                 ("position_index", models.PositiveSmallIntegerField()),
                 ("slot_code", models.CharField(max_length=32)),
                 ("label", models.CharField(blank=True, default="", max_length=100)),
-                ("is_active", models.BooleanField(default=True)),
                 (
                     "status",
                     models.CharField(
                         choices=[
-                            ("available", "Available"),
-                            ("occupied", "Occupied"),
-                            ("reserved", "Reserved"),
-                            ("maintenance", "Maintenance"),
+                            ("in_service", "In service"),
                             ("out_of_service", "Out of service"),
                             ("retired", "Retired"),
                         ],
-                        default="available",
+                        default="in_service",
                         max_length=32,
                     ),
                 ),
@@ -6709,12 +6694,8 @@ class Migration(migrations.Migration):
                     "status",
                     models.CharField(
                         choices=[
-                            ("available", "Available"),
-                            ("reserved", "Reserved"),
-                            ("issue", "Issue"),
-                            ("restricted", "Restricted"),
-                            ("closed", "Closed"),
-                            ("maintenance", "Maintenance"),
+                            ("planned", "Planned"),
+                            ("in_service", "In service"),
                             ("retired", "Retired"),
                         ],
                         max_length=255,
@@ -7389,27 +7370,11 @@ class Migration(migrations.Migration):
             model_name="equipmentevent",
             constraint=models.CheckConstraint(
                 condition=models.Q(
-                    models.Q(
-                        ("axis", "lifecycle"),
-                        (
-                            "to_value__in",
-                            [
-                                "planned",
-                                "in_service",
-                                "transferred_out",
-                                "retired",
-                                "lost",
-                            ],
-                        ),
+                    ("axis", "lifecycle"),
+                    (
+                        "to_value__in",
+                        ["planned", "in_service", "transferred_out", "retired", "lost"],
                     ),
-                    models.Q(
-                        ("axis", "condition"),
-                        (
-                            "to_value__in",
-                            ["operational", "in_maintenance", "out_of_service"],
-                        ),
-                    ),
-                    _connector="OR",
                 ),
                 name="equipment_event_value_valid",
             ),
@@ -8292,13 +8257,15 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="room",
             constraint=models.CheckConstraint(
-                condition=models.Q(
-                    (
-                        "status__in",
-                        ["available", "reserved", "issue", "restricted", "closed", "maintenance", "retired"],
-                    )
-                ),
-                name="room_status_valid",
+                condition=models.Q(("lifecycle_status__in", ["planned", "in_service", "retired"])),
+                name="room_lifecycle_valid",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="room",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("access_policy__in", ["open", "restricted"])),
+                name="room_access_policy_valid",
             ),
         ),
         migrations.AddConstraint(
@@ -8377,6 +8344,13 @@ class Migration(migrations.Migration):
             model_name="roomslot",
             constraint=models.UniqueConstraint(fields=("room", "slot_code"), name="uniq_room_slot_code"),
         ),
+        migrations.AddConstraint(
+            model_name="roomslot",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("status__in", ("usable", "blocked", "retired"))),
+                name="room_slot_status_valid",
+            ),
+        ),
         migrations.AddIndex(
             model_name="roomstatusrecord",
             index=models.Index(fields=["room", "-created", "-id"], name="room_status_latest_idx"),
@@ -8423,29 +8397,6 @@ class Migration(migrations.Migration):
                     )
                 ),
                 name="equipment_lifecycle_valid",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="equipment",
-            constraint=models.CheckConstraint(
-                condition=models.Q(
-                    (
-                        "condition__in",
-                        ["operational", "in_maintenance", "out_of_service"],
-                    )
-                ),
-                name="equipment_condition_valid",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="equipment",
-            constraint=models.CheckConstraint(
-                condition=models.Q(
-                    ("lifecycle_state", "in_service"),
-                    ("condition", "operational"),
-                    _connector="OR",
-                ),
-                name="equipment_condition_only_in_service",
             ),
         ),
         migrations.AddConstraint(
@@ -8540,6 +8491,13 @@ class Migration(migrations.Migration):
             model_name="stationslot",
             constraint=models.UniqueConstraint(fields=("station", "slot_code"), name="uniq_station_slot_code"),
         ),
+        migrations.AddConstraint(
+            model_name="stationslot",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("status__in", ["in_service", "out_of_service", "retired"])),
+                name="station_slot_status_valid",
+            ),
+        ),
         migrations.AddIndex(
             model_name="bench",
             index=models.Index(
@@ -8569,7 +8527,7 @@ class Migration(migrations.Migration):
                 condition=models.Q(
                     (
                         "lifecycle_status__in",
-                        ("planned", "in_service", "out_of_service", "retired"),
+                        ["planned", "in_service", "retired"],
                     )
                 ),
                 name="bench_lifecycle_valid",
@@ -8590,13 +8548,15 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="station",
             constraint=models.CheckConstraint(
-                condition=models.Q(
-                    (
-                        "status__in",
-                        ["available", "reserved", "issue", "restricted", "closed", "maintenance", "retired"],
-                    )
-                ),
-                name="station_status_valid",
+                condition=models.Q(("lifecycle_status__in", ["planned", "in_service", "retired"])),
+                name="station_lifecycle_valid",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="station",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("access_policy__in", ["open", "restricted"])),
+                name="station_access_policy_valid",
             ),
         ),
         migrations.AddConstraint(
@@ -8621,6 +8581,203 @@ class Migration(migrations.Migration):
                 fields=["os_name"],
                 name="computing_os_name_idx",
                 opclasses=("gin_trgm_ops",),
+            ),
+        ),
+        migrations.CreateModel(
+            name="ResourceDowntime",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                ("resource_object_id", models.CharField(max_length=64)),
+                (
+                    "condition",
+                    models.CharField(
+                        choices=[
+                            ("in_maintenance", "In maintenance"),
+                            ("out_of_service", "Out of service"),
+                        ],
+                        help_text="The condition of the resource during the window.",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "kind",
+                    models.CharField(
+                        choices=[("planned", "Planned"), ("unplanned", "Unplanned")],
+                        default="unplanned",
+                        max_length=16,
+                    ),
+                ),
+                (
+                    "reason",
+                    models.CharField(
+                        choices=[
+                            ("maintenance", "Maintenance"),
+                            ("fault", "Fault"),
+                            ("calibration", "Calibration"),
+                            ("safety_hold", "Safety hold"),
+                            ("renovation", "Renovation"),
+                            ("other", "Other"),
+                        ],
+                        default="other",
+                        max_length=32,
+                    ),
+                ),
+                ("starts_at", models.DateTimeField()),
+                (
+                    "ends_at",
+                    models.DateTimeField(
+                        blank=True,
+                        help_text="Empty while the end is not known.",
+                        null=True,
+                    ),
+                ),
+                ("notes", models.TextField(blank=True, default="")),
+                ("cancelled_at", models.DateTimeField(blank=True, null=True)),
+            ],
+            options={
+                "ordering": ("-starts_at", "-id"),
+            },
+        ),
+        migrations.AddField(
+            model_name="resourcedowntime",
+            name="creator",
+            field=models.ForeignKey(
+                blank=True,
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="%(app_label)s_%(class)s_creator",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Created by",
+            ),
+        ),
+        migrations.AddField(
+            model_name="resourcedowntime",
+            name="ended_by",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="ended_resource_downtimes",
+                to=settings.AUTH_USER_MODEL,
+            ),
+        ),
+        migrations.AddField(
+            model_name="resourcedowntime",
+            name="last_modified_by",
+            field=models.ForeignKey(
+                blank=True,
+                editable=False,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="%(app_label)s_%(class)s_last_modified_by",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Last modified by",
+            ),
+        ),
+        migrations.AddField(
+            model_name="resourcedowntime",
+            name="resource_content_type",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="resource_downtimes",
+                to="contenttypes.contenttype",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="resourcedowntime",
+            index=models.Index(
+                fields=["resource_content_type", "resource_object_id", "starts_at"],
+                name="downtime_resource_start_idx",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcedowntime",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("ends_at__isnull", True),
+                    ("ends_at__gt", models.F("starts_at")),
+                    _connector="OR",
+                ),
+                name="downtime_ends_after_start",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcedowntime",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("condition__in", ["in_maintenance", "out_of_service"])
+                ),
+                name="downtime_condition_valid",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcedowntime",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("kind__in", ["planned", "unplanned"])),
+                name="downtime_kind_valid",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcedowntime",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    (
+                        "reason__in",
+                        [
+                            "maintenance",
+                            "fault",
+                            "calibration",
+                            "safety_hold",
+                            "renovation",
+                            "other",
+                        ],
+                    )
+                ),
+                name="downtime_reason_valid",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcedowntime",
+            constraint=django.contrib.postgres.constraints.ExclusionConstraint(
+                condition=models.Q(("cancelled_at__isnull", True)),
+                expressions=[
+                    ("resource_content_type", "="),
+                    ("resource_object_id", "="),
+                    (
+                        core.labs.models.booking.base.TsTzRange(
+                            "starts_at",
+                            "ends_at",
+                            django.contrib.postgres.fields.ranges.RangeBoundary(),
+                        ),
+                        "&&",
+                    ),
+                ],
+                name="downtime_no_overlap",
             ),
         ),
         migrations.RunPython(seed_purchase_priorities, unseed_purchase_priorities),

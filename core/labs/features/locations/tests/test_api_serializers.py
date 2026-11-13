@@ -24,7 +24,7 @@ def test_room_serializer_contract():
     assert "deleted_at" not in fields
     assert "current_status" not in fields
 
-    room = SimpleNamespace(status=RoomStatus.AVAILABLE)
+    room = SimpleNamespace(legacy_status=RoomStatus.AVAILABLE)
     status_ref = RoomSerializer().get_status(room)
     assert status_ref == {"value": "available", "label": "Available"}
 
@@ -60,7 +60,7 @@ def test_station_serializer_contract_and_coordinates():
     assert "current_status" not in fields
 
     station = SimpleNamespace(
-        status=StationStatus.AVAILABLE,
+        legacy_status=StationStatus.AVAILABLE,
         position=[12.5, 34.0, 56.5],
     )
     assert StationSerializer().get_status(station) == {"value": "available", "label": "Available"}

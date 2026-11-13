@@ -23,6 +23,7 @@ from core.labs.models import (
     PurchaseItemResource,
     ResourceServiceRecord,
 )
+from core.labs.models.resource.base.downtime import condition_expression
 from core.labs.models.resource.base.generic_links import resource_root_model
 from core.labs.models.resource.base.resource import Group
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
@@ -31,7 +32,7 @@ from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 def display_status_expression() -> Case:
     """``display_status`` from the stored facts; first matching row wins (redesign, display status).
 
-    Needs ``latest_calibration_due_at`` on the queryset.
+    Needs ``latest_calibration_due_at`` and ``condition`` (computed from downtime windows) on the queryset.
     """
     on_loan = Exists(EquipmentLoan.objects.filter(equipment_id=OuterRef("pk"), returned_at__isnull=True))
     on_bench = Exists(EquipmentAssignment.objects.filter(equipment_id=OuterRef("pk"), unassigned_at__isnull=True))
@@ -67,8 +68,16 @@ def _latest_calibration(queryset) -> QuerySet:
     ).order_by("-performed_at", "-id")
 
 
+def with_condition(queryset):
+    """Annotate the computed ``condition`` (``ResourceDowntime`` window covering now; RS2)."""
+    if "condition" in queryset.query.annotations:
+        return queryset
+    return queryset.annotate(condition=condition_expression(queryset.model))
+
+
 def with_display_status(queryset):
-    """Annotate ``display_status`` (and the calibration due date it needs) for filters and counts."""
+    """Annotate ``display_status`` (and the calibration due date and condition it needs) for filters and counts."""
+    queryset = with_condition(queryset)
     if "latest_calibration_due_at" not in queryset.query.annotations:
         queryset = queryset.annotate(
             latest_calibration_due_at=Subquery(_latest_calibration(queryset).values("next_due_at")[:1])

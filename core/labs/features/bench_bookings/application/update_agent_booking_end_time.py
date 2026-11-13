@@ -8,7 +8,11 @@ from django.db import transaction
 
 from core.agents.public import AgentEnrollmentConflict, require_active_agent_identity
 from core.labs.features.bench_bookings.exceptions import BenchBookingConflict
-from core.labs.features.bench_bookings.queries import conflicting_bench_bookings
+from core.labs.features.bench_bookings.queries import (
+    bench_downtime_blocker,
+    bench_parent_blocker,
+    conflicting_bench_bookings,
+)
 from core.labs.features.equipment.public import lock_active_equipment_bench_assignment
 from core.labs.models import BenchBooking, BookingApprovalStatus, BookingStatus
 
@@ -62,7 +66,8 @@ def update_agent_booking_end_time(command: AgentBookingEndTimeInput, *, actor: o
     }:
         raise BenchBookingConflict("Only approved reserved or in-progress bookings can change end time.")
 
-    policies.ensure_bench_accepts_bookings(benches[booking.bench_id])
+    bench = benches[booking.bench_id]
+    policies.ensure_bench_accepts_bookings(bench, parent_blocker=bench_parent_blocker(bench=bench))
     policies.ensure_valid_period(booking.starts_at, command.ends_at)
     policies.ensure_minimum_duration(booking.starts_at, command.ends_at)
     if command.ends_at == booking.ends_at:
@@ -80,6 +85,10 @@ def update_agent_booking_end_time(command: AgentBookingEndTimeInput, *, actor: o
         exclude_id=booking.pk,
     )
     policies.ensure_no_conflicting_bookings(has_conflicts=conflicts.exists())
+    if command.ends_at > booking.ends_at:
+        policies.ensure_no_downtime(
+            bench_downtime_blocker(bench=bench, starts_at=booking.ends_at, ends_at=command.ends_at)
+        )
 
     booking.ends_at = command.ends_at
     update_fields = ["ends_at", "modified"]

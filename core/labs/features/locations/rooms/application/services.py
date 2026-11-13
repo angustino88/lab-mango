@@ -4,7 +4,9 @@ from django.core.exceptions import ValidationError
 
 from core.common.db.transactions import apply_fields, atomic_command
 from core.labs.features.equipment.public import has_active_placements
+from core.labs.features.locations.application.lifecycle import apply_legacy_status, apply_lifecycle, record_initial
 from core.labs.features.locations.rooms.application.policies import RoomConflict, grid_positions
+from core.labs.models.resource.base.status import ResourceLifecycleStatus
 from core.labs.models.resource.location.room import Room, RoomStatusRecord
 from core.labs.models.resource.location.room_observation import RoomObservation
 from core.labs.models.resource.location.room_slot import RoomSlot
@@ -56,7 +58,7 @@ def _sync_grid(room, actor):
 
 @_room_atomic_command
 def create_room(*, actor, **data):
-    """Create a room; its ``status`` column defaults to ``available`` and gets a first history record.
+    """Create a room; ``lifecycle_status`` defaults to ``in_service`` and gets a first history record.
 
     Race guard: the active-SKU partial unique constraint rejects a concurrent duplicate, and the
     whole transaction (room and its initial record) rolls back with it.
@@ -64,7 +66,7 @@ def create_room(*, actor, **data):
     room = Room()
     _apply(room, data, ROOM_WRITE_FIELDS)
     room.save(actor=actor)
-    RoomStatusRecord(room=room, status=room.status).save(actor=actor)
+    record_initial(room, record_model=RoomStatusRecord, record_field="room", actor=actor)
     return room
 
 
@@ -94,17 +96,31 @@ def generate_room_slots(*, room_id, actor):
     return room
 
 
+def _has_active_stations(room) -> bool:
+    # Read under the room lock; station writes lock the room first.
+    return Station.objects.filter(room_id=room.pk).exclude(lifecycle_status=ResourceLifecycleStatus.RETIRED).exists()
+
+
+@_room_atomic_command
+def change_room_lifecycle(*, room_id, actor, lifecycle_status=None, access_policy=None, metadata=None):
+    """Set ``lifecycle_status`` and/or ``access_policy``; returns the room. Race guard: the room row lock."""
+    room = _lock_room(room_id)
+    apply_lifecycle(
+        room, record_model=RoomStatusRecord, record_field="room", actor=actor,
+        lifecycle_status=lifecycle_status, access_policy=access_policy, metadata=metadata,
+        has_active_children=_has_active_stations(room),
+    )
+    return room
+
+
 @_room_atomic_command
 def record_room_status(*, room_id, actor, status, metadata=None):
+    """Deprecated seven-value ``status`` write, mapped onto lifecycle, access policy and downtime (RS3)."""
     room = _lock_room(room_id)
-    record = RoomStatusRecord(room=room, status=status, metadata={} if metadata is None else metadata)
-    if not isinstance(record.metadata, dict):
-        raise ValidationError({"metadata": "Metadata must be an object."})
-    record.full_clean()
-    record.save(actor=actor)
-    room.status = record.status
-    room.save(actor=actor, update_fields=("status", "modified"))
-    return record
+    return apply_legacy_status(
+        room, record_model=RoomStatusRecord, record_field="room", actor=actor, status=status, metadata=metadata,
+        has_active_children=_has_active_stations(room),
+    )
 
 
 @_room_atomic_command
@@ -118,6 +134,6 @@ def record_room_observation(*, room_id, **data):
 
 
 __all__ = [
-    "create_room", "delete_room", "generate_room_slots", "record_room_observation",
+    "change_room_lifecycle", "create_room", "delete_room", "generate_room_slots", "record_room_observation",
     "record_room_status", "update_room",
 ]

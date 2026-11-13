@@ -16,6 +16,7 @@ from core.labs.features.locations.rooms.queries.summaries import get_room_status
 from .filters import ROOM_FILTERS
 from .serializers import (
     RoomCreateSerializer,
+    RoomLifecycleWriteSerializer,
     RoomListQuerySerializer,
     RoomObservationSerializer,
     RoomObservationWriteSerializer,
@@ -118,6 +119,19 @@ class RoomSlotGenerateAPIView(RoomAPIView):
         return self._execute(
             lambda: services.generate_room_slots(room_id=room_id, actor=request.user),
             project=lambda room: selectors.list_room_slots(room_id=room.pk),
+        )
+
+
+class RoomLifecycleAPIView(RoomAPIView):
+    """Set ``lifecycle_status`` and/or ``access_policy``. Downtime is recorded at ``/api/labs/downtimes``."""
+
+    post_contract = operation("RoomLifecycleChange", RoomSerializer, request=RoomLifecycleWriteSerializer)
+
+    def handle_post(self, request, room_id, **kwargs):
+        return self._write(
+            services.change_room_lifecycle,
+            lookup={"room_id": room_id},
+            project=_room_projection,
         )
 
 

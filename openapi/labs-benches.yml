@@ -562,7 +562,19 @@ paths:
       description: HTTP mapping for domain commands and selector projections.
       parameters:
       - in: query
+        name: activity_status
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
         name: bench_group_id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: condition
         schema:
           type: string
           minLength: 1
@@ -589,6 +601,12 @@ paths:
         description: Comma-separated values; OR within this filter.
       - in: query
         name: id
+        schema:
+          type: string
+          minLength: 1
+        description: Comma-separated values; OR within this filter.
+      - in: query
+        name: lifecycle_status
         schema:
           type: string
           minLength: 1
@@ -907,6 +925,66 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Benches by Bench ID
+  /api/labs/benches/{bench_id}/actions/change-lifecycle:
+    post:
+      operationId: labs_benches_actions_change_lifecycle_create_by_bench_id
+      description: Set planned, in_service or retired. Out of service is a downtime
+        window (``/api/labs/downtimes``).
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchLifecycleWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchLifecycleWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchLifecycleWrite'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchLifecycleChangeSerializersBenchDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Lifecycle Benches by Bench ID
   /api/labs/benches/{bench_id}/actions/favorite:
     post:
       operationId: labs_benches_actions_favorite_create_by_bench_id
@@ -1698,6 +1776,24 @@ components:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
           readOnly: true
+          description: 'Deprecated: use lifecycle_status, condition, availability
+            and activity_status.'
+        lifecycle_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        availability:
+          allOf:
+          - $ref: '#/components/schemas/LabsAvailability'
+          readOnly: true
+        activity_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         criticality:
           type: string
           readOnly: true
@@ -1751,8 +1847,11 @@ components:
           type: string
           readOnly: true
       required:
+      - activity_status
+      - availability
       - bench_group
       - commissioning_date
+      - condition
       - created_at
       - criticality
       - department
@@ -1765,6 +1864,7 @@ components:
       - image
       - is_favorite
       - last_inspected_at
+      - lifecycle_status
       - name
       - next_inspection_due_at
       - owner
@@ -2133,6 +2233,22 @@ components:
           $ref: '#/components/schemas/BenchGroup'
       required:
       - data
+    BenchLifecycleChangeSerializersBenchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Bench'
+      required:
+      - data
+    BenchLifecycleWrite:
+      type: object
+      description: Preserve the benches module's established strict-write helper.
+      properties:
+        lifecycle_status:
+          $ref: '#/components/schemas/LifecycleStatusEnum'
+      required:
+      - lifecycle_status
     BenchListSerializersBenchPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -2228,10 +2344,17 @@ components:
           items:
             $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: Deprecated four-value status.
       required:
       - groups
       - lifecycle_statuses
       - stations
+      - statuses
       - types
     BenchReferenceDataSerializersBenchReferenceDataDetailResponse:
       type: object
@@ -2379,6 +2502,24 @@ components:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
           readOnly: true
+          description: 'Deprecated: use lifecycle_status, condition, availability
+            and activity_status.'
+        lifecycle_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        availability:
+          allOf:
+          - $ref: '#/components/schemas/LabsAvailability'
+          readOnly: true
+        activity_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         criticality:
           type: string
           readOnly: true
@@ -2432,8 +2573,11 @@ components:
           type: string
           readOnly: true
       required:
+      - activity_status
+      - availability
       - bench_group
       - commissioning_date
+      - condition
       - created_at
       - criticality
       - department
@@ -2446,6 +2590,7 @@ components:
       - image
       - is_favorite
       - last_inspected_at
+      - lifecycle_status
       - name
       - next_inspection_due_at
       - owner
@@ -2515,7 +2660,8 @@ components:
       - uid
     BenchStatusSummary:
       type: object
-      description: Lifecycle status, not booking status or live activity.
+      description: The deprecated four-value status (lifecycle, with out_of_service
+        from downtime), not bookings.
       properties:
         total_count:
           type: integer
@@ -2844,6 +2990,51 @@ components:
       - ordering
       - search
       - separator
+    LabsAvailability:
+      type: object
+      description: 'Computed ``availability``: problems pass down from room to station
+        to bench (never stored).'
+      properties:
+        value:
+          allOf:
+          - $ref: '#/components/schemas/ValueEnum'
+          readOnly: true
+        blocked_by:
+          allOf:
+          - $ref: '#/components/schemas/LabsAvailabilitySource'
+          readOnly: true
+          nullable: true
+          description: The resource that blocks.
+        condition:
+          type: string
+          readOnly: true
+          nullable: true
+        reason:
+          type: string
+          readOnly: true
+          nullable: true
+          description: Lifecycle status, or the downtime reason, of blocked_by.
+      required:
+      - blocked_by
+      - condition
+      - reason
+      - value
+    LabsAvailabilitySource:
+      type: object
+      properties:
+        type:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - type
     LabsChoiceReference:
       type: object
       description: Standard `{value, label}` representation for enum and lifecycle
@@ -2890,6 +3081,17 @@ components:
       - id
       - name
       - uid
+    LifecycleStatusEnum:
+      enum:
+      - planned
+      - in_service
+      - retired
+      type: string
+      description: '* `planned` - Planned
+
+        * `in_service` - In service
+
+        * `retired` - Retired'
     PatchedBenchPlacement:
       type: object
       description: Preserve the benches module's established strict-write helper.
@@ -3048,6 +3250,14 @@ components:
       required:
       - resource_count
       - status
+    ValueEnum:
+      enum:
+      - available
+      - unavailable
+      type: string
+      description: '* `available` - available
+
+        * `unavailable` - unavailable'
   securitySchemes:
     cookieAuth:
       type: apiKey

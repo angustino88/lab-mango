@@ -73,7 +73,7 @@ class TestAuditCatalog:
         assert equipment["sku"] == "CAT-E-1"
         assert equipment["serial_number"] == "SN-001"
         assert equipment["status"] == resources["equipment"].lifecycle_state
-        assert equipment["condition"] == resources["equipment"].condition
+        assert equipment["condition"] == "operational"  # computed from downtime windows
         assert equipment["deleted"] is False
         assert by_type["bench"]["location"] == "Catalog station"
         assert by_type["station"]["location"] == "Catalog room"
@@ -178,8 +178,8 @@ def _by_uid(body):
 
 @pytest.mark.django_db
 class TestCatalogStatusAndDelta:
-    def test_latest_status_record_is_the_status(self, client, resources):
-        # Room and station status is a stored column, changed only through the locations command.
+    def test_status_is_lifecycle_and_condition_comes_from_downtime(self, client, resources):
+        # The deprecated room/station status write maps onto downtime (resource-status-and-downtime.md).
         record_station_status(station_id=resources["station"].pk, actor=None, status="available")
         record_station_status(station_id=resources["station"].pk, actor=None, status="maintenance")
         record_room_status(room_id=resources["room"].pk, actor=None, status="closed")
@@ -187,8 +187,9 @@ class TestCatalogStatusAndDelta:
 
         items = _by_uid(client.get(URL).json())
 
-        assert items[str(resources["station"].uid)]["status"] == "maintenance"
-        assert items[str(resources["room"].uid)]["status"] == "closed"
+        station, room = items[str(resources["station"].uid)], items[str(resources["room"].uid)]
+        assert (station["status"], station["condition"]) == ("in_service", "in_maintenance")
+        assert (room["status"], room["condition"]) == ("in_service", "out_of_service")
         assert items[str(resources["license"].uid)]["status"] == "expired"
 
     def test_license_expiry_is_returned(self, client, resources):
@@ -219,20 +220,16 @@ class TestCatalogStatusAndDelta:
 
         assert items[str(resources["station"].uid)]["location"] == "Renamed room"
 
-    def test_new_status_record_returns_the_resource(self, client, resources):
+    def test_new_downtime_or_status_record_returns_the_resource(self, client, resources):
         since = timezone.now()
         record_station_status(station_id=resources["station"].pk, actor=None, status="issue")
         LicenseStatusRecord.objects.create(license=resources["license"], status="revoked")
 
         items = _by_uid(client.get(URL, {"changed_since": since.isoformat()}).json())
 
-        # The status command updates the station row, so its bench (whose location parent changed) comes too.
-        assert set(items) == {
-            str(resources["station"].uid),
-            str(resources["bench"].uid),
-            str(resources["license"].uid),
-        }
-        assert items[str(resources["station"].uid)]["status"] == "issue"
+        # The station row is unchanged (lifecycle stays in service); its new downtime window returns it.
+        assert set(items) == {str(resources["station"].uid), str(resources["license"].uid)}
+        assert items[str(resources["station"].uid)]["condition"] == "out_of_service"
 
     def test_unchanged_resources_are_not_returned(self, client, resources):
         since = timezone.now() + timedelta(seconds=1)

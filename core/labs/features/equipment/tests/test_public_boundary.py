@@ -63,6 +63,7 @@ def test_public_module_exports_supported_queries_and_commands():
     assert set(_exports(public)) == {
         "ActiveEquipmentBenchAssignment",
         "AssignEquipmentInput",
+        "CancelEquipmentBookingsForDowntimeInput",
         "ChangeConditionInput",
         "ChangeLifecycleInput",
         "CreateEquipmentInput",
@@ -82,6 +83,7 @@ def test_public_module_exports_supported_queries_and_commands():
         "HandOverReservationInput",
         "ReserveEquipmentBatchInput",
         "UpdateReservationInput",
+        "cancel_equipment_bookings_for_downtime",
         "cancel_reservation",
         "expire_uncollected_reservations",
         "hand_over_reservation",

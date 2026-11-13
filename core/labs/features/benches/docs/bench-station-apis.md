@@ -130,7 +130,7 @@ The [explicit serializers](../api/serializers.py) accept:
 | `image` | Image upload, not an arbitrary nested resource |
 | `description`, `documentation_url`, `criticality` | Workspace text, validated URL, free-form classification; criticality is not a fixed enum |
 | `setup_location`, `station_slot` | Nullable positive IDs; station slot requires a matching station |
-| `lifecycle_status` | `planned`, `in_service` (default), `out_of_service`, `retired`; only `in_service` accepts bookings |
+| `lifecycle_status` | Not writable here (drift fixed in docs): set with `POST /api/labs/benches/{id}/actions/change-lifecycle` to `planned`, `in_service` or `retired` (terminal). Out of service is a downtime window (`/api/labs/downtimes`). Reads add `condition`, `availability` (follows station and room) and `activity_status`; `status` is the deprecated four-value field |
 | `requested_power_w`, `requested_load_kg`, `requested_cooling_w` | Nullable nonnegative integers; zero is valid; null contributes zero to station aggregates |
 | `required_utilities` | JSON object describing requirements, not a list |
 | `commissioning_date` | Nullable date |
@@ -143,7 +143,7 @@ The dashboard clicked-bench endpoint returns category-grouped equipment, active
 license summaries, activity freshness, and booking schedule data. Resource mapping
 endpoints return graphic-only placement relationships and license summaries. All
 response fields are read-only.
-The compact select projection exposes only `id`, `uid`, `sku`, `name`, `lifecycle_status`.
+The compact select projection exposes only `id`, `sku`, `name`; its `status`/`lifecycle_status` filter uses the deprecated four values.
 Favorites expose `id`, `bench`, `created` (not the user's personal fields).
 
 The bench equipment subresource contains live assignments to non-deleted equipment,

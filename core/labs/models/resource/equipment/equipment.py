@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from core.labs.models.resource.base.resource import ResourceModel
+from core.labs.models.resource.base.status import ResourceCondition
 
 MAC_ADDRESS_VALIDATOR = RegexValidator(
     regex=r"^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$",
@@ -23,13 +24,8 @@ class EquipmentLifecycleState(models.TextChoices):
     LOST = "lost", _("Lost")
 
 
-class EquipmentCondition(models.TextChoices):
-    """Whether an in-service unit works. Any change is allowed while in service."""
-
-    OPERATIONAL = "operational", _("Operational")
-    IN_MAINTENANCE = "in_maintenance", _("In maintenance")
-    OUT_OF_SERVICE = "out_of_service", _("Out of service")
-
+# Whether an in-service unit works: computed from ResourceDowntime windows, never stored (RS2).
+EquipmentCondition = ResourceCondition
 
 class EquipmentDisplayStatus(models.TextChoices):
     """One read-only label computed from the stored facts; never written (redesign, display status)."""
@@ -123,13 +119,6 @@ class Equipment(ResourceModel):
         default=EquipmentLifecycleState.IN_SERVICE,
         db_index=True,
         help_text="Changed only by the change_lifecycle command; history is in EquipmentEvent.",
-    )
-    condition = models.CharField(
-        max_length=32,
-        choices=EquipmentCondition.choices,
-        default=EquipmentCondition.OPERATIONAL,
-        db_index=True,
-        help_text="Changed only by the change_condition command; operational unless in service.",
     )
     replacement_date = models.DateField(
         null=True,
@@ -263,15 +252,6 @@ class Equipment(ResourceModel):
                 condition=models.Q(lifecycle_state__in=EquipmentLifecycleState.values),
                 name="equipment_lifecycle_valid",
             ),
-            models.CheckConstraint(
-                condition=models.Q(condition__in=EquipmentCondition.values),
-                name="equipment_condition_valid",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(lifecycle_state=EquipmentLifecycleState.IN_SERVICE)
-                | models.Q(condition=EquipmentCondition.OPERATIONAL),
-                name="equipment_condition_only_in_service",
-            ),
         ]
         indexes = [
             models.Index(fields=("kind", "deleted_at"), name="equipment_kind_deleted_idx"),
@@ -283,12 +263,13 @@ class Equipment(ResourceModel):
 
 
 class EquipmentEventAxis(models.TextChoices):
+    """Only lifecycle changes are events; condition history is the ResourceDowntime windows."""
+
     LIFECYCLE = "lifecycle", _("Lifecycle")
-    CONDITION = "condition", _("Condition")
 
 
 class EquipmentEvent(models.Model):
-    """Append-only history of lifecycle and condition changes; written only by the state commands."""
+    """Append-only history of lifecycle changes; written only by the change-lifecycle command."""
 
     equipment = models.ForeignKey("labs.Equipment", related_name="events", on_delete=models.PROTECT)
     axis = models.CharField(max_length=16, choices=EquipmentEventAxis.choices)
@@ -309,10 +290,7 @@ class EquipmentEvent(models.Model):
         constraints = [
             models.CheckConstraint(condition=~models.Q(from_value=models.F("to_value")), name="equipment_event_changes"),
             models.CheckConstraint(
-                condition=(
-                    models.Q(axis="lifecycle", to_value__in=EquipmentLifecycleState.values)
-                    | models.Q(axis="condition", to_value__in=EquipmentCondition.values)
-                ),
+                condition=models.Q(axis="lifecycle", to_value__in=EquipmentLifecycleState.values),
                 name="equipment_event_value_valid",
             ),
         ]

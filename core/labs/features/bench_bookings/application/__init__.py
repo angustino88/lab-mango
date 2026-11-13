@@ -1,5 +1,6 @@
 """Supported bench booking commands and their frozen inputs."""
 
+from .cancel_for_downtime import CancelBookingsForDowntimeInput, cancel_bench_bookings_for_downtime
 from .check_agent_booking_login import CheckAgentBookingLoginInput, check_agent_booking_login
 from .check_in_agent_booking import CheckInAgentBookingInput, check_in_agent_booking
 from .complete_agent_booking import CompleteAgentBookingInput, complete_agent_booking
@@ -19,6 +20,8 @@ from .update_agent_booking_end_time import AgentBookingEndTimeInput, update_agen
 from .update_booking import UpdateBenchBookingInput, update_bench_booking
 
 __all__ = [
+    "CancelBookingsForDowntimeInput",
+    "cancel_bench_bookings_for_downtime",
     "CheckAgentBookingLoginInput",
     "CheckInAgentBookingInput",
     "CompleteAgentBookingInput",

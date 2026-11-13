@@ -130,6 +130,8 @@ paths:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches
   /api/labs/benches/{bench_id}:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}
+  /api/labs/benches/{bench_id}/actions/change-lifecycle:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1change-lifecycle
   /api/labs/benches/{bench_id}/actions/favorite:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1favorite
   /api/labs/benches/{bench_id}/actions/place:
@@ -226,6 +228,8 @@ paths:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms
   /api/labs/rooms/{room_id}:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}
+  /api/labs/rooms/{room_id}/actions/change-lifecycle:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1change-lifecycle
   /api/labs/rooms/{room_id}/actions/change-status:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1change-status
   /api/labs/rooms/{room_id}/actions/generate-slots:
@@ -252,6 +256,8 @@ paths:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations
   /api/labs/stations/{station_id}:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}
+  /api/labs/stations/{station_id}/actions/change-lifecycle:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1change-lifecycle
   /api/labs/stations/{station_id}/actions/change-status:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1change-status
   /api/labs/stations/{station_id}/actions/place:
@@ -444,6 +450,14 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1groups~1{group_id}
   /api/labs/groups/options:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1groups~1options
+  /api/labs/downtimes:
+    $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes
+  /api/labs/downtimes/{downtime_id}:
+    $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}
+  /api/labs/downtimes/{downtime_id}/actions/cancel:
+    $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}~1actions~1cancel
+  /api/labs/downtimes/{downtime_id}/actions/end:
+    $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}~1actions~1end
   /api/labs/expenses/{expense_id}/payments:
     $ref: ./labs-expense.yml#/paths/~1api~1labs~1expenses~1{expense_id}~1payments
   /api/labs/expenses/report:
@@ -678,6 +692,8 @@ tags:
   description: Benches endpoints
 - name: Dashboard
   description: Dashboard endpoints
+- name: Downtime
+  description: Downtime endpoints
 - name: Equipment
   description: Equipment endpoints
 - name: Expenses

@@ -5,9 +5,14 @@ cannot verify in code or from the owner. Owner: fill in and keep current.
 
 | Term | Meaning / owner module | Notes |
 |---|---|---|
-| Resource lifecycle status | <confirm> for benches, rooms, stations, licenses. Equipment: see *Equipment lifecycle state* | Distinct from booking and live activity status |
+| Resource lifecycle status | Whether the lab runs a room, station or bench: `planned`, `in_service`, `retired` (terminal). Stored as `lifecycle_status`; changed only by the change-lifecycle commands. Licenses: <confirm>. Equipment: see *Equipment lifecycle state* | Distinct from condition, booking and live activity status. Code: `ResourceLifecycleStatus`, `ensure_lifecycle_transition` (`core/labs/models/resource/base/status.py`); design `docs/proposals/resource-status-and-downtime.md` |
+| Downtime window | One period when a room, station, bench or equipment unit cannot be used: `condition` (`in_maintenance`, `out_of_service`), `kind` (`planned`, `unplanned`), `reason`, `starts_at`, `ends_at` (empty while unknown). Windows of one resource never overlap. Owner: downtime feature | Code: `ResourceDowntime`; API `/api/labs/downtimes` |
+| Condition | Whether an in-service resource works now: `operational`, `in_maintenance`, `out_of_service`. Computed from the downtime window covering now; never stored | Code: `ResourceCondition`, `condition_expression` |
+| Availability | Computed: `available` when a resource and every parent (bench → station → room) are in service and operational; otherwise `unavailable` with the blocking resource as `blocked_by`. Problems pass down | Code: `core/labs/models/resource/base/availability.py` |
+| Activity status | Computed: `active` (a bench booking in progress), `scheduled` (an approved booking later today), `idle`. Rolls up from benches to their station and room | Bookings only; no per-bench monitoring signal yet |
+| Access policy | `open` or `restricted` on rooms and stations; who may use it, not a status | Code: `ResourceAccessPolicy` |
 | Booking status | <confirm> | Distinct from resource lifecycle status |
-| Live activity status | <confirm> | From monitoring; distinct from lifecycle |
+| Live activity status | <confirm> | From monitoring; distinct from lifecycle. Resource *activity status* above is computed from bookings |
 | Stable global resource identifier | <confirm> | Distinct from database primary key |
 | Room / Station / Bench | <confirm> | |
 | Equipment | <confirm> | |
@@ -17,7 +22,7 @@ cannot verify in code or from the owner. Owner: fill in and keep current.
 | License | <confirm> | Agreement vs payment are different concepts |
 | Expense / Purchase | <confirm> | Commitment vs actual payment |
 | Equipment lifecycle state | Whether the lab still has a unit: `planned`, `in_service`, `transferred_out` (handed to another organisation), `retired` (scrapped), `lost`. Changed only by the change-lifecycle action. `in_service` does **not** mean "on a bench". Owner: equipment | Owner decisions OD5, OD8 (redesign proposal); code: `Equipment.lifecycle_state`, `application/change_state.py` |
-| Equipment condition | Whether an in-service unit works: `operational`, `in_maintenance`, `out_of_service`. Changing it never moves the unit. Owner: equipment | Code: `Equipment.condition`; constraint `equipment_condition_only_in_service` |
+| Equipment condition | Whether an in-service unit works: `operational`, `in_maintenance`, `out_of_service`. Computed from downtime windows like every resource's *condition* (RS2); the change-condition action opens or ends a window starting now. Changing it never moves the unit. Owner: equipment | Code: `EquipmentCondition` (alias of `ResourceCondition`), `application/change_state.py` |
 | Placement | Where a unit is: on a bench, at a station, in a room, or at an untracked place described in `location_note`; none means unknown. One active placement per unit. "In storage" means placed in a room, at a station, or at a noted place. Owner: equipment | Owner decisions OD1-OD2; code: `EquipmentPlacement`, `application/place_equipment.py` |
 | Display status (equipment) | One computed, read-only label (`available`, `in_use`, `maintenance`, `broken`, `calibration_overdue`, `on_order`, `transferred`, `retired`, `lost`) derived from lifecycle state, condition, bench placement and calibration. Never stored or set by hand. Owner: equipment | Code: `queries/equipment.py::display_status_expression`; priority table in `features/equipment/docs/spec.md` section 2.0 |
 | Equipment event | Append-only record of one lifecycle or condition change (from, to, reason, actor, time). Owner: equipment | Code: `EquipmentEvent` |

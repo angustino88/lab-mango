@@ -16,18 +16,22 @@ The Locations feature represents geographic and facility real-estate topology: c
 ### 2.2 `core.labs.models.Room` & `RoomSlot`
 - **`Room`** (inherits `ResourceModel` and `PhysicalLocationNode`):
   - `room_type`, `capacity`, `area_sqm`, `operating_hours`, `room_manager`.
-  - `room_status`: Enum (`planned`, `operational`, `maintenance`, `decommissioned`).
-- **`RoomSlot`**: Represents a physical coordinate grid position inside a room (`slot_number`, `x_coord`, `y_coord`, `status`).
+  - `lifecycle_status`: `planned`, `in_service` (default), `retired` (terminal). `access_policy`: `open` (default), `restricted`.
+  - Computed, never stored: `condition` (downtime windows), `availability`, `activity_status` (bench bookings at its
+    stations), and the deprecated seven-value `status`. See `docs/proposals/resource-status-and-downtime.md`.
+- **`RoomSlot`**: A grid cell inside a room (`row_index`, `col_index`, `slot_code`, `status`). `status` is `usable`
+  (default), `blocked` or `retired`; "occupied" is computed from `Station.slot`.
 
 ### 2.3 `core.labs.models.Station` & `StationSlot`
 - **`Station`** (inherits `ResourceModel`):
   - `room` (FK `Room`, PROTECT).
   - `station_type` (FK `StationType`, PROTECT).
-  - `station_status`: Enum (`operational`, `maintenance`, `inactive`).
+  - `lifecycle_status`, `access_policy`, and the computed fields as for rooms; availability also follows its room.
   - Rated limits: `max_power_w`, `max_load_kg`, `max_cooling_w`, `available_utilities`.
 - **`StationSlot`**:
   - `station` (FK `Station`, PROTECT), `slot_number` (IntegerField).
-  - `status`: `StationSlotStatus` (`available`, `occupied`, `reserved`, `maintenance`).
+  - `status`: `StationSlotStatus` (`in_service`, `out_of_service`, `retired`); "occupied" is computed from
+    `Bench.station_slot`. API: `service_status` (stored), `occupied`, deprecated `status` and `is_active`.
   - Invariant: `UniqueConstraint(fields=("station", "slot_number"))`.
 
 ---
@@ -44,19 +48,23 @@ The Locations feature represents geographic and facility real-estate topology: c
 | Method & Path | View Class | Purpose & Contract |
 |---|---|---|
 | `GET /api/labs/rooms` | `RoomListCreateAPIView` | Paginated room inventory. |
-| `POST /api/labs/rooms` | `RoomListCreateAPIView` | Create room; `status` column defaults to `available`, first history record written in the same transaction. |
+| `POST /api/labs/rooms` | `RoomListCreateAPIView` | Create room; `lifecycle_status` defaults to `in_service`, first history record written in the same transaction. |
+| `POST /api/labs/rooms/{id}/actions/change-lifecycle` | `RoomLifecycleAPIView` | Set `lifecycle_status` and/or `access_policy`; retiring needs every station retired and ends or cancels downtime. |
+| `POST /api/labs/rooms/{id}/actions/change-status` | `RoomStatusAPIView` | Deprecated seven-value write, mapped onto lifecycle, access policy and downtime; `reserved` is refused. |
 | `GET /api/labs/rooms/{id}` | `RoomDetailAPIView` | Room specs and contained stations. |
 | `PATCH /api/labs/rooms/{id}` | `RoomDetailAPIView` | Update room attributes. |
 | `GET /api/labs/rooms/options` | `RoomSelectAPIView` | Selector `{id, sku, name}`. |
-| `GET /api/labs/rooms/status-summary` | `RoomStatusSummaryAPIView` | Room operational status distribution. |
+| `GET /api/labs/rooms/status-summary` | `RoomStatusSummaryAPIView` | Distribution of the deprecated computed `status`. |
 | `GET /api/labs/rooms/{room_id}/slots` | `RoomSlotListCreateAPIView` | Grid slots in room. |
-| `GET /api/labs/rooms/{room_id}/history` | `RoomHistoryAPIView` | Status records, newest first; each row has `actor` (`{id, username, display_name}`, null when unknown). |
+| `GET /api/labs/rooms/{room_id}/history` | `RoomHistoryAPIView` | Lifecycle records (`status` holds the lifecycle; access changes in `metadata.access_policy`), newest first; each row has `actor` (`{id, username, display_name}`, null when unknown). Downtime history: `GET /api/labs/downtimes?resource_type=room&resource_id=`. |
 | `GET /api/labs/stations` | `StationListCreateAPIView` | Physical stations inventory. |
-| `POST /api/labs/stations` | `StationListCreateAPIView` | Create physical station dock; `status` column defaults to `available`, first history record written in the same transaction. |
+| `POST /api/labs/stations` | `StationListCreateAPIView` | Create physical station dock; `lifecycle_status` defaults to `in_service`, first history record written in the same transaction. |
+| `POST /api/labs/stations/{id}/actions/change-lifecycle` | `StationLifecycleAPIView` | As for rooms; retiring needs every bench at the station retired. |
+| `POST /api/labs/stations/{id}/actions/change-status` | `StationStatusAPIView` | Deprecated seven-value write (as for rooms). |
 | `GET /api/labs/stations/{id}` | `StationDetailAPIView` | Station technical specifications and slots. |
 | `PATCH /api/labs/stations/{id}` | `StationDetailAPIView` | Update station capacity ratings. |
 | `GET /api/labs/stations/options` | `StationSelectAPIView` | Selector `{id, sku, name}`. |
-| `GET /api/labs/stations/status-summary` | `StationStatusSummaryAPIView` | Station status distribution. |
+| `GET /api/labs/stations/status-summary` | `StationStatusSummaryAPIView` | Distribution of the deprecated computed `status`. |
 | `GET /api/labs/stations/{station_id}/slots` | `StationSlotListCreateAPIView` | Slots on station. |
-| `GET /api/labs/stations/{station_id}/history` | `StationHistoryAPIView` | Status records, newest first; each row has `actor` (`{id, username, display_name}`, null when unknown). |
+| `GET /api/labs/stations/{station_id}/history` | `StationHistoryAPIView` | Lifecycle records as for rooms; each row has `actor` (`{id, username, display_name}`, null when unknown). |
 | `GET /api/labs/station-slots/options` | `StationSlotSelectAPIView` | Selector `{id, sku, name}`. |

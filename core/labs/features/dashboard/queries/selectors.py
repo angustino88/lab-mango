@@ -25,9 +25,18 @@ from core.labs.models import (
     ComputingActivityStatus,
     LicenseAssignment,
 )
+from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES, legacy_bench_status_expression
+from core.labs.models.resource.base.downtime import condition_expression
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 from ..exceptions import DashboardResourceNotFound
+
+
+def _with_legacy_status(queryset: QuerySet[Bench]) -> QuerySet[Bench]:
+    """The four-value bench status the dashboard contract shows (computed; resource-status-and-downtime.md)."""
+    return queryset.annotate(condition=condition_expression(Bench)).annotate(
+        legacy_status=legacy_bench_status_expression()
+    )
 
 
 def list_dashboard_benches(
@@ -97,6 +106,7 @@ def list_dashboard_benches(
         )
         .prefetch_related(active_bookings_prefetch, active_assignments_prefetch)
     )
+    queryset = _with_legacy_status(queryset)
 
     if actor is not None and getattr(actor, "is_authenticated", False):
         queryset = queryset.annotate(
@@ -122,7 +132,8 @@ def list_dashboard_benches(
         queryset = queryset.filter(bench_group_id=bench_group)
 
     if lifecycle_status is not None:
-        queryset = queryset.filter(lifecycle_status=lifecycle_status)
+        # Dashboard keeps the four-value bench status: out_of_service is an in-service bench with downtime.
+        queryset = queryset.filter(Q(legacy_status=lifecycle_status))
 
     if location is not None:
         queryset = queryset.filter(
@@ -219,15 +230,15 @@ def get_dashboard_summary(actor: Any = None) -> dict[str, Any]:
         ).count()
 
     lifecycle_distribution: dict[str, int] = {
-        choice[0]: 0 for choice in Bench.LIFECYCLE_STATUSES
+        choice[0]: 0 for choice in LEGACY_BENCH_STATUSES
     }
     lifecycle_rows = (
-        Bench.objects.filter(deleted_at__isnull=True)
-        .values("lifecycle_status")
+        _with_legacy_status(Bench.objects.filter(deleted_at__isnull=True))
+        .values("legacy_status")
         .annotate(total=Count("id"))
     )
     for row in lifecycle_rows:
-        status_key = row["lifecycle_status"]
+        status_key = row["legacy_status"]
         if status_key in lifecycle_distribution:
             lifecycle_distribution[status_key] = row["total"]
 
@@ -330,6 +341,7 @@ def get_dashboard_bench_detail(bench_id: int, actor: Any = None) -> Bench:
             active_assignments_prefetch,
         )
     )
+    queryset = _with_legacy_status(queryset)
 
     if actor is not None and getattr(actor, "is_authenticated", False):
         queryset = queryset.annotate(

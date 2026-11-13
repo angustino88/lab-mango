@@ -5388,7 +5388,25 @@
         "parameters": [
           {
             "in": "query",
+            "name": "activity_status",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
             "name": "bench_group_id",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "condition",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -5430,6 +5448,15 @@
           {
             "in": "query",
             "name": "id",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "lifecycle_status",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -5963,6 +5990,106 @@
           }
         },
         "summary": "Delete Benches by Bench ID"
+      }
+    },
+    "/api/labs/benches/{bench_id}/actions/change-lifecycle": {
+      "post": {
+        "operationId": "labs_benches_actions_change_lifecycle_create_by_bench_id",
+        "description": "Set planned, in_service or retired. Out of service is a downtime window (``/api/labs/downtimes``).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bench_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Benches"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchLifecycleWrite"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchLifecycleWrite"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchLifecycleWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchLifecycleChangeSerializersBenchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Change Lifecycle Benches by Bench ID"
       }
     },
     "/api/labs/benches/{bench_id}/actions/favorite": {
@@ -8551,6 +8678,391 @@
         },
         "x-owner": "equipment",
         "summary": "Get Departments Options"
+      }
+    },
+    "/api/labs/downtimes": {
+      "get": {
+        "operationId": "labs_downtimes_retrieve",
+        "description": "Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource_type",
+            "schema": {
+              "enum": [
+                "room",
+                "station",
+                "bench",
+                "equipment"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `room` - room\n* `station` - station\n* `bench` - bench\n* `equipment` - equipment"
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "enum": [
+                "scheduled",
+                "current",
+                "ended",
+                "cancelled"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `scheduled` - scheduled\n* `current` - current\n* `ended` - ended\n* `cancelled` - cancelled"
+          }
+        ],
+        "tags": [
+          "Downtime"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DowntimeListSerializersDowntimePaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Downtimes"
+      },
+      "post": {
+        "operationId": "labs_downtimes_create",
+        "description": "Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write.",
+        "tags": [
+          "Downtime"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DowntimeCreate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DowntimeCreate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DowntimeCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DowntimeCreateSerializersDowntimeDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Downtimes"
+      }
+    },
+    "/api/labs/downtimes/{downtime_id}": {
+      "get": {
+        "operationId": "labs_downtimes_retrieve_by_downtime_id",
+        "description": "Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "downtime_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Downtime"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DowntimeDetailSerializersDowntimeDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Downtimes by Downtime ID"
+      }
+    },
+    "/api/labs/downtimes/{downtime_id}/actions/cancel": {
+      "post": {
+        "operationId": "labs_downtimes_actions_cancel_create_by_downtime_id",
+        "description": "Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "downtime_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Downtime"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DowntimeCancelSerializersDowntimeDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Cancel Downtimes by Downtime ID"
+      }
+    },
+    "/api/labs/downtimes/{downtime_id}/actions/end": {
+      "post": {
+        "operationId": "labs_downtimes_actions_end_create_by_downtime_id",
+        "description": "Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "downtime_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Downtime"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DowntimeEndSerializersDowntimeDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "End Downtimes by Downtime ID"
       }
     },
     "/api/labs/equipment": {
@@ -25309,6 +25821,24 @@
         "parameters": [
           {
             "in": "query",
+            "name": "access_policy",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "activity_status",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
             "name": "building_id",
             "schema": {
               "type": "string",
@@ -25319,6 +25849,15 @@
           {
             "in": "query",
             "name": "city_id",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "condition",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -25362,6 +25901,15 @@
           {
             "in": "query",
             "name": "id",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "lifecycle_status",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -25981,6 +26529,105 @@
           }
         },
         "summary": "Delete Rooms by Room ID"
+      }
+    },
+    "/api/labs/rooms/{room_id}/actions/change-lifecycle": {
+      "post": {
+        "operationId": "labs_rooms_actions_change_lifecycle_create_by_room_id",
+        "description": "Set ``lifecycle_status`` and/or ``access_policy``. Downtime is recorded at ``/api/labs/downtimes``.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "room_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Rooms"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomLifecycleWrite"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomLifecycleWrite"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomLifecycleWrite"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomLifecycleChangeSerializersRoomDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Change Lifecycle Rooms by Room ID"
       }
     },
     "/api/labs/rooms/{room_id}/actions/change-status": {
@@ -27394,6 +28041,33 @@
         "parameters": [
           {
             "in": "query",
+            "name": "access_policy",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "activity_status",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "condition",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
             "name": "created_at_after",
             "schema": {
               "type": "string",
@@ -27420,6 +28094,15 @@
           {
             "in": "query",
             "name": "id",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated values; OR within this filter."
+          },
+          {
+            "in": "query",
+            "name": "lifecycle_status",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -28057,6 +28740,105 @@
           }
         },
         "summary": "Delete Stations by Station ID"
+      }
+    },
+    "/api/labs/stations/{station_id}/actions/change-lifecycle": {
+      "post": {
+        "operationId": "labs_stations_actions_change_lifecycle_create_by_station_id",
+        "description": "Set ``lifecycle_status`` and/or ``access_policy``. Downtime is recorded at ``/api/labs/downtimes``.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "station_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Stations"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StationLifecycleWrite"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/StationLifecycleWrite"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/StationLifecycleWrite"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationLifecycleChangeSerializersStationDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Change Lifecycle Stations by Station ID"
       }
     },
     "/api/labs/stations/{station_id}/actions/change-status": {
@@ -36376,6 +37158,14 @@
           "data"
         ]
       },
+      "AccessPolicyEnum": {
+        "enum": [
+          "open",
+          "restricted"
+        ],
+        "type": "string",
+        "description": "* `open` - Open\n* `restricted` - Restricted"
+      },
       "AccessTypeEnum": {
         "enum": [
           "booked",
@@ -37772,11 +38562,11 @@
           },
           "status": {
             "type": "string",
-            "description": "Equipment lifecycle_state, bench lifecycle_status, or the newest status record of a station, room or license; empty when none exists."
+            "description": "Equipment lifecycle_state; bench, station or room lifecycle_status; or the newest status record of a license; empty when none exists."
           },
           "condition": {
             "type": "string",
-            "description": "Equipment only; empty for other types."
+            "description": "Computed from downtime (operational, in_maintenance, out_of_service); empty for licenses."
           },
           "location": {
             "type": "string",
@@ -38008,6 +38798,39 @@
               }
             ],
             "nullable": true,
+            "readOnly": true,
+            "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
+          },
+          "lifecycle_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "condition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsAvailability"
+              }
+            ],
+            "readOnly": true
+          },
+          "activity_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
             "readOnly": true
           },
           "criticality": {
@@ -38078,8 +38901,11 @@
           }
         },
         "required": [
+          "activity_status",
+          "availability",
           "bench_group",
           "commissioning_date",
+          "condition",
           "created_at",
           "criticality",
           "department",
@@ -38092,6 +38918,7 @@
           "image",
           "is_favorite",
           "last_inspected_at",
+          "lifecycle_status",
           "name",
           "next_inspection_due_at",
           "owner",
@@ -38973,6 +39800,30 @@
           "data"
         ]
       },
+      "BenchLifecycleChangeSerializersBenchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Bench"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "BenchLifecycleWrite": {
+        "type": "object",
+        "description": "Preserve the benches module's established strict-write helper.",
+        "properties": {
+          "lifecycle_status": {
+            "$ref": "#/components/schemas/LifecycleStatusEnum"
+          }
+        },
+        "required": [
+          "lifecycle_status"
+        ]
+      },
       "BenchListSerializersBenchPaginatedResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
@@ -39105,12 +39956,21 @@
               "$ref": "#/components/schemas/LabsChoiceReference"
             },
             "readOnly": true
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabsChoiceReference"
+            },
+            "readOnly": true,
+            "description": "Deprecated four-value status."
           }
         },
         "required": [
           "groups",
           "lifecycle_statuses",
           "stations",
+          "statuses",
           "types"
         ]
       },
@@ -39329,6 +40189,39 @@
               }
             ],
             "nullable": true,
+            "readOnly": true,
+            "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
+          },
+          "lifecycle_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "condition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsAvailability"
+              }
+            ],
+            "readOnly": true
+          },
+          "activity_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
             "readOnly": true
           },
           "criticality": {
@@ -39399,8 +40292,11 @@
           }
         },
         "required": [
+          "activity_status",
+          "availability",
           "bench_group",
           "commissioning_date",
+          "condition",
           "created_at",
           "criticality",
           "department",
@@ -39413,6 +40309,7 @@
           "image",
           "is_favorite",
           "last_inspected_at",
+          "lifecycle_status",
           "name",
           "next_inspection_due_at",
           "owner",
@@ -39503,7 +40400,7 @@
       },
       "BenchStatusSummary": {
         "type": "object",
-        "description": "Lifecycle status, not booking status or live activity.",
+        "description": "The deprecated four-value status (lifecycle, with out_of_service from downtime), not bookings.",
         "properties": {
           "total_count": {
             "type": "integer",
@@ -42636,6 +43533,323 @@
         "required": [
           "pagination"
         ]
+      },
+      "Downtime": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "resource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsDowntimeResource"
+              }
+            ],
+            "readOnly": true
+          },
+          "condition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DowntimeStateEnum"
+              }
+            ],
+            "readOnly": true
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Empty while the end is not known."
+          },
+          "cancelled_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "readOnly": true
+          },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsResourceOwner"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "ended_by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsResourceOwner"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "actor",
+          "cancelled_at",
+          "condition",
+          "created_at",
+          "ended_by",
+          "ends_at",
+          "id",
+          "kind",
+          "notes",
+          "reason",
+          "resource",
+          "starts_at",
+          "state",
+          "updated_at"
+        ]
+      },
+      "DowntimeCancelSerializersDowntimeDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Downtime"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "DowntimeCreate": {
+        "type": "object",
+        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+        "properties": {
+          "resource_type": {
+            "$ref": "#/components/schemas/DowntimeResourceTypeEnum"
+          },
+          "resource_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "condition": {
+            "$ref": "#/components/schemas/DowntimeCreateConditionEnum"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReasonEnum"
+              }
+            ],
+            "default": "other"
+          },
+          "kind": {
+            "nullable": true,
+            "description": "Defaults to planned for a window that starts later, otherwise unplanned.\n\n* `planned` - Planned\n* `unplanned` - Unplanned",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/KindEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Default: now."
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Empty while the end is not known."
+          },
+          "notes": {
+            "type": "string",
+            "default": "",
+            "maxLength": 2000
+          },
+          "cancel_conflicting_bookings": {
+            "type": "boolean",
+            "default": false,
+            "description": "Cancel reserved and in-progress bookings that overlap the window, in the same transaction."
+          }
+        },
+        "required": [
+          "condition",
+          "resource_id",
+          "resource_type"
+        ]
+      },
+      "DowntimeCreateConditionEnum": {
+        "enum": [
+          "in_maintenance",
+          "out_of_service"
+        ],
+        "type": "string",
+        "description": "* `in_maintenance` - In maintenance\n* `out_of_service` - Out of service"
+      },
+      "DowntimeCreateSerializersDowntimeDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Downtime"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "DowntimeDetailSerializersDowntimeDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Downtime"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "DowntimeEndSerializersDowntimeDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Downtime"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "DowntimeListSerializersDowntimePaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/DowntimeListSerializersDowntimePaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Downtime"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "DowntimeListSerializersDowntimePagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "DowntimeListSerializersDowntimePaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/DowntimeListSerializersDowntimePagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "DowntimeResourceTypeEnum": {
+        "enum": [
+          "room",
+          "station",
+          "bench",
+          "equipment"
+        ],
+        "type": "string",
+        "description": "* `room` - room\n* `station` - station\n* `bench` - bench\n* `equipment` - equipment"
+      },
+      "DowntimeStateEnum": {
+        "enum": [
+          "scheduled",
+          "current",
+          "ended",
+          "cancelled"
+        ],
+        "type": "string",
+        "description": "* `scheduled` - scheduled\n* `current` - current\n* `ended` - ended\n* `cancelled` - cancelled"
       },
       "DraftLineInput": {
         "type": "object",
@@ -48473,6 +49687,14 @@
         "type": "string",
         "description": "* `tpm` - TPM\n* `os_keystore` - OS keystore\n* `software` - Software key store"
       },
+      "KindEnum": {
+        "enum": [
+          "planned",
+          "unplanned"
+        ],
+        "type": "string",
+        "description": "* `planned` - Planned\n* `unplanned` - Unplanned"
+      },
       "LabCountAnalyticsResponse": {
         "type": "object",
         "description": "Schema-only envelope; create the proxy fresh to retain its explicit many=False.",
@@ -49002,6 +50224,69 @@
           "name"
         ]
       },
+      "LabsAvailability": {
+        "type": "object",
+        "description": "Computed ``availability``: problems pass down from room to station to bench (never stored).",
+        "properties": {
+          "value": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValueEnum"
+              }
+            ],
+            "readOnly": true
+          },
+          "blocked_by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsAvailabilitySource"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true,
+            "description": "The resource that blocks."
+          },
+          "condition": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Lifecycle status, or the downtime reason, of blocked_by."
+          }
+        },
+        "required": [
+          "blocked_by",
+          "condition",
+          "reason",
+          "value"
+        ]
+      },
+      "LabsAvailabilitySource": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "readOnly": true
+          },
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type"
+        ]
+      },
       "LabsChoiceReference": {
         "type": "object",
         "description": "Standard `{value, label}` representation for enum and lifecycle choices.",
@@ -49044,6 +50329,27 @@
           "x",
           "y",
           "z"
+        ]
+      },
+      "LabsDowntimeResource": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DowntimeResourceTypeEnum"
+              }
+            ],
+            "readOnly": true
+          },
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "type"
         ]
       },
       "LabsGroupReference": {
@@ -49349,6 +50655,19 @@
         "required": [
           "data"
         ]
+      },
+      "LegacyStationSlotStatusEnum": {
+        "enum": [
+          "available",
+          "in_service",
+          "maintenance",
+          "occupied",
+          "out_of_service",
+          "reserved",
+          "retired"
+        ],
+        "type": "string",
+        "description": "* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
       },
       "License": {
         "type": "object",
@@ -51206,6 +52525,15 @@
         "required": [
           "pagination"
         ]
+      },
+      "LifecycleStatusEnum": {
+        "enum": [
+          "planned",
+          "in_service",
+          "retired"
+        ],
+        "type": "string",
+        "description": "* `planned` - Planned\n* `in_service` - In service\n* `retired` - Retired"
       },
       "LinkResourceRequest": {
         "type": "object",
@@ -53430,9 +54758,18 @@
             "maxLength": 100
           },
           "is_active": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Deprecated: use service_status."
           },
           "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LegacyStationSlotStatusEnum"
+              }
+            ],
+            "description": "Deprecated: use service_status.\n\n* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
+          },
+          "service_status": {
             "$ref": "#/components/schemas/StationSlotStatusEnum"
           },
           "width_mm": {
@@ -55409,6 +56746,18 @@
           "team_id"
         ]
       },
+      "ReasonEnum": {
+        "enum": [
+          "maintenance",
+          "fault",
+          "calibration",
+          "safety_hold",
+          "renovation",
+          "other"
+        ],
+        "type": "string",
+        "description": "* `maintenance` - Maintenance\n* `fault` - Fault\n* `calibration` - Calibration\n* `safety_hold` - Safety hold\n* `renovation` - Renovation\n* `other` - Other"
+      },
       "RecordResourceAuditRequest": {
         "type": "object",
         "description": "Payload to record an audit on a specific resource.",
@@ -56025,7 +57374,7 @@
       },
       "Room": {
         "type": "object",
-        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
         "properties": {
           "id": {
             "type": "integer",
@@ -56186,6 +57535,47 @@
               }
             ],
             "nullable": true,
+            "readOnly": true,
+            "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
+          },
+          "lifecycle_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "access_policy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "condition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsAvailability"
+              }
+            ],
+            "readOnly": true
+          },
+          "activity_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
             "readOnly": true
           },
           "max_occupancy": {
@@ -56227,9 +57617,13 @@
           }
         },
         "required": [
+          "access_policy",
+          "activity_status",
           "area_m2",
+          "availability",
           "building",
           "city",
+          "condition",
           "cooling_capacity_w",
           "coordinate_unit",
           "country",
@@ -56245,6 +57639,7 @@
           "layout_columns",
           "layout_rows",
           "length_m",
+          "lifecycle_status",
           "location_path",
           "map_url",
           "max_occupancy",
@@ -56596,6 +57991,34 @@
           "pagination"
         ]
       },
+      "RoomLifecycleChangeSerializersRoomDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Room"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "RoomLifecycleWrite": {
+        "type": "object",
+        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+        "properties": {
+          "lifecycle_status": {
+            "$ref": "#/components/schemas/LifecycleStatusEnum"
+          },
+          "access_policy": {
+            "$ref": "#/components/schemas/AccessPolicyEnum"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
       "RoomListSerializersRoomPaginatedResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
@@ -56875,7 +58298,21 @@
                 "$ref": "#/components/schemas/LabsChoiceReference"
               }
             ],
+            "readOnly": true,
+            "description": "Deprecated: available, occupied, blocked or retired (occupied is computed)."
+          },
+          "service_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
             "readOnly": true
+          },
+          "occupied": {
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
           },
           "x_mm": {
             "type": "integer",
@@ -56942,10 +58379,12 @@
           "id",
           "is_accessible",
           "max_load_kg",
+          "occupied",
           "orientation_degrees",
           "power_capacity_w",
           "room",
           "row_index",
+          "service_status",
           "slot_code",
           "slot_type",
           "status",
@@ -57154,7 +58593,7 @@
       },
       "RoomStatusSummary": {
         "type": "object",
-        "description": "Recorded lifecycle state, distinct from operational configuration.",
+        "description": "The deprecated seven-value status, computed from lifecycle, condition, access and activity.",
         "properties": {
           "total_count": {
             "type": "integer",
@@ -57193,7 +58632,7 @@
       },
       "RoomStatusWrite": {
         "type": "object",
-        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+        "description": "Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set.",
         "properties": {
           "status": {
             "$ref": "#/components/schemas/RoomStatusEnum"
@@ -57903,7 +59342,7 @@
       },
       "Station": {
         "type": "object",
-        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
         "properties": {
           "id": {
             "type": "integer",
@@ -58063,6 +59502,47 @@
               }
             ],
             "nullable": true,
+            "readOnly": true,
+            "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
+          },
+          "lifecycle_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "access_policy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "condition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsAvailability"
+              }
+            ],
+            "readOnly": true
+          },
+          "activity_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
             "readOnly": true
           },
           "safety_classification": {
@@ -58116,11 +59596,15 @@
           }
         },
         "required": [
+          "access_policy",
           "active_bench_count",
+          "activity_status",
           "allocated_power_w",
+          "availability",
           "available_power_w",
           "available_slot_count",
           "bench_capacity",
+          "condition",
           "cooling_capacity_w",
           "created_at",
           "department",
@@ -58130,6 +59614,7 @@
           "id",
           "image",
           "label",
+          "lifecycle_status",
           "location_path",
           "max_concurrent_users",
           "max_load_kg",
@@ -58393,6 +59878,34 @@
           "pagination"
         ]
       },
+      "StationLifecycleChangeSerializersStationDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Station"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "StationLifecycleWrite": {
+        "type": "object",
+        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+        "properties": {
+          "lifecycle_status": {
+            "$ref": "#/components/schemas/LifecycleStatusEnum"
+          },
+          "access_policy": {
+            "$ref": "#/components/schemas/AccessPolicyEnum"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
       "StationListSerializersStationPaginatedResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
@@ -58537,6 +60050,21 @@
             "items": {
               "$ref": "#/components/schemas/LabsChoiceReference"
             },
+            "readOnly": true,
+            "description": "Deprecated seven-value status."
+          },
+          "lifecycle_statuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabsChoiceReference"
+            },
+            "readOnly": true
+          },
+          "access_policies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabsChoiceReference"
+            },
             "readOnly": true
           },
           "slot_statuses": {
@@ -58544,11 +60072,14 @@
             "items": {
               "$ref": "#/components/schemas/LabsChoiceReference"
             },
-            "readOnly": true
+            "readOnly": true,
+            "description": "Slot service_status values."
           }
         },
         "required": [
+          "access_policies",
           "bench_types",
+          "lifecycle_statuses",
           "rooms",
           "slot_statuses",
           "statuses",
@@ -58605,9 +60136,19 @@
           },
           "is_active": {
             "type": "boolean",
-            "readOnly": true
+            "readOnly": true,
+            "description": "Deprecated: service_status is in_service."
           },
           "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true,
+            "description": "Deprecated: available, occupied, out_of_service or retired (occupied is computed)."
+          },
+          "service_status": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/LabsChoiceReference"
@@ -58655,6 +60196,11 @@
             },
             "readOnly": true
           },
+          "occupied": {
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -58676,8 +60222,10 @@
           "label",
           "max_load_kg",
           "network_port_count",
+          "occupied",
           "position_index",
           "power_capacity_w",
+          "service_status",
           "slot_code",
           "station",
           "status",
@@ -58704,9 +60252,18 @@
             "maxLength": 100
           },
           "is_active": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Deprecated: use service_status."
           },
           "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LegacyStationSlotStatusEnum"
+              }
+            ],
+            "description": "Deprecated: use service_status.\n\n* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
+          },
+          "service_status": {
             "$ref": "#/components/schemas/StationSlotStatusEnum"
           },
           "width_mm": {
@@ -58862,15 +60419,12 @@
       },
       "StationSlotStatusEnum": {
         "enum": [
-          "available",
-          "occupied",
-          "reserved",
-          "maintenance",
+          "in_service",
           "out_of_service",
           "retired"
         ],
         "type": "string",
-        "description": "* `available` - Available\n* `occupied` - Occupied\n* `reserved` - Reserved\n* `maintenance` - Maintenance\n* `out_of_service` - Out of service\n* `retired` - Retired"
+        "description": "* `in_service` - In service\n* `out_of_service` - Out of service\n* `retired` - Retired"
       },
       "StationSlotUpdate": {
         "type": "object",
@@ -58890,9 +60444,18 @@
             "maxLength": 100
           },
           "is_active": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Deprecated: use service_status."
           },
           "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LegacyStationSlotStatusEnum"
+              }
+            ],
+            "description": "Deprecated: use service_status.\n\n* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
+          },
+          "service_status": {
             "$ref": "#/components/schemas/StationSlotStatusEnum"
           },
           "width_mm": {
@@ -59017,7 +60580,7 @@
       },
       "StationStatusSummary": {
         "type": "object",
-        "description": "Recorded lifecycle state, distinct from operational configuration.",
+        "description": "The deprecated seven-value status, computed from lifecycle, condition, access and activity.",
         "properties": {
           "total_count": {
             "type": "integer",
@@ -59056,7 +60619,7 @@
       },
       "StationStatusWrite": {
         "type": "object",
-        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+        "description": "Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set.",
         "properties": {
           "status": {
             "$ref": "#/components/schemas/RoomStatusEnum"
@@ -61943,6 +63506,14 @@
           "pagination"
         ]
       },
+      "ValueEnum": {
+        "enum": [
+          "available",
+          "unavailable"
+        ],
+        "type": "string",
+        "description": "* `available` - available\n* `unavailable` - unavailable"
+      },
       "ValueTypeEnum": {
         "enum": [
           "text",
@@ -62084,6 +63655,10 @@
     {
       "name": "Dashboard",
       "description": "Dashboard endpoints"
+    },
+    {
+      "name": "Downtime",
+      "description": "Downtime endpoints"
     },
     {
       "name": "Equipment",

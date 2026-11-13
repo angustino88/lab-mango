@@ -28,6 +28,7 @@ from .serializers import (
     BenchEquipmentListQuerySerializer,
     BenchFavoriteSerializer,
     BenchGroupSerializer,
+    BenchLifecycleWriteSerializer,
     BenchListQuerySerializer,
     BenchPlacementSerializer,
     BenchReferenceDataSerializer,
@@ -121,6 +122,15 @@ class BenchPlaceAPIView(BenchAPIView):
 
     def handle_post(self, request, bench_id, **kwargs):
         return self._write(services.place_bench, lookup={"bench_id": bench_id}, project=True)
+
+
+class BenchLifecycleAPIView(BenchAPIView):
+    """Set planned, in_service or retired. Out of service is a downtime window (``/api/labs/downtimes``)."""
+
+    post_contract = operation("BenchLifecycleChange", BenchSerializer, request=BenchLifecycleWriteSerializer)
+
+    def handle_post(self, request, bench_id, **kwargs):
+        return self._write(services.change_bench_lifecycle, lookup={"bench_id": bench_id}, project=True)
 
 
 class BenchFavoriteAPIView(BenchAPIView):

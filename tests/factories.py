@@ -28,14 +28,17 @@ from core.labs.models import (
     EquipmentEvent,
     EquipmentEventAxis,
     EquipmentKind,
+    EquipmentLifecycleState,
     LaboratoryVisitEvent,
     LabProject,
     LabSessionLog,
     MonitoringEvent,
     ProjectUsageObservation,
+    ResourceDowntime,
     StorageQuotaMeasurement,
     VisitorVolumeObservation,
 )
+from core.labs.models.resource.base.generic_links import resource_content_type
 from core.labs.models.resource.equipment.computing import ComputingProfile, TechnicalUser
 from core.users.models import URSGroup, User
 
@@ -139,15 +142,36 @@ class ComputingEquipmentFactory(factory.django.DjangoModelFactory):
 
 
 class EquipmentEventFactory(factory.django.DjangoModelFactory):
-    """A history row only. Also set the unit's column when the current state matters."""
+    """A lifecycle history row only. Also set the unit's column when the current state matters."""
 
     class Meta:
         model = EquipmentEvent
 
     equipment = factory.SubFactory(ComputingEquipmentFactory)
-    axis = EquipmentEventAxis.CONDITION
-    from_value = EquipmentCondition.OPERATIONAL
-    to_value = EquipmentCondition.OUT_OF_SERVICE
+    axis = EquipmentEventAxis.LIFECYCLE
+    from_value = EquipmentLifecycleState.IN_SERVICE
+    to_value = EquipmentLifecycleState.RETIRED
+
+
+def set_condition(resource, condition: str):
+    """Give ``resource`` a computed condition now by opening (or ending) a downtime window."""
+    ResourceDowntime.objects.end_current(resource)
+    if condition != EquipmentCondition.OPERATIONAL:
+        ResourceDowntime.objects.start_now(resource, condition=condition, reason="other")
+
+
+class ResourceDowntimeFactory(factory.django.DjangoModelFactory):
+    """A downtime window (condition source, RS2). Pass ``resource=`` with any room, station, bench or unit."""
+
+    class Meta:
+        model = ResourceDowntime
+        exclude = ("resource",)
+
+    resource = factory.SubFactory(ComputingEquipmentFactory)
+    resource_content_type = factory.LazyAttribute(lambda o: resource_content_type(o.resource))
+    resource_object_id = factory.LazyAttribute(lambda o: str(o.resource.pk))
+    condition = EquipmentCondition.OUT_OF_SERVICE
+    starts_at = factory.LazyFunction(timezone.now)
 
 
 class LabProjectFactory(factory.django.DjangoModelFactory):
@@ -366,6 +390,8 @@ __all__ = [
     "EquipmentCategoryFactory",
     "EquipmentKindFactory",
     "EquipmentEventFactory",
+    "ResourceDowntimeFactory",
+    "set_condition",
     "LabComputerFactory",
     "LabEquipmentFactory",
     "LabMonitoringFactory",

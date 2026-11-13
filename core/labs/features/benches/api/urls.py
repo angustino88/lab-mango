@@ -13,6 +13,11 @@ urlpatterns = [
     path("benches/<int:bench_id>", views.BenchDetailAPIView.as_view(), name="bench-detail"),
     path("benches/<int:bench_id>/equipment", views.BenchEquipmentListAPIView.as_view(), name="bench-equipment-list"),
     path("benches/<int:bench_id>/actions/place", views.BenchPlaceAPIView.as_view(), name="bench-action-place"),
+    path(
+        "benches/<int:bench_id>/actions/change-lifecycle",
+        views.BenchLifecycleAPIView.as_view(),
+        name="bench-action-change-lifecycle",
+    ),
     path("benches/<int:bench_id>/actions/favorite", views.BenchFavoriteAPIView.as_view(), name="bench-action-favorite"),
     path("benches/<int:bench_id>/actions/unfavorite", views.BenchUnfavoriteActionAPIView.as_view(), name="bench-action-unfavorite"),
     path("bench-groups", views.BenchGroupListCreateAPIView.as_view(), name="bench-group-list-create"),

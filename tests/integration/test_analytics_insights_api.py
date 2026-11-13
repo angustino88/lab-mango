@@ -13,9 +13,9 @@ from tests.factories import (
     BenchBookingFactory,
     BenchFactory,
     ComputingEquipmentFactory,
-    EquipmentEventFactory,
     LaboratoryVisitEventFactory,
     LabSessionLogFactory,
+    ResourceDowntimeFactory,
     UserFactory,
     grant_labs_role,
 )
@@ -157,15 +157,9 @@ class TestEquipmentAvailability:
         equipment = ComputingEquipmentFactory()
         # Available for the first quarter of the window, then broken for the rest.
         quarter = (WINDOW_END - WINDOW_START) / 4
-        Equipment.objects.filter(pk=equipment.pk).update(
-            created=WINDOW_START - timedelta(hours=1), condition="out_of_service"
-        )
-        EquipmentEventFactory(
-            equipment=equipment,
-            from_value="operational",
-            to_value="out_of_service",
-            occurred_at=WINDOW_START + quarter,
-        )
+        Equipment.objects.filter(pk=equipment.pk).update(created=WINDOW_START - timedelta(hours=1))
+        # Condition history is the downtime window (resource-status-and-downtime.md), still open now.
+        ResourceDowntimeFactory(resource=equipment, starts_at=WINDOW_START + quarter)
 
         data = auth_client.get(f"{EQUIPMENT_AVAILABILITY}?{QUERY}").json()["data"]
 
