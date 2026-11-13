@@ -46,7 +46,7 @@ path for nodes, no idempotency, no history aggregation, no retention, and no rea
 - F1 A node measures one *scope*: a room or a station. A scope may have several nodes.
 - F2 Nodes push samples with `observed_at`, any subset of `temperature_c`, `humidity_percent`, `power_w`.
 - F3 Operators see the latest value per scope, history over a time window, and live updates.
-- F4 Operators enroll, bind, rebind, revoke nodes. A node never chooses its scope.
+- F4 Operators enroll, bind, rebind, revoke nodes and configure RS485 channels. A node never chooses its scope.
 - F5 Node connectivity (online/stale/offline) is visible.
 
 **Quality attributes (targets to confirm, see §10)**
@@ -58,21 +58,46 @@ path for nodes, no idempotency, no history aggregation, no retention, and no rea
 **Out of scope for v1**: threshold alerts, energy billing / expense linkage, MQTT transport, control
 commands to nodes. §9 shows where each attaches later.
 
+### 2.1 Field topology (stated by owner 2026-11-13)
+
+```mermaid
+flowchart LR
+  subgraph Station A
+    S1[RS485 sensors<br/>Modbus RTU: power meter,<br/>temp/humidity probe] -- RS485 --> N1[Station node]
+  end
+  subgraph Station B
+    S2[RS485 sensors] -- RS485 --> N2[Station node]
+  end
+  N1 -- Wi-Fi --> M[Master node<br/>one per room]
+  N2 -- Wi-Fi --> M
+  MS[Room sensors on master<br/>optional] --> M
+  M -- "signed HTTPS (only device<br/>that talks to the server)" --> API[Lab Mango backend]
+```
+
+Consequences for the design:
+- Only the **master node** holds a server credential (`AgentIdentity`). Station nodes never reach the server.
+- The master is trusted to speak for **its room only**. It may forward data only from station nodes that the
+  server has bound to stations in that room.
+- A station node is identified by a factory **device UID** (for example its MAC or chip ID). The server, not
+  the firmware, decides which station that UID belongs to, so moving or swapping a node needs no reflash.
+- RS485 sensors are **channels** of a station node: a Modbus slave address plus a sensor profile (register
+  map). Their configuration is server-defined and pulled by the master.
+
 ---
 
 ## 3. Key decisions
 
-### D1 Node identity: reuse `core.agents` by registering each node as Equipment (recommended)
+### D1 Device identity: master = signed agent; station node = registered device behind it (recommended)
 
 | Option | For | Against |
 |---|---|---|
-| **A. Node = `Equipment` in a new `environment_sensor` category; reuse `AgentIdentity` unchanged** (recommended) | No change to agents schema; reuses enrollment, Ed25519 signing, revoke, decommission, throttling, audit. Inventory, lifecycle, procurement, expense of sensors come free. | Each sensor is an inventory row (acceptable: they are physical assets). |
-| B. Generalize `AgentIdentity.equipment` to a polymorphic subject | One identity model for every device kind | Migration on a security-critical table and constraint `agent_one_live_per_equipment`; changes `core.agents` contracts |
-| C. Separate `TelemetryNode` identity with HMAC shared secret | Simpler firmware | Second device-auth scheme to secure and maintain; shared secrets stored server-side |
+| **A. Master and station nodes are `Equipment` (category `environment_gateway` / `environment_node`). Only the master gets an `AgentIdentity`. Station nodes are `TelemetryDevice` rows keyed by a unique `device_uid`.** (recommended) | No change to `core.agents`; one credential per room; inventory/lifecycle/procurement of nodes come free; swapping a node is a server-side rebind | Server trusts the master to report honestly for its room's nodes (bounded by room scope) |
+| B. Every station node gets its own `AgentIdentity` and the master relays signed envelopes | End-to-end proof per node | Ed25519 + clock + key storage on every node; master can't batch-sign; much more firmware |
+| C. Station nodes are not modeled; master reports "station id" directly | Simplest | Firmware decides the scope (breaks F4); rewiring needs reflash; no per-node health |
 
-Constraint for option A: firmware must sign with Ed25519 (supported on ESP32-class MCUs via libsodium / mbedTLS
-ports; **not verified** on the target hardware). If the hardware cannot, option C becomes the fallback and
-needs its own security review.
+Constraint: the master signs with Ed25519 (ESP32-class MCUs support it via libsodium / mbedTLS;
+**not verified** on the target hardware). Station-node ↔ master trust on Wi-Fi is a firmware concern;
+the backend stores each node's key fingerprint so the master can enforce it (§5.0, Q7).
 
 ### D2 Transport: signed HTTPS batch push now; MQTT later only if measured need
 
@@ -113,9 +138,9 @@ document during model-design).
 
 | Concept | Owner | Used through |
 |---|---|---|
-| `TelemetryBinding`, `TelemetrySample`, `TelemetryRollup`, `TelemetryLatest`, `TelemetryNodeHealth` | telemetry (new) | `telemetry/public.py`, `telemetry/contracts.py` |
+| `TelemetryDevice`, `GatewayRoomBinding`, `NodeStationBinding`, `SensorProfile`, `TelemetryChannel`, `TelemetrySample`, `TelemetryRollup`, `TelemetryLatest`, `TelemetryNodeHealth` | telemetry (new) | `telemetry/public.py`, `telemetry/contracts.py` |
 | Room, Station existence, view policy | locations | `core/labs/features/locations/public.py` |
-| Sensor equipment, `environment_sensor` category | equipment | `core/labs/features/equipment/public.py` |
+| Node/master equipment, `environment_gateway` / `environment_node` categories | equipment | `core/labs/features/equipment/public.py` |
 | Node identity, signature verification | `core.agents` | `core/agents/public.py` (`require_active_agent_identity`) |
 | WS channel publishing | `core.websocket` | `publish_service` (new `publish_telemetry_update`) |
 
@@ -125,9 +150,11 @@ outside `public.py`/`contracts.py`).
 
 ```mermaid
 flowchart LR
-  N[IoT node<br/>Equipment: environment_sensor] -- "signed HTTPS<br/>POST /agent/telemetry/samples/bulk" --> AG[core.agents<br/>signature auth]
+  SN[Station nodes<br/>RS485 sensors] -- Wi-Fi --> N[Master node<br/>one per room]
+  N -- "GET /agent/telemetry/config" --> AG
+  N -- "signed HTTPS<br/>POST /agent/telemetry/samples/bulk" --> AG[core.agents<br/>signature auth]
   AG --> CMD[telemetry.application<br/>record_telemetry_batch]
-  CMD -- resolve active binding --> B[(TelemetryBinding)]
+  CMD -- resolve room + station bindings --> B[(GatewayRoomBinding<br/>NodeStationBinding)]
   CMD -- INSERT ... ON CONFLICT DO NOTHING --> S[(TelemetrySample)]
   CMD -- conditional upsert --> L[(TelemetryLatest)]
   CMD -- on_commit --> P[publish_service<br/>Redis pub/sub]
@@ -144,31 +171,62 @@ flowchart LR
 
 ## 5. Proposed models
 
-### 5.1 `TelemetryBinding`: which node measures which scope, and when
+### 5.0 `TelemetryDevice`: the hardware identity of a master or station node
 
 | Field | Type | Notes |
 |---|---|---|
-| `node` | FK `labs.Equipment`, PROTECT | Must be category `environment_sensor` (checked in application; category is reference data) |
-| `room` | FK `labs.Room`, PROTECT, null | exactly one of room/station |
-| `station` | FK `labs.Station`, PROTECT, null | |
-| `valid_from` | datetime | |
-| `valid_to` | datetime, null | open = current |
-| `label` | char(100), blank | e.g. "rack inlet", "PDU A" |
-| audit | `TimeStampedModel`, `UserStampedModel` | |
+| `equipment` | OneToOne `labs.Equipment`, PROTECT, null | null while `discovered` (not yet claimed into inventory) |
+| `role` | char: `gateway` / `station_node` | |
+| `device_uid` | char(64), **unique** | factory ID: MAC or chip ID, normalized uppercase. `Equipment.mac_address` is not unique (`equipment.py:144`), so uniqueness lives here |
+| `key_fingerprint` | char(128), blank | node's local key, reported by master on discovery, confirmed at claim (QR label) |
+| `state` | `discovered` → `claimed` → `retired` | own state machine, not equipment lifecycle (rule 2) |
+| `reported_by` | FK `TelemetryDevice` (gateway), null | the master that last saw it |
+| `firmware_version`, `config_version_applied` | char, int | reported by master |
+| `first_seen_at`, `last_seen_at` | datetime | |
 
-DB constraints:
-- `CHECK ((room_id IS NULL) <> (station_id IS NULL))` — `telemetry_binding_one_scope`
-- `CHECK (valid_to IS NULL OR valid_to > valid_from)`
-- Exclusion constraint (btree_gist): `node WITH =, tstzrange(valid_from, valid_to) WITH &&` — a node has
-  at most one scope at any instant. `btree_gist` is already installed by `core/labs/migrations/0001_initial.py`.
+DB: `CHECK (state = 'discovered' OR equipment_id IS NOT NULL)`.
+
+### 5.1 Bindings: master → room, station node → station
+
+Two tables with the same shape, so each has real foreign keys and its own constraints.
+
+`GatewayRoomBinding`: `gateway` (FK `TelemetryDevice`), `room` (FK `labs.Room`), `valid_from`, `valid_to`.
+- Exclusion `gateway WITH =, tstzrange(valid_from, valid_to) WITH &&` — a master serves one room at a time.
+- Exclusion `room WITH =, tstzrange(valid_from, valid_to) WITH &&` — **one master per room** at a time.
+
+`NodeStationBinding`: `node` (FK `TelemetryDevice`), `station` (FK `labs.Station`), `label`, `valid_from`, `valid_to`.
+- Exclusion on `node` range — a node is on one station at a time.
+- Exclusion on `station` range — one node per station (owner's topology; relax if a station gets two, Q8).
+- Application check `station.room == gateway's room` when binding and at ingest (a cross-table rule
+  PostgreSQL can't express as a constraint; guarded by `select_for_update` on the gateway binding).
+
+Room-level sensors wired to the master itself are channels of the gateway device, scoped to the room.
+
+All exclusion constraints use `btree_gist`, already installed by `core/labs/migrations/0001_initial.py`.
+Common: `CHECK (valid_to IS NULL OR valid_to > valid_from)`; audit via `TimeStampedModel`, `UserStampedModel`.
+
+### 5.1b `SensorProfile` and `TelemetryChannel`: RS485 configuration
+
+`SensorProfile` (reference data, staff-managed): `key` (e.g. `eastron_sdm120`, `sht30_modbus`), `name`,
+`register_map` JSON (per metric: function code, register, word count, data type, scale, unit), `baud_rate`,
+`parity`, `stop_bits`. Validated against a JSON schema on write.
+
+`TelemetryChannel`: `device` (FK `TelemetryDevice`), `bus_address` (1–247, Modbus slave ID), `profile`
+(FK `SensorProfile`), `metric` (`temperature_c` / `humidity_percent` / `power_w`), `enabled`.
+- `UNIQUE (device, bus_address, metric)`; `CHECK (bus_address BETWEEN 1 AND 247)`.
+- One device's channels on the same bus must share serial settings (application check at config build).
+
+`config_version` (int, on the gateway's `TelemetryDevice`) increments in the same transaction as any change to
+that room's bindings or channels (`select_for_update` on the gateway row), so the master knows when to re-pull.
 
 ### 5.2 `TelemetrySample`: raw, append-only
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | BigAutoField | |
-| `node` | FK `labs.Equipment`, PROTECT | |
-| `binding` | FK `TelemetryBinding`, PROTECT | scope resolved server-side at `observed_at` |
+| `node` | FK `TelemetryDevice`, PROTECT | station node, or the gateway for room sensors |
+| `gateway` | FK `TelemetryDevice`, PROTECT | master that forwarded it |
+| `node_binding` | FK `NodeStationBinding`, null | scope resolved server-side at `observed_at`; null for room sensors |
 | `room` | FK `labs.Room`, null | denormalized from binding for indexed reads |
 | `station` | FK `labs.Station`, null | denormalized from binding |
 | `sample_id` | UUID | generated by node; idempotency key |
@@ -220,27 +278,57 @@ All operator responses use the envelope and error rules in `docs/api/response-st
 
 ### 6.1 Device ingest (signed, `core.agents` auth)
 
-`POST /agent/telemetry/samples/bulk` — BLK-1/2/3, partial mode, max 500 operations, max 256 KiB body.
+Only the master calls these. Its identity comes from the signature; the body never carries a room or station id.
+
+**Config pull** — `GET /agent/telemetry/config` with `If-None-Match: "<config_version>"` → `304` or `200`:
+
+```json
+{"data": {
+  "config_version": 17, "room_id": 3, "push_interval_s": 10,
+  "nodes": [
+    {"device_uid": "A4:CF:12:9B:00:21", "key_fingerprint": "…", "station_label": "Station A",
+     "channels": [
+       {"bus_address": 1, "metric": "power_w", "profile": "eastron_sdm120"},
+       {"bus_address": 2, "metric": "temperature_c", "profile": "sht30_modbus"},
+       {"bus_address": 2, "metric": "humidity_percent", "profile": "sht30_modbus"}]}],
+  "gateway_channels": [],
+  "profiles": {"eastron_sdm120": {"baud_rate": 9600, "parity": "N", "register_map": {…}}}
+}}
+```
+
+The master pushes each node's channel list to that node over Wi-Fi. Nodes not in `nodes` are ignored by
+the master except for discovery reports. The config never contains server credentials. The master polls
+every 60 s and also when an ingest response carries a newer `config_version`.
+
+**Discovery** — `POST /agent/telemetry/discoveries` `{"devices": [{"device_uid", "key_fingerprint",
+"firmware_version", "rs485_scan": [1, 2]}]}`: idempotent upsert of `discovered` devices (`UNIQUE device_uid`).
+A UID already claimed by another room's gateway is recorded but not reassigned (operator sees a conflict).
+
+**Ingest** — `POST /agent/telemetry/samples/bulk` — BLK-1/2/3, partial mode, max 500 operations, max 256 KiB body.
 
 ```json
 {
   "mode": "partial",
   "operations": [
-    {"data": {"sample_id": "6f1c…", "observed_at": "2026-11-13T09:00:10Z",
+    {"data": {"device_uid": "A4:CF:12:9B:00:21", "sample_id": "6f1c…",
+              "observed_at": "2026-11-13T09:00:10Z", "config_version": 17,
               "temperature_c": "22.40", "humidity_percent": "41.0", "power_w": "1830.5"}}
   ]
 }
 ```
 
-`200` with per-item result in `data`: `accepted` | `duplicate` | `rejected` (+ ERR-1 error object).
-`Idempotency-Key` header replays the original response for the whole batch. Node identity comes only from the
-signature; the body carries no node id, room or station.
+`device_uid` omitted = the master's own room sensors. `sample_id` is generated where the reading is taken
+(station node) so a retry from node → master → server stays deduplicated end to end.
+`200` with per-item result in `data`: `accepted` | `duplicate` | `rejected` (+ ERR-1 error object), and the
+current `config_version`. `Idempotency-Key` header replays the original response for the whole batch.
 
 Validation and rejection:
 - `observed_at` more than 2 min in the future, or older than raw retention → `rejected` (`observed_at_out_of_range`).
-- No active binding covering `observed_at` → `rejected` (`node_not_bound`). The node keeps it for retry
-  per `docs/agent-platform/device-design.md` §5.
+- Unknown/unclaimed `device_uid`, or node not bound to a station in **this master's room** at `observed_at`
+  → `rejected` (`node_not_bound`). Never silently re-attributed.
+- Master with no active room binding → `409` for the whole batch (`gateway_not_bound`).
 - Revoked / decommissioned identity → `401` for the whole request (existing behavior).
+- The master buffers rejected-retryable and unsent samples per `docs/agent-platform/device-design.md` §5.
 
 ### 6.2 Operator read
 
@@ -251,15 +339,53 @@ Validation and rejection:
 | `GET /api/labs/rooms/{room_id}/telemetry?from=&to=&resolution=raw\|1m\|1h&metrics=` | history series | raw ≤ 24 h, 1m ≤ 31 d, 1h ≤ 2 y; else `422` |
 | `GET /api/labs/stations/{station_id}/telemetry?…` | same for stations | same |
 
-### 6.3 Operator write (node binding)
+### 6.3 Operator write: commissioning and configuration
 
 | Method and path | Purpose |
 |---|---|
-| `GET /api/labs/telemetry/nodes` | sensor nodes with binding and connectivity |
-| `POST /api/labs/telemetry/nodes/{equipment_id}/bindings` | bind to room or station (ends the current binding in the same transaction) |
-| `POST /api/labs/telemetry/bindings/{id}/actions/end` | end binding |
+| `GET /api/labs/telemetry/devices?state=discovered&room_id=` | devices with state, binding, connectivity, config version applied |
+| `POST /api/labs/telemetry/gateways/{device_id}/actions/bind-room` | bind master to a room (ends its previous binding) |
+| `POST /api/labs/telemetry/devices/{device_id}/actions/claim` | `discovered` → `claimed`: confirm fingerprint, create or link Equipment |
+| `POST /api/labs/telemetry/devices/{device_id}/actions/bind-station` | bind station node to a station in the gateway's room (ends previous binding) |
+| `POST /api/labs/telemetry/devices/{device_id}/actions/unbind` | end the current binding (node removed or broken) |
+| `GET/POST/PATCH/DELETE /api/labs/telemetry/devices/{device_id}/channels` | RS485 channels |
+| `GET/POST /api/labs/telemetry/sensor-profiles` | register-map reference data |
 
-Enrollment itself stays on the existing `POST /api/agents`, `/enrollment-grants`, `/agent/enrollments`.
+Master enrollment itself stays on the existing `POST /api/agents`, `/enrollment-grants`, `/agent/enrollments`.
+
+### 6.5 Commissioning flow (how a station gets its node)
+
+```mermaid
+sequenceDiagram
+  actor Tech as Lab staff
+  participant UI as Lab Mango UI
+  participant API as Backend
+  participant M as Master node (room)
+  participant N as Station node
+  Note over Tech,M: Once per room
+  Tech->>UI: Register master as Equipment, create enrollment grant
+  Tech->>M: Enter grant code (setup AP / BLE)
+  M->>API: POST /agent/enrollments (existing)
+  Tech->>UI: Bind master to Room 3
+  Note over Tech,N: Once per station
+  Tech->>N: Wire RS485 sensors, provision Wi-Fi to master's SSID
+  N->>M: Hello (device_uid, key fingerprint, RS485 scan)
+  M->>API: POST /agent/telemetry/discoveries
+  Tech->>UI: Scan node QR label at Station A
+  UI->>API: claim (fingerprint must match) + bind-station(Station A)
+  API->>API: config_version 16 → 17
+  Tech->>UI: Pick sensor profiles per bus address (prefilled from RS485 scan)
+  M->>API: GET /agent/telemetry/config (If-None-Match 16)
+  API-->>M: 200 config v17
+  M->>N: Channel list
+  N->>M: Samples (sample_id per reading)
+  M->>API: POST /agent/telemetry/samples/bulk
+  API-->>UI: ws/telemetry/stations/{id} live values
+```
+
+Swapping a broken node: unbind old → new node is discovered → claim + bind-station. History stays on the
+station because samples carry the binding. Moving a station to another room requires rebinding its node under
+the new room's master (the old master's samples for it start being rejected).
 
 ### 6.4 Real-time push
 
@@ -288,7 +414,11 @@ best-effort; on (re)connect the client calls `…/telemetry/latest` (documented 
 | Connectivity task | conditional update `WHERE connectivity = old AND last_sample_at = seen` | Yes |
 
 Authorization (deny-by-default, object-scoped):
-- Device writes: signed identity → its node → its active binding. A node can only write its own bound scope.
+- Device writes: signed master identity → its `TelemetryDevice` → active room binding → only nodes bound to
+  stations in that room. A compromised master can at worst forge data for its own room.
+- Connectivity has two layers: master (from agent heartbeat) and each node (last sample via the master).
+  When the master is offline, its nodes are `unknown`, not `offline` (matches the repo rule that missing
+  telemetry is unknown, `core/labs/features/equipment/queries/summaries.py:19`).
 - Operator reads: the caller must be allowed to view the room/station, via a locations policy exposed in
   `locations/public.py`. **No such object-level policy exists today** (drift table §1), so the owner must
   decide the rule (Q3). WS handshakes apply the same check, not "exists".
@@ -335,3 +465,7 @@ PostgreSQL ≥ 15 (CI uses 16).
 | Q4 | Push interval, raw retention, rollup retention | 10 s; 30 d; 1m for 90 d, 1h for 2 y |
 | Q5 | Is `power_w` per node real power at the PDU/meter, and is energy (kWh) needed for expenses? | `power_w` only in v1 |
 | Q6 | Fix the drift items in §1 (esp. room observation write authz) as separate tasks? | Yes, separate T2 task for authz |
+| Q7 | Node ↔ master link security: dedicated per-room WPA2 SSID only, or also a per-node key checked by the master against `key_fingerprint`? | Both |
+| Q8 | Exactly one node per station, or allow several (e.g. two PDUs)? | One; drop the station exclusion if needed |
+| Q9 | Which RS485 sensor models are used (needed to write the first `SensorProfile` register maps)? | Owner to list |
+| Q10 | Should RS485 config live on the server (pulled by master) or stay in firmware? | Server, so swaps need no reflash |
