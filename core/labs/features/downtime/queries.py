@@ -28,7 +28,7 @@ def state_of(window: ResourceDowntime) -> str:
 
 
 def list_downtimes(*, resource_type=None, resource_id=None, state=None) -> QuerySet[ResourceDowntime]:
-    queryset = ResourceDowntime.objects.select_related("resource_content_type", "creator", "ended_by")
+    queryset = ResourceDowntime.objects.get_queryset().select_related("resource_content_type", "creator", "ended_by")
     if resource_type is not None:
         model = RESOURCE_MODELS[resource_type]
         queryset = queryset.filter(

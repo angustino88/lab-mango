@@ -5,8 +5,9 @@ room → station → bench:
 
 * **Problems pass down.** A bench is unavailable when it, its station or its room is not in service or
   not operational (``availability``). ``blocked_by`` names the resource that blocks.
-* **Activity passes up.** A station is ``active`` when any of its benches has a booking in progress; a
-  room when any bench at one of its stations has one (``activity_expression``).
+* **Activity passes up.** A bench is ``active`` when a booking is in progress or a computing unit placed
+  on it reports live activity (``ComputingActivity.status = active``); a station when any of its
+  benches is, a room when any bench at one of its stations is (``activity_expression``).
 
 These helpers build SQL expressions and pure functions only; features own the querysets.
 """
@@ -20,9 +21,16 @@ from typing import Any
 from django.db.models import Case, CharField, Exists, OuterRef, Q, Value, When
 from django.utils import timezone
 
+from core.common.domain.errors import DetailMessage
+from core.labs.models.activity.computing_activity import ComputingActivityStatus
 from core.labs.models.booking.base import BookingApprovalStatus, BookingStatus
 from core.labs.models.booking.bench_booking import BenchBooking
-from core.labs.models.resource.base.downtime import condition_expression, downtime_reason_expression
+from core.labs.models.booking.equipment_booking import EquipmentBooking
+from core.labs.models.resource.base.downtime import (
+    ResourceDowntime,
+    condition_expression,
+    downtime_reason_expression,
+)
 from core.labs.models.resource.base.status import (
     LegacyLocationStatus,
     ResourceAccessPolicy,
@@ -31,6 +39,7 @@ from core.labs.models.resource.base.status import (
     ResourceCondition,
     ResourceLifecycleStatus,
 )
+from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 from core.labs.models.resource.location.room import Room
 from core.labs.models.resource.location.station import Station
 
@@ -48,13 +57,22 @@ def _end_of_today(now: datetime) -> datetime:
 
 
 def activity_expression(resource_type: str, *, now: datetime | None = None) -> Case:
-    """Annotation: ``active`` (a booking in progress), ``scheduled`` (an approved reserved booking
-    later today), else ``idle``. Rolls up from benches to their station and room.
+    """Annotation: ``active`` (a booking in progress, or live activity reported by a computing unit on
+    a bench), ``scheduled`` (an approved reserved booking later today), else ``idle``. Rolls up from
+    benches to their station and room.
     """
     now = now or timezone.now()
     scope = {_BOOKING_SCOPE[resource_type]: OuterRef("pk")}
     bookings = BenchBooking.objects.filter(**scope, bench__deleted_at__isnull=True)
     in_progress = bookings.filter(status=BookingStatus.IN_PROGRESS)
+    # Monitoring: the agent on a computing unit placed on the bench reports someone using it.
+    live = EquipmentAssignment.objects.filter(
+        **scope,
+        bench__deleted_at__isnull=True,
+        unassigned_at__isnull=True,
+        equipment__deleted_at__isnull=True,
+        equipment__activity__status=ComputingActivityStatus.ACTIVE,
+    )
     later_today = bookings.filter(
         status=BookingStatus.RESERVED,
         approval_status=BookingApprovalStatus.APPROVED,
@@ -62,11 +80,73 @@ def activity_expression(resource_type: str, *, now: datetime | None = None) -> C
         ends_at__gt=now,
     )
     return Case(
-        When(Exists(in_progress), then=Value(ResourceActivityStatus.ACTIVE.value)),
+        When(Exists(in_progress) | Exists(live), then=Value(ResourceActivityStatus.ACTIVE.value)),
         When(Exists(later_today), then=Value(ResourceActivityStatus.SCHEDULED.value)),
         default=Value(ResourceActivityStatus.IDLE.value),
         output_field=CharField(),
     )
+
+
+def bench_bookings_blocked_by_parents(*, bench_ids, station, room) -> list[int]:
+    """Reserving bench bookings (ending after now) that the new parents would block (design rule 3).
+
+    Used when a bench moves to ``station`` or a station moves to ``room``: every booking is blocked when a
+    parent is not in service, otherwise the bookings that overlap a downtime window of a parent. The
+    caller holds the station lock and the bench locks. Two queries at most (windows, bookings).
+    """
+    if station is None or not bench_ids:
+        return []
+    now = timezone.now()
+    bookings = BenchBooking.objects.filter(
+        bench_id__in=bench_ids,
+        status__in=BenchBooking.ACTIVE_STATUSES,
+        approval_status__in=BenchBooking.RESERVING_APPROVAL_STATUSES,
+        ends_at__gt=now,
+    ).order_by("pk")
+    parents = [parent for parent in (station, room) if parent is not None]
+    if any(parent.lifecycle_status != ResourceLifecycleStatus.IN_SERVICE for parent in parents):
+        return list(bookings.values_list("pk", flat=True))
+    windows = ResourceDowntime.objects.get_queryset().none()
+    for parent in parents:
+        windows = windows | ResourceDowntime.objects.for_resources(type(parent), (parent.pk,))
+    overlap = Q(pk__in=[])
+    for starts_at, ends_at in (
+        windows.not_cancelled()
+        .filter(Q(ends_at__isnull=True) | Q(ends_at__gt=now))
+        .values_list("starts_at", "ends_at")
+    ):
+        window = Q(ends_at__gt=starts_at)
+        if ends_at is not None:
+            window &= Q(starts_at__lt=ends_at)
+        overlap |= window
+    return list(bookings.filter(overlap).values_list("pk", flat=True))
+
+
+def booking_conflict_details(*, bench_booking_ids=(), equipment_booking_ids=()) -> dict[str, Any]:
+    """Error ``details`` naming each blocking booking: field ``bench_bookings.<id>`` / ``equipment_bookings.<id>``,
+    code ``booking_overlaps_downtime``, and a readable message (booking code and local period). One query per type.
+    """
+    details: dict[str, Any] = {}
+    for key, model, ids in (
+        ("bench_bookings", BenchBooking, bench_booking_ids),
+        ("equipment_bookings", EquipmentBooking, equipment_booking_ids),
+    ):
+        if not ids:
+            continue
+        rows = (
+            model.objects.filter(pk__in=ids)
+            .order_by("starts_at", "pk")
+            .values_list("pk", "booking_code", "starts_at", "ends_at")
+        )
+        details[key] = {
+            str(pk): DetailMessage(
+                f"Booking {code} ({timezone.localtime(starts_at):%Y-%m-%d %H:%M} to "
+                f"{timezone.localtime(ends_at):%Y-%m-%d %H:%M}) overlaps the downtime.",
+                "booking_overlaps_downtime",
+            )
+            for pk, code, starts_at, ends_at in rows
+        }
+    return details
 
 
 def legacy_status_expression(*, condition: str = "condition", activity: str = "activity_status") -> Case:
@@ -210,6 +290,8 @@ __all__ = [
     "LEGACY_BENCH_STATUSES",
     "HierarchyLevel",
     "activity_expression",
+    "bench_bookings_blocked_by_parents",
+    "booking_conflict_details",
     "availability",
     "bench_availability",
     "legacy_bench_status_expression",

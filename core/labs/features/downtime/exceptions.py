@@ -4,7 +4,8 @@ from core.common.domain.errors import Conflict
 
 
 class DowntimeBookingConflict(Conflict):
-    """Reserving bookings overlap the window. ``details``: ``bench_booking_ids``, ``equipment_booking_ids``.
+    """Reserving bookings overlap the window. ``details``: one entry per booking, field
+    ``bench_bookings.<id>`` or ``equipment_bookings.<id>``, code ``booking_overlaps_downtime``.
 
     Resend with ``cancel_conflicting_bookings: true`` to cancel them in the same transaction (RS4).
     """

@@ -49,7 +49,7 @@ exclusion constraint `downtime_no_overlap` (same resource, overlapping `[starts_
 |---|---|
 | `condition` | `out_of_service` or `in_maintenance` from the downtime window covering now (worst first), else `operational`. |
 | `availability` | `available` when the resource and every parent (bench → station → room) are `in_service` and `operational`; otherwise `unavailable` with `blocked_by` (the resource that blocks) and `reason`. Problems pass **down**. |
-| `activity_status` | `active` (a booking is in progress), `scheduled` (an approved reserved booking starts later today), `idle`. Rolls **up**: a station takes the strongest value of its benches, a room of its stations' benches. Monitoring activity is not used yet (no per-bench signal; not verified). |
+| `activity_status` | `active` (a booking is in progress), `scheduled` (an approved reserved booking starts later today), `idle`. A bench is also `active` when a computing unit placed on it reports `ComputingActivity.status = active` (agent monitoring). Rolls **up**: a station takes the strongest value of its benches, a room of its stations' benches. |
 | `status` (rooms, stations, deprecated) | `retired` → `retired`; `planned` → `closed`; condition `out_of_service` → `issue`; `in_maintenance` → `maintenance`; access `restricted` → `restricted`; activity `active`/`scheduled` → `reserved`; else `available`. |
 | Slot occupancy | A station slot is occupied when a bench references it; a room slot when a station references it. The legacy slot `status` read value is derived from that. |
 
@@ -65,9 +65,13 @@ computed condition.
    `in_service`, or when any downtime window of the resource or a parent overlaps the requested period.
 4. Ending a downtime window sets `ends_at` to now (only an open or current window). Cancelling is for a
    window that has not started; it keeps the row with `cancelled_at`.
-5. The old write paths keep their old behavior and do not check bookings: room/station `change-status`,
-   bench `lifecycle_status=out_of_service`, equipment `change-condition` and the condition recorded at loan
-   return. They open or end an unplanned window starting now.
+5. The old write paths open or end an unplanned window starting now. Room/station `change-status`
+   (`issue`, `closed`, `maintenance`) refuses with 409 `downtime_booking_conflict` while reserving bookings of
+   the covered benches end after now. Equipment `change-condition` and the condition recorded at loan return
+   keep their old behavior: an open-ended equipment window is checked at hand-over, like condition was.
+6. Moving a bench to another station, or a station to another room, is refused (409, `bench_booking_ids` in
+   `details`) while the bench's reserving bookings would fall in downtime of the new parents, or a new parent
+   is not in service. A bench cannot be set up at a retired station; a station cannot be placed in a retired room.
 
 ## API
 
@@ -97,13 +101,16 @@ location, bench and equipment write. No access-control change.
   reservation writers already lock the equipment row. Whichever commits first is seen by the other.
 - Same-resource overlap is guarded by the exclusion constraint (mapped to 409 `downtime_overlap`).
 
+## Frontend
+
+Implementation guide for the React frontend: [resource status frontend guide](../api/resource-status-frontend-guide.md).
+
 ## Residual risks
 
-- Moving a bench (new setup location) into a station that has downtime does not re-check that bench's
-  future bookings; availability shows it, but those bookings stay. Not handled in this change.
-- Activity uses bookings only. A bench used without a booking shows `idle`.
-- Old write paths open windows without booking checks (RS3 compatibility); new clients should use
-  `/api/labs/downtimes`.
+- Equipment `change-condition` opens a window without checking reservations (old behavior kept on
+  purpose; hand-over checks it). New clients should use `/api/labs/downtimes`.
+- Activity is computed when read. It changes as bookings and agent reports change; the page must refresh
+  or poll to see it (see the frontend guide).
 - `retired` is terminal for rooms, stations and benches (`LIFECYCLE_TRANSITIONS`); before this change any
   value could be set. A resource that comes back is registered again.
 - Bench `lifecycle_status` reads no longer return `out_of_service`; the deprecated `status` field (and the

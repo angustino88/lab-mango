@@ -8,9 +8,12 @@ value; an access-policy change is recorded with ``metadata.access_policy``).
 from typing import Any
 
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
-from core.labs.features.locations.exceptions import LocationConflict
+from core.labs.features.locations.exceptions import LocationBookingConflict, LocationConflict
 from core.labs.models import (
+    Bench,
+    BenchBooking,
     DowntimeReason,
     LegacyLocationStatus,
     ResourceAccessPolicy,
@@ -22,6 +25,7 @@ from core.labs.models import (
     Station,
     StationStatusRecord,
 )
+from core.labs.models.resource.base.availability import booking_conflict_details
 from core.labs.models.resource.base.status import LIFECYCLE_TRANSITIONS, ensure_lifecycle_transition
 
 
@@ -91,8 +95,9 @@ def apply_legacy_status(
 ):
     """Map a deprecated seven-value ``status`` write onto lifecycle, access policy and downtime (RS3).
 
-    Like the old endpoint, this does not check bookings (design rule 5). ``reserved`` is computed from
-    bookings now, so it cannot be set.
+    ``issue``, ``closed`` and ``maintenance`` open a window from now with no end, so they are refused
+    (``LocationBookingConflict``) while reserving bookings of the covered benches end after now.
+    ``reserved`` is computed from bookings now, so it cannot be set.
     """
     legacy = LegacyLocationStatus
     metadata = {**({} if metadata is None else metadata), "legacy_status": status}
@@ -127,8 +132,41 @@ def apply_legacy_status(
             legacy.CLOSED: (ResourceCondition.OUT_OF_SERVICE, DowntimeReason.OTHER),
             legacy.MAINTENANCE: (ResourceCondition.IN_MAINTENANCE, DowntimeReason.MAINTENANCE),
         }[legacy(status)]
+        if ResourceDowntime.objects.condition_of(resource) != condition:
+            _ensure_no_reserving_bookings(resource)
         ResourceDowntime.objects.start_now(resource, condition=condition, reason=reason, actor=actor)
     return _record_anyway(record, resource, metadata=metadata, **common)
+
+
+def _ensure_no_reserving_bookings(resource: Room | Station) -> None:
+    """Lock the covered benches (room, then stations, then benches, in PK order) and refuse when bookings remain.
+
+    Same lock order and booking rule as ``downtime.schedule_downtime`` for an open-ended window from now.
+    """
+    if isinstance(resource, Room):
+        station_ids = list(
+            Station.objects.select_for_update().filter(room_id=resource.pk).order_by("pk").values_list("pk", flat=True)
+        )
+    else:
+        station_ids = [resource.pk]
+    bench_ids = list(
+        Bench.objects.select_for_update()
+        .filter(setup_location_id__in=station_ids)
+        .order_by("pk")
+        .values_list("pk", flat=True)
+    )
+    booking_ids = list(
+        BenchBooking.objects.filter(
+            bench_id__in=bench_ids,
+            status__in=BenchBooking.ACTIVE_STATUSES,
+            approval_status__in=BenchBooking.RESERVING_APPROVAL_STATUSES,
+            ends_at__gt=timezone.now(),
+        )
+        .order_by("pk")
+        .values_list("pk", flat=True)
+    )
+    if booking_ids:
+        raise LocationBookingConflict(details=booking_conflict_details(bench_booking_ids=booking_ids))
 
 
 def _record_anyway(record, resource, *, record_model, record_field, actor, metadata):

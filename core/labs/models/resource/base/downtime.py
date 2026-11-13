@@ -60,7 +60,7 @@ def _resource_link(model: type[models.Model]) -> Q:
     )
 
 
-class ResourceDowntimeQuerySet(models.QuerySet):
+class ResourceDowntimeQuerySet(models.QuerySet["ResourceDowntime"]):
     def not_cancelled(self) -> ResourceDowntimeQuerySet:
         return self.filter(cancelled_at__isnull=True)
 
@@ -101,7 +101,24 @@ class ResourceDowntimeQuerySet(models.QuerySet):
         return self.order_by(severity, "starts_at", "pk")
 
 
-class ResourceDowntimeManager(models.Manager.from_queryset(ResourceDowntimeQuerySet)):
+class ResourceDowntimeManager(models.Manager["ResourceDowntime"]):
+    """Explicit manager (no dynamic ``from_queryset`` base): the queryset helpers are typed proxies."""
+
+    def get_queryset(self) -> ResourceDowntimeQuerySet:
+        return ResourceDowntimeQuerySet(self.model, using=self._db)
+
+    def for_resource(self, resource: models.Model) -> ResourceDowntimeQuerySet:
+        return self.get_queryset().for_resource(resource)
+
+    def for_resources(self, model: type[models.Model], ids) -> ResourceDowntimeQuerySet:
+        return self.get_queryset().for_resources(model, ids)
+
+    def not_cancelled(self) -> ResourceDowntimeQuerySet:
+        return self.get_queryset().not_cancelled()
+
+    def current(self, moment: datetime | None = None) -> ResourceDowntimeQuerySet:
+        return self.get_queryset().current(moment)
+
     def condition_of(self, resource: models.Model, *, at: datetime | None = None) -> str:
         """The condition of one saved resource at ``at`` (default now). One query; never call per row."""
         row = self.for_resource(resource).current(at).worst_first().values_list("condition", flat=True).first()
@@ -261,7 +278,7 @@ class ResourceDowntime(TimeStampedModel, UserStampedModel):
 
 def outer_windows(model: type[models.Model], *, outer_ref: str = "pk") -> ResourceDowntimeQuerySet:
     """Correlated subquery base: every window of the outer ``model`` row (``outer_ref`` holds its pk)."""
-    return ResourceDowntime.objects.filter(
+    return ResourceDowntime.objects.get_queryset().filter(
         _resource_link(model), resource_object_id=Cast(OuterRef(outer_ref), CharField())
     )
 

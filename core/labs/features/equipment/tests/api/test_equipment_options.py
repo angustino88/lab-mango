@@ -386,7 +386,7 @@ def test_category_reference_data_excludes_inactive_category_descendants(api_clie
     equipment_type = EquipmentType.objects.create(kind=kind, name="Inactive Category Type")
     manufacturer = EquipmentManufacturer.objects.create(name="Inactive Category Manufacturer")
     category.manufacturers.add(manufacturer)
-    product_model = EquipmentProductModel.objects.create(
+    EquipmentProductModel.objects.create(
         manufacturer=manufacturer,
         equipment_type=equipment_type,
         name="Inactive Category Model",

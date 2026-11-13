@@ -1,8 +1,10 @@
-"""Station writes lock rooms (sorted), then station, then slots, never bench rows.
+"""Station writes lock rooms (sorted), then station, then slots; a room change also locks the station's
+benches (PK order) last, to re-check their bookings against the new room's downtime.
 
 Bench commands must lock old/new stations in PK order before locking benches
 and validate aggregate allocations. This shared protocol serializes station
 capacity reductions with bench placement/edits without nullable lock joins.
+Downtime writers lock room, then stations, then benches: the same order.
 """
 
 from django.core.exceptions import ValidationError
@@ -16,6 +18,10 @@ from core.labs.features.locations.stations.application.policies import (
     validate_room_capacity,
     validate_room_slot,
     validate_station_capacity,
+)
+from core.labs.models.resource.base.availability import (
+    bench_bookings_blocked_by_parents,
+    booking_conflict_details,
 )
 from core.labs.models.resource.base.status import ResourceLifecycleStatus
 from core.labs.models.resource.bench.bench import Bench
@@ -116,8 +122,27 @@ def create_station(*, actor, **data):
 def update_station(*, station_id, actor, **data):
     station, rooms = _lock_station_with_rooms(station_id, data)
     old_slot_id = station.slot_id
+    old_room_id = station.room_id
     _apply(station, data, STATION_WRITE_FIELDS)
+    if station.room_id is not None and station.room_id != old_room_id:
+        _ensure_bookings_fit_new_room(station, rooms[station.room_id])
     return _placement(station, rooms, old_slot_id=old_slot_id, actor=actor)
+
+
+def _ensure_bookings_fit_new_room(station, room):
+    """A move must not put future bookings of the station's benches inside the new room's downtime."""
+    bench_ids = tuple(
+        Bench.objects.select_for_update()
+        .filter(setup_location_id=station.pk)
+        .order_by("pk")
+        .values_list("pk", flat=True)
+    )
+    blocked = bench_bookings_blocked_by_parents(bench_ids=bench_ids, station=station, room=room)
+    if blocked:
+        raise LocationConflict(
+            "Bookings at this station fall in downtime of the new room. Move or cancel them first.",
+            details=booking_conflict_details(bench_booking_ids=blocked),
+        )
 
 
 def place_station(*, station_id, actor, **data):

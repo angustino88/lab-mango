@@ -29,7 +29,7 @@ def _public_names(path: Path) -> list[str]:
 
 def test_exceptions_contain_only_stable_error_types():
     exceptions_path = FEATURE_ROOT / "exceptions.py"
-    assert _public_names(exceptions_path) == ["LocationConflict", "RoomConflict"]
+    assert _public_names(exceptions_path) == ["LocationBookingConflict", "LocationConflict", "RoomConflict"]
     assert not any(
         ".application" in imported or ".queries" in imported
         for imported in _absolute_imports(exceptions_path)

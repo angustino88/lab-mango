@@ -25,6 +25,10 @@ from core.labs.models import (
     Station,
     StationSlot,
 )
+from core.labs.models.resource.base.availability import (
+    bench_bookings_blocked_by_parents,
+    booking_conflict_details,
+)
 from core.labs.models.resource.base.status import ensure_lifecycle_transition
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
@@ -131,6 +135,8 @@ def _save(bench, stations, *, old_slot_id, data, actor):
         )
     if bench.setup_location_id is not None:
         bench.setup_location = stations[bench.setup_location_id]
+        if bench.setup_location.lifecycle_status == ResourceLifecycleStatus.RETIRED:
+            raise BenchConflict("The setup station is retired.")
         validate_capacity(
             bench,
             bench.setup_location,
@@ -163,6 +169,19 @@ def _take_lifecycle(bench, data) -> None:
     bench.lifecycle_status = target
 
 
+def _ensure_bookings_fit_new_station(bench, station) -> None:
+    """A move must not put future bookings inside the new station's or room's downtime (design rule 3).
+
+    Race guard: the station and bench locks of ``_lock_bench``; downtime writers lock the same rows.
+    """
+    blocked = bench_bookings_blocked_by_parents(bench_ids=(bench.pk,), station=station, room=station.room)
+    if blocked:
+        raise BenchConflict(
+            "Bookings of this bench fall in downtime of the new station or room. Move or cancel them first.",
+            details=booking_conflict_details(bench_booking_ids=blocked),
+        )
+
+
 def _after_lifecycle(bench, *, previous, actor) -> None:
     """Retiring ends the current downtime window and cancels windows planned for later."""
     if bench.lifecycle_status == ResourceLifecycleStatus.RETIRED and previous != ResourceLifecycleStatus.RETIRED:
@@ -184,9 +203,12 @@ def update_bench(*, bench_id, actor, **data):
     bench, stations = _lock_bench(bench_id, data)
     old_slot_id = bench.station_slot_id
     previous = bench.lifecycle_status
+    old_station_id = bench.setup_location_id
     data = dict(data)
     _take_lifecycle(bench, data)
     _apply(bench, data, WRITE_FIELDS)
+    if bench.setup_location_id is not None and bench.setup_location_id != old_station_id:
+        _ensure_bookings_fit_new_station(bench, stations[bench.setup_location_id])
     bench = _save(bench, stations, old_slot_id=old_slot_id, data=data, actor=actor)
     _after_lifecycle(bench, previous=previous, actor=actor)
     return bench

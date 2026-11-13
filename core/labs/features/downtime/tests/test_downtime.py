@@ -107,7 +107,14 @@ def test_overlapping_bookings_are_refused_unless_cancellation_is_confirmed(clien
 
     assert refused.status_code == 409, refused.data
     assert refused.data["error"]["code"] == "downtime_booking_conflict"
-    assert str(booking.pk) in str(refused.data["error"]["details"])
+    assert refused.data["error"]["details"] == [
+        {
+            "field": f"bench_bookings.{booking.pk}",
+            "code": "booking_overlaps_downtime",
+            "message": refused.data["error"]["details"][0]["message"],
+        }
+    ]
+    assert booking.booking_code in refused.data["error"]["details"][0]["message"]
     assert not ResourceDowntime.objects.exists()
 
     confirmed = _schedule(
@@ -313,3 +320,71 @@ def test_resource_lists_compute_state_in_a_constant_number_of_queries(client, co
         add_tree(index)
 
     assert count_queries() == single
+
+
+@pytest.mark.django_db
+def test_live_computing_activity_marks_bench_station_and_room_active(client, room, station, bench):
+    from core.labs.models import ComputingActivity, EquipmentAssignment
+    from tests.factories import ComputingEquipmentFactory
+
+    unit = ComputingEquipmentFactory()
+    EquipmentAssignment.objects.create(equipment=unit, bench=bench, assigned_at=timezone.now())
+    ComputingActivity.objects.update_or_create(computing=unit, defaults={"status": "active"})
+
+    for path in (f"/api/labs/benches/{bench.pk}", f"/api/labs/stations/{station.pk}", f"/api/labs/rooms/{room.pk}"):
+        assert client.get(path).data["data"]["activity_status"]["value"] == "active", path
+
+
+@pytest.mark.django_db
+def test_moving_a_bench_into_a_station_with_downtime_is_refused_while_bookings_overlap(
+    client, coordinator, station, bench
+):
+    starts_at, ends_at = _window(hours_from_now=3)
+    booking = _book(bench, coordinator, starts_at, ends_at)
+    target = Station.objects.create(sku="ST-DOWN", room=station.room)
+    ResourceDowntime.for_new_resource(target, condition="in_maintenance", starts_at=timezone.now()).save()
+
+    response = client.post(
+        f"/api/labs/benches/{bench.pk}/actions/place", {"setup_location_id": target.pk}, format="json"
+    )
+
+    assert response.status_code == 409, response.data
+    assert [d["field"] for d in response.data["error"]["details"]] == [f"bench_bookings.{booking.pk}"]
+    BenchBooking.objects.filter(pk=booking.pk).update(status=BookingStatus.CANCELLED, cancellation_reason="Moved")
+    moved = client.post(f"/api/labs/benches/{bench.pk}/actions/place", {"setup_location_id": target.pk}, format="json")
+    assert moved.status_code == 200, moved.data
+
+
+@pytest.mark.django_db
+def test_moving_a_station_into_a_room_with_downtime_is_refused_while_bookings_overlap(
+    client, coordinator, station, bench
+):
+    booking = _book(bench, coordinator, *_window(hours_from_now=3))
+    target = Room.objects.create(sku="R-DOWN")
+    ResourceDowntime.for_new_resource(target, condition="out_of_service", starts_at=timezone.now()).save()
+
+    response = client.post(f"/api/labs/stations/{station.pk}/actions/place", {"room_id": target.pk}, format="json")
+
+    assert response.status_code == 409, response.data
+    assert [d["field"] for d in response.data["error"]["details"]] == [f"bench_bookings.{booking.pk}"]
+
+
+@pytest.mark.django_db
+def test_benches_cannot_be_set_up_at_a_retired_station(client, station):
+    Station.objects.filter(pk=station.pk).update(lifecycle_status="retired")
+
+    response = client.post("/api/labs/benches", {"sku": "B-NEW", "setup_location_id": station.pk}, format="json")
+
+    assert response.status_code == 409, response.data
+
+
+@pytest.mark.django_db
+def test_deprecated_change_status_refuses_downtime_over_bookings(client, coordinator, room, bench):
+    booking = _book(bench, coordinator, *_window(hours_from_now=3))
+
+    refused = client.post(f"/api/labs/rooms/{room.pk}/actions/change-status", {"status": "issue"}, format="json")
+
+    assert refused.status_code == 409, refused.data
+    assert refused.data["error"]["code"] == "downtime_booking_conflict"
+    assert [d["field"] for d in refused.data["error"]["details"]] == [f"bench_bookings.{booking.pk}"]
+    assert not ResourceDowntime.objects.exists()

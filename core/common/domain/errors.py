@@ -14,6 +14,7 @@ DomainError / ValidationFailed  422  (business rule or semantic validation failu
 
 import re
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any, ClassVar
 
 _NAME_SUFFIX = re.compile(r"(Error|Exception)$")
@@ -59,6 +60,22 @@ class DomainError(Exception):
         return str(self.args[0]) if self.args else self.default_message
 
 
+@dataclass(frozen=True, slots=True)
+class DetailMessage:
+    """One ``details`` entry with its own stable ``code`` (ERR-2), for ``DomainError(details=...)``.
+
+    ``{"bench_bookings": {"12": DetailMessage("...", "booking_overlaps_downtime")}}`` renders as
+    ``{"field": "bench_bookings.12", "code": "booking_overlaps_downtime", "message": "..."}``. A plain
+    string renders with code ``invalid``.
+    """
+
+    message: str
+    code: str
+
+    def __str__(self) -> str:
+        return self.message
+
+
 class NotFound(DomainError):
     code = "not_found"
     default_message = "The requested resource was not found."
@@ -99,6 +116,7 @@ class ValidationFailed(DomainError):
 __all__ = [
     "BadRequest",
     "Conflict",
+    "DetailMessage",
     "DomainError",
     "Forbidden",
     "InvalidQuery",

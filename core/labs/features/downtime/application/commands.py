@@ -32,6 +32,7 @@ from core.labs.models import (
     ResourceCondition,
     ResourceDowntime,
 )
+from core.labs.models.resource.base.availability import booking_conflict_details
 from core.labs.models.resource.base.downtime import DOWNTIME_CONDITIONS
 
 from .targets import RESOURCE_MODELS, lock_target
@@ -108,7 +109,9 @@ def schedule_downtime(command: ScheduleDowntimeInput, *, actor) -> ResourceDownt
         if bench_booking_ids or equipment_booking_ids:
             if not command.cancel_conflicting_bookings:
                 raise DowntimeBookingConflict(
-                    details={"bench_booking_ids": bench_booking_ids, "equipment_booking_ids": equipment_booking_ids}
+                    details=booking_conflict_details(
+                        bench_booking_ids=bench_booking_ids, equipment_booking_ids=equipment_booking_ids
+                    )
                 )
             reason = f"Cancelled for {ResourceCondition(command.condition).label.lower()} ({command.reason})."
             if bench_booking_ids:
