@@ -63,7 +63,7 @@ Build the menu from the facts, not from the current label. Variables below: `lif
 | **Lost** | `life === "in_service"` | hide |
 | **Transferred** | `life === "in_service"` | hide |
 | **Retired** | `life` is `planned`, `in_service` or `lost` | hide |
-| **Available** | the label is not already Available, and `life !== "retired"` | hide |
+| **Available** | the label is not already Available, and `life !== "retired"`. When `life === "lost"`, label the item **Found**: the unit comes back as **Maintenance**, not Available | hide |
 | On order, Calibration overdue | never | they are not chosen by hand |
 
 Lost, Transferred and Retired also need the unit off its bench, and Transferred and Retired need it
@@ -88,7 +88,8 @@ Every write is `POST`/`PUT` with a JSON body; responses use `{"data": ...}`.
 
 | Current fact | Request | Form |
 |---|---|---|
-| `life` is `planned`, `lost` or `transferred_out` | `POST .../actions/change-lifecycle` `{"lifecycle_state": "in_service"}` | Reason |
+| `life` is `planned` or `transferred_out` | `POST .../actions/change-lifecycle` `{"lifecycle_state": "in_service"}` | Reason |
+| `life` is `lost` (found) | `POST .../actions/change-lifecycle` `{"lifecycle_state": "in_service"}`; the unit comes back as **Maintenance**, not Available | Reason (where it was found); label the item "Found" |
 | `cond` is not `operational` | `POST .../actions/change-condition` `{"condition": "operational"}` | Reason |
 | `onLoan` | `POST .../actions/return` `{"condition_in": "", "condition": null, "room_id": 3}` (or `station_id`, `bench_id`, `location_note`) | Return condition, where it goes now |
 | `onBench` | `PUT .../placement` `{"room_id": 3}` (or `station_id`, or only `location_note`) | Where it goes now |
@@ -111,7 +112,8 @@ Show these in the confirmation dialog before sending:
 | Lost | An open loan is closed as lost; non-bench placement is closed; reserved bookings are cancelled; condition resets to operational |
 | Transferred, Retired | Refused while on loan or on a bench (return / move first); non-bench placement is closed; reserved bookings are cancelled; condition resets to operational |
 | Borrowed (hand-over) | The unit leaves its resting place |
-| Back to service from Lost / Transferred / On order | Condition is operational |
+| Back to service from Transferred / On order | Condition is operational |
+| Found (back to service from Lost) | Condition is set to in maintenance; the unit shows **Maintenance** until it is set back to operational. It has no placement: record where it is |
 
 Preparation sequence for Lost, Transferred or Retired on a unit that is on a bench or on loan:
 1. on loan and target is Transferred or Retired → `POST .../actions/return`;
@@ -188,6 +190,7 @@ export function stepFor(target: string, e: Equipment, caps: string[]): Step | nu
     case "retired":     return ["planned", "in_service", "lost"].includes(life) ? lifecycle("retired", "retire") : null;
     case "available":
       if (life === "retired") return null;
+      if (life === "lost") return lifecycle("in_service", "found"); // comes back as Maintenance
       if (life !== "in_service") return lifecycle("in_service");
       if (cond !== "operational") return condition("operational");
       if (e.loan) return { method: "POST", path: `${base}/actions/return`, body: {}, form: "return" };

@@ -47,6 +47,8 @@ Three separate facts describe a unit. They are stored and changed independently;
 | `retired` | none (final) |
 
 - Leaving `in_service` resets `condition` to `operational` (its own event).
+- Returning from `lost` to `in_service` (found) sets `condition` to `in_maintenance` (its own event), so the unit shows `maintenance` and cannot be lent until someone inspects it and sets it back to `operational`. Returning from `planned` or `transferred_out` keeps `operational`.
+- `retired` is final: no action leaves it.
 - Entering `transferred_out`, `retired`, or `lost` is refused while the unit is on a bench (409 `equipment_already_placed`); any other placement is closed and reserved equipment bookings are cancelled with the given reason. `transferred_out` requires `receiving_organisation`.
 - Marking a unit `lost` is always a manual action; no timer sets it.
 

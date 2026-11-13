@@ -71,6 +71,8 @@ def change_lifecycle(command: ChangeLifecycleInput, *, actor) -> Equipment:
     Entering ``transferred_out``, ``retired`` or ``lost`` refuses a unit on a bench, closes any
     other placement, and cancels its reserved equipment bookings. Leaving ``in_service`` resets the
     condition to ``operational`` (its own event). Marking a unit lost is always this manual command.
+    A found unit (``lost`` to ``in_service``) returns ``in_maintenance`` (its own event) so it is
+    inspected before it is used or lent.
     """
     target = command.lifecycle_state
     if target not in EquipmentLifecycleState.values:
@@ -118,6 +120,15 @@ def change_lifecycle(command: ChangeLifecycleInput, *, actor) -> Equipment:
             actor=actor,
         )
     _record(equipment, EquipmentEventAxis.LIFECYCLE, target, reason=reason, details=details, actor=actor)
+    if current == EquipmentLifecycleState.LOST and target == EquipmentLifecycleState.IN_SERVICE:
+        _record(
+            equipment,
+            EquipmentEventAxis.CONDITION,
+            EquipmentCondition.IN_MAINTENANCE,
+            reason="Inspect after being found.",
+            details={},
+            actor=actor,
+        )
     return equipment
 
 

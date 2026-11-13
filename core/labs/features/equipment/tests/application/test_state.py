@@ -183,6 +183,32 @@ def test_leaving_service_resets_condition_with_its_own_event(unit):
 
 
 @pytest.mark.django_db
+def test_found_unit_returns_in_maintenance_with_its_own_event(unit):
+    _lifecycle(unit, "lost", reason="Not found at inventory")
+    _lifecycle(unit, "in_service", reason="Found in Room 5")
+    unit.refresh_from_db()
+    assert (unit.lifecycle_state, unit.condition) == ("in_service", "in_maintenance")
+    assert _display(unit) == "maintenance"
+    assert _events(unit)[-2:] == [
+        ("lifecycle", "lost", "in_service"),
+        ("condition", "operational", "in_maintenance"),
+    ]
+    _lifecycle(unit, "in_service")  # repeated "found" is a no-op
+    assert len(_events(unit)) == 3
+    _condition(unit, "operational", reason="Inspected")
+    assert _display(unit) == "available"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("source", ["planned", "transferred_out"])
+def test_other_returns_to_service_stay_operational(kind, source):
+    unit = create_computing_equipment(sku=f"ST-R-{source}", name="r", kind=kind, lifecycle_state=source)
+    _lifecycle(unit, "in_service")
+    unit.refresh_from_db()
+    assert unit.condition == "operational"
+
+
+@pytest.mark.django_db
 def test_transfer_requires_and_records_receiving_organisation(unit):
     with pytest.raises(ValidationError):
         _lifecycle(unit, "transferred_out")
