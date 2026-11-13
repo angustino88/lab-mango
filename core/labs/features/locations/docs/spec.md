@@ -57,6 +57,7 @@ The Locations feature represents geographic and facility real-estate topology: c
 | `GET /api/labs/rooms/status-summary` | `RoomStatusSummaryAPIView` | Distribution of the deprecated computed `status`. |
 | `GET /api/labs/rooms/{room_id}/slots` | `RoomSlotListCreateAPIView` | Grid slots in room. |
 | `GET /api/labs/rooms/{room_id}/history` | `RoomHistoryAPIView` | Lifecycle records (`status` holds the lifecycle; access changes in `metadata.access_policy`), newest first; each row has `actor` (`{id, username, display_name}`, null when unknown). Downtime history: `GET /api/labs/downtimes?resource_type=room&resource_id=`. |
+| `GET` / `PUT` / `DELETE /api/labs/rooms/{room_id}/image` | `RoomImageAPIView` | Read, replace (multipart, one `file` part: JPEG/PNG/GIF/WebP, at most 5 MB) or remove the image; room reads return `image_url` (see `core/labs/features/base/docs/resource-images.md`). |
 | `GET /api/labs/stations` | `StationListCreateAPIView` | Physical stations inventory. |
 | `POST /api/labs/stations` | `StationListCreateAPIView` | Create physical station dock; `lifecycle_status` defaults to `in_service`, first history record written in the same transaction. |
 | `POST /api/labs/stations/{id}/actions/change-lifecycle` | `StationLifecycleAPIView` | As for rooms; retiring needs every bench at the station retired. |
@@ -67,4 +68,5 @@ The Locations feature represents geographic and facility real-estate topology: c
 | `GET /api/labs/stations/status-summary` | `StationStatusSummaryAPIView` | Distribution of the deprecated computed `status`. |
 | `GET /api/labs/stations/{station_id}/slots` | `StationSlotListCreateAPIView` | Slots on station. |
 | `GET /api/labs/stations/{station_id}/history` | `StationHistoryAPIView` | Lifecycle records as for rooms; each row has `actor` (`{id, username, display_name}`, null when unknown). |
+| `GET` / `PUT` / `DELETE /api/labs/stations/{station_id}/image` | `StationImageAPIView` | As for rooms; station reads return `image_url`. |
 | `GET /api/labs/station-slots/options` | `StationSlotSelectAPIView` | Selector `{id, sku, name}`. |

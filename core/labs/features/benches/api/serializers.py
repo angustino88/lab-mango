@@ -10,6 +10,7 @@ from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.summary_serializers import StatusSummarySerializer
+from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     AvailabilitySerializer,
@@ -64,7 +65,6 @@ class BenchCreateSerializer(StrictWriteMixin, serializers.ModelSerializer):
             "group_id",
             "owner_id",
             "remark",
-            "image",
             "type_id",
             "bench_group_id",
             "description",
@@ -144,6 +144,7 @@ class BenchEquipmentListQuerySerializer(serializers.Serializer):
 
 
 class BenchSerializer(AppModelSerializer):
+    image_url = ResourceImageURLField()
     group = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
     owner = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -174,7 +175,7 @@ class BenchSerializer(AppModelSerializer):
             "department",
             "owner",
             "remark",
-            "image",
+            "image_url",
             "type",
             "bench_group",
             "description",

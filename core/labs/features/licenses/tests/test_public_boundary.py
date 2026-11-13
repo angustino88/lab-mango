@@ -51,6 +51,7 @@ def test_public_module_exports_license_commands_and_queries():
         "get_license_status_summary",
         "list_license_category_summary",
         "get_license_for_mapping",
+        "license_images",
         "license_mapping_rows",
         "list_license_agreements",
         "list_license_status_history",
@@ -98,7 +99,7 @@ def test_layer_package_exports_are_explicit_and_legacy_modules_absent():
     assert set(_exports(application)) == {
         "AssignLicenseInput", "ChangeLicenseStatusInput", "CreateLicenseAgreementInput",
         "UnassignLicenseInput", "assign_license", "change_license_status",
-        "create_license_agreement", "unassign_license",
+        "create_license_agreement", "license_images", "unassign_license",
     }
     assert set(_exports(queries)) == {
         "active_license_assignment_mapping_rows", "get_active_license", "get_license",

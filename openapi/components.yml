@@ -1213,11 +1213,11 @@ components:
         remark:
           type: string
           readOnly: true
-        image:
+        image_url:
           type: string
           format: uri
-          nullable: true
           readOnly: true
+          nullable: true
         type:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -1335,7 +1335,7 @@ components:
       - equipment_url
       - group
       - id
-      - image
+      - image_url
       - is_favorite
       - last_inspected_at
       - lifecycle_status
@@ -1606,10 +1606,6 @@ components:
         remark:
           type: string
           maxLength: 255
-        image:
-          type: string
-          format: uri
-          nullable: true
         type_id:
           type: integer
           minimum: 1
@@ -2195,11 +2191,11 @@ components:
         remark:
           type: string
           readOnly: true
-        image:
+        image_url:
           type: string
           format: uri
-          nullable: true
           readOnly: true
+          nullable: true
         type:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -2317,7 +2313,7 @@ components:
       - equipment_url
       - group
       - id
-      - image
+      - image_url
       - is_favorite
       - last_inspected_at
       - lifecycle_status
@@ -2584,10 +2580,6 @@ components:
         remark:
           type: string
           maxLength: 255
-        image:
-          type: string
-          format: uri
-          nullable: true
         type_id:
           type: integer
           minimum: 1
@@ -5612,6 +5604,11 @@ components:
         name:
           type: string
           readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
         manufacturer:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -5814,6 +5811,7 @@ components:
       - firmware_version
       - group
       - id
+      - image_url
       - interfaces
       - kind
       - last_calibrated_at
@@ -6193,6 +6191,11 @@ components:
         name:
           type: string
           readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
         manufacturer:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -6385,6 +6388,7 @@ components:
       - firmware_version
       - group
       - id
+      - image_url
       - interfaces
       - kind
       - last_calibrated_at
@@ -9957,6 +9961,11 @@ components:
         remark:
           type: string
           readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
         product:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -10022,6 +10031,7 @@ components:
       - department
       - expiry_date
       - id
+      - image_url
       - max_version
       - name
       - owner
@@ -12474,10 +12484,6 @@ components:
         remark:
           type: string
           maxLength: 255
-        image:
-          type: string
-          format: uri
-          nullable: true
         type_id:
           type: integer
           minimum: 1
@@ -14686,6 +14692,34 @@ components:
       required:
       - id
       - username
+    ResourceImage:
+      type: object
+      properties:
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+      required:
+      - image_url
+    ResourceImageResourceImagesResourceImageDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceImage'
+      required:
+      - data
+    ResourceImageUpload:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected
+            from the content.
+      required:
+      - file
     ResourceKindEnum:
       enum:
       - bench
@@ -14907,11 +14941,11 @@ components:
         remark:
           type: string
           readOnly: true
-        image:
+        image_url:
           type: string
           format: uri
-          nullable: true
           readOnly: true
+          nullable: true
         map_url:
           type: string
           format: uri
@@ -15054,7 +15088,7 @@ components:
       - floor_plan_url
       - group
       - id
-      - image
+      - image_url
       - label
       - layout_columns
       - layout_rows
@@ -16487,11 +16521,11 @@ components:
         safety_classification:
           type: string
           readOnly: true
-        image:
+        image_url:
           type: string
           format: uri
-          nullable: true
           readOnly: true
+          nullable: true
         active_bench_count:
           type: integer
           readOnly: true
@@ -16539,7 +16573,7 @@ components:
       - group
       - height_mm
       - id
-      - image
+      - image_url
       - label
       - lifecycle_status
       - location_path

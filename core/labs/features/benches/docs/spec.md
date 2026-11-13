@@ -59,6 +59,7 @@ The Benches feature governs test bench entities, logical workbench groupings, us
 | `POST /api/labs/benches/{bench_id}/actions/place` | `BenchPlaceAPIView` | Dock/move bench to station slot with capacity validation. |
 | `POST /api/labs/benches/{bench_id}/actions/favorite` | `BenchFavoriteAPIView` | Add bench to caller's favorites. |
 | `DELETE /api/labs/benches/{bench_id}/actions/favorite` | `BenchFavoriteAPIView` | Remove bench from favorites. |
+| `GET` / `PUT` / `DELETE /api/labs/benches/{bench_id}/image` | `BenchImageAPIView` | Read, replace (multipart, one `file` part: JPEG/PNG/GIF/WebP, at most 5 MB) or remove the image; reads return `image_url` (see `core/labs/features/base/docs/resource-images.md`). |
 | `GET /api/labs/benches/{id}/profile` | `LabProfileAPIView` | Historical performance and usage stats. |
 | `GET /api/labs/benches/{id}/weekly-usage` | `LabWeeklyUsageHeatmapAPIView` | 168-hour utilization heatmap. |
 | `GET/POST /api/labs/bench-groups` | `BenchGroupListCreateAPIView` | Manage bench taxonomies. |

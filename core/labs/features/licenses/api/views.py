@@ -12,6 +12,7 @@ from core.common.api.options import OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
 from core.labs.features.base import FeatureAPIView
 from core.labs.features.base.common import OptionsAPIView
+from core.labs.features.base.resource_images import ResourceImageAPIView
 from core.labs.features.licenses import public
 from core.labs.features.licenses.api.serializers import (
     LicenseAgreementSerializer,
@@ -539,4 +540,13 @@ __all__ = (
     "LicenseVendorDetailAPIView",
     "LicenseVendorListAPIView",
     "LicenseVendorOptionsAPIView",
+    "LicenseImageAPIView",
 )
+
+
+class LicenseImageAPIView(ResourceImageAPIView):
+    """Read, replace or remove a license's image. Upload as multipart/form-data with one ``file`` part."""
+
+    schema_tags = ("Licenses",)
+    image_commands = public.license_images
+    lookup_url_kwarg = "license_id"

@@ -10,6 +10,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.infrastructure.storage.urls import get_media_url
 from core.labs.models import ComputingActivityStatus
 from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES
 
@@ -383,14 +384,7 @@ class DashboardBenchSerializer(serializers.Serializer):
         if equipment_count is None:
             equipment_count = len(active_assignments) if active_assignments is not None else 0
 
-        image_url = None
-        if instance.image:
-            request = self.context.get("request")
-            image_url = (
-                request.build_absolute_uri(instance.image.url)
-                if request
-                else instance.image.url
-            )
+        image_url = get_media_url(instance.image, request=self.context.get("request"))
 
         return {
             "id": instance.id,

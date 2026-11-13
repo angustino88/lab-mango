@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.summary_serializers import StatusSummarySerializer
+from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
@@ -39,6 +40,7 @@ class LicenseCategorySummarySerializer(serializers.Serializer):
 
 
 class LicenseSerializer(AppModelSerializer):
+    image_url = ResourceImageURLField()
     owner = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
     product = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -60,6 +62,7 @@ class LicenseSerializer(AppModelSerializer):
             "owner",
             "department",
             "remark",
+            "image_url",
             "product",
             "vendor",
             "type",

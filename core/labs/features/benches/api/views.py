@@ -11,7 +11,8 @@ from core.common.api.pagination import PageNumberQuerySerializer, with_page_quer
 from core.labs.features.base import CommandAPIView, operation
 from core.labs.features.base.access import LABS_STAFF_ACCESS
 from core.labs.features.base.common import OptionsAPIView
-from core.labs.features.benches.application import services
+from core.labs.features.base.resource_images import ResourceImageAPIView
+from core.labs.features.benches.application import bench_images, services
 from core.labs.features.benches.queries import selectors
 
 # Import the functions, not the submodule: the package re-exports a selector
@@ -306,3 +307,11 @@ class BenchTypeDetailAPIView(ReferenceDetailAPIView):
     get_contract = operation("BenchTypeDetail", BenchTypeSerializer)
     patch_contract = operation("BenchTypeUpdate", BenchTypeSerializer, request=BenchReferenceWriteSerializer)
     delete_contract = operation("BenchTypeRetire", None, delete=True)
+
+
+class BenchImageAPIView(ResourceImageAPIView):
+    """Read, replace or remove a bench's image. Upload as multipart/form-data with one ``file`` part."""
+
+    schema_tags = ("Benches",)
+    image_commands = bench_images
+    lookup_url_kwarg = "bench_id"

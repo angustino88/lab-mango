@@ -25,6 +25,7 @@ urlpatterns = [
     path("equipment/sku/<str:sku>", collection.EquipmentBySKUAPIView.as_view(), name="equipment-by-sku"),
     path("equipment/uid/<uuid:uid>", collection.EquipmentByUIDAPIView.as_view(), name="equipment-by-uid"),
     path("equipment/<int:pk>", collection.EquipmentDetailAPIView.as_view(), name="equipment-retrieve"),
+    path("equipment/<int:equipment_id>/image", views.EquipmentImageAPIView.as_view(), name="equipment-image"),
     path(
         "equipment/<int:equipment_id>/activity",
         ComputingActivityAPIView.as_view(),

@@ -9,6 +9,7 @@ urlpatterns = [
     path("rooms/options", views.RoomOptionsAPIView.as_view(), name="room-options"),
     path("rooms/filters", views.RoomFiltersAPIView.as_view(), name="room-filters"),
     path("rooms/<int:room_id>", views.RoomDetailAPIView.as_view(), name="room-detail"),
+    path("rooms/<int:room_id>/image", views.RoomImageAPIView.as_view(), name="room-image"),
     path("rooms/<int:room_id>/slots", views.RoomSlotListAPIView.as_view(), name="room-slot-list"),
     path("rooms/<int:room_id>/actions/generate-slots", views.RoomSlotGenerateAPIView.as_view(), name="room-action-generate-slots"),
     path(

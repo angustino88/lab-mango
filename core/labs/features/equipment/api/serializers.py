@@ -5,6 +5,7 @@ from rest_framework import serializers
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.pagination import PageNumberQuerySerializer
 from core.common.api.summary_serializers import StatusSummarySerializer
+from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
@@ -344,6 +345,7 @@ class EquipmentLoanListQuerySerializer(PageNumberQuerySerializer):
 
 
 class EquipmentSerializer(AppModelSerializer):
+    image_url = ResourceImageURLField()
     category = NamedReferenceSerializer(source="kind.category", read_only=True)
     kind = NamedReferenceSerializer(read_only=True)
     type = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -373,6 +375,7 @@ class EquipmentSerializer(AppModelSerializer):
             "type",
             "sku",
             "name",
+            "image_url",
             "manufacturer",
             "product_model",
             "serial_number",

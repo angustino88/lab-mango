@@ -1166,6 +1166,120 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Licenses History by License ID
+  /api/labs/licenses/{license_id}/image:
+    get:
+      operationId: labs_licenses_image_retrieve_by_license_id
+      description: Read, replace or remove a license's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceImageResourceImagesResourceImageDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses Image by License ID
+    put:
+      operationId: labs_licenses_image_update_by_license_id
+      description: Read, replace or remove a license's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResourceImageUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceImageResourceImagesResourceImageDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Licenses Image by License ID
+    delete:
+      operationId: labs_licenses_image_destroy_by_license_id
+      description: Read, replace or remove a license's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Licenses Image by License ID
   /api/labs/licenses/categories/summary:
     get:
       operationId: labs_licenses_categories_summary_retrieve
@@ -2147,6 +2261,11 @@ components:
         remark:
           type: string
           readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
         product:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -2212,6 +2331,7 @@ components:
       - department
       - expiry_date
       - id
+      - image_url
       - max_version
       - name
       - owner
@@ -3470,6 +3590,34 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    ResourceImage:
+      type: object
+      properties:
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+      required:
+      - image_url
+    ResourceImageResourceImagesResourceImageDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceImage'
+      required:
+      - data
+    ResourceImageUpload:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected
+            from the content.
+      required:
+      - file
     SummaryStatus:
       type: object
       properties:

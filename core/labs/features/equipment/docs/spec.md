@@ -218,6 +218,7 @@ Append-only history of lifecycle changes, written only by `change_lifecycle` and
 | `POST /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | `EquipmentAssignmentSerializer` | Assign equipment to bench. |
 | `DELETE /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | Path `{equipment_id}` | Unassign equipment from current bench. |
 | `GET /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | Path `{equipment_id}` | Active placement of any kind (bench, station, room, untracked place); 404 when the location is unknown. |
+| `GET` / `PUT` / `DELETE /api/labs/equipment/{equipment_id}/image` | `EquipmentImageAPIView` | Multipart, one `file` part | Read, replace (JPEG/PNG/GIF/WebP, at most 5 MB) or remove the image; equipment reads return `image_url` (see `core/labs/features/base/docs/resource-images.md`). |
 | `PUT /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | `EquipmentPlacementWriteSerializer` | Set where the item is; moves it in one call from its current place or bench. |
 | `GET /api/labs/equipment/{equipment_id}/loan` | `EquipmentLoanAPIView` | Path `{equipment_id}` | Open loan; 404 when nobody holds the item. |
 | `POST /api/labs/equipment/{equipment_id}/actions/hand-over` | `EquipmentHandOverAPIView` | `EquipmentHandOverSerializer` | Open a one-line slip (`borrower_id` or `borrower_name`, `borrower_contact`, `purpose`, `due_at`, `condition_out`). |

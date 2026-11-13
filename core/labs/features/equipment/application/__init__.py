@@ -1,5 +1,8 @@
 """Equipment write commands and immutable command inputs."""
 
+from core.labs.features.base.resource_image_commands import ResourceImageCommands
+from core.labs.models import Equipment
+
 from .assign_equipment import AssignEquipmentInput, assign_equipment
 from .change_state import ChangeConditionInput, ChangeLifecycleInput, change_condition, change_lifecycle
 from .create_equipment import CreateEquipmentInput, create_equipment
@@ -33,7 +36,12 @@ from .reservations import (
 from .unassign_equipment import UnassignEquipmentInput, unassign_equipment
 from .update_equipment import UpdateEquipmentInput, update_equipment
 
+# Image use cases (replace/remove) for this resource; see core/labs/features/base/resource_image_commands.py.
+equipment_images = ResourceImageCommands(Equipment)
+
+
 __all__ = (
+    "equipment_images",
     "CancelReservationInput",
     "HandOverReservationInput",
     "ReserveEquipmentBatchInput",

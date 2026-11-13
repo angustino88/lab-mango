@@ -89,15 +89,16 @@ def test_http_adapters_use_their_own_application_and_query_layers():
 def test_nested_application_and_query_packages_export_explicit_names():
     for layer, names in (
         ("rooms/application", {
-            "change_room_lifecycle", "create_room", "delete_room", "generate_room_slots", "record_room_observation",
-            "record_room_status", "update_room",
+            "change_room_lifecycle", "room_images", "create_room", "delete_room", "generate_room_slots",
+            "record_room_observation", "record_room_status", "update_room",
         }),
         ("rooms/queries", {
             "get_room", "get_room_for_mapping", "list_room_slots", "list_rooms", "room_mapping_rows", "room_observations", "room_slot_mapping_rows", "room_status_history",
         }),
         ("stations/application", {
-            "change_station_lifecycle", "create_station", "create_station_slot", "create_station_type", "delete_station",
-            "delete_station_slot", "delete_station_type", "place_station", "record_station_status",
+            "change_station_lifecycle", "station_images", "create_station", "create_station_slot",
+            "create_station_type", "delete_station", "delete_station_slot", "delete_station_type", "place_station",
+            "record_station_status",
             "update_station", "update_station_slot", "update_station_type",
         }),
         ("stations/queries", {

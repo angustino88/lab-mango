@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.summary_serializers import StatusSummarySerializer
+from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
@@ -246,6 +247,7 @@ class StationSlotSerializer(AppModelSerializer):
 class StationSerializer(LocationStateFieldsMixin, AppModelSerializer):
     location_resource_type = "station"
 
+    image_url = ResourceImageURLField()
     group = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
     owner = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -293,7 +295,7 @@ class StationSerializer(LocationStateFieldsMixin, AppModelSerializer):
             "utilities",
             *LocationStateFieldsMixin.STATE_FIELDS,
             "safety_classification",
-            "image",
+            "image_url",
             "active_bench_count",
             "allocated_power_w",
             "available_power_w",

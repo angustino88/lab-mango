@@ -2315,6 +2315,120 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Assignment by Equipment ID
+  /api/labs/equipment/{equipment_id}/image:
+    get:
+      operationId: labs_equipment_image_retrieve_by_equipment_id
+      description: Read, replace or remove an equipment unit's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceImageResourceImagesResourceImageDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Equipment Image by Equipment ID
+    put:
+      operationId: labs_equipment_image_update_by_equipment_id
+      description: Read, replace or remove an equipment unit's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResourceImageUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceImageResourceImagesResourceImageDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Equipment Image by Equipment ID
+    delete:
+      operationId: labs_equipment_image_destroy_by_equipment_id
+      description: Read, replace or remove an equipment unit's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Equipment Image by Equipment ID
   /api/labs/equipment/{equipment_id}/loan:
     get:
       operationId: labs_equipment_loan_retrieve_by_equipment_id
@@ -6989,6 +7103,11 @@ components:
         name:
           type: string
           readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
         manufacturer:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -7191,6 +7310,7 @@ components:
       - firmware_version
       - group
       - id
+      - image_url
       - interfaces
       - kind
       - last_calibrated_at
@@ -7570,6 +7690,11 @@ components:
         name:
           type: string
           readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
         manufacturer:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -7762,6 +7887,7 @@ components:
       - firmware_version
       - group
       - id
+      - image_url
       - interfaces
       - kind
       - last_calibrated_at
@@ -10383,6 +10509,34 @@ components:
           $ref: '#/components/schemas/ProductModelSpecificationReferenceListSerializersProductModelSpecificationCatalogRecordPagination'
       required:
       - pagination
+    ResourceImage:
+      type: object
+      properties:
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+      required:
+      - image_url
+    ResourceImageResourceImagesResourceImageDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceImage'
+      required:
+      - data
+    ResourceImageUpload:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected
+            from the content.
+      required:
+      - file
     SampleCharacteristicCatalogCreate:
       type: object
       properties:
