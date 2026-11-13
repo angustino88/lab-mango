@@ -1,6 +1,8 @@
 """Supported bench booking selectors."""
 
 from .bench_bookings import (
+    bench_downtime_blocker,
+    bench_parent_blocker,
     conflicting_bench_bookings,
     find_bench_booking_for_agent_login,
     find_session_booking_facts,
@@ -15,6 +17,8 @@ from .bench_bookings import (
 from .lab_projects import get_lab_project, list_lab_projects
 
 __all__ = [
+    "bench_downtime_blocker",
+    "bench_parent_blocker",
     "conflicting_bench_bookings",
     "find_bench_booking_for_agent_login",
     "find_session_booking_facts",

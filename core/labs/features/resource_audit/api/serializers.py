@@ -192,11 +192,14 @@ class AuditCatalogItemSerializer(serializers.Serializer):
     status = serializers.CharField(
         allow_blank=True,
         help_text=(
-            "Equipment lifecycle_state, bench lifecycle_status, or the newest status record of a station, room "
-            "or license; empty when none exists."
+            "Equipment lifecycle_state; bench, station or room lifecycle_status; or the newest status record "
+            "of a license; empty when none exists."
         ),
     )
-    condition = serializers.CharField(allow_blank=True, help_text="Equipment only; empty for other types.")
+    condition = serializers.CharField(
+        allow_blank=True,
+        help_text="Computed from downtime (operational, in_maintenance, out_of_service); empty for licenses.",
+    )
     location = serializers.CharField(
         allow_blank=True,
         help_text="Bench: setup station name. Station: room name. Room: building name. Otherwise empty.",

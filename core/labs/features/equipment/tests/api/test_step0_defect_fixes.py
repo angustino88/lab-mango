@@ -35,7 +35,7 @@ from core.labs.models.resource.license.license import (
     LicenseType,
     LicenseVendor,
 )
-from tests.factories import create_computing_equipment
+from tests.factories import create_computing_equipment, set_condition
 
 ROOT = "/api/labs/"
 User = get_user_model()
@@ -326,7 +326,7 @@ def test_leaderboard_summary_counts_each_unit_once(computing_kind):
     create_computing_equipment(sku="S0-LB-2", name="B", kind=computing_kind)
     create_computing_equipment(sku="S0-LB-3", name="C", kind=computing_kind, lifecycle_state="planned")
     deleted = create_computing_equipment(sku="S0-LB-4", name="Gone", kind=computing_kind, lifecycle_state="lost")
-    Equipment.objects.filter(pk=broken.pk).update(condition="out_of_service")
+    set_condition(broken, "out_of_service")
     Equipment.objects.filter(pk=deleted.pk).update(deleted_at=timezone.now())
 
     summary = get_dashboard_summary()

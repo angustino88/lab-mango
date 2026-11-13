@@ -2,6 +2,7 @@
 
 from .services import (
     add_favorite,
+    change_bench_lifecycle,
     create_bench,
     delete_bench,
     place_bench,
@@ -13,6 +14,7 @@ from .services import (
 
 __all__ = [
     "add_favorite",
+    "change_bench_lifecycle",
     "create_bench",
     "delete_bench",
     "place_bench",

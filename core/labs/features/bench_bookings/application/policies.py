@@ -58,11 +58,20 @@ def approval_status_for_schedule_change(*, duration: timedelta, current_status: 
     return current_status
 
 
-def ensure_bench_accepts_bookings(bench) -> None:
+def ensure_bench_accepts_bookings(bench, *, parent_blocker: str | None = None) -> None:
+    """The bench, and its station and room (``parent_blocker``), must be in service (design rule 3)."""
     if bench.deleted_at is not None:
         raise ValidationError({"bench": "Select an active bench."})
     if bench.lifecycle_status != "in_service":
         raise ValidationError({"bench": "This bench is not in service."})
+    if parent_blocker is not None:
+        raise ValidationError({"bench": parent_blocker})
+
+
+def ensure_no_downtime(blocker: str | None) -> None:
+    """No downtime window of the bench, its station or its room may overlap the booking (design rule 3)."""
+    if blocker is not None:
+        raise BenchBookingConflict(f"The bench is unavailable for the requested period: {blocker}")
 
 
 def ensure_project_exists(*, exists: bool) -> None:

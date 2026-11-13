@@ -2,6 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.labs.models.resource.base.resource import ResourceModel
+from core.labs.models.resource.base.status import ResourceLifecycleStatus
+from core.labs.models.resource.location.station_slot import StationSlotStatus
 
 
 class Bench(ResourceModel):
@@ -14,14 +16,10 @@ class Bench(ResourceModel):
 
     IMAGE_UPLOAD_FOLDER = "bench"
 
-    # Bench is virtual (redesign OD3): four values only. "Reserved" and "active" are computed from
-    # bookings and computing activity, never stored. Only an in-service bench accepts bookings.
-    LIFECYCLE_STATUSES = (
-        ("planned", "Planned"),
-        ("in_service", "In service"),
-        ("out_of_service", "Out of service"),
-        ("retired", "Retired"),
-    )
+    # Bench is virtual. Lifecycle says whether the lab runs it (RS2 revisits OD3): "out of service" is
+    # a downtime window (ResourceDowntime), and condition, availability and activity are computed,
+    # never stored. Only an in-service, operational bench in an available station and room accepts bookings.
+    LIFECYCLE_STATUSES = tuple(ResourceLifecycleStatus.choices)
 
     bench_group = models.ForeignKey(
         "labs.BenchGroup",
@@ -57,7 +55,7 @@ class Bench(ResourceModel):
     lifecycle_status = models.CharField(
         max_length=32,
         choices=LIFECYCLE_STATUSES,
-        default="in_service",
+        default=ResourceLifecycleStatus.IN_SERVICE,
     )
     criticality = models.CharField(max_length=32, blank=True, default="")
     requested_power_w = models.PositiveIntegerField(null=True, blank=True)
@@ -82,7 +80,7 @@ class Bench(ResourceModel):
             raise ValidationError({
                 "station_slot": "The assigned slot must belong to the bench setup location."
             })
-        if not self.station_slot.is_active or self.station_slot.status not in {"available", "occupied", "reserved"}:
+        if self.station_slot.status != StationSlotStatus.IN_SERVICE:
             raise ValidationError({"station_slot": "The assigned station slot is not available for bench placement."})
         if (
             self.type_id
@@ -120,7 +118,7 @@ class Bench(ResourceModel):
         constraints = [
             *ResourceModel.Meta.constraints,
             models.CheckConstraint(
-                condition=models.Q(lifecycle_status__in=("planned", "in_service", "out_of_service", "retired")),
+                condition=models.Q(lifecycle_status__in=ResourceLifecycleStatus.values),
                 name="bench_lifecycle_valid",
             ),
         ]

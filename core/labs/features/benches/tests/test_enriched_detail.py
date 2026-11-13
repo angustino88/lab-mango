@@ -153,7 +153,14 @@ def test_freshness_boundaries_multiple_computers_and_no_writes(detail):
     assert [row["computing_activity"]["status"]["value"] for row in rows] == ["free", "free", "free", "offline"]
     assert ComputingActivity.objects.count() == 3
     assert not any(q["sql"].lstrip().upper().startswith(("INSERT", "UPDATE", "DELETE")) for q in queries)
-    activity_sql = [q["sql"] for q in queries if "labs_computingactivity" in q["sql"]]
+    # The bench query itself also checks live activity status in an EXISTS subquery (activity_status);
+    # this test is about the one projection query that reads activity rows.
+    activity_sql = [
+        q["sql"] for q in queries
+        if "labs_computingactivity" in q["sql"] and not q["sql"].lstrip().startswith('SELECT "labs_bench"')
+    ]
+    bench_sql = [q["sql"] for q in queries if q["sql"].lstrip().startswith('SELECT "labs_bench"')]
+    assert not any(field in " ".join(bench_sql) for field in ('"remote_user"', '"remote_ip"', '"remote_computer"'))
     assert len(activity_sql) == 1
     assert not any(
         field in activity_sql[0] for field in ("remote_user", "remote_ip", "inactive_at", "remote_computer")
@@ -180,7 +187,9 @@ def test_booking_temporal_approval_boundaries_and_minimal_projection(detail):
     assert row["approval_status"] == {"value": "pending", "label": "Pending"}
     assert summary["next_reservation"]["id"] == future.pk
     sql = [q["sql"] for q in queries if "labs_benchbooking" in q["sql"]]
-    assert not any(field in " ".join(sql) for field in ("reason", "approved_by", "remote_user"))
+    # Booking columns only: the bench query also reads the downtime window's own "reason" column.
+    booking_columns = (f'"labs_benchbooking"."{field}' for field in ("reason", "approved_by", "remote_user"))
+    assert not any(column in " ".join(sql) for column in booking_columns)
 
 
 def test_current_bookings_cap_count_and_deterministic_order(detail, monkeypatch):

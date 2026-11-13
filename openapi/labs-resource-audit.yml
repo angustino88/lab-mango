@@ -711,11 +711,12 @@ components:
           description: Equipment only; empty for other types.
         status:
           type: string
-          description: Equipment lifecycle_state, bench lifecycle_status, or the newest
-            status record of a station, room or license; empty when none exists.
+          description: Equipment lifecycle_state; bench, station or room lifecycle_status;
+            or the newest status record of a license; empty when none exists.
         condition:
           type: string
-          description: Equipment only; empty for other types.
+          description: Computed from downtime (operational, in_maintenance, out_of_service);
+            empty for licenses.
         location:
           type: string
           description: 'Bench: setup station name. Station: room name. Room: building

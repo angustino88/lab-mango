@@ -7,6 +7,7 @@ urlpatterns = [
     path("labs/", include("core.labs.features.benches.urls")),
     path("labs/", include("core.labs.features.bench_bookings.urls")),
     path("labs/", include("core.labs.features.locations.urls")),
+    path("labs/", include("core.labs.features.downtime.urls")),
     path("labs/", include("core.labs.features.procurement.urls")),
     path("labs/", include("core.labs.features.expense.urls")),
     path("labs/", include("core.labs.features.resource_audit.urls")),

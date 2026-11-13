@@ -2,7 +2,8 @@
 
 from django.db.models import BooleanField, Count, Exists, OuterRef, Q, Value
 
-from core.labs.models import Bench, BenchFavorite, BenchGroup, BenchType, Station
+from core.labs.models import Bench, BenchFavorite, BenchGroup, BenchType, ResourceLifecycleStatus, Station
+from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES, with_bench_state
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 
@@ -24,6 +25,8 @@ def list_benches(*, actor=None, setup_location=None, bench_group=None, type=None
             queryset = queryset.filter(**{field: value})
     if search:
         queryset = queryset.filter(Q(sku__icontains=search) | Q(name__icontains=search) | Q(description__icontains=search))
+    # Condition, availability inputs and activity are computed per row (one correlated subquery each).
+    queryset = with_bench_state(queryset)
     return queryset.annotate(
         equipment_count=Count(
             "equipment_assignments",
@@ -62,8 +65,11 @@ def list_bench_options(
         cond &= Q(bench_group_id=bench_group_id)
     if type_id is not None:
         cond &= Q(type_id=type_id)
+    queryset = Bench.objects.all()
     if status_val is not None:
-        cond &= Q(lifecycle_status=status_val)
+        # The deprecated value set (LEGACY_BENCH_STATUSES) still filters: out_of_service is downtime now.
+        queryset = with_bench_state(queryset)
+        cond &= Q(legacy_status=status_val)
     if search_term:
         cond &= (Q(sku__icontains=search_term) | Q(name__icontains=search_term) | Q(description__icontains=search_term))
     if favorite is not None:
@@ -79,7 +85,7 @@ def list_bench_options(
         query_filter = cond
 
     return (
-        Bench.objects.filter(query_filter)
+        queryset.filter(query_filter)
         .only("id", "sku", "name")
         .order_by("name", "id")
     )
@@ -122,7 +128,10 @@ def reference_data():
         "types": BenchType.objects.filter(active=True).order_by("name", "pk"),
         "groups": BenchGroup.objects.filter(active=True).order_by("name", "pk"),
         "stations": Station.objects.order_by("sku", "pk"),
-        "lifecycle_statuses": [{"value": value, "label": label} for value, label in Bench.LIFECYCLE_STATUSES],
+        "lifecycle_statuses": [
+            {"value": value, "label": str(label)} for value, label in ResourceLifecycleStatus.choices
+        ],
+        "statuses": [{"value": value, "label": str(label)} for value, label in LEGACY_BENCH_STATUSES],
     }
 
 

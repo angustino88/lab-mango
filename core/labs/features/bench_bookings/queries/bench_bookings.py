@@ -6,7 +6,17 @@ from typing import Any
 from django.db.models import Q, QuerySet
 
 from core.labs.features.bench_bookings.contracts import SessionBookingFacts
-from core.labs.models import BenchBooking, Booking, BookingApprovalStatus, BookingStatus, LabProject
+from core.labs.models import (
+    BenchBooking,
+    Booking,
+    BookingApprovalStatus,
+    BookingStatus,
+    LabProject,
+    ResourceDowntime,
+    ResourceLifecycleStatus,
+    Room,
+    Station,
+)
 from core.users.public import LabsRole, has_labs_role
 
 
@@ -164,6 +174,52 @@ def conflicting_bench_bookings(*, bench_id, starts_at, ends_at, exclude_id=None)
     if exclude_id is not None:
         queryset = queryset.exclude(pk=exclude_id)
     return queryset
+
+
+def bench_parent_blocker(*, bench) -> str | None:
+    """Why the bench's station or room does not accept bookings (not in service), or ``None``.
+
+    Design rule 3. One query; the caller holds the bench lock.
+    """
+    if bench.setup_location_id is None:
+        return None
+    row = (
+        Station.objects.filter(pk=bench.setup_location_id)
+        .values("lifecycle_status", "name", "sku", "room__lifecycle_status", "room__name", "room__sku")
+        .first()
+    )
+    if row is None:
+        return None
+    if row["lifecycle_status"] != ResourceLifecycleStatus.IN_SERVICE:
+        return f"Station {row['name'] or row['sku']} is {row['lifecycle_status']}."
+    if row["room__lifecycle_status"] not in (None, ResourceLifecycleStatus.IN_SERVICE):
+        return f"Room {row['room__name'] or row['room__sku']} is {row['room__lifecycle_status']}."
+    return None
+
+
+def bench_downtime_blocker(*, bench, starts_at, ends_at) -> str | None:
+    """The first downtime window of the bench, its station or its room that overlaps the period.
+
+    Design rule 3. Downtime writers lock the bench row this caller already holds (``lock_benches``), so a
+    window created concurrently is either committed and seen here, or waits for this transaction.
+    """
+    scopes = [(type(bench), bench.pk, "Bench")]
+    if bench.setup_location_id is not None:
+        scopes.append((Station, bench.setup_location_id, "Station"))
+        room_id = Station.objects.filter(pk=bench.setup_location_id).values_list("room_id", flat=True).first()
+        if room_id is not None:
+            scopes.append((Room, room_id, "Room"))
+    for model, pk, label in scopes:
+        window = (
+            ResourceDowntime.objects.for_resources(model, (pk,))
+            .overlapping(starts_at, ends_at)
+            .order_by("starts_at", "pk")
+            .first()
+        )
+        if window is not None:
+            until = "until further notice" if window.ends_at is None else f"until {window.ends_at:%Y-%m-%d %H:%M}"
+            return f"{label} is {window.get_condition_display().lower()} ({window.reason}) {until}."
+    return None
 
 
 def project_exists(*, project_id) -> bool:

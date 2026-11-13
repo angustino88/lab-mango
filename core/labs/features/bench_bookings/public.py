@@ -2,6 +2,7 @@
 
 from .application import (
     AgentBookingEndTimeInput,
+    CancelBookingsForDowntimeInput,
     CheckAgentBookingLoginInput,
     CheckInAgentBookingInput,
     CompleteAgentBookingInput,
@@ -10,6 +11,7 @@ from .application import (
     UpdateBenchBookingInput,
     activate_bench_booking_for_computing_activity,
     activate_bench_bookings,
+    cancel_bench_bookings_for_downtime,
     check_agent_booking_login,
     check_in_agent_booking,
     complete_agent_booking,
@@ -42,6 +44,7 @@ __all__ = (
     "AgentExtensionNotAllowed",
     "AgentBookingLogin",
     "BenchBookingConflict",
+    "CancelBookingsForDowntimeInput",
     "AgentBookingEndTimeInput",
     "CheckAgentBookingLoginInput",
     "CheckInAgentBookingInput",
@@ -54,6 +57,7 @@ __all__ = (
     "activate_bench_booking_for_computing_activity",
     "activate_bench_bookings",
     "bench_booking_summary",
+    "cancel_bench_bookings_for_downtime",
     "check_agent_booking_login",
     "check_in_agent_booking",
     "complete_agent_booking",

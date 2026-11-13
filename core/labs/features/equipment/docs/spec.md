@@ -14,7 +14,7 @@ Three separate facts describe a unit. They are stored and changed independently;
 | Fact | Question it answers | Values | Changed by |
 |---|---|---|---|
 | `lifecycle_state` | Does the lab still have it? | `planned`, `in_service`, `transferred_out`, `retired`, `lost` | `POST .../actions/change-lifecycle` only |
-| `condition` | Does it work? | `operational`, `in_maintenance`, `out_of_service` | `POST .../actions/change-condition` only (while `in_service`) |
+| `condition` | Does it work? | `operational`, `in_maintenance`, `out_of_service` | Computed from `ResourceDowntime` windows (RS2), never stored. `POST .../actions/change-condition` (while `in_service`) opens a window starting now or ends the current one; scheduled windows: `/api/labs/downtimes` |
 | placement | Where is it? | a bench, a station, a room, only a `location_note`, or none (unknown) | `PUT` / `DELETE .../placement` (and the bench `/assignment` routes) |
 | loan | Who holds it, until when? | an open loan (borrower, due time) or none | `POST .../actions/hand-over`, `.../actions/return`, `.../actions/extend-loan` |
 | `display_status` (computed) | One label for lists and counts | see below | never written |
@@ -46,8 +46,8 @@ Three separate facts describe a unit. They are stored and changed independently;
 | `transferred_out` | `in_service` (handed back) |
 | `retired` | none (final) |
 
-- Leaving `in_service` resets `condition` to `operational` (its own event).
-- Returning from `lost` to `in_service` (found) sets `condition` to `in_maintenance` (its own event), so the unit shows `maintenance` and cannot be lent until someone inspects it and sets it back to `operational`. Returning from `planned` or `transferred_out` keeps `operational`.
+- Leaving `in_service` ends the current downtime window and cancels windows planned for later, so `condition` reads `operational`.
+- Returning from `lost` to `in_service` (found) opens an `in_maintenance` downtime window, so the unit shows `maintenance` and cannot be lent until someone inspects it and sets it back to `operational`. Returning from `planned` or `transferred_out` keeps `operational`.
 - `retired` is final: no action leaves it.
 - Entering `transferred_out`, `retired`, or `lost` is refused while the unit is on a bench (409 `equipment_already_placed`); any other placement is closed and reserved equipment bookings are cancelled with the given reason. `transferred_out` requires `receiving_organisation`.
 - Marking a unit `lost` is always a manual action; no timer sets it.
@@ -97,7 +97,7 @@ The full design and its rationale are in `docs/proposals/equipment-management-re
   - `details` (TextField), `metadata` (JSONField).
   - `replacement_date` (DateField, optional).
   - `lifecycle_state` (CharField(32), indexed, default `in_service`; `planned` or `in_service` at creation).
-  - `condition` (CharField(32), indexed, default `operational`).
+  - No `condition` column: condition is computed from `ResourceDowntime` (design `docs/proposals/resource-status-and-downtime.md`).
   - `licenses` (ManyToManyField `License`, through `LicenseAssignment`).
   - Typed fields shared by categories (step 6, decision A), all optional: `mac_address`, `channels`,
     `power_rating`, `dimensions` (JSON), `material`, `size`, `resolution`, `protocol`, `customer` (FKs,
@@ -105,8 +105,8 @@ The full design and its rationale are in `docs/proposals/equipment-management-re
 - **DB Invariants:**
   - Soft-deletion via `deleted_at`. Active SKUs must be unique.
   - Deletion of an active equipment kind or type referenced by an active equipment instance is protected (`on_delete=PROTECT`).
-  - `equipment_lifecycle_valid`, `equipment_condition_valid`: values must be in their enumerations.
-  - `equipment_condition_only_in_service`: `condition = 'operational'` unless `lifecycle_state = 'in_service'`.
+  - `equipment_lifecycle_valid`: values must be in the enumeration.
+  - Downtime can be recorded only for an in-service unit; leaving service closes it (application rule).
 
 ### 2.2 One table for every category (redesign step 6)
 - There are no category subclasses. The category of a unit is `kind.category`; a category created at runtime
@@ -160,8 +160,8 @@ One table records every placement. `EquipmentAssignment.objects` returns bench p
 - **PostgreSQL Invariants:** `one_active_loan_per_equipment` (unique `equipment` where `returned_at IS NULL`), `equipment_loan_closed_has_reason`, `equipment_loan_close_reason_valid`, `equipment_loan_due_after_handover`, `equipment_loan_returned_after_handover`.
 
 ### 2.5 `core.labs.models.EquipmentEvent`
-Append-only history of lifecycle and condition changes, written only by `change_lifecycle`, `change_condition`, and creation.
-- **Fields:** `equipment` (FK, PROTECT), `axis` (`lifecycle` or `condition`), `from_value` (empty for the initial state), `to_value`, `reason` (CharField(500)), `details` (JSON, for example `receiving_organisation`, `transfer_date`, `cancelled_booking_ids`), `actor` (FK user, nullable), `occurred_at`.
+Append-only history of lifecycle changes, written only by `change_lifecycle` and creation. Condition history is the downtime windows.
+- **Fields:** `equipment` (FK, PROTECT), `axis` (`lifecycle`), `from_value` (empty for the initial state), `to_value`, `reason` (CharField(500)), `details` (JSON, for example `receiving_organisation`, `transfer_date`, `cancelled_booking_ids`), `actor` (FK user, nullable), `occurred_at`.
 - **PostgreSQL Invariants:** `equipment_event_changes` (`from_value <> to_value`), `equipment_event_value_valid` (`to_value` belongs to the axis's enumeration).
 
 ---
@@ -199,7 +199,7 @@ Append-only history of lifecycle and condition changes, written only by `change_
 - `rdp_file` is server-generated. `mac_address` is a shared column; `computing.monitored_devices` and
   `computing.technical_user_id` are editable on update. Agent writes to `technical_user` are prohibited by the
   agent contract.
-- Lifecycle state and condition are read-only in update and change only through `actions/change-lifecycle` and `actions/change-condition`; history is `EquipmentEvent`. `display_status` is computed, never written.
+- Lifecycle state and condition are read-only in update and change only through `actions/change-lifecycle` and `actions/change-condition` (or the downtime API); history is `EquipmentEvent` and `ResourceDowntime`. `display_status` is computed, never written.
 - Audit result/remarks are managed by the resource-audit API, not category payloads. Authenticated equipment creation currently still creates a server-generated `NOT_ASSESSED` audit record; this behavior is retained.
 - Equipment `details`, shared-resource `remark`, `EquipmentEvent.details`, and per-audit `remarks` remain separate stored concepts. Do not consolidate them without an approved data and API compatibility plan.
 
@@ -234,7 +234,7 @@ Append-only history of lifecycle and condition changes, written only by `change_
 | `POST /api/labs/equipment/{equipment_id}/actions/return` | `EquipmentReturnAPIView` | `EquipmentReturnSerializer` | Close the loan; optional `condition` and new place. |
 | `POST /api/labs/equipment/{equipment_id}/actions/extend-loan` | `EquipmentExtendLoanAPIView` | `EquipmentExtendLoanSerializer` | Move `due_at` of a loan without a booking. |
 | `DELETE /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | Path `{equipment_id}` | Remove the active placement; 204 also when there is none. |
-| `POST /api/labs/equipment/{id}/actions/change-condition` | `EquipmentChangeConditionAPIView` | `EquipmentChangeConditionSerializer` | Set operational / in maintenance / out of service (in service only). |
+| `POST /api/labs/equipment/{id}/actions/change-condition` | `EquipmentChangeConditionAPIView` | `EquipmentChangeConditionSerializer` | Set operational / in maintenance / out of service now (in service only): opens or ends a downtime window; does not check reservations; refused when downtime is already planned for later. |
 | `POST /api/labs/equipment/{id}/actions/change-lifecycle` | `EquipmentChangeLifecycleAPIView` | `EquipmentChangeLifecycleSerializer` | Move along the lifecycle transition table. |
 | `GET /api/labs/equipment/{equipment_id}/status-changes` | `EquipmentStatusChangeListAPIView` | Page query only | `display_status` history, newest first: `previous_display_status` (null on the creation row), `display_status`, `occurred_at`, `actor`, `reason`, `details`. Replayed from lifecycle and condition events, loans and bench placements (`queries/status_history.py`); facts written by one command within 2 s are one step; calibration is not replayed; at most 500 newest rows per source. 404 for a missing or deleted unit. |
 | `GET /api/labs/equipment/computing/activity-summary` | `ComputingActivitySummaryAPIView` | None | Summary of monitored computing units. |

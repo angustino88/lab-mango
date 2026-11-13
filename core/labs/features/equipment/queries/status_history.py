@@ -1,12 +1,12 @@
 """Display-status history of one unit, rebuilt from the stored facts that make up ``display_status``.
 
 ``display_status`` is never stored (spec.md, priority table). Its history is replayed from the facts
-that are: lifecycle and condition changes (``EquipmentEvent``), loans (``EquipmentLoan``) and bench
-placements (``EquipmentAssignment``). Calibration is not replayed: it has no recorded change, so a unit
+that are: lifecycle changes (``EquipmentEvent``), condition windows (``ResourceDowntime``, RS2), loans
+(``EquipmentLoan``) and bench placements (``EquipmentAssignment``). Calibration is not replayed: it has no recorded change, so a unit
 shown ``calibration_overdue`` today appears here with the label its other facts give.
 
 The replay walks backward from the unit's current state over at most ``SOURCE_LIMIT`` newest rows per
-source, so the read is bounded (4 queries). When a source is truncated, history stops at the oldest
+source, so the read is bounded (5 queries). When a source is truncated, history stops at the oldest
 point every source still covers and the creation row is omitted.
 
 One command writes several facts a few milliseconds apart (leaving service resets the condition, a return
@@ -18,14 +18,17 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from typing import Any
 
+from django.utils import timezone
+
 from core.labs.models import (
+    DowntimeReason,
     Equipment,
     EquipmentCondition,
     EquipmentDisplayStatus,
     EquipmentEvent,
-    EquipmentEventAxis,
     EquipmentLifecycleState,
     EquipmentLoan,
+    ResourceDowntime,
 )
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
@@ -85,10 +88,16 @@ def display_label(state: _State) -> str:
 def equipment_status_history(*, equipment_id: int) -> list[DisplayStatusChange]:
     """``display_status`` changes of one non-deleted unit, newest first.
 
-    Raises ``Equipment.DoesNotExist`` for a missing or deleted unit. 4 queries.
+    Raises ``Equipment.DoesNotExist`` for a missing or deleted unit. 5 queries.
     """
-    unit = Equipment.objects.only("pk", "created", "lifecycle_state", "condition").get(
-        pk=equipment_id, deleted_at__isnull=True
+    unit = Equipment.objects.only("pk", "created", "lifecycle_state").get(pk=equipment_id, deleted_at__isnull=True)
+    now = timezone.now()
+    windows = list(
+        ResourceDowntime.objects.for_resources(Equipment, (equipment_id,))
+        .not_cancelled()
+        .filter(starts_at__lte=now)
+        .select_related("creator", "ended_by")
+        .order_by("-starts_at", "-id")[:SOURCE_LIMIT]
     )
     events = list(
         EquipmentEvent.objects.filter(equipment_id=equipment_id)
@@ -108,18 +117,25 @@ def equipment_status_history(*, equipment_id: int) -> list[DisplayStatusChange]:
 
     cutoff = _cutoff(
         (events, lambda row: row.occurred_at),
+        (windows, lambda row: row.starts_at),
         (loans, lambda row: row.handed_over_at),
         (benches, lambda row: row.assigned_at),
     )
     creation = next((event for event in events if not event.from_value), None)
-    changes = [*_event_changes(events), *_loan_changes(loans), *_bench_changes(benches)]
+    changes = [
+        *_event_changes(events),
+        *_downtime_changes(windows, now),
+        *_loan_changes(loans),
+        *_bench_changes(benches),
+    ]
     if cutoff is not None:
         changes = [change for change in changes if change.at > cutoff]
     changes.sort(key=lambda change: (change.at, change.tiebreak), reverse=True)
 
+    current = next((window for window in windows if window.ends_at is None or window.ends_at > now), None)
     state = _State(
         lifecycle=unit.lifecycle_state,
-        condition=unit.condition,
+        condition=current.condition if current is not None else EquipmentCondition.OPERATIONAL,
         loan=any(loan.returned_at is None for loan in loans),
         bench=any(placement.unassigned_at is None for placement in benches),
     )
@@ -160,11 +176,43 @@ def _cutoff(*sources) -> datetime | None:
     return max(times) if times else None
 
 
+def _downtime_changes(windows: list[ResourceDowntime], now) -> list[_Change]:
+    """Each window starts a condition (before: operational) and, once ended, restores operational."""
+    changes = []
+    for window in windows:
+        details = {"downtime_id": window.pk, "reason": window.reason}
+        reason = window.notes or DowntimeReason(window.reason).label
+        changes.append(
+            _Change(
+                at=window.starts_at,
+                fact=_CONDITION,
+                before=EquipmentCondition.OPERATIONAL,
+                actor=window.creator,
+                reason=str(reason),
+                details=details,
+                tiebreak=(0, window.pk),
+            )
+        )
+        if window.ends_at is not None and window.ends_at <= now:
+            changes.append(
+                _Change(
+                    at=window.ends_at,
+                    fact=_CONDITION,
+                    before=window.condition,
+                    actor=window.ended_by,
+                    reason="",
+                    details=details,
+                    tiebreak=(0, window.pk),
+                )
+            )
+    return changes
+
+
 def _event_changes(events: list[EquipmentEvent]) -> list[_Change]:
     return [
         _Change(
             at=event.occurred_at,
-            fact=_LIFECYCLE if event.axis == EquipmentEventAxis.LIFECYCLE else _CONDITION,
+            fact=_LIFECYCLE,
             before=event.from_value,
             actor=event.actor,
             reason=event.reason,

@@ -13,6 +13,8 @@ from core.labs.features.base.serializers import (
     ResourceWriteSerializerMixin,
     to_choice_reference,
 )
+from core.labs.features.locations.api.serializers import LocationLifecycleWriteSerializer, LocationStateFieldsMixin
+from core.labs.models.resource.base.status import ResourceLifecycleStatus
 from core.labs.models.resource.location.room import Room, RoomStatus, RoomStatusRecord
 from core.labs.models.resource.location.room_observation import RoomObservation
 from core.labs.models.resource.location.room_slot import RoomSlot
@@ -21,7 +23,11 @@ from .filters import ROOM_FILTERS
 
 
 class RoomStatusSummarySerializer(StatusSummarySerializer):
-    """Recorded lifecycle state, distinct from operational configuration."""
+    """The deprecated seven-value status, computed from lifecycle, condition, access and activity."""
+
+
+class RoomLifecycleWriteSerializer(LocationLifecycleWriteSerializer):
+    pass
 
 
 class RoomCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
@@ -71,6 +77,8 @@ class RoomUpdateSerializer(RoomCreateSerializer):
 
 
 class RoomStatusWriteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    """Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set."""
+
     status = serializers.ChoiceField(choices=RoomStatus.choices)
     metadata = serializers.DictField(required=False, default=dict)
 
@@ -86,7 +94,11 @@ RoomListQuerySerializer = ROOM_FILTERS.serializer("RoomListQuerySerializer")
 
 
 class RoomSlotSerializer(AppModelSerializer):
-    status = serializers.SerializerMethodField(read_only=True)
+    status = serializers.SerializerMethodField(
+        read_only=True, help_text="Deprecated: available, occupied, blocked or retired (occupied is computed)."
+    )
+    service_status = serializers.SerializerMethodField()
+    occupied = serializers.BooleanField(read_only=True, default=False)
 
     class Meta:
         model = RoomSlot
@@ -98,6 +110,8 @@ class RoomSlotSerializer(AppModelSerializer):
             "slot_code",
             "slot_type",
             "status",
+            "service_status",
+            "occupied",
             "x_mm",
             "y_mm",
             "width_mm",
@@ -115,7 +129,13 @@ class RoomSlotSerializer(AppModelSerializer):
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_status(self, obj) -> dict[str, str] | None:
-        return to_choice_reference(getattr(obj, "status", None))
+        if obj.status == "usable":
+            return to_choice_reference("occupied" if getattr(obj, "occupied", False) else "available")
+        return to_choice_reference(obj.status)
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_service_status(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(obj.status, RoomSlot.STATUSES)
 
 
 class RoomStatusRecordSerializer(AppModelSerializer):
@@ -129,7 +149,7 @@ class RoomStatusRecordSerializer(AppModelSerializer):
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_status(self, obj) -> dict[str, str] | None:
-        return to_choice_reference(getattr(obj, "status", None), RoomStatus.choices)
+        return to_choice_reference(getattr(obj, "status", None), ResourceLifecycleStatus.choices)
 
 
 class RoomObservationSerializer(AppModelSerializer):
@@ -148,14 +168,13 @@ class RoomObservationSerializer(AppModelSerializer):
         read_only_fields = fields
 
 
-class RoomSerializer(AppModelSerializer):
+class RoomSerializer(LocationStateFieldsMixin, AppModelSerializer):
     group = NamedReferenceSerializer(read_only=True, allow_null=True)
     owner = NamedReferenceSerializer(read_only=True, allow_null=True)
     country = NamedReferenceSerializer(read_only=True, allow_null=True)
     city = NamedReferenceSerializer(read_only=True, allow_null=True)
     building = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
-    status = serializers.SerializerMethodField(read_only=True)
     location_path = serializers.CharField(source="get_location_path", read_only=True)
     area_m2 = serializers.DecimalField(max_digits=18, decimal_places=6, read_only=True, allow_null=True)
     slot_capacity = serializers.IntegerField(read_only=True, allow_null=True)
@@ -188,7 +207,7 @@ class RoomSerializer(AppModelSerializer):
             "coordinate_unit",
             "floor_plan_revision",
             "floor_plan_url",
-            "status",
+            *LocationStateFieldsMixin.STATE_FIELDS,
             "max_occupancy",
             "power_capacity_w",
             "cooling_capacity_w",
@@ -200,11 +219,6 @@ class RoomSerializer(AppModelSerializer):
         )
         read_only_fields = fields
 
-    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
-    def get_status(self, obj) -> dict[str, str] | None:
-        raw_status = getattr(obj, "status", None)
-        return to_choice_reference(raw_status, RoomStatus.choices)
-
 
 class RoomOptionsQuerySerializer(OptionsQueryMixin):
     building_id = serializers.IntegerField(required=False, min_value=1)
@@ -213,6 +227,7 @@ class RoomOptionsQuerySerializer(OptionsQueryMixin):
 
 __all__ = [
     "RoomCreateSerializer",
+    "RoomLifecycleWriteSerializer",
     "RoomListQuerySerializer",
     "RoomObservationSerializer",
     "RoomObservationWriteSerializer",

@@ -17,14 +17,32 @@ from core.labs.features.base.serializers import (
     UIDNamedReferenceSerializer,
     to_choice_reference,
 )
+from core.labs.features.locations.api.serializers import LocationLifecycleWriteSerializer, LocationStateFieldsMixin
+from core.labs.models.resource.base.status import ResourceLifecycleStatus
 from core.labs.models.resource.location.station import Station, StationStatus, StationStatusRecord, StationType
-from core.labs.models.resource.location.station_slot import StationSlot
+from core.labs.models.resource.location.station_slot import StationSlot, StationSlotStatus
 
 from .filters import STATION_FILTERS
 
 
 class StationStatusSummarySerializer(StatusSummarySerializer):
-    """Recorded lifecycle state, distinct from operational configuration."""
+    """The deprecated seven-value status, computed from lifecycle, condition, access and activity."""
+
+
+class StationLifecycleWriteSerializer(LocationLifecycleWriteSerializer):
+    pass
+
+
+# Deprecated slot inputs (RS3): the old status values and ``is_active`` map onto ``service_status``.
+LEGACY_SLOT_STATUS = {
+    "available": StationSlotStatus.IN_SERVICE,
+    "occupied": StationSlotStatus.IN_SERVICE,
+    "reserved": StationSlotStatus.IN_SERVICE,
+    "maintenance": StationSlotStatus.OUT_OF_SERVICE,
+    "out_of_service": StationSlotStatus.OUT_OF_SERVICE,
+    "in_service": StationSlotStatus.IN_SERVICE,
+    "retired": StationSlotStatus.RETIRED,
+}
 
 
 class StationPlacementSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
@@ -129,6 +147,11 @@ class StationUpdateSerializer(StationCreateSerializer):
 class StationSlotCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
     compatible_bench_types = serializers.ListField(child=serializers.IntegerField(min_value=1), required=False)
     utilities = serializers.DictField(required=False)
+    service_status = serializers.ChoiceField(choices=StationSlotStatus.choices, required=False)
+    status = serializers.ChoiceField(
+        choices=sorted(LEGACY_SLOT_STATUS), required=False, help_text="Deprecated: use service_status."
+    )
+    is_active = serializers.BooleanField(required=False, help_text="Deprecated: use service_status.")
 
     class Meta:
         model = StationSlot
@@ -138,6 +161,7 @@ class StationSlotCreateSerializer(ResourceWriteSerializerMixin, serializers.Mode
             "label",
             "is_active",
             "status",
+            "service_status",
             "width_mm",
             "depth_mm",
             "height_mm",
@@ -148,6 +172,22 @@ class StationSlotCreateSerializer(ResourceWriteSerializerMixin, serializers.Mode
             "compatible_bench_types",
         )
         validators = []
+
+    def validate(self, attrs):
+        """Map the deprecated inputs; ``service_status`` wins, then ``status``, then ``is_active``."""
+        attrs = super().validate(attrs)
+        legacy_status = attrs.pop("status", None)
+        is_active = attrs.pop("is_active", None)
+        if "service_status" not in attrs:
+            if legacy_status is not None:
+                attrs["service_status"] = LEGACY_SLOT_STATUS[legacy_status]
+            elif is_active is not None:
+                attrs["service_status"] = (
+                    StationSlotStatus.IN_SERVICE if is_active else StationSlotStatus.OUT_OF_SERVICE
+                )
+        if "service_status" in attrs:
+            attrs["status"] = attrs.pop("service_status")
+        return attrs
 
 
 class StationSlotUpdateSerializer(StationSlotCreateSerializer):
@@ -160,6 +200,8 @@ class StationTypeWriteSerializer(ResourceWriteSerializerMixin, serializers.Seria
 
 
 class StationStatusWriteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    """Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set."""
+
     status = serializers.ChoiceField(choices=StationStatus.choices)
     metadata = serializers.DictField(required=False, default=dict)
 
@@ -168,7 +210,12 @@ StationListQuerySerializer = STATION_FILTERS.serializer("StationListQuerySeriali
 
 
 class StationSlotSerializer(AppModelSerializer):
-    status = serializers.SerializerMethodField(read_only=True)
+    status = serializers.SerializerMethodField(
+        read_only=True, help_text="Deprecated: available, occupied, out_of_service or retired (occupied is computed)."
+    )
+    service_status = serializers.SerializerMethodField()
+    occupied = serializers.BooleanField(read_only=True, default=False)
+    is_active = serializers.SerializerMethodField(help_text="Deprecated: service_status is in_service.")
 
     class Meta:
         model = StationSlot
@@ -176,6 +223,7 @@ class StationSlotSerializer(AppModelSerializer):
             "id",
             "station",
             *StationSlotCreateSerializer.Meta.fields,
+            "occupied",
             "created_at",
             "updated_at",
         )
@@ -183,17 +231,27 @@ class StationSlotSerializer(AppModelSerializer):
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_status(self, obj) -> dict[str, str] | None:
-        return to_choice_reference(getattr(obj, "status", None))
+        if obj.status == StationSlotStatus.IN_SERVICE:
+            return to_choice_reference("occupied" if getattr(obj, "occupied", False) else "available")
+        return to_choice_reference(obj.status)
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_service_status(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(obj.status, StationSlotStatus.choices)
+
+    def get_is_active(self, obj) -> bool:
+        return obj.status == StationSlotStatus.IN_SERVICE
 
 
-class StationSerializer(AppModelSerializer):
+class StationSerializer(LocationStateFieldsMixin, AppModelSerializer):
+    location_resource_type = "station"
+
     group = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
     owner = NamedReferenceSerializer(read_only=True, allow_null=True)
     type = NamedReferenceSerializer(read_only=True, allow_null=True)
     room = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
     slot = NamedReferenceSerializer(read_only=True, allow_null=True)
-    status = serializers.SerializerMethodField(read_only=True)
     position = serializers.SerializerMethodField(read_only=True)
     active_bench_count = serializers.IntegerField(read_only=True)
     allocated_power_w = serializers.IntegerField(read_only=True)
@@ -233,7 +291,7 @@ class StationSerializer(AppModelSerializer):
             "cooling_capacity_w",
             "network_port_capacity",
             "utilities",
-            "status",
+            *LocationStateFieldsMixin.STATE_FIELDS,
             "safety_classification",
             "image",
             "active_bench_count",
@@ -247,11 +305,6 @@ class StationSerializer(AppModelSerializer):
             "updated_at",
         )
         read_only_fields = fields
-
-    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
-    def get_status(self, obj) -> dict[str, str] | None:
-        raw = getattr(obj, "status", None)
-        return to_choice_reference(raw, StationStatus.choices)
 
     @extend_schema_field(Coordinate3DSerializer(allow_null=True))
     def get_position(self, obj) -> dict[str, float] | None:
@@ -291,7 +344,7 @@ class StationStatusRecordSerializer(AppModelSerializer):
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_status(self, obj) -> dict[str, str] | None:
-        return to_choice_reference(getattr(obj, "status", None), StationStatus.choices)
+        return to_choice_reference(getattr(obj, "status", None), ResourceLifecycleStatus.choices)
 
 
 class RoomReferenceSerializer(NamedReferenceSerializer):
@@ -305,8 +358,10 @@ class StationReferenceDataSerializer(serializers.Serializer):
     types = StationTypeSerializer(many=True, read_only=True)
     bench_types = NamedReferenceSerializer(many=True, read_only=True)
     rooms = RoomReferenceSerializer(many=True, read_only=True)
-    statuses = ChoiceReferenceSerializer(many=True, read_only=True)
-    slot_statuses = ChoiceReferenceSerializer(many=True, read_only=True)
+    statuses = ChoiceReferenceSerializer(many=True, read_only=True, help_text="Deprecated seven-value status.")
+    lifecycle_statuses = ChoiceReferenceSerializer(many=True, read_only=True)
+    access_policies = ChoiceReferenceSerializer(many=True, read_only=True)
+    slot_statuses = ChoiceReferenceSerializer(many=True, read_only=True, help_text="Slot service_status values.")
 
 
 class StationOptionsQuerySerializer(OptionsQueryMixin):
@@ -317,6 +372,7 @@ class StationOptionsQuerySerializer(OptionsQueryMixin):
 __all__ = [
     "RoomReferenceSerializer",
     "StationCreateSerializer",
+    "StationLifecycleWriteSerializer",
     "StationListQuerySerializer",
     "StationOptionsQuerySerializer",
     "StationPlacementSerializer",

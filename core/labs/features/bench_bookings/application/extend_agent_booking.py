@@ -10,7 +10,11 @@ from django.utils import timezone
 
 from core.labs.features.bench_bookings.contracts import AgentBookingExtended
 from core.labs.features.bench_bookings.exceptions import AgentExtensionBenchNotFree, AgentExtensionNotAllowed
-from core.labs.features.bench_bookings.queries import conflicting_bench_bookings
+from core.labs.features.bench_bookings.queries import (
+    bench_downtime_blocker,
+    bench_parent_blocker,
+    conflicting_bench_bookings,
+)
 from core.labs.models import BookingApprovalStatus, BookingStatus
 
 from . import policies
@@ -55,11 +59,16 @@ def extend_agent_booking(
             starts_at=booking.starts_at, current_ends_at=booking.ends_at, new_ends_at=new_ends_at, now=now
         )
         try:
-            policies.ensure_bench_accepts_bookings(locked.bench)
+            policies.ensure_bench_accepts_bookings(
+                locked.bench, parent_blocker=bench_parent_blocker(bench=locked.bench)
+            )
         except ValidationError as error:
             raise AgentExtensionNotAllowed(
                 reason="bench_not_in_service", message="The bench is not in service."
             ) from error
+        downtime = bench_downtime_blocker(bench=locked.bench, starts_at=booking.ends_at, ends_at=new_ends_at)
+        if downtime is not None:
+            raise AgentExtensionNotAllowed(reason="bench_unavailable", message=downtime)
         next_start = (
             conflicting_bench_bookings(
                 bench_id=booking.bench_id, starts_at=booking.ends_at, ends_at=new_ends_at, exclude_id=booking.pk

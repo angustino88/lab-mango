@@ -20,13 +20,14 @@ def test_bench_serializer_contains_standard_contract_fields():
     assert "modified" not in fields
     assert "deleted_at" not in fields
     assert "current_status" not in fields
-    assert "lifecycle_status" not in fields
+    # Separate state fields (resource-status-and-downtime.md); ``status`` is the deprecated four-value field.
+    assert {"lifecycle_status", "condition", "availability", "activity_status"} <= set(fields)
     assert "equipment_count" in fields
     assert "equipment_url" in fields
 
-    bench = SimpleNamespace(lifecycle_status="active", equipment_count=0)
-    ref = BenchSerializer().get_status(bench)
-    assert ref == {"value": "active", "label": "Active"}
+    bench = SimpleNamespace(lifecycle_status="in_service", legacy_status="out_of_service", equipment_count=0)
+    assert BenchSerializer().get_status(bench) == {"value": "out_of_service", "label": "Out of service"}
+    assert BenchSerializer().get_lifecycle_status(bench) == {"value": "in_service", "label": "In service"}
 
 
 def test_bench_setup_equipment_serializer_remains_available_for_subresource_and_is_monitored():

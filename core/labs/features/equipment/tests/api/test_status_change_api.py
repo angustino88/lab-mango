@@ -235,7 +235,8 @@ def test_query_budget_does_not_grow_with_history(client, frozen, unit, django_as
         _act(client, frozen, "post", f"{unit.pk}/actions/return", {})
     client.get(_url(unit.pk))  # warm the per-user Labs role cache
 
-    with django_assert_num_queries(4):
+    # 5: unit, downtime windows (condition history, RS2), lifecycle events, loans, bench placements.
+    with django_assert_num_queries(5):
         # unit, events, loans with slip and people, bench placements with bench and people
         response = client.get(_url(unit.pk))
     assert response.status_code == 200

@@ -39,8 +39,8 @@ def validate_station_capacity(station, benches: Iterable, slots: Iterable = ()):
 
 
 def validate_occupied_slot(slot, bench, compatible_type_ids):
-    if not slot.is_active or slot.status not in {"available", "occupied", "reserved"}:
-        raise LocationConflict("An occupied slot must remain active and usable.")
+    if slot.status != "in_service":
+        raise LocationConflict("An occupied slot must stay in service.")
     compatible_type_ids = set(compatible_type_ids)
     if compatible_type_ids and bench.type_id not in compatible_type_ids:
         raise ValidationError({"compatible_bench_types": "The existing bench type must remain compatible."})
@@ -54,8 +54,9 @@ def validate_room_slot(station, slot, *, staying=False):
         raise ValidationError({"slot": "The assigned slot must belong to the station's room."})
     if slot.slot_type != "station":
         raise ValidationError({"slot": "The room slot must be a station position."})
-    if slot.status != "available" and not (staying and slot.status == "occupied"):
-        raise LocationConflict("The room slot is not available.")
+    # Occupancy is Station.slot (checked by the caller and a unique constraint); this checks usability.
+    if slot.status != "usable" and not staying:
+        raise LocationConflict("The room slot is not usable.")
     for field in ("width_mm", "depth_mm", "max_load_kg"):
         check_limit(field, getattr(slot, field), getattr(station, field))
     requested_power = station.power_reserved_w if station.power_capacity_w is None else station.power_capacity_w

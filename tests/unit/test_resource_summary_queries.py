@@ -10,13 +10,13 @@ from core.labs.features.equipment.queries.summaries import (
     get_equipment_status_summary,
 )
 from core.labs.models import ComputingActivity, Equipment
-from tests.factories import BenchFactory, ComputingEquipmentFactory
+from tests.factories import BenchFactory, ComputingEquipmentFactory, set_condition
 
 
 @pytest.mark.django_db
 def test_current_equipment_display_status_and_deleted_inventory(django_assert_num_queries):
     equipment = ComputingEquipmentFactory()
-    Equipment.objects.filter(pk=equipment.pk).update(condition="out_of_service")
+    set_condition(equipment, "out_of_service")
     deleted = ComputingEquipmentFactory()
     Equipment.objects.filter(pk=deleted.pk).update(deleted_at=timezone.now())
     with django_assert_num_queries(1):
@@ -42,7 +42,7 @@ def test_computing_activity_includes_unassigned_and_missing_telemetry(django_ass
 @pytest.mark.django_db
 def test_computing_category_summary_counts_only_computing_equipment(django_assert_num_queries):
     computing = ComputingEquipmentFactory()
-    Equipment.objects.filter(pk=ComputingEquipmentFactory().pk).update(condition="out_of_service")
+    set_condition(ComputingEquipmentFactory(), "out_of_service")
     with django_assert_num_queries(1):
         summary = get_equipment_category_status_summary(category_id=computing.kind.category_id)
     counts = {item["status"]["value"]: item["resource_count"] for item in summary["statuses"]}

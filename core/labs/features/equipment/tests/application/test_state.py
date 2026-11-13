@@ -1,4 +1,4 @@
-"""Equipment lifecycle state and condition (redesign step 2)."""
+"""Equipment lifecycle state and condition (redesign step 2; condition from downtime windows, RS2)."""
 
 from datetime import timedelta
 
@@ -25,12 +25,12 @@ from core.labs.features.equipment.public import (
 )
 from core.labs.models import (
     Bench,
-    Equipment,
     EquipmentBooking,
     EquipmentCategory,
     EquipmentEvent,
     EquipmentKind,
     EquipmentPlacement,
+    ResourceDowntime,
     Room,
 )
 from tests.factories import create_computing_equipment
@@ -69,6 +69,16 @@ def _condition(unit, condition, reason=""):
     return change_condition(ChangeConditionInput(equipment_id=unit.pk, condition=condition, reason=reason), actor=None)
 
 
+def _condition_of(unit):
+    return ResourceDowntime.objects.condition_of(unit)
+
+
+def _windows(unit):
+    return list(
+        ResourceDowntime.objects.for_resource(unit).order_by("starts_at", "pk").values_list("condition", "notes")
+    )
+
+
 def _display(unit):
     return list_equipment().get(pk=unit.pk).display_status
 
@@ -88,7 +98,7 @@ def test_create_defaults_to_in_service_and_records_initial_event(kind):
     unit = create_equipment(
         CreateEquipmentInput(fields=(("kind", kind.pk), ("sku", "ST-C1"), ("name", "n"))), actor=None
     )
-    assert (unit.lifecycle_state, unit.condition) == ("in_service", "operational")
+    assert (unit.lifecycle_state, _condition_of(unit)) == ("in_service", "operational")
     assert _events(unit) == [("lifecycle", "", "in_service")]
 
 
@@ -114,13 +124,15 @@ def test_create_planned_and_reject_other_lifecycle(kind):
 
 
 @pytest.mark.django_db
-def test_condition_change_records_event_and_is_idempotent(unit):
+def test_condition_change_opens_one_downtime_window_and_is_idempotent(unit):
     _condition(unit, "in_maintenance", reason="Fan noise")
     _condition(unit, "in_maintenance")
-    unit.refresh_from_db()
-    assert unit.condition == "in_maintenance"
-    assert _events(unit, "condition") == [("condition", "operational", "in_maintenance")]
-    assert EquipmentEvent.objects.get(equipment=unit, axis="condition").reason == "Fan noise"
+    assert _condition_of(unit) == "in_maintenance"
+    assert _windows(unit) == [("in_maintenance", "Fan noise")]
+    assert _events(unit, "condition") == []
+    _condition(unit, "operational")
+    assert _condition_of(unit) == "operational"
+    assert ResourceDowntime.objects.for_resource(unit).get().ends_at is not None
 
 
 @pytest.mark.django_db
@@ -141,10 +153,11 @@ def test_condition_changes_only_in_service(unit):
 
 
 @pytest.mark.django_db
-def test_condition_only_in_service_is_a_database_constraint(unit):
+def test_downtime_windows_of_one_unit_cannot_overlap_in_the_database(unit):
+    _condition(unit, "out_of_service")
     with pytest.raises(IntegrityError) as error, transaction.atomic():
-        Equipment.objects.filter(pk=unit.pk).update(lifecycle_state="lost", condition="out_of_service")
-    assert "equipment_condition_only_in_service" in str(error.value)
+        ResourceDowntime.for_new_resource(unit, condition="in_maintenance", starts_at=timezone.now()).save()
+    assert "downtime_no_overlap" in str(error.value)
 
 
 # Lifecycle -------------------------------------------------------------------------------
@@ -170,31 +183,33 @@ def test_lifecycle_transition_table(kind, source, target):
 
 
 @pytest.mark.django_db
-def test_leaving_service_resets_condition_with_its_own_event(unit):
-    _condition(unit, "out_of_service")
+def test_leaving_service_ends_downtime_and_cancels_planned_windows(unit):
+    now = timezone.now()
+    for starts_at in (now, now + timedelta(days=2)):
+        ResourceDowntime.for_new_resource(
+            unit, condition="out_of_service", starts_at=starts_at, ends_at=starts_at + timedelta(hours=1)
+        ).save()
     _lifecycle(unit, "retired", reason="Scrapped")
     unit.refresh_from_db()
-    assert (unit.lifecycle_state, unit.condition) == ("retired", "operational")
-    assert _events(unit) == [
-        ("condition", "operational", "out_of_service"),
-        ("condition", "out_of_service", "operational"),
-        ("lifecycle", "in_service", "retired"),
-    ]
+    assert (unit.lifecycle_state, _condition_of(unit)) == ("retired", "operational")
+    current, planned = ResourceDowntime.objects.for_resource(unit).order_by("starts_at")
+    assert current.ends_at <= timezone.now() and current.cancelled_at is None
+    assert planned.cancelled_at is not None
+    assert _events(unit) == [("lifecycle", "in_service", "retired")]
 
 
 @pytest.mark.django_db
-def test_found_unit_returns_in_maintenance_with_its_own_event(unit):
+def test_found_unit_returns_in_maintenance_with_a_downtime_window(unit):
     _lifecycle(unit, "lost", reason="Not found at inventory")
     _lifecycle(unit, "in_service", reason="Found in Room 5")
     unit.refresh_from_db()
-    assert (unit.lifecycle_state, unit.condition) == ("in_service", "in_maintenance")
+    assert (unit.lifecycle_state, _condition_of(unit)) == ("in_service", "in_maintenance")
     assert _display(unit) == "maintenance"
-    assert _events(unit)[-2:] == [
-        ("lifecycle", "lost", "in_service"),
-        ("condition", "operational", "in_maintenance"),
-    ]
+    assert _events(unit)[-1] == ("lifecycle", "lost", "in_service")
+    assert _windows(unit) == [("in_maintenance", "Inspect after being found.")]
     _lifecycle(unit, "in_service")  # repeated "found" is a no-op
-    assert len(_events(unit)) == 3
+    assert len(_events(unit)) == 2
+    assert len(_windows(unit)) == 1
     _condition(unit, "operational", reason="Inspected")
     assert _display(unit) == "available"
 
@@ -204,8 +219,7 @@ def test_found_unit_returns_in_maintenance_with_its_own_event(unit):
 def test_other_returns_to_service_stay_operational(kind, source):
     unit = create_computing_equipment(sku=f"ST-R-{source}", name="r", kind=kind, lifecycle_state=source)
     _lifecycle(unit, "in_service")
-    unit.refresh_from_db()
-    assert unit.condition == "operational"
+    assert _condition_of(unit) == "operational"
 
 
 @pytest.mark.django_db

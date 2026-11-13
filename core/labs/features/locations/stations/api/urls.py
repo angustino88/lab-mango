@@ -11,6 +11,11 @@ urlpatterns = [
     path("stations/reference-data", views.StationReferenceDataAPIView.as_view(), name="station-reference-data"),
     path("stations/<int:station_id>", views.StationDetailAPIView.as_view(), name="station-detail"),
     path("stations/<int:station_id>/actions/place", views.StationPlaceAPIView.as_view(), name="station-action-place"),
+    path(
+        "stations/<int:station_id>/actions/change-lifecycle",
+        views.StationLifecycleAPIView.as_view(),
+        name="station-action-change-lifecycle",
+    ),
     path("stations/<int:station_id>/actions/change-status", views.StationStatusAPIView.as_view(), name="station-action-change-status"),
     path("stations/<int:station_id>/slots", views.StationSlotListCreateAPIView.as_view(), name="station-slot-list-create"),
     path("stations/<int:station_id>/slots/<int:slot_id>", views.StationSlotDetailAPIView.as_view(), name="station-slot-detail"),

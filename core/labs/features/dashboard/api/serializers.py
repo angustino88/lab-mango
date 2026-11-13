@@ -10,7 +10,8 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api.pagination import PageNumberQuerySerializer
-from core.labs.models import Bench, ComputingActivityStatus
+from core.labs.models import ComputingActivityStatus
+from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES
 
 
 class DashboardQueryFilterSerializer(PageNumberQuerySerializer):
@@ -27,7 +28,7 @@ class DashboardQueryFilterSerializer(PageNumberQuerySerializer):
         help_text="Filter benches by bench group identifier.",
     )
     lifecycle_status = serializers.ChoiceField(
-        choices=Bench.LIFECYCLE_STATUSES,
+        choices=LEGACY_BENCH_STATUSES,
         required=False,
         help_text="Filter by lifecycle status (planned, in_service, out_of_service, retired).",
     )
@@ -395,7 +396,7 @@ class DashboardBenchSerializer(serializers.Serializer):
             "id": instance.id,
             "sku": instance.sku,
             "name": instance.name,
-            "lifecycle_status": instance.lifecycle_status,
+            "lifecycle_status": getattr(instance, "legacy_status", None) or instance.lifecycle_status,
             "bench_group": bench_group_data,
             "bench_type": bench_type_data,
             "location": location_data,

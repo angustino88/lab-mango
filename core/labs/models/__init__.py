@@ -49,8 +49,17 @@ from .procurement import (
     PurchaseStatus,
     PurchaseTransaction,
 )
+from .resource.base.downtime import DowntimeKind, DowntimeReason, ResourceDowntime
 from .resource.base.resource import Department, Group
 from .resource.base.service_record import ResourceServiceRecord
+from .resource.base.status import (
+    LegacyLocationStatus,
+    ResourceAccessPolicy,
+    ResourceActivityStatus,
+    ResourceAvailability,
+    ResourceCondition,
+    ResourceLifecycleStatus,
+)
 from .resource.bench import Bench, BenchFavorite, BenchGroup, BenchType
 from .resource.equipment import (
     Equipment,
@@ -123,6 +132,8 @@ __all__ = [
     "ComputingProfile",
     "Country",
     "Department",
+    "DowntimeKind",
+    "DowntimeReason",
     "Equipment",
     "EquipmentAssignment",
     "EquipmentPlacement",
@@ -150,6 +161,7 @@ __all__ = [
     "EnrollmentGrant",
     "LabProject",
     "LabSessionLog",
+    "LegacyLocationStatus",
     "SessionAccessType",
     "Material",
     "License",
@@ -174,7 +186,13 @@ __all__ = [
     "PurchaseStatus",
     "PurchaseTransaction",
     "ResourceAudit",
+    "ResourceAccessPolicy",
+    "ResourceActivityStatus",
+    "ResourceAvailability",
     "ResourceChangeLog",
+    "ResourceCondition",
+    "ResourceDowntime",
+    "ResourceLifecycleStatus",
     "Group",
     "ResourceServiceRecord",
     "ResourceUtilizationObservation",

@@ -1,7 +1,14 @@
 """Supported external commands, queries, and stable business errors."""
 
 from .application.assign_equipment import AssignEquipmentInput, assign_equipment
-from .application.change_state import ChangeConditionInput, ChangeLifecycleInput, change_condition, change_lifecycle
+from .application.change_state import (
+    CancelEquipmentBookingsForDowntimeInput,
+    ChangeConditionInput,
+    ChangeLifecycleInput,
+    cancel_equipment_bookings_for_downtime,
+    change_condition,
+    change_lifecycle,
+)
 from .application.create_equipment import CreateEquipmentInput, create_equipment
 from .application.delete_equipment import DeleteEquipmentInput, delete_equipment
 from .application.loans import (
@@ -72,6 +79,8 @@ from .queries.summaries import (
 )
 
 __all__ = (
+    "CancelEquipmentBookingsForDowntimeInput",
+    "cancel_equipment_bookings_for_downtime",
     "CancelReservationInput",
     "HandOverReservationInput",
     "ReserveEquipmentBatchInput",

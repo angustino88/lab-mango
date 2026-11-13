@@ -6,7 +6,12 @@ from datetime import datetime
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from core.labs.features.bench_bookings.queries import conflicting_bench_bookings, project_exists
+from core.labs.features.bench_bookings.queries import (
+    bench_downtime_blocker,
+    bench_parent_blocker,
+    conflicting_bench_bookings,
+    project_exists,
+)
 from core.labs.models import BenchBooking
 
 from . import policies
@@ -30,7 +35,7 @@ def create_bench_booking(*, actor, data: CreateBenchBookingInput) -> BenchBookin
     policies.ensure_startable(data.starts_at, now=timezone.now())
     with transaction.atomic():
         bench = lock_benches((data.bench_id,))[data.bench_id]
-        policies.ensure_bench_accepts_bookings(bench)
+        policies.ensure_bench_accepts_bookings(bench, parent_blocker=bench_parent_blocker(bench=bench))
         if data.project_id is not None:
             policies.ensure_project_exists(exists=project_exists(project_id=data.project_id))
         conflicts = conflicting_bench_bookings(
@@ -39,6 +44,9 @@ def create_bench_booking(*, actor, data: CreateBenchBookingInput) -> BenchBookin
             ends_at=data.ends_at,
         )
         policies.ensure_no_conflicting_bookings(has_conflicts=conflicts.exists())
+        policies.ensure_no_downtime(
+            bench_downtime_blocker(bench=bench, starts_at=data.starts_at, ends_at=data.ends_at)
+        )
         for _ in range(3):
             booking = BenchBooking(
                 bench_id=data.bench_id,

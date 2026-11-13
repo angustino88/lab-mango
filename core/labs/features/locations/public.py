@@ -2,6 +2,7 @@
 
 from .exceptions import LocationConflict, RoomConflict
 from .rooms.application import (
+    change_room_lifecycle,
     create_room,
     delete_room,
     generate_room_slots,
@@ -21,6 +22,7 @@ from .rooms.queries import (
 )
 from .rooms.queries.summaries import get_room_status_summary
 from .stations.application import (
+    change_station_lifecycle,
     create_station,
     create_station_slot,
     create_station_type,
@@ -52,6 +54,8 @@ __all__ = (
     "get_station_status_summary",
     "LocationConflict",
     "RoomConflict",
+    "change_room_lifecycle",
+    "change_station_lifecycle",
     "create_room",
     "delete_room",
     "generate_room_slots",

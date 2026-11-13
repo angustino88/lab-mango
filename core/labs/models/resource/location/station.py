@@ -4,11 +4,11 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from core.common.models import UserStampedModel
 from core.labs.models.resource.base.resource import ResourceModel, ResourceStatusRecordModel
+from core.labs.models.resource.base.status import LegacyLocationStatus, ResourceAccessPolicy, ResourceLifecycleStatus
 from core.labs.models.resource.location.physical_location import PhysicalLocationNode
 
 if TYPE_CHECKING:
@@ -26,14 +26,8 @@ class StationType(TimeStampedModel, UserStampedModel):
         ordering = ("name",)
 
 
-class StationStatus(models.TextChoices):
-    AVAILABLE = "available", _("Available")
-    RESERVED = "reserved", _("Reserved")
-    ISSUE = "issue", _("Issue")
-    RESTRICTED = "restricted", _("Restricted")
-    CLOSED = "closed", _("Closed")
-    MAINTENANCE = "maintenance", _("Maintenance")
-    RETIRED = "retired", _("Retired")
+# Deprecated seven-value status, now computed for old clients (never stored).
+StationStatus = LegacyLocationStatus
 
 
 class Station(ResourceModel, PhysicalLocationNode):
@@ -89,12 +83,18 @@ class Station(ResourceModel, PhysicalLocationNode):
     cooling_capacity_w = models.PositiveIntegerField(null=True, blank=True)
     network_port_capacity = models.PositiveSmallIntegerField(null=True, blank=True)
     utilities = models.JSONField(default=dict, blank=True)
-    status = models.CharField(
+    lifecycle_status = models.CharField(
         max_length=32,
-        choices=StationStatus.choices,
-        default=StationStatus.AVAILABLE,
+        choices=ResourceLifecycleStatus.choices,
+        default=ResourceLifecycleStatus.IN_SERVICE,
         db_index=True,
-        help_text="Current lifecycle status. Changed only by the record status command; history is in status_records.",
+        help_text="Whether the lab runs it. Changed only by the change-lifecycle command; history is in status_records.",
+    )
+    access_policy = models.CharField(
+        max_length=16,
+        choices=ResourceAccessPolicy.choices,
+        default=ResourceAccessPolicy.OPEN,
+        help_text="Who may use it. Not a status: a restricted resource can be fully working.",
     )
     safety_classification = models.CharField(max_length=64, blank=True, default="")
 
@@ -134,8 +134,12 @@ class Station(ResourceModel, PhysicalLocationNode):
         app_label = "labs"
         constraints = [*ResourceModel.Meta.constraints,
             models.CheckConstraint(
-                condition=models.Q(status__in=StationStatus.values),
-                name="station_status_valid",
+                condition=models.Q(lifecycle_status__in=ResourceLifecycleStatus.values),
+                name="station_lifecycle_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(access_policy__in=ResourceAccessPolicy.values),
+                name="station_access_policy_valid",
             ),
             models.UniqueConstraint(
                 fields=("slot",),
@@ -153,7 +157,7 @@ class StationStatusRecord(ResourceStatusRecordModel):
     )
     status = models.CharField(
         max_length=255,
-        choices=StationStatus.choices,
+        choices=ResourceLifecycleStatus.choices,
     )
 
     class Meta:

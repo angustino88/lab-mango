@@ -74,9 +74,9 @@ class StationAdmin(LabMangoModelAdmin):
 
 @admin.register(StationSlot)
 class StationSlotAdmin(LabMangoModelAdmin):
-    list_display = ("slot_code", "label", "station", "position_index", "status", "is_active")
+    list_display = ("slot_code", "label", "station", "position_index", "status")
     list_select_related = ("station",)
-    list_filter = ("status", "is_active")
+    list_filter = ("status",)
     search_fields = ("slot_code", "label", "station__name")
     autocomplete_fields = ("station",)
     filter_horizontal = ("compatible_bench_types",)

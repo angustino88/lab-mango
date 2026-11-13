@@ -1,4 +1,5 @@
-"""Room and station ``status`` is a stored column defaulting to ``available`` (like equipment lifecycle)."""
+"""Room and station lifecycle is a stored column defaulting to ``in_service``; the deprecated seven-value
+``status`` is computed (resource-status-and-downtime.md, RS3)."""
 
 import pytest
 from django.db import IntegrityError, transaction
@@ -6,7 +7,7 @@ from rest_framework.test import APIClient
 
 from core.labs.models import Room, Station
 from core.users.models import User
-from tests.factories import grant_labs_role
+from tests.factories import grant_labs_role, set_condition
 
 KINDS = [("rooms", Room), ("stations", Station)]
 
@@ -20,9 +21,10 @@ def client(db):
 
 
 @pytest.mark.django_db
-def test_model_default_is_available_without_any_service():
-    assert Room.objects.create(sku="RM-DEFAULT").status == "available"
-    assert Station.objects.create(sku="ST-DEFAULT").status == "available"
+def test_model_default_is_in_service_and_open_without_any_service():
+    for model, sku in ((Room, "RM-DEFAULT"), (Station, "ST-DEFAULT")):
+        resource = model.objects.create(sku=sku)
+        assert (resource.lifecycle_status, resource.access_policy) == ("in_service", "open")
 
 
 @pytest.mark.django_db
@@ -35,17 +37,20 @@ def test_create_starts_available_with_one_record(client, path, model):
     assert response.status_code == 201, response.data
     body = response.data["data"]
     assert body["status"] == {"value": "available", "label": "Available"}
+    assert body["lifecycle_status"] == {"value": "in_service", "label": "In service"}
+    assert body["condition"]["value"] == "operational"
+    assert body["availability"]["value"] == "available"
     assert "operational_status" not in body
     resource = model.objects.get(pk=body["id"])
-    assert resource.status == "available"
+    assert resource.lifecycle_status == "in_service"
     records = list(resource.status_records.all())
-    assert [record.status for record in records] == ["available"]
+    assert [record.status for record in records] == ["in_service"]
     assert records[0].creator_id == coordinator.pk
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(("path", "model"), KINDS)
-def test_change_status_updates_column_and_appends_history(client, path, model):
+def test_deprecated_change_status_opens_downtime_and_appends_history(client, path, model):
     api, _ = client
     created = api.post(f"/api/labs/{path}", {"sku": f"{path}-CHG", "name": "Chg"}, format="json").data["data"]
 
@@ -55,18 +60,21 @@ def test_change_status_updates_column_and_appends_history(client, path, model):
 
     assert changed.status_code == 200, changed.data
     resource = model.objects.get(pk=created["id"])
-    assert resource.status == "maintenance"
-    assert [record.status for record in resource.status_records.all()] == ["maintenance", "available"]
+    assert resource.lifecycle_status == "in_service"
+    records = list(resource.status_records.all())
+    assert [record.status for record in records] == ["in_service", "in_service"]
+    assert records[0].metadata == {"legacy_status": "maintenance"}
     detail = api.get(f"/api/labs/{path}/{created['id']}").data["data"]
     assert detail["status"]["value"] == "maintenance"
+    assert detail["condition"]["value"] == "in_maintenance"
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(("path", "model"), KINDS)
-def test_status_filter_and_summary_read_the_column(client, path, model):
+def test_status_filter_and_summary_read_the_computed_status(client, path, model):
     api, _ = client
     model.objects.create(sku=f"{path}-A")
-    model.objects.create(sku=f"{path}-M", status="maintenance")
+    set_condition(model.objects.create(sku=f"{path}-M"), "in_maintenance")
 
     listed = api.get(f"/api/labs/{path}", {"status": "maintenance"})
     summary = api.get(f"/api/labs/{path}/status-summary")
@@ -82,10 +90,11 @@ def test_status_filter_and_summary_read_the_column(client, path, model):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("model", [Room, Station])
-def test_database_rejects_unknown_status(model):
+def test_database_rejects_unknown_lifecycle_and_access_policy(model):
     resource = model.objects.create(sku=f"{model.__name__}-BAD")
-    with pytest.raises(IntegrityError), transaction.atomic():
-        model.objects.filter(pk=resource.pk).update(status="operational")
+    for field in ("lifecycle_status", "access_policy"):
+        with pytest.raises(IntegrityError), transaction.atomic():
+            model.objects.filter(pk=resource.pk).update(**{field: "available"})
 
 
 @pytest.mark.django_db

@@ -19,7 +19,7 @@
 | Equipment assignment and hardware status | Equipment | Not a locations responsibility |
 | Booking workflow | Bookings | Not a location status or placement lifecycle |
 
-**Verified model locations:** [location models](../../../models/resource/location/). Rooms and stations inherit the shared resource model; station has room and room-slot relations, with a database uniqueness constraint on non-null slot assignment. Room and station each store their current `status` as a column (default `available`, check constraint `room_status_valid` / `station_status_valid`); status records are the separate append-only history.
+**Verified model locations:** [location models](../../../models/resource/location/). Rooms and stations inherit the shared resource model; station has room and room-slot relations, with a database uniqueness constraint on non-null slot assignment. Room and station each store `lifecycle_status` (default `in_service`, check constraint `room_lifecycle_valid` / `station_lifecycle_valid`) and `access_policy`; status records are the append-only lifecycle history. Condition comes from `ResourceDowntime` windows and is computed with availability, activity and the deprecated `status` (`docs/proposals/resource-status-and-downtime.md`).
 
 ## 3. Public interface and dependencies
 

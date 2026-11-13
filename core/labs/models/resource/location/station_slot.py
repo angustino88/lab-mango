@@ -6,10 +6,9 @@ from core.common.models import UserStampedModel
 
 
 class StationSlotStatus(models.TextChoices):
-    AVAILABLE = "available", "Available"
-    OCCUPIED = "occupied", "Occupied"
-    RESERVED = "reserved", "Reserved"
-    MAINTENANCE = "maintenance", "Maintenance"
+    """Whether the position may hold a bench. "Occupied" is computed from Bench.station_slot, never stored."""
+
+    IN_SERVICE = "in_service", "In service"
     OUT_OF_SERVICE = "out_of_service", "Out of service"
     RETIRED = "retired", "Retired"
 
@@ -25,8 +24,7 @@ class StationSlot(TimeStampedModel, UserStampedModel):
     position_index = models.PositiveSmallIntegerField()
     slot_code = models.CharField(max_length=32)
     label = models.CharField(max_length=100, blank=True, default="")
-    is_active = models.BooleanField(default=True)
-    status = models.CharField(max_length=32, choices=StationSlotStatus, default="available")
+    status = models.CharField(max_length=32, choices=StationSlotStatus, default=StationSlotStatus.IN_SERVICE)
     width_mm = models.PositiveIntegerField(null=True, blank=True)
     depth_mm = models.PositiveIntegerField(null=True, blank=True)
     height_mm = models.PositiveIntegerField(null=True, blank=True)
@@ -70,6 +68,10 @@ class StationSlot(TimeStampedModel, UserStampedModel):
             models.UniqueConstraint(
                 fields=("station", "slot_code"),
                 name="uniq_station_slot_code",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(status__in=StationSlotStatus.values),
+                name="station_slot_status_valid",
             ),
         ]
 

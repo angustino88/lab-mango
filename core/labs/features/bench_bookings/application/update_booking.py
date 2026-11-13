@@ -10,7 +10,12 @@ from django.utils import timezone
 
 from core.common.api.permissions import is_owner
 from core.labs.features.bench_bookings.exceptions import BenchBookingConflict, BenchBookingPermissionDenied
-from core.labs.features.bench_bookings.queries import conflicting_bench_bookings, project_exists
+from core.labs.features.bench_bookings.queries import (
+    bench_downtime_blocker,
+    bench_parent_blocker,
+    conflicting_bench_bookings,
+    project_exists,
+)
 from core.labs.models import BenchBooking, BookingApprovalStatus, BookingStatus, ensure_booking_status_transition
 from core.users.public import LabsRole, has_labs_role
 
@@ -99,7 +104,8 @@ def update_bench_booking(*, actor, data: UpdateBenchBookingInput) -> BenchBookin
                 f"A {BookingStatus(booking.status).label.lower()} booking cannot be changed."
             )
         if bench_changed:
-            policies.ensure_bench_accepts_bookings(benches[target_bench_id])
+            target = benches[target_bench_id]
+            policies.ensure_bench_accepts_bookings(target, parent_blocker=bench_parent_blocker(bench=target))
 
         for name, value in data.fields.items():
             setattr(booking, name, value)
@@ -131,6 +137,11 @@ def update_bench_booking(*, actor, data: UpdateBenchBookingInput) -> BenchBookin
                 exclude_id=booking.pk,
             )
             policies.ensure_no_conflicting_bookings(has_conflicts=conflicts.exists())
+            policies.ensure_no_downtime(
+                bench_downtime_blocker(
+                    bench=benches[booking.bench_id], starts_at=booking.starts_at, ends_at=booking.ends_at
+                )
+            )
         booking.save(actor=actor)
         if before != material_values(booking):
             record_notification(booking=booking, kind="updated")

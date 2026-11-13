@@ -45,10 +45,9 @@ __all__ = ["BenchConflict", "validate_capacity", "validate_slot"]
 def validate_slot(bench, slot, *, staying=False):
     if slot.station_id != bench.setup_location_id:
         raise ValidationError({"station_slot": "The slot must belong to the setup station."})
-    if not slot.is_active or slot.status not in {"available", "reserved", "occupied"}:
-        raise BenchConflict("The station slot is not available.")
-    if slot.status == "occupied" and not staying:
-        raise BenchConflict("The station slot is occupied.")
+    # Occupancy (another bench on the slot) is checked by the caller under the slot lock.
+    if slot.status != "in_service" and not staying:
+        raise BenchConflict("The station slot is not in service.")
     for request_field, capacity_field in (
         ("requested_power_w", "power_capacity_w"), ("requested_load_kg", "max_load_kg"),
     ):

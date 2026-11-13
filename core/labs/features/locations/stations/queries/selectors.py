@@ -1,23 +1,32 @@
 """Station projections; correlated aggregates avoid bench/slot fan-out."""
 
-from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, Subquery, Sum, Value
+from django.db.models import Count, Exists, IntegerField, OuterRef, Prefetch, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 
+from core.labs.models.resource.base.availability import with_location_state
+from core.labs.models.resource.base.status import ResourceAccessPolicy, ResourceLifecycleStatus
 from core.labs.models.resource.bench.bench import Bench
 from core.labs.models.resource.bench.bench_type import BenchType
 from core.labs.models.resource.location.room import Room
 from core.labs.models.resource.location.station import Station, StationStatus, StationStatusRecord, StationType
-from core.labs.models.resource.location.station_slot import StationSlot
+from core.labs.models.resource.location.station_slot import StationSlot, StationSlotStatus
+
+
+def _with_occupancy(queryset):
+    """Occupancy is computed: a slot is occupied when a bench (current or historical) references it."""
+    return queryset.annotate(occupied=Exists(Bench.all_objects.filter(station_slot_id=OuterRef("pk"))))
 
 
 def list_station_slots(*, station_id):
-    return StationSlot.objects.filter(station_id=station_id).prefetch_related("compatible_bench_types").order_by("position_index", "pk")
+    return _with_occupancy(
+        StationSlot.objects.filter(station_id=station_id).prefetch_related("compatible_bench_types")
+    ).order_by("position_index", "pk")
 
 
 def list_stations(*, room_id=None, type_id=None, search=None, with_slots=False):
     benches = Bench.objects.filter(setup_location_id=OuterRef("pk")).order_by().values("setup_location_id")
     slots = StationSlot.objects.filter(
-        station_id=OuterRef("pk"), is_active=True, status="available", bench__isnull=True,
+        station_id=OuterRef("pk"), status=StationSlotStatus.IN_SERVICE, bench__isnull=True,
     ).order_by().values("station_id")
     queryset = Station.objects.select_related(
         "type", "room__country", "room__city", "room__building", "slot",
@@ -29,7 +38,8 @@ def list_stations(*, room_id=None, type_id=None, search=None, with_slots=False):
         ),
         available_slot_count=Coalesce(Subquery(slots.annotate(total=Count("pk")).values("total")), Value(0)),
         slot_count=Count("bench_slots", distinct=True),
-    ).order_by("sku", "pk")
+    )
+    queryset = with_location_state(queryset, "station").order_by("sku", "pk")
     if room_id is not None:
         queryset = queryset.filter(room_id=room_id)
     if type_id is not None:
@@ -38,7 +48,10 @@ def list_stations(*, room_id=None, type_id=None, search=None, with_slots=False):
         queryset = queryset.filter(Q(sku__icontains=search) | Q(name__icontains=search) | Q(label__icontains=search))
     if with_slots:
         queryset = queryset.prefetch_related(Prefetch(
-            "bench_slots", queryset=StationSlot.objects.prefetch_related("compatible_bench_types").order_by("position_index", "pk"),
+            "bench_slots",
+            queryset=_with_occupancy(StationSlot.objects.prefetch_related("compatible_bench_types")).order_by(
+                "position_index", "pk"
+            ),
         ))
     return queryset
 
@@ -89,7 +102,9 @@ def station_reference_data():
         "bench_types": BenchType.objects.filter(active=True).order_by("name", "pk"),
         "rooms": Room.objects.only("id", "sku", "name").order_by("sku", "pk"),
         "statuses": [{"value": value, "label": str(label)} for value, label in StationStatus.choices],
-        "slot_statuses": [{"value": value, "label": label} for value, label in StationSlot.STATUSES],
+        "lifecycle_statuses": [{"value": value, "label": str(label)} for value, label in ResourceLifecycleStatus.choices],
+        "access_policies": [{"value": value, "label": str(label)} for value, label in ResourceAccessPolicy.choices],
+        "slot_statuses": [{"value": value, "label": str(label)} for value, label in StationSlotStatus.choices],
     }
 
 

@@ -20,6 +20,7 @@ from core.labs.models.resource.equipment.reference_data import (
     EquipmentType,
 )
 from core.users.public import effective_labs_roles
+from tests.factories import set_condition
 
 
 @pytest.fixture()
@@ -53,9 +54,12 @@ def bench(db):
     return Bench.objects.create(name="Bench 1", sku="BENCH-OPT-01")
 
 
-def _set_state(equipment, **fields):
-    """Set stored lifecycle_state / condition directly; display_status is computed from them."""
-    Equipment.objects.filter(pk=equipment.pk).update(**fields)
+def _set_state(equipment, condition=None, **fields):
+    """Set stored lifecycle_state directly and condition through a downtime window; display_status is computed."""
+    if fields:
+        Equipment.objects.filter(pk=equipment.pk).update(**fields)
+    if condition is not None:
+        set_condition(equipment, condition)
 
 
 @pytest.mark.django_db
@@ -382,7 +386,7 @@ def test_category_reference_data_excludes_inactive_category_descendants(api_clie
     equipment_type = EquipmentType.objects.create(kind=kind, name="Inactive Category Type")
     manufacturer = EquipmentManufacturer.objects.create(name="Inactive Category Manufacturer")
     category.manufacturers.add(manufacturer)
-    product_model = EquipmentProductModel.objects.create(
+    EquipmentProductModel.objects.create(
         manufacturer=manufacturer,
         equipment_type=equipment_type,
         name="Inactive Category Model",

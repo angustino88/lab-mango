@@ -36,7 +36,7 @@ class AgentExtensionNotAllowed(ValidationFailed):
     """The requested end time breaks an extension rule. ``details``: ``reason`` and optional ``limit``.
 
     Reasons (stable): ``already_ended``, ``not_later``, ``too_short``, ``needs_approval``,
-    ``bench_not_in_service``. ``limit`` is the earliest (``too_short``) or latest (``needs_approval``)
+    ``bench_not_in_service``, ``bench_unavailable`` (a downtime window of the bench, its station or room). ``limit`` is the earliest (``too_short``) or latest (``needs_approval``)
     end time that would be accepted.
     """
 

@@ -2,6 +2,7 @@
 
 from .application import (
     add_favorite,
+    change_bench_lifecycle,
     create_bench,
     delete_bench,
     place_bench,
@@ -26,6 +27,7 @@ __all__ = (
     "get_bench_status_summary",
     "add_favorite",
     "BenchConflict",
+    "change_bench_lifecycle",
     "create_bench",
     "bench_mapping_rows",
     "delete_bench",

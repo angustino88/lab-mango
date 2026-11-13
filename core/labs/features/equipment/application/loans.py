@@ -38,6 +38,7 @@ from core.labs.models import (
     EquipmentLoan,
     EquipmentLoanBatch,
     LoanCloseReason,
+    ResourceDowntime,
     ensure_booking_status_transition,
 )
 from core.labs.models.resource.equipment.loan import (
@@ -235,8 +236,11 @@ def unavailable_reasons(
         reasons.append("category is not bookable")
     if equipment.lifecycle_state != EquipmentLifecycleState.IN_SERVICE:
         reasons.append(f"lifecycle state is {equipment.lifecycle_state}")
-    if equipment.condition != EquipmentCondition.OPERATIONAL:
-        reasons.append(f"condition is {equipment.condition}")
+    condition = ResourceDowntime.objects.condition_of(equipment, at=now)
+    if condition != EquipmentCondition.OPERATIONAL:
+        reasons.append(f"condition is {condition}")
+    elif ResourceDowntime.objects.for_resource(equipment).overlapping(now, until).exists():
+        reasons.append("downtime planned before the due date")
     placement = lock_active_placement(equipment)
     if placement is not None and placement.bench_id is not None:
         reasons.append("placed on a bench")
