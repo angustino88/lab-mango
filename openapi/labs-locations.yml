@@ -3618,6 +3618,26 @@ components:
       required:
       - id
       - name
+    LabsResourceOwner:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        display_name:
+          type: string
+          maxLength: 255
+      required:
+      - id
+      - username
     LabsStationRoomReference:
       type: object
       description: Compact `{id, name}` object representation of a related entity.
@@ -4768,11 +4788,17 @@ components:
           readOnly: true
         metadata:
           readOnly: true
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - actor
       - created_at
       - id
       - metadata
@@ -5793,11 +5819,17 @@ components:
           readOnly: true
         metadata:
           readOnly: true
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - actor
       - created_at
       - id
       - metadata

@@ -12,6 +12,7 @@ from core.labs.features.base.serializers import (
     ChoiceReferenceSerializer,
     Coordinate3DSerializer,
     NamedReferenceSerializer,
+    ResourceOwnerSerializer,
     ResourceWriteSerializerMixin,
     UIDNamedReferenceSerializer,
     to_choice_reference,
@@ -288,10 +289,11 @@ class StationTypeSerializer(AppModelSerializer):
 
 class StationStatusRecordSerializer(AppModelSerializer):
     status = serializers.SerializerMethodField(read_only=True)
+    actor = ResourceOwnerSerializer(source="creator", read_only=True, allow_null=True)
 
     class Meta:
         model = StationStatusRecord
-        fields = ("id", "station", "status", "metadata", "created_at")
+        fields = ("id", "station", "status", "metadata", "actor", "created_at")
         read_only_fields = fields
 
     @extend_schema_field(ChoiceReferenceSerializer)

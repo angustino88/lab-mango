@@ -1119,6 +1119,53 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Create Licenses Agreements by License ID
+  /api/labs/licenses/{license_id}/history:
+    get:
+      operationId: labs_licenses_history_retrieve_by_license_id
+      description: Status records of a license, newest first; 404 for a missing or
+        deleted license.
+      parameters:
+      - in: path
+        name: license_id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Licenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseHistorySerializersLicenseStatusRecordPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Licenses History by License ID
   /api/labs/licenses/categories/summary:
     get:
       operationId: labs_licenses_categories_summary_retrieve
@@ -2030,6 +2077,26 @@ components:
       required:
       - id
       - name
+    LabsResourceOwner:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        display_name:
+          type: string
+          maxLength: 255
+      required:
+      - id
+      - username
     LabsUIDNamedReference:
       type: object
       description: Compact `{id, uid, name}` object representation when target defines
@@ -2556,6 +2623,50 @@ components:
           $ref: '#/components/schemas/FilterMetadata'
       required:
       - data
+    LicenseHistorySerializersLicenseStatusRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseHistorySerializersLicenseStatusRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseStatusRecord'
+      required:
+      - data
+      - meta
+    LicenseHistorySerializersLicenseStatusRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseHistorySerializersLicenseStatusRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseHistorySerializersLicenseStatusRecordPagination'
+      required:
+      - pagination
     LicenseListSerializersLicensePaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -2956,6 +3067,40 @@ components:
         * `revoked` - Revoked
 
         * `suspended` - Suspended'
+    LicenseStatusRecord:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        license:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        metadata:
+          readOnly: true
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor
+      - created_at
+      - id
+      - license
+      - metadata
+      - status
     LicenseStatusSummary:
       type: object
       description: Recorded state only; expiry and assignment are not recomputed.

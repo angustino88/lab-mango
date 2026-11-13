@@ -110,7 +110,7 @@ either list route, including HTML/`QueryDict` requests.
 | `/stations/{station_id}/slots` | GET 200, POST 201 | List/create bench positions |
 | `/stations/{station_id}/slots/{slot_id}` | GET 200, PUT 200, PATCH 200, DELETE 204 | Read/update/hard-delete a position |
 | `/stations/{station_id}/status` | POST 201 | Append a status record |
-| `/stations/{station_id}/history` | GET 200 | Newest status first, PK breaks timestamp ties |
+| `/stations/{station_id}/history` | GET 200 | Newest status first, PK breaks timestamp ties; `actor` names who recorded it |
 | `/stations/reference-data` | GET 200 | Station types, active bench types, rooms, status/slot choices |
 | `/station-types` | GET 200, POST 201 | List/create station types |
 | `/station-types/{type_id}` | GET 200, PATCH 200, DELETE 204 | Update/hard-delete an unreferenced type |

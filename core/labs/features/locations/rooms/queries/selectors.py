@@ -46,7 +46,7 @@ def list_room_slots(*, room_id):
 
 def room_status_history(*, room_id):
     Room.objects.only("pk").get(pk=room_id)
-    return RoomStatusRecord.objects.filter(room_id=room_id).order_by("-created", "-pk")
+    return RoomStatusRecord.objects.filter(room_id=room_id).select_related("creator").order_by("-created", "-pk")
 
 
 def room_observations(*, room_id):

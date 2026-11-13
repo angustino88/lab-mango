@@ -506,6 +506,8 @@ paths:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1unassign
   /api/labs/licenses/{license_id}/agreements:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1agreements
+  /api/labs/licenses/{license_id}/history:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1history
   /api/labs/licenses/categories/summary:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1categories~1summary
   /api/labs/licenses/filters:

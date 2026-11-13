@@ -50,6 +50,7 @@ The Locations feature represents geographic and facility real-estate topology: c
 | `GET /api/labs/rooms/options` | `RoomSelectAPIView` | Selector `{id, sku, name}`. |
 | `GET /api/labs/rooms/status-summary` | `RoomStatusSummaryAPIView` | Room operational status distribution. |
 | `GET /api/labs/rooms/{room_id}/slots` | `RoomSlotListCreateAPIView` | Grid slots in room. |
+| `GET /api/labs/rooms/{room_id}/history` | `RoomHistoryAPIView` | Status records, newest first; each row has `actor` (`{id, username, display_name}`, null when unknown). |
 | `GET /api/labs/stations` | `StationListCreateAPIView` | Physical stations inventory. |
 | `POST /api/labs/stations` | `StationListCreateAPIView` | Create physical station dock. |
 | `GET /api/labs/stations/{id}` | `StationDetailAPIView` | Station technical specifications and slots. |
@@ -57,4 +58,5 @@ The Locations feature represents geographic and facility real-estate topology: c
 | `GET /api/labs/stations/options` | `StationSelectAPIView` | Selector `{id, sku, name}`. |
 | `GET /api/labs/stations/status-summary` | `StationStatusSummaryAPIView` | Station status distribution. |
 | `GET /api/labs/stations/{station_id}/slots` | `StationSlotListCreateAPIView` | Slots on station. |
+| `GET /api/labs/stations/{station_id}/history` | `StationHistoryAPIView` | Status records, newest first; each row has `actor` (`{id, username, display_name}`, null when unknown). |
 | `GET /api/labs/station-slots/options` | `StationSlotSelectAPIView` | Selector `{id, sku, name}`. |

@@ -18,6 +18,7 @@ from .queries import (
     get_license_for_mapping,
     license_mapping_rows,
     list_license_agreements,
+    list_license_status_history,
     list_licenses,
 )
 from .queries.summaries import get_license_status_summary, list_license_category_summary
@@ -40,6 +41,7 @@ __all__ = (
     "license_mapping_rows",
     "get_active_license",
     "list_license_agreements",
+    "list_license_status_history",
     "list_licenses",
     "unassign_license",
 )

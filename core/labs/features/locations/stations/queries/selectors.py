@@ -80,7 +80,9 @@ def station_slot_mapping_rows(*, station_ids=(), room_ids=()):
 
 def station_history(*, station_id):
     Station.objects.only("pk").get(pk=station_id)
-    return StationStatusRecord.objects.filter(station_id=station_id).order_by("-created", "-pk")
+    return (
+        StationStatusRecord.objects.filter(station_id=station_id).select_related("creator").order_by("-created", "-pk")
+    )
 
 
 def station_reference_data():
