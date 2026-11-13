@@ -360,7 +360,7 @@ flowchart TB
 
 Wiring rules per station bus (also in the install checklist):
 - Both sensors on one W630 share **one** serial setting (baud, parity, data/stop bits); set the W630 to the same.
-- **Distinct Modbus addresses.** Meters and probes often ship with address 1; set e.g. DTSU666 = 1, ES35 = 2 on
+- **Distinct Modbus addresses.** Meters and probes often ship with address 1; set e.g. DDSU666 = 1, ES35-SW = 2 on
   the device's own menu/tool before connecting both.
 - A/B polarity consistent, 120 Ω termination at the two ends of the bus, common ground where the devices
   provide it.
@@ -691,7 +691,7 @@ at 10 s; production PostgreSQL ≥ 15 (CI uses 16).
 | Q2 | Fate of `RoomObservation` and `/rooms/{id}/observations`: keep for manual entries, or deprecate after telemetry ships? | Keep in v1; decide after adoption |
 | Q3 | Who may view a room's/station's telemetry? | Same users who can view the room; staff for all |
 | Q4 | Push interval, raw retention, rollup retention | 10 s; 30 d; 1m for 90 d, 1h for 2 y |
-| Q5 | `power_w` = DTSU666 total active power. The meter also gives energy (kWh): store it for expenses? | `power_w` only in v1; energy as a follow-up (§9) |
+| Q5 | `power_w` = DDSU666 active power. The meter also gives energy (kWh): store it for expenses? | `power_w` only in v1; energy as a follow-up (§9) |
 | Q6 | Fix the drift items in §1 (esp. room observation write authz) as separate tasks? | Yes, separate T2 task for authz |
 | Q7 | ~~Router model?~~ **Answered:** UniFi Cloud Gateway Ultra + U7 Long-Range; settings in §5.1e | — |
 | Q8 | Exactly one W630 per station, or several (e.g. two RS485 buses)? | One; drop the station exclusion if needed |
