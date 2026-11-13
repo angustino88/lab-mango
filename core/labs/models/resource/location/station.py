@@ -26,6 +26,16 @@ class StationType(TimeStampedModel, UserStampedModel):
         ordering = ("name",)
 
 
+class StationStatus(models.TextChoices):
+    AVAILABLE = "available", _("Available")
+    RESERVED = "reserved", _("Reserved")
+    ISSUE = "issue", _("Issue")
+    RESTRICTED = "restricted", _("Restricted")
+    CLOSED = "closed", _("Closed")
+    MAINTENANCE = "maintenance", _("Maintenance")
+    RETIRED = "retired", _("Retired")
+
+
 class Station(ResourceModel, PhysicalLocationNode):
     """A physical station optionally placed in one of its room's slots."""
 
@@ -79,6 +89,13 @@ class Station(ResourceModel, PhysicalLocationNode):
     cooling_capacity_w = models.PositiveIntegerField(null=True, blank=True)
     network_port_capacity = models.PositiveSmallIntegerField(null=True, blank=True)
     utilities = models.JSONField(default=dict, blank=True)
+    status = models.CharField(
+        max_length=32,
+        choices=StationStatus.choices,
+        default=StationStatus.AVAILABLE,
+        db_index=True,
+        help_text="Current lifecycle status. Changed only by the record status command; history is in status_records.",
+    )
     safety_classification = models.CharField(max_length=64, blank=True, default="")
 
     def clean(self) -> None:
@@ -116,22 +133,16 @@ class Station(ResourceModel, PhysicalLocationNode):
     class Meta:
         app_label = "labs"
         constraints = [*ResourceModel.Meta.constraints,
+            models.CheckConstraint(
+                condition=models.Q(status__in=StationStatus.values),
+                name="station_status_valid",
+            ),
             models.UniqueConstraint(
                 fields=("slot",),
                 condition=models.Q(slot__isnull=False),
                 name="station_slot_uniq",
             ),
         ]
-
-
-class StationStatus(models.TextChoices):
-    AVAILABLE = "available", _("Available")
-    RESERVED = "reserved", _("Reserved")
-    ISSUE = "issue", _("Issue")
-    RESTRICTED = "restricted", _("Restricted")
-    CLOSED = "closed", _("Closed")
-    MAINTENANCE = "maintenance", _("Maintenance")
-    RETIRED = "retired", _("Retired")
 
 
 class StationStatusRecord(ResourceStatusRecordModel):

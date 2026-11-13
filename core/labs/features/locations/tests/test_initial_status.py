@@ -1,11 +1,17 @@
-"""New rooms and stations start with an ``available`` status record; no ``operational_status`` field."""
+"""Room and station ``status`` is a stored column defaulting to ``available`` (like equipment lifecycle)."""
+
+import importlib
 
 import pytest
+from django.apps import apps
+from django.db import IntegrityError, transaction
 from rest_framework.test import APIClient
 
 from core.labs.models import Room, Station
 from core.users.models import User
 from tests.factories import grant_labs_role
+
+KINDS = [("rooms", Room), ("stations", Station)]
 
 
 @pytest.fixture
@@ -17,7 +23,13 @@ def client(db):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(("path", "model"), [("rooms", Room), ("stations", Station)])
+def test_model_default_is_available_without_any_service():
+    assert Room.objects.create(sku="RM-DEFAULT").status == "available"
+    assert Station.objects.create(sku="ST-DEFAULT").status == "available"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(("path", "model"), KINDS)
 def test_create_starts_available_with_one_record(client, path, model):
     api, coordinator = client
 
@@ -27,13 +39,60 @@ def test_create_starts_available_with_one_record(client, path, model):
     body = response.data["data"]
     assert body["status"] == {"value": "available", "label": "Available"}
     assert "operational_status" not in body
-    records = list(model.objects.get(pk=body["id"]).status_records.all())
+    resource = model.objects.get(pk=body["id"])
+    assert resource.status == "available"
+    records = list(resource.status_records.all())
     assert [record.status for record in records] == ["available"]
     assert records[0].creator_id == coordinator.pk
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(("path", "model"), [("rooms", Room), ("stations", Station)])
+@pytest.mark.parametrize(("path", "model"), KINDS)
+def test_change_status_updates_column_and_appends_history(client, path, model):
+    api, _ = client
+    created = api.post(f"/api/labs/{path}", {"sku": f"{path}-CHG", "name": "Chg"}, format="json").data["data"]
+
+    changed = api.post(
+        f"/api/labs/{path}/{created['id']}/actions/change-status", {"status": "maintenance"}, format="json"
+    )
+
+    assert changed.status_code == 200, changed.data
+    resource = model.objects.get(pk=created["id"])
+    assert resource.status == "maintenance"
+    assert [record.status for record in resource.status_records.all()] == ["maintenance", "available"]
+    detail = api.get(f"/api/labs/{path}/{created['id']}").data["data"]
+    assert detail["status"]["value"] == "maintenance"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(("path", "model"), KINDS)
+def test_status_filter_and_summary_read_the_column(client, path, model):
+    api, _ = client
+    model.objects.create(sku=f"{path}-A")
+    model.objects.create(sku=f"{path}-M", status="maintenance")
+
+    listed = api.get(f"/api/labs/{path}", {"status": "maintenance"})
+    summary = api.get(f"/api/labs/{path}/status-summary")
+
+    assert listed.status_code == 200, listed.data
+    assert [row["sku"] for row in listed.data["data"]] == [f"{path}-M"]
+    assert summary.status_code == 200, summary.data
+    counts = {row["status"]["value"]: row["resource_count"] for row in summary.data["data"]["statuses"]}
+    assert counts["available"] == 1
+    assert counts["maintenance"] == 1
+    assert summary.data["data"]["unknown_status_count"] == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("model", [Room, Station])
+def test_database_rejects_unknown_status(model):
+    resource = model.objects.create(sku=f"{model.__name__}-BAD")
+    with pytest.raises(IntegrityError), transaction.atomic():
+        model.objects.filter(pk=resource.pk).update(status="operational")
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(("path", "model"), KINDS)
 def test_rejected_duplicate_create_leaves_no_extra_record(client, path, model):
     api, _ = client
     payload = {"sku": f"{path}-DUP", "name": "Dup"}
@@ -44,3 +103,17 @@ def test_rejected_duplicate_create_leaves_no_extra_record(client, path, model):
     assert duplicate.status_code in (400, 409), duplicate.data
     assert model.objects.filter(sku=payload["sku"]).count() == 1
     assert model.status_records.rel.related_model.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_migration_backfill_copies_latest_record_and_keeps_default_otherwise():
+    migration = importlib.import_module("core.labs.migrations.0003_room_station_status")
+    with_history = Room.objects.create(sku="RM-HIST")
+    with_history.status_records.create(status="maintenance")
+    with_history.status_records.create(status="closed")
+    without_history = Station.objects.create(sku="ST-NOHIST")
+
+    migration.copy_latest_recorded_status(apps, None)
+
+    assert Room.objects.get(pk=with_history.pk).status == "closed"
+    assert Station.objects.get(pk=without_history.pk).status == "available"

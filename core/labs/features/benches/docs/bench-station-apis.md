@@ -227,20 +227,21 @@ requirements are ignored, true requires a truthy value, numbers require a
 numeric value at least as large, and other values require equality. This is a
 simple object policy, not a typed engineering-units schema.
 
-Station projections include `current_status`, `active_bench_count`,
+Station projections include `status`, `active_bench_count`,
 `allocated_power_w`, `available_power_w`, `available_slot_count`, `location_path`,
 and nested `bench_slots`. Available power subtracts reserved and allocated bench
 power; null station capacity yields null available power. Available-slot count
 requires active, `available`, unreferenced slots. Separate correlated subqueries
 prevent equipment/bench/slot join fan-out from inflating aggregates.
 
-Creating a station also records its first status, `available`, in the same
-transaction, so `status` is never null for a station created through the API.
-Station status POST accepts `status` (`available`, `reserved`, `issue`, `restricted`,
-`closed`, `maintenance`, `retired`) and optional object `metadata`. It appends a
-status record. Latest status uses creation time then PK, both descending. Reading
-station projections does not create history. Stations have no `operational_status`
-field.
+Station `status` is a stored column (like equipment `lifecycle_state`), default
+`available`, limited to the choices below by the `station_status_valid` check
+constraint. Creating a station writes a first history record with that value in the
+same transaction. Station status POST accepts `status` (`available`, `reserved`,
+`issue`, `restricted`, `closed`, `maintenance`, `retired`) and optional object
+`metadata`; under the station row lock it appends a history record and updates the
+column. Reading station projections does not create history. Stations have no
+`operational_status` field.
 Station types accept only `name`; DELETE is blocked by live or historical stations.
 
 ## Errors and response envelopes

@@ -11,4 +11,5 @@ STATION_FILTERS = resource_filter_spec(
     ],
     search_fields=("sku", "name", "label"),
     status_choices=StationStatus.choices,
+    status_lookup="status",
 )

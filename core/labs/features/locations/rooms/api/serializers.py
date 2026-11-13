@@ -202,7 +202,7 @@ class RoomSerializer(AppModelSerializer):
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
     def get_status(self, obj) -> dict[str, str] | None:
-        raw_status = getattr(obj, "current_status", None)
+        raw_status = getattr(obj, "status", None)
         return to_choice_reference(raw_status, RoomStatus.choices)
 
 

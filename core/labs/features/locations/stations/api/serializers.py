@@ -250,7 +250,7 @@ class StationSerializer(AppModelSerializer):
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
     def get_status(self, obj) -> dict[str, str] | None:
-        raw = getattr(obj, "current_status", None)
+        raw = getattr(obj, "status", None)
         return to_choice_reference(raw, StationStatus.choices)
 
     @extend_schema_field(Coordinate3DSerializer(allow_null=True))

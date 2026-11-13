@@ -1,6 +1,6 @@
-"""Room projections; status is a correlated subquery, not a join."""
+"""Room projections; ``status`` is a stored column, history lives in status records."""
 
-from django.db.models import OuterRef, Q, Subquery
+from django.db.models import Q
 
 from core.labs.models.resource.location.room import Room, RoomStatusRecord
 from core.labs.models.resource.location.room_observation import RoomObservation
@@ -8,10 +8,7 @@ from core.labs.models.resource.location.room_slot import RoomSlot
 
 
 def list_rooms(*, search=None):
-    latest = RoomStatusRecord.objects.filter(room_id=OuterRef("pk")).order_by("-created", "-pk")
-    queryset = Room.objects.select_related("country", "city", "building").annotate(
-        current_status=Subquery(latest.values("status")[:1]),
-    ).order_by("sku", "pk")
+    queryset = Room.objects.select_related("country", "city", "building").order_by("sku", "pk")
     if search:
         queryset = queryset.filter(Q(sku__icontains=search) | Q(name__icontains=search) | Q(label__icontains=search))
     return queryset

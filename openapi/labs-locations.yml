@@ -1746,8 +1746,7 @@ paths:
   /api/labs/rooms/status-summary:
     get:
       operationId: labs_rooms_status_summary_retrieve
-      description: Non-deleted rooms by latest recorded lifecycle state, unknown if
-        absent.
+      description: Non-deleted rooms counted by their stored lifecycle `status`.
       tags:
       - Rooms
       security:
@@ -2991,8 +2990,7 @@ paths:
   /api/labs/stations/status-summary:
     get:
       operationId: labs_stations_status_summary_retrieve
-      description: Non-deleted stations by latest recorded lifecycle state, unknown
-        if absent.
+      description: Non-deleted stations counted by their stored lifecycle `status`.
       tags:
       - Stations
       security:

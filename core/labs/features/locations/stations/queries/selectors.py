@@ -19,11 +19,9 @@ def list_stations(*, room_id=None, type_id=None, search=None, with_slots=False):
     slots = StationSlot.objects.filter(
         station_id=OuterRef("pk"), is_active=True, status="available", bench__isnull=True,
     ).order_by().values("station_id")
-    latest = StationStatusRecord.objects.filter(station_id=OuterRef("pk")).order_by("-created", "-pk")
     queryset = Station.objects.select_related(
         "type", "room__country", "room__city", "room__building", "slot",
     ).annotate(
-        current_status=Subquery(latest.values("status")[:1]),
         active_bench_count=Coalesce(Subquery(benches.annotate(total=Count("pk")).values("total")), Value(0)),
         allocated_power_w=Coalesce(
             Subquery(benches.annotate(total=Sum("requested_power_w")).values("total")), Value(0),
