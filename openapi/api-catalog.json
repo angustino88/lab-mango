@@ -85778,16 +85778,6 @@
                       "nullable": true,
                       "readOnly": true
                     },
-                    "operational_status": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "nullable": true,
-                      "readOnly": true
-                    },
                     "max_occupancy": {
                       "type": "integer",
                       "readOnly": true,
@@ -85850,7 +85840,6 @@
                     "max_occupancy",
                     "name",
                     "network_port_capacity",
-                    "operational_status",
                     "owner",
                     "power_capacity_w",
                     "remark",
@@ -85906,7 +85895,6 @@
                 "floor_plan_revision": "string",
                 "floor_plan_url": "https://example.com/resource",
                 "status": {},
-                "operational_status": {},
                 "max_occupancy": 1,
                 "power_capacity_w": 1,
                 "cooling_capacity_w": 1,
@@ -86402,16 +86390,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "max_occupancy": {
                     "type": "integer",
                     "readOnly": true,
@@ -86474,7 +86452,6 @@
                   "max_occupancy",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "owner",
                   "power_capacity_w",
                   "remark",
@@ -86521,7 +86498,6 @@
               "floor_plan_revision": "string",
               "floor_plan_url": "https://example.com/resource",
               "status": {},
-              "operational_status": {},
               "max_occupancy": 1,
               "power_capacity_w": 1,
               "cooling_capacity_w": 1,
@@ -87870,16 +87846,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "max_occupancy": {
                     "type": "integer",
                     "readOnly": true,
@@ -87942,7 +87908,6 @@
                   "max_occupancy",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "owner",
                   "power_capacity_w",
                   "remark",
@@ -87989,7 +87954,6 @@
               "floor_plan_revision": "string",
               "floor_plan_url": "https://example.com/resource",
               "status": {},
-              "operational_status": {},
               "max_occupancy": 1,
               "power_capacity_w": 1,
               "cooling_capacity_w": 1,
@@ -88441,16 +88405,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "max_occupancy": {
                     "type": "integer",
                     "readOnly": true,
@@ -88513,7 +88467,6 @@
                   "max_occupancy",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "owner",
                   "power_capacity_w",
                   "remark",
@@ -88560,7 +88513,6 @@
               "floor_plan_revision": "string",
               "floor_plan_url": "https://example.com/resource",
               "status": {},
-              "operational_status": {},
               "max_occupancy": 1,
               "power_capacity_w": 1,
               "cooling_capacity_w": 1,
@@ -89168,16 +89120,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "max_occupancy": {
                     "type": "integer",
                     "readOnly": true,
@@ -89240,7 +89182,6 @@
                   "max_occupancy",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "owner",
                   "power_capacity_w",
                   "remark",
@@ -89287,7 +89228,6 @@
               "floor_plan_revision": "string",
               "floor_plan_url": "https://example.com/resource",
               "status": {},
-              "operational_status": {},
               "max_occupancy": 1,
               "power_capacity_w": 1,
               "cooling_capacity_w": 1,
@@ -89836,16 +89776,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "max_occupancy": {
                     "type": "integer",
                     "readOnly": true,
@@ -89908,7 +89838,6 @@
                   "max_occupancy",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "owner",
                   "power_capacity_w",
                   "remark",
@@ -89955,7 +89884,6 @@
               "floor_plan_revision": "string",
               "floor_plan_url": "https://example.com/resource",
               "status": {},
-              "operational_status": {},
               "max_occupancy": 1,
               "power_capacity_w": 1,
               "cooling_capacity_w": 1,
@@ -94377,16 +94305,6 @@
                       "nullable": true,
                       "readOnly": true
                     },
-                    "operational_status": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "nullable": true,
-                      "readOnly": true
-                    },
                     "safety_classification": {
                       "type": "string",
                       "readOnly": true
@@ -94457,7 +94375,6 @@
                     "max_load_kg",
                     "name",
                     "network_port_capacity",
-                    "operational_status",
                     "orientation_degrees",
                     "owner",
                     "position",
@@ -94522,7 +94439,6 @@
                 "network_port_capacity": 1,
                 "utilities": null,
                 "status": {},
-                "operational_status": {},
                 "safety_classification": "string",
                 "image": "https://example.com/resource",
                 "active_bench_count": 1,
@@ -95012,16 +94928,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "safety_classification": {
                     "type": "string",
                     "readOnly": true
@@ -95092,7 +94998,6 @@
                   "max_load_kg",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "orientation_degrees",
                   "owner",
                   "position",
@@ -95148,7 +95053,6 @@
               "network_port_capacity": 1,
               "utilities": null,
               "status": {},
-              "operational_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
               "active_bench_count": 1,
@@ -96651,16 +96555,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "safety_classification": {
                     "type": "string",
                     "readOnly": true
@@ -96731,7 +96625,6 @@
                   "max_load_kg",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "orientation_degrees",
                   "owner",
                   "position",
@@ -96787,7 +96680,6 @@
               "network_port_capacity": 1,
               "utilities": null,
               "status": {},
-              "operational_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
               "active_bench_count": 1,
@@ -97233,16 +97125,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "safety_classification": {
                     "type": "string",
                     "readOnly": true
@@ -97313,7 +97195,6 @@
                   "max_load_kg",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "orientation_degrees",
                   "owner",
                   "position",
@@ -97369,7 +97250,6 @@
               "network_port_capacity": 1,
               "utilities": null,
               "status": {},
-              "operational_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
               "active_bench_count": 1,
@@ -97971,16 +97851,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "safety_classification": {
                     "type": "string",
                     "readOnly": true
@@ -98051,7 +97921,6 @@
                   "max_load_kg",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "orientation_degrees",
                   "owner",
                   "position",
@@ -98107,7 +97976,6 @@
               "network_port_capacity": 1,
               "utilities": null,
               "status": {},
-              "operational_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
               "active_bench_count": 1,
@@ -98659,16 +98527,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "safety_classification": {
                     "type": "string",
                     "readOnly": true
@@ -98739,7 +98597,6 @@
                   "max_load_kg",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "orientation_degrees",
                   "owner",
                   "position",
@@ -98795,7 +98652,6 @@
               "network_port_capacity": 1,
               "utilities": null,
               "status": {},
-              "operational_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
               "active_bench_count": 1,
@@ -99270,16 +99126,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "safety_classification": {
                     "type": "string",
                     "readOnly": true
@@ -99350,7 +99196,6 @@
                   "max_load_kg",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "orientation_degrees",
                   "owner",
                   "position",
@@ -99406,7 +99251,6 @@
               "network_port_capacity": 1,
               "utilities": null,
               "status": {},
-              "operational_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
               "active_bench_count": 1,
@@ -99881,16 +99725,6 @@
                     "nullable": true,
                     "readOnly": true
                   },
-                  "operational_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "safety_classification": {
                     "type": "string",
                     "readOnly": true
@@ -99961,7 +99795,6 @@
                   "max_load_kg",
                   "name",
                   "network_port_capacity",
-                  "operational_status",
                   "orientation_degrees",
                   "owner",
                   "position",
@@ -100017,7 +99850,6 @@
               "network_port_capacity": 1,
               "utilities": null,
               "status": {},
-              "operational_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
               "active_bench_count": 1,

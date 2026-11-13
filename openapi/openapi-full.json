@@ -56188,15 +56188,6 @@
             "nullable": true,
             "readOnly": true
           },
-          "operational_status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true
-          },
           "max_occupancy": {
             "type": "integer",
             "readOnly": true,
@@ -56259,7 +56250,6 @@
           "max_occupancy",
           "name",
           "network_port_capacity",
-          "operational_status",
           "owner",
           "power_capacity_w",
           "remark",
@@ -58075,15 +58065,6 @@
             "nullable": true,
             "readOnly": true
           },
-          "operational_status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true
-          },
           "safety_classification": {
             "type": "string",
             "readOnly": true
@@ -58154,7 +58135,6 @@
           "max_load_kg",
           "name",
           "network_port_capacity",
-          "operational_status",
           "orientation_degrees",
           "owner",
           "position",

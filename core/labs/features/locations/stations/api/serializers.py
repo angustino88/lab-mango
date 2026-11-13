@@ -194,7 +194,6 @@ class StationSerializer(AppModelSerializer):
     room = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
     slot = NamedReferenceSerializer(read_only=True, allow_null=True)
     status = serializers.SerializerMethodField(read_only=True)
-    operational_status = serializers.SerializerMethodField(read_only=True)
     position = serializers.SerializerMethodField(read_only=True)
     active_bench_count = serializers.IntegerField(read_only=True)
     allocated_power_w = serializers.IntegerField(read_only=True)
@@ -235,7 +234,6 @@ class StationSerializer(AppModelSerializer):
             "network_port_capacity",
             "utilities",
             "status",
-            "operational_status",
             "safety_classification",
             "image",
             "active_bench_count",
@@ -254,11 +252,6 @@ class StationSerializer(AppModelSerializer):
     def get_status(self, obj) -> dict[str, str] | None:
         raw = getattr(obj, "current_status", None)
         return to_choice_reference(raw, StationStatus.choices)
-
-    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
-    def get_operational_status(self, obj) -> dict[str, str] | None:
-        raw = getattr(obj, "operational_status", None)
-        return to_choice_reference(raw)
 
     @extend_schema_field(Coordinate3DSerializer(allow_null=True))
     def get_position(self, obj) -> dict[str, float] | None:

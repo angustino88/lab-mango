@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from core.common.db.transactions import apply_fields, atomic_command
 from core.labs.features.equipment.public import has_active_placements
 from core.labs.features.locations.rooms.application.policies import RoomConflict, grid_positions
-from core.labs.models.resource.location.room import Room, RoomStatusRecord
+from core.labs.models.resource.location.room import Room, RoomStatus, RoomStatusRecord
 from core.labs.models.resource.location.room_observation import RoomObservation
 from core.labs.models.resource.location.room_slot import RoomSlot
 from core.labs.models.resource.location.station import Station
@@ -16,6 +16,7 @@ ROOM_WRITE_FIELDS = (
     "usable_height_m", "floor_plan_revision", "floor_plan_url",
     "max_occupancy", "power_capacity_w", "cooling_capacity_w", "network_port_capacity", "utilities",
 )
+INITIAL_ROOM_STATUS = RoomStatus.AVAILABLE
 OBSERVATION_WRITE_FIELDS = ("observed_at", "source", "temperature_c", "humidity_percent", "power_usage_w")
 
 _room_atomic_command = atomic_command(RoomConflict)
@@ -56,9 +57,15 @@ def _sync_grid(room, actor):
 
 @_room_atomic_command
 def create_room(*, actor, **data):
+    """Create a room with its first lifecycle status record in the same transaction.
+
+    Race guard: the active-SKU partial unique constraint rejects a concurrent duplicate, and the
+    whole transaction (room and its initial record) rolls back with it.
+    """
     room = Room()
     _apply(room, data, ROOM_WRITE_FIELDS)
     room.save(actor=actor)
+    RoomStatusRecord(room=room, status=INITIAL_ROOM_STATUS).save(actor=actor)
     return room
 
 

@@ -200,7 +200,7 @@ Station writes accept `sku`, `name`, `group`, `owner`, `remark`, `label`, `type`
 `room`, `slot`, `position`, `height_mm`, `width_mm`, `depth_mm`,
 `orientation_degrees`, `max_load_kg`, `bench_capacity`, `max_concurrent_users`,
 `usable_surface_mm2`, `power_capacity_w`, `power_reserved_w`, `cooling_capacity_w`,
-`network_port_capacity`, `utilities`, `operational_status`, `safety_classification`.
+`network_port_capacity`, `utilities`, `safety_classification`.
 `image` is a read field here, not a station create/update field.
 
 Station placement accepts only `room`, `slot`, `position`, `orientation_degrees`.
@@ -234,11 +234,13 @@ power; null station capacity yields null available power. Available-slot count
 requires active, `available`, unreferenced slots. Separate correlated subqueries
 prevent equipment/bench/slot join fan-out from inflating aggregates.
 
-`operational_status` is nonblank normalized administrative text. Station status
-POST accepts `status` (`available`, `reserved`, `issue`, `restricted`, `closed`,
-`maintenance`, `retired`) and optional object `metadata`. It appends an observation
-and does not overwrite administrative status. Latest status uses creation time
-then PK, both descending. Reading station projections does not create history.
+Creating a station also records its first status, `available`, in the same
+transaction, so `status` is never null for a station created through the API.
+Station status POST accepts `status` (`available`, `reserved`, `issue`, `restricted`,
+`closed`, `maintenance`, `retired`) and optional object `metadata`. It appends a
+status record. Latest status uses creation time then PK, both descending. Reading
+station projections does not create history. Stations have no `operational_status`
+field.
 Station types accept only `name`; DELETE is blocked by live or historical stations.
 
 ## Errors and response envelopes

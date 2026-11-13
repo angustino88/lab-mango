@@ -44,7 +44,7 @@ The Locations feature represents geographic and facility real-estate topology: c
 | Method & Path | View Class | Purpose & Contract |
 |---|---|---|
 | `GET /api/labs/rooms` | `RoomListCreateAPIView` | Paginated room inventory. |
-| `POST /api/labs/rooms` | `RoomListCreateAPIView` | Create room. |
+| `POST /api/labs/rooms` | `RoomListCreateAPIView` | Create room; records initial status `available` in the same transaction. |
 | `GET /api/labs/rooms/{id}` | `RoomDetailAPIView` | Room specs and contained stations. |
 | `PATCH /api/labs/rooms/{id}` | `RoomDetailAPIView` | Update room attributes. |
 | `GET /api/labs/rooms/options` | `RoomSelectAPIView` | Selector `{id, sku, name}`. |
@@ -52,7 +52,7 @@ The Locations feature represents geographic and facility real-estate topology: c
 | `GET /api/labs/rooms/{room_id}/slots` | `RoomSlotListCreateAPIView` | Grid slots in room. |
 | `GET /api/labs/rooms/{room_id}/history` | `RoomHistoryAPIView` | Status records, newest first; each row has `actor` (`{id, username, display_name}`, null when unknown). |
 | `GET /api/labs/stations` | `StationListCreateAPIView` | Physical stations inventory. |
-| `POST /api/labs/stations` | `StationListCreateAPIView` | Create physical station dock. |
+| `POST /api/labs/stations` | `StationListCreateAPIView` | Create physical station dock; records initial status `available` in the same transaction. |
 | `GET /api/labs/stations/{id}` | `StationDetailAPIView` | Station technical specifications and slots. |
 | `PATCH /api/labs/stations/{id}` | `StationDetailAPIView` | Update station capacity ratings. |
 | `GET /api/labs/stations/options` | `StationSelectAPIView` | Selector `{id, sku, name}`. |

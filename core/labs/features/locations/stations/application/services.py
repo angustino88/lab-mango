@@ -20,7 +20,7 @@ from core.labs.models.resource.bench.bench import Bench
 from core.labs.models.resource.bench.bench_type import BenchType
 from core.labs.models.resource.location.room import Room
 from core.labs.models.resource.location.room_slot import RoomSlot
-from core.labs.models.resource.location.station import Station, StationStatusRecord, StationType
+from core.labs.models.resource.location.station import Station, StationStatus, StationStatusRecord, StationType
 from core.labs.models.resource.location.station_slot import StationSlot
 
 STATION_WRITE_FIELDS = (
@@ -30,6 +30,7 @@ STATION_WRITE_FIELDS = (
     "power_reserved_w", "cooling_capacity_w", "network_port_capacity", "utilities",
     "safety_classification",
 )
+INITIAL_STATION_STATUS = StationStatus.AVAILABLE
 PLACEMENT_FIELDS = ("room_id", "slot_id", "position", "orientation_degrees")
 SLOT_WRITE_FIELDS = (
     "position_index", "slot_code", "label", "is_active", "status", "width_mm", "depth_mm",
@@ -104,10 +105,17 @@ def _placement(station, rooms, *, old_slot_id, actor):
 
 @_atomic_command
 def create_station(*, actor, **data):
+    """Create a station with its first lifecycle status record in the same transaction.
+
+    Race guard: room/slot row locks plus the active-SKU and slot partial unique constraints; any
+    failure rolls back the station and its initial record together.
+    """
     station = Station()
     _apply(station, data, STATION_WRITE_FIELDS)
     rooms = _lock_rooms((station.room_id,))
-    return _placement(station, rooms, old_slot_id=None, actor=actor)
+    station = _placement(station, rooms, old_slot_id=None, actor=actor)
+    StationStatusRecord(station=station, status=INITIAL_STATION_STATUS).save(actor=actor)
+    return station
 
 
 @_atomic_command
