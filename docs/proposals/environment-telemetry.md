@@ -84,7 +84,7 @@ flowchart LR
   WA -- "Wi-Fi<br/>Modbus TCP :502" --> R[Room Wi-Fi router<br/>isolated SSID/VLAN]
   WB -- Wi-Fi --> R
   WR -- Wi-Fi --> R
-  R --- H[Room host PC<br/>Lab Mango agent<br/>+ telemetry collector]
+  R --- H[Room host PC<br/>telemetry collector service]
   H -- "signed HTTPS<br/>/agent/telemetry/..." --> API[Lab Mango backend]
 ```
 
@@ -127,6 +127,22 @@ station data integrity rests on network isolation (§7), not on device crypto.
 
 RS485 is half-duplex: the collector keeps **one request in flight per converter**, reads all of that
 converter's channels sequentially each cycle (≈ 0.5–1 s timeout per request), and runs converters in parallel.
+
+### D7 Collector identity: the collector is a separate service, so it needs its own server login
+
+`AgentIdentity` allows one live identity per equipment (`agent_one_live_per_equipment`,
+`core/agents/models/agent_identity.py:50-54`). Sharing the computer agent's private key between two processes
+is not an option (`docs/agent-platform/device-design.md` §2: keys are unavailable to other components).
+
+| Option | For | Against |
+|---|---|---|
+| **A. Host PC is dedicated and runs only the collector; the collector enrolls as that PC's one `AgentIdentity`** (recommended for v1) | No change to `core.agents`; existing enrollment, revoke and signing as is | The host PC cannot also run the computer agent |
+| B. Register the collector as its own `Equipment` row and enroll against it | No agents change; host PC can also run the computer agent | An inventory row that is not a physical asset; confuses equipment reports |
+| C. Add `purpose` (`computer_agent` / `telemetry_collector`) to `AgentIdentity`, unique per `(equipment, purpose)`; each endpoint accepts only its purpose | Least privilege (collector key can't call booking endpoints and vice versa); both can run on one PC | Migration on a security-critical table and auth change in `core.agents` (separate T2 task with security review) |
+
+Recommendation: A now (Q13: dedicated host PC). Move to C if a host PC must also be a managed lab computer.
+Under any option, `/agent/telemetry/*` additionally requires the signing identity's equipment to be a claimed
+`room_host` gateway, so an ordinary computer agent cannot submit telemetry.
 
 ### D5 Sensor configuration: defined in Lab Mango, discovered by the host PC (recommended)
 
@@ -281,7 +297,7 @@ Common: `CHECK (valid_to IS NULL OR valid_to > valid_from)`; audit via `TimeStam
 
 ### 5.1b `SensorProfile` and `TelemetryChannel`: RS485 configuration
 
-`SensorProfile` (reference data, staff-managed): `key` (e.g. `eastron_sdm120`, `rs485_th_probe`), `name`,
+`SensorProfile` (reference data, staff-managed): `key` (e.g. `chint_dtsu666`, `es35_sw`), `name`,
 `register_map` JSON (per metric: function code 3/4, register, word count, data type `int16/uint16/int32/float32`,
 word order, scale, offset, unit), supported serial settings. Validated against a JSON schema on write.
 Profiles are versioned: an edit creates a new version, so history keeps the register map it was read with.
@@ -301,7 +317,7 @@ settings or channels in its scope (`select_for_update` on the gateway row), so t
 |---|---|---|---|
 | **Station node** = USR-W630 at the station | Off-the-shelf converter, vendor firmware | Bridges the station's RS485 bus to Modbus TCP on the room Wi-Fi. Nothing else | No |
 | **Room node** (optional) = a USR-W630 bound to the room | Same hardware, mounted in the room | Bridges room-level sensors (ambient temp/humidity, room main meter) | No |
-| **Room host PC** = gateway | PC on the room router, enrolled Lab Mango agent | Runs the **telemetry collector** module (a "Collector" in `docs/agent-platform/device-design.md` §2) | Yes (`AgentIdentity`) |
+| **Room host PC** = gateway | Dedicated PC on the room network | Runs the **telemetry collector**, a separate service from the Lab Mango computer agent (owner decision 2026-11-13; identity in D7) | Yes (`AgentIdentity` owned by the collector) |
 
 So there is no separate "master node" hardware any more: the router gives the network, and the host PC does the master's job.
 
@@ -320,14 +336,55 @@ flowchart TB
 
 - Before polling a converter, check that the MAC in the host's ARP table for `network_host` matches the
   configured MAC; on mismatch, stop polling it and report `address_conflict` (catches DHCP mix-ups; it is not
-  protection against a spoofing attacker).
+  protection against a spoofing attacker). This works only when the host PC is on the **same VLAN** as the
+  converters (§5.1e); across a routed hop the ARP entry is the gateway's MAC and the check must be disabled.
 - `sample_id` is written to the outbox **before** the first send, so retries after a crash reuse it and the
   server deduplicates (`UNIQUE (converter, sample_id)`).
 - Values are decoded with the profile's register map and scale on the host PC; the server receives SI values
   (`temperature_c`, `humidity_percent`, `power_w`) plus `profile_version` for traceability.
-- Modbus client library choice for the agent (e.g. `pymodbus` if the agent is Python) is a rule-7 decision in
-  the agent codebase; the **backend never speaks Modbus** and needs no new dependency. Agent language is
-  **not verified**.
+- The collector is its **own deliverable** (own package, release and OS service: systemd or Windows service
+  with auto-restart). It implements the existing signed-request protocol (`labmango-agent-request-v1`,
+  `docs/agent-platform/backend-api.md:180-190`) itself; it never reads the computer agent's key.
+- Its Modbus client is a rule-7 decision in the collector's codebase. Candidate: `pymodbus` (Modbus TCP and
+  RTU-over-TCP in one library). Alternative considered: `minimalmodbus` (serial RTU only, cannot talk to a W630
+  over TCP). The **backend never speaks Modbus** and needs no new dependency.
+- On approval, the collector design moves to `docs/agent-platform/telemetry-collector.md` (agent-platform row
+  of `docs/ai-team/documentation-map.md`).
+
+### 5.1d Site hardware: sensor profiles (owner, 2026-11-13)
+
+| Sensor | Role | Metric(s) | Register map status |
+|---|---|---|---|
+| **CHINT DTSU666** | Electricity meter, RS485 Modbus RTU | `power_w` = total active power; also offers imported energy (kWh), relevant to Q5 | Community integrations commonly cite total active power at `0x2012` (float32, FC 03) and imported energy at `0x401E` (float32). Unit/scale of the power register differs between sources (W vs 0.1 W). **Not verified**: confirm against the CHINT manual and by reading the meter beside a known load before approving the profile. DTSU666 is the three-phase model; single-phase stations would normally use DDSU666, so confirm which is installed |
+| **ES35-SW** (read from "ES35-SƯ"; please confirm the model) | Temperature/humidity transmitter, RS485 Modbus RTU | `temperature_c`, `humidity_percent` | **Unknown.** Manual needed: register addresses, data type and scale (often int16 × 0.1, but not assumed) |
+
+Wiring rules per station bus (also in the install checklist):
+- Both sensors on one W630 share **one** serial setting (baud, parity, data/stop bits); set the W630 to the same.
+- **Distinct Modbus addresses.** Meters and probes often ship with address 1; set e.g. DTSU666 = 1, ES35 = 2 on
+  the device's own menu/tool before connecting both.
+- A/B polarity consistent, 120 Ω termination at the two ends of the bus, common ground where the devices
+  provide it.
+
+The first two `SensorProfile` rows are seeded by a data migration only after the register maps are verified on
+one real station (the collector's on-demand scan + a reading compared against the meter display).
+
+### 5.1e Site network: UniFi Cloud Gateway Ultra + U7 Long-Range (owner, 2026-11-13)
+
+Configured by staff in the UniFi Network app; Lab Mango does not configure UniFi in v1. UniFi supports VLANs,
+per-SSID networks, fixed IPs and firewall rules; exact menu names vary by UniFi Network version (**not verified**
+for the installed version).
+
+| Item | Setting |
+|---|---|
+| Network | `lab-iot-room<N>`: its own VLAN per room, DHCP on |
+| Fixed IPs | one DHCP reservation per W630 MAC; this IP goes in Lab Mango `network_host` |
+| SSID | `lab-iot` on the U7-LR, **2.4 GHz only** (W630 is 2.4 GHz), WPA2-Personal (W630 WPA3 support not verified), mapped to the room's IoT VLAN |
+| Host PC | wired to the Gateway Ultra on a port in the **same IoT VLAN** (keeps Modbus on L2 and makes the MAC check work), fixed IP |
+| Firewall | IoT VLAN → internet: block. IoT VLAN → other networks: block. Host PC → W630s TCP 502: allow. Host PC → Lab Mango server TCP 443: allow. Admin network → W630 web UI (setup only): allow. Everything else into the IoT VLAN: block |
+| W630 | joins `lab-iot`; Modbus TCP gateway mode on 502; serial = sensor settings; admin password changed; vendor cloud off |
+
+If one Gateway Ultra serves several rooms, the per-room VLAN keeps each host PC from reaching another room's
+converters. The server-side scope rule (§5.1) still rejects cross-room data if the network is misconfigured.
 
 Converter lifecycle as seen by the backend: `discovered` → `claimed` (+ scope binding) → `retired`.
 Connectivity is separate (§5.5).
@@ -406,11 +463,11 @@ signature; the body never carries a room or station id.
      "serial": {"interface": "rs485", "baud_rate": 9600, "parity": "N", "data_bits": 8, "stop_bits": 1},
      "request_timeout_ms": 800,
      "channels": [
-       {"unit_id": 1, "metric": "power_w", "profile": "eastron_sdm120@2"},
-       {"unit_id": 2, "metric": "temperature_c", "profile": "rs485_th_probe@1"},
-       {"unit_id": 2, "metric": "humidity_percent", "profile": "rs485_th_probe@1"}]}],
-  "profiles": {"eastron_sdm120@2": {"register_map": {"power_w": {"fc": 4, "register": 12,
-               "words": 2, "type": "float32", "word_order": "big", "scale": 1}}}}
+       {"unit_id": 1, "metric": "power_w", "profile": "chint_dtsu666@1"},
+       {"unit_id": 2, "metric": "temperature_c", "profile": "es35_sw@1"},
+       {"unit_id": 2, "metric": "humidity_percent", "profile": "es35_sw@1"}]}],
+  "profiles": {"chint_dtsu666@1": {"register_map": {"power_w": {"fc": 3, "register": 8210,
+               "words": 2, "type": "float32", "word_order": "big", "scale": 1}}}}  // register/scale unverified, §5.1d
 }}
 ```
 
@@ -436,7 +493,7 @@ not reassigned (operator sees a conflict).
     {"data": {"device_uid": "A4:CF:12:9B:00:21", "sample_id": "0193…",
               "observed_at": "2026-11-13T09:00:10Z", "config_version": 17,
               "temperature_c": "22.40", "humidity_percent": "41.0", "power_w": "1830.5",
-              "profile_versions": {"power_w": "eastron_sdm120@2"}}}
+              "profile_versions": {"power_w": "chint_dtsu666@1"}}}
   ]
 }
 ```
@@ -597,7 +654,7 @@ Authorization (deny-by-default, object-scoped):
 
 ## 10. Assumptions and open questions for the owner
 
-Assumptions (not verified): the room host PC can run the Lab Mango agent (Ed25519 signing happens there);
+Assumptions (not verified): the room host PC can run the collector service (Ed25519 signing happens there);
 W630 Modbus TCP gateway mode works with the chosen sensors (validate on one station first); ~500 converters
 at 10 s; production PostgreSQL ≥ 15 (CI uses 16).
 
@@ -607,12 +664,14 @@ at 10 s; production PostgreSQL ≥ 15 (CI uses 16).
 | Q2 | Fate of `RoomObservation` and `/rooms/{id}/observations`: keep for manual entries, or deprecate after telemetry ships? | Keep in v1; decide after adoption |
 | Q3 | Who may view a room's/station's telemetry? | Same users who can view the room; staff for all |
 | Q4 | Push interval, raw retention, rollup retention | 10 s; 30 d; 1m for 90 d, 1h for 2 y |
-| Q5 | Is `power_w` per station real power at the PDU/meter, and is energy (kWh) needed for expenses? | `power_w` only in v1 |
+| Q5 | `power_w` = DTSU666 total active power. The meter also gives energy (kWh): store it for expenses? | `power_w` only in v1; energy as a follow-up (§9) |
 | Q6 | Fix the drift items in §1 (esp. room observation write authz) as separate tasks? | Yes, separate T2 task for authz |
-| Q7 | Can the room router give converters an isolated SSID/VLAN and restrict TCP 502 to the host PC? Which router model? | Required for v1 |
+| Q7 | ~~Router model?~~ **Answered:** UniFi Cloud Gateway Ultra + U7 Long-Range; settings in §5.1e | — |
 | Q8 | Exactly one W630 per station, or several (e.g. two RS485 buses)? | One; drop the station exclusion if needed |
-| Q9 | Which RS485 sensor models (power meter, temp/humidity probe) and their manuals? Needed for the first `SensorProfile` register maps | Owner to list |
+| Q9 | **Partly answered:** CHINT DTSU666 + ES35-SW (§5.1d). Still needed: confirm "ES35-SW" spelling and send its manual; confirm DTSU666 (three-phase) vs DDSU666 (single-phase); each device's serial defaults | Owner to send manuals |
 | Q10 | Room-level sensors: one extra W630 bound to the room, or none? | Optional per room |
 | Q11 | Is the "station PC" topology still needed now that every station has a W630 on the room network? | Not in v1; room host PC only |
-| Q12 | Collector ships in the existing agent (needs `docs/agent-platform/device-design.md` update and agent release) or as a separate service on the host PC? Agent language/runtime? | Existing agent, as a collector |
-| Q13 | Is the room host PC always on, and is it a dedicated machine or also a user workstation? | Dedicated, always on, Ethernet to router |
+| Q12 | ~~Collector in the agent or separate?~~ **Answered: separate service.** Identity consequence in D7 | — |
+| Q13 | Is the room host PC dedicated (runs only the collector, D7-A) and always on? | Dedicated, always on, wired |
+| Q14 | One Gateway Ultra per room, or one for the building with a U7-LR per room? (Decides per-room VLANs, §5.1e) | One IoT VLAN per room either way |
+| Q15 | Host PC OS (Windows/Linux) and the collector's language/runtime? | Linux + Python service |
