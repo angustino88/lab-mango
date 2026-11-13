@@ -44,16 +44,17 @@ The feature exposes its boundary strictly through `public.py`:
   - `record_storage_quota_measurement(input_data: RecordStorageQuotaInput, *, actor: Any = None) -> StorageQuotaMeasurement`
   - `record_facility_visit(input_data: RecordFacilityVisitInput, *, actor: Any = None) -> LaboratoryVisitEvent`
 - **Scheduled Tasks:**
-  - `snapshot_daily_booking_volume()`
+  - `snapshot_daily_booking_volume(day: str | None = None)` (default: yesterday; ISO date for backfill)
   - `snapshot_daily_active_benches()`
   - `snapshot_daily_active_users()`
-  - `snapshot_daily_facility_visitors()`
+  - `snapshot_daily_facility_visitors(day: str | None = None)` (default: yesterday; ISO date for backfill)
   - `send_storage_quota_alerts()`
 - **Query Selectors:**
-  - `get_booking_volume_metrics(*, unit: str | None = None)`
-  - `get_active_bench_metrics(*, unit: str | None = None)`
-  - `get_active_user_metrics(*, unit: str | None = None)`
-  - `get_facility_visit_metrics(*, unit: str | None = None)`
+  - `get_booking_volume_metrics(*, unit=None, date_after=None, date_before=None)`
+  - `get_active_bench_metrics(*, unit=None, date_after=None, date_before=None)`
+  - `get_active_user_metrics(*, unit=None, date_after=None, date_before=None)`
+  - `get_facility_visit_metrics(*, unit=None, date_after=None, date_before=None)`
+  - `resolve_daily_window(date_after, date_before, *, today)` (bounded daily window; see `daily-chart-series.md`)
   - `get_bench_group_distribution()`
   - `get_equipment_status_distribution()`
   - `get_bench_efficiency_rankings(*, from_date_time, to_date_time, sort_order, top_n)`
@@ -66,9 +67,9 @@ The feature exposes its boundary strictly through `public.py`:
   - `get_booked_vs_used(*, from_date_time, to_date_time)`
   - `get_equipment_availability(*, from_date_time, to_date_time)`
 - **HTTP Endpoints (mounted under `/api/labs/analytics/`):**
-  - `GET /booking` (Polymorphic: trend count or historical list)
-  - `GET /lab-count` (Polymorphic: trend count or historical list)
-  - `GET /user-count` (Polymorphic: trend count or historical list)
+  - `GET /booking` (Polymorphic: trend count or historical list; `unit`, `date_after`, `date_before`)
+  - `GET /lab-count` (Polymorphic: trend count or historical list; `unit`, `date_after`, `date_before`)
+  - `GET /user-count` (Polymorphic: trend count or historical list; `unit`, `date_after`, `date_before`)
   - `GET /bench-group`
   - `GET /lab-equipment-status`
   - `GET /lab-efficiency`
@@ -77,7 +78,7 @@ The feature exposes its boundary strictly through `public.py`:
   - `GET /user-booking-efficiency`
   - `GET /lab-usage-by-timeframe`
   - `GET, POST /storage-quota`
-  - `GET, POST /lab-visits`
+  - `GET, POST /lab-visits` (GET takes `unit`, `date_after`, `date_before`)
   - `GET /dashboard-summary` (KPI cards with previous-period trend; requires `from_date_time`, `to_date_time`)
   - `GET /booked-vs-used` (reserved bench hours vs recorded session hours; per-bench booked hours, laboratory-wide used hours)
   - `GET /equipment-availability` (uptime percent, unavailable hours, outage count per equipment from status history)
@@ -136,14 +137,14 @@ sequenceDiagram
 
 ## 7. Security and authorization
 
-- **Authentication:** Analytics endpoints require `HasAPIKey | IsAuthenticated` via `FeatureAPIView`, except the finance reports, which require `HasAPIKey | IsLabCoordinatorReadWrite` (lab coordinators and admins; owner decision 2026-11-11).
+- **Authentication:** Analytics endpoints use the labs `FeatureAPIView` default, `LABS_STAFF_ACCESS` (`HasAPIKeyAccess | IsLabCoordinatorReadWrite`: lab coordinators, admins and API keys), unless a view overrides it. The finance reports use the same rule (owner decision 2026-11-11). Plain lab members get `403` (verified for the count endpoints in `tests/test_daily_series.py`).
 - **Query Parameter Validation:** Date strings, sort order, and limit values are strictly validated via DRF serializers with explicit bounds.
 
 ---
 
 ## 8. Observability and operations
 
-- **Celery Tasks:** Scheduled tasks run daily via Celery beat (`snapshot_daily_booking_volume`, etc.).
+- **Celery Tasks:** The four `snapshot_daily_*` tasks are code-owned entries in `CELERY_BEAT_SCHEDULE` (`config/settings/base.py`, `analytics-snapshot-daily-*`), run at 00:15 `CELERY_TIMEZONE` and record the local day that just ended. Admins may disable them in Django admin. Days before the schedule existed: `manage.py backfill_analytics_daily_snapshots --since YYYY-MM-DD` (bookings and visitors only).
 - **Email Notifications:** RFC 5545 `.ics` attachments generated cleanly with CRLF line endings and line folding at 75 octets.
 - **OpenAPI Integration:** Fully documented in `openapi/labs-analytics.yml` through `drf-spectacular`.
 
@@ -155,4 +156,5 @@ sequenceDiagram
 - `tests/integration/test_analytics_api.py`: 37 behavioral integration tests covering all 12 original endpoints.
 - `tests/integration/test_analytics_insights_api.py`: 23 integration tests covering the three insight endpoints (auth, strict query 400s, envelope, KPI values).
 - `tests/unit/test_analytics_helpers.py`: 19 unit tests for calculation utilities and bucket aggregations.
-- `tests/unit/test_analytics_tasks.py`: 21 mock-based tests for Celery tasks and alert dispatch.
+- `tests/unit/test_analytics_tasks.py`: database tests for the daily snapshots and mock-based tests for alert dispatch.
+- `core/labs/features/analytics/tests/test_daily_series.py`: daily chart series (window, zero-fill, live today, query budget), HTTP validation and access, backfill command.

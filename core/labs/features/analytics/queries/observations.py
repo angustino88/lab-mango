@@ -1,7 +1,8 @@
 """Read-only queries for aggregate volume and population observations."""
 from __future__ import annotations
 
-from datetime import timedelta
+from collections.abc import Callable
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from django.contrib.auth import get_user_model
@@ -17,13 +18,128 @@ from core.labs.models import (
     VisitorVolumeObservation,
 )
 
-from .calculations import aggregate_observation_buckets, calculate_period_trend
+from .calculations import (
+    aggregate_observation_buckets,
+    calculate_period_trend,
+    local_day_start,
+    resolve_daily_window,
+)
+
+MetricResult = dict[str, Any] | list[dict[str, Any]]
 
 
-def get_booking_volume_metrics(*, unit: str | None = None) -> dict[str, Any] | list[dict[str, Any]]:
+# ---------------------------------------------------------------------------
+# Live counts. Shared by the daily snapshot tasks and by "today" in a daily series, so a
+# snapshot and the live value for the same day always use the same definition.
+# ---------------------------------------------------------------------------
+
+
+def count_bookings_created(start: datetime, end: datetime) -> int:
+    """Count bookings created in ``[start, end)``."""
+    return BenchBooking.objects.filter(created__gte=start, created__lt=end).count()
+
+
+def count_distinct_visitors(start: datetime, end: datetime) -> int:
+    """Count distinct visitors with a visit event in ``[start, end)``.
+
+    Visits without a known visitor (anonymous or removed accounts) count as one visitor,
+    matching the historical snapshot definition.
+    """
+    return (
+        LaboratoryVisitEvent.objects.filter(occurred_at__gte=start, occurred_at__lt=end)
+        .values("visitor")
+        .distinct()
+        .count()
+    )
+
+
+def count_active_users() -> int:
+    """Count user accounts that are currently active."""
+    return get_user_model().objects.filter(is_active=True).count()
+
+
+def count_active_benches() -> int:
+    """Count benches that are currently not deleted."""
+    return Bench.objects.filter(deleted_at__isnull=True).count()
+
+
+def _day_bounds(day: date) -> tuple[datetime, datetime]:
+    return local_day_start(day), local_day_start(day + timedelta(days=1))
+
+
+def _daily_series(
+    model: Any,
+    *,
+    date_after: date | None,
+    date_before: date | None,
+    live_today: Callable[[date], int],
+    fill_missing_with_zero: bool,
+) -> list[dict[str, Any]]:
+    """Return one ``{"date", "count"}`` row per local day in a bounded window, oldest first.
+
+    Past days come from daily observations. Today has no snapshot yet (the nightly task records
+    the day that just ended), so today's value is counted live. Future days are omitted.
+    With ``fill_missing_with_zero`` (volumes) a past day without a snapshot reads as 0, so charts
+    get a continuous axis; run the backfill command for days before the schedule existed.
+    Population counts leave such days out, because 0 would wrongly read as "nobody".
+    """
+    today = timezone.localdate()
+    start, end = resolve_daily_window(date_after, date_before, today=today)
+    counts: dict[date, int] = {
+        row["date"]: row["count"]
+        for row in aggregate_observation_buckets(model, "day", date_after=start, date_before=end)
+    }
+    if start <= today < end:
+        counts[today] = live_today(today)
+
+    series: list[dict[str, Any]] = []
+    day = start
+    last_day = min(end, today + timedelta(days=1))
+    while day < last_day:
+        if day in counts:
+            series.append({"date": day.isoformat(), "count": counts[day]})
+        elif fill_missing_with_zero:
+            series.append({"date": day.isoformat(), "count": 0})
+        day += timedelta(days=1)
+    return series
+
+
+def _bucketed(
+    model: Any,
+    unit: str,
+    *,
+    date_after: date | None,
+    date_before: date | None,
+    live_today: Callable[[date], int],
+    fill_missing_with_zero: bool,
+) -> list[dict[str, Any]]:
+    if unit.lower() == "day":
+        return _daily_series(
+            model,
+            date_after=date_after,
+            date_before=date_before,
+            live_today=live_today,
+            fill_missing_with_zero=fill_missing_with_zero,
+        )
+    return list(aggregate_observation_buckets(model, unit, date_after=date_after, date_before=date_before))
+
+
+def get_booking_volume_metrics(
+    *,
+    unit: str | None = None,
+    date_after: date | None = None,
+    date_before: date | None = None,
+) -> MetricResult:
     """Retrieve booking volume trend or historical time-bucketed aggregates."""
     if unit:
-        return list(aggregate_observation_buckets(BookingVolumeObservation, unit))
+        return _bucketed(
+            BookingVolumeObservation,
+            unit,
+            date_after=date_after,
+            date_before=date_before,
+            live_today=lambda day: count_bookings_created(*_day_bounds(day)),
+            fill_missing_with_zero=True,
+        )
 
     now = timezone.now()
     this_week = now - timedelta(days=7)
@@ -48,12 +164,24 @@ def get_booking_volume_metrics(*, unit: str | None = None) -> dict[str, Any] | l
     return {"count": current_count, "trend": trend}
 
 
-def get_active_bench_metrics(*, unit: str | None = None) -> dict[str, Any] | list[dict[str, Any]]:
+def get_active_bench_metrics(
+    *,
+    unit: str | None = None,
+    date_after: date | None = None,
+    date_before: date | None = None,
+) -> MetricResult:
     """Retrieve active bench population count or historical bucketed snapshots."""
     if unit:
-        return list(aggregate_observation_buckets(ActiveLaboratoryObservation, unit))
+        return _bucketed(
+            ActiveLaboratoryObservation,
+            unit,
+            date_after=date_after,
+            date_before=date_before,
+            live_today=lambda _day: count_active_benches(),
+            fill_missing_with_zero=False,
+        )
 
-    count = Bench.objects.filter(deleted_at__isnull=True).count()
+    count = count_active_benches()
     if count == 0:
         latest = ActiveLaboratoryObservation.objects.order_by("-period_start").first()
         count = latest.active_laboratory_count if latest else 0
@@ -61,13 +189,24 @@ def get_active_bench_metrics(*, unit: str | None = None) -> dict[str, Any] | lis
     return {"count": count, "trend": 0}
 
 
-def get_active_user_metrics(*, unit: str | None = None) -> dict[str, Any] | list[dict[str, Any]]:
+def get_active_user_metrics(
+    *,
+    unit: str | None = None,
+    date_after: date | None = None,
+    date_before: date | None = None,
+) -> MetricResult:
     """Retrieve active user count or historical bucketed snapshots."""
     if unit:
-        return list(aggregate_observation_buckets(ActiveUserObservation, unit))
+        return _bucketed(
+            ActiveUserObservation,
+            unit,
+            date_after=date_after,
+            date_before=date_before,
+            live_today=lambda _day: count_active_users(),
+            fill_missing_with_zero=False,
+        )
 
-    User = get_user_model()
-    count = User.objects.filter(is_active=True).count()
+    count = count_active_users()
     if count == 0:
         latest = ActiveUserObservation.objects.order_by("-period_start").first()
         count = latest.active_user_count if latest else 0
@@ -75,10 +214,22 @@ def get_active_user_metrics(*, unit: str | None = None) -> dict[str, Any] | list
     return {"count": count, "trend": 0}
 
 
-def get_facility_visit_metrics(*, unit: str | None = None) -> dict[str, Any] | list[dict[str, Any]]:
+def get_facility_visit_metrics(
+    *,
+    unit: str | None = None,
+    date_after: date | None = None,
+    date_before: date | None = None,
+) -> MetricResult:
     """Retrieve facility visit counts or historical bucketed visits."""
     if unit:
-        return list(aggregate_observation_buckets(VisitorVolumeObservation, unit))
+        return _bucketed(
+            VisitorVolumeObservation,
+            unit,
+            date_after=date_after,
+            date_before=date_before,
+            live_today=lambda day: count_distinct_visitors(*_day_bounds(day)),
+            fill_missing_with_zero=True,
+        )
 
     now = timezone.now()
     this_week = now - timedelta(days=7)
@@ -99,6 +250,10 @@ def get_facility_visit_metrics(*, unit: str | None = None) -> dict[str, Any] | l
 
 
 __all__ = [
+    "count_active_benches",
+    "count_active_users",
+    "count_bookings_created",
+    "count_distinct_visitors",
     "get_active_bench_metrics",
     "get_active_user_metrics",
     "get_booking_volume_metrics",

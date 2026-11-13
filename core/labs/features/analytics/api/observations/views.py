@@ -38,6 +38,12 @@ class _AnalyticsResponseEnvelopeSerializer(serializers.Serializer):
         }
 
 
+def _metric_filters(query) -> dict:
+    """Map validated query values to selector keywords; absent values stay ``None``."""
+    query = query or {}
+    return {key: query.get(key) for key in ("unit", "date_after", "date_before")}
+
+
 def _analytics_response_schema(name: str) -> serializers.Serializer:
     """Document the responder's envelope without changing payload validation."""
     return type(name, (_AnalyticsResponseEnvelopeSerializer,), {"__module__": __name__})()
@@ -56,9 +62,10 @@ class BookingCountAPIView(FeatureAPIView):
     )
 
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
-        unit = request.query_params.get("unit")
-        data = get_booking_volume_metrics(unit=unit)
-        return self.respond_data(data)
+        query, error = self.validate_query()
+        if error is not None:
+            return error
+        return self.respond_data(get_booking_volume_metrics(**_metric_filters(query)))
 
 
 class LabCountAPIView(FeatureAPIView):
@@ -74,9 +81,10 @@ class LabCountAPIView(FeatureAPIView):
     )
 
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
-        unit = request.query_params.get("unit")
-        data = get_active_bench_metrics(unit=unit)
-        return self.respond_data(data)
+        query, error = self.validate_query()
+        if error is not None:
+            return error
+        return self.respond_data(get_active_bench_metrics(**_metric_filters(query)))
 
 
 class UserCountAPIView(FeatureAPIView):
@@ -92,9 +100,10 @@ class UserCountAPIView(FeatureAPIView):
     )
 
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
-        unit = request.query_params.get("unit")
-        data = get_active_user_metrics(unit=unit)
-        return self.respond_data(data)
+        query, error = self.validate_query()
+        if error is not None:
+            return error
+        return self.respond_data(get_active_user_metrics(**_metric_filters(query)))
 
 
 class LabVisitsAPIView(FeatureAPIView):
@@ -115,9 +124,10 @@ class LabVisitsAPIView(FeatureAPIView):
     )
 
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
-        unit = request.query_params.get("unit")
-        data = get_facility_visit_metrics(unit=unit)
-        return self.respond_data(data)
+        query, error = self.validate_query()
+        if error is not None:
+            return error
+        return self.respond_data(get_facility_visit_metrics(**_metric_filters(query)))
 
     def handle_post(self, request: Request, *args, **kwargs) -> Response:
         serializer = LabVisitLogCreateSerializer(data=request.data)
