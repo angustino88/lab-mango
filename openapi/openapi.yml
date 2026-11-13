@@ -140,6 +140,8 @@ paths:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1unfavorite
   /api/labs/benches/{bench_id}/equipment:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1equipment
+  /api/labs/benches/{bench_id}/image:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1image
   /api/labs/benches/filters:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1filters
   /api/labs/benches/options:
@@ -236,6 +238,8 @@ paths:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1generate-slots
   /api/labs/rooms/{room_id}/history:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1history
+  /api/labs/rooms/{room_id}/image:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1image
   /api/labs/rooms/{room_id}/observations:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1observations
   /api/labs/rooms/{room_id}/slots:
@@ -264,6 +268,8 @@ paths:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1place
   /api/labs/stations/{station_id}/history:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1history
+  /api/labs/stations/{station_id}/image:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1image
   /api/labs/stations/{station_id}/slots:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1slots
   /api/labs/stations/{station_id}/slots/{slot_id}:
@@ -352,6 +358,8 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1activity
   /api/labs/equipment/{equipment_id}/assignment:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1assignment
+  /api/labs/equipment/{equipment_id}/image:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1image
   /api/labs/equipment/{equipment_id}/loan:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1loan
   /api/labs/equipment/{equipment_id}/placement:
@@ -522,6 +530,8 @@ paths:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1agreements
   /api/labs/licenses/{license_id}/history:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1history
+  /api/labs/licenses/{license_id}/image:
+    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1image
   /api/labs/licenses/categories/summary:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1categories~1summary
   /api/labs/licenses/filters:

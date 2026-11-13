@@ -10,6 +10,7 @@ urlpatterns = [
     path("stations/filters", views.StationFiltersAPIView.as_view(), name="station-filters"),
     path("stations/reference-data", views.StationReferenceDataAPIView.as_view(), name="station-reference-data"),
     path("stations/<int:station_id>", views.StationDetailAPIView.as_view(), name="station-detail"),
+    path("stations/<int:station_id>/image", views.StationImageAPIView.as_view(), name="station-image"),
     path("stations/<int:station_id>/actions/place", views.StationPlaceAPIView.as_view(), name="station-action-place"),
     path(
         "stations/<int:station_id>/actions/change-lifecycle",

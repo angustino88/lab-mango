@@ -1,8 +1,8 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 458,
-  "generated_at": "2026-11-13",
+  "total_endpoints": 473,
+  "generated_at": "2026-11-14",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -18016,6 +18016,12 @@
                       "nullable": true,
                       "readOnly": true
                     },
+                    "image_url": {
+                      "type": "string",
+                      "format": "uri",
+                      "readOnly": true,
+                      "nullable": true
+                    },
                     "type": {
                       "allOf": [
                         {
@@ -18195,6 +18201,7 @@
                     "group",
                     "id",
                     "image",
+                    "image_url",
                     "is_favorite",
                     "last_inspected_at",
                     "lifecycle_status",
@@ -18241,6 +18248,7 @@
                 "owner": {},
                 "remark": "string",
                 "image": "https://example.com/resource",
+                "image_url": "https://example.com/resource",
                 "type": {},
                 "bench_group": {},
                 "description": "string",
@@ -18661,6 +18669,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "type": {
                     "allOf": [
                       {
@@ -18840,6 +18854,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "is_favorite",
                   "last_inspected_at",
                   "lifecycle_status",
@@ -18877,6 +18892,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
               "description": "string",
@@ -21156,6 +21172,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "type": {
                     "allOf": [
                       {
@@ -21335,6 +21357,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "is_favorite",
                   "last_inspected_at",
                   "lifecycle_status",
@@ -21372,6 +21395,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
               "description": "string",
@@ -21748,6 +21772,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "type": {
                     "allOf": [
                       {
@@ -21927,6 +21957,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "is_favorite",
                   "last_inspected_at",
                   "lifecycle_status",
@@ -21964,6 +21995,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
               "description": "string",
@@ -22443,6 +22475,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "type": {
                     "allOf": [
                       {
@@ -22622,6 +22660,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "is_favorite",
                   "last_inspected_at",
                   "lifecycle_status",
@@ -22659,6 +22698,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
               "description": "string",
@@ -23157,6 +23197,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "type": {
                     "allOf": [
                       {
@@ -23336,6 +23382,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "is_favorite",
                   "last_inspected_at",
                   "lifecycle_status",
@@ -23373,6 +23420,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
               "description": "string",
@@ -24049,6 +24097,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "type": {
                     "allOf": [
                       {
@@ -24228,6 +24282,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "is_favorite",
                   "last_inspected_at",
                   "lifecycle_status",
@@ -24265,6 +24320,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
               "description": "string",
@@ -24626,6 +24682,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "type": {
                     "allOf": [
                       {
@@ -24805,6 +24867,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "is_favorite",
                   "last_inspected_at",
                   "lifecycle_status",
@@ -24842,6 +24905,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
               "description": "string",
@@ -25467,6 +25531,542 @@
           }
         },
         "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/benches/{bench_id}/image",
+      "method": "GET",
+      "operation_id": "labs_benches_image_retrieve_by_bench_id",
+      "summary": "Get Benches Image by Bench ID",
+      "description": "Read, replace or remove a bench's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Benches"
+      ],
+      "parameters": [
+        {
+          "name": "bench_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "image_url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "image_url": "https://example.com/resource"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/benches/{bench_id}/image",
+      "method": "PUT",
+      "operation_id": "labs_benches_image_update_by_bench_id",
+      "summary": "Update Benches Image by Bench ID",
+      "description": "Read, replace or remove a bench's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Benches"
+      ],
+      "parameters": [
+        {
+          "name": "bench_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "multipart/form-data",
+        "supported_content_types": [
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "format": "binary",
+              "description": "JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected from the content."
+            }
+          },
+          "required": [
+            "file"
+          ]
+        },
+        "example_payload": {
+          "file": "string"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "image_url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "image_url": "https://example.com/resource"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "413": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "415": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/benches/{bench_id}/image",
+      "method": "DELETE",
+      "operation_id": "labs_benches_image_destroy_by_bench_id",
+      "summary": "Delete Benches Image by Bench ID",
+      "description": "Read, replace or remove a bench's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Benches"
+      ],
+      "parameters": [
+        {
+          "name": "bench_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -31598,6 +32198,12 @@
                       "type": "string",
                       "readOnly": true
                     },
+                    "image_url": {
+                      "type": "string",
+                      "format": "uri",
+                      "readOnly": true,
+                      "nullable": true
+                    },
                     "manufacturer": {
                       "allOf": [
                         {
@@ -31903,6 +32509,7 @@
                     "firmware_version",
                     "group",
                     "id",
+                    "image_url",
                     "interfaces",
                     "kind",
                     "last_calibrated_at",
@@ -31957,6 +32564,7 @@
                 "type": {},
                 "sku": "string",
                 "name": "string",
+                "image_url": "https://example.com/resource",
                 "manufacturer": {},
                 "product_model": {},
                 "serial_number": "string",
@@ -32411,6 +33019,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "manufacturer": {
                     "allOf": [
                       {
@@ -32732,6 +33346,7 @@
                   "firmware_version",
                   "group",
                   "id",
+                  "image_url",
                   "interfaces",
                   "kind",
                   "last_calibrated_at",
@@ -32777,6 +33392,7 @@
               "type": {},
               "sku": "string",
               "name": "string",
+              "image_url": "https://example.com/resource",
               "manufacturer": {},
               "product_model": {},
               "serial_number": "string",
@@ -51619,6 +52235,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "manufacturer": {
                     "allOf": [
                       {
@@ -51940,6 +52562,7 @@
                   "firmware_version",
                   "group",
                   "id",
+                  "image_url",
                   "interfaces",
                   "kind",
                   "last_calibrated_at",
@@ -51985,6 +52608,7 @@
               "type": {},
               "sku": "string",
               "name": "string",
+              "image_url": "https://example.com/resource",
               "manufacturer": {},
               "product_model": {},
               "serial_number": "string",
@@ -52378,6 +53002,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "manufacturer": {
                     "allOf": [
                       {
@@ -52699,6 +53329,7 @@
                   "firmware_version",
                   "group",
                   "id",
+                  "image_url",
                   "interfaces",
                   "kind",
                   "last_calibrated_at",
@@ -52744,6 +53375,7 @@
               "type": {},
               "sku": "string",
               "name": "string",
+              "image_url": "https://example.com/resource",
               "manufacturer": {},
               "product_model": {},
               "serial_number": "string",
@@ -53214,6 +53846,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "manufacturer": {
                     "allOf": [
                       {
@@ -53535,6 +54173,7 @@
                   "firmware_version",
                   "group",
                   "id",
+                  "image_url",
                   "interfaces",
                   "kind",
                   "last_calibrated_at",
@@ -53580,6 +54219,7 @@
               "type": {},
               "sku": "string",
               "name": "string",
+              "image_url": "https://example.com/resource",
               "manufacturer": {},
               "product_model": {},
               "serial_number": "string",
@@ -53974,6 +54614,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "manufacturer": {
                     "allOf": [
                       {
@@ -54295,6 +54941,7 @@
                   "firmware_version",
                   "group",
                   "id",
+                  "image_url",
                   "interfaces",
                   "kind",
                   "last_calibrated_at",
@@ -54340,6 +54987,7 @@
               "type": {},
               "sku": "string",
               "name": "string",
+              "image_url": "https://example.com/resource",
               "manufacturer": {},
               "product_model": {},
               "serial_number": "string",
@@ -55278,6 +55926,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "manufacturer": {
                     "allOf": [
                       {
@@ -55599,6 +56253,7 @@
                   "firmware_version",
                   "group",
                   "id",
+                  "image_url",
                   "interfaces",
                   "kind",
                   "last_calibrated_at",
@@ -55644,6 +56299,7 @@
               "type": {},
               "sku": "string",
               "name": "string",
+              "image_url": "https://example.com/resource",
               "manufacturer": {},
               "product_model": {},
               "serial_number": "string",
@@ -56037,6 +56693,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "manufacturer": {
                     "allOf": [
                       {
@@ -56358,6 +57020,7 @@
                   "firmware_version",
                   "group",
                   "id",
+                  "image_url",
                   "interfaces",
                   "kind",
                   "last_calibrated_at",
@@ -56403,6 +57066,7 @@
               "type": {},
               "sku": "string",
               "name": "string",
+              "image_url": "https://example.com/resource",
               "manufacturer": {},
               "product_model": {},
               "serial_number": "string",
@@ -58654,6 +59318,542 @@
       }
     },
     {
+      "endpoint": "/api/labs/equipment/{equipment_id}/image",
+      "method": "GET",
+      "operation_id": "labs_equipment_image_retrieve_by_equipment_id",
+      "summary": "Get Equipment Image by Equipment ID",
+      "description": "Read, replace or remove an equipment unit's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "equipment_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "image_url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "image_url": "https://example.com/resource"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/{equipment_id}/image",
+      "method": "PUT",
+      "operation_id": "labs_equipment_image_update_by_equipment_id",
+      "summary": "Update Equipment Image by Equipment ID",
+      "description": "Read, replace or remove an equipment unit's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "equipment_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "multipart/form-data",
+        "supported_content_types": [
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "format": "binary",
+              "description": "JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected from the content."
+            }
+          },
+          "required": [
+            "file"
+          ]
+        },
+        "example_payload": {
+          "file": "string"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "image_url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "image_url": "https://example.com/resource"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "413": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "415": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/{equipment_id}/image",
+      "method": "DELETE",
+      "operation_id": "labs_equipment_image_destroy_by_equipment_id",
+      "summary": "Delete Equipment Image by Equipment ID",
+      "description": "Read, replace or remove an equipment unit's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "equipment_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "endpoint": "/api/labs/equipment/{equipment_id}/loan",
       "method": "GET",
       "operation_id": "labs_equipment_loan_retrieve_by_equipment_id",
@@ -59863,6 +61063,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "manufacturer": {
                     "allOf": [
                       {
@@ -60184,6 +61390,7 @@
                   "firmware_version",
                   "group",
                   "id",
+                  "image_url",
                   "interfaces",
                   "kind",
                   "last_calibrated_at",
@@ -60229,6 +61436,7 @@
               "type": {},
               "sku": "string",
               "name": "string",
+              "image_url": "https://example.com/resource",
               "manufacturer": {},
               "product_model": {},
               "serial_number": "string",
@@ -60626,6 +61834,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "manufacturer": {
                     "allOf": [
                       {
@@ -60947,6 +62161,7 @@
                   "firmware_version",
                   "group",
                   "id",
+                  "image_url",
                   "interfaces",
                   "kind",
                   "last_calibrated_at",
@@ -60992,6 +62207,7 @@
               "type": {},
               "sku": "string",
               "name": "string",
+              "image_url": "https://example.com/resource",
               "manufacturer": {},
               "product_model": {},
               "serial_number": "string",
@@ -61544,6 +62760,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "manufacturer": {
                     "allOf": [
                       {
@@ -61865,6 +63087,7 @@
                   "firmware_version",
                   "group",
                   "id",
+                  "image_url",
                   "interfaces",
                   "kind",
                   "last_calibrated_at",
@@ -61910,6 +63133,7 @@
               "type": {},
               "sku": "string",
               "name": "string",
+              "image_url": "https://example.com/resource",
               "manufacturer": {},
               "product_model": {},
               "serial_number": "string",
@@ -70562,6 +71786,12 @@
                       "type": "string",
                       "readOnly": true
                     },
+                    "image_url": {
+                      "type": "string",
+                      "format": "uri",
+                      "readOnly": true,
+                      "nullable": true
+                    },
                     "product": {
                       "allOf": [
                         {
@@ -70669,6 +71899,7 @@
                     "department",
                     "expiry_date",
                     "id",
+                    "image_url",
                     "max_version",
                     "name",
                     "owner",
@@ -70708,6 +71939,7 @@
                 "owner": {},
                 "department": {},
                 "remark": "string",
+                "image_url": "https://example.com/resource",
                 "product": {},
                 "vendor": {},
                 "type": {},
@@ -74325,6 +75557,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "product": {
                     "allOf": [
                       {
@@ -74432,6 +75670,7 @@
                   "department",
                   "expiry_date",
                   "id",
+                  "image_url",
                   "max_version",
                   "name",
                   "owner",
@@ -74462,6 +75701,7 @@
               "owner": {},
               "department": {},
               "remark": "string",
+              "image_url": "https://example.com/resource",
               "product": {},
               "vendor": {},
               "type": {},
@@ -75158,6 +76398,12 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "product": {
                     "allOf": [
                       {
@@ -75265,6 +76511,7 @@
                   "department",
                   "expiry_date",
                   "id",
+                  "image_url",
                   "max_version",
                   "name",
                   "owner",
@@ -75295,6 +76542,7 @@
               "owner": {},
               "department": {},
               "remark": "string",
+              "image_url": "https://example.com/resource",
               "product": {},
               "vendor": {},
               "type": {},
@@ -76534,6 +77782,542 @@
               "request_id": "string"
             }
           }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/licenses/{license_id}/image",
+      "method": "GET",
+      "operation_id": "labs_licenses_image_retrieve_by_license_id",
+      "summary": "Get Licenses Image by License ID",
+      "description": "Read, replace or remove a license's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Licenses"
+      ],
+      "parameters": [
+        {
+          "name": "license_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "image_url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "image_url": "https://example.com/resource"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/licenses/{license_id}/image",
+      "method": "PUT",
+      "operation_id": "labs_licenses_image_update_by_license_id",
+      "summary": "Update Licenses Image by License ID",
+      "description": "Read, replace or remove a license's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Licenses"
+      ],
+      "parameters": [
+        {
+          "name": "license_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "multipart/form-data",
+        "supported_content_types": [
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "format": "binary",
+              "description": "JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected from the content."
+            }
+          },
+          "required": [
+            "file"
+          ]
+        },
+        "example_payload": {
+          "file": "string"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "image_url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "image_url": "https://example.com/resource"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "413": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "415": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/licenses/{license_id}/image",
+      "method": "DELETE",
+      "operation_id": "labs_licenses_image_destroy_by_license_id",
+      "summary": "Delete Licenses Image by License ID",
+      "description": "Read, replace or remove a license's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Licenses"
+      ],
+      "parameters": [
+        {
+          "name": "license_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
         },
         "404": {
           "description": "",
@@ -88520,6 +90304,12 @@
                       "nullable": true,
                       "readOnly": true
                     },
+                    "image_url": {
+                      "type": "string",
+                      "format": "uri",
+                      "readOnly": true,
+                      "nullable": true
+                    },
                     "map_url": {
                       "type": "string",
                       "format": "uri",
@@ -88728,6 +90518,7 @@
                     "group",
                     "id",
                     "image",
+                    "image_url",
                     "label",
                     "layout_columns",
                     "layout_rows",
@@ -88777,6 +90568,7 @@
                 "owner": {},
                 "remark": "string",
                 "image": "https://example.com/resource",
+                "image_url": "https://example.com/resource",
                 "map_url": "https://example.com/resource",
                 "length_m": "string",
                 "width_m": "string",
@@ -89188,6 +90980,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "map_url": {
                     "type": "string",
                     "format": "uri",
@@ -89396,6 +91194,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "layout_columns",
                   "layout_rows",
@@ -89436,6 +91235,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
               "width_m": "string",
@@ -90700,6 +92500,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "map_url": {
                     "type": "string",
                     "format": "uri",
@@ -90908,6 +92714,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "layout_columns",
                   "layout_rows",
@@ -90948,6 +92755,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
               "width_m": "string",
@@ -91315,6 +93123,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "map_url": {
                     "type": "string",
                     "format": "uri",
@@ -91523,6 +93337,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "layout_columns",
                   "layout_rows",
@@ -91563,6 +93378,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
               "width_m": "string",
@@ -92086,6 +93902,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "map_url": {
                     "type": "string",
                     "format": "uri",
@@ -92294,6 +94116,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "layout_columns",
                   "layout_rows",
@@ -92334,6 +94157,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
               "width_m": "string",
@@ -92800,6 +94624,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "map_url": {
                     "type": "string",
                     "format": "uri",
@@ -93008,6 +94838,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "layout_columns",
                   "layout_rows",
@@ -93048,6 +94879,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
               "width_m": "string",
@@ -93429,6 +95261,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "map_url": {
                     "type": "string",
                     "format": "uri",
@@ -93637,6 +95475,7 @@
                   "group",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "layout_columns",
                   "layout_rows",
@@ -93677,6 +95516,7 @@
               "owner": {},
               "remark": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
               "width_m": "string",
@@ -95517,6 +97357,542 @@
           }
         },
         "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/rooms/{room_id}/image",
+      "method": "GET",
+      "operation_id": "labs_rooms_image_retrieve_by_room_id",
+      "summary": "Get Rooms Image by Room ID",
+      "description": "Read, replace or remove a room's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Rooms"
+      ],
+      "parameters": [
+        {
+          "name": "room_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "image_url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "image_url": "https://example.com/resource"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/rooms/{room_id}/image",
+      "method": "PUT",
+      "operation_id": "labs_rooms_image_update_by_room_id",
+      "summary": "Update Rooms Image by Room ID",
+      "description": "Read, replace or remove a room's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Rooms"
+      ],
+      "parameters": [
+        {
+          "name": "room_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "multipart/form-data",
+        "supported_content_types": [
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "format": "binary",
+              "description": "JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected from the content."
+            }
+          },
+          "required": [
+            "file"
+          ]
+        },
+        "example_payload": {
+          "file": "string"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "image_url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "image_url": "https://example.com/resource"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "413": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "415": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/rooms/{room_id}/image",
+      "method": "DELETE",
+      "operation_id": "labs_rooms_image_destroy_by_room_id",
+      "summary": "Delete Rooms Image by Room ID",
+      "description": "Read, replace or remove a room's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Rooms"
+      ],
+      "parameters": [
+        {
+          "name": "room_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -98253,6 +100629,12 @@
                       "nullable": true,
                       "readOnly": true
                     },
+                    "image_url": {
+                      "type": "string",
+                      "format": "uri",
+                      "readOnly": true,
+                      "nullable": true
+                    },
                     "active_bench_count": {
                       "type": "integer",
                       "readOnly": true
@@ -98311,6 +100693,7 @@
                     "height_mm",
                     "id",
                     "image",
+                    "image_url",
                     "label",
                     "lifecycle_status",
                     "location_path",
@@ -98389,6 +100772,7 @@
                 "activity_status": {},
                 "safety_classification": "string",
                 "image": "https://example.com/resource",
+                "image_url": "https://example.com/resource",
                 "active_bench_count": 1,
                 "allocated_power_w": 1,
                 "available_power_w": 1,
@@ -98932,6 +101316,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "active_bench_count": {
                     "type": "integer",
                     "readOnly": true
@@ -98990,6 +101380,7 @@
                   "height_mm",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "lifecycle_status",
                   "location_path",
@@ -99059,6 +101450,7 @@
               "activity_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
               "available_power_w": 1,
@@ -100641,6 +103033,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "active_bench_count": {
                     "type": "integer",
                     "readOnly": true
@@ -100699,6 +103097,7 @@
                   "height_mm",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "lifecycle_status",
                   "location_path",
@@ -100768,6 +103167,7 @@
               "activity_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
               "available_power_w": 1,
@@ -101267,6 +103667,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "active_bench_count": {
                     "type": "integer",
                     "readOnly": true
@@ -101325,6 +103731,7 @@
                   "height_mm",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "lifecycle_status",
                   "location_path",
@@ -101394,6 +103801,7 @@
               "activity_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
               "available_power_w": 1,
@@ -102049,6 +104457,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "active_bench_count": {
                     "type": "integer",
                     "readOnly": true
@@ -102107,6 +104521,7 @@
                   "height_mm",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "lifecycle_status",
                   "location_path",
@@ -102176,6 +104591,7 @@
               "activity_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
               "available_power_w": 1,
@@ -102783,6 +105199,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "active_bench_count": {
                     "type": "integer",
                     "readOnly": true
@@ -102841,6 +105263,7 @@
                   "height_mm",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "lifecycle_status",
                   "location_path",
@@ -102910,6 +105333,7 @@
               "activity_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
               "available_power_w": 1,
@@ -103432,6 +105856,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "active_bench_count": {
                     "type": "integer",
                     "readOnly": true
@@ -103490,6 +105920,7 @@
                   "height_mm",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "lifecycle_status",
                   "location_path",
@@ -103559,6 +105990,7 @@
               "activity_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
               "available_power_w": 1,
@@ -104087,6 +106519,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "active_bench_count": {
                     "type": "integer",
                     "readOnly": true
@@ -104145,6 +106583,7 @@
                   "height_mm",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "lifecycle_status",
                   "location_path",
@@ -104214,6 +106653,7 @@
               "activity_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
               "available_power_w": 1,
@@ -104742,6 +107182,12 @@
                     "nullable": true,
                     "readOnly": true
                   },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "active_bench_count": {
                     "type": "integer",
                     "readOnly": true
@@ -104800,6 +107246,7 @@
                   "height_mm",
                   "id",
                   "image",
+                  "image_url",
                   "label",
                   "lifecycle_status",
                   "location_path",
@@ -104869,6 +107316,7 @@
               "activity_status": {},
               "safety_classification": "string",
               "image": "https://example.com/resource",
+              "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
               "available_power_w": 1,
@@ -105295,6 +107743,542 @@
           }
         },
         "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/stations/{station_id}/image",
+      "method": "GET",
+      "operation_id": "labs_stations_image_retrieve_by_station_id",
+      "summary": "Get Stations Image by Station ID",
+      "description": "Read, replace or remove a station's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Stations"
+      ],
+      "parameters": [
+        {
+          "name": "station_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "image_url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "image_url": "https://example.com/resource"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/stations/{station_id}/image",
+      "method": "PUT",
+      "operation_id": "labs_stations_image_update_by_station_id",
+      "summary": "Update Stations Image by Station ID",
+      "description": "Read, replace or remove a station's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Stations"
+      ],
+      "parameters": [
+        {
+          "name": "station_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "multipart/form-data",
+        "supported_content_types": [
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "format": "binary",
+              "description": "JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected from the content."
+            }
+          },
+          "required": [
+            "file"
+          ]
+        },
+        "example_payload": {
+          "file": "string"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "image_url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "image_url": "https://example.com/resource"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "413": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "415": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/stations/{station_id}/image",
+      "method": "DELETE",
+      "operation_id": "labs_stations_image_destroy_by_station_id",
+      "summary": "Delete Stations Image by Station ID",
+      "description": "Read, replace or remove a station's image. Upload as multipart/form-data with one ``file`` part.",
+      "tags": [
+        "Stations"
+      ],
+      "parameters": [
+        {
+          "name": "station_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {

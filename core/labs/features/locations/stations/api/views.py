@@ -6,10 +6,11 @@ from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSeriali
 from core.common.api.options import OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
 from core.labs.features.base.common import OptionsAPIView
+from core.labs.features.base.resource_images import ResourceImageAPIView
 from core.labs.features.locations.api.schema import operation
 from core.labs.features.locations.api.views import LocationAPIView
 from core.labs.features.locations.queries import list_station_options, list_station_type_options
-from core.labs.features.locations.stations.application import services
+from core.labs.features.locations.stations.application import services, station_images
 from core.labs.features.locations.stations.queries import selectors
 from core.labs.features.locations.stations.queries.summaries import get_station_status_summary
 
@@ -269,3 +270,11 @@ class StationTypeDetailAPIView(StationAPIView):
 
     def handle_delete(self, request, type_id, **kwargs):
         return self._execute(lambda: services.delete_station_type(type_id=type_id, actor=request.user), delete=True)
+
+
+class StationImageAPIView(ResourceImageAPIView):
+    """Read, replace or remove a station's image. Upload as multipart/form-data with one ``file`` part."""
+
+    schema_tags = ("Stations",)
+    image_commands = station_images
+    lookup_url_kwarg = "station_id"

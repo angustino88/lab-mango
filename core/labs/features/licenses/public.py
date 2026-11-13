@@ -8,6 +8,7 @@ from .application import (
     assign_license,
     change_license_status,
     create_license_agreement,
+    license_images,
     unassign_license,
 )
 from .exceptions import InvalidLicenseStatus, LicenseAlreadyAssigned
@@ -38,6 +39,7 @@ __all__ = (
     "create_license_agreement",
     "get_license",
     "get_license_for_mapping",
+    "license_images",
     "license_mapping_rows",
     "get_active_license",
     "list_license_agreements",

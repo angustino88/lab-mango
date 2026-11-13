@@ -13,6 +13,7 @@ from core.common.api.api_views import AppListAPIView
 from core.common.api.options import OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer, ResultsSetPagination, with_page_query
 from core.labs.features.base.common import OptionsAPIView
+from core.labs.features.base.resource_images import ResourceImageAPIView
 from core.labs.features.equipment.api.serializers import (
     EquipmentCategorySerializer,
     EquipmentKindSerializer,
@@ -41,6 +42,7 @@ from core.labs.features.equipment.application import (
     cancel_reservation,
     change_condition,
     change_lifecycle,
+    equipment_images,
     extend_loan,
     extend_loans,
     hand_over_equipment,
@@ -1039,3 +1041,11 @@ class GroupOptionsAPIView(OptionsAPIView):
 
     def select(self, *, actor: Any, filters: dict[str, Any]) -> Any:
         return list_group_options(actor=actor, **filters)
+
+
+class EquipmentImageAPIView(ResourceImageAPIView):
+    """Read, replace or remove an equipment unit's image. Upload as multipart/form-data with one ``file`` part."""
+
+    schema_tags = ("Equipment",)
+    image_commands = equipment_images
+    lookup_url_kwarg = "equipment_id"

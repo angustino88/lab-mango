@@ -1570,6 +1570,120 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Rooms History by Room ID
+  /api/labs/rooms/{room_id}/image:
+    get:
+      operationId: labs_rooms_image_retrieve_by_room_id
+      description: Read, replace or remove a room's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceImageResourceImagesResourceImageDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Rooms Image by Room ID
+    put:
+      operationId: labs_rooms_image_update_by_room_id
+      description: Read, replace or remove a room's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResourceImageUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceImageResourceImagesResourceImageDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Rooms Image by Room ID
+    delete:
+      operationId: labs_rooms_image_destroy_by_room_id
+      description: Read, replace or remove a room's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Rooms Image by Room ID
   /api/labs/rooms/{room_id}/observations:
     get:
       operationId: labs_rooms_observations_retrieve_by_room_id
@@ -2733,6 +2847,120 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Stations History by Station ID
+  /api/labs/stations/{station_id}/image:
+    get:
+      operationId: labs_stations_image_retrieve_by_station_id
+      description: Read, replace or remove a station's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceImageResourceImagesResourceImageDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Stations Image by Station ID
+    put:
+      operationId: labs_stations_image_update_by_station_id
+      description: Read, replace or remove a station's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResourceImageUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceImageResourceImagesResourceImageDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Stations Image by Station ID
+    delete:
+      operationId: labs_stations_image_destroy_by_station_id
+      description: Read, replace or remove a station's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Stations Image by Station ID
   /api/labs/stations/{station_id}/slots:
     get:
       operationId: labs_stations_slots_retrieve_by_station_id
@@ -4281,6 +4509,34 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    ResourceImage:
+      type: object
+      properties:
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+      required:
+      - image_url
+    ResourceImageResourceImagesResourceImageDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceImage'
+      required:
+      - data
+    ResourceImageUpload:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected
+            from the content.
+      required:
+      - file
     Room:
       type: object
       description: 'Separate state fields of a room or station (design: resource-status-and-downtime.md).
@@ -4330,6 +4586,11 @@ components:
           format: uri
           nullable: true
           readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
         map_url:
           type: string
           format: uri
@@ -4473,6 +4734,7 @@ components:
       - group
       - id
       - image
+      - image_url
       - label
       - layout_columns
       - layout_rows
@@ -5462,6 +5724,11 @@ components:
           format: uri
           nullable: true
           readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
         active_bench_count:
           type: integer
           readOnly: true
@@ -5510,6 +5777,7 @@ components:
       - height_mm
       - id
       - image
+      - image_url
       - label
       - lifecycle_status
       - location_path

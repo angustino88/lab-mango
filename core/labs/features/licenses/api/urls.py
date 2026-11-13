@@ -21,6 +21,7 @@ urlpatterns = [
     path("licenses", LicenseListAPIView.as_view(), name="license-list"),
     path("licenses/filters", LicenseFiltersAPIView.as_view(), name="license-filters"),
     path("licenses/<int:license_id>", LicenseRetrieveAPIView.as_view(), name="license-detail"),
+    path("licenses/<int:license_id>/image", views.LicenseImageAPIView.as_view(), name="license-image"),
     path("licenses/<int:license_id>/actions/change-status", LicenseStatusAPIView.as_view(), name="license-change-status"),
     path("licenses/<int:license_id>/history", LicenseHistoryAPIView.as_view(), name="license-history"),
     path("licenses/<int:license_id>/actions/assign", LicenseAssignActionAPIView.as_view(), name="license-action-assign"),

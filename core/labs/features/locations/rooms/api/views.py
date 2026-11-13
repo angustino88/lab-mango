@@ -6,10 +6,11 @@ from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSeriali
 from core.common.api.options import SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
 from core.labs.features.base.common import OptionsAPIView
+from core.labs.features.base.resource_images import ResourceImageAPIView
 from core.labs.features.locations.api.schema import operation
 from core.labs.features.locations.api.views import LocationAPIView
 from core.labs.features.locations.queries import list_room_options
-from core.labs.features.locations.rooms.application import services
+from core.labs.features.locations.rooms.application import room_images, services
 from core.labs.features.locations.rooms.queries import selectors
 from core.labs.features.locations.rooms.queries.summaries import get_room_status_summary
 
@@ -192,3 +193,11 @@ class RoomObservationListCreateAPIView(RoomAPIView):
         return self._execute(
             lambda: services.record_room_observation(room_id=room_id, **serializer.validated_data),
         )
+
+
+class RoomImageAPIView(ResourceImageAPIView):
+    """Read, replace or remove a room's image. Upload as multipart/form-data with one ``file`` part."""
+
+    schema_tags = ("Rooms",)
+    image_commands = room_images
+    lookup_url_kwarg = "room_id"

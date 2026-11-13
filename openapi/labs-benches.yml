@@ -1250,6 +1250,120 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Benches Equipment by Bench ID
+  /api/labs/benches/{bench_id}/image:
+    get:
+      operationId: labs_benches_image_retrieve_by_bench_id
+      description: Read, replace or remove a bench's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceImageResourceImagesResourceImageDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Image by Bench ID
+    put:
+      operationId: labs_benches_image_update_by_bench_id
+      description: Read, replace or remove a bench's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResourceImageUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceImageResourceImagesResourceImageDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Benches Image by Bench ID
+    delete:
+      operationId: labs_benches_image_destroy_by_bench_id
+      description: Read, replace or remove a bench's image. Upload as multipart/form-data
+        with one ``file`` part.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Benches Image by Bench ID
   /api/labs/benches/filters:
     get:
       operationId: labs_benches_filters_retrieve
@@ -1744,6 +1858,11 @@ components:
           format: uri
           nullable: true
           readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
         type:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -1862,6 +1981,7 @@ components:
       - group
       - id
       - image
+      - image_url
       - is_favorite
       - last_inspected_at
       - lifecycle_status
@@ -2470,6 +2590,11 @@ components:
           format: uri
           nullable: true
           readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
         type:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
@@ -2588,6 +2713,7 @@ components:
       - group
       - id
       - image
+      - image_url
       - is_favorite
       - last_inspected_at
       - lifecycle_status
@@ -3229,6 +3355,34 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    ResourceImage:
+      type: object
+      properties:
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+      required:
+      - image_url
+    ResourceImageResourceImagesResourceImageDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceImage'
+      required:
+      - data
+    ResourceImageUpload:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected
+            from the content.
+      required:
+      - file
     SummaryStatus:
       type: object
       properties:
