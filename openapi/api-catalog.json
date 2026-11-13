@@ -5412,6 +5412,26 @@
       ],
       "parameters": [
         {
+          "name": "date_after",
+          "in": "query",
+          "required": false,
+          "description": "First local day to include (YYYY-MM-DD, inclusive). Requires `unit`. For `unit=day` the default is 30 days before `date_before`.",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        {
+          "name": "date_before",
+          "in": "query",
+          "required": false,
+          "description": "Local day to stop before (YYYY-MM-DD, exclusive). Requires `unit`. For `unit=day` the default is tomorrow, so today is included; a range covers at most 366 days.",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        {
           "name": "unit",
           "in": "query",
           "required": false,
@@ -6978,6 +6998,26 @@
       ],
       "parameters": [
         {
+          "name": "date_after",
+          "in": "query",
+          "required": false,
+          "description": "First local day to include (YYYY-MM-DD, inclusive). Requires `unit`. For `unit=day` the default is 30 days before `date_before`.",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        {
+          "name": "date_before",
+          "in": "query",
+          "required": false,
+          "description": "Local day to stop before (YYYY-MM-DD, exclusive). Requires `unit`. For `unit=day` the default is tomorrow, so today is included; a range covers at most 366 days.",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        {
           "name": "unit",
           "in": "query",
           "required": false,
@@ -7656,6 +7696,26 @@
         "Analytics"
       ],
       "parameters": [
+        {
+          "name": "date_after",
+          "in": "query",
+          "required": false,
+          "description": "First local day to include (YYYY-MM-DD, inclusive). Requires `unit`. For `unit=day` the default is 30 days before `date_before`.",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        {
+          "name": "date_before",
+          "in": "query",
+          "required": false,
+          "description": "Local day to stop before (YYYY-MM-DD, exclusive). Requires `unit`. For `unit=day` the default is tomorrow, so today is included; a range covers at most 366 days.",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          }
+        },
         {
           "name": "unit",
           "in": "query",
@@ -8727,6 +8787,26 @@
         "Analytics"
       ],
       "parameters": [
+        {
+          "name": "date_after",
+          "in": "query",
+          "required": false,
+          "description": "First local day to include (YYYY-MM-DD, inclusive). Requires `unit`. For `unit=day` the default is 30 days before `date_before`.",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        {
+          "name": "date_before",
+          "in": "query",
+          "required": false,
+          "description": "Local day to stop before (YYYY-MM-DD, exclusive). Requires `unit`. For `unit=day` the default is tomorrow, so today is included; a range covers at most 366 days.",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          }
+        },
         {
           "name": "unit",
           "in": "query",

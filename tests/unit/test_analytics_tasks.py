@@ -1,9 +1,12 @@
-"""Unit tests for analytics Celery tasks — mock-based, no real DB access."""
+"""Tests for analytics Celery tasks: snapshots use the database, alert dispatch is mock-based."""
 from __future__ import annotations
 
+from datetime import date, datetime, time, timedelta
 from unittest.mock import MagicMock, patch
 
+import pytest
 from django.test import override_settings
+from django.utils import timezone
 
 from core.labs.features.analytics.application.notifications import generate_storage_quota_ical as generate_ical
 from core.labs.features.analytics.application.tasks import (
@@ -21,6 +24,17 @@ from core.labs.features.analytics.application.tasks import (
 from core.labs.features.analytics.application.tasks import (
     snapshot_daily_facility_visitors as count_visit_daily,
 )
+from core.labs.models import (
+    ActiveLaboratoryObservation,
+    ActiveUserObservation,
+    AnalyticsGranularity,
+    AnalyticsSource,
+    BenchBooking,
+    BookingVolumeObservation,
+    VisitorVolumeObservation,
+)
+from core.users.models import User
+from tests.factories import BenchBookingFactory, BenchFactory, LaboratoryVisitEventFactory, UserFactory
 
 _TASKS_MODULE = "core.labs.features.analytics.application.tasks"
 
@@ -74,138 +88,90 @@ class TestGenerateIcal:
 
 
 # ---------------------------------------------------------------------------
-# snapshot_daily_facility_visitors
+# Daily snapshots (real database: they record the local day that just ended)
 # ---------------------------------------------------------------------------
 
 
-class TestCountVisitDailyTask:
-    def test_creates_observation_with_visitor_count(self):
-        mock_qs = MagicMock()
-        mock_qs.values.return_value.distinct.return_value.count.return_value = 7
-        with (
-            patch(f"{_TASKS_MODULE}.LaboratoryVisitEvent") as MockVisitLog,
-            patch(f"{_TASKS_MODULE}.VisitorVolumeObservation") as MockObservation,
-        ):
-            MockVisitLog.objects.filter.return_value = mock_qs
-
-            count_visit_daily()
-
-            MockObservation.objects.update_or_create.assert_called_once()
-            assert MockObservation.objects.update_or_create.call_args.kwargs["defaults"]["distinct_visitor_count"] == 7
-
-    def test_returns_none(self):
-        mock_qs = MagicMock()
-        mock_qs.values.return_value.distinct.return_value.count.return_value = 0
-        with (
-            patch(f"{_TASKS_MODULE}.LaboratoryVisitEvent") as MockVisitLog,
-            patch(f"{_TASKS_MODULE}.VisitorVolumeObservation"),
-        ):
-            MockVisitLog.objects.filter.return_value = mock_qs
-            result = count_visit_daily()
-        assert result is None
-
-    def test_filters_within_current_day(self):
-        mock_qs = MagicMock()
-        mock_qs.values.return_value.distinct.return_value.count.return_value = 0
-        with (
-            patch(f"{_TASKS_MODULE}.LaboratoryVisitEvent") as MockVisitLog,
-            patch(f"{_TASKS_MODULE}.VisitorVolumeObservation"),
-        ):
-            MockVisitLog.objects.filter.return_value = mock_qs
-            count_visit_daily()
-            call_kwargs = MockVisitLog.objects.filter.call_args.kwargs
-            assert "occurred_at__gte" in call_kwargs
-            assert "occurred_at__lt" in call_kwargs
+def _day_start(day: date) -> datetime:
+    return timezone.make_aware(datetime.combine(day, time.min))
 
 
-# ---------------------------------------------------------------------------
-# snapshot_daily_booking_volume
-# ---------------------------------------------------------------------------
+@pytest.fixture
+def yesterday() -> date:
+    return timezone.localdate() - timedelta(days=1)
 
 
-class TestCountBookingDailyTask:
-    def test_creates_observation_with_booking_count(self):
-        mock_qs = MagicMock()
-        mock_qs.count.return_value = 3
-        with (
-            patch(f"{_TASKS_MODULE}.BenchBooking") as MockBooking,
-            patch(f"{_TASKS_MODULE}.BookingVolumeObservation") as MockObservation,
-        ):
-            MockBooking.objects.filter.return_value = mock_qs
+@pytest.mark.django_db
+class TestDailySnapshots:
+    def test_booking_volume_counts_bookings_created_yesterday_only(self, yesterday):
+        bookings = BenchBookingFactory.create_batch(3)
+        BenchBooking.objects.filter(pk__in=[b.pk for b in bookings[:2]]).update(
+            created=_day_start(yesterday) + timedelta(hours=10)
+        )
+        BenchBooking.objects.filter(pk=bookings[2].pk).update(created=_day_start(yesterday) - timedelta(seconds=1))
 
-            count_booking_daily()
+        assert count_booking_daily() is None
 
-            MockObservation.objects.update_or_create.assert_called_once()
-            assert MockObservation.objects.update_or_create.call_args.kwargs["defaults"]["booking_count"] == 3
+        row = BookingVolumeObservation.objects.get()
+        assert (row.period_start, row.period_end) == (
+            _day_start(yesterday),
+            _day_start(yesterday + timedelta(days=1)),
+        )
+        assert (row.granularity, row.source, row.booking_count) == (
+            AnalyticsGranularity.DAILY,
+            AnalyticsSource.APPLICATION,
+            2,
+        )
 
-    def test_filters_within_current_day(self):
-        mock_qs = MagicMock()
-        mock_qs.count.return_value = 0
-        with (
-            patch(f"{_TASKS_MODULE}.BenchBooking") as MockBooking,
-            patch(f"{_TASKS_MODULE}.BookingVolumeObservation"),
-        ):
-            MockBooking.objects.filter.return_value = mock_qs
-            count_booking_daily()
-            call_kwargs = MockBooking.objects.filter.call_args.kwargs
-            assert "created__gte" in call_kwargs
-            assert "created__lt" in call_kwargs
+    def test_booking_volume_accepts_an_explicit_day_for_backfill(self):
+        day = timezone.localdate() - timedelta(days=10)
+        booking = BenchBookingFactory()
+        BenchBooking.objects.filter(pk=booking.pk).update(created=_day_start(day) + timedelta(hours=1))
 
+        count_booking_daily(day.isoformat())
 
-# ---------------------------------------------------------------------------
-# snapshot_daily_active_users
-# ---------------------------------------------------------------------------
+        row = BookingVolumeObservation.objects.get()
+        assert (row.period_start, row.booking_count) == (_day_start(day), 1)
 
+    def test_visitors_counts_distinct_visitors(self, yesterday):
+        visitor = UserFactory()
+        at = _day_start(yesterday) + timedelta(hours=9)
+        LaboratoryVisitEventFactory(visitor=visitor, occurred_at=at)
+        LaboratoryVisitEventFactory(visitor=visitor, occurred_at=at + timedelta(hours=1))
+        LaboratoryVisitEventFactory(visitor=UserFactory(), occurred_at=at)
+        LaboratoryVisitEventFactory(visitor=UserFactory(), occurred_at=_day_start(yesterday) - timedelta(minutes=1))
 
-class TestCountTotalUserDailyTask:
-    def test_creates_observation_with_active_user_count(self):
-        with (
-            patch("core.users.models.User") as MockUser,
-            patch(f"{_TASKS_MODULE}.ActiveUserObservation") as MockObservation,
-        ):
-            MockUser.objects.filter.return_value.count.return_value = 42
+        count_visit_daily()
 
-            count_total_user_daily()
+        assert VisitorVolumeObservation.objects.get().distinct_visitor_count == 2
 
-            MockObservation.objects.update_or_create.assert_called_once()
-            assert MockObservation.objects.update_or_create.call_args.kwargs["defaults"]["active_user_count"] == 42
+    def test_active_users_counts_only_active_accounts(self, yesterday):
+        active_before = User.objects.filter(is_active=True).count()
+        UserFactory(is_active=True)
+        UserFactory(is_active=False)
 
-    def test_filters_only_active_users(self):
-        with (
-            patch("core.users.models.User") as MockUser,
-            patch(f"{_TASKS_MODULE}.ActiveUserObservation"),
-        ):
-            MockUser.objects.filter.return_value.count.return_value = 0
-            count_total_user_daily()
-            MockUser.objects.filter.assert_called_once_with(is_active=True)
+        count_total_user_daily()
 
+        row = ActiveUserObservation.objects.get()
+        assert (row.period_start, row.active_user_count) == (_day_start(yesterday), active_before + 1)
 
-# ---------------------------------------------------------------------------
-# snapshot_daily_active_benches
-# ---------------------------------------------------------------------------
+    def test_active_benches_excludes_deleted(self, yesterday):
+        BenchFactory()
+        BenchFactory(deleted_at=timezone.now())
 
+        count_total_lab_daily()
 
-class TestCountTotalLabDailyTask:
-    def test_creates_observation_with_active_lab_count(self):
-        with (
-            patch(f"{_TASKS_MODULE}.Bench") as MockLab,
-            patch(f"{_TASKS_MODULE}.ActiveLaboratoryObservation") as MockObservation,
-        ):
-            MockLab.objects.filter.return_value.count.return_value = 15
+        row = ActiveLaboratoryObservation.objects.get()
+        assert (row.period_start, row.active_laboratory_count) == (_day_start(yesterday), 1)
 
-            count_total_lab_daily()
+    def test_rerun_overwrites_the_same_row(self, yesterday):
+        count_booking_daily()
+        booking = BenchBookingFactory()
+        BenchBooking.objects.filter(pk=booking.pk).update(created=_day_start(yesterday) + timedelta(hours=1))
 
-            MockObservation.objects.update_or_create.assert_called_once()
-            assert MockObservation.objects.update_or_create.call_args.kwargs["defaults"]["active_laboratory_count"] == 15
+        count_booking_daily()
 
-    def test_filters_by_deleted_at_isnull(self):
-        with (
-            patch(f"{_TASKS_MODULE}.Bench") as MockLab,
-            patch(f"{_TASKS_MODULE}.ActiveLaboratoryObservation"),
-        ):
-            MockLab.objects.filter.return_value.count.return_value = 0
-            count_total_lab_daily()
-            MockLab.objects.filter.assert_called_once_with(deleted_at__isnull=True)
+        assert BookingVolumeObservation.objects.get().booking_count == 1
 
 
 # ---------------------------------------------------------------------------

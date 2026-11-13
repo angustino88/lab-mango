@@ -6,6 +6,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from celery.schedules import crontab
 
 from config.openapi import ENUM_NAME_OVERRIDES
 
@@ -347,6 +348,24 @@ CELERY_BEAT_SCHEDULE = {
     "bench-booking-status-reconciliation": {
         "task": "labs.bench_bookings.reconcile_statuses",
         "schedule": env.float("BENCH_BOOKING_RECONCILE_INTERVAL_SECONDS", default=60.0),
+    },
+    # Daily analytics snapshots behind the /api/labs/analytics/{booking,lab-visits,user-count,lab-count}
+    # ?unit=day charts. Each records the local day that just ended (CELERY_TIMEZONE) and is idempotent.
+    "analytics-snapshot-daily-booking-volume": {
+        "task": "labs.analytics.snapshot_daily_booking_volume",
+        "schedule": crontab(minute=15, hour=0),
+    },
+    "analytics-snapshot-daily-facility-visitors": {
+        "task": "labs.analytics.snapshot_daily_facility_visitors",
+        "schedule": crontab(minute=15, hour=0),
+    },
+    "analytics-snapshot-daily-active-users": {
+        "task": "labs.analytics.snapshot_daily_active_users",
+        "schedule": crontab(minute=15, hour=0),
+    },
+    "analytics-snapshot-daily-active-benches": {
+        "task": "labs.analytics.snapshot_daily_active_benches",
+        "schedule": crontab(minute=15, hour=0),
     },
 }
 

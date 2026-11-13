@@ -56,3 +56,30 @@ def test_an_admin_can_still_disable_it():
     start_beat()
 
     assert PeriodicTask.objects.get(name=RECONCILE).enabled is False
+
+
+ANALYTICS_SNAPSHOTS = {
+    "analytics-snapshot-daily-booking-volume": "labs.analytics.snapshot_daily_booking_volume",
+    "analytics-snapshot-daily-facility-visitors": "labs.analytics.snapshot_daily_facility_visitors",
+    "analytics-snapshot-daily-active-users": "labs.analytics.snapshot_daily_active_users",
+    "analytics-snapshot-daily-active-benches": "labs.analytics.snapshot_daily_active_benches",
+}
+
+
+@pytest.mark.parametrize("name,task", ANALYTICS_SNAPSHOTS.items())
+def test_analytics_snapshots_run_daily_after_local_midnight(name, task):
+    schedule = settings.CELERY_BEAT_SCHEDULE[name]["schedule"]
+
+    assert settings.CELERY_BEAT_SCHEDULE[name]["task"] == task
+    assert (schedule.minute, schedule.hour) == ({15}, {0})
+    app.loader.import_default_modules()
+    assert task in app.tasks
+
+
+@pytest.mark.django_db
+def test_beat_startup_creates_the_analytics_snapshot_tasks():
+    start_beat()
+
+    tasks = dict(PeriodicTask.objects.filter(name__in=ANALYTICS_SNAPSHOTS).values_list("name", "task"))
+    assert tasks == ANALYTICS_SNAPSHOTS
+    assert all(PeriodicTask.objects.get(name=name).crontab.hour == "0" for name in ANALYTICS_SNAPSHOTS)
