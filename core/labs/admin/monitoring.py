@@ -1,8 +1,11 @@
-"""Agent-reported activity, monitoring events, visits, storage and analytics observations."""
+"""Agent-reported activity, monitoring events, visits, storage and analytics observations.
+
+All view-only: these rows are written by agents, ingestion commands and analytics tasks, never by hand.
+"""
 
 from django.contrib import admin
 
-from core.common.admin import LabMangoModelAdmin
+from core.common.admin import ReadOnlyModelAdmin
 from core.labs.models import (
     ActiveLaboratoryObservation,
     ActiveUserObservation,
@@ -21,7 +24,7 @@ from core.labs.models import (
 
 
 @admin.register(ComputingActivity)
-class ComputingActivityAdmin(LabMangoModelAdmin):
+class ComputingActivityAdmin(ReadOnlyModelAdmin):
     list_display = ("computing", "status", "remote_user", "booking_code", "last_agent_report_at", "offline_at")
     list_select_related = ("computing",)
     list_filter = ("status", "last_agent_report_at")
@@ -30,7 +33,7 @@ class ComputingActivityAdmin(LabMangoModelAdmin):
 
 
 @admin.register(LabSessionLog)
-class LabSessionLogAdmin(LabMangoModelAdmin):
+class LabSessionLogAdmin(ReadOnlyModelAdmin):
     list_display = (
         "host_name",
         "remote_user",
@@ -48,7 +51,7 @@ class LabSessionLogAdmin(LabMangoModelAdmin):
 
 
 @admin.register(MonitoringEvent)
-class MonitoringEventAdmin(LabMangoModelAdmin):
+class MonitoringEventAdmin(ReadOnlyModelAdmin):
     list_display = ("occurred_at", "computer", "action", "action_name", "subject_type", "subject_name")
     list_select_related = ("computer",)
     list_filter = ("action", "occurred_at")
@@ -57,7 +60,7 @@ class MonitoringEventAdmin(LabMangoModelAdmin):
 
 
 @admin.register(LaboratoryVisitEvent)
-class LaboratoryVisitEventAdmin(LabMangoModelAdmin):
+class LaboratoryVisitEventAdmin(ReadOnlyModelAdmin):
     list_display = ("occurred_at", "visitor", "source", "facility_identifier", "external_reference")
     list_select_related = ("visitor",)
     list_filter = ("source", "occurred_at")
@@ -66,7 +69,7 @@ class LaboratoryVisitEventAdmin(LabMangoModelAdmin):
 
 
 @admin.register(StorageQuotaMeasurement)
-class StorageQuotaMeasurementAdmin(LabMangoModelAdmin):
+class StorageQuotaMeasurementAdmin(ReadOnlyModelAdmin):
     list_display = (
         "measured_at",
         "account_identifier",
@@ -89,7 +92,7 @@ def _observation_admin(model):
     values = tuple(f.name for f in model._meta.concrete_fields if f.name not in _OBSERVATION_SKIP)
     return type(
         f"{model.__name__}Admin",
-        (LabMangoModelAdmin,),
+        (ReadOnlyModelAdmin,),
         {
             "__module__": __name__,
             "list_display": (*_OBSERVATION_BASE[:3], *values, "source"),

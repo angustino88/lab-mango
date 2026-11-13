@@ -1,8 +1,11 @@
-"""Status history and audit trails for rooms, stations, equipment and resources."""
+"""Status history and audit trails for rooms, stations, equipment and resources.
+
+All view-only: the feature commands append these records; editing one would rewrite history.
+"""
 
 from django.contrib import admin
 
-from core.common.admin import LabMangoModelAdmin
+from core.common.admin import ReadOnlyModelAdmin
 from core.labs.admin._base import room_label_related
 from core.labs.models import (
     EquipmentEvent,
@@ -14,7 +17,7 @@ from core.labs.models import (
 
 
 @admin.register(RoomStatusRecord)
-class RoomStatusRecordAdmin(LabMangoModelAdmin):
+class RoomStatusRecordAdmin(ReadOnlyModelAdmin):
     list_display = ("room", "status", "created", "creator")
     list_select_related = ("creator", *room_label_related("room"))
     list_filter = ("status", "created")
@@ -23,7 +26,7 @@ class RoomStatusRecordAdmin(LabMangoModelAdmin):
 
 
 @admin.register(StationStatusRecord)
-class StationStatusRecordAdmin(LabMangoModelAdmin):
+class StationStatusRecordAdmin(ReadOnlyModelAdmin):
     list_display = ("station", "status", "created", "creator")
     list_select_related = ("station", "creator")
     list_filter = ("status", "created")
@@ -32,7 +35,7 @@ class StationStatusRecordAdmin(LabMangoModelAdmin):
 
 
 @admin.register(EquipmentEvent)
-class EquipmentEventAdmin(LabMangoModelAdmin):
+class EquipmentEventAdmin(ReadOnlyModelAdmin):
     list_display = ("occurred_at", "equipment", "axis", "from_value", "to_value", "reason", "actor")
     list_select_related = ("equipment", "actor")
     list_filter = ("axis", "occurred_at")
@@ -41,7 +44,7 @@ class EquipmentEventAdmin(LabMangoModelAdmin):
 
 
 @admin.register(ResourceAudit)
-class ResourceAuditAdmin(LabMangoModelAdmin):
+class ResourceAuditAdmin(ReadOnlyModelAdmin):
     list_display = ("audited_at", "resource_content_type", "resource_object_id", "result", "auditor")
     list_select_related = ("resource_content_type", "auditor")
     list_filter = ("result", "resource_content_type", "audited_at")
@@ -50,7 +53,7 @@ class ResourceAuditAdmin(LabMangoModelAdmin):
 
 
 @admin.register(ResourceChangeLog)
-class ResourceChangeLogAdmin(LabMangoModelAdmin):
+class ResourceChangeLogAdmin(ReadOnlyModelAdmin):
     list_display = ("created", "resource_content_type", "resource_object_id", "action", "field_name", "creator")
     list_select_related = ("resource_content_type", "creator")
     list_filter = ("action", "resource_content_type", "created")

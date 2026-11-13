@@ -59,4 +59,23 @@ class LabMangoModelAdmin(UserStampedAdminMixin, admin.ModelAdmin):
         return queryset.select_related(*self.label_select_related, *listed)
 
 
-__all__ = ["LabMangoModelAdmin", "UserStampedAdminMixin"]
+class ReadOnlyModelAdmin(LabMangoModelAdmin):
+    """View-only admin for rows that only application code writes: logs, audit trails, telemetry, snapshots.
+
+    Editing such a row by hand would falsify history or reported data, so the admin cannot add, change or
+    delete them, even for superusers. ``actions = None`` also removes bulk "delete selected".
+    """
+
+    actions = None
+
+    def has_add_permission(self, request) -> bool:
+        return False
+
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
+    def has_delete_permission(self, request, obj=None) -> bool:
+        return False
+
+
+__all__ = ["LabMangoModelAdmin", "ReadOnlyModelAdmin", "UserStampedAdminMixin"]

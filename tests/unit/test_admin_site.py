@@ -235,3 +235,43 @@ def test_admin_list_names_use_correct_plurals(model_name, plural):
     from django.apps import apps
 
     assert str(apps.get_model("labs", model_name)._meta.verbose_name_plural) == plural
+
+
+_VIEW_ONLY_LABS_MODELS = (
+    # Status history and audit: appended by feature commands.
+    "RoomStatusRecord",
+    "StationStatusRecord",
+    "EquipmentEvent",
+    "ResourceAudit",
+    "ResourceChangeLog",
+    # Agent-reported activity and ingested telemetry.
+    "ComputingActivity",
+    "LabSessionLog",
+    "MonitoringEvent",
+    "LaboratoryVisitEvent",
+    "StorageQuotaMeasurement",
+    # Analytics observations: derived snapshots written by analytics tasks.
+    "ActiveUserObservation",
+    "ActiveLaboratoryObservation",
+    "BookingVolumeObservation",
+    "BookingOutcomeObservation",
+    "VisitorVolumeObservation",
+    "ResourceUtilizationObservation",
+    "LaboratoryAvailabilityObservation",
+    "ProjectUsageObservation",
+)
+
+
+@pytest.mark.parametrize("model_name", _VIEW_ONLY_LABS_MODELS)
+def test_logs_telemetry_and_observations_are_view_only_even_for_superusers(rf, model_name):
+    from django.apps import apps
+
+    model_admin = admin.site._registry[apps.get_model("labs", model_name)]
+    request = rf.get("/admin/")
+    request.user = User(is_superuser=True, is_staff=True, is_active=True)
+
+    assert model_admin.has_view_permission(request)
+    assert not model_admin.has_add_permission(request)
+    assert not model_admin.has_change_permission(request)
+    assert not model_admin.has_delete_permission(request)
+    assert model_admin.get_actions(request) == {}
