@@ -1,9 +1,6 @@
 """Room and station ``status`` is a stored column defaulting to ``available`` (like equipment lifecycle)."""
 
-import importlib
-
 import pytest
-from django.apps import apps
 from django.db import IntegrityError, transaction
 from rest_framework.test import APIClient
 
@@ -103,17 +100,3 @@ def test_rejected_duplicate_create_leaves_no_extra_record(client, path, model):
     assert duplicate.status_code in (400, 409), duplicate.data
     assert model.objects.filter(sku=payload["sku"]).count() == 1
     assert model.status_records.rel.related_model.objects.count() == 1
-
-
-@pytest.mark.django_db
-def test_migration_backfill_copies_latest_record_and_keeps_default_otherwise():
-    migration = importlib.import_module("core.labs.migrations.0003_room_station_status")
-    with_history = Room.objects.create(sku="RM-HIST")
-    with_history.status_records.create(status="maintenance")
-    with_history.status_records.create(status="closed")
-    without_history = Station.objects.create(sku="ST-NOHIST")
-
-    migration.copy_latest_recorded_status(apps, None)
-
-    assert Room.objects.get(pk=with_history.pk).status == "closed"
-    assert Station.objects.get(pk=without_history.pk).status == "available"

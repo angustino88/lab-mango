@@ -201,7 +201,7 @@ JWKS). JWKS unavailable → `503`, matching the routing sync behavior.
 5. Tool release.
 
 Rollback: set `ENTRA_API_ACCESS_TOKENS_ENABLED=False` to stop accepting Entra access tokens; the columns are
-nullable and can stay. Migration: `core/labs/migrations/0002_resource_audit_idempotency.py` (additive).
+nullable and can stay. Migration: folded into `core/labs/migrations/0001_initial.py` (no deployed database).
 
 ## Observability
 
