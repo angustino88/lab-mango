@@ -38,7 +38,7 @@ def _room_projection(room):
 
 
 class RoomStatusSummaryAPIView(RoomAPIView):
-    """Non-deleted rooms by latest recorded lifecycle state, unknown if absent."""
+    """Non-deleted rooms counted by their stored lifecycle `status`."""
 
     get_contract = OperationContract(
         success=ResponseContract.success("RoomStatusSummaryData", RoomStatusSummarySerializer),

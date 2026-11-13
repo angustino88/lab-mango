@@ -104,10 +104,17 @@ def _placement(station, rooms, *, old_slot_id, actor):
 
 @_atomic_command
 def create_station(*, actor, **data):
+    """Create a station; its ``status`` column defaults to ``available`` and gets a first history record.
+
+    Race guard: room/slot row locks plus the active-SKU and slot partial unique constraints; any
+    failure rolls back the station and its initial record together.
+    """
     station = Station()
     _apply(station, data, STATION_WRITE_FIELDS)
     rooms = _lock_rooms((station.room_id,))
-    return _placement(station, rooms, old_slot_id=None, actor=actor)
+    station = _placement(station, rooms, old_slot_id=None, actor=actor)
+    StationStatusRecord(station=station, status=station.status).save(actor=actor)
+    return station
 
 
 @_atomic_command
@@ -208,6 +215,8 @@ def record_station_status(*, station_id, actor, status, metadata=None):
         raise ValidationError({"metadata": "Metadata must be an object."})
     record.full_clean()
     record.save(actor=actor)
+    station.status = record.status
+    station.save(actor=actor, update_fields=("status", "modified"))
     return record
 
 

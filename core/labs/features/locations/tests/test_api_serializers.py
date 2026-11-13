@@ -16,7 +16,7 @@ from core.labs.models import RoomStatus, StationStatus
 def test_room_serializer_contract():
     fields = RoomSerializer.Meta.fields
     assert "status" in fields
-    assert "operational_status" in fields
+    assert "operational_status" not in fields
     assert "created_at" in fields
     assert "updated_at" in fields
     assert "created" not in fields
@@ -24,7 +24,7 @@ def test_room_serializer_contract():
     assert "deleted_at" not in fields
     assert "current_status" not in fields
 
-    room = SimpleNamespace(current_status=RoomStatus.AVAILABLE, operational_status="operational")
+    room = SimpleNamespace(status=RoomStatus.AVAILABLE)
     status_ref = RoomSerializer().get_status(room)
     assert status_ref == {"value": "available", "label": "Available"}
 
@@ -50,7 +50,7 @@ def test_room_create_serializer_accepts_relation_ids():
 def test_station_serializer_contract_and_coordinates():
     fields = StationSerializer.Meta.fields
     assert "status" in fields
-    assert "operational_status" in fields
+    assert "operational_status" not in fields
     assert "position" in fields
     assert "created_at" in fields
     assert "updated_at" in fields
@@ -60,8 +60,7 @@ def test_station_serializer_contract_and_coordinates():
     assert "current_status" not in fields
 
     station = SimpleNamespace(
-        current_status=StationStatus.AVAILABLE,
-        operational_status="operational",
+        status=StationStatus.AVAILABLE,
         position=[12.5, 34.0, 56.5],
     )
     assert StationSerializer().get_status(station) == {"value": "available", "label": "Available"}

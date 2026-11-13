@@ -16,8 +16,8 @@ from core.labs.features.resource_audit.exceptions import InvalidCatalogCursorErr
 from core.labs.models.resource.bench.bench import Bench
 from core.labs.models.resource.equipment.equipment import Equipment
 from core.labs.models.resource.license.license import License, LicenseStatusRecord
-from core.labs.models.resource.location.room import Room, RoomStatusRecord
-from core.labs.models.resource.location.station import Station, StationStatusRecord
+from core.labs.models.resource.location.room import Room
+from core.labs.models.resource.location.station import Station
 
 CATALOG_PAGE_SIZE_DEFAULT = 500
 CATALOG_PAGE_SIZE_MAX = 1000
@@ -40,10 +40,9 @@ def _base_values(queryset: QuerySet) -> QuerySet:
     return queryset.values("id", "uid", "sku", "name", "modified", "deleted_at")
 
 
-# Station, room and license status is the newest status-history record (index ``<type>_status_latest_idx``).
+# License status is the newest status-history record (index ``license_status_latest_idx``).
+# Station and room status are stored columns, like bench ``lifecycle_status``.
 _STATUS_RECORDS: dict[str, tuple[type[Model], str]] = {
-    "station": (StationStatusRecord, "station"),
-    "room": (RoomStatusRecord, "room"),
     "license": (LicenseStatusRecord, "license"),
 }
 
@@ -75,14 +74,14 @@ def _typed_querysets() -> dict[str, QuerySet]:
         ),
         "station": _base_values(Station.all_objects.all()).annotate(
             serial=blank,
-            state=_latest_status("station"),
+            state=F("status"),
             item_condition=blank,
             location_name=Coalesce(F("room__name"), blank),
             expires=no_expiry,
         ),
         "room": _base_values(Room.all_objects.all()).annotate(
             serial=blank,
-            state=_latest_status("room"),
+            state=F("status"),
             item_condition=blank,
             location_name=Coalesce(F("building__name"), blank),
             expires=no_expiry,
@@ -100,8 +99,9 @@ def _typed_querysets() -> dict[str, QuerySet]:
 def _changed_since(resource_type: str, since: datetime) -> Q:
     """The row itself changed or was deleted, its location parent was renamed, or it got a new status record.
 
-    Parent and status changes do not touch the row's own ``modified``, so without these terms a delta sync
-    would keep a stale location name or status.
+    Parent renames and license status records do not touch the row's own ``modified``, so without these
+    terms a delta sync would keep a stale location name or status. Room and station status is a column,
+    so a status change is caught by ``modified``.
     """
     condition = Q(modified__gte=since) | Q(deleted_at__gte=since)
     if resource_type == "bench":

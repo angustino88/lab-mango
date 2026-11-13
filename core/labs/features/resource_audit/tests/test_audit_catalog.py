@@ -6,6 +6,7 @@ import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from core.labs.features.locations.public import record_room_status, record_station_status
 from core.labs.models import Bench, Equipment, EquipmentCategory, EquipmentKind, License, Room, RoomSlot, Station
 from core.labs.models.resource.license.license import (
     LicenseCategory,
@@ -14,8 +15,6 @@ from core.labs.models.resource.license.license import (
     LicenseType,
     LicenseVendor,
 )
-from core.labs.models.resource.location.room import RoomStatusRecord
-from core.labs.models.resource.location.station import StationStatusRecord
 from tests.factories import UserFactory, grant_labs_role
 
 URL = "/api/labs/audit-catalog"
@@ -180,9 +179,10 @@ def _by_uid(body):
 @pytest.mark.django_db
 class TestCatalogStatusAndDelta:
     def test_latest_status_record_is_the_status(self, client, resources):
-        StationStatusRecord.objects.create(station=resources["station"], status="available")
-        StationStatusRecord.objects.create(station=resources["station"], status="maintenance")
-        RoomStatusRecord.objects.create(room=resources["room"], status="closed")
+        # Room and station status is a stored column, changed only through the locations command.
+        record_station_status(station_id=resources["station"].pk, actor=None, status="available")
+        record_station_status(station_id=resources["station"].pk, actor=None, status="maintenance")
+        record_room_status(room_id=resources["room"].pk, actor=None, status="closed")
         LicenseStatusRecord.objects.create(license=resources["license"], status="expired")
 
         items = _by_uid(client.get(URL).json())
@@ -221,12 +221,17 @@ class TestCatalogStatusAndDelta:
 
     def test_new_status_record_returns_the_resource(self, client, resources):
         since = timezone.now()
-        StationStatusRecord.objects.create(station=resources["station"], status="issue")
+        record_station_status(station_id=resources["station"].pk, actor=None, status="issue")
         LicenseStatusRecord.objects.create(license=resources["license"], status="revoked")
 
         items = _by_uid(client.get(URL, {"changed_since": since.isoformat()}).json())
 
-        assert set(items) == {str(resources["station"].uid), str(resources["license"].uid)}
+        # The status command updates the station row, so its bench (whose location parent changed) comes too.
+        assert set(items) == {
+            str(resources["station"].uid),
+            str(resources["bench"].uid),
+            str(resources["license"].uid),
+        }
         assert items[str(resources["station"].uid)]["status"] == "issue"
 
     def test_unchanged_resources_are_not_returned(self, client, resources):

@@ -5041,6 +5041,14 @@ class Migration(migrations.Migration):
                 ),
                 ("remarks", models.CharField(blank=True, default="", max_length=255)),
                 (
+                    "idempotency_key",
+                    models.CharField(blank=True, editable=False, max_length=128, null=True),
+                ),
+                (
+                    "request_hash",
+                    models.CharField(blank=True, default="", editable=False, max_length=64),
+                ),
+                (
                     "auditor",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
@@ -5626,6 +5634,24 @@ class Migration(migrations.Migration):
                 (
                     "floor_plan_url",
                     models.URLField(blank=True, default="", max_length=500),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("available", "Available"),
+                            ("reserved", "Reserved"),
+                            ("issue", "Issue"),
+                            ("restricted", "Restricted"),
+                            ("closed", "Closed"),
+                            ("maintenance", "Maintenance"),
+                            ("retired", "Retired"),
+                        ],
+                        db_index=True,
+                        default="available",
+                        help_text="Current lifecycle status. Changed only by the record status command; history is in status_records.",
+                        max_length=32,
+                    ),
                 ),
                 (
                     "max_occupancy",
@@ -6412,6 +6438,24 @@ class Migration(migrations.Migration):
                     models.PositiveSmallIntegerField(blank=True, null=True),
                 ),
                 ("utilities", models.JSONField(blank=True, default=dict)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("available", "Available"),
+                            ("reserved", "Reserved"),
+                            ("issue", "Issue"),
+                            ("restricted", "Restricted"),
+                            ("closed", "Closed"),
+                            ("maintenance", "Maintenance"),
+                            ("retired", "Retired"),
+                        ],
+                        db_index=True,
+                        default="available",
+                        help_text="Current lifecycle status. Changed only by the record status command; history is in status_records.",
+                        max_length=32,
+                    ),
+                ),
                 (
                     "safety_classification",
                     models.CharField(blank=True, default="", max_length=64),
@@ -8175,6 +8219,14 @@ class Migration(migrations.Migration):
             model_name="resourceaudit",
             index=models.Index(fields=["result", "-audited_at"], name="resource_audit_result_idx"),
         ),
+        migrations.AddConstraint(
+            model_name="resourceaudit",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("idempotency_key__isnull", False)),
+                fields=("auditor", "idempotency_key"),
+                name="resource_audit_idempotency_uniq",
+            ),
+        ),
         migrations.AddIndex(
             model_name="resourcechangelog",
             index=models.Index(
@@ -8235,6 +8287,18 @@ class Migration(migrations.Migration):
                 condition=models.Q(("deleted_at__isnull", True)),
                 fields=("sku",),
                 name="labs_room_active_sku_uniq",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="room",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    (
+                        "status__in",
+                        ["available", "reserved", "issue", "restricted", "closed", "maintenance", "retired"],
+                    )
+                ),
+                name="room_status_valid",
             ),
         ),
         migrations.AddConstraint(
@@ -8521,6 +8585,18 @@ class Migration(migrations.Migration):
                 condition=models.Q(("deleted_at__isnull", True)),
                 fields=("sku",),
                 name="labs_station_active_sku_uniq",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="station",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    (
+                        "status__in",
+                        ["available", "reserved", "issue", "restricted", "closed", "maintenance", "retired"],
+                    )
+                ),
+                name="station_status_valid",
             ),
         ),
         migrations.AddConstraint(

@@ -42,7 +42,7 @@ def _station_projection(station):
 
 
 class StationStatusSummaryAPIView(StationAPIView):
-    """Non-deleted stations by latest recorded lifecycle state, unknown if absent."""
+    """Non-deleted stations counted by their stored lifecycle `status`."""
 
     get_contract = OperationContract(
         success=ResponseContract.success("StationStatusSummaryData", StationStatusSummarySerializer),

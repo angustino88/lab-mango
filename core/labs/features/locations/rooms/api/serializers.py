@@ -156,7 +156,6 @@ class RoomSerializer(AppModelSerializer):
     building = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
     status = serializers.SerializerMethodField(read_only=True)
-    operational_status = serializers.SerializerMethodField(read_only=True)
     location_path = serializers.CharField(source="get_location_path", read_only=True)
     area_m2 = serializers.DecimalField(max_digits=18, decimal_places=6, read_only=True, allow_null=True)
     slot_capacity = serializers.IntegerField(read_only=True, allow_null=True)
@@ -190,7 +189,6 @@ class RoomSerializer(AppModelSerializer):
             "floor_plan_revision",
             "floor_plan_url",
             "status",
-            "operational_status",
             "max_occupancy",
             "power_capacity_w",
             "cooling_capacity_w",
@@ -204,13 +202,8 @@ class RoomSerializer(AppModelSerializer):
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
     def get_status(self, obj) -> dict[str, str] | None:
-        raw_status = getattr(obj, "current_status", None)
+        raw_status = getattr(obj, "status", None)
         return to_choice_reference(raw_status, RoomStatus.choices)
-
-    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
-    def get_operational_status(self, obj) -> dict[str, str] | None:
-        raw = getattr(obj, "operational_status", None)
-        return to_choice_reference(raw)
 
 
 class RoomOptionsQuerySerializer(OptionsQueryMixin):

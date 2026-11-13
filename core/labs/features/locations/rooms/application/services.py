@@ -56,9 +56,15 @@ def _sync_grid(room, actor):
 
 @_room_atomic_command
 def create_room(*, actor, **data):
+    """Create a room; its ``status`` column defaults to ``available`` and gets a first history record.
+
+    Race guard: the active-SKU partial unique constraint rejects a concurrent duplicate, and the
+    whole transaction (room and its initial record) rolls back with it.
+    """
     room = Room()
     _apply(room, data, ROOM_WRITE_FIELDS)
     room.save(actor=actor)
+    RoomStatusRecord(room=room, status=room.status).save(actor=actor)
     return room
 
 
@@ -96,6 +102,8 @@ def record_room_status(*, room_id, actor, status, metadata=None):
         raise ValidationError({"metadata": "Metadata must be an object."})
     record.full_clean()
     record.save(actor=actor)
+    room.status = record.status
+    room.save(actor=actor, update_fields=("status", "modified"))
     return record
 
 

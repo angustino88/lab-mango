@@ -88,6 +88,16 @@ class Building(TimeStampedModel, UserStampedModel):
         ]
 
 
+class RoomStatus(models.TextChoices):
+    AVAILABLE = "available", _("Available")
+    RESERVED = "reserved", _("Reserved")
+    ISSUE = "issue", _("Issue")
+    RESTRICTED = "restricted", _("Restricted")
+    CLOSED = "closed", _("Closed")
+    MAINTENANCE = "maintenance", _("Maintenance")
+    RETIRED = "retired", _("Retired")
+
+
 class Room(ResourceModel, PhysicalLocationNode):
     """Static room configuration, separate from timestamped RoomObservation data.
 
@@ -145,6 +155,13 @@ class Room(ResourceModel, PhysicalLocationNode):
     coordinate_unit = models.CharField(max_length=8, default="mm", editable=False)
     floor_plan_revision = models.CharField(max_length=64, blank=True, default="")
     floor_plan_url = models.URLField(max_length=500, blank=True, default="")
+    status = models.CharField(
+        max_length=32,
+        choices=RoomStatus.choices,
+        default=RoomStatus.AVAILABLE,
+        db_index=True,
+        help_text="Current lifecycle status. Changed only by the record status command; history is in status_records.",
+    )
     max_occupancy = models.PositiveSmallIntegerField(null=True, blank=True)
     power_capacity_w = models.PositiveIntegerField(null=True, blank=True)
     cooling_capacity_w = models.PositiveIntegerField(null=True, blank=True)
@@ -209,6 +226,10 @@ class Room(ResourceModel, PhysicalLocationNode):
         constraints = [
             *ResourceModel.Meta.constraints,
             models.CheckConstraint(
+                condition=models.Q(status__in=RoomStatus.values),
+                name="room_status_valid",
+            ),
+            models.CheckConstraint(
                 condition=(
                     models.Q(layout_rows__isnull=True, layout_columns__isnull=True)
                     | models.Q(
@@ -229,16 +250,6 @@ class Room(ResourceModel, PhysicalLocationNode):
                 name="room_width_positive",
             ),
         ]
-
-
-class RoomStatus(models.TextChoices):
-    AVAILABLE = "available", _("Available")
-    RESERVED = "reserved", _("Reserved")
-    ISSUE = "issue", _("Issue")
-    RESTRICTED = "restricted", _("Restricted")
-    CLOSED = "closed", _("Closed")
-    MAINTENANCE = "maintenance", _("Maintenance")
-    RETIRED = "retired", _("Retired")
 
 
 class RoomStatusRecord(ResourceStatusRecordModel):

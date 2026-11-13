@@ -11,4 +11,5 @@ ROOM_FILTERS = resource_filter_spec(
     ],
     search_fields=("sku", "name", "label"),
     status_choices=RoomStatus.choices,
+    status_lookup="status",
 )
