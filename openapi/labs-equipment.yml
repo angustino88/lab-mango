@@ -2469,11 +2469,11 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Equipment Placement by Equipment ID
-  /api/labs/equipment/{equipment_id}/status-events:
+  /api/labs/equipment/{equipment_id}/status-changes:
     get:
-      operationId: labs_equipment_status_events_retrieve_by_equipment_id
-      description: Recorded lifecycle and condition changes of one unit, newest first;
-        404 for a missing or deleted unit.
+      operationId: labs_equipment_status_changes_retrieve_by_equipment_id
+      description: '``display_status`` history of one unit, newest first; 404 for
+        a missing or deleted unit.'
       parameters:
       - in: path
         name: equipment_id
@@ -2501,7 +2501,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EquipmentStatusEventListSerializersEquipmentStatusEventPaginatedResponse'
+                $ref: '#/components/schemas/EquipmentStatusChangeListSerializersEquipmentStatusChangePaginatedResponse'
           description: ''
         '400':
           content:
@@ -2515,7 +2515,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Get Equipment Status Events by Equipment ID
+      summary: Get Equipment Status Changes by Equipment ID
   /api/labs/equipment/{id}:
     get:
       operationId: labs_equipment_retrieve_by_id
@@ -9169,27 +9169,37 @@ components:
       required:
       - id
       - name
-    EquipmentStatusEvent:
+    EquipmentStatusChange:
       type: object
-      description: One recorded lifecycle or condition change. ``from_value`` is null
-        for the initial state.
+      description: 'One change of ``display_status``. ``previous_display_status``
+        is null for the creation row.
+
+
+        ``details`` depends on what caused the change: lifecycle facts (``receiving_organisation``,
+
+        ``transfer_date``), a loan (``loan_id``, ``borrower_name``, ``due_at`` or
+        ``close_reason``), or a
+
+        bench (``bench``: ``{id, name}``).'
       properties:
-        id:
-          type: integer
-          readOnly: true
-        axis:
+        display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
-        from_value:
+        previous_display_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           nullable: true
           readOnly: true
-        to_value:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
+        occurred_at:
+          type: string
+          format: date-time
           readOnly: true
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
         reason:
           type: string
           readOnly: true
@@ -9197,38 +9207,27 @@ components:
           type: object
           additionalProperties: {}
           readOnly: true
-        actor:
-          allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
-          readOnly: true
-          nullable: true
-        occurred_at:
-          type: string
-          format: date-time
-          readOnly: true
       required:
       - actor
-      - axis
       - details
-      - from_value
-      - id
+      - display_status
       - occurred_at
+      - previous_display_status
       - reason
-      - to_value
-    EquipmentStatusEventListSerializersEquipmentStatusEventPaginatedResponse:
+    EquipmentStatusChangeListSerializersEquipmentStatusChangePaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
         meta:
-          $ref: '#/components/schemas/EquipmentStatusEventListSerializersEquipmentStatusEventPaginationMeta'
+          $ref: '#/components/schemas/EquipmentStatusChangeListSerializersEquipmentStatusChangePaginationMeta'
         data:
           type: array
           items:
-            $ref: '#/components/schemas/EquipmentStatusEvent'
+            $ref: '#/components/schemas/EquipmentStatusChange'
       required:
       - data
       - meta
-    EquipmentStatusEventListSerializersEquipmentStatusEventPagination:
+    EquipmentStatusChangeListSerializersEquipmentStatusChangePagination:
       type: object
       properties:
         count:
@@ -9252,11 +9251,11 @@ components:
       - page
       - page_size
       - previous
-    EquipmentStatusEventListSerializersEquipmentStatusEventPaginationMeta:
+    EquipmentStatusChangeListSerializersEquipmentStatusChangePaginationMeta:
       type: object
       properties:
         pagination:
-          $ref: '#/components/schemas/EquipmentStatusEventListSerializersEquipmentStatusEventPagination'
+          $ref: '#/components/schemas/EquipmentStatusChangeListSerializersEquipmentStatusChangePagination'
       required:
       - pagination
     EquipmentStatusSummaryDataSerializersEquipmentStatusSummaryDetailResponse:

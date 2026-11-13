@@ -98,9 +98,9 @@ urlpatterns = [
         name="equipment-action-extend-loan",
     ),
     path(
-        "equipment/<int:equipment_id>/status-events",
-        views.EquipmentStatusEventListAPIView.as_view(),
-        name="equipment-status-event-list",
+        "equipment/<int:equipment_id>/status-changes",
+        views.EquipmentStatusChangeListAPIView.as_view(),
+        name="equipment-status-change-list",
     ),
     path(
         "equipment/<int:equipment_id>/actions/change-condition",

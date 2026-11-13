@@ -207,10 +207,11 @@ The `form` value names the dialog that fills `body` before sending. Keep the ser
 
 ## 9. Known gaps
 
-- Status history (`GET equipment/{id}/status-events`, paginated, newest first) lists only lifecycle and
-  condition changes: one `EquipmentEvent` per row, with `axis` (`lifecycle` or `condition`), `from_value`
-  (null for the initial state) and `to_value`. It has no `display_status` and no placement or loan
-  changes. A screen that shows display labels derives them from the two axes, using the table in section 1.
+- Status history (`GET equipment/{id}/status-changes`) is in display-status terms: each row is
+  `previous_display_status` -> `display_status` with `occurred_at`, `actor`, `reason` and `details`
+  (lifecycle facts, the loan's `borrower_name`, or the `bench`). It never shows `calibration_overdue`:
+  calibration has no recorded change, so today's top row can differ from the unit's current label when
+  calibration is overdue.
 - Removed old detail fields without a replacement: `responsible_person`, `notes`, `stored_date`,
   `expected_end_date`, `issue_description`, `failure_cause`, `last_known_location`, `supplier`,
   `expected_delivery_date`. Only `reason` remains for condition and lifecycle changes.

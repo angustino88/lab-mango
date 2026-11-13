@@ -350,8 +350,8 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1loan
   /api/labs/equipment/{equipment_id}/placement:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1placement
-  /api/labs/equipment/{equipment_id}/status-events:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1status-events
+  /api/labs/equipment/{equipment_id}/status-changes:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1status-changes
   /api/labs/equipment/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{id}
   /api/labs/equipment/computing/activity-summary:

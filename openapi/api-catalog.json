@@ -56714,11 +56714,11 @@
       }
     },
     {
-      "endpoint": "/api/labs/equipment/{equipment_id}/status-events",
+      "endpoint": "/api/labs/equipment/{equipment_id}/status-changes",
       "method": "GET",
-      "operation_id": "labs_equipment_status_events_retrieve_by_equipment_id",
-      "summary": "Get Equipment Status Events by Equipment ID",
-      "description": "Recorded lifecycle and condition changes of one unit, newest first; 404 for a missing or deleted unit.",
+      "operation_id": "labs_equipment_status_changes_retrieve_by_equipment_id",
+      "summary": "Get Equipment Status Changes by Equipment ID",
+      "description": "``display_status`` history of one unit, newest first; 404 for a missing or deleted unit.",
       "tags": [
         "Equipment"
       ],
@@ -56786,13 +56786,9 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "One recorded lifecycle or condition change. ``from_value`` is null for the initial state.",
+                  "description": "One change of ``display_status``. ``previous_display_status`` is null for the creation row.\n\n``details`` depends on what caused the change: lifecycle facts (``receiving_organisation``,\n``transfer_date``), a loan (``loan_id``, ``borrower_name``, ``due_at`` or ``close_reason``), or a\nbench (``bench``: ``{id, name}``).",
                   "properties": {
-                    "id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "axis": {
+                    "display_status": {
                       "allOf": [
                         {
                           "type": "object",
@@ -56801,7 +56797,7 @@
                       ],
                       "readOnly": true
                     },
-                    "from_value": {
+                    "previous_display_status": {
                       "allOf": [
                         {
                           "type": "object",
@@ -56811,25 +56807,9 @@
                       "nullable": true,
                       "readOnly": true
                     },
-                    "to_value": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "readOnly": true
-                    },
-                    "reason": {
+                    "occurred_at": {
                       "type": "string",
-                      "readOnly": true
-                    },
-                    "details": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                      "format": "date-time",
                       "readOnly": true
                     },
                     "actor": {
@@ -56842,21 +56822,26 @@
                       "readOnly": true,
                       "nullable": true
                     },
-                    "occurred_at": {
+                    "reason": {
                       "type": "string",
-                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
                       "readOnly": true
                     }
                   },
                   "required": [
                     "actor",
-                    "axis",
                     "details",
-                    "from_value",
-                    "id",
+                    "display_status",
                     "occurred_at",
-                    "reason",
-                    "to_value"
+                    "previous_display_status",
+                    "reason"
                   ]
                 }
               }
@@ -56875,14 +56860,12 @@
             },
             "data": [
               {
-                "id": 1,
-                "axis": {},
-                "from_value": {},
-                "to_value": {},
-                "reason": "string",
-                "details": {},
+                "display_status": {},
+                "previous_display_status": {},
+                "occurred_at": "2026-10-20T12:00:00Z",
                 "actor": {},
-                "occurred_at": "2026-10-20T12:00:00Z"
+                "reason": "string",
+                "details": {}
               }
             ]
           }
