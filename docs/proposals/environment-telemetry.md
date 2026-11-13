@@ -472,6 +472,67 @@ converters. The server-side scope rule (§5.1) still rejects cross-room data if 
 Converter lifecycle as seen by the backend: `discovered` → `claimed` (+ scope binding) → `retired`.
 Connectivity is separate (§5.5).
 
+### 5.1g Addressing and route path: how the host PC reaches each W630
+
+In Modbus TCP gateway mode the W630 is the **server** (listens on TCP 502) and the host PC is the **client**,
+so the host PC must know each W630's IP. The chain is:
+
+| Step | Who | What |
+|---|---|---|
+| 1 | Staff, UniFi app | DHCP reservation: W630 MAC `A4:CF:12:9B:00:21` → `192.168.50.21` |
+| 2 | Staff, Lab Mango (or discovery) | Source settings: `device_uid` = MAC, `network_host` = `192.168.50.21`, port 502 |
+| 3 | Host PC | `GET /agent/telemetry/config` returns `network_host` per source (§6.1) |
+| 4 | Host PC | ARP check: `192.168.50.21` resolves to the configured MAC, then connects |
+
+Discovery (§6.1) can fill step 2 automatically: the host PC scans its IoT subnet for open port 502, reads the
+MAC from its ARP table and reports both; staff only claim the device and link it to a target.
+
+Alternatives considered:
+- **DNS name instead of IP** (`w630-station-a.lab.local`): UniFi supports local DNS records, but it adds a second
+  mapping to maintain; the IP stays the identifier.
+- **Reverse connection** (W630 in TCP client mode connects *to* the host PC and identifies itself with a
+  registration packet containing its MAC): the host PC then needs no W630 addresses and no fixed IPs. But the
+  registration packet is a plain, spoofable string. It's also **not verified** that the W630 can do Modbus
+  gateway conversion while acting as a TCP client. Keep it as a fallback only if fixed IPs become a burden.
+
+**Route path for one read** (example IPs; host PC on the same IoT VLAN as the converters, §5.1e):
+
+```mermaid
+flowchart LR
+  subgraph VLAN50["Room 3 IoT VLAN 50 — 192.168.50.0/24 (layer 2, no routing)"]
+    H["Room host PC<br/>192.168.50.10<br/>collector (Modbus TCP client)"]
+    G["UniFi Cloud Gateway Ultra<br/>LAN port, VLAN 50<br/>switches frames, applies firewall"]
+    AP["U7 Long-Range AP<br/>SSID lab-iot → VLAN 50"]
+    W["USR-W630 Station A<br/>192.168.50.21:502<br/>MAC A4:CF:12:9B:00:21"]
+  end
+  S1["DDSU666<br/>Modbus addr 1"]
+  S2["ES35-SW<br/>Modbus addr 2"]
+  LM["Lab Mango server<br/>HTTPS 443"]
+  H -- "① Ethernet<br/>TCP → .21:502<br/>Modbus TCP: unit 2, FC03" --> G
+  G -- "② wired uplink<br/>(PoE for the AP)" --> AP
+  AP -- "③ Wi-Fi 2.4 GHz WPA2" --> W
+  W -- "④ RS485 Modbus RTU<br/>addr 2, FC03, CRC" --> S2
+  W -.- S1
+  S2 -- "⑤ RTU response" --> W
+  W -- "⑥ Modbus TCP response<br/>back the same way" --> H
+  H -- "⑦ HTTPS POST /agent/telemetry/samples/bulk<br/>via the gateway's WAN, firewall allows only this" --> LM
+```
+
+What changes at each hop for "read ES35-SW temperature" (register numbers are placeholders until the Phase 1
+bench test):
+
+| Hop | Protocol | Addressing used |
+|---|---|---|
+| Host PC → W630 | Modbus TCP over TCP/IP | IP `192.168.50.21`, port `502`, **unit ID 2**, FC 03, start register, count |
+| W630 → sensor | Modbus RTU over RS485 | **slave address 2** (= unit ID), FC 03, same registers, CRC added by the W630 |
+| Sensor → W630 → host PC | reverse | W630 matches the reply to the request and wraps it back into Modbus TCP |
+| Host PC → Lab Mango | HTTPS, signed | no IPs or Modbus addresses: only W630 MAC (`device_uid`) + `channel_id` + value |
+
+So the host PC needs **two addresses per reading**: the W630's IP (which box) and the Modbus unit ID (which
+sensor on that box's RS485 bus). Both come from Lab Mango's config; nothing is hard-coded on the host PC.
+The U7-LR is PoE-powered; whether the Gateway Ultra's LAN ports supply PoE is **not verified** (use a PoE
+injector or PoE switch if not).
+
 ### 5.2 `TelemetryReading`: raw, append-only, partitioned by day
 
 | Field | Type | Notes |
