@@ -33,10 +33,10 @@ The Analytics feature calculates longitudinal operational trends, booking effici
 | `GET /api/labs/analytics/user-booking-efficiency` | `UserBookingEfficiencyAPIView` | Reserved vs actual hours utilized. |
 | `GET /api/labs/analytics/lab-usage-by-timeframe` | `LabUsageTimeframeAPIView` | Time-binned utilization curves. |
 | `GET /api/labs/analytics/storage-quota` | `StorageQuotaAPIView` | Storage consumption metrics. |
-| `GET /api/labs/analytics/lab-visits` | `LabVisitsAPIView` | Physical visitor counts. |
-| `GET /api/labs/analytics/booking` | `BookingCountAPIView` | Reservation volume metrics. |
-| `GET /api/labs/analytics/lab-count` | `LabCountAPIView` | Active laboratory counts. |
-| `GET /api/labs/analytics/user-count` | `UserCountAPIView` | Active user statistics. |
+| `GET /api/labs/analytics/lab-visits` | `LabVisitsAPIView` | Physical visitor counts; `?unit=day` daily chart series (see `daily-chart-series.md`). |
+| `GET /api/labs/analytics/booking` | `BookingCountAPIView` | Reservation volume metrics; `?unit=day` daily chart series. |
+| `GET /api/labs/analytics/lab-count` | `LabCountAPIView` | Active laboratory counts; `?unit=day` daily chart series. |
+| `GET /api/labs/analytics/user-count` | `UserCountAPIView` | Active user statistics; `?unit=day` daily chart series. |
 | `GET /api/labs/analytics/booked-vs-used` | `BookedVsUsedAPIView` | Scheduled vs confirmed run hours. |
 | `GET /api/labs/analytics/equipment-availability` | `EquipmentAvailabilityAPIView` | Uptime and readiness statistics. |
 | `GET /api/labs/analytics/dashboard-summary` | `DashboardSummaryAPIView` | Deprecated alias for dashboard summary. |

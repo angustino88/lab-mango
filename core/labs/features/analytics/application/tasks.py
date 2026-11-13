@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from datetime import timedelta
+from datetime import date, datetime, timedelta
+from typing import Any
 
 from celery import shared_task
 from django.conf import settings
@@ -15,15 +16,19 @@ from core.labs.models import (
     ActiveUserObservation,
     AnalyticsGranularity,
     AnalyticsSource,
-    Bench,
-    BenchBooking,
     BookingVolumeObservation,
-    LaboratoryVisitEvent,
     StorageQuotaMeasurement,
     VisitorVolumeObservation,
 )
 from core.users.models.lab_management_email import LabManagementEmail
 
+from ..queries.calculations import local_day_start
+from ..queries.observations import (
+    count_active_benches,
+    count_active_users,
+    count_bookings_created,
+    count_distinct_visitors,
+)
 from .notifications import (
     send_storage_quota_management_email,
     send_storage_quota_user_email,
@@ -32,75 +37,60 @@ from .notifications import (
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name='labs.analytics.snapshot_daily_booking_volume')
-def snapshot_daily_booking_volume() -> None:
-    """Snapshot total booking volume created during the current calendar day."""
-    now = timezone.localtime(timezone.now())
-    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_of_day = start_of_day + timedelta(days=1)
-    count = BenchBooking.objects.filter(created__gte=start_of_day, created__lt=end_of_day).count()
-    BookingVolumeObservation.objects.update_or_create(
-        period_start=start_of_day,
-        period_end=end_of_day,
+def _snapshot_day(day: str | None) -> tuple[datetime, datetime]:
+    """Return the local-day bounds to snapshot: ``day`` (ISO date) or, by default, yesterday.
+
+    The schedule runs shortly after midnight, so the default records the day that just ended
+    and never a partial day. ``day`` is a string because Celery serializes arguments as JSON.
+    """
+    target = date.fromisoformat(day) if day else timezone.localdate() - timedelta(days=1)
+    return local_day_start(target), local_day_start(target + timedelta(days=1))
+
+
+def _record(model: Any, start: datetime, end: datetime, **counts: int) -> None:
+    # Race guard: the unique constraint on (period_start, period_end, granularity, source).
+    # update_or_create makes a rerun or a concurrent duplicate overwrite the same row.
+    model.objects.update_or_create(
+        period_start=start,
+        period_end=end,
         granularity=AnalyticsGranularity.DAILY,
         source=AnalyticsSource.APPLICATION,
-        defaults={"recorded_at": now, "booking_count": count},
+        defaults={"recorded_at": timezone.now(), **counts},
     )
+
+
+@shared_task(name='labs.analytics.snapshot_daily_booking_volume')
+def snapshot_daily_booking_volume(day: str | None = None) -> None:
+    """Record bookings created during one local day (default: yesterday). Safe to rerun."""
+    start, end = _snapshot_day(day)
+    _record(BookingVolumeObservation, start, end, booking_count=count_bookings_created(start, end))
 
 
 @shared_task(name='labs.analytics.snapshot_daily_active_benches')
 def snapshot_daily_active_benches() -> None:
-    """Snapshot the total number of non-deleted active benches."""
-    now = timezone.localtime(timezone.now())
-    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_of_day = start_of_day + timedelta(days=1)
-    count = Bench.objects.filter(deleted_at__isnull=True).count()
-    ActiveLaboratoryObservation.objects.update_or_create(
-        period_start=start_of_day,
-        period_end=end_of_day,
-        granularity=AnalyticsGranularity.DAILY,
-        source=AnalyticsSource.APPLICATION,
-        defaults={"recorded_at": now, "active_laboratory_count": count},
-    )
+    """Record the current non-deleted bench count as the total for the day that just ended.
+
+    A population cannot be measured for a past day, so this task takes no ``day`` argument.
+    """
+    start, end = _snapshot_day(None)
+    _record(ActiveLaboratoryObservation, start, end, active_laboratory_count=count_active_benches())
 
 
 @shared_task(name='labs.analytics.snapshot_daily_active_users')
 def snapshot_daily_active_users() -> None:
-    """Snapshot the count of active platform users for the current day."""
-    from core.users.models import User
+    """Record the current active user count as the total for the day that just ended.
 
-    now = timezone.localtime(timezone.now())
-    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_of_day = start_of_day + timedelta(days=1)
-    count = User.objects.filter(is_active=True).count()
-    ActiveUserObservation.objects.update_or_create(
-        period_start=start_of_day,
-        period_end=end_of_day,
-        granularity=AnalyticsGranularity.DAILY,
-        source=AnalyticsSource.APPLICATION,
-        defaults={"recorded_at": now, "active_user_count": count},
-    )
+    A population cannot be measured for a past day, so this task takes no ``day`` argument.
+    """
+    start, end = _snapshot_day(None)
+    _record(ActiveUserObservation, start, end, active_user_count=count_active_users())
 
 
 @shared_task(name='labs.analytics.snapshot_daily_facility_visitors')
-def snapshot_daily_facility_visitors() -> None:
-    """Snapshot distinct users visiting facilities during the current calendar day."""
-    now = timezone.localtime(timezone.now())
-    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_of_day = start_of_day + timedelta(days=1)
-    count = (
-        LaboratoryVisitEvent.objects.filter(occurred_at__gte=start_of_day, occurred_at__lt=end_of_day)
-        .values("visitor")
-        .distinct()
-        .count()
-    )
-    VisitorVolumeObservation.objects.update_or_create(
-        period_start=start_of_day,
-        period_end=end_of_day,
-        granularity=AnalyticsGranularity.DAILY,
-        source=AnalyticsSource.APPLICATION,
-        defaults={"recorded_at": now, "distinct_visitor_count": count},
-    )
+def snapshot_daily_facility_visitors(day: str | None = None) -> None:
+    """Record distinct facility visitors during one local day (default: yesterday). Safe to rerun."""
+    start, end = _snapshot_day(day)
+    _record(VisitorVolumeObservation, start, end, distinct_visitor_count=count_distinct_visitors(start, end))
 
 
 @shared_task(name='labs.analytics.send_storage_quota_alerts')

@@ -1,5 +1,7 @@
 """Analytics query selectors package."""
 from .calculations import (
+    DEFAULT_DAILY_WINDOW_DAYS,
+    MAX_DAILY_WINDOW_DAYS,
     SLOT_LABELS,
     aggregate_observation_buckets,
     calculate_official_working_hours,
@@ -8,6 +10,7 @@ from .calculations import (
     calculate_working_hours,
     get_nearest_monday,
     get_nearest_tuesday,
+    resolve_daily_window,
 )
 from .insights import (
     get_booked_vs_used,
@@ -35,6 +38,8 @@ from .utilization import (
 )
 
 __all__ = [
+    "DEFAULT_DAILY_WINDOW_DAYS",
+    "MAX_DAILY_WINDOW_DAYS",
     "SLOT_LABELS",
     "aggregate_observation_buckets",
     "calculate_official_working_hours",
@@ -59,4 +64,5 @@ __all__ = [
     "get_user_booking_compliance",
     "get_user_utilization",
     "list_storage_quota_measurements",
+    "resolve_daily_window",
 ]

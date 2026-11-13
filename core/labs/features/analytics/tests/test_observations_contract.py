@@ -1,5 +1,6 @@
 """Database-free runtime/schema regressions for observations and pagination audit."""
 
+from datetime import date
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -77,7 +78,7 @@ def test_get_runtime_matches_nested_polymorphic_envelope(schema, name, view_clas
     view.request = request
     with patch.object(views, query, return_value=payload) as metric_query:
         response = view.handle_get(request)
-    metric_query.assert_called_once_with(unit=unit)
+    metric_query.assert_called_once_with(unit=unit, date_after=None, date_before=None)
     assert response.status_code == 200
     assert response.data == {"data": payload}
     validator = response_validator(schema, endpoint)
@@ -106,12 +107,47 @@ def test_get_query_and_status_documentation_is_preserved(schema, name, view_clas
     operation = schema["paths"][BASE + name]["get"]
     assert set(operation["responses"]) == {"200", "400"}
     assert operation["tags"] == ["Analytics"]
-    assert len(operation["parameters"]) == 1
-    unit = operation["parameters"][0]
-    assert unit["name"] == "unit"
-    assert unit["in"] == "query"
-    assert not unit.get("required", False)
-    assert unit["schema"]["enum"] == ["day", "week", "month", "quarter", "year"]
+    parameters = {parameter["name"]: parameter for parameter in operation["parameters"]}
+    assert set(parameters) == {"unit", "date_after", "date_before"}
+    assert all(p["in"] == "query" and not p.get("required", False) for p in parameters.values())
+    assert parameters["unit"]["schema"]["enum"] == ["day", "week", "month", "quarter", "year"]
+    assert parameters["date_after"]["schema"]["format"] == "date"
+    assert parameters["date_before"]["schema"]["format"] == "date"
+
+
+@pytest.mark.parametrize("name,view_class,query,component", CASES)
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"unit": "hour"},
+        {"date_after": "2026-11-01"},
+        {"unit": "day", "date_after": "2026-11-10", "date_before": "2026-11-10"},
+        {"unit": "day", "date_after": "2024-01-01", "date_before": "2026-01-01"},
+        {"unit": "week", "date_after": "2026-11-10", "date_before": "2026-11-01"},
+        {"unit": "day", "date_after": "2026-02-30"},
+        {"unit": "day", "since": "2026-11-01"},
+    ],
+)
+def test_get_rejects_invalid_query_without_calling_the_selector(name, view_class, query, component, params):
+    request = Request(APIRequestFactory().get(BASE + name, params))
+    view = view_class()
+    view.request = request
+    with patch.object(views, query) as metric_query:
+        response = view.handle_get(request)
+    assert response.status_code == 400
+    metric_query.assert_not_called()
+
+
+@pytest.mark.parametrize("name,view_class,query,component", CASES)
+def test_get_passes_a_valid_day_range_to_the_selector(name, view_class, query, component):
+    params = {"unit": "day", "date_after": "2026-10-14", "date_before": "2026-11-14"}
+    request = Request(APIRequestFactory().get(BASE + name, params))
+    view = view_class()
+    view.request = request
+    with patch.object(views, query, return_value=[]) as metric_query:
+        response = view.handle_get(request)
+    assert response.status_code == 200
+    metric_query.assert_called_once_with(unit="day", date_after=date(2026, 10, 14), date_before=date(2026, 11, 14))
 
 
 @pytest.mark.parametrize("valid", [True, False])

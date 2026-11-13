@@ -1,7 +1,7 @@
 """Mathematical and calendar aggregation utilities for analytics projections."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import TYPE_CHECKING, Any
 
 from django.db.models import Max, Sum
@@ -16,6 +16,15 @@ SLOT_LABELS = (
     "08h-10h", "10h-12h", "12h-14h", "14h-16h",
     "16h-18h", "18h-20h", "20h-22h", "22h-00h",
 )
+
+#: Observation count fields that measure a population at a point in time. Summing them across a
+#: bucket would multiply the population by the number of snapshots, so buckets take the maximum.
+POPULATION_COUNT_FIELDS = ("active_laboratory_count", "active_user_count")
+
+#: Days returned by a daily series when the caller gives no range.
+DEFAULT_DAILY_WINDOW_DAYS = 30
+#: Longest daily series a caller may request (bounded read).
+MAX_DAILY_WINDOW_DAYS = 366
 
 
 def calculate_working_hours(from_date: datetime, to_date: datetime) -> float:
@@ -125,8 +134,45 @@ def get_nearest_tuesday() -> datetime:
     )
 
 
-def aggregate_observation_buckets(model: Any, unit: str) -> QuerySet:
-    """Aggregate observation model metrics across standardized time buckets."""
+def local_day_start(day: date) -> datetime:
+    """Return the aware start of ``day`` in the current time zone (DST-correct)."""
+    return timezone.make_aware(datetime.combine(day, time.min))
+
+
+def resolve_daily_window(
+    date_after: date | None,
+    date_before: date | None,
+    *,
+    today: date,
+) -> tuple[date, date]:
+    """Resolve an inclusive-start, exclusive-end day window for a daily series.
+
+    With no bounds the window is the last ``DEFAULT_DAILY_WINDOW_DAYS`` days including today.
+    A missing end defaults to tomorrow (today included); a missing start defaults to
+    ``DEFAULT_DAILY_WINDOW_DAYS`` before the end. Raises ``ValueError`` for an empty window or
+    one longer than ``MAX_DAILY_WINDOW_DAYS``.
+    """
+    end = date_before if date_before is not None else today + timedelta(days=1)
+    start = date_after if date_after is not None else end - timedelta(days=DEFAULT_DAILY_WINDOW_DAYS)
+    if start >= end:
+        raise ValueError("date_after must be before date_before.")
+    if (end - start).days > MAX_DAILY_WINDOW_DAYS:
+        raise ValueError(f"A daily series covers at most {MAX_DAILY_WINDOW_DAYS} days.")
+    return start, end
+
+
+def aggregate_observation_buckets(
+    model: Any,
+    unit: str,
+    *,
+    date_after: date | None = None,
+    date_before: date | None = None,
+) -> QuerySet:
+    """Aggregate observation model metrics across standardized time buckets.
+
+    ``date_after`` (inclusive) and ``date_before`` (exclusive) bound ``period_start`` by local
+    calendar day; omitted bounds leave that side open.
+    """
     unit_key = unit.lower()
     valid_units = ("day", "week", "month", "quarter", "year")
     if unit_key not in valid_units:
@@ -146,7 +192,7 @@ def aggregate_observation_buckets(model: Any, unit: str) -> QuerySet:
         count_field = "id"
 
     date_field = "period_start" if "period_start" in fields else "created"
-    count_agg = Max(count_field) if "active_laboratory_count" in fields else Sum(count_field)
+    count_agg = Max(count_field) if count_field in POPULATION_COUNT_FIELDS else Sum(count_field)
 
     unit_mappings: dict[str, dict[str, Any]] = {
         "day": {
@@ -177,8 +223,13 @@ def aggregate_observation_buckets(model: Any, unit: str) -> QuerySet:
     }
 
     mapping = unit_mappings[unit_key]
+    queryset = model.objects.all()
+    if date_after is not None:
+        queryset = queryset.filter(**{f"{date_field}__gte": local_day_start(date_after)})
+    if date_before is not None:
+        queryset = queryset.filter(**{f"{date_field}__lt": local_day_start(date_before)})
     return (
-        model.objects.annotate(**mapping["annotation"])
+        queryset.annotate(**mapping["annotation"])
         .values(*mapping["group_by"])
         .annotate(count=count_agg)
         .order_by(*mapping["order_by"])
@@ -186,6 +237,9 @@ def aggregate_observation_buckets(model: Any, unit: str) -> QuerySet:
 
 
 __all__ = [
+    "DEFAULT_DAILY_WINDOW_DAYS",
+    "MAX_DAILY_WINDOW_DAYS",
+    "POPULATION_COUNT_FIELDS",
     "SLOT_LABELS",
     "aggregate_observation_buckets",
     "calculate_official_working_hours",
@@ -194,4 +248,6 @@ __all__ = [
     "calculate_working_hours",
     "get_nearest_monday",
     "get_nearest_tuesday",
+    "local_day_start",
+    "resolve_daily_window",
 ]

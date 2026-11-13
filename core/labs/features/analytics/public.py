@@ -20,6 +20,8 @@ from .exceptions import (
     StorageQuotaMeasurementError,
 )
 from .queries import (
+    DEFAULT_DAILY_WINDOW_DAYS,
+    MAX_DAILY_WINDOW_DAYS,
     SLOT_LABELS,
     aggregate_observation_buckets,
     calculate_official_working_hours,
@@ -44,6 +46,7 @@ from .queries import (
     get_user_booking_compliance,
     get_user_utilization,
     list_storage_quota_measurements,
+    resolve_daily_window,
 )
 from .queries.finance import get_finance_breakdown, get_finance_monthly_trends, get_finance_summary
 
@@ -53,6 +56,8 @@ __all__ = [
     "get_finance_summary",
     "AnalyticsError",
     "AnalyticsValidationError",
+    "DEFAULT_DAILY_WINDOW_DAYS",
+    "MAX_DAILY_WINDOW_DAYS",
     "RecordFacilityVisitInput",
     "RecordStorageQuotaInput",
     "SLOT_LABELS",
@@ -83,6 +88,7 @@ __all__ = [
     "list_storage_quota_measurements",
     "record_facility_visit",
     "record_storage_quota_measurement",
+    "resolve_daily_window",
     "send_storage_quota_alerts",
     "send_storage_quota_management_email",
     "send_storage_quota_user_email",

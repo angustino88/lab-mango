@@ -1,7 +1,7 @@
 """KPI correctness tests for analytics queries and snapshot tasks (PostgreSQL)."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from datetime import timezone as dt_timezone
 
 import pytest
@@ -115,8 +115,9 @@ class TestSnapshotIdempotency:
         snapshot_daily_active_benches()
         snapshot_daily_active_benches()
 
-        now = timezone.localtime(timezone.now())
-        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        # The snapshot records the local day that just ended (yesterday).
+        yesterday = timezone.localdate() - timedelta(days=1)
+        start_of_day = timezone.make_aware(datetime.combine(yesterday, time.min))
         rows = ActiveLaboratoryObservation.objects.filter(period_start=start_of_day)
 
         assert rows.count() == 1
