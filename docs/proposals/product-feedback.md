@@ -131,7 +131,7 @@ stateDiagram-v2
   `ensure_booking_status_transition`). Same target status and resolution → no-op `200`.
 - Reopening a closed item clears `resolution` and `duplicate_of`, and a converted item cannot be reopened (`409 invalid_state_transition`), because the ticket now owns the work.
 - The author can delete their own item only while it is `new`. After triage it belongs to the team's record
-  (`409 feedback_already_triaged`); erasure requests then go through Q6.
+  (`409 feedback_already_triaged`); erasure requests then go through `erase_author_feedback` (AC12).
 
 ### 3.5 Convert to ticket
 
