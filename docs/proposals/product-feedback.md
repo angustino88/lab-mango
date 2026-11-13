@@ -1,7 +1,8 @@
 # Design: Product feedback and page rating
 
 - Tier: T2 (new models and constraints, new public API, authorization, personal data, cross-feature call)
-  · Status: Draft, awaits owner approval; not approved for implementation · Date: 2026-11-12
+  · Status: Draft with recommended decisions (section 14), awaits owner approval; not approved for
+  implementation · Date: 2026-11-13
 - Domain: Support desk (`core/support_desk/features/feedback`, a feature that does not exist yet; models in
   `core/support_desk/models/feedback/`)
 - Depends on: `support_desk.features.tickets` (convert feedback to a ticket), `core.users.public` (roles).
@@ -30,9 +31,11 @@ We have no measure of how satisfied users are with each page.
 | AC9 | Agents get page insights for a period of at most 366 days: per `page_key`, the rating count, average, score distribution, share of 4 and 5 ("satisfied"), and general feedback count by category. |
 | AC10 | Every list and detail endpoint has a constant query budget test. |
 | AC11 | OpenAPI is regenerated in the same change. Everything is behind `SUPPORT_FEEDBACK_ENABLED` (default off). |
+| AC12 | A support admin can erase all feedback personal data of one user (message, client context, author), keeping only anonymous score and category for insights. Running it twice changes nothing. |
 
-Out of scope for v1 (see open questions, section 14): screenshots and attachments, anonymous submissions,
-feedback from signed-out pages (login), replying to the author, automatic retention purge, NPS surveys.
+Out of scope for v1 (decisions in section 14; later phases in section 9): screenshots, anonymous
+submissions, feedback from signed-out pages, author notifications, the automatic 12-month purge task,
+NPS or effort surveys.
 
 ## 2. Current state (repository facts, verified 2026-11-12)
 
@@ -167,7 +170,7 @@ core/support_desk/features/feedback/        # split layout
 ├── public.py  urls.py  contracts.py  exceptions.py
 ├── api/          urls.py views.py serializers.py filters.py permissions.py
 ├── application/  submit_feedback.py delete_feedback.py transition_feedback.py
-│                 convert_feedback.py policies.py
+│                 convert_feedback.py erase_author_feedback.py policies.py
 ├── queries/      list_feedback.py feedback_insights.py options.py
 ├── tests/        api/ application/ queries/ conftest.py factories.py test_public.py
 └── docs/         spec.md architecture.md   (written on approval; this proposal moves there)
@@ -317,6 +320,7 @@ and `request_id` set to `null` and listed in `meta.restricted_fields` (SEC-3). T
 | `triaged_at` | timestamptz, nullable | |
 | `duplicate_of` | FK self, nullable, `PROTECT` | |
 | `ticket` | FK `SupportTicket`, nullable, `PROTECT`, unique | |
+| `erased_at` | timestamptz, nullable | set when personal data was erased (AC12, retention) |
 | `version` | integer, default 1 | ETag source |
 | `created_at`, `updated_at` | timestamptz | |
 
@@ -328,7 +332,8 @@ and `request_id` set to `null` and listed in `meta.restricted_fields` (SEC-3). T
 | `product_feedback_kind_valid` | `kind IN ('page_rating','general')` |
 | `product_feedback_score_1_to_5` | `score IS NULL OR score BETWEEN 1 AND 5` |
 | `product_feedback_page_rating_shape` | `kind <> 'page_rating' OR (score IS NOT NULL AND category IS NULL)` |
-| `product_feedback_general_shape` | `kind <> 'general' OR (category IS NOT NULL AND btrim(message) <> '')` |
+| `product_feedback_general_shape` | `kind <> 'general' OR (category IS NOT NULL AND (btrim(message) <> '' OR erased_at IS NOT NULL))` |
+| `product_feedback_erased_is_blank` | `erased_at IS NULL OR (message = '' AND triage_note = '' AND user_agent = '' AND request_id = '')` |
 | `product_feedback_category_valid` | `category IS NULL OR category IN ('bug','suggestion','praise','question','other')` |
 | `product_feedback_message_max_length` | `char_length(message) <= 4000` |
 | `product_feedback_page_key_format` | `page_key ~ '^[a-z0-9][a-z0-9_.-]{0,99}$'` |
@@ -353,7 +358,7 @@ Reasoned, not measured; the implementation attaches `EXPLAIN (ANALYZE, BUFFERS)`
 
 ### `ProductFeedbackEvent` (immutable, `created_at` only)
 
-`feedback` FK `CASCADE`, `actor` FK user `SET_NULL`, `event_type` (`status_changed`, `converted_to_ticket`),
+`feedback` FK `CASCADE`, `actor` FK user `SET_NULL`, `event_type` (`status_changed`, `converted_to_ticket`, `erased`),
 `from_status`, `to_status`, `resolution`, `note`, `created_at`. Written in the same transaction as the change.
 
 ### Write paths
@@ -393,11 +398,16 @@ Each budget is a `django_assert_num_queries` test with at least 3 rows and their
 
 - Deny by default: a permission class at the HTTP edge, `ensure_*` policies in commands, and object scope
   in queries (requesters get `author_id = actor.id`). Out-of-scope reads return `404`.
-- Signed-in users only. Accepting feedback from the login page means an anonymous, abuse-prone endpoint and
-  is left to Q3.
+- Signed-in users only (Q3). Problems on signed-out pages go to the existing support contact channel.
+- **Confidential, not anonymous (Q7).** The author is stored and visible to support agents and admins only.
+  It never appears in insights, exports, or any response to another requester. The widget says so:
+  "Your name is visible to the support team only."
 - **Personal data.** Messages may contain names, emails, or pasted secrets. Messages and triage notes are
   never written to logs. The full URL is never stored. User agent is visible to agents only. Delete is
-  allowed while `new`. Retention is Q6.
+  allowed while `new`. Retention (Q6): message, triage note and client context are erased 12 months after
+  submission; score, category, `page_key`, `app_version` and dates are kept without the author so insights
+  keep working. A user's feedback personal data is erased within 30 days of an account-deletion request
+  (AC12). The retention periods are a recommendation and need confirmation from the privacy or legal owner.
 - **Injection.** Plain-text rendering only; the API returns no HTML. `page_key` is pattern-checked, so it
   cannot carry markup or a URL into the agent UI.
 - **Abuse.** Per-user rate limit, one row per `client_submission_id`, message length limit. The throttle
@@ -409,13 +419,31 @@ Each budget is a `django_assert_num_queries` test with at least 3 rows and their
 ## 9. Async and integration behavior
 
 None in v1. No Celery task and no outbox of its own. Conversion reuses the ticket outbox through
-`create_ticket`. Planned follow-ups, each needing its own approval: a "your feedback was addressed"
-notification through the support desk outbox (Q5), and a batched retention purge task (Q6).
+`create_ticket`.
 
-**Frontend behavior** (for the React team; the API does not depend on it):
-- "Rate this page" prompt: at most once per `page_key` per user every 30 days, never in the first 3 visits
-  to a page, never during a form submit; dismissal counts as shown. Remembered in browser storage, so
-  losing it only means one extra prompt.
+**Per-user erasure in v1 (AC12).** `erase_author_feedback` is an application command with a frozen input
+and a support-admin actor, called from a management command (`erase_user_feedback --user-id`). It blanks
+message, triage note, client context, user agent and request id, sets `erased_at`, and sets `author` to a
+single system "Deleted user" account (REL-12), in keyset batches of 500 rows, each batch in its own
+transaction. Idempotent: rows with `erased_at` set are skipped. Writes one
+`ProductFeedbackEvent(event_type="erased")` per row, without content, and blanks the `note` of that row's
+earlier events. Erased items keep their triage status and stay in insights.
+
+**Later phases** (each needs its own approval and design note):
+
+| Phase | Scope | Must ship by |
+|---|---|---|
+| 1.1 Author notification (Q5) | In-app notification only, no email, when an item closes as `implemented` or `converted_to_ticket`. One notification per item, through the support desk outbox with a deterministic event id (`uuid5(feedback uid, resolution)`). Never for `declined`, `duplicate` or `no_action_needed`. Whether the outbox has an in-app channel is **not verified**. | — |
+| 1.2 Retention purge (Q6) | Celery beat task running daily: rows older than 12 months get the same erasure as `erase_author_feedback`, keyset batches, re-enqueue for the rest, idempotent. | Launch + 11 months, before the first rows reach 12 months |
+| 2 Screenshots (Q4) | Opt-in only: the user presses "Add screenshot", gets a blackout/highlight tool before upload, sees the image before sending. Stored with the support desk attachment storage and scanner, erased after 90 days, visible to agents only. | — |
+
+**Frontend behavior** (for the React team; the API does not depend on it). The goal is to avoid
+prompt fatigue, the most common reason these widgets get ignored:
+- "Rate this page" prompt: at most once per `page_key` per user every **90 days**, and at most **one prompt
+  per user per week** across all pages.
+- Never in the first 3 visits to a page, never during a form submit, never right after an error message
+  (the user should report errors through "Send feedback" or a ticket). Dismissal counts as shown.
+- Remembered in browser storage, so losing it only means one extra prompt.
 - "Send feedback" is always available from the user menu and does not depend on the prompt.
 - One `client_submission_id` per opened form, reused on retry.
 - When a `bug` is submitted, the UI says "For urgent problems, open a support ticket" with a link.
@@ -458,6 +486,7 @@ notification through the support desk outbox (Q5), and a batched retention purge
 | AC9 | `queries/test_feedback_insights.py::test_average_null_below_min`, `::test_distribution_five_entries`, `::test_period_over_366_days_400`, `::test_prefix_filter` |
 | AC10 | `api/test_query_budget.py`, one test per endpoint with 3 or more rows |
 | AC11 | `api/test_routes.py::test_flag_off_404`, `::test_detail_does_not_shadow_named_routes`; OpenAPI parity gate |
+| AC12 | `application/test_erase_author_feedback.py::test_erases_personal_fields_keeps_score`, `::test_second_run_no_changes`, `::test_requires_support_admin`, `::test_erased_general_item_satisfies_constraints`, `::test_event_notes_blanked` |
 | Model | `core/support_desk/tests/models/test_product_feedback_constraints.py`: each named constraint rejects a direct invalid write |
 | Boundary | `tests/architecture/test_support_feedback_boundaries.py`; `test_public.py` exports and DTOs |
 
@@ -475,21 +504,24 @@ OpenAPI parity, Spectral.
 | Store the full URL | Simple, but URLs carry ids, search text and sometimes tokens. A route key gives the same grouping without the data. |
 | JSON `metadata` for client context | Flexible, but untyped and unbounded. Fixed columns are validated, constrained and queryable; adding a field is a small migration. |
 | Cached insight table | Faster reads but a second copy of the truth and a background job. A grouped aggregate over an indexed period is enough at this volume; switch when measured p95 passes the budget. |
-| NPS ("how likely are you to recommend") | A different question about the whole product, usually asked on a schedule. Can be a third `kind` later (Q8). |
+| NPS ("how likely are you to recommend") | Means little for an internal tool staff must use: they cannot choose another. If a product-wide score is wanted later, a Customer Effort Score on key tasks ("How easy was it to book a bench?") fits better and can be a third `kind` (Q8). |
 
-## 14. Open questions for the owner
+## 14. Decisions (recommended, awaiting owner sign-off)
 
-| # | Question | Default if unanswered |
-|---|---|---|
-| Q1 | Owner: support desk feature, or a separate `core/feedback` app with its own team? | Support desk feature |
-| Q2 | Who triages: all support agents (Labs coordinators), or a dedicated product team role? | All support agents |
-| Q3 | Accept feedback from signed-out pages (login, password reset)? | No |
-| Q4 | Allow screenshots? They often contain other people's data. Would reuse the support desk attachment storage and scanner. | No screenshots in v1 |
-| Q5 | Notify the author when their feedback is closed as `implemented` or `converted_to_ticket`? | No notification in v1; status visible in "My feedback" |
-| Q6 | Retention: how long are messages kept, and are authors anonymized after deactivation? | Keep 24 months, then erase message and author (scores stay for insights); purge task is a follow-up |
-| Q7 | Let users submit anonymously (author hidden from agents, kept for abuse handling)? | No |
-| Q8 | Add an NPS survey kind later? | Not planned |
-| Q9 | Confirm limits: 4000-character message, 20 per hour, average shown from 5 ratings, 366-day insight period | As stated |
+Recommendations follow common practice for in-app feedback in internal tools that staff are required to
+use. Each one becomes binding only when the owner approves this document.
+
+| # | Decision | Recommendation | Reason |
+|---|---|---|---|
+| Q1 | Owning app | **Support desk feature** (`core/support_desk/features/feedback`) | Service desks usually hold product feedback next to tickets; the app already has the roles, tickets and outbox. Revisit if a separate product team takes ownership. |
+| Q2 | Who triages | **Support agents do first-pass triage; the product owner reviews insights weekly. No new role in v1.** | Support sorts quickly (bugs to tickets, duplicates merged); the product owner decides what is built. A new role is an access-control change; add it only when needed. The product owner needs the coordinator or admin Labs role to read insights (who that is: **not verified**). |
+| Q3 | Signed-out pages | **No** | An anonymous form attracts spam and needs a CAPTCHA. Sign-in problems go to the existing support contact channel. |
+| Q4 | Screenshots | **Not in v1.** Phase 2: opt-in, with a blackout/highlight tool, 90-day retention, agents only (section 9). | Screenshots in a lab tool often show other people's bookings and names. |
+| Q5 | Notify the author | **Phase 1.1: in-app only, only for `implemented` and `converted_to_ticket`, one per item. No email.** | Closing the loop keeps people sending feedback; notices for every status change are noise, and "declined" notices annoy more than help. |
+| Q6 | Retention | **Erase message, triage note and client context after 12 months; keep score, category, page and version without the author. Erase a user's feedback personal data within 30 days of an account-deletion request (AC12, in v1).** | Data-protection rules such as GDPR require keeping personal data only as long as needed; feedback older than a year is rarely acted on. **Periods must be confirmed by the privacy or legal owner.** |
+| Q7 | Anonymous submissions | **No. Confidential instead:** the author is visible to support agents and admins only (section 8). | Anonymous feedback cannot be followed up and invites abuse; confidentiality addresses most people's worry about criticising the tool. |
+| Q8 | NPS | **No.** If a product-wide score is wanted, use a Customer Effort Score on key tasks later. | NPS asks about recommending a product users cannot choose; effort scores measure what an internal tool should improve. |
+| Q9 | Limits | **Keep:** 4000-character message, 20 submissions per user per hour, average shown from 5 ratings, 366-day insight period. Prompt cadence: once per page per 90 days, at most one prompt per user per week (section 9). | Typical values; the stricter prompt cadence prevents prompt fatigue. |
 
 ## 15. Assumptions and gaps
 
