@@ -40,11 +40,14 @@ Response: `{"data": [{"date": "2026-11-12", "count": 42}, ...]}`, oldest first, 
 - **Other units** (`week`, `month`, `quarter`, `year`) keep their previous shape and default (all history);
   `date_after` / `date_before` optionally bound them. Population buckets now take the maximum daily snapshot.
 - **Without `unit`** the endpoints keep returning the `{count, trend}` summary card. Sending `date_after` or
-  `date_before` without `unit` is rejected.
+  `date_before` without `unit` is rejected. For `lab-visits` the card counts **distinct visitors** in the last
+  7 days against the 7 days before (owner decision 2026-11-13; it previously counted visit events).
 - **Errors:** an unknown parameter, an invalid `unit` or date, an empty range or one over 366 days returns
   `400` with the standard error body (previously an invalid `unit` failed in the selector, and unknown
-  parameters were ignored).
-- **Access:** lab coordinators, admins and API keys (`LABS_STAFF_ACCESS`), unchanged. Plain lab members get `403`.
+  parameters were ignored). Rejecting unknown parameters follows SCP-3 (owner delegated, 2026-11-13); the
+  frontend must send only `unit`, `date_after` and `date_before`.
+- **Access:** lab coordinators, admins and API keys (`LABS_STAFF_ACCESS`), unchanged and confirmed by the owner
+  (2026-11-13). Plain lab members get `403`; hide the charts for them.
 
 ## 3. Design
 
@@ -77,8 +80,5 @@ Response: `{"data": [{"date": "2026-11-12", "count": 42}, ...]}`, oldest first, 
 
 ## 5. Not changed
 
-- The `{count, trend}` summary for `lab-visits` counts visit *events* in a rolling 7 days, while the daily
-  series counts *distinct visitors*. Which one the "weekly visitors" card should show is an open product
-  question; the summary was left as is.
 - Observations from other sources (`collector`, `import`, `manual`) are still summed with application
   snapshots, as before.

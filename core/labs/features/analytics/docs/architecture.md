@@ -78,7 +78,7 @@ The feature exposes its boundary strictly through `public.py`:
   - `GET /user-booking-efficiency`
   - `GET /lab-usage-by-timeframe`
   - `GET, POST /storage-quota`
-  - `GET, POST /lab-visits` (GET takes `unit`, `date_after`, `date_before`)
+  - `GET, POST /lab-visits` (GET takes `unit`, `date_after`, `date_before`; the summary counts distinct visitors)
   - `GET /dashboard-summary` (KPI cards with previous-period trend; requires `from_date_time`, `to_date_time`)
   - `GET /booked-vs-used` (reserved bench hours vs recorded session hours; per-bench booked hours, laboratory-wide used hours)
   - `GET /equipment-availability` (uptime percent, unavailable hours, outage count per equipment from status history)

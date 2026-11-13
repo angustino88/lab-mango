@@ -220,7 +220,11 @@ def get_facility_visit_metrics(
     date_after: date | None = None,
     date_before: date | None = None,
 ) -> MetricResult:
-    """Retrieve facility visit counts or historical bucketed visits."""
+    """Retrieve distinct facility visitors: a rolling 7-day count with trend, or bucketed history.
+
+    The summary counts distinct visitors (not visit events) in the last 7 days against the 7 days
+    before, the same definition as the daily series (owner decision 2026-11-13).
+    """
     if unit:
         return _bucketed(
             VisitorVolumeObservation,
@@ -235,15 +239,8 @@ def get_facility_visit_metrics(
     this_week = now - timedelta(days=7)
     last_week = now - timedelta(days=14)
 
-    current_count = LaboratoryVisitEvent.objects.filter(
-        occurred_at__gte=this_week,
-        occurred_at__lte=now,
-    ).count()
-
-    previous_count = LaboratoryVisitEvent.objects.filter(
-        occurred_at__gte=last_week,
-        occurred_at__lt=this_week,
-    ).count()
+    current_count = count_distinct_visitors(this_week, now + timedelta(microseconds=1))
+    previous_count = count_distinct_visitors(last_week, this_week)
 
     trend = calculate_period_trend(previous_count, current_count)
     return {"count": current_count, "trend": trend}

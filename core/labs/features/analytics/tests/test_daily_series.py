@@ -160,6 +160,27 @@ class TestVolumeSeries:
 
 
 @pytest.mark.django_db
+class TestWeeklyVisitorSummary:
+    def test_counts_distinct_visitors_not_visit_events(self):
+        now = timezone.now()
+        regular, other = UserFactory(), UserFactory()
+        LaboratoryVisitEventFactory.create_batch(4, visitor=regular, occurred_at=now - timedelta(days=1))
+        LaboratoryVisitEventFactory(visitor=other, occurred_at=now - timedelta(days=6))
+        LaboratoryVisitEventFactory(visitor=regular, occurred_at=now - timedelta(days=10))  # previous week
+
+        assert get_facility_visit_metrics() == {"count": 2, "trend": 100}
+
+    def test_trend_compares_distinct_visitors_week_over_week(self):
+        now = timezone.now()
+        visitors = UserFactory.create_batch(4)
+        for visitor in visitors:
+            LaboratoryVisitEventFactory.create_batch(2, visitor=visitor, occurred_at=now - timedelta(days=9))
+        LaboratoryVisitEventFactory.create_batch(5, visitor=visitors[0], occurred_at=now - timedelta(hours=1))
+
+        assert get_facility_visit_metrics() == {"count": 1, "trend": -75}
+
+
+@pytest.mark.django_db
 class TestPopulationSeries:
     def test_missing_days_are_omitted_and_today_is_live(self, today):
         _daily(ActiveLaboratoryObservationFactory, today - timedelta(days=2), active_laboratory_count=5)
