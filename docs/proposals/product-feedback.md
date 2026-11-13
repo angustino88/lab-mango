@@ -25,7 +25,7 @@ We have no measure of how satisfied users are with each page.
 | AC3 | Every submission records the page it was sent from (`page_key`), the app version, and limited client context. It never stores the full URL, query string or page content. |
 | AC4 | A retried or double-clicked submit creates one row (`client_submission_id`). Reusing the id with a different body returns `422 idempotency_key_reuse`. |
 | AC5 | Each user can submit at most 20 feedback items per hour (configurable). Above that: `429` with `Retry-After`. |
-| AC6 | Users see and can delete their own feedback while it is still `new`. Agents and admins see all feedback, with author. Everyone else gets `404`. API keys and agents (devices) have no access. |
+| AC6 | Users see and can delete their own feedback while it is still `new`. Agents and admins see all feedback, with author. **Feedback viewers** (a read-only grant, section 8) see all feedback and insights **without** author or triage notes. Everyone else gets `404`. API keys and agents (devices) have no access. |
 | AC7 | Agents move feedback through a triage state machine (`new` → `acknowledged` → `planned` → `closed` with a resolution). Each change needs `If-Match`, is recorded as an immutable event, and a disallowed change returns `409 invalid_state_transition`. |
 | AC8 | An agent can convert feedback into a support ticket on behalf of the author. Converting twice returns the same ticket. |
 | AC9 | Agents get page insights for a period of at most 366 days: per `page_key`, the rating count, average, score distribution, share of 4 and 5 ("satisfied"), and general feedback count by category. |
@@ -55,6 +55,13 @@ NPS or effort surveys.
 - DRF throttles are configured with per-scope rates from the environment (`config/settings/base.py:374-385`).
   Throttles fail closed with `503` on a cache outage (`core/users/tests/features/auth/test_cache_outage.py`).
 - Request correlation ids exist (`core/common/api/correlation.py:16`).
+- The support desk outbox already delivers **in-app** notifications: `OutboxChannel.IN_APP`
+  (`core/support_desk/contracts.py:192`), `IN_APP_ONLY` and the idempotent `queue_notification`
+  (`core/support_desk/features/tickets/application/notifications.py:19,45`), dispatched over WebSocket with
+  batch claiming and retries by `process_notification_outbox` (`.../application/tasks.py:65`).
+- Labs has exactly three roles: `admin` ⊃ `coord` ⊃ `user` (`core/users/access.py:40`). `coord` also grants
+  booking approval, procurement, expenses and finance reports (`core/users/access.py:8-10`). There is no
+  read-only role.
 
 **Why support desk and not a new app.** Core architecture says a stateful business capability needs an
 owning app, and that new apps are created "only when requirements establish that ownership"
@@ -164,6 +171,7 @@ optional `page_key` prefix (`labs.`), one row per `page_key`:
 core/support_desk/models/feedback/
 ├── __init__.py              # re-exported from core/support_desk/models/__init__.py
 ├── feedback.py              # ProductFeedback, enums, FEEDBACK_STATUS_TRANSITIONS
+├── viewer.py                # ProductFeedbackViewer, ProductFeedbackViewerEvent
 └── event.py                 # ProductFeedbackEvent (immutable)
 
 core/support_desk/features/feedback/        # split layout
@@ -195,10 +203,15 @@ flowchart LR
 | `ProductFeedback.ticket` → `SupportTicket` | Same-app FK, written only by `convert_feedback`. Documented in both features' architecture docs. |
 | Nothing imports `feedback` in v1 | A future dashboard tile uses `feedback.public` read projections only. |
 
-`resolve_support_role` currently lives in `tickets/application/policies.py`, a private layer. The feedback
-feature must not import it. The implementation either exports it from `tickets.public` or moves it to
-`core/support_desk/policies.py` (app level). This is the only change outside the new feature; it is
-named here so the reviewer can check it.
+Two support desk helpers live in the ticket feature's private layer and are needed here:
+`resolve_support_role` (`tickets/application/policies.py:19`) and `queue_notification`
+(`tickets/application/notifications.py:45`, phase 1.1). The feedback feature must not import either.
+**Chosen:** move both, unchanged, to app-level modules `core/support_desk/policies.py` and
+`core/support_desk/notifications.py`, and have `tickets` import them from there. They are app concepts
+(support roles, the app's outbox), not ticket concepts, so the app level is their correct owner
+(core architecture section 3, placement rule 2). Exporting them from `tickets.public` would make feedback
+depend on tickets for things tickets does not own. This is a behavior-preserving move; the existing ticket
+tests are its regression gate. It is the only change outside the new feature.
 
 Enforcement: an architecture test in `tests/architecture/` checks that `support_desk.features.feedback`
 imports other features only through `public` and `contracts`, and that nothing outside imports its private
@@ -212,16 +225,18 @@ All routes under the existing `/api/support/` prefix, slashless, standard envelo
 | Method and path | Who | Purpose | Success |
 |---|---|---|---|
 | `POST /api/support/feedback` | any signed-in user | Submit; throttle scope `support_feedback` | `201` + `Location`; `200` on identical replay |
-| `GET /api/support/feedback` | requester (own) · agent (all) | List, page style, maximum page size 100 | `200` |
-| `GET /api/support/feedback/{id}` | author · agent | Detail with strong `ETag` | `200` |
+| `GET /api/support/feedback` | requester (own) · agent, viewer (all) | List, page style, maximum page size 100 | `200` |
+| `GET /api/support/feedback/{id}` | author · agent · viewer | Detail with strong `ETag` | `200` |
 | `DELETE /api/support/feedback/{id}` | author, while `new` | Delete | `204` |
 | `POST /api/support/feedback/{id}/actions/transition` | agent | `{to_status, resolution, duplicate_of_id, note}`; `If-Match` required | `200` + new `ETag` |
 | `POST /api/support/feedback/{id}/actions/convert-to-ticket` | agent | `{category_id, priority_id}` | `200` |
 | `GET /api/support/feedback/{id}/events` | agent | Triage history | `200` |
-| `GET /api/support/feedback/insights` | agent | Per-page summary, paginated, max 100 rows | `200` |
+| `GET /api/support/feedback/insights` | agent · viewer | Per-page summary, paginated, max 100 rows | `200` |
 | `GET /api/support/feedback/options` | any signed-in user | Kinds, categories, statuses, resolutions | `200` |
+| `GET`, `POST /api/support/feedback/viewers` | support admin | List and grant viewer access `{user_id, reason}` | `200` / `201` (`200` if already granted) |
+| `DELETE /api/support/feedback/viewers/{user_id}` | support admin | Revoke | `204` |
 
-`{id}` uses the `int` converter so `insights` and `options` are not shadowed; a routing test checks it.
+`{id}` uses the `int` converter so `insights`, `options` and `viewers` are not shadowed; a routing test checks it.
 
 **List filters** (allowlisted, unknown keys `400`): `kind`, `category`, `status`, `resolution`,
 `page_key`, `page_key_prefix`, `score_min`, `score_max`, `has_message`, `app_version`, `created_after`,
@@ -289,7 +304,7 @@ and `request_id` set to `null` and listed in `meta.restricted_fields` (SEC-3). T
 | 422 | `validation_failed` with `details` | Wrong field set for the kind, score out of range, message too long or blank, bad `page_key`, unknown `client_context` key, `duplicate_of_id` is self or a duplicate (`does_not_exist` / `invalid`), unknown or read-only field |
 | 422 | `idempotency_key_reuse` | Same `client_submission_id` with a different body |
 | 429 | `rate_limited` | Over the per-user submit rate, with `Retry-After` |
-| 403 | `permission_denied` | A requester calling an agent route |
+| 403 | `permission_denied` | A requester or feedback viewer calling an agent route; anyone but a support admin managing viewers |
 | 503 | `service_unavailable` | Throttle store down (fails closed, as login does) |
 
 ## 6. Data model, constraints, concurrency
@@ -394,7 +409,31 @@ Each budget is a `django_assert_num_queries` test with at least 3 rows and their
 | Anonymous, API key, agent device | — | — | — | — | — | — |
 | Signed-in user (support requester) | yes | yes (restricted fields) | — | yes | — | — |
 | Support agent (Labs coordinator) | yes | yes | yes | yes | yes | yes |
-| Support admin (Labs admin) | as agent | | | | | |
+| Support admin (Labs admin) | as agent, plus grant and revoke feedback viewers | | | | | |
+| Feedback viewer (grant, any role) | yes | yes | yes, **without** author, triage note, user agent, request id | yes | — | yes |
+
+**Feedback viewer grant (Q2).** The product owner needs to read feedback and insights, but the only Labs
+role that allows it today, `coord`, also grants booking approval and finance. Least privilege rules that out.
+A new Labs role would change the `core.users` role vocabulary for one read-only need. **Chosen:** a
+support-desk-scoped grant, `ProductFeedbackViewer`:
+
+| Field | Notes |
+|---|---|
+| `user` | FK user, `CASCADE`, unique (`product_feedback_viewer_user_unique`) |
+| `granted_by` | FK user, `SET_NULL` |
+| `granted_at` | timestamptz |
+| `reason` | text, required, not blank (`product_feedback_viewer_reason_present`) |
+
+- Managed by support admins only: `GET/POST /api/support/feedback/viewers`,
+  `DELETE /api/support/feedback/viewers/{user_id}`, and Django admin (read-only there; writes go through the
+  commands `grant_feedback_viewer` / `revoke_feedback_viewer`). Grant is idempotent (unique `user`; already
+  granted returns the existing grant). Every grant and revoke writes an immutable
+  `ProductFeedbackViewerEvent` (actor, user, action, reason, `created_at`).
+- Inactive users lose access automatically: the policy checks `user.is_active` together with the grant.
+- The grant gives read access only. It never allows triage, conversion, or seeing who wrote an item, which
+  keeps the confidentiality promise of Q7.
+- Granting it is an access-control change and needs the explicit authorization AGENTS.md rule 9 requires;
+  the admin endpoint is the authorized, audited path for it.
 
 - Deny by default: a permission class at the HTTP edge, `ensure_*` policies in commands, and object scope
   in queries (requesters get `author_id = actor.id`). Out-of-scope reads return `404`.
@@ -433,7 +472,7 @@ earlier events. Erased items keep their triage status and stay in insights.
 
 | Phase | Scope | Must ship by |
 |---|---|---|
-| 1.1 Author notification (Q5) | In-app notification only, no email, when an item closes as `implemented` or `converted_to_ticket`. One notification per item, through the support desk outbox with a deterministic event id (`uuid5(feedback uid, resolution)`). Never for `declined`, `duplicate` or `no_action_needed`. Whether the outbox has an in-app channel is **not verified**. | — |
+| 1.1 Author notification (Q5) | In-app notification only, no email, when an item closes as `implemented` or `converted_to_ticket`. One notification per item, through the support desk outbox with a deterministic event id (`uuid5(feedback uid, resolution)`). Never for `declined`, `duplicate` or `no_action_needed`. Uses the existing `IN_APP` channel via `queue_notification` after it moves to app level (section 4), queued in the transition or convert transaction. Verified feasible. | — |
 | 1.2 Retention purge (Q6) | Celery beat task running daily: rows older than 12 months get the same erasure as `erase_author_feedback`, keyset batches, re-enqueue for the rest, idempotent. | Launch + 11 months, before the first rows reach 12 months |
 | 2 Screenshots (Q4) | Opt-in only: the user presses "Add screenshot", gets a blackout/highlight tool before upload, sees the image before sending. Stored with the support desk attachment storage and scanner, erased after 90 days, visible to agents only. | — |
 
@@ -450,7 +489,7 @@ prompt fatigue, the most common reason these widgets get ignored:
 
 ## 10. Migration, rollout, rollback
 
-1. Migration (schema, additive): two new tables in `support_desk`, with constraints and indexes. No change to
+1. Migration (schema, additive): four new tables in `support_desk` (feedback, feedback event, viewer grant, viewer event), with constraints and indexes. No change to
    existing tables. Reversible.
 2. Settings: `SUPPORT_FEEDBACK_ENABLED` (default `False`), throttle rate `support_feedback`
    (`THROTTLE_SUPPORT_FEEDBACK`, default `20/hour`), `SUPPORT_FEEDBACK_MIN_RATINGS_FOR_AVERAGE` (default 5).
@@ -488,6 +527,8 @@ prompt fatigue, the most common reason these widgets get ignored:
 | AC11 | `api/test_routes.py::test_flag_off_404`, `::test_detail_does_not_shadow_named_routes`; OpenAPI parity gate |
 | AC12 | `application/test_erase_author_feedback.py::test_erases_personal_fields_keeps_score`, `::test_second_run_no_changes`, `::test_requires_support_admin`, `::test_erased_general_item_satisfies_constraints`, `::test_event_notes_blanked` |
 | Model | `core/support_desk/tests/models/test_product_feedback_constraints.py`: each named constraint rejects a direct invalid write |
+| Viewer grant | `application/test_feedback_viewers.py::test_viewer_reads_without_author`, `::test_viewer_cannot_triage_403`, `::test_inactive_viewer_404`, `::test_grant_idempotent`, `::test_only_support_admin_grants`, `::test_grant_and_revoke_write_events` |
+| Helper move | existing `core/support_desk/features/tickets/tests` pass unchanged; architecture test forbids feedback importing `tickets.application` |
 | Boundary | `tests/architecture/test_support_feedback_boundaries.py`; `test_public.py` exports and DTOs |
 
 Gates to report on implementation (quality gates): ruff check and format and mypy on changed paths, focused
@@ -514,7 +555,7 @@ use. Each one becomes binding only when the owner approves this document.
 | # | Decision | Recommendation | Reason |
 |---|---|---|---|
 | Q1 | Owning app | **Support desk feature** (`core/support_desk/features/feedback`) | Service desks usually hold product feedback next to tickets; the app already has the roles, tickets and outbox. Revisit if a separate product team takes ownership. |
-| Q2 | Who triages | **Support agents do first-pass triage; the product owner reviews insights weekly. No new role in v1.** | Support sorts quickly (bugs to tickets, duplicates merged); the product owner decides what is built. A new role is an access-control change; add it only when needed. The product owner needs the coordinator or admin Labs role to read insights (who that is: **not verified**). |
+| Q2 | Who triages | **Support agents do first-pass triage. The product owner reviews insights weekly through a read-only *feedback viewer* grant, given by a support admin (section 8). No new Labs role.** | Support sorts quickly (bugs to tickets, duplicates merged); the product owner decides what is built. The coordinator role would over-grant (booking approval, finance), and a new Labs role changes the user app for one read-only need. Who the product owner is, is a staffing fact the owner fills in when granting. |
 | Q3 | Signed-out pages | **No** | An anonymous form attracts spam and needs a CAPTCHA. Sign-in problems go to the existing support contact channel. |
 | Q4 | Screenshots | **Not in v1.** Phase 2: opt-in, with a blackout/highlight tool, 90-day retention, agents only (section 9). | Screenshots in a lab tool often show other people's bookings and names. |
 | Q5 | Notify the author | **Phase 1.1: in-app only, only for `implemented` and `converted_to_ticket`, one per item. No email.** | Closing the loop keeps people sending feedback; notices for every status change are noise, and "declined" notices annoy more than help. |
@@ -530,7 +571,7 @@ use. Each one becomes binding only when the owner approves this document.
 - **Assumed:** agents may create tickets on behalf of any requester under `can_create_ticket_on_behalf` (not
   verified in detail; conversion fails with that policy's error if not).
 - **Not verified:** whether an existing endpoint exposes feature flags to the frontend.
-- **Required change outside the feature:** support role resolution must be reachable without importing
-  `tickets/application/policies.py` (section 4).
+- **Required change outside the feature:** move `resolve_support_role` and `queue_notification` to the
+  support desk app level, unchanged (section 4). Regression gate: the existing ticket tests.
 - **Gap:** no import-linter contract; the architecture test is the boundary gate.
 - **Residual risk:** `q` text search is a full scan; acceptable at expected volume, revisit with measurements.
