@@ -58,46 +58,78 @@ path for nodes, no idempotency, no history aggregation, no retention, and no rea
 **Out of scope for v1**: threshold alerts, energy billing / expense linkage, MQTT transport, control
 commands to nodes. §9 shows where each attaches later.
 
-### 2.1 Field topology (stated by owner 2026-11-13)
+### 2.1 Field topologies (stated by owner 2026-11-13)
+
+Both are supported at the same time, even in the same room.
+
+**T-A: PC mode.** The station node plugs into a PC on the station (USB serial). The PC's existing Lab Mango
+agent forwards the data.
+
+**T-B: Master mode.** Station nodes join the room master over Wi-Fi. The master forwards for the room and may
+carry room-level sensors itself.
 
 ```mermaid
 flowchart LR
-  subgraph Station A
-    S1[RS485 sensors<br/>Modbus RTU: power meter,<br/>temp/humidity probe] -- RS485 --> N1[Station node]
+  subgraph "Station A (T-A: PC mode)"
+    SA[RS485 sensors] -- RS485 --> NA[Station node]
+    NA -- USB serial --> PC[Station PC<br/>Lab Mango agent<br/>+ telemetry bridge]
   end
-  subgraph Station B
-    S2[RS485 sensors] -- RS485 --> N2[Station node]
+  subgraph "Room 3 (T-B: master mode)"
+    SB[RS485 sensors] -- RS485 --> NB[Station node<br/>Station B]
+    SC[RS485 sensors] -- RS485 --> NC[Station node<br/>Station C]
+    NB -- Wi-Fi --> M[Room node / master]
+    NC -- Wi-Fi --> M
+    RS[Room sensors<br/>temp, humidity, main meter] -- RS485 --> M
   end
-  N1 -- Wi-Fi --> M[Master node<br/>one per room]
-  N2 -- Wi-Fi --> M
-  MS[Room sensors on master<br/>optional] --> M
-  M -- "signed HTTPS (only device<br/>that talks to the server)" --> API[Lab Mango backend]
+  PC -- signed HTTPS --> API[Lab Mango backend]
+  M -- signed HTTPS --> API
 ```
 
 Consequences for the design:
-- Only the **master node** holds a server credential (`AgentIdentity`). Station nodes never reach the server.
-- The master is trusted to speak for **its room only**. It may forward data only from station nodes that the
-  server has bound to stations in that room.
-- A station node is identified by a factory **device UID** (for example its MAC or chip ID). The server, not
-  the firmware, decides which station that UID belongs to, so moving or swapping a node needs no reflash.
-- RS485 sensors are **channels** of a station node: a Modbus slave address plus a sensor profile (register
-  map). Their configuration is server-defined and pulled by the master.
+- One abstraction covers both: a **gateway** is any signed agent that forwards node data. Kinds:
+  `room_master` (scope = one room) and `station_pc` (scope = one station). Only gateways hold server
+  credentials (`AgentIdentity`). Station nodes never reach the server in either topology.
+- The PC gateway reuses the PC's **existing** `AgentIdentity` (bound to that PC's `Equipment`,
+  `core/agents/models/agent_identity.py:31`). No second credential on the PC.
+- A station node is identified by a factory **device UID** (MAC or chip ID). The server, not the firmware,
+  decides which station it belongs to. Moving a node from PC mode to master mode, or swapping it, needs no
+  reflash and keeps the station's history.
+- RS485 sensors are **channels** of a node: a Modbus slave address plus a sensor profile (register map),
+  configured in Lab Mango (D5).
 
 ---
 
 ## 3. Key decisions
 
-### D1 Device identity: master = signed agent; station node = registered device behind it (recommended)
+### D1 Device identity: gateway (master or station PC) = signed agent; station node = registered device behind it (recommended)
 
 | Option | For | Against |
 |---|---|---|
-| **A. Master and station nodes are `Equipment` (category `environment_gateway` / `environment_node`). Only the master gets an `AgentIdentity`. Station nodes are `TelemetryDevice` rows keyed by a unique `device_uid`.** (recommended) | No change to `core.agents`; one credential per room; inventory/lifecycle/procurement of nodes come free; swapping a node is a server-side rebind | Server trusts the master to report honestly for its room's nodes (bounded by room scope) |
+| **A. Master and station nodes are `Equipment` (category `environment_gateway` / `environment_node`). Only gateways hold an `AgentIdentity` (the master's own, or the station PC's existing one). Station nodes are `TelemetryDevice` rows keyed by a unique `device_uid`.** (recommended) | No change to `core.agents`; one credential per room (master) or none new (PC mode); inventory/lifecycle/procurement of nodes come free; swapping a node is a server-side rebind | Server trusts the gateway to report honestly for nodes in its scope (room or station) |
 | B. Every station node gets its own `AgentIdentity` and the master relays signed envelopes | End-to-end proof per node | Ed25519 + clock + key storage on every node; master can't batch-sign; much more firmware |
 | C. Station nodes are not modeled; master reports "station id" directly | Simplest | Firmware decides the scope (breaks F4); rewiring needs reflash; no per-node health |
 
 Constraint: the master signs with Ed25519 (ESP32-class MCUs support it via libsodium / mbedTLS;
 **not verified** on the target hardware). Station-node ↔ master trust on Wi-Fi is a firmware concern;
 the backend stores each node's key fingerprint so the master can enforce it (§5.0, Q7).
+
+### D5 Sensor configuration: defined in Lab Mango, discovered by the node (recommended)
+
+| Option | For | Against |
+|---|---|---|
+| **A. Lab Mango is the source of truth for *what is where and what it measures*; nodes scan the RS485 bus and report; staff confirm the profile** (recommended) | Swap/move without reflash; one place to audit; channels map to metrics with DB constraints; works identically in both topologies | Needs config sync (`GET /agent/telemetry/config`) and a profile library |
+| B. Configured only in node firmware/local web UI | No server work | Server can't validate what a reading means; each swap is a field visit; config drifts per node |
+| C. Fully automatic (node guesses sensor model from scan) | Zero touch | Modbus has no standard device-ID; wrong register map = silently wrong data |
+
+Split of responsibility:
+
+| Configured in Lab Mango | Stays on the device |
+|---|---|
+| Device registry, role, claim, fingerprint | Wi-Fi credentials, master SSID (provisioned locally via setup AP/BLE) |
+| Gateway → room/station, node → station | Firmware, OTA (out of scope v1) |
+| Channels: Modbus address → profile → metric, enabled | Serial driver, polling loop, retry |
+| Sensor profiles (register map, baud, parity, scale) | Node ↔ gateway pairing key |
+| Sample/push interval | Clock sync from gateway |
 
 ### D2 Transport: signed HTTPS batch push now; MQTT later only if measured need
 
@@ -138,7 +170,7 @@ document during model-design).
 
 | Concept | Owner | Used through |
 |---|---|---|
-| `TelemetryDevice`, `GatewayRoomBinding`, `NodeStationBinding`, `SensorProfile`, `TelemetryChannel`, `TelemetrySample`, `TelemetryRollup`, `TelemetryLatest`, `TelemetryNodeHealth` | telemetry (new) | `telemetry/public.py`, `telemetry/contracts.py` |
+| `TelemetryDevice`, `GatewayScopeBinding`, `NodeStationBinding`, `SensorProfile`, `TelemetryChannel`, `TelemetrySample`, `TelemetryRollup`, `TelemetryLatest`, `TelemetryNodeHealth` | telemetry (new) | `telemetry/public.py`, `telemetry/contracts.py` |
 | Room, Station existence, view policy | locations | `core/labs/features/locations/public.py` |
 | Node/master equipment, `environment_gateway` / `environment_node` categories | equipment | `core/labs/features/equipment/public.py` |
 | Node identity, signature verification | `core.agents` | `core/agents/public.py` (`require_active_agent_identity`) |
@@ -154,7 +186,7 @@ flowchart LR
   N -- "GET /agent/telemetry/config" --> AG
   N -- "signed HTTPS<br/>POST /agent/telemetry/samples/bulk" --> AG[core.agents<br/>signature auth]
   AG --> CMD[telemetry.application<br/>record_telemetry_batch]
-  CMD -- resolve room + station bindings --> B[(GatewayRoomBinding<br/>NodeStationBinding)]
+  CMD -- resolve room + station bindings --> B[(GatewayScopeBinding<br/>NodeStationBinding)]
   CMD -- INSERT ... ON CONFLICT DO NOTHING --> S[(TelemetrySample)]
   CMD -- conditional upsert --> L[(TelemetryLatest)]
   CMD -- on_commit --> P[publish_service<br/>Redis pub/sub]
@@ -176,7 +208,7 @@ flowchart LR
 | Field | Type | Notes |
 |---|---|---|
 | `equipment` | OneToOne `labs.Equipment`, PROTECT, null | null while `discovered` (not yet claimed into inventory) |
-| `role` | char: `gateway` / `station_node` | |
+| `role` | char: `room_master` / `station_pc` / `station_node` | `station_pc` rows point at the PC's existing Equipment |
 | `device_uid` | char(64), **unique** | factory ID: MAC or chip ID, normalized uppercase. `Equipment.mac_address` is not unique (`equipment.py:144`), so uniqueness lives here |
 | `key_fingerprint` | char(128), blank | node's local key, reported by master on discovery, confirmed at claim (QR label) |
 | `state` | `discovered` → `claimed` → `retired` | own state machine, not equipment lifecycle (rule 2) |
@@ -186,21 +218,32 @@ flowchart LR
 
 DB: `CHECK (state = 'discovered' OR equipment_id IS NOT NULL)`.
 
-### 5.1 Bindings: master → room, station node → station
+### 5.1 Bindings: gateway → scope, station node → station
 
-Two tables with the same shape, so each has real foreign keys and its own constraints.
-
-`GatewayRoomBinding`: `gateway` (FK `TelemetryDevice`), `room` (FK `labs.Room`), `valid_from`, `valid_to`.
-- Exclusion `gateway WITH =, tstzrange(valid_from, valid_to) WITH &&` — a master serves one room at a time.
-- Exclusion `room WITH =, tstzrange(valid_from, valid_to) WITH &&` — **one master per room** at a time.
+`GatewayScopeBinding`: `gateway` (FK `TelemetryDevice`), `room` (FK `labs.Room`, null), `station`
+(FK `labs.Station`, null), `valid_from`, `valid_to`.
+- `CHECK ((room_id IS NULL) <> (station_id IS NULL))`; `room_master` ⇒ room set, `station_pc` ⇒ station set
+  (CHECK on a denormalized `gateway_role` column, or application check).
+- Exclusion on `gateway` range — a gateway has one scope at a time.
+- Exclusion on `room` range (partial `WHERE room_id IS NOT NULL`) — **one master per room** at a time.
+- Several PCs may serve the same station; duplicates from two forwarders are removed by `UNIQUE (node, sample_id)`.
+- PC gateway scope is set **explicitly**, not derived live from the PC's bench assignment
+  (`EquipmentAssignment` → `Bench.station_slot` → `StationSlot.station`). Deriving it would silently move data
+  to another station when someone reassigns the PC. The UI pre-fills the station from that chain and warns
+  when they disagree.
 
 `NodeStationBinding`: `node` (FK `TelemetryDevice`), `station` (FK `labs.Station`), `label`, `valid_from`, `valid_to`.
 - Exclusion on `node` range — a node is on one station at a time.
-- Exclusion on `station` range — one node per station (owner's topology; relax if a station gets two, Q8).
-- Application check `station.room == gateway's room` when binding and at ingest (a cross-table rule
-  PostgreSQL can't express as a constraint; guarded by `select_for_update` on the gateway binding).
+- Exclusion on `station` range — one node per station (relax if a station gets two, Q8).
+- The node binding does **not** name a gateway. Which gateway forwards is a transport fact; switching T-A ↔ T-B
+  needs no rebind.
 
-Room-level sensors wired to the master itself are channels of the gateway device, scoped to the room.
+**Ingest authorization rule** (application, under `select_for_update` on the gateway's binding): a gateway may
+forward a sample from node *n* at time *t* only if *n*'s station binding at *t* is inside the gateway's scope:
+`room_master` → `station.room_id == scope.room_id`; `station_pc` → `station_id == scope.station_id`.
+
+Room-level sensors wired to the master are channels of the `room_master` device, scoped to its room. A PC
+gateway has no own channels in v1.
 
 All exclusion constraints use `btree_gist`, already installed by `core/labs/migrations/0001_initial.py`.
 Common: `CHECK (valid_to IS NULL OR valid_to > valid_from)`; audit via `TimeStampedModel`, `UserStampedModel`.
@@ -219,13 +262,41 @@ Common: `CHECK (valid_to IS NULL OR valid_to > valid_from)`; audit via `TimeStam
 `config_version` (int, on the gateway's `TelemetryDevice`) increments in the same transaction as any change to
 that room's bindings or channels (`select_for_update` on the gateway row), so the master knows when to re-pull.
 
+### 5.1c Node and gateway design (firmware/agent, for the device team)
+
+One station-node hardware and firmware for both topologies; the uplink is chosen at provisioning.
+
+| Device | Hardware (suggested) | Responsibilities | Holds server credential? |
+|---|---|---|---|
+| **Station node** | MCU with Wi-Fi + USB (ESP32-S3 class), RS485 transceiver, optional local temp/humidity | Poll RS485 channels per config; stamp `sample_id` (UUID) and `seq`; ring buffer (≥ 1 h); send frames up the uplink; report bus scan and firmware version | No |
+| **Room node (master)** | Same MCU class or small Linux SBC; Wi-Fi AP/STA, Ethernet preferred for uplink; RS485 for room sensors; secure key storage | Run room SSID or join lab Wi-Fi; authenticate nodes (pairing key, Q7); time source for nodes; buffer (≥ 24 h); batch + sign to backend; pull config and fan out to nodes | Yes (`AgentIdentity`) |
+| **PC telemetry bridge** | Software module in the existing PC agent ("Collectors", `docs/agent-platform/device-design.md` §2) | Read node frames over USB serial; same buffering/batching/config pull as master, scoped to its station; no access to the agent's private key outside the backend client | Uses the PC's existing identity |
+
+**Node frame** (identical on Wi-Fi and USB, so the gateways share one parser):
+
+```json
+{"v": 1, "device_uid": "A4:CF:12:9B:00:21", "seq": 18233, "sample_id": "6f1c…",
+ "observed_at": "2026-11-13T09:00:10Z", "clock": "synced",
+ "config_version": 17,
+ "readings": [{"bus_address": 1, "metric": "power_w", "value": "1830.5"},
+              {"bus_address": 2, "metric": "temperature_c", "value": "22.40"}]}
+```
+
+- `clock: "unsynced"` + `uptime_ms` instead of `observed_at` when the node has no time yet; the gateway
+  converts using its own clock and marks the sample `quality = suspect` if the offset is uncertain.
+- The gateway acknowledges by `seq`; the node deletes from its buffer only after ack.
+- A reading for a channel not in the node's config is dropped at the gateway and counted, never forwarded.
+
+Node lifecycle as seen by the backend: `discovered` → `claimed` (+ station binding) → `retired`. Connectivity
+(`online/stale/offline/unknown`) is separate (§5.5).
+
 ### 5.2 `TelemetrySample`: raw, append-only
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | BigAutoField | |
 | `node` | FK `TelemetryDevice`, PROTECT | station node, or the gateway for room sensors |
-| `gateway` | FK `TelemetryDevice`, PROTECT | master that forwarded it |
+| `gateway` | FK `TelemetryDevice`, PROTECT | master or PC that forwarded it (first accepted copy) |
 | `node_binding` | FK `NodeStationBinding`, null | scope resolved server-side at `observed_at`; null for room sensors |
 | `room` | FK `labs.Room`, null | denormalized from binding for indexed reads |
 | `station` | FK `labs.Station`, null | denormalized from binding |
@@ -278,7 +349,8 @@ All operator responses use the envelope and error rules in `docs/api/response-st
 
 ### 6.1 Device ingest (signed, `core.agents` auth)
 
-Only the master calls these. Its identity comes from the signature; the body never carries a room or station id.
+Only gateways call these (room master or station PC; same endpoints, scope differs). Identity comes from the
+signature; the body never carries a room or station id. In the examples below "master" means either gateway kind.
 
 **Config pull** — `GET /agent/telemetry/config` with `If-None-Match: "<config_version>"` → `304` or `200`:
 
@@ -344,9 +416,10 @@ Validation and rejection:
 | Method and path | Purpose |
 |---|---|
 | `GET /api/labs/telemetry/devices?state=discovered&room_id=` | devices with state, binding, connectivity, config version applied |
-| `POST /api/labs/telemetry/gateways/{device_id}/actions/bind-room` | bind master to a room (ends its previous binding) |
+| `POST /api/labs/telemetry/gateways` | register a gateway: `room_master` (new Equipment) or `station_pc` (existing PC Equipment with an active agent) |
+| `POST /api/labs/telemetry/gateways/{device_id}/actions/bind-scope` | bind to a room (master) or station (PC); ends previous binding |
 | `POST /api/labs/telemetry/devices/{device_id}/actions/claim` | `discovered` → `claimed`: confirm fingerprint, create or link Equipment |
-| `POST /api/labs/telemetry/devices/{device_id}/actions/bind-station` | bind station node to a station in the gateway's room (ends previous binding) |
+| `POST /api/labs/telemetry/devices/{device_id}/actions/bind-station` | bind station node (must be inside a gateway's scope to be accepted at ingest) (ends previous binding) |
 | `POST /api/labs/telemetry/devices/{device_id}/actions/unbind` | end the current binding (node removed or broken) |
 | `GET/POST/PATCH/DELETE /api/labs/telemetry/devices/{device_id}/channels` | RS485 channels |
 | `GET/POST /api/labs/telemetry/sensor-profiles` | register-map reference data |
@@ -382,6 +455,14 @@ sequenceDiagram
   M->>API: POST /agent/telemetry/samples/bulk
   API-->>UI: ws/telemetry/stations/{id} live values
 ```
+
+**PC mode (T-A)** differs only in the first part: no new hardware enrollment. Staff enable the telemetry
+bridge on the station PC (already enrolled), register it as a `station_pc` gateway, and bind it to the station
+(pre-filled from the PC's bench assignment). Plugging the node into USB triggers the same discovery → claim →
+bind-station → config steps.
+
+**Switching a station from PC mode to master mode**: unplug from PC, provision the node onto the room Wi-Fi.
+No server change; the station binding is unchanged and the master's scope already covers the station.
 
 Swapping a broken node: unbind old → new node is discovered → claim + bind-station. History stays on the
 station because samples carry the binding. Moving a station to another room requires rebinding its node under
@@ -468,4 +549,6 @@ PostgreSQL ≥ 15 (CI uses 16).
 | Q7 | Node ↔ master link security: dedicated per-room WPA2 SSID only, or also a per-node key checked by the master against `key_fingerprint`? | Both |
 | Q8 | Exactly one node per station, or allow several (e.g. two PDUs)? | One; drop the station exclusion if needed |
 | Q9 | Which RS485 sensor models are used (needed to write the first `SensorProfile` register maps)? | Owner to list |
-| Q10 | Should RS485 config live on the server (pulled by master) or stay in firmware? | Server, so swaps need no reflash |
+| Q10 | Should RS485 config live on the server (pulled by master) or stay in firmware? | Server (D5-A), so swaps need no reflash |
+| Q11 | PC mode: does the station PC always run the Lab Mango agent? If a station has no enrolled PC, should the node push directly over Wi-Fi with its own identity (a third topology)? | Not in v1; use master mode |
+| Q12 | PC bridge ships in the existing agent (needs `docs/agent-platform/device-design.md` update and agent release) or as a separate service? | Existing agent, as a collector |
