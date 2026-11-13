@@ -116,7 +116,7 @@ Consequences for the design:
 Trust limits on the LAN: Modbus TCP has no authentication and the W630 has only a web-admin password, so
 station data integrity rests on network isolation (§7), not on device crypto.
 
-### D6 Collection mode: host PC polls each W630 over Modbus TCP (recommended)
+### D6 Collection mode: host PC polls each W630 over Modbus TCP (**decided by owner 2026-11-13**)
 
 | Option | For | Against |
 |---|---|---|
@@ -389,11 +389,8 @@ register maps. No Lab Mango change is needed for this phase.
    Record: register, function code, raw words, decoded value, display value, word order, scale.
 6. **Hand back** the recorded table; it becomes the `chint_ddsu666@1` and `es35_sw@1` profiles.
 
-**If "W630 pushes data" means the W630 itself sends readings** (it polls the sensors and publishes over MQTT
-or HTTP), test that in step 4 as well: search results confirm the W630 has an MQTT client, but not that it
-can poll registers and publish decoded values by itself (that is documented for other PUSR models such as
-the USR-N720). If it can, D6-C becomes an option; it still needs a broker on the host PC (new dependency,
-rule 7) and per-device register config in each W630, so D6-A (host PC polls) stays recommended until owner decides (Q16).
+**Data flow decided (Q16):** the host PC polls the W630 (D6-A); the W630 stays in Modbus TCP gateway mode and
+does not publish MQTT.
 
 ### 5.1e Site network: UniFi Cloud Gateway Ultra + U7 Long-Range (owner, 2026-11-13)
 
@@ -687,7 +684,7 @@ at 10 s; production PostgreSQL ≥ 15 (CI uses 16).
 
 | # | Question | Recommended default |
 |---|---|---|
-| Q1 | Approve host PC as gateway and W630 as Equipment-backed converter (D1-A) with Modbus TCP polling (D6-A)? | Yes |
+| Q1 | Approve host PC as gateway and W630 as Equipment-backed converter (D1-A)? (Polling D6-A is decided) | Yes |
 | Q2 | Fate of `RoomObservation` and `/rooms/{id}/observations`: keep for manual entries, or deprecate after telemetry ships? | Keep in v1; decide after adoption |
 | Q3 | Who may view a room's/station's telemetry? | Same users who can view the room; staff for all |
 | Q4 | Push interval, raw retention, rollup retention | 10 s; 30 d; 1m for 90 d, 1h for 2 y |
@@ -701,5 +698,5 @@ at 10 s; production PostgreSQL ≥ 15 (CI uses 16).
 | Q12 | ~~Collector in the agent or separate?~~ **Answered: separate service.** Identity consequence in D7 | — |
 | Q13 | Is the room host PC dedicated (runs only the collector, D7-A) and always on? | Dedicated, always on, wired |
 | Q14 | One Gateway Ultra per room, or one for the building with a U7-LR per room? (Decides per-room VLANs, §5.1e) | One IoT VLAN per room either way |
-| Q16 | Data flow: host PC polls the W630 (D6-A), or the W630 pushes MQTT to a broker on the host PC (D6-C)? | D6-A unless the Phase 1 test shows a reason |
+| Q16 | ~~Host PC polls or W630 pushes?~~ **Answered: host PC polls the W630 and pushes to the server (D6-A).** | — |
 | Q15 | Host PC OS (Windows/Linux) and the collector's language/runtime? | Linux + Python service |
