@@ -63,7 +63,7 @@ Build the menu from the facts, not from the current label. Variables below: `lif
 | **Lost** | `life === "in_service"` | hide |
 | **Transferred** | `life === "in_service"` | hide |
 | **Retired** | `life` is `planned`, `in_service` or `lost` | hide |
-| **Available** | the label is not already Available, and `life !== "retired"` | hide |
+| **Available** | the label is not already Available, and `life !== "retired"`. When `life === "lost"`, label the item **Found**: the unit comes back as **Maintenance**, not Available | hide |
 | On order, Calibration overdue | never | they are not chosen by hand |
 
 Lost, Transferred and Retired also need the unit off its bench, and Transferred and Retired need it
@@ -190,6 +190,7 @@ export function stepFor(target: string, e: Equipment, caps: string[]): Step | nu
     case "retired":     return ["planned", "in_service", "lost"].includes(life) ? lifecycle("retired", "retire") : null;
     case "available":
       if (life === "retired") return null;
+      if (life === "lost") return lifecycle("in_service", "found"); // comes back as Maintenance
       if (life !== "in_service") return lifecycle("in_service");
       if (cond !== "operational") return condition("operational");
       if (e.loan) return { method: "POST", path: `${base}/actions/return`, body: {}, form: "return" };
