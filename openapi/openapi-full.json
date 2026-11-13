@@ -39757,12 +39757,6 @@
             "type": "string",
             "readOnly": true
           },
-          "image": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true,
-            "readOnly": true
-          },
           "image_url": {
             "type": "string",
             "format": "uri",
@@ -39938,7 +39932,6 @@
           "equipment_url",
           "group",
           "id",
-          "image",
           "image_url",
           "is_favorite",
           "last_inspected_at",
@@ -40319,11 +40312,6 @@
           "remark": {
             "type": "string",
             "maxLength": 255
-          },
-          "image": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
           },
           "type_id": {
             "type": "integer",
@@ -41155,12 +41143,6 @@
             "type": "string",
             "readOnly": true
           },
-          "image": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true,
-            "readOnly": true
-          },
           "image_url": {
             "type": "string",
             "format": "uri",
@@ -41336,7 +41318,6 @@
           "equipment_url",
           "group",
           "id",
-          "image",
           "image_url",
           "is_favorite",
           "last_inspected_at",
@@ -41695,11 +41676,6 @@
           "remark": {
             "type": "string",
             "maxLength": 255
-          },
-          "image": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
           },
           "type_id": {
             "type": "integer",
@@ -55269,11 +55245,6 @@
             "type": "string",
             "maxLength": 255
           },
-          "image": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
-          },
           "type_id": {
             "type": "integer",
             "minimum": 1,
@@ -58521,12 +58492,6 @@
             "type": "string",
             "readOnly": true
           },
-          "image": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true,
-            "readOnly": true
-          },
           "image_url": {
             "type": "string",
             "format": "uri",
@@ -58731,7 +58696,6 @@
           "floor_plan_url",
           "group",
           "id",
-          "image",
           "image_url",
           "label",
           "layout_columns",
@@ -60647,12 +60611,6 @@
             "type": "string",
             "readOnly": true
           },
-          "image": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true,
-            "readOnly": true
-          },
           "image_url": {
             "type": "string",
             "format": "uri",
@@ -60716,7 +60674,6 @@
           "group",
           "height_mm",
           "id",
-          "image",
           "image_url",
           "label",
           "lifecycle_status",

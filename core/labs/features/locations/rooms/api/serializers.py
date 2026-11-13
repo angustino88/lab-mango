@@ -193,7 +193,6 @@ class RoomSerializer(LocationStateFieldsMixin, AppModelSerializer):
             "group",
             "owner",
             "remark",
-            "image",
             "image_url",
             "map_url",
             "length_m",

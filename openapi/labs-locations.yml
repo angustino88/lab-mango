@@ -4581,11 +4581,6 @@ components:
         remark:
           type: string
           readOnly: true
-        image:
-          type: string
-          format: uri
-          nullable: true
-          readOnly: true
         image_url:
           type: string
           format: uri
@@ -4733,7 +4728,6 @@ components:
       - floor_plan_url
       - group
       - id
-      - image
       - image_url
       - label
       - layout_columns
@@ -5719,11 +5713,6 @@ components:
         safety_classification:
           type: string
           readOnly: true
-        image:
-          type: string
-          format: uri
-          nullable: true
-          readOnly: true
         image_url:
           type: string
           format: uri
@@ -5776,7 +5765,6 @@ components:
       - group
       - height_mm
       - id
-      - image
       - image_url
       - label
       - lifecycle_status

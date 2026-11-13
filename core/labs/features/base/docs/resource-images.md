@@ -26,7 +26,13 @@ presigned URL when MinIO is enabled) for avatars.
 2. **One upload endpoint shape.** `/api/labs/{benches|equipment|licenses|rooms|stations}/{id}/image`, served by
    one base view, `ResourceImageAPIView`. A sub-resource is used because licenses have no create/update
    endpoint, and JSON bodies cannot carry files (UPL-7).
-3. **Layering.** The write lives in `base/resource_image_commands.py`. Each feature's application package
+3. **No legacy field.** The old `image` read field (bench, room, station) and bench create/update's `image`
+   input are removed; uploads go only through the `/image` endpoint. Owner decision: the API is still in
+   development, so breaking clients is accepted. The dashboard's bench `image_url` uses `get_media_url` too.
+4. **Lists carry the URL.** `image_url` is part of each resource's row serializer, so every paginated list
+   (`/api/labs/benches`, `/equipment`, `/licenses`, `/rooms`, `/stations`) returns it with the data. No extra
+   request per row.
+5. **Layering.** The write lives in `base/resource_image_commands.py`. Each feature's application package
    binds it to its model (`bench_images = ResourceImageCommands(Bench)`, and so on), and its API view references
    that binding. API views therefore never import `core.labs.models` (each feature's boundary tests enforce this).
    Licenses export `license_images` through `public.py`, because license views use only the public facade.
@@ -60,19 +66,14 @@ Access: the Labs default (`LABS_STAFF_ACCESS`): coordinators, admins and API key
 | UPL-1 one `file` part; unknown or duplicate part → 422 | pass |
 | UPL-3 / FIL-3 type sniffed by Pillow, allowlist enforced (415), size enforced (413) | pass |
 | FIL-7 client filename never used as storage path (`ResourceImageUploadPath`) | pass |
-| NAM-3 URLs end in `_url` | pass for `image_url`. The existing `image` field on bench/room/station is kept unchanged (rule 1, deployed behavior) |
+| NAM-3 URLs end in `_url` | pass |
 | NUL-3 field always present, `null` when unset | pass |
-| VER-2 classification | non-breaking: new optional response field and new endpoints. Nothing removed or renamed |
+| VER-2 classification | breaking: `image` removed from bench/room/station responses and from bench create/update input (owner-approved, API in development) |
 | UPL-2 size enforced while streaming | gap: checked after Django has buffered the upload, as for avatars |
 | FIL-4 downloads through a permission-checked endpoint | gap: `image_url` is a direct media URL or a 7-day presigned MinIO URL, the existing project-wide behavior of `get_media_url` |
 | FIL-6 active content | pass: SVG is not on the allowlist |
 
 ## Follow-ups (not in this change; owner decision)
 
-- Mark the legacy `image` read field on bench/room/station `deprecated: true` and announce a sunset (VER-3).
-  Also decide whether bench create/update should keep accepting `image`.
-- `core/labs/features/dashboard/api/serializers.py` builds its own bench `image_url` with
-  `request.build_absolute_uri(instance.image.url)`. That URL is not presigned in MinIO mode. It could switch to
-  `ResourceImageURLField`.
 - The avatar upload schema documents its file part as `format: uri` instead of `binary` (no
   `COMPONENT_SPLIT_REQUEST`). The resource upload field overrides this locally.

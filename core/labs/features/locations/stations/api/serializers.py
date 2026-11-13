@@ -295,7 +295,6 @@ class StationSerializer(LocationStateFieldsMixin, AppModelSerializer):
             "utilities",
             *LocationStateFieldsMixin.STATE_FIELDS,
             "safety_classification",
-            "image",
             "image_url",
             "active_bench_count",
             "allocated_power_w",

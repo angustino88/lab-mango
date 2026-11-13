@@ -295,3 +295,53 @@ def test_stored_file_is_removed_when_resource_vanishes_before_lock(media_root):
         replace_resource_image(model=Bench, data=ReplaceResourceImageInput(resource_id=bench.pk, image=_png()))
 
     assert [path for path in media_root.rglob("*") if path.is_file()] == []
+
+
+LIST_PATHS = {
+    "benches": "/api/labs/benches",
+    "equipment": "/api/labs/equipment",
+    "licenses": "/api/labs/licenses",
+    "rooms": "/api/labs/rooms",
+    "stations": "/api/labs/stations",
+}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", RESOURCES)
+def test_paginated_list_rows_carry_image_url_and_no_legacy_image(client, kind):
+    resource = _make(kind)
+    image_url = client.put(_url(kind, resource), {"file": _png()}, format="multipart").data["data"]["image_url"]
+
+    listed = client.get(LIST_PATHS[kind])
+
+    assert listed.status_code == 200, listed.data
+    row = next(row for row in listed.data["data"] if row["id"] == resource.pk)
+    assert row["image_url"] == image_url
+    assert "image" not in row
+    assert "image" not in client.get(DETAIL_PATHS[kind].format(id=resource.pk)).data["data"]
+
+
+@pytest.mark.django_db
+def test_dashboard_bench_rows_use_the_shared_url_rule(client, settings):
+    bench = _make("benches")
+    client.put(_url("benches", bench), {"file": _png()}, format="multipart")
+    settings.MINIO_ENABLED = True
+    signed = "https://minio.example/media/resources/b.png?X-Amz-Signature=ok"
+
+    with patch("core.infrastructure.storage.urls.generate_presigned_url", return_value=signed):
+        response = client.get("/api/labs/dashboard")
+
+    assert response.status_code == 200, response.data
+    assert signed in str(response.data)
+
+
+@pytest.mark.django_db
+def test_bench_create_no_longer_accepts_image(client):
+    response = client.post("/api/labs/benches", {"sku": "IMG-NEW", "name": "New", "image": "x.png"}, format="json")
+
+    assert response.status_code == 422
+    assert response.data["error"]["details"][0] == {
+        "field": "image",
+        "code": "unknown_field",
+        "message": "Unknown field.",
+    }

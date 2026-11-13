@@ -40,7 +40,6 @@ WRITE_FIELDS = (
     "group_id",
     "owner_id",
     "remark",
-    "image",
     "bench_group_id",
     "type_id",
     "description",

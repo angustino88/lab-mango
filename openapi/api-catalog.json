@@ -18010,12 +18010,6 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "image": {
-                      "type": "string",
-                      "format": "uri",
-                      "nullable": true,
-                      "readOnly": true
-                    },
                     "image_url": {
                       "type": "string",
                       "format": "uri",
@@ -18200,7 +18194,6 @@
                     "equipment_url",
                     "group",
                     "id",
-                    "image",
                     "image_url",
                     "is_favorite",
                     "last_inspected_at",
@@ -18247,7 +18240,6 @@
                 "department": {},
                 "owner": {},
                 "remark": "string",
-                "image": "https://example.com/resource",
                 "image_url": "https://example.com/resource",
                 "type": {},
                 "bench_group": {},
@@ -18489,11 +18481,6 @@
               "type": "string",
               "maxLength": 255
             },
-            "image": {
-              "type": "string",
-              "format": "uri",
-              "nullable": true
-            },
             "type_id": {
               "type": "integer",
               "minimum": 1,
@@ -18583,7 +18570,6 @@
           "group_id": 1,
           "owner_id": 1,
           "remark": "string",
-          "image": "https://example.com/resource",
           "type_id": 1,
           "bench_group_id": 1,
           "description": "string",
@@ -18661,12 +18647,6 @@
                   },
                   "remark": {
                     "type": "string",
-                    "readOnly": true
-                  },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
                     "readOnly": true
                   },
                   "image_url": {
@@ -18853,7 +18833,6 @@
                   "equipment_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "is_favorite",
                   "last_inspected_at",
@@ -18891,7 +18870,6 @@
               "department": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
@@ -21166,12 +21144,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -21356,7 +21328,6 @@
                   "equipment_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "is_favorite",
                   "last_inspected_at",
@@ -21394,7 +21365,6 @@
               "department": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
@@ -21592,11 +21562,6 @@
               "type": "string",
               "maxLength": 255
             },
-            "image": {
-              "type": "string",
-              "format": "uri",
-              "nullable": true
-            },
             "type_id": {
               "type": "integer",
               "minimum": 1,
@@ -21686,7 +21651,6 @@
           "group_id": 1,
           "owner_id": 1,
           "remark": "string",
-          "image": "https://example.com/resource",
           "type_id": 1,
           "bench_group_id": 1,
           "description": "string",
@@ -21764,12 +21728,6 @@
                   },
                   "remark": {
                     "type": "string",
-                    "readOnly": true
-                  },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
                     "readOnly": true
                   },
                   "image_url": {
@@ -21956,7 +21914,6 @@
                   "equipment_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "is_favorite",
                   "last_inspected_at",
@@ -21994,7 +21951,6 @@
               "department": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
@@ -22298,11 +22254,6 @@
               "type": "string",
               "maxLength": 255
             },
-            "image": {
-              "type": "string",
-              "format": "uri",
-              "nullable": true
-            },
             "type_id": {
               "type": "integer",
               "minimum": 1,
@@ -22389,7 +22340,6 @@
           "group_id": 1,
           "owner_id": 1,
           "remark": "string",
-          "image": "https://example.com/resource",
           "type_id": 1,
           "bench_group_id": 1,
           "description": "string",
@@ -22467,12 +22417,6 @@
                   },
                   "remark": {
                     "type": "string",
-                    "readOnly": true
-                  },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
                     "readOnly": true
                   },
                   "image_url": {
@@ -22659,7 +22603,6 @@
                   "equipment_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "is_favorite",
                   "last_inspected_at",
@@ -22697,7 +22640,6 @@
               "department": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
@@ -23191,12 +23133,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -23381,7 +23317,6 @@
                   "equipment_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "is_favorite",
                   "last_inspected_at",
@@ -23419,7 +23354,6 @@
               "department": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
@@ -24091,12 +24025,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -24281,7 +24209,6 @@
                   "equipment_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "is_favorite",
                   "last_inspected_at",
@@ -24319,7 +24246,6 @@
               "department": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
@@ -24676,12 +24602,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -24866,7 +24786,6 @@
                   "equipment_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "is_favorite",
                   "last_inspected_at",
@@ -24904,7 +24823,6 @@
               "department": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "type": {},
               "bench_group": {},
@@ -90298,12 +90216,6 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "image": {
-                      "type": "string",
-                      "format": "uri",
-                      "nullable": true,
-                      "readOnly": true
-                    },
                     "image_url": {
                       "type": "string",
                       "format": "uri",
@@ -90517,7 +90429,6 @@
                     "floor_plan_url",
                     "group",
                     "id",
-                    "image",
                     "image_url",
                     "label",
                     "layout_columns",
@@ -90567,7 +90478,6 @@
                 "group": {},
                 "owner": {},
                 "remark": "string",
-                "image": "https://example.com/resource",
                 "image_url": "https://example.com/resource",
                 "map_url": "https://example.com/resource",
                 "length_m": "string",
@@ -90974,12 +90884,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -91193,7 +91097,6 @@
                   "floor_plan_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "layout_columns",
@@ -91234,7 +91137,6 @@
               "group": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
@@ -92494,12 +92396,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -92713,7 +92609,6 @@
                   "floor_plan_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "layout_columns",
@@ -92754,7 +92649,6 @@
               "group": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
@@ -93117,12 +93011,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -93336,7 +93224,6 @@
                   "floor_plan_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "layout_columns",
@@ -93377,7 +93264,6 @@
               "group": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
@@ -93896,12 +93782,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -94115,7 +93995,6 @@
                   "floor_plan_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "layout_columns",
@@ -94156,7 +94035,6 @@
               "group": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
@@ -94618,12 +94496,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -94837,7 +94709,6 @@
                   "floor_plan_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "layout_columns",
@@ -94878,7 +94749,6 @@
               "group": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
@@ -95255,12 +95125,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -95474,7 +95338,6 @@
                   "floor_plan_url",
                   "group",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "layout_columns",
@@ -95515,7 +95378,6 @@
               "group": {},
               "owner": {},
               "remark": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "map_url": "https://example.com/resource",
               "length_m": "string",
@@ -100623,12 +100485,6 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "image": {
-                      "type": "string",
-                      "format": "uri",
-                      "nullable": true,
-                      "readOnly": true
-                    },
                     "image_url": {
                       "type": "string",
                       "format": "uri",
@@ -100692,7 +100548,6 @@
                     "group",
                     "height_mm",
                     "id",
-                    "image",
                     "image_url",
                     "label",
                     "lifecycle_status",
@@ -100771,7 +100626,6 @@
                 "availability": {},
                 "activity_status": {},
                 "safety_classification": "string",
-                "image": "https://example.com/resource",
                 "image_url": "https://example.com/resource",
                 "active_bench_count": 1,
                 "allocated_power_w": 1,
@@ -101310,12 +101164,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -101379,7 +101227,6 @@
                   "group",
                   "height_mm",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "lifecycle_status",
@@ -101449,7 +101296,6 @@
               "availability": {},
               "activity_status": {},
               "safety_classification": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
@@ -103027,12 +102873,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -103096,7 +102936,6 @@
                   "group",
                   "height_mm",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "lifecycle_status",
@@ -103166,7 +103005,6 @@
               "availability": {},
               "activity_status": {},
               "safety_classification": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
@@ -103661,12 +103499,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -103730,7 +103562,6 @@
                   "group",
                   "height_mm",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "lifecycle_status",
@@ -103800,7 +103631,6 @@
               "availability": {},
               "activity_status": {},
               "safety_classification": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
@@ -104451,12 +104281,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -104520,7 +104344,6 @@
                   "group",
                   "height_mm",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "lifecycle_status",
@@ -104590,7 +104413,6 @@
               "availability": {},
               "activity_status": {},
               "safety_classification": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
@@ -105193,12 +105015,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -105262,7 +105078,6 @@
                   "group",
                   "height_mm",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "lifecycle_status",
@@ -105332,7 +105147,6 @@
               "availability": {},
               "activity_status": {},
               "safety_classification": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
@@ -105850,12 +105664,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -105919,7 +105727,6 @@
                   "group",
                   "height_mm",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "lifecycle_status",
@@ -105989,7 +105796,6 @@
               "availability": {},
               "activity_status": {},
               "safety_classification": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
@@ -106513,12 +106319,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -106582,7 +106382,6 @@
                   "group",
                   "height_mm",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "lifecycle_status",
@@ -106652,7 +106451,6 @@
               "availability": {},
               "activity_status": {},
               "safety_classification": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
@@ -107176,12 +106974,6 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "image": {
-                    "type": "string",
-                    "format": "uri",
-                    "nullable": true,
-                    "readOnly": true
-                  },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
@@ -107245,7 +107037,6 @@
                   "group",
                   "height_mm",
                   "id",
-                  "image",
                   "image_url",
                   "label",
                   "lifecycle_status",
@@ -107315,7 +107106,6 @@
               "availability": {},
               "activity_status": {},
               "safety_classification": "string",
-              "image": "https://example.com/resource",
               "image_url": "https://example.com/resource",
               "active_bench_count": 1,
               "allocated_power_w": 1,
