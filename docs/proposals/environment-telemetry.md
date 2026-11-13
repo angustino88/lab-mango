@@ -43,8 +43,10 @@ path for nodes, no idempotency, no history aggregation, no retention, and no rea
 ## 2. Requirements and quality attributes
 
 **Functional**
-- F1 A node measures one *scope*: a room or a station. A scope may have several nodes.
-- F2 Nodes push samples with `observed_at`, any subset of `temperature_c`, `humidity_percent`, `power_w`.
+- F1 A reading is about one *target*: a room, station, bench or equipment item (extendable to new types). A target
+  may have many channels; a single collector may serve targets of different types (owner, 2026-11-13).
+- F2 Gateways push readings with `observed_at`; v1 metrics `temperature_c`, `humidity_percent`, `power_w`; new
+  metrics are added as data, not schema.
 - F3 Operators see the latest value per scope, history over a time window, and live updates.
 - F4 Operators enroll, bind, rebind, revoke nodes and configure RS485 channels. A node never chooses its scope.
 - F5 Node connectivity (online/stale/offline) is visible.
@@ -178,22 +180,47 @@ channel of that converter and is surfaced in the UI as "check converter serial s
 (default 10 s each, a batch may hold one sample), backend publishes on commit, browser receives within ~1 s. Option B can be added later behind the
 same application command (`record_telemetry_batch`) without changing storage or the operator API.
 
-### D3 Storage: new wide raw table + rollups + latest-value row; keep `RoomObservation` as is
+### D3 Storage: narrow readings table, partitioned by day, + rollups + latest (revised 2026-11-13 for extensibility)
+
+Owner requirement (2026-11-13): telemetry must be extendable — new measured things (equipment, bench,
+station, room, later others), new collector kinds, and new metrics without redesign.
 
 | Option | For | Against |
 |---|---|---|
-| **A. New `TelemetrySample` (wide row) + `TelemetryRollup` + `TelemetryLatest`** (recommended) | Bounded queries; cheap dashboard reads; retention without touching rollups; existing room API unchanged (rule 1) | Two places for room environment data until owner decides the fate of `RoomObservation` (Q2) |
-| B. Extend `RoomObservation` with `station` FK, node, sample id | One table | Changes a deployed model and API; manual and high-volume data mixed; retention would delete manual data |
-| C. Narrow EAV `(scope, metric, value)` | Add metrics without migrations | 3× rows, weak DB typing, constraints per metric impossible |
-| D. TimescaleDB hypertable / native partitioning | Best at very high volume | New extension/infra (rule 7); Django migrations need raw SQL |
+| A. Wide row per sample (`temperature_c`, `humidity_percent`, `power_w` columns) | Fewest rows; typed columns | Every new metric = migration on the biggest table; a sample row mixes metrics that may belong to different targets (meter on equipment, probe on station) |
+| **B. Narrow `TelemetryReading` (one row per channel per poll: `target`, `metric`, `value`), daily range partitions on `observed_at`** (recommended) | New metric = one `MetricDefinition` row; each reading has exactly one target; retention = drop a partition (instant) | ~3× rows; needs native partitioning via `RunSQL` migration and a composite primary key (Django 5.2 `CompositePrimaryKey`; repo pins `django==5.2.13`, `uv.lock:583-584`) |
+| C. TimescaleDB / `pg_partman` | Managed partitions, compression | New database extension (rule 7) and infra change; not needed at this volume |
 
-Escalation trigger for D: raw table > ~200 M rows or retention delete > 5 min. Until then a BRIN index on
-`observed_at` and batched deletes are enough (**not verified** with a load test; see §8).
+Volume with B: 500 sources × 3 channels × 1 per 10 s ≈ 13 M rows/day. Proposed retention: raw **7 days**
+(≈ 90 M rows over 7 partitions), 1-minute rollups 30 days, 1-hour rollups 2 years (Q4). Load test before
+approval (§8). Physical-range rules stay in PostgreSQL as per-metric CHECKs (§5.2), so rule 4 still holds.
 
-### D4 Scope modeling: two nullable FKs with exactly-one DB check (not GenericForeignKey)
+`RoomObservation` and its API stay unchanged (rule 1; Q2).
 
-Keeps real foreign keys (`PROTECT`) and lets PostgreSQL enforce "room xor station". A station's room is
-derivable, so room dashboards can optionally include station converters in a query; they are not double-stored.
+### D4 Targets: one `TelemetryTarget` table with typed nullable FKs (not GenericForeignKey)
+
+`PhysicalLocationNode` (`core/labs/models/resource/location/physical_location.py:14`) and `ResourceModel` are
+abstract, so there is no shared table a single FK could point at.
+
+| Option | For | Against |
+|---|---|---|
+| **A. `TelemetryTarget` row per measured thing: nullable FKs `room` / `station` / `bench` / `equipment`, exactly one set (DB CHECK); every other table references `target_id`** (recommended) | Real FKs with `PROTECT`; one place to extend (new target type = one nullable FK + CHECK update); readings stay one `bigint` wide | One extra join to show names |
+| B. Nullable FKs repeated on every table (bindings, readings, rollups, latest) | No extra table | Each new target type touches every table, including the partitioned one |
+| C. `GenericForeignKey` (`content_type`, `object_id`) | Infinitely open | No referential integrity, no `PROTECT` — violates AGENTS.md rule 4 |
+
+### D8 Sources and gateways are typed kinds with per-kind settings
+
+- A **gateway** is any signed agent that submits telemetry, with a **scope** that is itself a target:
+  `room_host` (scope = room; this project's host PC), `station_pc` (scope = station), `equipment_agent`
+  (scope = its own equipment, e.g. a lab computer's existing agent reporting its own power/temperature later).
+- A **source** is what the gateway reads from: `modbus_tcp_converter` (USR-W630) now; later e.g. `snmp_pdu`,
+  `ipmi_bmc`, `agent_self`. Kind-specific settings live in one-to-one tables (`ModbusConverterSettings`), so a
+  new kind adds a table, not columns on a shared one.
+- A **channel** is one metric read from one source (for Modbus: unit ID + profile). Each channel is bound to a
+  **target** over time. The gateway never needs to know targets: it reports channel values, the server attributes them.
+
+This is what makes "the collector can be on equipment, bench, station or room" work: a single W630 at a
+station can carry a meter bound to one equipment item and a probe bound to the station itself.
 
 ---
 
@@ -205,9 +232,9 @@ document during model-design).
 
 | Concept | Owner | Used through |
 |---|---|---|
-| `TelemetryDevice`, `GatewayScopeBinding`, `ConverterScopeBinding`, `TelemetryConverterSettings`, `SensorProfile`, `TelemetryChannel`, `TelemetrySample`, `TelemetryRollup`, `TelemetryLatest`, `TelemetryDeviceHealth` | telemetry (new) | `telemetry/public.py`, `telemetry/contracts.py` |
-| Room, Station existence, view policy | locations | `core/labs/features/locations/public.py` |
-| Host PC and converter equipment, `environment_converter` category | equipment | `core/labs/features/equipment/public.py` |
+| `TelemetryTarget`, `MetricDefinition`, `TelemetryDevice`, `ModbusConverterSettings`, `GatewayScopeBinding`, `TelemetryChannel`, `ModbusChannelSettings`, `ChannelTargetBinding`, `SensorProfile`, `TelemetryReading`, `TelemetryRollup`, `TelemetryLatest`, `TelemetryDeviceHealth` | telemetry (new) | `telemetry/public.py`, `telemetry/contracts.py` |
+| Room, Station, Bench existence, placement (bench → station → room), view policy | locations, benches | `core/labs/features/locations/public.py`, `core/labs/features/benches/public.py` (batched placement functions to add) |
+| Equipment as target, current bench assignment; host PC / W630 / sensor assets, `environment_converter` category | equipment | `core/labs/features/equipment/public.py` (batched `current_bench_for(equipment_ids)` to add) |
 | Host PC identity, signature verification | `core.agents` | `core/agents/public.py` (`require_active_agent_identity`) |
 | WS channel publishing | `core.websocket` | `publish_service` (new `publish_telemetry_update`) |
 
@@ -221,14 +248,14 @@ flowchart LR
   N -- "GET /agent/telemetry/config" --> AG
   N -- "signed HTTPS<br/>POST /agent/telemetry/samples/bulk" --> AG[core.agents<br/>signature auth]
   AG --> CMD[telemetry.application<br/>record_telemetry_batch]
-  CMD -- resolve room + station bindings --> B[(GatewayScopeBinding<br/>ConverterScopeBinding)]
-  CMD -- INSERT ... ON CONFLICT DO NOTHING --> S[(TelemetrySample)]
+  CMD -- channel → target → placement --> B[(ChannelTargetBinding<br/>TelemetryTarget<br/>GatewayScopeBinding)]
+  CMD -- INSERT ... ON CONFLICT DO NOTHING --> S[(TelemetryReading<br/>daily partitions)]
   CMD -- conditional upsert --> L[(TelemetryLatest)]
   CMD -- on_commit --> P[publish_service<br/>Redis pub/sub]
-  P --> WS[ws/telemetry/rooms/:id<br/>ws/telemetry/stations/:id]
+  P --> WS[ws/telemetry/:target_type/:id<br/>+ station and room fan-out]
   WS --> FE[React dashboard]
   CEL[Celery beat] --> R[(TelemetryRollup 1m / 1h)]
-  CEL -- batched delete > 30 d --> S
+  CEL -- create / drop daily partitions --> S
   CEL -- mark stale/offline --> H[(TelemetryDeviceHealth)]
   FE -- "GET /api/labs/telemetry/..." --> Q[telemetry.queries]
   Q --> L & R & S
@@ -238,78 +265,110 @@ flowchart LR
 
 ## 5. Proposed models
 
-### 5.0 `TelemetryDevice`: host PC gateway or W630 converter
+### 5.0 Target, metric, and placement
+
+**`TelemetryTarget`** — the thing a reading is *about*.
 
 | Field | Type | Notes |
 |---|---|---|
-| `equipment` | OneToOne `labs.Equipment`, PROTECT, null | null while `discovered` (not yet claimed into inventory) |
-| `role` | char: `room_host` / `station_pc` / `converter` | gateways point at a PC's existing Equipment |
-| `device_uid` | char(64), **unique** | converter MAC, normalized `AA:BB:CC:DD:EE:FF`; for gateways the `agent_uid`. `Equipment.mac_address` is not unique (`equipment.py:144`), so uniqueness lives here |
+| `target_type` | char: `room` / `station` / `bench` / `equipment` | denormalized for CHECK and filtering |
+| `room` | FK `labs.Room`, PROTECT, null | |
+| `station` | FK `labs.Station`, PROTECT, null | |
+| `bench` | FK `labs.Bench`, PROTECT, null | |
+| `equipment` | FK `labs.Equipment`, PROTECT, null | |
+
+DB: `CHECK (num_nonnulls(room_id, station_id, bench_id, equipment_id) = 1)`; `CHECK` that `target_type` names
+the non-null FK; partial `UNIQUE` on each FK (one target row per resource). Created on first bind with
+`INSERT … ON CONFLICT DO NOTHING` + re-read (race-safe). Adding a target type later (rack, building) = add one
+nullable FK, extend both CHECKs and the placement resolver. Soft-deleted resources keep their target row;
+binding to a soft-deleted resource is refused and its channels stop accepting readings.
+
+**Placement resolver** (`resolve_placement(targets) -> {target_id: (room_id, station_id | None)}`, batched,
+current placement at ingest time):
+
+| Target | Room | Station |
+|---|---|---|
+| room | itself | none |
+| station | `station.room` | itself |
+| bench | `bench.station_slot.station.room` | `bench.station_slot.station` |
+| equipment | via open `EquipmentAssignment` → bench → as bench | as bench |
+
+`Bench.station_slot` is nullable (`core/labs/models/resource/bench/bench.py:48-53`) and equipment may be
+unassigned; such targets are **not located** and their readings are rejected (`target_not_located`, Q18)
+rather than guessed. Needs batched public functions from locations and equipment (no N+1; no import of their
+models). The resolved `room_id` / `station_id` are snapshotted on each reading, so history does not move
+when a bench or equipment is moved later.
+
+**`MetricDefinition`** (reference data, seeded by data migration): `key` (PK slug, e.g. `temperature_c`),
+`name`, `unit`, `value_min`, `value_max` (null = open), `kind` (`gauge` / `counter`), `aggregation`
+(`mean` / `max` / `last`; counters roll up as delta), `decimals`, `active`. v1 rows: `temperature_c`
+(≥ -273.15), `humidity_percent` (0–100), `power_w` (≥ 0). Adding `energy_wh` (counter), `voltage_v`,
+`current_a`, `co2_ppm` later = one row (+ optional CHECK migration, §5.2).
+
+### 5.1 Devices, gateways, sources and bindings
+
+**`TelemetryDevice`** — a gateway or a source.
+
+| Field | Type | Notes |
+|---|---|---|
+| `role` | `gateway` / `source` | |
+| `kind` | gateway: `room_host` / `station_pc` / `equipment_agent`; source: `modbus_tcp_converter` (later `snmp_pdu`, `ipmi_bmc`, `agent_self`) | CHECK that kind matches role |
+| `equipment` | OneToOne `labs.Equipment`, PROTECT, null | the physical box (host PC, W630); null while `discovered` |
+| `device_uid` | char(64), **unique** | W630: MAC normalized `AA:BB:CC:DD:EE:FF`; gateways: `agent_uid`. `Equipment.mac_address` is not unique (`equipment.py:144`) |
 | `model` | char(64), blank | e.g. `usr_w630` |
 | `state` | `discovered` → `claimed` → `retired` | own state machine, not equipment lifecycle (rule 2) |
-| `reported_by` | FK `TelemetryDevice` (gateway), null | host PC that last saw it |
-| `config_version` | int, default 0 | gateways only: bumped on any config change in scope |
-| `config_version_applied` | int, null | gateways only: reported by host PC |
+| `reported_by` | FK `TelemetryDevice` (gateway), null | gateway that last saw it |
+| `config_version` / `config_version_applied` | int / int null | gateways only |
 | `first_seen_at`, `last_seen_at` | datetime | |
 
-Converter-only settings (`TelemetryConverterSettings`, one-to-one, so gateway rows carry no unused columns):
+DB: `CHECK (state = 'discovered' OR equipment_id IS NOT NULL)`.
 
-| Field | Type | Notes |
-|---|---|---|
-| `network_host` | char(253) | IP or hostname; pin it with a DHCP reservation on the router |
-| `port` | int, default 502 | `CHECK (port BETWEEN 1 AND 65535)` |
-| `collection_mode` | `modbus_tcp` / `rtu_over_tcp` | D6-A / D6-B |
-| `serial_interface` | `rs485` / `rs232` | RS232 = one device only |
-| `baud_rate`, `parity`, `data_bits`, `stop_bits` | int, char(1), int, int | what the W630 web UI must be set to |
-| `request_timeout_ms` | int, default 800 | |
+**`ModbusConverterSettings`** (one-to-one with a `modbus_tcp_converter` source): `network_host`, `port`
+(default 502, 1–65535), `collection_mode` (`modbus_tcp` / `rtu_over_tcp`), `serial_interface`
+(`rs485` / `rs232`), `baud_rate`, `parity`, `data_bits`, `stop_bits`, `request_timeout_ms`. Partial `UNIQUE
+(network_host, port)` among claimed sources. Other source kinds get their own settings table.
 
-DB: `CHECK (state = 'discovered' OR equipment_id IS NOT NULL)`; `UNIQUE (network_host, port)` among
-claimed converters (partial index) so two converters can't be configured on the same address.
+**`GatewayScopeBinding`**: `gateway`, `target` (FK `TelemetryTarget`), denormalized `gateway_kind`,
+`valid_from`, `valid_to`.
+- Exclusion on `gateway` range — one scope at a time.
+- Partial exclusion on `target` range `WHERE gateway_kind = 'room_host'` — **one host PC per room**.
+- Application check that the scope's `target_type` fits the kind (`room_host` → room, `station_pc` → station,
+  `equipment_agent` → its own equipment).
+- A source is served by whichever gateway's scope contains its channels' targets; `SourceGatewayAssignment`
+  is not needed in v1 (the config endpoint derives it, §6.1).
 
-### 5.1 Bindings: gateway → scope, converter → station or room
+**`TelemetryChannel`**: `source` (FK `TelemetryDevice`), `metric` (FK `MetricDefinition.key`), `enabled`,
+`label`, optional `sensor_equipment` (FK `labs.Equipment`, null: the physical sensor as an inventory asset,
+e.g. the DDSU666 itself — distinct from the *target* it measures).
+Kind-specific addressing in one-to-one tables: `ModbusChannelSettings` (`unit_id` 1–247 CHECK, `profile` FK
+`SensorProfile` version). `UNIQUE (source, unit_id, metric)` via the settings table + channel.
 
-`GatewayScopeBinding`: `gateway` (FK `TelemetryDevice`), `room` (FK `labs.Room`, null), `station`
-(FK `labs.Station`, null), `valid_from`, `valid_to`.
-- `CHECK ((room_id IS NULL) <> (station_id IS NULL))`; `room_host` ⇒ room set, `station_pc` ⇒ station set
-  (CHECK on a denormalized `gateway_role` column, or application check).
-- Exclusion on `gateway` range — a gateway has one scope at a time.
-- Exclusion on `room` range (partial `WHERE room_id IS NOT NULL`) — **one host PC per room** at a time.
-- A `station_pc` scope is set **explicitly**, not derived live from the PC's bench assignment
-  (`EquipmentAssignment` → `Bench.station_slot` → `StationSlot.station`); the UI pre-fills it and warns on mismatch.
-
-`ConverterScopeBinding`: `converter` (FK `TelemetryDevice`), `station` (FK `labs.Station`, null), `room`
-(FK `labs.Room`, null), `label`, `valid_from`, `valid_to`.
-- `CHECK ((room_id IS NULL) <> (station_id IS NULL))` — a converter measures a station, or the room itself
-  (wall-mounted room sensors, main meter).
-- Exclusion on `converter` range — one scope at a time.
-- Exclusion on `station` range (partial) — one converter per station (relax if a station gets two, Q8).
-- The binding does not name a gateway: which PC polls is a transport fact, so replacing the host PC needs no
-  converter rebind.
-
-**Ingest authorization rule** (application, under `select_for_update` on the gateway's binding): a gateway may
-submit a sample for converter *c* at time *t* only if *c*'s binding at *t* is inside the gateway's scope:
-`room_host` → the station's room (or the bound room) equals the scope room; `station_pc` → same station.
-The same rule filters what `GET /agent/telemetry/config` returns, so a host PC never even learns about
-converters outside its room.
+**`ChannelTargetBinding`**: `channel`, `target`, `valid_from`, `valid_to`.
+- Exclusion on `channel` range — a channel measures one target at a time.
+- No uniqueness on `target`: a target may have many channels (two probes, a meter and a probe).
+- "Bind all channels of this W630 to Station A" is one UI action creating N bindings in one transaction.
 
 All exclusion constraints use `btree_gist`, already installed by `core/labs/migrations/0001_initial.py`.
 Common: `CHECK (valid_to IS NULL OR valid_to > valid_from)`; audit via `TimeStampedModel`, `UserStampedModel`.
 
-### 5.1b `SensorProfile` and `TelemetryChannel`: RS485 configuration
+**Ingest authorization rule** (application, under `select_for_update` on the gateway's scope binding): a
+gateway may submit a reading for channel *c* at time *t* only if *c*'s source is claimed, *c* has a target
+binding at *t*, and that target's placement is inside the gateway's scope:
+`room` scope → placement room = scope room; `station` scope → placement station = scope station;
+`equipment` scope → target = scope equipment. The config endpoint applies the same rule, so a gateway only
+learns about channels it may report.
 
-`SensorProfile` (reference data, staff-managed): `key` (e.g. `chint_ddsu666`, `es35_sw`), `name`,
-`register_map` JSON (per metric: function code 3/4, register, word count, data type `int16/uint16/int32/float32`,
-word order, scale, offset, unit), supported serial settings. Validated against a JSON schema on write.
-Profiles are versioned: an edit creates a new version, so history keeps the register map it was read with.
+`config_version` on each gateway increments in the same transaction as any change that alters its config
+(bindings, source settings, channels, profiles in use), under `select_for_update` on the gateway row.
 
-`TelemetryChannel`: `converter` (FK `TelemetryDevice`), `unit_id` (Modbus slave address 1–247), `profile`
-(FK `SensorProfile` version), `metric` (`temperature_c` / `humidity_percent` / `power_w`), `enabled`.
-- `UNIQUE (converter, unit_id, metric)`; `CHECK (unit_id BETWEEN 1 AND 247)`.
-- Application checks at config build: every profile on a converter supports the converter's serial settings
-  (one RS485 bus = one baud/parity); RS232 converter ⇒ one unit ID.
+### 5.1b `SensorProfile`: register maps for Modbus sensors
 
-`config_version` on the gateway increments in the same transaction as any change to bindings, converter
-settings or channels in its scope (`select_for_update` on the gateway row), so the host PC knows when to re-pull.
+`SensorProfile` (reference data, versioned — an edit creates a new version): `key` (e.g. `chint_ddsu666`,
+`es35_sw`), `version`, `name`, `register_map` JSON (per metric key: function code 3/4, register, word count,
+data type `int16/uint16/int32/float32`, word order, scale, offset), supported serial settings. Validated
+against a JSON schema on write; each `register_map` key must be an active `MetricDefinition`.
+Application check at config build: all profiles on one converter support its serial settings (one RS485 bus
+= one baud/parity); RS232 converter ⇒ one unit ID.
 
 ### 5.1c Device roles: "station node" and "room node" in this hardware
 
@@ -339,7 +398,7 @@ flowchart TB
   protection against a spoofing attacker). This works only when the host PC is on the **same VLAN** as the
   converters (§5.1e); across a routed hop the ARP entry is the gateway's MAC and the check must be disabled.
 - `sample_id` is written to the outbox **before** the first send, so retries after a crash reuse it and the
-  server deduplicates (`UNIQUE (converter, sample_id)`).
+  server deduplicates (`UNIQUE (channel, sample_id, observed_at)`).
 - Values are decoded with the profile's register map and scale on the host PC; the server receives SI values
   (`temperature_c`, `humidity_percent`, `power_w`) plus `profile_version` for traceability.
 - The collector is its **own deliverable** (own package, release and OS service: systemd or Windows service
@@ -413,56 +472,71 @@ converters. The server-side scope rule (§5.1) still rejects cross-room data if 
 Converter lifecycle as seen by the backend: `discovered` → `claimed` (+ scope binding) → `retired`.
 Connectivity is separate (§5.5).
 
-### 5.2 `TelemetrySample`: raw, append-only
+### 5.2 `TelemetryReading`: raw, append-only, partitioned by day
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | BigAutoField | |
-| `converter` | FK `TelemetryDevice`, PROTECT | the W630 the reading came through |
-| `gateway` | FK `TelemetryDevice`, PROTECT | host PC that submitted it (first accepted copy) |
-| `converter_binding` | FK `ConverterScopeBinding`, PROTECT | scope resolved server-side at `observed_at` |
-| `room` | FK `labs.Room`, null | denormalized from binding for indexed reads |
-| `station` | FK `labs.Station`, null | denormalized from binding |
-| `sample_id` | UUID | generated by node; idempotency key |
-| `observed_at` | datetime | node clock, UTC |
-| `received_at` | datetime | server clock |
-| `temperature_c` | Decimal(6,2), null | |
-| `humidity_percent` | Decimal(5,2), null | |
-| `power_w` | Decimal(10,2), null | instantaneous active power |
-| `quality` | char(16), default `ok` | `ok` / `suspect` (clock corrected, sensor flag) |
+| `id` | bigint identity | primary key is `(observed_at, id)` (`CompositePrimaryKey`), required by partitioning |
+| `observed_at` | timestamptz | partition key; host PC clock (NTP), UTC |
+| `received_at` | timestamptz | server clock |
+| `channel` | FK `TelemetryChannel`, PROTECT | |
+| `target` | FK `TelemetryTarget`, PROTECT | from `ChannelTargetBinding` at `observed_at` |
+| `metric` | FK `MetricDefinition.key` | from the channel; denormalized for queries and CHECKs |
+| `value` | numeric(14,4) | SI unit of the metric |
+| `room` | FK `labs.Room`, PROTECT | placement snapshot (§5.0) |
+| `station` | FK `labs.Station`, PROTECT, null | placement snapshot |
+| `source`, `gateway` | FK `TelemetryDevice`, PROTECT | provenance |
+| `sample_id` | UUID | one per source per poll cycle; idempotency key |
+| `profile_version` | char(64), blank | e.g. `chint_ddsu666@1` |
+| `quality` | `ok` / `suspect` | |
 
-DB constraints (same physical rules as `RoomObservation`): at least one value; temperature ≥ -273.15;
-humidity 0–100; `power_w ≥ 0`; exactly one of room/station; `UNIQUE (converter, sample_id)`.
+DB constraints: `UNIQUE (channel_id, sample_id, observed_at)` (unique keys on a partitioned table must include
+the partition key; a resent sample has the same `observed_at`). Per-metric physical rules as CHECKs:
+`metric_id <> 'temperature_c' OR value >= -273.15`, `metric_id <> 'humidity_percent' OR value BETWEEN 0 AND 100`,
+`metric_id <> 'power_w' OR value >= 0`. A new metric's range check is one `ALTER TABLE … ADD CONSTRAINT …
+NOT VALID` + `VALIDATE` migration; the application also enforces `MetricDefinition` ranges.
 
-Indexes: `(room, observed_at DESC)` partial where room not null; `(station, observed_at DESC)` partial;
-BRIN on `observed_at` for retention deletes. No `full_clean()` per row on ingest; DB constraints are the
-guard (same reasoning as `core/labs/models/base/agent_report.py:27-38`), serializer validates shape first.
+Indexes (per partition): `(target_id, metric_id, observed_at DESC)`, `(room_id, observed_at DESC)`,
+`(station_id, observed_at DESC) WHERE station_id IS NOT NULL`.
+
+Partitions: daily, created 7 days ahead by a Celery beat task (idempotent `CREATE TABLE IF NOT EXISTS … PARTITION OF`);
+retention drops partitions older than 7 days. A default partition catches anything outside the window
+(alert if non-empty). Migration uses `RunSQL` inside `SeparateDatabaseAndState`; written plan needed (rule 6).
+No `full_clean()` per row on ingest; DB constraints are the guard (`core/labs/models/base/agent_report.py:27-38`
+reasoning), the serializer validates shape first.
 
 ### 5.3 `TelemetryRollup`: aggregates for charts
 
-`scope (room|station)`, `bucket_start`, `resolution` (`1m`, `1h`), and for each metric `min`, `max`, `avg`,
-`count`. `UNIQUE (room, station, resolution, bucket_start)` with `NULLS NOT DISTINCT` (PostgreSQL 15+; CI runs
-`postgres:16` per `.github/workflows/ci.yml:22`, production version not verified) or two partial unique indexes. Recomputed idempotently by upsert.
+`target`, `metric`, `resolution` (`1m` / `1h`), `bucket_start`, `min`, `max`, `avg`, `last`, `count`
+(counters: `delta`). `UNIQUE (target, metric, resolution, bucket_start)`. Recomputed idempotently by upsert from
+raw. `1m` table partitioned monthly (30-day retention), `1h` unpartitioned (2 years).
 
-### 5.4 `TelemetryLatest`: one row per converter for dashboards
+### 5.4 `TelemetryLatest`: one row per channel for dashboards
 
-`scope`, `node`, latest `observed_at` and values. `UNIQUE (node)`. Room/station "current" values are a
-read over the scope's nodes (few rows). Keeps the dashboard off the raw table.
+`channel` (unique), `target`, `metric`, `observed_at`, `value`, `status` (`ok` / `no_response` / `error`).
+A target's "current values" = latest rows of channels currently bound to it (plus descendants on request,
+via the placement snapshot). Keeps dashboards off the raw table.
 
-### 5.5 `TelemetryDeviceHealth`: connectivity, a separate state machine
+### 5.5 `TelemetryDeviceHealth` and channel status: separate state machines
 
-`node` (unique), `connectivity` ∈ {`online`, `stale`, `offline`}, `last_sample_at`, `changed_at`.
-This is **not** the equipment lifecycle status and **not** computing live activity (AGENTS.md rule 2).
+Per device (gateway or source): `connectivity` ∈ {`online`, `stale`, `offline`, `unknown`}, `last_seen_at`,
+`changed_at`. Per channel: `TelemetryLatest.status`. None of these is equipment lifecycle status or computing
+live activity (AGENTS.md rule 2). A source behind an offline gateway is `unknown`, not `offline`
+(`core/labs/features/equipment/queries/summaries.py:19`: missing telemetry is unknown).
 
 ```mermaid
 stateDiagram-v2
-  [*] --> offline
-  offline --> online: sample accepted
-  online --> stale: no sample for 3 x push_interval
-  stale --> online: sample accepted
-  stale --> offline: no sample for 10 min
+  [*] --> unknown
+  unknown --> online: data accepted
+  online --> stale: nothing for 3 x poll_interval
+  stale --> online: data accepted
+  stale --> offline: nothing for 10 min while gateway online
+  online --> unknown: gateway offline
+  stale --> unknown: gateway offline
   online --> offline: binding ended / identity revoked
 ```
+
+---
 
 ---
 
@@ -472,8 +546,8 @@ All operator responses use the envelope and error rules in `docs/api/response-st
 
 ### 6.1 Device ingest (signed, `core.agents` auth)
 
-Only gateways call these (room host PC, or optional station PC; same endpoints, scope differs). Identity comes from the
-signature; the body never carries a room or station id.
+Only gateways call these. Identity comes from the signature; the body never carries a room, station, bench or
+equipment id — **the collector never knows targets**; the server attributes every reading.
 
 **Config pull** — `GET /agent/telemetry/config` with `If-None-Match: "<config_version>"` → `304` or `200`:
 
@@ -481,34 +555,32 @@ signature; the body never carries a room or station id.
 {"data": {
   "config_version": 17, "scope": {"type": "room", "id": 3},
   "poll_interval_s": 10, "push_interval_s": 10,
-  "converters": [
-    {"device_uid": "A4:CF:12:9B:00:21", "model": "usr_w630", "label": "Station A",
-     "network_host": "192.168.50.21", "port": 502, "collection_mode": "modbus_tcp",
-     "serial": {"interface": "rs485", "baud_rate": 9600, "parity": "N", "data_bits": 8, "stop_bits": 1},
-     "request_timeout_ms": 800,
+  "sources": [
+    {"device_uid": "A4:CF:12:9B:00:21", "kind": "modbus_tcp_converter", "model": "usr_w630",
+     "settings": {"network_host": "192.168.50.21", "port": 502, "collection_mode": "modbus_tcp",
+                  "serial": {"interface": "rs485", "baud_rate": 9600, "parity": "N", "data_bits": 8, "stop_bits": 1},
+                  "request_timeout_ms": 800},
      "channels": [
-       {"unit_id": 1, "metric": "power_w", "profile": "chint_ddsu666@1"},
-       {"unit_id": 2, "metric": "temperature_c", "profile": "es35_sw@1"},
-       {"unit_id": 2, "metric": "humidity_percent", "profile": "es35_sw@1"}]}],
+       {"channel_id": 101, "metric": "power_w", "unit_id": 1, "profile": "chint_ddsu666@1"},
+       {"channel_id": 102, "metric": "temperature_c", "unit_id": 2, "profile": "es35_sw@1"},
+       {"channel_id": 103, "metric": "humidity_percent", "unit_id": 2, "profile": "es35_sw@1"}]}],
   "profiles": {"chint_ddsu666@1": {"register_map": {"power_w": {"fc": 3, "register": 8196,
                "words": 2, "type": "float32", "word_order": "big", "scale": 0.1}}}}
 }}
 ```
 
-Only converters bound inside the gateway's scope are returned. The config never contains server or
-converter credentials. The host PC re-pulls every 60 s and when an ingest response carries a newer `config_version`.
+Register numbers above are placeholders until the Phase 1 bench test (§5.1d). Only channels whose current
+target is inside the gateway's scope are returned (§5.1); `settings` shape depends on the source `kind`.
+The host PC re-pulls every 60 s and when an ingest response carries a newer `config_version`.
 
 **Discovery** — `POST /agent/telemetry/discoveries`
-`{"devices": [{"device_uid": "A4:CF:12:9B:00:21", "network_host": "192.168.50.21", "port_502_open": true,
-"unit_id_scan": [1, 2]}]}`: idempotent upsert of `discovered` devices (`UNIQUE device_uid`). `unit_id_scan`
-is filled only when staff request a scan for that converter (`…/actions/request-scan`): probing 1–247 at
-~300 ms each takes over a minute and blocks the bus. A MAC already bound under another room is recorded but
-not reassigned (operator sees a conflict).
-
-**Health** — `POST /agent/telemetry/health` (or inside each ingest batch): per converter `reachable`,
-`address_conflict`, last error; per channel `ok` / `no_response` / `modbus_exception:<code>`.
+`{"devices": [{"device_uid": "A4:CF:12:9B:00:21", "kind": "modbus_tcp_converter", "network_host":
+"192.168.50.21", "port_502_open": true, "unit_id_scan": [1, 2]}]}`: idempotent upsert of `discovered` sources
+(`UNIQUE device_uid`). `unit_id_scan` only after staff request a scan (`…/actions/request-scan`; probing
+1–247 takes over a minute and blocks the bus). A MAC already claimed elsewhere is recorded, not reassigned.
 
 **Ingest** — `POST /agent/telemetry/samples/bulk` — BLK-1/2/3, partial mode, max 500 operations, max 256 KiB body.
+One operation = one source's poll cycle:
 
 ```json
 {
@@ -516,51 +588,57 @@ not reassigned (operator sees a conflict).
   "operations": [
     {"data": {"device_uid": "A4:CF:12:9B:00:21", "sample_id": "0193…",
               "observed_at": "2026-11-13T09:00:10Z", "config_version": 17,
-              "temperature_c": "22.40", "humidity_percent": "41.0", "power_w": "1830.5",
-              "profile_versions": {"power_w": "chint_ddsu666@1"}}}
+              "readings": [
+                {"channel_id": 101, "value": "1830.5", "profile_version": "chint_ddsu666@1"},
+                {"channel_id": 102, "value": "22.40"},
+                {"channel_id": 103, "status": "no_response"}]}}
   ]
 }
 ```
 
-`device_uid` is always the converter MAC. A metric whose channel didn't answer this cycle is omitted (null),
-never sent as 0. `sample_id` is created by the host PC and persisted before sending, so retries stay deduplicated.
-`200` with per-item result in `data`: `accepted` | `duplicate` | `rejected` (+ ERR-1 error object), and the
-current `config_version`. `Idempotency-Key` header replays the original response for the whole batch.
+A channel that didn't answer is sent with `status`, never as `0`; it updates channel health only.
+`200` with per-operation result in `data`: `accepted` | `duplicate` | `partially_accepted` (per-reading errors)
+| `rejected` (+ ERR-1 error objects), and the current `config_version`. `Idempotency-Key` replays the batch response.
 
-Validation and rejection:
-- `observed_at` more than 2 min in the future, or older than raw retention → `rejected` (`observed_at_out_of_range`).
-- Unknown/unclaimed `device_uid`, or converter not bound inside **this gateway's scope** at `observed_at`
-  → `rejected` (`converter_not_bound`). Never silently re-attributed.
-- Gateway with no active scope binding → `409` for the whole batch (`gateway_not_bound`).
+Validation and rejection (per reading unless stated):
+- `observed_at` more than 2 min in the future, or older than raw retention → `observed_at_out_of_range`.
+- Channel not belonging to this source, disabled, or with no target binding at `observed_at` → `channel_not_bound`.
+- Target placement outside the gateway's scope → `outside_gateway_scope`; target not located → `target_not_located`.
+- Value outside the metric's range → `value_out_of_range`.
+- Unknown/unclaimed source → whole operation `source_not_claimed`. Gateway with no scope → `409` for the batch.
 - Revoked / decommissioned identity → `401` for the whole request (existing behavior).
-- The host PC buffers unsent samples per `docs/agent-platform/device-design.md` §5.
+Never silently re-attributed. The host PC buffers unsent samples per `docs/agent-platform/device-design.md` §5.
 
 ### 6.2 Operator read
 
+Same shape for every target type, nested under the existing resource routes:
+`{base}` ∈ `/api/labs/rooms/{id}`, `/api/labs/stations/{id}`, `/api/labs/benches/{id}`, `/api/labs/equipment/{id}`
+(existing prefixes; `…/equipment/{equipment_id}/activity` already exists in this style).
+
 | Method and path | Purpose | Bounds |
 |---|---|---|
-| `GET /api/labs/rooms/{room_id}/telemetry/latest` | current values per converter in the room (`include_stations=true` adds the room's station converters) | ≤ 200 converters |
-| `GET /api/labs/stations/{station_id}/telemetry/latest` | current values for the station | |
-| `GET /api/labs/rooms/{room_id}/telemetry?from=&to=&resolution=raw\|1m\|1h&metrics=` | history series | raw ≤ 24 h, 1m ≤ 31 d, 1h ≤ 2 y; else `422` |
-| `GET /api/labs/stations/{station_id}/telemetry?…` | same for stations | same |
+| `GET {base}/telemetry/latest?metrics=&include_descendants=` | current value per channel of the target (descendants: everything placed in the room/station) | ≤ 200 channels |
+| `GET {base}/telemetry?from=&to=&resolution=raw\|1m\|1h&metrics=&include_descendants=` | series per (target, metric) | raw ≤ 24 h, 1m ≤ 30 d, 1h ≤ 2 y; ≤ 50 series; else `422` |
+| `GET /api/labs/telemetry/metrics` | `MetricDefinition` list (units, ranges) | |
 
 ### 6.3 Operator write: commissioning and configuration
 
 | Method and path | Purpose |
 |---|---|
-| `GET /api/labs/telemetry/devices?state=discovered&room_id=` | devices with state, binding, connectivity, config version applied |
-| `POST /api/labs/telemetry/gateways` | register an enrolled PC as gateway: `room_host` or `station_pc` (existing PC Equipment with an active agent) |
-| `POST /api/labs/telemetry/gateways/{device_id}/actions/bind-scope` | bind to a room (host PC) or station (station PC); ends previous binding |
-| `POST /api/labs/telemetry/converters` | pre-register a converter by MAC (typed or scanned from its label) before it's discovered |
-| `POST /api/labs/telemetry/devices/{device_id}/actions/claim` | `discovered` → `claimed`: staff confirm MAC matches the label; create or link Equipment |
-| `PATCH /api/labs/telemetry/converters/{device_id}/settings` | network address, mode, serial settings |
-| `POST /api/labs/telemetry/devices/{device_id}/actions/bind-scope` | bind converter to a station or the room (ends previous binding) |
-| `POST /api/labs/telemetry/devices/{device_id}/actions/unbind` | end the current binding (removed or broken) |
-| `POST /api/labs/telemetry/converters/{device_id}/actions/request-scan` | ask the host PC to scan RS485 unit IDs |
-| `GET/POST/PATCH/DELETE /api/labs/telemetry/converters/{device_id}/channels` | RS485 channels |
+| `GET /api/labs/telemetry/devices?role=&kind=&state=&room_id=` | gateways and sources with state, scope/binding, connectivity, config version applied |
+| `POST /api/labs/telemetry/gateways` | register an enrolled agent's equipment as gateway (`room_host` / `station_pc` / `equipment_agent`) |
+| `POST /api/labs/telemetry/gateways/{device_id}/actions/bind-scope` | set its scope target; ends previous binding |
+| `POST /api/labs/telemetry/sources` | pre-register a source (kind + `device_uid`, e.g. W630 MAC from its label) |
+| `POST /api/labs/telemetry/devices/{device_id}/actions/claim` | `discovered` → `claimed`; create or link Equipment |
+| `PATCH /api/labs/telemetry/sources/{device_id}/settings` | kind-specific settings (W630: address, mode, serial) |
+| `POST /api/labs/telemetry/sources/{device_id}/actions/request-scan` | ask the gateway to scan Modbus unit IDs |
+| `GET/POST/PATCH/DELETE /api/labs/telemetry/sources/{device_id}/channels` | channels (metric + kind-specific address + optional `sensor_equipment`) |
+| `POST /api/labs/telemetry/channels/{channel_id}/actions/bind-target` | `{"target": {"type": "station", "id": 5}}`; ends previous binding |
+| `POST /api/labs/telemetry/sources/{device_id}/actions/bind-target` | bind **all** its channels to one target in one transaction |
+| `POST /api/labs/telemetry/channels/{channel_id}/actions/unbind` | stop attributing (sensor removed) |
 | `GET/POST /api/labs/telemetry/sensor-profiles` | register-map reference data (versioned) |
 
-Host PC enrollment itself stays on the existing `POST /api/agents`, `/enrollment-grants`, `/agent/enrollments`.
+Gateway enrollment itself stays on the existing `POST /api/agents`, `/enrollment-grants`, `/agent/enrollments`.
 
 ### 6.5 Commissioning flow (how a station gets its W630)
 
@@ -609,16 +687,19 @@ ends). Converter bindings don't change.
 
 ### 6.4 Real-time push
 
-| WS route | Channel |
+| WS route | Redis channel |
 |---|---|
-| `ws/telemetry/rooms/{room_id}` | `ws:telemetry:room:{room_id}` |
-| `ws/telemetry/stations/{station_id}` | `ws:telemetry:station:{station_id}` |
+| `ws/telemetry/{target_type}/{id}` with `target_type` ∈ `rooms`, `stations`, `benches`, `equipment` | `ws:telemetry:{target_type}:{id}` |
 
-Message (STM-3): `{"type": "telemetry.latest", "data": {"scope": {"type": "room", "id": 7}, "node_id": 42,
-"observed_at": "…", "temperature_c": "22.40", "humidity_percent": "41.0", "power_w": "1830.5"}}` and
-`{"type": "telemetry.connectivity", "data": {…}}`. Published in `transaction.on_commit`, one message per
-node per batch (the newest sample), so a 500-sample backfill sends one message, not 500. Messages are
-best-effort; on (re)connect the client calls `…/telemetry/latest` (documented per STM-4). Heartbeat every 30 s.
+Each accepted reading is published to its own target's channel **and** to its placement snapshot's station and
+room channels, so a room dashboard sees everything inside it without subscribing per target.
+Message (STM-3): `{"type": "telemetry.latest", "data": {"target": {"type": "equipment", "id": 88},
+"channel_id": 101, "metric": "power_w", "observed_at": "…", "value": "1830.5"}}` and
+`{"type": "telemetry.connectivity", "data": {…}}`. Published in `transaction.on_commit`, coalesced to the
+newest reading per channel per batch, so a backfill sends one message per channel, not hundreds. Best-effort;
+on (re)connect the client calls `…/telemetry/latest` (STM-4). Heartbeat every 30 s.
+
+---
 
 ---
 
@@ -626,16 +707,16 @@ best-effort; on (re)connect the client calls `…/telemetry/latest` (documented 
 
 | Write path | Race guard | Safe to run twice |
 |---|---|---|
-| `record_telemetry_batch` | `UNIQUE (converter, sample_id)` + `bulk_create(ignore_conflicts=True)`; binding resolved by exclusion-constrained range lookup | Yes: duplicates reported as `duplicate`, no extra rows |
-| `TelemetryLatest` upsert | `INSERT … ON CONFLICT (node) DO UPDATE … WHERE excluded.observed_at > telemetry_latest.observed_at` | Yes: older or equal samples never overwrite newer |
-| Bind node | `select_for_update` on the node's open binding + exclusion constraint | Same request twice: second sees identical open binding and returns it |
-| Rollup task | upsert on `(scope, resolution, bucket_start)`; recompute from raw | Yes |
-| Retention task | delete in batches of 10 k by `observed_at < cutoff` | Yes |
+| `record_telemetry_batch` | `UNIQUE (channel, sample_id, observed_at)` + `INSERT … ON CONFLICT DO NOTHING`; target from exclusion-constrained binding range | Yes: duplicates reported as `duplicate`, no extra rows |
+| `TelemetryLatest` upsert | `INSERT … ON CONFLICT (channel) DO UPDATE … WHERE excluded.observed_at > telemetry_latest.observed_at` | Yes: older or equal readings never overwrite newer |
+| Bind channel / source to target, bind gateway scope | `select_for_update` on the channel (or gateway) and its open binding + exclusion constraint; target row via `ON CONFLICT DO NOTHING` on its partial unique | Same request twice: second sees identical open binding and returns it |
+| Rollup task | upsert on `(target, metric, resolution, bucket_start)`; recompute from raw | Yes |
+| Partition task | `CREATE TABLE IF NOT EXISTS … PARTITION OF`; `DROP TABLE IF EXISTS` for expired days | Yes |
 | Connectivity task | conditional update `WHERE connectivity = old AND last_sample_at = seen` | Yes |
 
 Authorization (deny-by-default, object-scoped):
-- Device writes: signed host PC identity → its `TelemetryDevice` → active scope binding → only converters bound
-  inside that scope. A compromised host PC can at worst forge data for its own room.
+- Device writes: signed gateway identity → its `TelemetryDevice` → active scope binding → only channels whose
+  target placement is inside that scope (§5.1). A compromised host PC can at worst forge data for its own room.
 - LAN between W630s and the host PC (no device auth available, see D1), required in the install checklist:
   dedicated SSID or VLAN for converters, WPA2/WPA3, no internet route for converters, router firewall allows
   TCP 502 only from the host PC, W630 default admin password changed, vendor cloud / unused socket and MQTT
@@ -643,7 +724,7 @@ Authorization (deny-by-default, object-scoped):
 - Connectivity has three layers: host PC (agent heartbeat), converter (reachable / not), and channel (sensor
   answers / not). When the host PC is offline, its converters are `unknown`, not `offline` (matches the repo
   rule that missing telemetry is unknown, `core/labs/features/equipment/queries/summaries.py:19`).
-- Operator reads: the caller must be allowed to view the room/station, via a locations policy exposed in
+- Operator reads: the caller must be allowed to view the target (room/station/bench/equipment), via a locations policy exposed in
   `locations/public.py`. **No such object-level policy exists today** (drift table §1), so the owner must
   decide the rule (Q3). WS handshakes apply the same check, not "exists".
 - Binding management: lab staff only (`LABS_STAFF_ACCESS`, already used at
@@ -670,7 +751,8 @@ Authorization (deny-by-default, object-scoped):
 | Extension | Attaches at |
 |---|---|
 | Threshold alerts (temp/humidity bands; `power_w > Station.power_capacity_w`) | Rule table in telemetry; evaluated in `record_telemetry_batch` after commit; notify via `core.websocket` user notifications |
-| Energy (`energy_wh` monotonic counter) for expense/billing | New nullable column + rollup delta; money logic is its own T2 change |
+| Energy (`energy_wh` counter) for expense/billing | New `MetricDefinition` row (`kind = counter`) + channel; money logic is its own T2 change |
+| New target types (rack, building) or collector kinds (SNMP PDU, IPMI, a lab computer's own agent) | One nullable FK on `TelemetryTarget` (D4); a new source kind + settings table (D8) |
 | MQTT transport | Bridge worker calling `telemetry.public.record_telemetry_batch` |
 | Long-range storage | TimescaleDB or native partitioning (D3 option D) |
 
@@ -687,7 +769,7 @@ at 10 s; production PostgreSQL ≥ 15 (CI uses 16).
 | Q1 | Approve host PC as gateway and W630 as Equipment-backed converter (D1-A)? (Polling D6-A is decided) | Yes |
 | Q2 | Fate of `RoomObservation` and `/rooms/{id}/observations`: keep for manual entries, or deprecate after telemetry ships? | Keep in v1; decide after adoption |
 | Q3 | Who may view a room's/station's telemetry? | Same users who can view the room; staff for all |
-| Q4 | Push interval, raw retention, rollup retention | 10 s; 30 d; 1m for 90 d, 1h for 2 y |
+| Q4 | Poll/push interval, raw retention, rollup retention | 10 s; raw 7 d; 1m for 30 d; 1h for 2 y (changed for the narrow table, D3) |
 | Q5 | `power_w` = DDSU666 active power. The meter also gives energy (kWh): store it for expenses? | `power_w` only in v1; energy as a follow-up (§9) |
 | Q6 | Fix the drift items in §1 (esp. room observation write authz) as separate tasks? | Yes, separate T2 task for authz |
 | Q7 | ~~Router model?~~ **Answered:** UniFi Cloud Gateway Ultra + U7 Long-Range; settings in §5.1e | — |
@@ -700,3 +782,6 @@ at 10 s; production PostgreSQL ≥ 15 (CI uses 16).
 | Q14 | One Gateway Ultra per room, or one for the building with a U7-LR per room? (Decides per-room VLANs, §5.1e) | One IoT VLAN per room either way |
 | Q16 | ~~Host PC polls or W630 pushes?~~ **Answered: host PC polls the W630 and pushes to the server (D6-A).** | — |
 | Q15 | Host PC OS (Windows/Linux) and the collector's language/runtime? | Linux + Python service |
+| Q17 | v1 metric list: `temperature_c`, `humidity_percent`, `power_w` only, or also `energy_wh` / `voltage_v` / `current_a` from the DDSU666? | The three, others later as `MetricDefinition` rows |
+| Q18 | A bench without a station slot, or equipment not assigned to a bench: reject its readings, or allow an explicit fallback room? | Reject (`target_not_located`) |
+| Q19 | Room dashboards: include readings from everything inside the room by default? | Yes (`include_descendants=true` default for rooms) |
