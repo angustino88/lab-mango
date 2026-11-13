@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
 from rest_framework import serializers
@@ -23,6 +25,8 @@ from core.labs.models import (
     EquipmentCategory,
     EquipmentCondition,
     EquipmentDisplayStatus,
+    EquipmentEvent,
+    EquipmentEventAxis,
     EquipmentKind,
     EquipmentLifecycleState,
     EquipmentLoan,
@@ -90,6 +94,40 @@ class EquipmentLoanSerializer(serializers.Serializer):
 
     def get_overdue(self, obj) -> bool:
         return obj.returned_at is None and obj.due_at < timezone.now()
+
+
+_AXIS_CHOICES: dict[str, list[tuple[str, Any]]] = {
+    EquipmentEventAxis.LIFECYCLE.value: EquipmentLifecycleState.choices,
+    EquipmentEventAxis.CONDITION.value: EquipmentCondition.choices,
+}
+
+
+class EquipmentStatusEventSerializer(serializers.Serializer):
+    """One recorded lifecycle or condition change. ``from_value`` is null for the initial state."""
+
+    id = serializers.IntegerField(read_only=True)
+    axis = serializers.SerializerMethodField()
+    from_value = serializers.SerializerMethodField()
+    to_value = serializers.SerializerMethodField()
+    reason = serializers.CharField(read_only=True)
+    details = serializers.DictField(read_only=True)
+    actor = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    occurred_at = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        ref_name = "EquipmentStatusEvent"
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_axis(self, obj: EquipmentEvent) -> dict[str, str] | None:
+        return to_choice_reference(obj.axis, EquipmentEventAxis.choices)
+
+    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
+    def get_from_value(self, obj: EquipmentEvent) -> dict[str, str] | None:
+        return to_choice_reference(obj.from_value or None, _AXIS_CHOICES.get(obj.axis))
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_to_value(self, obj: EquipmentEvent) -> dict[str, str] | None:
+        return to_choice_reference(obj.to_value, _AXIS_CHOICES.get(obj.axis))
 
 
 class EquipmentReservationSerializer(serializers.Serializer):

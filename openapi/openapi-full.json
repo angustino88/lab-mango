@@ -12260,6 +12260,83 @@
         "summary": "Delete Equipment Placement by Equipment ID"
       }
     },
+    "/api/labs/equipment/{equipment_id}/status-events": {
+      "get": {
+        "operationId": "labs_equipment_status_events_retrieve_by_equipment_id",
+        "description": "Recorded lifecycle and condition changes of one unit, newest first; 404 for a missing or deleted unit.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentStatusEventListSerializersEquipmentStatusEventPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Status Events by Equipment ID"
+      }
+    },
     "/api/labs/equipment/{id}": {
       "get": {
         "operationId": "labs_equipment_retrieve_by_id",
@@ -46470,6 +46547,136 @@
         "required": [
           "id",
           "name"
+        ]
+      },
+      "EquipmentStatusEvent": {
+        "type": "object",
+        "description": "One recorded lifecycle or condition change. ``from_value`` is null for the initial state.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "axis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "from_value": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "to_value": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "reason": {
+            "type": "string",
+            "readOnly": true
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {},
+            "readOnly": true
+          },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsResourceOwner"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "actor",
+          "axis",
+          "details",
+          "from_value",
+          "id",
+          "occurred_at",
+          "reason",
+          "to_value"
+        ]
+      },
+      "EquipmentStatusEventListSerializersEquipmentStatusEventPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/EquipmentStatusEventListSerializersEquipmentStatusEventPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentStatusEvent"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "EquipmentStatusEventListSerializersEquipmentStatusEventPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "EquipmentStatusEventListSerializersEquipmentStatusEventPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/EquipmentStatusEventListSerializersEquipmentStatusEventPagination"
+          }
+        },
+        "required": [
+          "pagination"
         ]
       },
       "EquipmentStatusSummary": {

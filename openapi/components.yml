@@ -7473,6 +7473,96 @@ components:
       required:
       - id
       - name
+    EquipmentStatusEvent:
+      type: object
+      description: One recorded lifecycle or condition change. ``from_value`` is null
+        for the initial state.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        axis:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        from_value:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          nullable: true
+          readOnly: true
+        to_value:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        reason:
+          type: string
+          readOnly: true
+        details:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor
+      - axis
+      - details
+      - from_value
+      - id
+      - occurred_at
+      - reason
+      - to_value
+    EquipmentStatusEventListSerializersEquipmentStatusEventPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/EquipmentStatusEventListSerializersEquipmentStatusEventPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentStatusEvent'
+      required:
+      - data
+      - meta
+    EquipmentStatusEventListSerializersEquipmentStatusEventPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    EquipmentStatusEventListSerializersEquipmentStatusEventPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/EquipmentStatusEventListSerializersEquipmentStatusEventPagination'
+      required:
+      - pagination
     EquipmentStatusSummary:
       type: object
       properties:

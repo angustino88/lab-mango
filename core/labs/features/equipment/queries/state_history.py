@@ -1,8 +1,10 @@
-"""Replay of lifecycle and condition history, for other features' time-based reports."""
+"""Lifecycle and condition history: one unit's recorded events, and a replay for time-based reports."""
 
 from collections import defaultdict
 from datetime import datetime
 from typing import Any
+
+from django.db.models import QuerySet
 
 from core.labs.models import (
     Equipment,
@@ -70,6 +72,19 @@ def equipment_state_timelines(*, until: datetime) -> dict[int, dict]:
     return result
 
 
+def list_equipment_status_events(*, equipment_id: int) -> QuerySet[EquipmentEvent]:
+    """Recorded lifecycle and condition changes of one non-deleted unit, newest first.
+
+    Raises ``Equipment.DoesNotExist`` for a missing or deleted unit. 1 query, then page + count = 2 queries.
+    """
+    Equipment.objects.only("pk").get(pk=equipment_id, deleted_at__isnull=True)
+    return (
+        EquipmentEvent.objects.filter(equipment_id=equipment_id)
+        .select_related("actor")
+        .order_by("-occurred_at", "-id")
+    )
+
+
 def _initial(history: list[dict], axis: str, current: str) -> str:
     for event in history:
         if event["axis"] == axis:
@@ -77,4 +92,4 @@ def _initial(history: list[dict], axis: str, current: str) -> str:
     return current
 
 
-__all__ = ("equipment_state_timelines", "state_label")
+__all__ = ("equipment_state_timelines", "list_equipment_status_events", "state_label")

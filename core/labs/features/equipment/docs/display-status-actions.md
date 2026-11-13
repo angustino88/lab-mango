@@ -207,8 +207,10 @@ The `form` value names the dialog that fills `body` before sending. Keep the ser
 
 ## 9. Known gaps
 
-- There is no endpoint that lists a unit's status history. `EquipmentEvent` rows are recorded but not
-  exposed in the API, so the old status-history view has nothing to call yet.
+- Status history (`GET equipment/{id}/status-events`, paginated, newest first) lists only lifecycle and
+  condition changes: one `EquipmentEvent` per row, with `axis` (`lifecycle` or `condition`), `from_value`
+  (null for the initial state) and `to_value`. It has no `display_status` and no placement or loan
+  changes. A screen that shows display labels derives them from the two axes, using the table in section 1.
 - Removed old detail fields without a replacement: `responsible_person`, `notes`, `stored_date`,
   `expected_end_date`, `issue_description`, `failure_cause`, `last_known_location`, `supplier`,
   `expected_delivery_date`. Only `reason` remains for condition and lifecycle changes.

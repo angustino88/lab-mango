@@ -98,6 +98,11 @@ urlpatterns = [
         name="equipment-action-extend-loan",
     ),
     path(
+        "equipment/<int:equipment_id>/status-events",
+        views.EquipmentStatusEventListAPIView.as_view(),
+        name="equipment-status-event-list",
+    ),
+    path(
         "equipment/<int:equipment_id>/actions/change-condition",
         collection.EquipmentChangeConditionAPIView.as_view(),
         name="equipment-action-change-condition",
