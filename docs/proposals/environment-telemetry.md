@@ -297,7 +297,7 @@ Common: `CHECK (valid_to IS NULL OR valid_to > valid_from)`; audit via `TimeStam
 
 ### 5.1b `SensorProfile` and `TelemetryChannel`: RS485 configuration
 
-`SensorProfile` (reference data, staff-managed): `key` (e.g. `chint_dtsu666`, `es35_sw`), `name`,
+`SensorProfile` (reference data, staff-managed): `key` (e.g. `chint_ddsu666`, `es35_sw`), `name`,
 `register_map` JSON (per metric: function code 3/4, register, word count, data type `int16/uint16/int32/float32`,
 word order, scale, offset, unit), supported serial settings. Validated against a JSON schema on write.
 Profiles are versioned: an edit creates a new version, so history keeps the register map it was read with.
@@ -355,8 +355,8 @@ flowchart TB
 
 | Sensor | Role | Metric(s) | Register map status |
 |---|---|---|---|
-| **CHINT DTSU666** | Electricity meter, RS485 Modbus RTU | `power_w` = total active power; also offers imported energy (kWh), relevant to Q5 | Community integrations commonly cite total active power at `0x2012` (float32, FC 03) and imported energy at `0x401E` (float32). Unit/scale of the power register differs between sources (W vs 0.1 W). **Not verified**: confirm against the CHINT manual and by reading the meter beside a known load before approving the profile. DTSU666 is the three-phase model; single-phase stations would normally use DDSU666, so confirm which is installed |
-| **ES35-SW** (read from "ES35-SƯ"; please confirm the model) | Temperature/humidity transmitter, RS485 Modbus RTU | `temperature_c`, `humidity_percent` | **Unknown.** Manual needed: register addresses, data type and scale (often int16 × 0.1, but not assumed) |
+| **CHINT DDSU666** (single-phase; owner confirmed "one phase" 2026-11-13) | Electricity meter, RS485 Modbus RTU | `power_w` = active power; the meter also offers total active energy (kWh), relevant to Q5 | **Not verified.** The register table is in Appendix A (MODBUS-RTU) of the CHINT DDSU666 manual, which this session could not download. Community maps for the three-phase sibling DTSU666 store powers as float32 starting near `0x2000` with a ×0.1 W scale for power; the DDSU666 layout and scale must be taken from its own manual, not copied from DTSU666 |
+| **ES35-SW** (owner link: epcb.vn product page, 2026-11-13) | Temperature/humidity transmitter, RS485 Modbus RTU | `temperature_c`, `humidity_percent` | **Not verified.** The product page could not be fetched from this session. Needed from the page/manual: default address, baud/parity, function code, temperature and humidity registers, data type, scale (often int16 × 0.1, not assumed) |
 
 Wiring rules per station bus (also in the install checklist):
 - Both sensors on one W630 share **one** serial setting (baud, parity, data/stop bits); set the W630 to the same.
@@ -365,8 +365,35 @@ Wiring rules per station bus (also in the install checklist):
 - A/B polarity consistent, 120 Ω termination at the two ends of the bus, common ground where the devices
   provide it.
 
+The register numbers in the §6.1 config example are placeholders, not the verified DDSU666 map.
 The first two `SensorProfile` rows are seeded by a data migration only after the register maps are verified on
-one real station (the collector's on-demand scan + a reading compared against the meter display).
+one real station (Phase 1 bench test, §5.1f).
+
+### 5.1f Phase 1 (owner's first priority): local network + W630 + sensors, proven before any backend work
+
+Goal: one station's DDSU666 and ES35-SW readings arrive over the room Wi-Fi through a W630, with verified
+register maps. No Lab Mango change is needed for this phase.
+
+1. **Network** (§5.1e): create the room IoT VLAN and 2.4 GHz WPA2 SSID, DHCP reservation for the W630 MAC,
+   firewall as listed. Connect a laptop (or the future host PC) to the IoT VLAN for testing.
+2. **Sensors, before wiring them together**: give each its own address and the same serial settings, using
+   each device's own menu or setup tool (e.g. DDSU666 = address 1, ES35-SW = address 2; both 9600 8N1 unless
+   the manuals say otherwise). Record the values.
+3. **Wiring**: one RS485 bus: W630 A/B → DDSU666 A/B → ES35-SW A/B, same polarity, 120 Ω at both ends, ES35-SW
+   power supply per its spec.
+4. **W630 web UI**: join the SSID; serial port = the settings from step 2; work mode **Modbus TCP gateway**
+   (RTU↔TCP conversion), port 502; change the admin password; disable vendor cloud.
+5. **Bench test from the laptop** with any Modbus TCP client tool (e.g. QModMaster, Modbus Poll, `mbpoll`):
+   connect to `<W630 IP>:502`, unit ID 1 then 2, read the registers from each manual. Compare:
+   DDSU666 power against the meter's display under a known load; ES35-SW against a reference thermometer.
+   Record: register, function code, raw words, decoded value, display value, word order, scale.
+6. **Hand back** the recorded table; it becomes the `chint_ddsu666@1` and `es35_sw@1` profiles.
+
+**If "W630 pushes data" means the W630 itself sends readings** (it polls the sensors and publishes over MQTT
+or HTTP), test that in step 4 as well: search results confirm the W630 has an MQTT client, but not that it
+can poll registers and publish decoded values by itself (that is documented for other PUSR models such as
+the USR-N720). If it can, D6-C becomes an option; it still needs a broker on the host PC (new dependency,
+rule 7) and per-device register config in each W630, so D6-A (host PC polls) stays recommended until owner decides (Q16).
 
 ### 5.1e Site network: UniFi Cloud Gateway Ultra + U7 Long-Range (owner, 2026-11-13)
 
@@ -463,11 +490,11 @@ signature; the body never carries a room or station id.
      "serial": {"interface": "rs485", "baud_rate": 9600, "parity": "N", "data_bits": 8, "stop_bits": 1},
      "request_timeout_ms": 800,
      "channels": [
-       {"unit_id": 1, "metric": "power_w", "profile": "chint_dtsu666@1"},
+       {"unit_id": 1, "metric": "power_w", "profile": "chint_ddsu666@1"},
        {"unit_id": 2, "metric": "temperature_c", "profile": "es35_sw@1"},
        {"unit_id": 2, "metric": "humidity_percent", "profile": "es35_sw@1"}]}],
-  "profiles": {"chint_dtsu666@1": {"register_map": {"power_w": {"fc": 3, "register": 8210,
-               "words": 2, "type": "float32", "word_order": "big", "scale": 1}}}}  // register/scale unverified, §5.1d
+  "profiles": {"chint_ddsu666@1": {"register_map": {"power_w": {"fc": 3, "register": 8196,
+               "words": 2, "type": "float32", "word_order": "big", "scale": 0.1}}}}
 }}
 ```
 
@@ -493,7 +520,7 @@ not reassigned (operator sees a conflict).
     {"data": {"device_uid": "A4:CF:12:9B:00:21", "sample_id": "0193…",
               "observed_at": "2026-11-13T09:00:10Z", "config_version": 17,
               "temperature_c": "22.40", "humidity_percent": "41.0", "power_w": "1830.5",
-              "profile_versions": {"power_w": "chint_dtsu666@1"}}}
+              "profile_versions": {"power_w": "chint_ddsu666@1"}}}
   ]
 }
 ```
@@ -668,10 +695,11 @@ at 10 s; production PostgreSQL ≥ 15 (CI uses 16).
 | Q6 | Fix the drift items in §1 (esp. room observation write authz) as separate tasks? | Yes, separate T2 task for authz |
 | Q7 | ~~Router model?~~ **Answered:** UniFi Cloud Gateway Ultra + U7 Long-Range; settings in §5.1e | — |
 | Q8 | Exactly one W630 per station, or several (e.g. two RS485 buses)? | One; drop the station exclusion if needed |
-| Q9 | **Partly answered:** CHINT DTSU666 + ES35-SW (§5.1d). Still needed: confirm "ES35-SW" spelling and send its manual; confirm DTSU666 (three-phase) vs DDSU666 (single-phase); each device's serial defaults | Owner to send manuals |
+| Q9 | **Answered:** CHINT DDSU666 (single-phase) + ES35-SW (§5.1d). Register maps still to verify in the Phase 1 bench test | Bench test results |
 | Q10 | Room-level sensors: one extra W630 bound to the room, or none? | Optional per room |
 | Q11 | Is the "station PC" topology still needed now that every station has a W630 on the room network? | Not in v1; room host PC only |
 | Q12 | ~~Collector in the agent or separate?~~ **Answered: separate service.** Identity consequence in D7 | — |
 | Q13 | Is the room host PC dedicated (runs only the collector, D7-A) and always on? | Dedicated, always on, wired |
 | Q14 | One Gateway Ultra per room, or one for the building with a U7-LR per room? (Decides per-room VLANs, §5.1e) | One IoT VLAN per room either way |
+| Q16 | Data flow: host PC polls the W630 (D6-A), or the W630 pushes MQTT to a broker on the host PC (D6-C)? | D6-A unless the Phase 1 test shows a reason |
 | Q15 | Host PC OS (Windows/Linux) and the collector's language/runtime? | Linux + Python service |
