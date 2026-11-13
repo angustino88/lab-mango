@@ -12260,6 +12260,83 @@
         "summary": "Delete Equipment Placement by Equipment ID"
       }
     },
+    "/api/labs/equipment/{equipment_id}/status-changes": {
+      "get": {
+        "operationId": "labs_equipment_status_changes_retrieve_by_equipment_id",
+        "description": "``display_status`` history of one unit, newest first; 404 for a missing or deleted unit.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentStatusChangeListSerializersEquipmentStatusChangePaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Status Changes by Equipment ID"
+      }
+    },
     "/api/labs/equipment/{id}": {
       "get": {
         "operationId": "labs_equipment_retrieve_by_id",
@@ -20683,6 +20760,83 @@
           }
         },
         "summary": "Create Licenses Agreements by License ID"
+      }
+    },
+    "/api/labs/licenses/{license_id}/history": {
+      "get": {
+        "operationId": "labs_licenses_history_retrieve_by_license_id",
+        "description": "Status records of a license, newest first; 404 for a missing or deleted license.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "license_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Licenses"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseHistorySerializersLicenseStatusRecordPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Licenses History by License ID"
       }
     },
     "/api/labs/licenses/categories/summary": {
@@ -46472,6 +46626,122 @@
           "name"
         ]
       },
+      "EquipmentStatusChange": {
+        "type": "object",
+        "description": "One change of ``display_status``. ``previous_display_status`` is null for the creation row.\n\n``details`` depends on what caused the change: lifecycle facts (``receiving_organisation``,\n``transfer_date``), a loan (``loan_id``, ``borrower_name``, ``due_at`` or ``close_reason``), or a\nbench (``bench``: ``{id, name}``).",
+        "properties": {
+          "display_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "previous_display_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsResourceOwner"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "readOnly": true
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {},
+            "readOnly": true
+          }
+        },
+        "required": [
+          "actor",
+          "details",
+          "display_status",
+          "occurred_at",
+          "previous_display_status",
+          "reason"
+        ]
+      },
+      "EquipmentStatusChangeListSerializersEquipmentStatusChangePaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/EquipmentStatusChangeListSerializersEquipmentStatusChangePaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentStatusChange"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "EquipmentStatusChangeListSerializersEquipmentStatusChangePagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "EquipmentStatusChangeListSerializersEquipmentStatusChangePaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/EquipmentStatusChangeListSerializersEquipmentStatusChangePagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
       "EquipmentStatusSummary": {
         "type": "object",
         "properties": {
@@ -49799,6 +50069,68 @@
           "data"
         ]
       },
+      "LicenseHistorySerializersLicenseStatusRecordPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/LicenseHistorySerializersLicenseStatusRecordPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LicenseStatusRecord"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "LicenseHistorySerializersLicenseStatusRecordPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "LicenseHistorySerializersLicenseStatusRecordPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/LicenseHistorySerializersLicenseStatusRecordPagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
       "LicenseListSerializersLicensePaginatedResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
@@ -50346,6 +50678,57 @@
         ],
         "type": "string",
         "description": "* `available` - Available\n* `assigned` - Assigned\n* `expired` - Expired\n* `revoked` - Revoked\n* `suspended` - Suspended"
+      },
+      "LicenseStatusRecord": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "license": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "metadata": {
+            "readOnly": true
+          },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsResourceOwner"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "actor",
+          "created_at",
+          "id",
+          "license",
+          "metadata",
+          "status"
+        ]
       },
       "LicenseStatusSummary": {
         "type": "object",
@@ -56755,6 +57138,15 @@
           "metadata": {
             "readOnly": true
           },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsResourceOwner"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -56762,6 +57154,7 @@
           }
         },
         "required": [
+          "actor",
           "created_at",
           "id",
           "metadata",
@@ -58618,6 +59011,15 @@
           "metadata": {
             "readOnly": true
           },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsResourceOwner"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -58625,6 +59027,7 @@
           }
         },
         "required": [
+          "actor",
           "created_at",
           "id",
           "metadata",

@@ -10,6 +10,7 @@ from core.labs.features.base.serializers import (
     ChoiceReferenceSerializer,
     MoneySerializer,
     NamedReferenceSerializer,
+    ResourceOwnerSerializer,
     ResourceWriteSerializerMixin,
     UIDNamedReferenceSerializer,
     to_choice_reference,
@@ -100,10 +101,11 @@ class LicenseStatusSerializer(ResourceWriteSerializerMixin, serializers.Serializ
 class LicenseStatusRecordSerializer(AppModelSerializer):
     license = NamedReferenceSerializer(read_only=True)
     status = serializers.SerializerMethodField(read_only=True)
+    actor = ResourceOwnerSerializer(source="creator", read_only=True, allow_null=True)
 
     class Meta:
         model = LicenseStatusRecord
-        fields = ("id", "license", "status", "metadata", "created_at")
+        fields = ("id", "license", "status", "metadata", "actor", "created_at")
         read_only_fields = fields
 
     @extend_schema_field(ChoiceReferenceSerializer)

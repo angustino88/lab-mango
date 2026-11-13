@@ -25,6 +25,7 @@ from core.labs.features.licenses.api.serializers import (
     LicenseProductSerializer,
     LicenseRestrictionSerializer,
     LicenseSerializer,
+    LicenseStatusRecordSerializer,
     LicenseStatusSerializer,
     LicenseStatusSummarySerializer,
     LicenseTypeSerializer,
@@ -269,6 +270,26 @@ class LicenseStatusAPIView(FeatureAPIView):
         )
         license_record = public.get_license(license_id=status_record.license_id)
         return self.respond(license_record)
+
+
+class LicenseHistoryAPIView(AppListAPIView, FeatureAPIView):
+    """Status records of a license, newest first; 404 for a missing or deleted license."""
+
+    schema_tags = ("Licenses",)
+    get_contract = OperationContract(
+        query=PageNumberQuerySerializer,
+        success=ResponseContract.paginated("LicenseHistory", LicenseStatusRecordSerializer),
+        bad_request=ResponseContract.bad_request(),
+        not_found=ResponseContract.not_found(),
+    )
+
+    def handle_get(self, request: Request, license_id: int, *args, **kwargs) -> Response:
+        _, error = self.validate_query()
+        if error is not None:
+            return error
+        if public.get_active_license(license_id=license_id) is None:
+            return self.respond_problem("not_found")
+        return self.list_response_sync(public.list_license_status_history(license_id=license_id))
 
 
 class LicenseAgreementListCreateAPIView(AppListAPIView, FeatureAPIView):

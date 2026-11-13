@@ -111,6 +111,15 @@ def list_license_agreements(*, license_id: int) -> QuerySet[LicenseAgreement]:
     return LicenseAgreement.objects.filter(license_id=license_id).order_by("-created", "-pk")
 
 
+def list_license_status_history(*, license_id: int) -> QuerySet[LicenseStatusRecord]:
+    """Status records of one license, newest first. Callers check the license exists first."""
+    return (
+        LicenseStatusRecord.objects.filter(license_id=license_id)
+        .select_related("license", "creator")
+        .order_by("-created", "-id")
+    )
+
+
 __all__ = [
     "active_license_assignment_mapping_rows",
     "get_active_license",
@@ -118,5 +127,6 @@ __all__ = [
     "get_license_for_mapping",
     "license_mapping_rows",
     "list_license_agreements",
+    "list_license_status_history",
     "list_licenses",
 ]

@@ -49,4 +49,5 @@ The Licenses feature tracks commercial software and firmware entitlements, seat 
 | `DELETE /api/labs/licenses/{license_id}/actions/assign` | `LicenseAssignActionAPIView` | Standard unassign command. |
 | `POST /api/labs/licenses/{license_id}/actions/unassign` | `LicenseUnassignActionAPIView` | Deprecated alias with Sunset headers. |
 | `POST /api/labs/licenses/{license_id}/actions/change-status` | `LicenseStatusAPIView` | Update lifecycle state. |
+| `GET /api/labs/licenses/{license_id}/history` | `LicenseHistoryAPIView` | Status records (`status`, `metadata`, `actor`, `created_at`), newest first, paginated; 404 for a missing or deleted license. |
 | `GET/POST /api/labs/licenses/{license_id}/agreements` | `LicenseAgreementListCreateAPIView` | Commercial agreements list. |

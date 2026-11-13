@@ -86,6 +86,7 @@ from core.labs.features.equipment.queries.reference_data import (
     list_groups,
 )
 from core.labs.features.equipment.queries.reservations import list_reservations
+from core.labs.features.equipment.queries.status_history import equipment_status_history
 from core.labs.models import Equipment
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
@@ -124,6 +125,7 @@ from .serializers import (
     EquipmentReserveSerializer,
     EquipmentReturnBatchSerializer,
     EquipmentReturnSerializer,
+    EquipmentStatusChangeSerializer,
     EquipmentStatusSummarySerializer,
     EquipmentTypeOptionsQuerySerializer,
     GroupCatalogSerializer,
@@ -316,6 +318,24 @@ class EquipmentLoanAPIView(EquipmentAPIView):
 
     def handle_get(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
         return self.respond(get_active_loan(equipment_id=equipment_id))
+
+
+class EquipmentStatusChangeListAPIView(AppListAPIView, EquipmentAPIView):
+    """``display_status`` history of one unit, newest first; 404 for a missing or deleted unit."""
+
+    pagination_class = ResultsSetPagination
+    get_contract = OperationContract(
+        query=PageNumberQuerySerializer,
+        success=ResponseContract.paginated("EquipmentStatusChangeList", EquipmentStatusChangeSerializer),
+        bad_request=ResponseContract.bad_request(),
+        not_found=ResponseContract.not_found(),
+    )
+
+    def handle_get(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        _, error = self.validate_query()
+        if error is not None:
+            return error
+        return self.list_response_sync(equipment_status_history(equipment_id=equipment_id))
 
 
 def _loan_contract(name: str, request: Any) -> OperationContract:

@@ -7473,6 +7473,95 @@ components:
       required:
       - id
       - name
+    EquipmentStatusChange:
+      type: object
+      description: 'One change of ``display_status``. ``previous_display_status``
+        is null for the creation row.
+
+
+        ``details`` depends on what caused the change: lifecycle facts (``receiving_organisation``,
+
+        ``transfer_date``), a loan (``loan_id``, ``borrower_name``, ``due_at`` or
+        ``close_reason``), or a
+
+        bench (``bench``: ``{id, name}``).'
+      properties:
+        display_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        previous_display_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          nullable: true
+          readOnly: true
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
+        reason:
+          type: string
+          readOnly: true
+        details:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+      required:
+      - actor
+      - details
+      - display_status
+      - occurred_at
+      - previous_display_status
+      - reason
+    EquipmentStatusChangeListSerializersEquipmentStatusChangePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/EquipmentStatusChangeListSerializersEquipmentStatusChangePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentStatusChange'
+      required:
+      - data
+      - meta
+    EquipmentStatusChangeListSerializersEquipmentStatusChangePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    EquipmentStatusChangeListSerializersEquipmentStatusChangePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/EquipmentStatusChangeListSerializersEquipmentStatusChangePagination'
+      required:
+      - pagination
     EquipmentStatusSummary:
       type: object
       properties:
@@ -9936,6 +10025,50 @@ components:
           $ref: '#/components/schemas/FilterMetadata'
       required:
       - data
+    LicenseHistorySerializersLicenseStatusRecordPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseHistorySerializersLicenseStatusRecordPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseStatusRecord'
+      required:
+      - data
+      - meta
+    LicenseHistorySerializersLicenseStatusRecordPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseHistorySerializersLicenseStatusRecordPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseHistorySerializersLicenseStatusRecordPagination'
+      required:
+      - pagination
     LicenseListSerializersLicensePaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -10336,6 +10469,40 @@ components:
         * `revoked` - Revoked
 
         * `suspended` - Suspended'
+    LicenseStatusRecord:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        license:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        metadata:
+          readOnly: true
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor
+      - created_at
+      - id
+      - license
+      - metadata
+      - status
     LicenseStatusSummary:
       type: object
       description: Recorded state only; expiry and assignment are not recomputed.
@@ -15075,11 +15242,17 @@ components:
           readOnly: true
         metadata:
           readOnly: true
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - actor
       - created_at
       - id
       - metadata
@@ -16488,11 +16661,17 @@ components:
           readOnly: true
         metadata:
           readOnly: true
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/LabsResourceOwner'
+          readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - actor
       - created_at
       - id
       - metadata

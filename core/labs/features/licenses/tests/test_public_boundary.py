@@ -53,6 +53,7 @@ def test_public_module_exports_license_commands_and_queries():
         "get_license_for_mapping",
         "license_mapping_rows",
         "list_license_agreements",
+        "list_license_status_history",
         "list_licenses",
         "unassign_license",
     }
@@ -101,7 +102,8 @@ def test_layer_package_exports_are_explicit_and_legacy_modules_absent():
     }
     assert set(_exports(queries)) == {
         "active_license_assignment_mapping_rows", "get_active_license", "get_license",
-        "get_license_for_mapping", "license_mapping_rows", "list_license_agreements", "list_licenses",
+        "get_license_for_mapping", "license_mapping_rows", "list_license_agreements",
+        "list_license_status_history", "list_licenses",
     }
     assert not (FEATURE_ROOT / "services").exists()
     assert not (FEATURE_ROOT / "selectors.py").exists()
@@ -116,7 +118,8 @@ def test_layer_package_exports_are_explicit_and_legacy_modules_absent():
     }
     assert set(_exports(FEATURE_ROOT / "queries" / "selectors.py")) == {
         "active_license_assignment_mapping_rows", "get_active_license", "get_license",
-        "get_license_for_mapping", "license_mapping_rows", "list_license_agreements", "list_licenses",
+        "get_license_for_mapping", "license_mapping_rows", "list_license_agreements",
+        "list_license_status_history", "list_licenses",
     }
 
 

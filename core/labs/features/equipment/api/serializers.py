@@ -92,6 +92,33 @@ class EquipmentLoanSerializer(serializers.Serializer):
         return obj.returned_at is None and obj.due_at < timezone.now()
 
 
+class EquipmentStatusChangeSerializer(serializers.Serializer):
+    """One change of ``display_status``. ``previous_display_status`` is null for the creation row.
+
+    ``details`` depends on what caused the change: lifecycle facts (``receiving_organisation``,
+    ``transfer_date``), a loan (``loan_id``, ``borrower_name``, ``due_at`` or ``close_reason``), or a
+    bench (``bench``: ``{id, name}``).
+    """
+
+    display_status = serializers.SerializerMethodField()
+    previous_display_status = serializers.SerializerMethodField()
+    occurred_at = serializers.DateTimeField(read_only=True)
+    actor = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    reason = serializers.CharField(read_only=True)
+    details = serializers.DictField(read_only=True)
+
+    class Meta:
+        ref_name = "EquipmentStatusChange"
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_display_status(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(obj.display_status, EquipmentDisplayStatus.choices)
+
+    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
+    def get_previous_display_status(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(obj.previous_display_status, EquipmentDisplayStatus.choices)
+
+
 class EquipmentReservationSerializer(serializers.Serializer):
     """One reservation line: an item kept for a borrower over a window."""
 

@@ -207,8 +207,11 @@ The `form` value names the dialog that fills `body` before sending. Keep the ser
 
 ## 9. Known gaps
 
-- There is no endpoint that lists a unit's status history. `EquipmentEvent` rows are recorded but not
-  exposed in the API, so the old status-history view has nothing to call yet.
+- Status history (`GET equipment/{id}/status-changes`) is in display-status terms: each row is
+  `previous_display_status` -> `display_status` with `occurred_at`, `actor`, `reason` and `details`
+  (lifecycle facts, the loan's `borrower_name`, or the `bench`). It never shows `calibration_overdue`:
+  calibration has no recorded change, so today's top row can differ from the unit's current label when
+  calibration is overdue.
 - Removed old detail fields without a replacement: `responsible_person`, `notes`, `stored_date`,
   `expected_end_date`, `issue_description`, `failure_cause`, `last_known_location`, `supplier`,
   `expected_delivery_date`. Only `reason` remains for condition and lifecycle changes.
