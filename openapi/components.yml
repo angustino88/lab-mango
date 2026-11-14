@@ -3289,18 +3289,10 @@ components:
           type: string
         visibility:
           allOf:
-          - $ref: '#/components/schemas/CommentCreateRequestVisibilityEnum'
+          - $ref: '#/components/schemas/VisibilityEnum'
           default: public
       required:
       - body
-    CommentCreateRequestVisibilityEnum:
-      enum:
-      - public
-      - internal
-      type: string
-      description: '* `public` - public
-
-        * `internal` - internal'
     ComputingActivity:
       type: object
       description: Read projection of the live activity state.
@@ -8254,80 +8246,6 @@ components:
           $ref: '#/components/schemas/ErrorBody'
       required:
       - error
-    EventTypeEnum:
-      enum:
-      - created
-      - updated
-      - assigned
-      - unassigned
-      - status_changed
-      - priority_changed
-      - category_changed
-      - comment_added
-      - comment_edited
-      - comment_deleted
-      - attachment_added
-      - attachment_removed
-      - resource_linked
-      - resource_unlinked
-      - resolved
-      - reopened
-      - watcher_added
-      - watcher_removed
-      - ticket_linked
-      - ticket_unlinked
-      - sla_breached
-      - sla_paused
-      - sla_resumed
-      - csat_submitted
-      type: string
-      description: '* `created` - Created
-
-        * `updated` - Updated
-
-        * `assigned` - Assigned
-
-        * `unassigned` - Unassigned
-
-        * `status_changed` - Status Changed
-
-        * `priority_changed` - Priority Changed
-
-        * `category_changed` - Category Changed
-
-        * `comment_added` - Comment Added
-
-        * `comment_edited` - Comment Edited
-
-        * `comment_deleted` - Comment Deleted
-
-        * `attachment_added` - Attachment Added
-
-        * `attachment_removed` - Attachment Removed
-
-        * `resource_linked` - Resource Linked
-
-        * `resource_unlinked` - Resource Unlinked
-
-        * `resolved` - Resolved
-
-        * `reopened` - Reopened
-
-        * `watcher_added` - Watcher Added
-
-        * `watcher_removed` - Watcher Removed
-
-        * `ticket_linked` - Ticket Linked
-
-        * `ticket_unlinked` - Ticket Unlinked
-
-        * `sla_breached` - Sla Breached
-
-        * `sla_paused` - Sla Paused
-
-        * `sla_resumed` - Sla Resumed
-
-        * `csat_submitted` - Csat Submitted'
     Expense:
       type: object
       description: Read shape for expenses.
@@ -11410,6 +11328,25 @@ components:
         * `blocks` - Blocks
 
         * `caused_by` - Caused By'
+    LinkedResource:
+      type: object
+      description: REL-13 polymorphic relation to the linked resource; ``id`` is the
+        resource's own identifier.
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ResourceTypeEnum'
+          readOnly: true
+      required:
+      - id
+      - name
+      - type
     LinkedResourceItem:
       type: object
       properties:
@@ -14569,6 +14506,20 @@ components:
           $ref: '#/components/schemas/RefreshTokenResponse'
       required:
       - data
+    Relation:
+      type: object
+      description: REL-3 relation ``{id, name}`` to any model row; ``name`` follows
+        ``relation_name``.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     ReportPeriod:
       type: object
       description: NAM-9 ``period`` group read from the row's ``period_start`` / ``period_end``.
@@ -16247,17 +16198,6 @@ components:
           $ref: '#/components/schemas/SampleCustomerReferenceListSerializersSampleCustomerCatalogRecordPagination'
       required:
       - pagination
-    ScanStatusEnum:
-      enum:
-      - clean
-      - pending
-      - infected
-      type: string
-      description: '* `clean` - Clean
-
-        * `pending` - Pending
-
-        * `infected` - Infected'
     SendOTP:
       type: object
       properties:
@@ -17780,7 +17720,9 @@ components:
           type: string
           maxLength: 50
         system_state:
-          $ref: '#/components/schemas/SystemStateEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         color_hex:
           type: string
           description: Optional '#RRGGBB' badge colour.
@@ -17791,10 +17733,9 @@ components:
           type: boolean
           description: Terminal status (e.g. Closed). Entering it stamps closed_at;
             auto-close moves tickets here.
-        pauses_sla:
+        is_sla_paused:
           type: boolean
-          description: While a ticket is in this status (e.g. Waiting for Customer)
-            SLA clocks are paused.
+          readOnly: true
         sort_order:
           type: integer
           maximum: 2147483647
@@ -17808,7 +17749,9 @@ components:
       required:
       - created_at
       - id
+      - is_sla_paused
       - name
+      - system_state
     StatusTransition:
       type: object
       properties:
@@ -17817,14 +17760,14 @@ components:
           readOnly: true
         from_status:
           allOf:
-          - $ref: '#/components/schemas/Status'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
         from_status_id:
           type: integer
           writeOnly: true
         to_status:
           allOf:
-          - $ref: '#/components/schemas/Status'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
         to_status_id:
           type: integer
@@ -17832,12 +17775,12 @@ components:
         allowed_roles:
           description: List of roles allowed to trigger this transition, e.g. ['agent',
             'admin'].
-        requires_reason:
+        is_reason_required:
           type: boolean
-          description: Whether this transition requires a reason from the actor.
-        requires_resolution:
+          readOnly: true
+        is_resolution_required:
           type: boolean
-          description: Whether this transition requires a resolution summary.
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -17847,6 +17790,8 @@ components:
       - from_status
       - from_status_id
       - id
+      - is_reason_required
+      - is_resolution_required
       - to_status
       - to_status_id
     StorageQuotaCreate:
@@ -18005,22 +17950,21 @@ components:
           minimum: 0
           description: Minutes after creation during which an author may edit/delete
             their comment.
-        requesters_can_set_priority:
+        can_requesters_set_priority:
           type: boolean
-          description: If disabled, requesters describe impact/urgency and the priority
-            is derived (agents still set it).
-        sla_enabled:
+          readOnly: true
+        is_sla_enabled:
           type: boolean
-          description: Compute SLA deadlines and flag breaches from the priority targets.
+          readOnly: true
         sla_at_risk_percent:
           type: integer
           maximum: 32767
           minimum: 0
           description: A ticket is 'at risk' once this percentage of its SLA window
             has elapsed.
-        csat_enabled:
+        is_csat_enabled:
           type: boolean
-          description: Allow requesters to rate resolved tickets (1-5).
+          readOnly: true
         csat_window_days:
           type: integer
           maximum: 2147483647
@@ -18029,24 +17973,17 @@ components:
             a satisfaction rating.
         default_ticket_type:
           allOf:
-          - $ref: '#/components/schemas/TicketTypeEnum'
-          description: 'Type applied when a ticket is created without one.
-
-
-            * `incident` - Incident
-
-            * `service_request` - Service Request
-
-            * `problem` - Problem
-
-            * `change` - Change
-
-            * `question` - Question'
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         updated_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - can_requesters_set_priority
+      - default_ticket_type
+      - is_csat_enabled
+      - is_sla_enabled
       - updated_at
     SyncInfoResponse:
       type: object
@@ -18136,12 +18073,12 @@ components:
           type: string
         lead:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         members:
           type: array
           items:
-            $ref: '#/components/schemas/UserSummary'
+            $ref: '#/components/schemas/UserReference'
           readOnly: true
         is_active:
           type: boolean
@@ -18158,6 +18095,7 @@ components:
       - name
     TeamSummary:
       type: object
+      description: REL-3 relation to a team; the code is read from the team catalog.
       properties:
         id:
           type: integer
@@ -18165,13 +18103,7 @@ components:
         name:
           type: string
           maxLength: 100
-        code:
-          type: string
-          description: Stable machine-readable identifier used by the options API.
-          maxLength: 50
-          pattern: ^[-a-zA-Z0-9_]+$
       required:
-      - code
       - id
       - name
     TechnicalUserCatalogCreate:
@@ -18275,7 +18207,9 @@ components:
           type: integer
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         actor_name:
           type: string
           maxLength: 255
@@ -18284,14 +18218,16 @@ components:
           format: date-time
           readOnly: true
         payload: {}
-        correlation_id:
+        correlation_key:
           type: string
-          maxLength: 64
+          readOnly: true
       required:
       - actor_name
+      - correlation_key
       - event_type
       - id
       - occurred_at
+      x-embedded-resource: true
     TicketActivityListSerializersTicketActivityListResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -18343,14 +18279,16 @@ components:
           description: Restricted attachments are visible only to support agents and
             administrators.
         scan_status:
-          $ref: '#/components/schemas/ScanStatusEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
         uploaded_by:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         download_url:
           type: string
@@ -18361,8 +18299,10 @@ components:
       - download_url
       - filename
       - id
+      - scan_status
       - size
       - uploaded_by
+      x-embedded-resource: true
     TicketAttachmentCreateSerializersTicketAttachmentDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -18379,12 +18319,14 @@ components:
           readOnly: true
         author:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         body:
           type: string
         visibility:
-          $ref: '#/components/schemas/TicketCommentVisibilityEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -18398,6 +18340,8 @@ components:
       - body
       - created_at
       - id
+      - visibility
+      x-embedded-resource: true
     TicketCommentCreateSerializersTicketCommentDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -18424,14 +18368,6 @@ components:
           $ref: '#/components/schemas/TicketComment'
       required:
       - data
-    TicketCommentVisibilityEnum:
-      enum:
-      - public
-      - internal
-      type: string
-      description: '* `public` - Public
-
-        * `internal` - Internal'
     TicketCreateRequest:
       type: object
       properties:
@@ -18591,15 +18527,15 @@ components:
           readOnly: true
         requester:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         created_by:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         assignee:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         team:
           allOf:
@@ -18658,7 +18594,7 @@ components:
           nullable: true
         resolved_by:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         reopen_count:
           type: integer
@@ -18758,7 +18694,9 @@ components:
           type: integer
           readOnly: true
         link_type:
-          $ref: '#/components/schemas/LinkTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         direction:
           type: string
           readOnly: true
@@ -18766,8 +18704,8 @@ components:
           type: string
           readOnly: true
         ticket:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/TicketRef'
           readOnly: true
         created_at:
           type: string
@@ -18780,6 +18718,7 @@ components:
       - label
       - link_type
       - ticket
+      x-embedded-resource: true
     TicketLinkCreateSerializersTicketLinkDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -18850,11 +18789,11 @@ components:
           readOnly: true
         requester:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         assignee:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         team:
           allOf:
@@ -18958,40 +18897,28 @@ components:
       - pagination
     TicketRef:
       type: object
-      description: Compact reference to another ticket.
+      description: 'REL-3 relation to another ticket; ``name`` is ``"<key>: <subject>"``.'
       properties:
         id:
           type: integer
           readOnly: true
-        key:
-          type: string
-          readOnly: true
-        subject:
-          type: string
-          maxLength: 200
-        status:
-          type: string
-          readOnly: true
-        system_state:
+        name:
           type: string
           readOnly: true
       required:
       - id
-      - key
-      - status
-      - subject
-      - system_state
+      - name
     TicketResourceLink:
       type: object
+      description: A resource link owned by the ticket (REL-15).
       properties:
         id:
           type: integer
           readOnly: true
-        resource_type:
-          $ref: '#/components/schemas/ResourceTypeEnum'
-        resource_id:
-          type: string
-          maxLength: 64
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/LinkedResource'
+          readOnly: true
         snapshot:
           type: object
           additionalProperties: {}
@@ -19004,7 +18931,7 @@ components:
           readOnly: true
         linked_by:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         unlinked_at:
           type: string
@@ -19012,7 +18939,7 @@ components:
           nullable: true
         unlinked_by:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         unlink_reason:
           type: string
@@ -19024,10 +18951,10 @@ components:
       - id
       - linked_at
       - linked_by
-      - resource_id
-      - resource_type
+      - resource
       - snapshot
       - unlinked_by
+      x-embedded-resource: true
     TicketResourceLinkCreateSerializersTicketResourceLinkDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -19455,21 +19382,6 @@ components:
           $ref: '#/components/schemas/User'
       required:
       - data
-    UserSummary:
-      type: object
-      description: Compact public user representation.
-      properties:
-        id:
-          type: integer
-        username:
-          type: string
-        full_name:
-          type: string
-          readOnly: true
-      required:
-      - full_name
-      - id
-      - username
     UserWeeklyUsageSerializersWeeklyUsageSlotListResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -19569,12 +19481,20 @@ components:
         * `number` - Number
 
         * `boolean` - Yes / No'
+    VisibilityEnum:
+      enum:
+      - public
+      - internal
+      type: string
+      description: '* `public` - public
+
+        * `internal` - internal'
     Watcher:
       type: object
       properties:
         user:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         created_at:
           type: string

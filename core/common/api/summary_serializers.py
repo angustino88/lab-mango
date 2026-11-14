@@ -74,6 +74,21 @@ class UserReferenceSerializer(serializers.Serializer):
         return user_display_name(obj)
 
 
+class RelationSerializer(serializers.Serializer):
+    """REL-3 relation ``{id, name}`` to any model row; ``name`` follows ``relation_name``."""
+
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.SerializerMethodField()
+
+    class Meta:
+        ref_name = "Relation"
+
+    def get_name(self, obj: Any) -> str:
+        from .wire_names import relation_name
+
+        return relation_name(obj)
+
+
 class ChoiceSerializer(serializers.Serializer):
     """ENU-1 ``{value, label}``."""
 

@@ -113895,13 +113895,13 @@
                     "minimum": 0,
                     "description": "Minutes after creation during which an author may edit/delete their comment."
                   },
-                  "requesters_can_set_priority": {
+                  "can_requesters_set_priority": {
                     "type": "boolean",
-                    "description": "If disabled, requesters describe impact/urgency and the priority is derived (agents still set it)."
+                    "readOnly": true
                   },
-                  "sla_enabled": {
+                  "is_sla_enabled": {
                     "type": "boolean",
-                    "description": "Compute SLA deadlines and flag breaches from the priority targets."
+                    "readOnly": true
                   },
                   "sla_at_risk_percent": {
                     "type": "integer",
@@ -113909,9 +113909,9 @@
                     "minimum": 0,
                     "description": "A ticket is 'at risk' once this percentage of its SLA window has elapsed."
                   },
-                  "csat_enabled": {
+                  "is_csat_enabled": {
                     "type": "boolean",
-                    "description": "Allow requesters to rate resolved tickets (1-5)."
+                    "readOnly": true
                   },
                   "csat_window_days": {
                     "type": "integer",
@@ -113926,7 +113926,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "description": "Type applied when a ticket is created without one.\n\n* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+                    "readOnly": true
                   },
                   "updated_at": {
                     "type": "string",
@@ -113935,6 +113935,10 @@
                   }
                 },
                 "required": [
+                  "can_requesters_set_priority",
+                  "default_ticket_type",
+                  "is_csat_enabled",
+                  "is_sla_enabled",
                   "updated_at"
                 ]
               }
@@ -113951,10 +113955,10 @@
               "allowed_attachment_extensions": null,
               "max_attachments_per_ticket": 1,
               "comment_edit_window_minutes": 1,
-              "requesters_can_set_priority": true,
-              "sla_enabled": true,
+              "can_requesters_set_priority": true,
+              "is_sla_enabled": true,
               "sla_at_risk_percent": 1,
-              "csat_enabled": true,
+              "is_csat_enabled": true,
               "csat_window_days": 1,
               "default_ticket_type": {},
               "updated_at": "2026-10-20T12:00:00Z"
@@ -114258,13 +114262,13 @@
                     "minimum": 0,
                     "description": "Minutes after creation during which an author may edit/delete their comment."
                   },
-                  "requesters_can_set_priority": {
+                  "can_requesters_set_priority": {
                     "type": "boolean",
-                    "description": "If disabled, requesters describe impact/urgency and the priority is derived (agents still set it)."
+                    "readOnly": true
                   },
-                  "sla_enabled": {
+                  "is_sla_enabled": {
                     "type": "boolean",
-                    "description": "Compute SLA deadlines and flag breaches from the priority targets."
+                    "readOnly": true
                   },
                   "sla_at_risk_percent": {
                     "type": "integer",
@@ -114272,9 +114276,9 @@
                     "minimum": 0,
                     "description": "A ticket is 'at risk' once this percentage of its SLA window has elapsed."
                   },
-                  "csat_enabled": {
+                  "is_csat_enabled": {
                     "type": "boolean",
-                    "description": "Allow requesters to rate resolved tickets (1-5)."
+                    "readOnly": true
                   },
                   "csat_window_days": {
                     "type": "integer",
@@ -114289,7 +114293,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "description": "Type applied when a ticket is created without one.\n\n* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+                    "readOnly": true
                   },
                   "updated_at": {
                     "type": "string",
@@ -114298,6 +114302,10 @@
                   }
                 },
                 "required": [
+                  "can_requesters_set_priority",
+                  "default_ticket_type",
+                  "is_csat_enabled",
+                  "is_sla_enabled",
                   "updated_at"
                 ]
               }
@@ -114314,10 +114322,10 @@
               "allowed_attachment_extensions": null,
               "max_attachments_per_ticket": 1,
               "comment_edit_window_minutes": 1,
-              "requesters_can_set_priority": true,
-              "sla_enabled": true,
+              "can_requesters_set_priority": true,
+              "is_sla_enabled": true,
               "sla_at_risk_percent": 1,
-              "csat_enabled": true,
+              "is_csat_enabled": true,
               "csat_window_days": 1,
               "default_ticket_type": {},
               "updated_at": "2026-10-20T12:00:00Z"
@@ -114648,13 +114656,13 @@
                     "allowed_roles": {
                       "description": "List of roles allowed to trigger this transition, e.g. ['agent', 'admin']."
                     },
-                    "requires_reason": {
+                    "is_reason_required": {
                       "type": "boolean",
-                      "description": "Whether this transition requires a reason from the actor."
+                      "readOnly": true
                     },
-                    "requires_resolution": {
+                    "is_resolution_required": {
                       "type": "boolean",
-                      "description": "Whether this transition requires a resolution summary."
+                      "readOnly": true
                     },
                     "created_at": {
                       "type": "string",
@@ -114667,6 +114675,8 @@
                     "from_status",
                     "from_status_id",
                     "id",
+                    "is_reason_required",
+                    "is_resolution_required",
                     "to_status",
                     "to_status_id"
                   ]
@@ -114686,8 +114696,8 @@
                 "to_status": {},
                 "to_status_id": 1,
                 "allowed_roles": null,
-                "requires_reason": true,
-                "requires_resolution": true,
+                "is_reason_required": true,
+                "is_resolution_required": true,
                 "created_at": "2026-10-20T12:00:00Z"
               }
             ]
@@ -114956,13 +114966,13 @@
                   "allowed_roles": {
                     "description": "List of roles allowed to trigger this transition, e.g. ['agent', 'admin']."
                   },
-                  "requires_reason": {
+                  "is_reason_required": {
                     "type": "boolean",
-                    "description": "Whether this transition requires a reason from the actor."
+                    "readOnly": true
                   },
-                  "requires_resolution": {
+                  "is_resolution_required": {
                     "type": "boolean",
-                    "description": "Whether this transition requires a resolution summary."
+                    "readOnly": true
                   },
                   "created_at": {
                     "type": "string",
@@ -114975,6 +114985,8 @@
                   "from_status",
                   "from_status_id",
                   "id",
+                  "is_reason_required",
+                  "is_resolution_required",
                   "to_status",
                   "to_status_id"
                 ]
@@ -114992,8 +115004,8 @@
               "to_status": {},
               "to_status_id": 1,
               "allowed_roles": null,
-              "requires_reason": true,
-              "requires_resolution": true,
+              "is_reason_required": true,
+              "is_resolution_required": true,
               "created_at": "2026-10-20T12:00:00Z"
             }
           }
@@ -115363,13 +115375,13 @@
                   "allowed_roles": {
                     "description": "List of roles allowed to trigger this transition, e.g. ['agent', 'admin']."
                   },
-                  "requires_reason": {
+                  "is_reason_required": {
                     "type": "boolean",
-                    "description": "Whether this transition requires a reason from the actor."
+                    "readOnly": true
                   },
-                  "requires_resolution": {
+                  "is_resolution_required": {
                     "type": "boolean",
-                    "description": "Whether this transition requires a resolution summary."
+                    "readOnly": true
                   },
                   "created_at": {
                     "type": "string",
@@ -115382,6 +115394,8 @@
                   "from_status",
                   "from_status_id",
                   "id",
+                  "is_reason_required",
+                  "is_resolution_required",
                   "to_status",
                   "to_status_id"
                 ]
@@ -115399,8 +115413,8 @@
               "to_status": {},
               "to_status_id": 1,
               "allowed_roles": null,
-              "requires_reason": true,
-              "requires_resolution": true,
+              "is_reason_required": true,
+              "is_resolution_required": true,
               "created_at": "2026-10-20T12:00:00Z"
             }
           }
@@ -121099,8 +121113,13 @@
                       "maxLength": 50
                     },
                     "system_state": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "color_hex": {
                       "type": "string",
@@ -121114,9 +121133,9 @@
                       "type": "boolean",
                       "description": "Terminal status (e.g. Closed). Entering it stamps closed_at; auto-close moves tickets here."
                     },
-                    "pauses_sla": {
+                    "is_sla_paused": {
                       "type": "boolean",
-                      "description": "While a ticket is in this status (e.g. Waiting for Customer) SLA clocks are paused."
+                      "readOnly": true
                     },
                     "sort_order": {
                       "type": "integer",
@@ -121135,7 +121154,9 @@
                   "required": [
                     "created_at",
                     "id",
-                    "name"
+                    "is_sla_paused",
+                    "name",
+                    "system_state"
                   ]
                 }
               }
@@ -121153,7 +121174,7 @@
                 "color_hex": "string",
                 "is_initial": true,
                 "is_final": true,
-                "pauses_sla": true,
+                "is_sla_paused": true,
                 "sort_order": 1,
                 "is_active": true,
                 "created_at": "2026-10-20T12:00:00Z"
@@ -121428,12 +121449,13 @@
                     "maxLength": 50
                   },
                   "system_state": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `open` - Open\n* `active` - Active\n* `waiting` - Waiting\n* `done` - Done"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "color_hex": {
                     "type": "string",
@@ -121447,9 +121469,9 @@
                     "type": "boolean",
                     "description": "Terminal status (e.g. Closed). Entering it stamps closed_at; auto-close moves tickets here."
                   },
-                  "pauses_sla": {
+                  "is_sla_paused": {
                     "type": "boolean",
-                    "description": "While a ticket is in this status (e.g. Waiting for Customer) SLA clocks are paused."
+                    "readOnly": true
                   },
                   "sort_order": {
                     "type": "integer",
@@ -121468,7 +121490,9 @@
                 "required": [
                   "created_at",
                   "id",
-                  "name"
+                  "is_sla_paused",
+                  "name",
+                  "system_state"
                 ]
               }
             },
@@ -121480,11 +121504,11 @@
             "data": {
               "id": 1,
               "name": "string",
-              "system_state": "string",
+              "system_state": {},
               "color_hex": "string",
               "is_initial": true,
               "is_final": true,
-              "pauses_sla": true,
+              "is_sla_paused": true,
               "sort_order": 1,
               "is_active": true,
               "created_at": "2026-10-20T12:00:00Z"
@@ -122083,12 +122107,13 @@
                     "maxLength": 50
                   },
                   "system_state": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `open` - Open\n* `active` - Active\n* `waiting` - Waiting\n* `done` - Done"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "color_hex": {
                     "type": "string",
@@ -122102,9 +122127,9 @@
                     "type": "boolean",
                     "description": "Terminal status (e.g. Closed). Entering it stamps closed_at; auto-close moves tickets here."
                   },
-                  "pauses_sla": {
+                  "is_sla_paused": {
                     "type": "boolean",
-                    "description": "While a ticket is in this status (e.g. Waiting for Customer) SLA clocks are paused."
+                    "readOnly": true
                   },
                   "sort_order": {
                     "type": "integer",
@@ -122123,7 +122148,9 @@
                 "required": [
                   "created_at",
                   "id",
-                  "name"
+                  "is_sla_paused",
+                  "name",
+                  "system_state"
                 ]
               }
             },
@@ -122135,11 +122162,11 @@
             "data": {
               "id": 1,
               "name": "string",
-              "system_state": "string",
+              "system_state": {},
               "color_hex": "string",
               "is_initial": true,
               "is_final": true,
-              "pauses_sla": true,
+              "is_sla_paused": true,
               "sort_order": 1,
               "is_active": true,
               "created_at": "2026-10-20T12:00:00Z"
@@ -127484,8 +127511,13 @@
                       "readOnly": true
                     },
                     "event_type": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "actor_name": {
                       "type": "string",
@@ -127497,17 +127529,19 @@
                       "readOnly": true
                     },
                     "payload": {},
-                    "correlation_id": {
+                    "correlation_key": {
                       "type": "string",
-                      "maxLength": 64
+                      "readOnly": true
                     }
                   },
                   "required": [
                     "actor_name",
+                    "correlation_key",
                     "event_type",
                     "id",
                     "occurred_at"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -127523,7 +127557,7 @@
                 "actor_name": "string",
                 "occurred_at": "2026-10-20T12:00:00Z",
                 "payload": null,
-                "correlation_id": "string"
+                "correlation_key": "string"
               }
             ]
           }
@@ -128511,12 +128545,13 @@
                     "description": "Restricted attachments are visible only to support agents and administrators."
                   },
                   "scan_status": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `clean` - Clean\n* `pending` - Pending\n* `infected` - Infected"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "created_at": {
                     "type": "string",
@@ -128543,9 +128578,11 @@
                   "download_url",
                   "filename",
                   "id",
+                  "scan_status",
                   "size",
                   "uploaded_by"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -128559,7 +128596,7 @@
               "content_type": "string",
               "size": 1,
               "is_restricted": true,
-              "scan_status": "string",
+              "scan_status": {},
               "created_at": "2026-10-20T12:00:00Z",
               "uploaded_by": {},
               "download_url": "string"
@@ -129082,8 +129119,13 @@
                       "type": "string"
                     },
                     "visibility": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "created_at": {
                       "type": "string",
@@ -129100,8 +129142,10 @@
                     "author",
                     "body",
                     "created_at",
-                    "id"
-                  ]
+                    "id",
+                    "visibility"
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -129369,12 +129413,13 @@
                     "type": "string"
                   },
                   "visibility": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `public` - Public\n* `internal` - Internal"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "created_at": {
                     "type": "string",
@@ -129391,8 +129436,10 @@
                   "author",
                   "body",
                   "created_at",
-                  "id"
-                ]
+                  "id",
+                  "visibility"
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -129404,7 +129451,7 @@
               "id": 1,
               "author": {},
               "body": "string",
-              "visibility": "string",
+              "visibility": {},
               "created_at": "2026-10-20T12:00:00Z",
               "edited_at": "2026-10-20T12:00:00Z"
             }
@@ -129755,12 +129802,13 @@
                     "type": "string"
                   },
                   "visibility": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `public` - Public\n* `internal` - Internal"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "created_at": {
                     "type": "string",
@@ -129777,8 +129825,10 @@
                   "author",
                   "body",
                   "created_at",
-                  "id"
-                ]
+                  "id",
+                  "visibility"
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -129790,7 +129840,7 @@
               "id": 1,
               "author": {},
               "body": "string",
-              "visibility": "string",
+              "visibility": {},
               "created_at": "2026-10-20T12:00:00Z",
               "edited_at": "2026-10-20T12:00:00Z"
             }
@@ -131036,8 +131086,13 @@
                       "readOnly": true
                     },
                     "link_type": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "direction": {
                       "type": "string",
@@ -131048,11 +131103,12 @@
                       "readOnly": true
                     },
                     "ticket": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "created_at": {
@@ -131068,7 +131124,8 @@
                     "label",
                     "link_type",
                     "ticket"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -131324,12 +131381,13 @@
                     "readOnly": true
                   },
                   "link_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `relates_to` - Relates To\n* `duplicates` - Duplicates\n* `blocks` - Blocks\n* `caused_by` - Caused By"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "direction": {
                     "type": "string",
@@ -131340,8 +131398,12 @@
                     "readOnly": true
                   },
                   "ticket": {
-                    "type": "object",
-                    "additionalProperties": {},
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "created_at": {
@@ -131357,7 +131419,8 @@
                   "label",
                   "link_type",
                   "ticket"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -131367,7 +131430,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "link_type": "string",
+              "link_type": {},
               "direction": "string",
               "label": "string",
               "ticket": {},
@@ -131908,22 +131971,20 @@
             "properties": {
               "data": {
                 "type": "object",
+                "description": "A resource link owned by the ticket (REL-15).",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "resource_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment\n* `license` - License"
-                  },
-                  "resource_id": {
-                    "type": "string",
-                    "maxLength": 64
+                  "resource": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "snapshot": {
                     "type": "object",
@@ -131974,11 +132035,11 @@
                   "id",
                   "linked_at",
                   "linked_by",
-                  "resource_id",
-                  "resource_type",
+                  "resource",
                   "snapshot",
                   "unlinked_by"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -131988,8 +132049,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "resource_type": "string",
-              "resource_id": "string",
+              "resource": {},
               "snapshot": {},
               "is_active": true,
               "linked_at": "2026-10-20T12:00:00Z",
