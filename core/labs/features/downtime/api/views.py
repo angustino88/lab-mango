@@ -1,7 +1,7 @@
 """Downtime HTTP mapping only; each handler calls one command or selector."""
 
 from core.common.api.api_views import AppListAPIView
-from core.common.api.pagination import with_page_query
+from core.common.api.pagination import PAGE_QUERY_PARAMS, with_page_query
 from core.labs.features.base import CommandAPIView, operation
 from core.labs.features.downtime import queries
 from core.labs.features.downtime.application import (
@@ -35,7 +35,9 @@ class DowntimeListCreateAPIView(DowntimeAPIView):
         filters, error = self.validate_query()
         if error is not None:
             return error
-        return self._execute(lambda: queries.list_downtimes(**(filters or {})))
+        # ``page`` and ``page_size`` are validated with the query but belong to the paginator, not the selector.
+        selector_filters = {key: value for key, value in (filters or {}).items() if key not in PAGE_QUERY_PARAMS}
+        return self._execute(lambda: queries.list_downtimes(**selector_filters))
 
     def handle_post(self, request, **kwargs):
         serializer, error = self.validate_request()

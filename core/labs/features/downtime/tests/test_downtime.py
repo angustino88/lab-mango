@@ -298,6 +298,17 @@ def test_list_filters_and_query_budget_does_not_grow(client, room, station, benc
 
 
 @pytest.mark.django_db
+def test_list_accepts_page_and_page_size_with_filters(client, station):
+    _schedule(client, "station", station.pk)
+
+    response = client.get(URL, {"resource_type": "station", "resource_id": station.pk, "page": 1, "page_size": 100})
+
+    assert response.status_code == 200, response.data
+    assert len(response.data["data"]) == 1
+    assert response.data["meta"]["pagination"]["page_size"] == 100
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("path", ["/api/labs/benches", "/api/labs/stations", "/api/labs/rooms"])
 def test_resource_lists_compute_state_in_a_constant_number_of_queries(client, coordinator, path):
     def count_queries():
