@@ -116,7 +116,7 @@ def test_computing_unit_gets_profile_rdp_file_and_activity(client, settings, tmp
     assert profile.hostname == "pc-1.lab" and profile.rdp_file.name.endswith(".rdp")
     assert ComputingActivity.objects.filter(computing_id=body["id"]).exists()
     assert body["computing"]["hostname"] == "pc-1.lab"
-    assert body["activity"]["status"] == "offline"
+    assert body["activity"]["status"]["value"] == "offline"
     technical_user = TechnicalUser.objects.create(username="svc-lab")
     changed = client.patch(
         f"{ROOT}/{body['id']}", {"computing": {"technical_user_id": technical_user.pk}}, format="json"
@@ -124,7 +124,7 @@ def test_computing_unit_gets_profile_rdp_file_and_activity(client, settings, tmp
     assert changed.status_code == 200, changed.data
     assert changed.data["data"]["computing"]["technical_user"] == {"id": technical_user.pk, "name": "svc-lab"}
     activity = client.get(f"{ROOT}/{body['id']}/activity")
-    assert activity.status_code == 200 and activity.data["data"]["status"] == "offline"
+    assert activity.status_code == 200 and activity.data["data"]["status"]["value"] == "offline"
 
 
 @pytest.mark.django_db
@@ -176,7 +176,10 @@ def test_category_reports_its_capabilities(client):
     response = client.get(f"{ROOT}/reference-data", {"category": kind.category_id})
     assert response.status_code == 200
     (category,) = response.data["data"]["categories"]
-    assert "bookable" not in category["capabilities"] and "assignable" in category["capabilities"]
+    assert {"value": "bookable", "label": "Bookable"} not in category["capabilities"] and {
+        "value": "assignable",
+        "label": "Assignable",
+    } in category["capabilities"]
 
 
 @pytest.mark.django_db

@@ -136,3 +136,21 @@ The write body is unchanged, including its legacy aliases.
 | `expiry_date` | read and write | `expires_at` |
 | `target_user` | integer | `{id, name}` or `null` |
 | `created` / `modified` | | `created_at` / `updated_at` |
+
+### Equipment
+
+| Field | Before | After |
+| --- | --- | --- |
+| `warranty_until` (date) | read and write | `warranty_end_date` |
+| `calibration_required` | read and write | `is_calibration_required` |
+| `calibration_overdue` | | `is_calibration_overdue` |
+| Loan `batch_id`, `booking_id` | integers | `batch: {id, name}`, `booking: {id, name}` (name = booking code) |
+| Loan `overdue` | | `is_overdue` |
+| Reservation `batch_id` | integer | `batch: {id, name}` |
+| Placement `target_type` | plain string | `{value, label}` |
+| Category `capabilities` | array of strings | array of `{value, label}` |
+| Kind `category`, type `kind`, product model `manufacturer` | integer | `{id, name}` |
+| Product model specification `definition_id`, `name` | two keys | `definition: {id, name}`; `value_type` is `{value, label}` |
+| Reference-data `owners` | `{id, username}` | `{id, name}` |
+| Department / group catalog `active` | | `is_active`; group `department` is `{id, name}` |
+| Computing activity `status`, `modified` | | `status` is `{value, label}`; `updated_at` |

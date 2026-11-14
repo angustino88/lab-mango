@@ -37,7 +37,7 @@ def test_put_get_delete_room_placement(coordinator_client, unit):
     put = coordinator_client.put(url, {"room_id": room.pk, "location_note": "  Shelf B "}, format="json")
     assert put.status_code == 200, put.data
     body = put.data["data"]
-    assert body["target_type"] == "room"
+    assert body["target_type"]["value"] == "room"
     assert body["room"]["id"] == room.pk and body["bench"] is None and body["station"] is None
     assert body["location_note"] == "Shelf B"
 
@@ -58,11 +58,11 @@ def test_put_moves_off_a_bench_in_one_call(coordinator_client, unit):
     url = f"{ROOT}{unit.pk}/placement"
     on_bench = coordinator_client.put(url, {"bench_id": bench.pk, "role": "primary"}, format="json")
     assert on_bench.status_code == 200, on_bench.data
-    assert on_bench.data["data"]["target_type"] == "bench"
+    assert on_bench.data["data"]["target_type"]["value"] == "bench"
     assert coordinator_client.get(f"{ROOT}{unit.pk}/assignment").status_code == 200
     moved = coordinator_client.put(url, {"room_id": room.pk}, format="json")
     assert moved.status_code == 200, moved.data
-    assert moved.data["data"]["target_type"] == "room"
+    assert moved.data["data"]["target_type"]["value"] == "room"
     assert coordinator_client.get(f"{ROOT}{unit.pk}/assignment").status_code == 404
 
 
@@ -95,7 +95,7 @@ def test_equipment_responses_include_placement(coordinator_client, unit):
     coordinator_client.put(f"{ROOT}{unit.pk}/placement", {"room_id": room.pk}, format="json")
 
     detail = coordinator_client.get(f"{ROOT}{unit.pk}").data["data"]
-    assert detail["placement"]["target_type"] == "room"
+    assert detail["placement"]["target_type"]["value"] == "room"
     assert detail["placement"]["room"]["id"] == room.pk
     assert "storage_room" not in detail
 

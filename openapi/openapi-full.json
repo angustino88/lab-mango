@@ -42238,18 +42238,6 @@
           "data"
         ]
       },
-      "CapabilitiesEnum": {
-        "type": "string",
-        "enum": [
-          "assignable",
-          "licensable",
-          "status_tracking",
-          "auditable",
-          "bookable",
-          "calibratable",
-          "monitored"
-        ]
-      },
       "CatalogOption": {
         "type": "object",
         "description": "Standard selector dropdown item: exactly {id, sku, name} (OPT-2, OPT-4).",
@@ -42735,7 +42723,7 @@
           "status": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/ComputingActivityStatusEnum"
+                "$ref": "#/components/schemas/Choice"
               }
             ],
             "readOnly": true
@@ -42777,7 +42765,7 @@
             "type": "integer",
             "readOnly": true
           },
-          "modified": {
+          "updated_at": {
             "type": "string",
             "format": "date-time",
             "readOnly": true
@@ -42787,13 +42775,13 @@
           "booking_code",
           "inactive_at",
           "inactive_reminder_count",
-          "modified",
           "offline_at",
           "remote_computer",
           "remote_ip",
           "remote_user",
           "remote_user_display_name",
-          "status"
+          "status",
+          "updated_at"
         ]
       },
       "ComputingActivityDetailApiComputingActivityDetailResponse": {
@@ -44084,7 +44072,7 @@
             "type": "string",
             "maxLength": 255
           },
-          "active": {
+          "is_active": {
             "type": "boolean"
           },
           "created_at": {
@@ -45334,7 +45322,7 @@
           "capabilities": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CapabilitiesEnum"
+              "$ref": "#/components/schemas/Choice"
             },
             "readOnly": true
           }
@@ -45344,7 +45332,8 @@
           "definition",
           "id",
           "name"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentCategoryCatalogRecord": {
         "type": "object",
@@ -45733,15 +45722,6 @@
             "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
             "nullable": true
           },
-          "warranty_until": {
-            "type": "string",
-            "format": "date",
-            "nullable": true
-          },
-          "calibration_required": {
-            "type": "boolean",
-            "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
-          },
           "lifecycle_state": {
             "allOf": [
               {
@@ -45811,6 +45791,15 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
+          },
+          "warranty_end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "is_calibration_required": {
+            "type": "boolean",
+            "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
           },
           "material_id": {
             "type": "integer",
@@ -46000,16 +45989,15 @@
             "readOnly": true,
             "nullable": true
           },
-          "warranty_until": {
+          "warranty_end_date": {
             "type": "string",
             "format": "date",
             "readOnly": true,
             "nullable": true
           },
-          "calibration_required": {
+          "is_calibration_required": {
             "type": "boolean",
-            "readOnly": true,
-            "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+            "readOnly": true
           },
           "last_calibrated_at": {
             "type": "string",
@@ -46023,7 +46011,7 @@
             "readOnly": true,
             "nullable": true
           },
-          "calibration_overdue": {
+          "is_calibration_overdue": {
             "type": "boolean",
             "readOnly": true
           },
@@ -46186,8 +46174,6 @@
         "required": [
           "acquisition_price",
           "activity",
-          "calibration_overdue",
-          "calibration_required",
           "category",
           "channels",
           "characteristics",
@@ -46204,6 +46190,8 @@
           "id",
           "image_url",
           "interfaces",
+          "is_calibration_overdue",
+          "is_calibration_required",
           "kind",
           "last_calibrated_at",
           "lifecycle_state",
@@ -46230,7 +46218,7 @@
           "type",
           "uid",
           "updated_at",
-          "warranty_until",
+          "warranty_end_date",
           "weight_kg"
         ]
       },
@@ -46286,7 +46274,8 @@
         "required": [
           "id",
           "resolution"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentDisplayResolutionReference": {
         "type": "object",
@@ -46322,7 +46311,8 @@
         "required": [
           "id",
           "size"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentDisplaySizeReference": {
         "type": "object",
@@ -46563,7 +46553,8 @@
         "required": [
           "id",
           "name"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentInterfaceReferenceCreateSerializersEquipmentInterfaceCatalogRecordDetailResponse": {
         "type": "object",
@@ -46828,16 +46819,15 @@
             "readOnly": true,
             "nullable": true
           },
-          "warranty_until": {
+          "warranty_end_date": {
             "type": "string",
             "format": "date",
             "readOnly": true,
             "nullable": true
           },
-          "calibration_required": {
+          "is_calibration_required": {
             "type": "boolean",
-            "readOnly": true,
-            "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+            "readOnly": true
           },
           "last_calibrated_at": {
             "type": "string",
@@ -46851,7 +46841,7 @@
             "readOnly": true,
             "nullable": true
           },
-          "calibration_overdue": {
+          "is_calibration_overdue": {
             "type": "boolean",
             "readOnly": true
           },
@@ -47000,8 +46990,6 @@
         },
         "required": [
           "acquisition_price",
-          "calibration_overdue",
-          "calibration_required",
           "category",
           "channels",
           "characteristics",
@@ -47017,6 +47005,8 @@
           "id",
           "image_url",
           "interfaces",
+          "is_calibration_overdue",
+          "is_calibration_required",
           "kind",
           "last_calibrated_at",
           "lifecycle_state",
@@ -47043,7 +47033,7 @@
           "type",
           "uid",
           "updated_at",
-          "warranty_until",
+          "warranty_end_date",
           "weight_kg"
         ]
       },
@@ -47056,7 +47046,12 @@
             "readOnly": true
           },
           "category": {
-            "type": "integer"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true
           },
           "name": {
             "type": "string",
@@ -47067,7 +47062,8 @@
           "category",
           "id",
           "name"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentKindCatalogCreate": {
         "type": "object",
@@ -47346,14 +47342,18 @@
       },
       "EquipmentLoan": {
         "type": "object",
-        "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+        "description": "One loan line (REL-15): who holds an item and until when. ``is_overdue`` is open and past ``due_at``.",
         "properties": {
           "id": {
             "type": "integer",
             "readOnly": true
           },
-          "batch_id": {
-            "type": "integer",
+          "batch": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
             "readOnly": true
           },
           "equipment": {
@@ -47385,10 +47385,14 @@
             "type": "string",
             "readOnly": true
           },
-          "booking_id": {
-            "type": "integer",
-            "readOnly": true,
-            "nullable": true
+          "booking": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
           },
           "handed_over_at": {
             "type": "string",
@@ -47400,7 +47404,7 @@
             "format": "date-time",
             "readOnly": true
           },
-          "overdue": {
+          "is_overdue": {
             "type": "boolean",
             "readOnly": true
           },
@@ -47425,8 +47429,8 @@
           }
         },
         "required": [
-          "batch_id",
-          "booking_id",
+          "batch",
+          "booking",
           "borrower",
           "borrower_contact",
           "borrower_name",
@@ -47437,10 +47441,11 @@
           "equipment",
           "handed_over_at",
           "id",
-          "overdue",
+          "is_overdue",
           "purpose",
           "returned_at"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentLoanBatch": {
         "type": "object",
@@ -47732,7 +47737,8 @@
         "required": [
           "id",
           "name"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentManufacturerCatalogCreate": {
         "type": "object",
@@ -47963,7 +47969,8 @@
         "required": [
           "id",
           "name"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentNetworkingProtocolOption": {
         "type": "object",
@@ -47980,29 +47987,12 @@
         "required": [
           "id",
           "name"
-        ]
-      },
-      "EquipmentOwner": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "username": {
-            "type": "string",
-            "readOnly": true,
-            "description": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
-          }
-        },
-        "required": [
-          "id",
-          "username"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentPlacement": {
         "type": "object",
-        "description": "Where a unit is now: exactly one of bench, station, room, or only ``location_note``.",
+        "description": "Where a unit is now (REL-15): exactly one of bench, station, room, or only ``location_note``.",
         "properties": {
           "id": {
             "type": "integer",
@@ -48011,11 +48001,11 @@
           "target_type": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/TargetTypeEnum"
+                "$ref": "#/components/schemas/Choice"
               }
             ],
             "readOnly": true,
-            "description": "Which target is set; ``note`` means an untracked place described by location_note.\n\n* `bench` - bench\n* `station` - station\n* `room` - room\n* `note` - note"
+            "description": "Which target is set; ``note`` means an untracked place described by location_note."
           },
           "bench": {
             "allOf": [
@@ -48072,7 +48062,8 @@
           "room",
           "station",
           "target_type"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentPlacementDetailSerializersEquipmentPlacementDetailResponse": {
         "type": "object",
@@ -48144,7 +48135,12 @@
             "readOnly": true
           },
           "manufacturer": {
-            "type": "integer"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true
           },
           "name": {
             "type": "string",
@@ -48177,7 +48173,8 @@
           "manufacturer",
           "name",
           "specifications"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentProductModelCatalogCreate": {
         "type": "object",
@@ -48478,7 +48475,7 @@
           "owners": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/EquipmentOwner"
+              "$ref": "#/components/schemas/UserReference"
             },
             "readOnly": true
           },
@@ -48578,7 +48575,7 @@
       },
       "EquipmentReservation": {
         "type": "object",
-        "description": "One reservation line: an item kept for a borrower over a window.",
+        "description": "One reservation line (REL-15): an item kept for a borrower over a window.",
         "properties": {
           "id": {
             "type": "integer",
@@ -48588,10 +48585,14 @@
             "type": "string",
             "readOnly": true
           },
-          "batch_id": {
-            "type": "integer",
-            "readOnly": true,
-            "nullable": true
+          "batch": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
           },
           "equipment": {
             "allOf": [
@@ -48625,7 +48626,7 @@
           }
         },
         "required": [
-          "batch_id",
+          "batch",
           "booking_code",
           "borrower_name",
           "cancellation_reason",
@@ -48634,7 +48635,8 @@
           "id",
           "starts_at",
           "status"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentReservationCancel": {
         "type": "object",
@@ -48925,7 +48927,8 @@
         "required": [
           "id",
           "name"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentSampleCustomerOption": {
         "type": "object",
@@ -48942,7 +48945,8 @@
         "required": [
           "id",
           "name"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentStatusChange": {
         "type": "object",
@@ -49120,7 +49124,8 @@
         "required": [
           "id",
           "username"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentType": {
         "type": "object",
@@ -49131,7 +49136,12 @@
             "readOnly": true
           },
           "kind": {
-            "type": "integer"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true
           },
           "name": {
             "type": "string",
@@ -49142,7 +49152,8 @@
           "id",
           "kind",
           "name"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "EquipmentTypeCatalogCreate": {
         "type": "object",
@@ -49406,15 +49417,6 @@
             "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
             "nullable": true
           },
-          "warranty_until": {
-            "type": "string",
-            "format": "date",
-            "nullable": true
-          },
-          "calibration_required": {
-            "type": "boolean",
-            "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
-          },
           "mac_address": {
             "oneOf": [
               {
@@ -49476,6 +49478,15 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
+          },
+          "warranty_end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "is_calibration_required": {
+            "type": "boolean",
+            "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
           },
           "material_id": {
             "type": "integer",
@@ -50702,7 +50713,7 @@
           "department": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/DepartmentCatalogItem"
+                "$ref": "#/components/schemas/LabsNamedReference"
               }
             ],
             "readOnly": true
@@ -50711,7 +50722,7 @@
             "type": "integer",
             "writeOnly": true
           },
-          "active": {
+          "is_active": {
             "type": "boolean"
           },
           "created_at": {
@@ -51673,7 +51684,8 @@
         "required": [
           "id",
           "name"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "LabsMoney": {
         "type": "object",
@@ -55718,15 +55730,6 @@
             "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
             "nullable": true
           },
-          "warranty_until": {
-            "type": "string",
-            "format": "date",
-            "nullable": true
-          },
-          "calibration_required": {
-            "type": "boolean",
-            "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
-          },
           "mac_address": {
             "oneOf": [
               {
@@ -55788,6 +55791,15 @@
             "type": "integer",
             "nullable": true,
             "description": "Owning team; must belong to the selected department."
+          },
+          "warranty_end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "is_calibration_required": {
+            "type": "boolean",
+            "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
           },
           "material_id": {
             "type": "integer",
@@ -56471,18 +56483,18 @@
       },
       "ProductModelSpecification": {
         "type": "object",
-        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "description": "A specification value owned by the product model (REL-15).",
         "properties": {
           "id": {
             "type": "integer",
             "readOnly": true
           },
-          "definition_id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
+          "definition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
             "readOnly": true
           },
           "unit": {
@@ -56490,7 +56502,11 @@
             "readOnly": true
           },
           "value_type": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
             "readOnly": true
           },
           "value": {
@@ -56499,13 +56515,13 @@
           }
         },
         "required": [
-          "definition_id",
+          "definition",
           "id",
-          "name",
           "unit",
           "value",
           "value_type"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "ProductModelSpecificationCatalogCreate": {
         "type": "object",
@@ -62844,16 +62860,6 @@
         ],
         "type": "string",
         "description": "* `open` - Open\n* `active` - Active\n* `waiting` - Waiting\n* `done` - Done"
-      },
-      "TargetTypeEnum": {
-        "enum": [
-          "bench",
-          "station",
-          "room",
-          "note"
-        ],
-        "type": "string",
-        "description": "* `bench` - bench\n* `station` - station\n* `room` - room\n* `note` - note"
       },
       "Team": {
         "type": "object",

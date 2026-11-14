@@ -6021,16 +6021,6 @@ paths:
       summary: Get Groups Options
 components:
   schemas:
-    CapabilitiesEnum:
-      type: string
-      enum:
-      - assignable
-      - licensable
-      - status_tracking
-      - auditable
-      - bookable
-      - calibratable
-      - monitored
     CatalogOption:
       type: object
       description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
@@ -6080,7 +6070,7 @@ components:
       properties:
         status:
           allOf:
-          - $ref: '#/components/schemas/ComputingActivityStatusEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         remote_user:
           type: string
@@ -6111,7 +6101,7 @@ components:
         inactive_reminder_count:
           type: integer
           readOnly: true
-        modified:
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -6119,13 +6109,13 @@ components:
       - booking_code
       - inactive_at
       - inactive_reminder_count
-      - modified
       - offline_at
       - remote_computer
       - remote_ip
       - remote_user
       - remote_user_display_name
       - status
+      - updated_at
     ComputingActivityDetailApiComputingActivityDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -6134,23 +6124,6 @@ components:
           $ref: '#/components/schemas/ComputingActivity'
       required:
       - data
-    ComputingActivityStatusEnum:
-      enum:
-      - offline
-      - free
-      - active
-      - inactive
-      - maintaining
-      type: string
-      description: '* `offline` - Offline
-
-        * `free` - Free
-
-        * `active` - Active
-
-        * `inactive` - Inactive
-
-        * `maintaining` - Maintaining'
     ComputingActivitySummary:
       type: object
       description: Stored live activity, including assets without telemetry as unknown.
@@ -6212,7 +6185,7 @@ components:
         name:
           type: string
           maxLength: 255
-        active:
+        is_active:
           type: boolean
         created_at:
           type: string
@@ -6710,13 +6683,14 @@ components:
         capabilities:
           type: array
           items:
-            $ref: '#/components/schemas/CapabilitiesEnum'
+            $ref: '#/components/schemas/Choice'
           readOnly: true
       required:
       - capabilities
       - definition
       - id
       - name
+      x-embedded-resource: true
     EquipmentCategoryCatalogRecord:
       type: object
       properties:
@@ -7016,13 +6990,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
-        warranty_until:
-          type: string
-          format: date
-          nullable: true
-        calibration_required:
-          type: boolean
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         lifecycle_state:
           allOf:
           - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
@@ -7084,6 +7051,13 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
+        warranty_end_date:
+          type: string
+          format: date
+          nullable: true
+        is_calibration_required:
+          type: boolean
+          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         material_id:
           type: integer
           nullable: true
@@ -7208,15 +7182,14 @@ components:
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           readOnly: true
           nullable: true
-        warranty_until:
+        warranty_end_date:
           type: string
           format: date
           readOnly: true
           nullable: true
-        calibration_required:
+        is_calibration_required:
           type: boolean
           readOnly: true
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         last_calibrated_at:
           type: string
           format: date-time
@@ -7227,7 +7200,7 @@ components:
           format: date-time
           readOnly: true
           nullable: true
-        calibration_overdue:
+        is_calibration_overdue:
           type: boolean
           readOnly: true
         metadata:
@@ -7331,8 +7304,6 @@ components:
       required:
       - acquisition_price
       - activity
-      - calibration_overdue
-      - calibration_required
       - category
       - channels
       - characteristics
@@ -7349,6 +7320,8 @@ components:
       - id
       - image_url
       - interfaces
+      - is_calibration_overdue
+      - is_calibration_required
       - kind
       - last_calibrated_at
       - lifecycle_state
@@ -7375,7 +7348,7 @@ components:
       - type
       - uid
       - updated_at
-      - warranty_until
+      - warranty_end_date
       - weight_kg
     EquipmentDetailAPIViewResponseCollectionEquipmentDetailDetailResponse:
       type: object
@@ -7414,6 +7387,7 @@ components:
       required:
       - id
       - resolution
+      x-embedded-resource: true
     EquipmentDisplayResolutionReference:
       type: object
       description: '``{id, name}`` for lookups whose label column is not ``name``.'
@@ -7440,6 +7414,7 @@ components:
       required:
       - id
       - size
+      x-embedded-resource: true
     EquipmentDisplaySizeReference:
       type: object
       description: '``{id, name}`` for lookups whose label column is not ``name``.'
@@ -7615,6 +7590,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentInterfaceReferenceCreateSerializersEquipmentInterfaceCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -7796,15 +7772,14 @@ components:
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           readOnly: true
           nullable: true
-        warranty_until:
+        warranty_end_date:
           type: string
           format: date
           readOnly: true
           nullable: true
-        calibration_required:
+        is_calibration_required:
           type: boolean
           readOnly: true
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         last_calibrated_at:
           type: string
           format: date-time
@@ -7815,7 +7790,7 @@ components:
           format: date-time
           readOnly: true
           nullable: true
-        calibration_overdue:
+        is_calibration_overdue:
           type: boolean
           readOnly: true
         metadata:
@@ -7910,8 +7885,6 @@ components:
           nullable: true
       required:
       - acquisition_price
-      - calibration_overdue
-      - calibration_required
       - category
       - channels
       - characteristics
@@ -7927,6 +7900,8 @@ components:
       - id
       - image_url
       - interfaces
+      - is_calibration_overdue
+      - is_calibration_required
       - kind
       - last_calibrated_at
       - lifecycle_state
@@ -7953,7 +7928,7 @@ components:
       - type
       - uid
       - updated_at
-      - warranty_until
+      - warranty_end_date
       - weight_kg
     EquipmentKind:
       type: object
@@ -7964,7 +7939,9 @@ components:
           type: integer
           readOnly: true
         category:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         name:
           type: string
           maxLength: 120
@@ -7972,6 +7949,7 @@ components:
       - category
       - id
       - name
+      x-embedded-resource: true
     EquipmentKindCatalogCreate:
       type: object
       properties:
@@ -8179,14 +8157,15 @@ components:
         * `lost` - Lost'
     EquipmentLoan:
       type: object
-      description: 'One loan line: who holds an item and until when. ``overdue`` is
-        computed (open and past ``due_at``).'
+      description: 'One loan line (REL-15): who holds an item and until when. ``is_overdue``
+        is open and past ``due_at``.'
       properties:
         id:
           type: integer
           readOnly: true
-        batch_id:
-          type: integer
+        batch:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
         equipment:
           allOf:
@@ -8206,10 +8185,11 @@ components:
         purpose:
           type: string
           readOnly: true
-        booking_id:
-          type: integer
-          readOnly: true
+        booking:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
+          readOnly: true
         handed_over_at:
           type: string
           format: date-time
@@ -8218,7 +8198,7 @@ components:
           type: string
           format: date-time
           readOnly: true
-        overdue:
+        is_overdue:
           type: boolean
           readOnly: true
         condition_out:
@@ -8237,8 +8217,8 @@ components:
           readOnly: true
           nullable: true
       required:
-      - batch_id
-      - booking_id
+      - batch
+      - booking
       - borrower
       - borrower_contact
       - borrower_name
@@ -8249,9 +8229,10 @@ components:
       - equipment
       - handed_over_at
       - id
-      - overdue
+      - is_overdue
       - purpose
       - returned_at
+      x-embedded-resource: true
     EquipmentLoanBatch:
       type: object
       description: 'The loan slip: one borrower and purpose, with every item handed
@@ -8463,6 +8444,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentManufacturerCatalogCreate:
       type: object
       properties:
@@ -8626,6 +8608,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentNetworkingProtocolOption:
       type: object
       properties:
@@ -8638,43 +8621,21 @@ components:
       required:
       - id
       - name
-    EquipmentOwner:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          readOnly: true
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-      required:
-      - id
-      - username
+      x-embedded-resource: true
     EquipmentPlacement:
       type: object
-      description: 'Where a unit is now: exactly one of bench, station, room, or only
-        ``location_note``.'
+      description: 'Where a unit is now (REL-15): exactly one of bench, station, room,
+        or only ``location_note``.'
       properties:
         id:
           type: integer
           readOnly: true
         target_type:
           allOf:
-          - $ref: '#/components/schemas/TargetTypeEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
-          description: 'Which target is set; ``note`` means an untracked place described
+          description: Which target is set; ``note`` means an untracked place described
             by location_note.
-
-
-            * `bench` - bench
-
-            * `station` - station
-
-            * `room` - room
-
-            * `note` - note'
         bench:
           allOf:
           - $ref: '#/components/schemas/LabsUIDNamedReference'
@@ -8713,6 +8674,7 @@ components:
       - room
       - station
       - target_type
+      x-embedded-resource: true
     EquipmentPlacementDetailSerializersEquipmentPlacementDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -8769,7 +8731,9 @@ components:
           type: integer
           readOnly: true
         manufacturer:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         name:
           type: string
           maxLength: 120
@@ -8795,6 +8759,7 @@ components:
       - manufacturer
       - name
       - specifications
+      x-embedded-resource: true
     EquipmentProductModelCatalogCreate:
       type: object
       properties:
@@ -9011,7 +8976,7 @@ components:
         owners:
           type: array
           items:
-            $ref: '#/components/schemas/EquipmentOwner'
+            $ref: '#/components/schemas/UserReference'
           readOnly: true
         categories:
           type: array
@@ -9084,7 +9049,8 @@ components:
       - data
     EquipmentReservation:
       type: object
-      description: 'One reservation line: an item kept for a borrower over a window.'
+      description: 'One reservation line (REL-15): an item kept for a borrower over
+        a window.'
       properties:
         id:
           type: integer
@@ -9092,10 +9058,11 @@ components:
         booking_code:
           type: string
           readOnly: true
-        batch_id:
-          type: integer
-          readOnly: true
+        batch:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
+          readOnly: true
         equipment:
           allOf:
           - $ref: '#/components/schemas/LabsUIDNamedReference'
@@ -9118,7 +9085,7 @@ components:
           type: string
           readOnly: true
       required:
-      - batch_id
+      - batch
       - booking_code
       - borrower_name
       - cancellation_reason
@@ -9127,6 +9094,7 @@ components:
       - id
       - starts_at
       - status
+      x-embedded-resource: true
     EquipmentReservationCancel:
       type: object
       description: Reject unsupported keys and return a stable error when SKU is supplied
@@ -9337,6 +9305,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentSampleCustomerOption:
       type: object
       properties:
@@ -9349,6 +9318,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentStatusChange:
       type: object
       description: 'One change of ``display_status``. ``previous_display_status``
@@ -9458,6 +9428,7 @@ components:
       required:
       - id
       - username
+      x-embedded-resource: true
     EquipmentType:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -9467,7 +9438,9 @@ components:
           type: integer
           readOnly: true
         kind:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         name:
           type: string
           maxLength: 120
@@ -9475,6 +9448,7 @@ components:
       - id
       - kind
       - name
+      x-embedded-resource: true
     EquipmentTypeCatalogCreate:
       type: object
       properties:
@@ -9665,13 +9639,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
-        warranty_until:
-          type: string
-          format: date
-          nullable: true
-        calibration_required:
-          type: boolean
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
           oneOf:
           - type: string
@@ -9717,6 +9684,13 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
+        warranty_end_date:
+          type: string
+          format: date
+          nullable: true
+        is_calibration_required:
+          type: boolean
+          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         material_id:
           type: integer
           nullable: true
@@ -9826,12 +9800,12 @@ components:
           maxLength: 255
         department:
           allOf:
-          - $ref: '#/components/schemas/DepartmentCatalogItem'
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
         department_id:
           type: integer
           writeOnly: true
-        active:
+        is_active:
           type: boolean
         created_at:
           type: string
@@ -10004,6 +9978,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     LabsMoney:
       type: object
       description: Standard `{amount, currency}` representation for monetary values.
@@ -10327,13 +10302,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
-        warranty_until:
-          type: string
-          format: date
-          nullable: true
-        calibration_required:
-          type: boolean
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
           oneOf:
           - type: string
@@ -10379,6 +10347,13 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
+        warranty_end_date:
+          type: string
+          format: date
+          nullable: true
+        is_calibration_required:
+          type: boolean
+          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         material_id:
           type: integer
           nullable: true
@@ -10431,34 +10406,32 @@ components:
       - error
     ProductModelSpecification:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: A specification value owned by the product model (REL-15).
       properties:
         id:
           type: integer
           readOnly: true
-        definition_id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
+        definition:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
         unit:
           type: string
           readOnly: true
         value_type:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         value:
           type: string
           maxLength: 255
       required:
-      - definition_id
+      - definition
       - id
-      - name
       - unit
       - value
       - value_type
+      x-embedded-resource: true
     ProductModelSpecificationCatalogCreate:
       type: object
       properties:
@@ -10894,20 +10867,6 @@ components:
       required:
       - resource_count
       - status
-    TargetTypeEnum:
-      enum:
-      - bench
-      - station
-      - room
-      - note
-      type: string
-      description: '* `bench` - bench
-
-        * `station` - station
-
-        * `room` - room
-
-        * `note` - note'
     TechnicalUserCatalogCreate:
       type: object
       properties:

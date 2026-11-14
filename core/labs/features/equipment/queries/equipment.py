@@ -138,7 +138,7 @@ def with_active_loan(queryset: QuerySet) -> QuerySet:
         Prefetch(
             "loans",
             queryset=EquipmentLoan.objects.filter(returned_at__isnull=True).select_related(
-                "batch", "batch__borrower", "equipment"
+                "batch", "batch__borrower", "equipment", "booking"
             ),
             to_attr=ACTIVE_LOAN_ATTR,
         )
@@ -341,7 +341,7 @@ def equipment_form_reference_data(*, category_id: int | None = None) -> dict[str
     manufacturers = EquipmentManufacturer.objects.filter(active=True)
     product_models = EquipmentProductModel.objects.filter(
         active=True, manufacturer__active=True, equipment_type__active=True, equipment_type__kind__active=True
-    )
+    ).select_related("manufacturer")
     if category_id is not None:
         categories = categories.filter(pk=category_id)
         kinds = kinds.filter(category_id=category_id)
@@ -363,7 +363,7 @@ def equipment_form_reference_data(*, category_id: int | None = None) -> dict[str
     return {
         "categories": categories,
         "kinds": kinds,
-        "types": EquipmentType.objects.filter(active=True, kind__active=True, kind__in=kinds),
+        "types": EquipmentType.objects.filter(active=True, kind__active=True, kind__in=kinds).select_related("kind"),
         "manufacturers": manufacturers,
         "product_models": product_models,
         "groups": Group.objects.filter(active=True),

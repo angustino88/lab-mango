@@ -29525,7 +29525,7 @@
                       "type": "string",
                       "maxLength": 255
                     },
-                    "active": {
+                    "is_active": {
                       "type": "boolean"
                     },
                     "created_at": {
@@ -29564,7 +29564,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "active": true,
+                "is_active": true,
                 "created_at": "2026-10-20T12:00:00Z",
                 "updated_at": "2026-10-20T12:00:00Z"
               }
@@ -29923,7 +29923,7 @@
                     "type": "string",
                     "maxLength": 255
                   },
-                  "active": {
+                  "is_active": {
                     "type": "boolean"
                   },
                   "created_at": {
@@ -29953,7 +29953,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "active": true,
+              "is_active": true,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
             }
@@ -32272,16 +32272,15 @@
                       "readOnly": true,
                       "nullable": true
                     },
-                    "warranty_until": {
+                    "warranty_end_date": {
                       "type": "string",
                       "format": "date",
                       "readOnly": true,
                       "nullable": true
                     },
-                    "calibration_required": {
+                    "is_calibration_required": {
                       "type": "boolean",
-                      "readOnly": true,
-                      "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                      "readOnly": true
                     },
                     "last_calibrated_at": {
                       "type": "string",
@@ -32295,7 +32294,7 @@
                       "readOnly": true,
                       "nullable": true
                     },
-                    "calibration_overdue": {
+                    "is_calibration_overdue": {
                       "type": "boolean",
                       "readOnly": true
                     },
@@ -32456,8 +32455,6 @@
                   },
                   "required": [
                     "acquisition_price",
-                    "calibration_overdue",
-                    "calibration_required",
                     "category",
                     "channels",
                     "characteristics",
@@ -32473,6 +32470,8 @@
                     "id",
                     "image_url",
                     "interfaces",
+                    "is_calibration_overdue",
+                    "is_calibration_required",
                     "kind",
                     "last_calibrated_at",
                     "lifecycle_state",
@@ -32499,7 +32498,7 @@
                     "type",
                     "uid",
                     "updated_at",
-                    "warranty_until",
+                    "warranty_end_date",
                     "weight_kg"
                   ]
                 }
@@ -32542,11 +32541,11 @@
                 "firmware_version": "string",
                 "power_draw_w": 1,
                 "weight_kg": "string",
-                "warranty_until": "2026-10-20",
-                "calibration_required": true,
+                "warranty_end_date": "2026-10-20",
+                "is_calibration_required": true,
                 "last_calibrated_at": "2026-10-20T12:00:00Z",
                 "next_calibration_due_at": "2026-10-20T12:00:00Z",
-                "calibration_overdue": true,
+                "is_calibration_overdue": true,
                 "metadata": null,
                 "replacement_date": "2026-10-20",
                 "display_status": {},
@@ -32752,15 +32751,6 @@
               "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
               "nullable": true
             },
-            "warranty_until": {
-              "type": "string",
-              "format": "date",
-              "nullable": true
-            },
-            "calibration_required": {
-              "type": "boolean",
-              "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
-            },
             "lifecycle_state": {
               "allOf": [
                 {
@@ -32845,6 +32835,15 @@
               "nullable": true,
               "description": "Owning team; must belong to the selected department."
             },
+            "warranty_end_date": {
+              "type": "string",
+              "format": "date",
+              "nullable": true
+            },
+            "is_calibration_required": {
+              "type": "boolean",
+              "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+            },
             "material_id": {
               "type": "integer",
               "nullable": true
@@ -32894,8 +32893,6 @@
           "firmware_version": "string",
           "power_draw_w": 1,
           "weight_kg": "string",
-          "warranty_until": "2026-10-20",
-          "calibration_required": true,
           "lifecycle_state": {},
           "mac_address": "string",
           "channels": 1,
@@ -32911,6 +32908,8 @@
           "owner_id": 1,
           "department_id": 1,
           "group_id": 1,
+          "warranty_end_date": "2026-10-20",
+          "is_calibration_required": true,
           "material_id": 1,
           "size_id": 1,
           "resolution_id": 1,
@@ -33093,16 +33092,15 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "warranty_until": {
+                  "warranty_end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_required": {
+                  "is_calibration_required": {
                     "type": "boolean",
-                    "readOnly": true,
-                    "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                    "readOnly": true
                   },
                   "last_calibrated_at": {
                     "type": "string",
@@ -33116,7 +33114,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_overdue": {
+                  "is_calibration_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -33292,8 +33290,6 @@
                 "required": [
                   "acquisition_price",
                   "activity",
-                  "calibration_overdue",
-                  "calibration_required",
                   "category",
                   "channels",
                   "characteristics",
@@ -33310,6 +33306,8 @@
                   "id",
                   "image_url",
                   "interfaces",
+                  "is_calibration_overdue",
+                  "is_calibration_required",
                   "kind",
                   "last_calibrated_at",
                   "lifecycle_state",
@@ -33336,7 +33334,7 @@
                   "type",
                   "uid",
                   "updated_at",
-                  "warranty_until",
+                  "warranty_end_date",
                   "weight_kg"
                 ]
               }
@@ -33370,11 +33368,11 @@
               "firmware_version": "string",
               "power_draw_w": 1,
               "weight_kg": "string",
-              "warranty_until": "2026-10-20",
-              "calibration_required": true,
+              "warranty_end_date": "2026-10-20",
+              "is_calibration_required": true,
               "last_calibrated_at": "2026-10-20T12:00:00Z",
               "next_calibration_due_at": "2026-10-20T12:00:00Z",
-              "calibration_overdue": true,
+              "is_calibration_overdue": true,
               "metadata": null,
               "replacement_date": "2026-10-20",
               "display_status": {},
@@ -33670,7 +33668,8 @@
                     "definition",
                     "id",
                     "name"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -34083,7 +34082,8 @@
                   "definition",
                   "id",
                   "name"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -34264,7 +34264,13 @@
                       "readOnly": true
                     },
                     "category": {
-                      "type": "integer"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "name": {
                       "type": "string",
@@ -34275,7 +34281,8 @@
                     "category",
                     "id",
                     "name"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -34294,7 +34301,7 @@
             "data": [
               {
                 "id": 1,
-                "category": 1,
+                "category": {},
                 "name": "string"
               }
             ]
@@ -34659,7 +34666,13 @@
                     "readOnly": true
                   },
                   "category": {
-                    "type": "integer"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "name": {
                     "type": "string",
@@ -34670,7 +34683,8 @@
                   "category",
                   "id",
                   "name"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -34680,7 +34694,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "category": 1,
+              "category": {},
               "name": "string"
             }
           }
@@ -35052,14 +35066,19 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+                  "description": "One loan line (REL-15): who holds an item and until when. ``is_overdue`` is open and past ``due_at``.",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
-                    "batch_id": {
-                      "type": "integer",
+                    "batch": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "equipment": {
@@ -35093,10 +35112,15 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "booking_id": {
-                      "type": "integer",
-                      "readOnly": true,
-                      "nullable": true
+                    "booking": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
+                      "readOnly": true
                     },
                     "handed_over_at": {
                       "type": "string",
@@ -35108,7 +35132,7 @@
                       "format": "date-time",
                       "readOnly": true
                     },
-                    "overdue": {
+                    "is_overdue": {
                       "type": "boolean",
                       "readOnly": true
                     },
@@ -35133,8 +35157,8 @@
                     }
                   },
                   "required": [
-                    "batch_id",
-                    "booking_id",
+                    "batch",
+                    "booking",
                     "borrower",
                     "borrower_contact",
                     "borrower_name",
@@ -35145,10 +35169,11 @@
                     "equipment",
                     "handed_over_at",
                     "id",
-                    "overdue",
+                    "is_overdue",
                     "purpose",
                     "returned_at"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -35167,16 +35192,16 @@
             "data": [
               {
                 "id": 1,
-                "batch_id": 1,
+                "batch": {},
                 "equipment": {},
                 "borrower": {},
                 "borrower_name": "string",
                 "borrower_contact": "string",
                 "purpose": "string",
-                "booking_id": 1,
+                "booking": {},
                 "handed_over_at": "2026-10-20T12:00:00Z",
                 "due_at": "2026-10-20T12:00:00Z",
-                "overdue": true,
+                "is_overdue": true,
                 "condition_out": "string",
                 "returned_at": "2026-10-20T12:00:00Z",
                 "condition_in": "string",
@@ -35732,14 +35757,19 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+                  "description": "One loan line (REL-15): who holds an item and until when. ``is_overdue`` is open and past ``due_at``.",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
-                    "batch_id": {
-                      "type": "integer",
+                    "batch": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "equipment": {
@@ -35773,10 +35803,15 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "booking_id": {
-                      "type": "integer",
-                      "readOnly": true,
-                      "nullable": true
+                    "booking": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
+                      "readOnly": true
                     },
                     "handed_over_at": {
                       "type": "string",
@@ -35788,7 +35823,7 @@
                       "format": "date-time",
                       "readOnly": true
                     },
-                    "overdue": {
+                    "is_overdue": {
                       "type": "boolean",
                       "readOnly": true
                     },
@@ -35813,8 +35848,8 @@
                     }
                   },
                   "required": [
-                    "batch_id",
-                    "booking_id",
+                    "batch",
+                    "booking",
                     "borrower",
                     "borrower_contact",
                     "borrower_name",
@@ -35825,10 +35860,11 @@
                     "equipment",
                     "handed_over_at",
                     "id",
-                    "overdue",
+                    "is_overdue",
                     "purpose",
                     "returned_at"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -35840,16 +35876,16 @@
             "data": [
               {
                 "id": 1,
-                "batch_id": 1,
+                "batch": {},
                 "equipment": {},
                 "borrower": {},
                 "borrower_name": "string",
                 "borrower_contact": "string",
                 "purpose": "string",
-                "booking_id": 1,
+                "booking": {},
                 "handed_over_at": "2026-10-20T12:00:00Z",
                 "due_at": "2026-10-20T12:00:00Z",
-                "overdue": true,
+                "is_overdue": true,
                 "condition_out": "string",
                 "returned_at": "2026-10-20T12:00:00Z",
                 "condition_in": "string",
@@ -36129,14 +36165,19 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+                  "description": "One loan line (REL-15): who holds an item and until when. ``is_overdue`` is open and past ``due_at``.",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
-                    "batch_id": {
-                      "type": "integer",
+                    "batch": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "equipment": {
@@ -36170,10 +36211,15 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "booking_id": {
-                      "type": "integer",
-                      "readOnly": true,
-                      "nullable": true
+                    "booking": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
+                      "readOnly": true
                     },
                     "handed_over_at": {
                       "type": "string",
@@ -36185,7 +36231,7 @@
                       "format": "date-time",
                       "readOnly": true
                     },
-                    "overdue": {
+                    "is_overdue": {
                       "type": "boolean",
                       "readOnly": true
                     },
@@ -36210,8 +36256,8 @@
                     }
                   },
                   "required": [
-                    "batch_id",
-                    "booking_id",
+                    "batch",
+                    "booking",
                     "borrower",
                     "borrower_contact",
                     "borrower_name",
@@ -36222,10 +36268,11 @@
                     "equipment",
                     "handed_over_at",
                     "id",
-                    "overdue",
+                    "is_overdue",
                     "purpose",
                     "returned_at"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -36237,16 +36284,16 @@
             "data": [
               {
                 "id": 1,
-                "batch_id": 1,
+                "batch": {},
                 "equipment": {},
                 "borrower": {},
                 "borrower_name": "string",
                 "borrower_contact": "string",
                 "purpose": "string",
-                "booking_id": 1,
+                "booking": {},
                 "handed_over_at": "2026-10-20T12:00:00Z",
                 "due_at": "2026-10-20T12:00:00Z",
-                "overdue": true,
+                "is_overdue": true,
                 "condition_out": "string",
                 "returned_at": "2026-10-20T12:00:00Z",
                 "condition_in": "string",
@@ -36530,7 +36577,8 @@
                   "required": [
                     "id",
                     "name"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -36920,7 +36968,8 @@
                 "required": [
                   "id",
                   "name"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -37106,7 +37155,13 @@
                       "readOnly": true
                     },
                     "manufacturer": {
-                      "type": "integer"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "name": {
                       "type": "string",
@@ -37140,7 +37195,8 @@
                     "manufacturer",
                     "name",
                     "specifications"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -37159,7 +37215,7 @@
             "data": [
               {
                 "id": 1,
-                "manufacturer": 1,
+                "manufacturer": {},
                 "name": "string",
                 "default_power_draw_w": 1,
                 "default_weight_kg": "string",
@@ -37539,7 +37595,13 @@
                     "readOnly": true
                   },
                   "manufacturer": {
-                    "type": "integer"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "name": {
                     "type": "string",
@@ -37573,7 +37635,8 @@
                   "manufacturer",
                   "name",
                   "specifications"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -37583,7 +37646,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "manufacturer": 1,
+              "manufacturer": {},
               "name": "string",
               "default_power_draw_w": 1,
               "default_weight_kg": "string",
@@ -37781,7 +37844,7 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "One reservation line: an item kept for a borrower over a window.",
+                  "description": "One reservation line (REL-15): an item kept for a borrower over a window.",
                   "properties": {
                     "id": {
                       "type": "integer",
@@ -37791,10 +37854,15 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "batch_id": {
-                      "type": "integer",
-                      "readOnly": true,
-                      "nullable": true
+                    "batch": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
+                      "readOnly": true
                     },
                     "equipment": {
                       "allOf": [
@@ -37829,7 +37897,7 @@
                     }
                   },
                   "required": [
-                    "batch_id",
+                    "batch",
                     "booking_code",
                     "borrower_name",
                     "cancellation_reason",
@@ -37838,7 +37906,8 @@
                     "id",
                     "starts_at",
                     "status"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -37858,7 +37927,7 @@
               {
                 "id": 1,
                 "booking_code": "string",
-                "batch_id": 1,
+                "batch": {},
                 "equipment": {},
                 "borrower_name": "string",
                 "starts_at": "2026-10-20T12:00:00Z",
@@ -39815,7 +39884,13 @@
                       "readOnly": true
                     },
                     "kind": {
-                      "type": "integer"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "name": {
                       "type": "string",
@@ -39826,7 +39901,8 @@
                     "id",
                     "kind",
                     "name"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -39845,7 +39921,7 @@
             "data": [
               {
                 "id": 1,
-                "kind": 1,
+                "kind": {},
                 "name": "string"
               }
             ]
@@ -40220,7 +40296,13 @@
                     "readOnly": true
                   },
                   "kind": {
-                    "type": "integer"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "name": {
                     "type": "string",
@@ -40231,7 +40313,8 @@
                   "id",
                   "kind",
                   "name"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -40241,7 +40324,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "kind": 1,
+              "kind": {},
               "name": "string"
             }
           }
@@ -52592,16 +52675,15 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "warranty_until": {
+                  "warranty_end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_required": {
+                  "is_calibration_required": {
                     "type": "boolean",
-                    "readOnly": true,
-                    "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                    "readOnly": true
                   },
                   "last_calibrated_at": {
                     "type": "string",
@@ -52615,7 +52697,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_overdue": {
+                  "is_calibration_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -52791,8 +52873,6 @@
                 "required": [
                   "acquisition_price",
                   "activity",
-                  "calibration_overdue",
-                  "calibration_required",
                   "category",
                   "channels",
                   "characteristics",
@@ -52809,6 +52889,8 @@
                   "id",
                   "image_url",
                   "interfaces",
+                  "is_calibration_overdue",
+                  "is_calibration_required",
                   "kind",
                   "last_calibrated_at",
                   "lifecycle_state",
@@ -52835,7 +52917,7 @@
                   "type",
                   "uid",
                   "updated_at",
-                  "warranty_until",
+                  "warranty_end_date",
                   "weight_kg"
                 ]
               }
@@ -52869,11 +52951,11 @@
               "firmware_version": "string",
               "power_draw_w": 1,
               "weight_kg": "string",
-              "warranty_until": "2026-10-20",
-              "calibration_required": true,
+              "warranty_end_date": "2026-10-20",
+              "is_calibration_required": true,
               "last_calibrated_at": "2026-10-20T12:00:00Z",
               "next_calibration_due_at": "2026-10-20T12:00:00Z",
-              "calibration_overdue": true,
+              "is_calibration_overdue": true,
               "metadata": null,
               "replacement_date": "2026-10-20",
               "display_status": {},
@@ -53037,15 +53119,6 @@
               "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
               "nullable": true
             },
-            "warranty_until": {
-              "type": "string",
-              "format": "date",
-              "nullable": true
-            },
-            "calibration_required": {
-              "type": "boolean",
-              "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
-            },
             "mac_address": {
               "oneOf": [
                 {
@@ -53115,6 +53188,15 @@
               "nullable": true,
               "description": "Owning team; must belong to the selected department."
             },
+            "warranty_end_date": {
+              "type": "string",
+              "format": "date",
+              "nullable": true
+            },
+            "is_calibration_required": {
+              "type": "boolean",
+              "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+            },
             "material_id": {
               "type": "integer",
               "nullable": true
@@ -53160,8 +53242,6 @@
           "firmware_version": "string",
           "power_draw_w": 1,
           "weight_kg": "string",
-          "warranty_until": "2026-10-20",
-          "calibration_required": true,
           "mac_address": "string",
           "channels": 1,
           "power_rating": 1,
@@ -53177,6 +53257,8 @@
           "owner_id": 1,
           "department_id": 1,
           "group_id": 1,
+          "warranty_end_date": "2026-10-20",
+          "is_calibration_required": true,
           "material_id": 1,
           "size_id": 1,
           "resolution_id": 1,
@@ -53359,16 +53441,15 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "warranty_until": {
+                  "warranty_end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_required": {
+                  "is_calibration_required": {
                     "type": "boolean",
-                    "readOnly": true,
-                    "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                    "readOnly": true
                   },
                   "last_calibrated_at": {
                     "type": "string",
@@ -53382,7 +53463,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_overdue": {
+                  "is_calibration_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -53558,8 +53639,6 @@
                 "required": [
                   "acquisition_price",
                   "activity",
-                  "calibration_overdue",
-                  "calibration_required",
                   "category",
                   "channels",
                   "characteristics",
@@ -53576,6 +53655,8 @@
                   "id",
                   "image_url",
                   "interfaces",
+                  "is_calibration_overdue",
+                  "is_calibration_required",
                   "kind",
                   "last_calibrated_at",
                   "lifecycle_state",
@@ -53602,7 +53683,7 @@
                   "type",
                   "uid",
                   "updated_at",
-                  "warranty_until",
+                  "warranty_end_date",
                   "weight_kg"
                 ]
               }
@@ -53636,11 +53717,11 @@
               "firmware_version": "string",
               "power_draw_w": 1,
               "weight_kg": "string",
-              "warranty_until": "2026-10-20",
-              "calibration_required": true,
+              "warranty_end_date": "2026-10-20",
+              "is_calibration_required": true,
               "last_calibrated_at": "2026-10-20T12:00:00Z",
               "next_calibration_due_at": "2026-10-20T12:00:00Z",
-              "calibration_overdue": true,
+              "is_calibration_overdue": true,
               "metadata": null,
               "replacement_date": "2026-10-20",
               "display_status": {},
@@ -54203,16 +54284,15 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "warranty_until": {
+                  "warranty_end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_required": {
+                  "is_calibration_required": {
                     "type": "boolean",
-                    "readOnly": true,
-                    "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                    "readOnly": true
                   },
                   "last_calibrated_at": {
                     "type": "string",
@@ -54226,7 +54306,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_overdue": {
+                  "is_calibration_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -54402,8 +54482,6 @@
                 "required": [
                   "acquisition_price",
                   "activity",
-                  "calibration_overdue",
-                  "calibration_required",
                   "category",
                   "channels",
                   "characteristics",
@@ -54420,6 +54498,8 @@
                   "id",
                   "image_url",
                   "interfaces",
+                  "is_calibration_overdue",
+                  "is_calibration_required",
                   "kind",
                   "last_calibrated_at",
                   "lifecycle_state",
@@ -54446,7 +54526,7 @@
                   "type",
                   "uid",
                   "updated_at",
-                  "warranty_until",
+                  "warranty_end_date",
                   "weight_kg"
                 ]
               }
@@ -54480,11 +54560,11 @@
               "firmware_version": "string",
               "power_draw_w": 1,
               "weight_kg": "string",
-              "warranty_until": "2026-10-20",
-              "calibration_required": true,
+              "warranty_end_date": "2026-10-20",
+              "is_calibration_required": true,
               "last_calibrated_at": "2026-10-20T12:00:00Z",
               "next_calibration_due_at": "2026-10-20T12:00:00Z",
-              "calibration_overdue": true,
+              "is_calibration_overdue": true,
               "metadata": null,
               "replacement_date": "2026-10-20",
               "display_status": {},
@@ -54649,15 +54729,6 @@
               "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
               "nullable": true
             },
-            "warranty_until": {
-              "type": "string",
-              "format": "date",
-              "nullable": true
-            },
-            "calibration_required": {
-              "type": "boolean",
-              "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
-            },
             "mac_address": {
               "oneOf": [
                 {
@@ -54727,6 +54798,15 @@
               "nullable": true,
               "description": "Owning team; must belong to the selected department."
             },
+            "warranty_end_date": {
+              "type": "string",
+              "format": "date",
+              "nullable": true
+            },
+            "is_calibration_required": {
+              "type": "boolean",
+              "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+            },
             "material_id": {
               "type": "integer",
               "nullable": true
@@ -54772,8 +54852,6 @@
           "firmware_version": "string",
           "power_draw_w": 1,
           "weight_kg": "string",
-          "warranty_until": "2026-10-20",
-          "calibration_required": true,
           "mac_address": "string",
           "channels": 1,
           "power_rating": 1,
@@ -54789,6 +54867,8 @@
           "owner_id": 1,
           "department_id": 1,
           "group_id": 1,
+          "warranty_end_date": "2026-10-20",
+          "is_calibration_required": true,
           "material_id": 1,
           "size_id": 1,
           "resolution_id": 1,
@@ -54971,16 +55051,15 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "warranty_until": {
+                  "warranty_end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_required": {
+                  "is_calibration_required": {
                     "type": "boolean",
-                    "readOnly": true,
-                    "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                    "readOnly": true
                   },
                   "last_calibrated_at": {
                     "type": "string",
@@ -54994,7 +55073,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_overdue": {
+                  "is_calibration_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -55170,8 +55249,6 @@
                 "required": [
                   "acquisition_price",
                   "activity",
-                  "calibration_overdue",
-                  "calibration_required",
                   "category",
                   "channels",
                   "characteristics",
@@ -55188,6 +55265,8 @@
                   "id",
                   "image_url",
                   "interfaces",
+                  "is_calibration_overdue",
+                  "is_calibration_required",
                   "kind",
                   "last_calibrated_at",
                   "lifecycle_state",
@@ -55214,7 +55293,7 @@
                   "type",
                   "uid",
                   "updated_at",
-                  "warranty_until",
+                  "warranty_end_date",
                   "weight_kg"
                 ]
               }
@@ -55248,11 +55327,11 @@
               "firmware_version": "string",
               "power_draw_w": 1,
               "weight_kg": "string",
-              "warranty_until": "2026-10-20",
-              "calibration_required": true,
+              "warranty_end_date": "2026-10-20",
+              "is_calibration_required": true,
               "last_calibrated_at": "2026-10-20T12:00:00Z",
               "next_calibration_due_at": "2026-10-20T12:00:00Z",
-              "calibration_overdue": true,
+              "is_calibration_overdue": true,
               "metadata": null,
               "replacement_date": "2026-10-20",
               "display_status": {},
@@ -56283,16 +56362,15 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "warranty_until": {
+                  "warranty_end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_required": {
+                  "is_calibration_required": {
                     "type": "boolean",
-                    "readOnly": true,
-                    "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                    "readOnly": true
                   },
                   "last_calibrated_at": {
                     "type": "string",
@@ -56306,7 +56384,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_overdue": {
+                  "is_calibration_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -56482,8 +56560,6 @@
                 "required": [
                   "acquisition_price",
                   "activity",
-                  "calibration_overdue",
-                  "calibration_required",
                   "category",
                   "channels",
                   "characteristics",
@@ -56500,6 +56576,8 @@
                   "id",
                   "image_url",
                   "interfaces",
+                  "is_calibration_overdue",
+                  "is_calibration_required",
                   "kind",
                   "last_calibrated_at",
                   "lifecycle_state",
@@ -56526,7 +56604,7 @@
                   "type",
                   "uid",
                   "updated_at",
-                  "warranty_until",
+                  "warranty_end_date",
                   "weight_kg"
                 ]
               }
@@ -56560,11 +56638,11 @@
               "firmware_version": "string",
               "power_draw_w": 1,
               "weight_kg": "string",
-              "warranty_until": "2026-10-20",
-              "calibration_required": true,
+              "warranty_end_date": "2026-10-20",
+              "is_calibration_required": true,
               "last_calibrated_at": "2026-10-20T12:00:00Z",
               "next_calibration_due_at": "2026-10-20T12:00:00Z",
-              "calibration_overdue": true,
+              "is_calibration_overdue": true,
               "metadata": null,
               "replacement_date": "2026-10-20",
               "display_status": {},
@@ -57050,16 +57128,15 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "warranty_until": {
+                  "warranty_end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_required": {
+                  "is_calibration_required": {
                     "type": "boolean",
-                    "readOnly": true,
-                    "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                    "readOnly": true
                   },
                   "last_calibrated_at": {
                     "type": "string",
@@ -57073,7 +57150,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_overdue": {
+                  "is_calibration_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -57249,8 +57326,6 @@
                 "required": [
                   "acquisition_price",
                   "activity",
-                  "calibration_overdue",
-                  "calibration_required",
                   "category",
                   "channels",
                   "characteristics",
@@ -57267,6 +57342,8 @@
                   "id",
                   "image_url",
                   "interfaces",
+                  "is_calibration_overdue",
+                  "is_calibration_required",
                   "kind",
                   "last_calibrated_at",
                   "lifecycle_state",
@@ -57293,7 +57370,7 @@
                   "type",
                   "uid",
                   "updated_at",
-                  "warranty_until",
+                  "warranty_end_date",
                   "weight_kg"
                 ]
               }
@@ -57327,11 +57404,11 @@
               "firmware_version": "string",
               "power_draw_w": 1,
               "weight_kg": "string",
-              "warranty_until": "2026-10-20",
-              "calibration_required": true,
+              "warranty_end_date": "2026-10-20",
+              "is_calibration_required": true,
               "last_calibrated_at": "2026-10-20T12:00:00Z",
               "next_calibration_due_at": "2026-10-20T12:00:00Z",
-              "calibration_overdue": true,
+              "is_calibration_overdue": true,
               "metadata": null,
               "replacement_date": "2026-10-20",
               "display_status": {},
@@ -57631,14 +57708,19 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+                "description": "One loan line (REL-15): who holds an item and until when. ``is_overdue`` is open and past ``due_at``.",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "batch_id": {
-                    "type": "integer",
+                  "batch": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "equipment": {
@@ -57672,10 +57754,15 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "booking_id": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
+                  "booking": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true
                   },
                   "handed_over_at": {
                     "type": "string",
@@ -57687,7 +57774,7 @@
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "overdue": {
+                  "is_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -57712,8 +57799,8 @@
                   }
                 },
                 "required": [
-                  "batch_id",
-                  "booking_id",
+                  "batch",
+                  "booking",
                   "borrower",
                   "borrower_contact",
                   "borrower_name",
@@ -57724,10 +57811,11 @@
                   "equipment",
                   "handed_over_at",
                   "id",
-                  "overdue",
+                  "is_overdue",
                   "purpose",
                   "returned_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -57737,16 +57825,16 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "batch_id": 1,
+              "batch": {},
               "equipment": {},
               "borrower": {},
               "borrower_name": "string",
               "borrower_contact": "string",
               "purpose": "string",
-              "booking_id": 1,
+              "booking": {},
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
-              "overdue": true,
+              "is_overdue": true,
               "condition_out": "string",
               "returned_at": "2026-10-20T12:00:00Z",
               "condition_in": "string",
@@ -58056,14 +58144,19 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+                "description": "One loan line (REL-15): who holds an item and until when. ``is_overdue`` is open and past ``due_at``.",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "batch_id": {
-                    "type": "integer",
+                  "batch": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "equipment": {
@@ -58097,10 +58190,15 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "booking_id": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
+                  "booking": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true
                   },
                   "handed_over_at": {
                     "type": "string",
@@ -58112,7 +58210,7 @@
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "overdue": {
+                  "is_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -58137,8 +58235,8 @@
                   }
                 },
                 "required": [
-                  "batch_id",
-                  "booking_id",
+                  "batch",
+                  "booking",
                   "borrower",
                   "borrower_contact",
                   "borrower_name",
@@ -58149,10 +58247,11 @@
                   "equipment",
                   "handed_over_at",
                   "id",
-                  "overdue",
+                  "is_overdue",
                   "purpose",
                   "returned_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -58162,16 +58261,16 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "batch_id": 1,
+              "batch": {},
               "equipment": {},
               "borrower": {},
               "borrower_name": "string",
               "borrower_contact": "string",
               "purpose": "string",
-              "booking_id": 1,
+              "booking": {},
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
-              "overdue": true,
+              "is_overdue": true,
               "condition_out": "string",
               "returned_at": "2026-10-20T12:00:00Z",
               "condition_in": "string",
@@ -58491,14 +58590,19 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+                "description": "One loan line (REL-15): who holds an item and until when. ``is_overdue`` is open and past ``due_at``.",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "batch_id": {
-                    "type": "integer",
+                  "batch": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "equipment": {
@@ -58532,10 +58636,15 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "booking_id": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
+                  "booking": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true
                   },
                   "handed_over_at": {
                     "type": "string",
@@ -58547,7 +58656,7 @@
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "overdue": {
+                  "is_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -58572,8 +58681,8 @@
                   }
                 },
                 "required": [
-                  "batch_id",
-                  "booking_id",
+                  "batch",
+                  "booking",
                   "borrower",
                   "borrower_contact",
                   "borrower_name",
@@ -58584,10 +58693,11 @@
                   "equipment",
                   "handed_over_at",
                   "id",
-                  "overdue",
+                  "is_overdue",
                   "purpose",
                   "returned_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -58597,16 +58707,16 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "batch_id": 1,
+              "batch": {},
               "equipment": {},
               "borrower": {},
               "borrower_name": "string",
               "borrower_contact": "string",
               "purpose": "string",
-              "booking_id": 1,
+              "booking": {},
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
-              "overdue": true,
+              "is_overdue": true,
               "condition_out": "string",
               "returned_at": "2026-10-20T12:00:00Z",
               "condition_in": "string",
@@ -58907,7 +59017,7 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "modified": {
+                  "updated_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
@@ -58917,13 +59027,13 @@
                   "booking_code",
                   "inactive_at",
                   "inactive_reminder_count",
-                  "modified",
                   "offline_at",
                   "remote_computer",
                   "remote_ip",
                   "remote_user",
                   "remote_user_display_name",
-                  "status"
+                  "status",
+                  "updated_at"
                 ]
               }
             },
@@ -58942,7 +59052,7 @@
               "offline_at": "2026-10-20T12:00:00Z",
               "inactive_at": "2026-10-20T12:00:00Z",
               "inactive_reminder_count": 1,
-              "modified": "2026-10-20T12:00:00Z"
+              "updated_at": "2026-10-20T12:00:00Z"
             }
           }
         },
@@ -60129,14 +60239,19 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``).",
+                "description": "One loan line (REL-15): who holds an item and until when. ``is_overdue`` is open and past ``due_at``.",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "batch_id": {
-                    "type": "integer",
+                  "batch": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "equipment": {
@@ -60170,10 +60285,15 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "booking_id": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
+                  "booking": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true
                   },
                   "handed_over_at": {
                     "type": "string",
@@ -60185,7 +60305,7 @@
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "overdue": {
+                  "is_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -60210,8 +60330,8 @@
                   }
                 },
                 "required": [
-                  "batch_id",
-                  "booking_id",
+                  "batch",
+                  "booking",
                   "borrower",
                   "borrower_contact",
                   "borrower_name",
@@ -60222,10 +60342,11 @@
                   "equipment",
                   "handed_over_at",
                   "id",
-                  "overdue",
+                  "is_overdue",
                   "purpose",
                   "returned_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -60235,16 +60356,16 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "batch_id": 1,
+              "batch": {},
               "equipment": {},
               "borrower": {},
               "borrower_name": "string",
               "borrower_contact": "string",
               "purpose": "string",
-              "booking_id": 1,
+              "booking": {},
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
-              "overdue": true,
+              "is_overdue": true,
               "condition_out": "string",
               "returned_at": "2026-10-20T12:00:00Z",
               "condition_in": "string",
@@ -60338,7 +60459,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Where a unit is now: exactly one of bench, station, room, or only ``location_note``.",
+                "description": "Where a unit is now (REL-15): exactly one of bench, station, room, or only ``location_note``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -60352,7 +60473,7 @@
                       }
                     ],
                     "readOnly": true,
-                    "description": "Which target is set; ``note`` means an untracked place described by location_note.\n\n* `bench` - bench\n* `station` - station\n* `room` - room\n* `note` - note"
+                    "description": "Which target is set; ``note`` means an untracked place described by location_note."
                   },
                   "bench": {
                     "allOf": [
@@ -60412,7 +60533,8 @@
                   "room",
                   "station",
                   "target_type"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -60573,7 +60695,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Where a unit is now: exactly one of bench, station, room, or only ``location_note``.",
+                "description": "Where a unit is now (REL-15): exactly one of bench, station, room, or only ``location_note``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -60587,7 +60709,7 @@
                       }
                     ],
                     "readOnly": true,
-                    "description": "Which target is set; ``note`` means an untracked place described by location_note.\n\n* `bench` - bench\n* `station` - station\n* `room` - room\n* `note` - note"
+                    "description": "Which target is set; ``note`` means an untracked place described by location_note."
                   },
                   "bench": {
                     "allOf": [
@@ -60647,7 +60769,8 @@
                   "room",
                   "station",
                   "target_type"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -61420,16 +61543,15 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "warranty_until": {
+                  "warranty_end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_required": {
+                  "is_calibration_required": {
                     "type": "boolean",
-                    "readOnly": true,
-                    "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                    "readOnly": true
                   },
                   "last_calibrated_at": {
                     "type": "string",
@@ -61443,7 +61565,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_overdue": {
+                  "is_calibration_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -61619,8 +61741,6 @@
                 "required": [
                   "acquisition_price",
                   "activity",
-                  "calibration_overdue",
-                  "calibration_required",
                   "category",
                   "channels",
                   "characteristics",
@@ -61637,6 +61757,8 @@
                   "id",
                   "image_url",
                   "interfaces",
+                  "is_calibration_overdue",
+                  "is_calibration_required",
                   "kind",
                   "last_calibrated_at",
                   "lifecycle_state",
@@ -61663,7 +61785,7 @@
                   "type",
                   "uid",
                   "updated_at",
-                  "warranty_until",
+                  "warranty_end_date",
                   "weight_kg"
                 ]
               }
@@ -61697,11 +61819,11 @@
               "firmware_version": "string",
               "power_draw_w": 1,
               "weight_kg": "string",
-              "warranty_until": "2026-10-20",
-              "calibration_required": true,
+              "warranty_end_date": "2026-10-20",
+              "is_calibration_required": true,
               "last_calibrated_at": "2026-10-20T12:00:00Z",
               "next_calibration_due_at": "2026-10-20T12:00:00Z",
-              "calibration_overdue": true,
+              "is_calibration_overdue": true,
               "metadata": null,
               "replacement_date": "2026-10-20",
               "display_status": {},
@@ -61865,15 +61987,6 @@
               "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
               "nullable": true
             },
-            "warranty_until": {
-              "type": "string",
-              "format": "date",
-              "nullable": true
-            },
-            "calibration_required": {
-              "type": "boolean",
-              "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
-            },
             "mac_address": {
               "oneOf": [
                 {
@@ -61943,6 +62056,15 @@
               "nullable": true,
               "description": "Owning team; must belong to the selected department."
             },
+            "warranty_end_date": {
+              "type": "string",
+              "format": "date",
+              "nullable": true
+            },
+            "is_calibration_required": {
+              "type": "boolean",
+              "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+            },
             "material_id": {
               "type": "integer",
               "nullable": true
@@ -61992,8 +62114,6 @@
           "firmware_version": "string",
           "power_draw_w": 1,
           "weight_kg": "string",
-          "warranty_until": "2026-10-20",
-          "calibration_required": true,
           "mac_address": "string",
           "channels": 1,
           "power_rating": 1,
@@ -62009,6 +62129,8 @@
           "owner_id": 1,
           "department_id": 1,
           "group_id": 1,
+          "warranty_end_date": "2026-10-20",
+          "is_calibration_required": true,
           "material_id": 1,
           "size_id": 1,
           "resolution_id": 1,
@@ -62191,16 +62313,15 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "warranty_until": {
+                  "warranty_end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_required": {
+                  "is_calibration_required": {
                     "type": "boolean",
-                    "readOnly": true,
-                    "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                    "readOnly": true
                   },
                   "last_calibrated_at": {
                     "type": "string",
@@ -62214,7 +62335,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_overdue": {
+                  "is_calibration_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -62390,8 +62511,6 @@
                 "required": [
                   "acquisition_price",
                   "activity",
-                  "calibration_overdue",
-                  "calibration_required",
                   "category",
                   "channels",
                   "characteristics",
@@ -62408,6 +62527,8 @@
                   "id",
                   "image_url",
                   "interfaces",
+                  "is_calibration_overdue",
+                  "is_calibration_required",
                   "kind",
                   "last_calibrated_at",
                   "lifecycle_state",
@@ -62434,7 +62555,7 @@
                   "type",
                   "uid",
                   "updated_at",
-                  "warranty_until",
+                  "warranty_end_date",
                   "weight_kg"
                 ]
               }
@@ -62468,11 +62589,11 @@
               "firmware_version": "string",
               "power_draw_w": 1,
               "weight_kg": "string",
-              "warranty_until": "2026-10-20",
-              "calibration_required": true,
+              "warranty_end_date": "2026-10-20",
+              "is_calibration_required": true,
               "last_calibrated_at": "2026-10-20T12:00:00Z",
               "next_calibration_due_at": "2026-10-20T12:00:00Z",
-              "calibration_overdue": true,
+              "is_calibration_overdue": true,
               "metadata": null,
               "replacement_date": "2026-10-20",
               "display_status": {},
@@ -62795,15 +62916,6 @@
               "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
               "nullable": true
             },
-            "warranty_until": {
-              "type": "string",
-              "format": "date",
-              "nullable": true
-            },
-            "calibration_required": {
-              "type": "boolean",
-              "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
-            },
             "mac_address": {
               "oneOf": [
                 {
@@ -62873,6 +62985,15 @@
               "nullable": true,
               "description": "Owning team; must belong to the selected department."
             },
+            "warranty_end_date": {
+              "type": "string",
+              "format": "date",
+              "nullable": true
+            },
+            "is_calibration_required": {
+              "type": "boolean",
+              "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+            },
             "material_id": {
               "type": "integer",
               "nullable": true
@@ -62918,8 +63039,6 @@
           "firmware_version": "string",
           "power_draw_w": 1,
           "weight_kg": "string",
-          "warranty_until": "2026-10-20",
-          "calibration_required": true,
           "mac_address": "string",
           "channels": 1,
           "power_rating": 1,
@@ -62935,6 +63054,8 @@
           "owner_id": 1,
           "department_id": 1,
           "group_id": 1,
+          "warranty_end_date": "2026-10-20",
+          "is_calibration_required": true,
           "material_id": 1,
           "size_id": 1,
           "resolution_id": 1,
@@ -63117,16 +63238,15 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "warranty_until": {
+                  "warranty_end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_required": {
+                  "is_calibration_required": {
                     "type": "boolean",
-                    "readOnly": true,
-                    "description": "History and due dates are kept as ResourceServiceRecord (kind=calibration)."
+                    "readOnly": true
                   },
                   "last_calibrated_at": {
                     "type": "string",
@@ -63140,7 +63260,7 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "calibration_overdue": {
+                  "is_calibration_overdue": {
                     "type": "boolean",
                     "readOnly": true
                   },
@@ -63316,8 +63436,6 @@
                 "required": [
                   "acquisition_price",
                   "activity",
-                  "calibration_overdue",
-                  "calibration_required",
                   "category",
                   "channels",
                   "characteristics",
@@ -63334,6 +63452,8 @@
                   "id",
                   "image_url",
                   "interfaces",
+                  "is_calibration_overdue",
+                  "is_calibration_required",
                   "kind",
                   "last_calibrated_at",
                   "lifecycle_state",
@@ -63360,7 +63480,7 @@
                   "type",
                   "uid",
                   "updated_at",
-                  "warranty_until",
+                  "warranty_end_date",
                   "weight_kg"
                 ]
               }
@@ -63394,11 +63514,11 @@
               "firmware_version": "string",
               "power_draw_w": 1,
               "weight_kg": "string",
-              "warranty_until": "2026-10-20",
-              "calibration_required": true,
+              "warranty_end_date": "2026-10-20",
+              "is_calibration_required": true,
               "last_calibrated_at": "2026-10-20T12:00:00Z",
               "next_calibration_due_at": "2026-10-20T12:00:00Z",
-              "calibration_overdue": true,
+              "is_calibration_overdue": true,
               "metadata": null,
               "replacement_date": "2026-10-20",
               "display_status": {},
@@ -65318,7 +65438,7 @@
                       "type": "integer",
                       "writeOnly": true
                     },
-                    "active": {
+                    "is_active": {
                       "type": "boolean"
                     },
                     "created_at": {
@@ -65360,7 +65480,7 @@
                 "name": "string",
                 "department": {},
                 "department_id": 1,
-                "active": true,
+                "is_active": true,
                 "created_at": "2026-10-20T12:00:00Z",
                 "updated_at": "2026-10-20T12:00:00Z"
               }
@@ -65742,7 +65862,7 @@
                     "type": "integer",
                     "writeOnly": true
                   },
-                  "active": {
+                  "is_active": {
                     "type": "boolean"
                   },
                   "created_at": {
@@ -65775,7 +65895,7 @@
               "name": "string",
               "department": {},
               "department_id": 1,
-              "active": true,
+              "is_active": true,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
             }

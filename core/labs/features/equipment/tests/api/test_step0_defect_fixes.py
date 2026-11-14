@@ -215,8 +215,8 @@ def test_generic_create_accepts_declared_fields(coordinator, computing_kind):
             "firmware_version": "1.2.3",
             "power_draw_w": 45,
             "weight_kg": "2.25",
-            "warranty_until": "2028-01-31",
-            "calibration_required": True,
+            "warranty_end_date": "2028-01-31",
+            "is_calibration_required": True,
         },
         format="json",
     )

@@ -50,7 +50,7 @@ def test_hand_over_get_extend_return(client, unit, borrower):
     assert opened.status_code == 200, opened.data
     assert opened.data["data"]["borrower"] == {"id": borrower.pk, "name": "Ada"}
     assert opened.data["data"]["borrower_name"] == "Ada"
-    assert opened.data["data"]["overdue"] is False
+    assert opened.data["data"]["is_overdue"] is False
 
     detail = client.get(f"{ROOT}/{unit.pk}").data["data"]
     assert detail["display_status"]["value"] == "borrowed"
@@ -92,7 +92,7 @@ def test_overdue_filter(client, unit, borrower):
         handed_over_at=timezone.now() - timedelta(days=2), due_at=timezone.now() - timedelta(hours=1)
     )
     rows = client.get(ROOT, {"loan_overdue": "true"}).data["data"]
-    assert [row["id"] for row in rows] == [unit.pk] and rows[0]["loan"]["overdue"] is True
+    assert [row["id"] for row in rows] == [unit.pk] and rows[0]["loan"]["is_overdue"] is True
 
 
 @pytest.mark.django_db
