@@ -24,7 +24,7 @@ class TestTicketContractShapes:
     def test_queue_stats_dimensions_are_relations(self, support_setup, agent_client, agent_user):
         created = _create(agent_client, support_setup)
         assigned = agent_client.post(
-            f"/api/support/tickets/{created['key']}/assign", {"assignee_id": agent_user.id}, format="json"
+            f"/api/support/tickets/{created['key']}/actions/assign", {"assignee_id": agent_user.id}, format="json"
         )
         assert assigned.status_code == 200, assigned.content
         stats = agent_client.get("/api/support/tickets/stats").json()["data"]
@@ -54,3 +54,22 @@ class TestTicketContractShapes:
         assert status.status_code == 200, status.content
         assert status.json()["data"]["is_sla_paused"] is True
         assert set(status.json()["data"]["system_state"]) == {"value", "label"}
+
+
+@pytest.mark.django_db
+def test_ticket_operations_are_actions_and_old_paths_are_deprecated(support_setup, agent_client, agent_user):
+    """ACT-1: operations are `actions/<verb>`; the old paths answer the same for one release (VER-3)."""
+    created = _create(agent_client, support_setup)
+    key = created["key"]
+
+    action = agent_client.post(
+        f"/api/support/tickets/{key}/actions/assign", {"assignee_id": agent_user.id}, format="json"
+    )
+    assert action.status_code == 200, action.content
+    assert "Deprecation" not in action
+
+    legacy = agent_client.post(f"/api/support/tickets/{key}/assign", {"assignee_id": agent_user.id}, format="json")
+    assert legacy.status_code == 200, legacy.content
+    assert legacy.json()["data"]["assignee"]["id"] == agent_user.id
+    assert legacy["Deprecation"] == "true"
+    assert legacy["Link"] == f'</api/support/tickets/{key}/actions/assign>; rel="successor-version"'

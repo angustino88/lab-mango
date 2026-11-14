@@ -75,6 +75,12 @@ Deployed-behavior note (AGENTS.md rule 1): the Agent API and routing sync are no
 
 ## 6. Status (2026-11-14)
 
+**Money, search and actions.** Three more rules are gated and hold: money is one `{amount, currency}` object
+read and written (FMT-2, `core/common/api/money.py`), free-text search is `q` with `search` as a deprecated
+alias (QRY-7, `core/common/api/search.py`), and a POST on an item that creates nothing is an `actions/` route
+(ACT-1; old ticket paths and the equipment assignment POST are deprecated aliases, `core/common/api/deprecation.py`).
+The aliases need a `Sunset` date before they are removed; that date is the owner's decision.
+
 **Runtime check (DOC-4).** `respond_data` rendered nothing: it validated the dict and sent it unchanged, so
 the schema could differ from the wire. It now renders through the payload serializer, like `respond`, and every
 JSON response produced in the test suite is validated against the committed schema (`conftest.py`). The first
@@ -87,9 +93,7 @@ Migration complete for the gated rules: the generated schema has no violations a
 `core/common/openapi/contract_baseline.json` is empty. Any new violation now fails CI. Known gaps that the gate
 does not check, found during the migration and left for separate changes:
 
-- Money split into `amount` + `currency` fields (FMT-2, FMT-7) in expenses and license agreements.
 - The leaderboard export contract declares persona rows but can return lab rows.
-- Ticket assignment is `POST /tickets/{key}/assign`, not an `actions/<verb>` route (ACT-1).
 - Monitoring event writes still accept legacy aliases (kept for deployed agents, AGENTS.md rule 1).
 - The dashboard DTOs in `core/labs/features/dashboard/contracts.py` describe the old shape and are unused.
 - `ENV-6`: the audit catalog's `meta.sync_started_at` is an ad-hoc meta key.

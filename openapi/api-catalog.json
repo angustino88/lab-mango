@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 473,
+  "total_endpoints": 478,
   "generated_at": "2026-11-14",
   "endpoints": [
     {
@@ -56109,6 +56109,343 @@
     },
     {
       "endpoint": "/api/labs/equipment/{equipment_id}/actions/assign",
+      "method": "PUT",
+      "operation_id": "labs_equipment_actions_assign_update_by_equipment_id",
+      "summary": "Assign Equipment by Equipment ID",
+      "description": "Deprecated alias for equipment assignment.\n\nUse /api/labs/equipment/{equipment_id}/assignment instead.",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "equipment_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+          "properties": {
+            "bench_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "role": {
+              "type": "string",
+              "default": "default",
+              "maxLength": 64
+            },
+            "position": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          "required": [
+            "bench_id"
+          ]
+        },
+        "example_payload": {
+          "bench_id": 1,
+          "role": "default",
+          "position": 0
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "equipment": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "bench": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "role": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "position": {
+                    "type": "integer",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "bench",
+                  "equipment",
+                  "id",
+                  "position",
+                  "role"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "equipment": {},
+              "bench": {},
+              "role": "string",
+              "position": 1
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/{equipment_id}/actions/assign",
       "method": "DELETE",
       "operation_id": "labs_equipment_actions_assign_destroy_by_equipment_id",
       "summary": "Assign Equipment by Equipment ID",
@@ -59140,7 +59477,7 @@
       "method": "GET",
       "operation_id": "labs_equipment_assignment_retrieve_by_equipment_id",
       "summary": "Get Equipment Assignment by Equipment ID",
-      "description": "Assign equipment to a bench, or release its current assignment.",
+      "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.\n\nPOST is the deprecated way to set it (it creates nothing, so it is not a create); it stays for one release.",
       "tags": [
         "Equipment"
       ],
@@ -59281,7 +59618,344 @@
       "method": "POST",
       "operation_id": "labs_equipment_assignment_create_by_equipment_id",
       "summary": "Assign Equipment ment by Equipment ID",
-      "description": "Assign equipment to a bench, or release its current assignment.",
+      "description": "Deprecated: use PUT to set the assignment (ACT-1; the assignment is a sub-resource).",
+      "tags": [
+        "Equipment"
+      ],
+      "parameters": [
+        {
+          "name": "equipment_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+          "properties": {
+            "bench_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "role": {
+              "type": "string",
+              "default": "default",
+              "maxLength": 64
+            },
+            "position": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          "required": [
+            "bench_id"
+          ]
+        },
+        "example_payload": {
+          "bench_id": 1,
+          "role": "default",
+          "position": 0
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "equipment": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "bench": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "role": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "position": {
+                    "type": "integer",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "bench",
+                  "equipment",
+                  "id",
+                  "position",
+                  "role"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "equipment": {},
+              "bench": {},
+              "role": "string",
+              "position": 1
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/{equipment_id}/assignment",
+      "method": "PUT",
+      "operation_id": "labs_equipment_assignment_update_by_equipment_id",
+      "summary": "Update Equipment Assignment by Equipment ID",
+      "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.\n\nPOST is the deprecated way to set it (it creates nothing, so it is not a create); it stays for one release.",
       "tags": [
         "Equipment"
       ],
@@ -59618,7 +60292,7 @@
       "method": "DELETE",
       "operation_id": "labs_equipment_assignment_destroy_by_equipment_id",
       "summary": "Delete Equipment Assignment by Equipment ID",
-      "description": "Assign equipment to a bench, or release its current assignment.",
+      "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.\n\nPOST is the deprecated way to set it (it creates nothing, so it is not a create); it stays for one release.",
       "tags": [
         "Equipment"
       ],
@@ -127609,6 +128283,2277 @@
       }
     },
     {
+      "endpoint": "/api/support/tickets/{key}/actions/assign",
+      "method": "POST",
+      "operation_id": "support_tickets_actions_assign_create_by_key",
+      "summary": "Assign Tickets by Key",
+      "description": "Assign or reassign a support ticket to an agent.",
+      "tags": [
+        "Support Desk"
+      ],
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "assignee_id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "version": {
+              "type": "integer",
+              "nullable": true
+            }
+          },
+          "required": [
+            "assignee_id"
+          ]
+        },
+        "example_payload": {
+          "assignee_id": 1,
+          "version": 1
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "key": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "number": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "ticket_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "source": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "impact": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
+                  },
+                  "urgency": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
+                  },
+                  "external_reference": {
+                    "type": "string",
+                    "description": "Reference in an external system (vendor RMA / case number, legacy Jira key...).",
+                    "maxLength": 128
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true,
+                    "description": "Requester/agent-set target date, independent of the SLA."
+                  },
+                  "category": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "priority": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "status": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "requester": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "created_by": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "assignee": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "team": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "labels": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "readOnly": true
+                  },
+                  "parent": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "children": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "ticket_links": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  },
+                  "watchers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "is_watching": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "last_activity_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "first_response_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "resolved_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "closed_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "resolved_by": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "reopen_count": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "resolution_code": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
+                  },
+                  "resolution_summary": {
+                    "type": "string"
+                  },
+                  "root_cause": {
+                    "type": "string"
+                  },
+                  "csat_score": {
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1,
+                    "nullable": true
+                  },
+                  "csat_comment": {
+                    "type": "string"
+                  },
+                  "csat_submitted_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "sla": {
+                    "type": "object",
+                    "additionalProperties": {},
+                    "readOnly": true
+                  },
+                  "version": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "resource_links": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "comments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  },
+                  "attachments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  },
+                  "activities": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "activities",
+                  "assignee",
+                  "attachments",
+                  "category",
+                  "children",
+                  "comments",
+                  "created_at",
+                  "created_by",
+                  "description",
+                  "id",
+                  "is_watching",
+                  "key",
+                  "labels",
+                  "number",
+                  "parent",
+                  "priority",
+                  "requester",
+                  "resolved_by",
+                  "resource_links",
+                  "sla",
+                  "source",
+                  "status",
+                  "subject",
+                  "team",
+                  "ticket_links",
+                  "ticket_type",
+                  "updated_at",
+                  "watchers"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "key": "string",
+              "number": 1,
+              "subject": "string",
+              "description": "string",
+              "ticket_type": {},
+              "source": {},
+              "impact": {},
+              "urgency": {},
+              "external_reference": "string",
+              "due_date": "2026-10-20",
+              "category": {},
+              "priority": {},
+              "status": {},
+              "requester": {},
+              "created_by": {},
+              "assignee": {},
+              "team": {},
+              "labels": [
+                "string"
+              ],
+              "parent": {},
+              "children": [
+                {}
+              ],
+              "ticket_links": [
+                {}
+              ],
+              "watchers": [
+                {}
+              ],
+              "is_watching": true,
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z",
+              "last_activity_at": "2026-10-20T12:00:00Z",
+              "first_response_at": "2026-10-20T12:00:00Z",
+              "resolved_at": "2026-10-20T12:00:00Z",
+              "closed_at": "2026-10-20T12:00:00Z",
+              "resolved_by": {},
+              "reopen_count": 1,
+              "resolution_code": {},
+              "resolution_summary": "string",
+              "root_cause": "string",
+              "csat_score": 1,
+              "csat_comment": "string",
+              "csat_submitted_at": "2026-10-20T12:00:00Z",
+              "sla": {},
+              "version": 1,
+              "resource_links": [
+                {}
+              ],
+              "comments": [
+                {}
+              ],
+              "attachments": [
+                {}
+              ],
+              "activities": [
+                {}
+              ]
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/support/tickets/{key}/actions/submit-csat",
+      "method": "POST",
+      "operation_id": "support_tickets_actions_submit_csat_create_by_key",
+      "summary": "Submit Csat Tickets by Key",
+      "description": "Requester satisfaction rating (1-5) for a resolved ticket.",
+      "tags": [
+        "Support Desk"
+      ],
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "score": {
+              "type": "integer",
+              "maximum": 5,
+              "minimum": 1
+            },
+            "comment": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "required": [
+            "score"
+          ]
+        },
+        "example_payload": {
+          "score": 1,
+          "comment": ""
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "key": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "number": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "ticket_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "source": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "impact": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
+                  },
+                  "urgency": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
+                  },
+                  "external_reference": {
+                    "type": "string",
+                    "description": "Reference in an external system (vendor RMA / case number, legacy Jira key...).",
+                    "maxLength": 128
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true,
+                    "description": "Requester/agent-set target date, independent of the SLA."
+                  },
+                  "category": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "priority": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "status": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "requester": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "created_by": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "assignee": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "team": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "labels": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "readOnly": true
+                  },
+                  "parent": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "children": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "ticket_links": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  },
+                  "watchers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "is_watching": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "last_activity_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "first_response_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "resolved_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "closed_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "resolved_by": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "reopen_count": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "resolution_code": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
+                  },
+                  "resolution_summary": {
+                    "type": "string"
+                  },
+                  "root_cause": {
+                    "type": "string"
+                  },
+                  "csat_score": {
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1,
+                    "nullable": true
+                  },
+                  "csat_comment": {
+                    "type": "string"
+                  },
+                  "csat_submitted_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "sla": {
+                    "type": "object",
+                    "additionalProperties": {},
+                    "readOnly": true
+                  },
+                  "version": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "resource_links": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "comments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  },
+                  "attachments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  },
+                  "activities": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "activities",
+                  "assignee",
+                  "attachments",
+                  "category",
+                  "children",
+                  "comments",
+                  "created_at",
+                  "created_by",
+                  "description",
+                  "id",
+                  "is_watching",
+                  "key",
+                  "labels",
+                  "number",
+                  "parent",
+                  "priority",
+                  "requester",
+                  "resolved_by",
+                  "resource_links",
+                  "sla",
+                  "source",
+                  "status",
+                  "subject",
+                  "team",
+                  "ticket_links",
+                  "ticket_type",
+                  "updated_at",
+                  "watchers"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "key": "string",
+              "number": 1,
+              "subject": "string",
+              "description": "string",
+              "ticket_type": {},
+              "source": {},
+              "impact": {},
+              "urgency": {},
+              "external_reference": "string",
+              "due_date": "2026-10-20",
+              "category": {},
+              "priority": {},
+              "status": {},
+              "requester": {},
+              "created_by": {},
+              "assignee": {},
+              "team": {},
+              "labels": [
+                "string"
+              ],
+              "parent": {},
+              "children": [
+                {}
+              ],
+              "ticket_links": [
+                {}
+              ],
+              "watchers": [
+                {}
+              ],
+              "is_watching": true,
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z",
+              "last_activity_at": "2026-10-20T12:00:00Z",
+              "first_response_at": "2026-10-20T12:00:00Z",
+              "resolved_at": "2026-10-20T12:00:00Z",
+              "closed_at": "2026-10-20T12:00:00Z",
+              "resolved_by": {},
+              "reopen_count": 1,
+              "resolution_code": {},
+              "resolution_summary": "string",
+              "root_cause": "string",
+              "csat_score": 1,
+              "csat_comment": "string",
+              "csat_submitted_at": "2026-10-20T12:00:00Z",
+              "sla": {},
+              "version": 1,
+              "resource_links": [
+                {}
+              ],
+              "comments": [
+                {}
+              ],
+              "attachments": [
+                {}
+              ],
+              "activities": [
+                {}
+              ]
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/support/tickets/{key}/actions/transition",
+      "method": "POST",
+      "operation_id": "support_tickets_actions_transition_create_by_key",
+      "summary": "Transition Tickets by Key",
+      "description": "Execute a validated lifecycle status transition on a ticket.",
+      "tags": [
+        "Support Desk"
+      ],
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "to_status_id": {
+              "type": "integer"
+            },
+            "version": {
+              "type": "integer"
+            },
+            "reason": {
+              "type": "string",
+              "default": ""
+            },
+            "resolution_summary": {
+              "type": "string",
+              "default": ""
+            },
+            "root_cause": {
+              "type": "string",
+              "default": ""
+            },
+            "resolution_code": {
+              "default": "",
+              "oneOf": [
+                {
+                  "enum": [
+                    "fixed",
+                    "workaround",
+                    "cannot_reproduce",
+                    "duplicate",
+                    "wont_fix",
+                    "user_error",
+                    "vendor"
+                  ],
+                  "type": "string",
+                  "description": "* `fixed` - Fixed\n* `workaround` - Workaround\n* `cannot_reproduce` - Cannot Reproduce\n* `duplicate` - Duplicate\n* `wont_fix` - Wont Fix\n* `user_error` - User Error\n* `vendor` - Vendor"
+                },
+                {
+                  "enum": [
+                    ""
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "to_status_id",
+            "version"
+          ]
+        },
+        "example_payload": {
+          "to_status_id": 1,
+          "version": 1,
+          "reason": "",
+          "resolution_summary": "",
+          "root_cause": "",
+          "resolution_code": "fixed"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "key": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "number": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "ticket_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "source": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "impact": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
+                  },
+                  "urgency": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
+                  },
+                  "external_reference": {
+                    "type": "string",
+                    "description": "Reference in an external system (vendor RMA / case number, legacy Jira key...).",
+                    "maxLength": 128
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true,
+                    "description": "Requester/agent-set target date, independent of the SLA."
+                  },
+                  "category": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "priority": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "status": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "requester": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "created_by": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "assignee": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "team": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "labels": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "readOnly": true
+                  },
+                  "parent": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "children": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "ticket_links": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  },
+                  "watchers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "is_watching": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "last_activity_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "first_response_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "resolved_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "closed_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "resolved_by": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "reopen_count": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "resolution_code": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ]
+                  },
+                  "resolution_summary": {
+                    "type": "string"
+                  },
+                  "root_cause": {
+                    "type": "string"
+                  },
+                  "csat_score": {
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1,
+                    "nullable": true
+                  },
+                  "csat_comment": {
+                    "type": "string"
+                  },
+                  "csat_submitted_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "sla": {
+                    "type": "object",
+                    "additionalProperties": {},
+                    "readOnly": true
+                  },
+                  "version": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "resource_links": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "comments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  },
+                  "attachments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  },
+                  "activities": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    },
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "activities",
+                  "assignee",
+                  "attachments",
+                  "category",
+                  "children",
+                  "comments",
+                  "created_at",
+                  "created_by",
+                  "description",
+                  "id",
+                  "is_watching",
+                  "key",
+                  "labels",
+                  "number",
+                  "parent",
+                  "priority",
+                  "requester",
+                  "resolved_by",
+                  "resource_links",
+                  "sla",
+                  "source",
+                  "status",
+                  "subject",
+                  "team",
+                  "ticket_links",
+                  "ticket_type",
+                  "updated_at",
+                  "watchers"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "key": "string",
+              "number": 1,
+              "subject": "string",
+              "description": "string",
+              "ticket_type": {},
+              "source": {},
+              "impact": {},
+              "urgency": {},
+              "external_reference": "string",
+              "due_date": "2026-10-20",
+              "category": {},
+              "priority": {},
+              "status": {},
+              "requester": {},
+              "created_by": {},
+              "assignee": {},
+              "team": {},
+              "labels": [
+                "string"
+              ],
+              "parent": {},
+              "children": [
+                {}
+              ],
+              "ticket_links": [
+                {}
+              ],
+              "watchers": [
+                {}
+              ],
+              "is_watching": true,
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z",
+              "last_activity_at": "2026-10-20T12:00:00Z",
+              "first_response_at": "2026-10-20T12:00:00Z",
+              "resolved_at": "2026-10-20T12:00:00Z",
+              "closed_at": "2026-10-20T12:00:00Z",
+              "resolved_by": {},
+              "reopen_count": 1,
+              "resolution_code": {},
+              "resolution_summary": "string",
+              "root_cause": "string",
+              "csat_score": 1,
+              "csat_comment": "string",
+              "csat_submitted_at": "2026-10-20T12:00:00Z",
+              "sla": {},
+              "version": 1,
+              "resource_links": [
+                {}
+              ],
+              "comments": [
+                {}
+              ],
+              "attachments": [
+                {}
+              ],
+              "activities": [
+                {}
+              ]
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "endpoint": "/api/support/tickets/{key}/activity",
       "method": "GET",
       "operation_id": "support_tickets_activity_retrieve_by_key",
@@ -127864,7 +130809,7 @@
       "method": "POST",
       "operation_id": "support_tickets_assign_create_by_key",
       "summary": "Assign Tickets by Key",
-      "description": "Assign or reassign a support ticket to an agent.",
+      "description": "Deprecated alias; use POST /api/support/tickets/{key}/actions/assign.",
       "tags": [
         "Support Desk"
       ],
@@ -130462,7 +133407,7 @@
       "method": "POST",
       "operation_id": "support_tickets_csat_create_by_key",
       "summary": "Create Tickets Csat by Key",
-      "description": "Requester satisfaction rating (1-5) for a resolved ticket.",
+      "description": "Deprecated alias; use POST /api/support/tickets/{key}/actions/submit-csat.",
       "tags": [
         "Support Desk"
       ],
@@ -132785,7 +135730,7 @@
       "method": "POST",
       "operation_id": "support_tickets_transitions_create_by_key",
       "summary": "Create Tickets Transitions by Key",
-      "description": "Execute a validated lifecycle status transition on a ticket.",
+      "description": "Deprecated alias; use POST /api/support/tickets/{key}/actions/transition.",
       "tags": [
         "Support Desk"
       ],

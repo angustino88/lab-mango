@@ -132,3 +132,22 @@ def test_list_placement_query_count_does_not_grow_with_rows(coordinator_client, 
     for index in range(2, 8):
         seed(index)
     assert count() == small
+
+
+@pytest.mark.django_db
+def test_put_sets_the_assignment_and_post_is_a_deprecated_alias(coordinator_client, unit):
+    """ACT-1: the assignment is a sub-resource set with PUT; POST still works for one release (VER-3)."""
+    first, second = (Bench.objects.create(name=f"Assign bench {i}", sku=f"AS-BENCH-{i}") for i in (1, 2))
+    url = f"{ROOT}{unit.pk}/assignment"
+
+    put = coordinator_client.put(url, {"bench_id": first.pk}, format="json")
+    assert put.status_code == 200, put.content
+    assert put.data["data"]["bench"]["id"] == first.pk
+    assert "Deprecation" not in put
+
+    coordinator_client.delete(url)
+    post = coordinator_client.post(url, {"bench_id": second.pk}, format="json")
+    assert post.status_code == 200, post.content
+    assert post.data["data"]["bench"]["id"] == second.pk
+    assert post["Deprecation"] == "true"
+    assert post["Link"] == f'</api/labs/equipment/{unit.pk}/assignment>; rel="successor-version"'

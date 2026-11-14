@@ -91,7 +91,9 @@ class TestHelpdeskEndpoints:
         assert denied.status_code == 403
 
         # CSAT is refused until resolved
-        early = requester_client.post(f"/api/support/tickets/{a['key']}/csat", {"score": 5}, format="json")
+        early = requester_client.post(
+            f"/api/support/tickets/{a['key']}/actions/submit-csat", {"score": 5}, format="json"
+        )
         assert early.status_code == 422
 
     def test_stats_and_canned_responses_are_agent_only(self, support_setup, requester_client, agent_client):

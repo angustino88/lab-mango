@@ -1,9 +1,4 @@
 {
   "description": "Known API contract drift, shrinking to empty. New entries are never added by hand: fix the code. See docs/architecture/decisions/007-api-contract-gate.md.",
-  "violations": [
-    "ACT-1 POST /api/labs/equipment/{equipment_id}/assignment",
-    "ACT-1 POST /api/support/tickets/{key}/assign",
-    "ACT-1 POST /api/support/tickets/{key}/csat",
-    "ACT-1 POST /api/support/tickets/{key}/transitions"
-  ]
+  "violations": []
 }

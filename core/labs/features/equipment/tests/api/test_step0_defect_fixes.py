@@ -90,6 +90,7 @@ def test_plain_user_cannot_read_or_write_equipment(plain_user, computing_kind, c
         ("patch", f"equipment/{pk}", {"name": "renamed"}),
         ("delete", f"equipment/{pk}", None),
         ("patch", f"equipment/sku/{computing_unit.sku}", {"name": "renamed"}),
+        ("put", f"equipment/{pk}/assignment", {"bench_id": bench.pk}),
         ("post", f"equipment/{pk}/assignment", {"bench_id": bench.pk}),
         ("delete", f"equipment/{pk}/assignment", None),
         ("post", f"equipment/{pk}/actions/change-condition", {"condition": "out_of_service"}),

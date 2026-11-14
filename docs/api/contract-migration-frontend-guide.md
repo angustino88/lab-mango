@@ -251,3 +251,15 @@ parent (a payment of an expense, a line of a purchase) must use the parent's cur
 Every list that searches by free text takes `?q=` (QRY-7), 1 to 200 characters. `?search=` still works for
 one release: it is marked `deprecated` in the schema and the response carries `Deprecation: true`. Sending
 both is `400`. Move every call to `q`; `search` will be removed in a later release.
+
+### Operations are actions (ACT-1)
+
+| Before | After |
+| --- | --- |
+| `POST /api/support/tickets/{key}/assign` | `POST /api/support/tickets/{key}/actions/assign` |
+| `POST /api/support/tickets/{key}/transitions` | `POST /api/support/tickets/{key}/actions/transition` |
+| `POST /api/support/tickets/{key}/csat` | `POST /api/support/tickets/{key}/actions/submit-csat` |
+| `POST /api/labs/equipment/{id}/assignment` (sets the assignment) | `PUT /api/labs/equipment/{id}/assignment` |
+
+The old routes keep working for one release, marked `deprecated` in the schema, with `Deprecation: true` and a
+`Link: <…>; rel="successor-version"` header on every response. Request and response bodies are unchanged.

@@ -2233,6 +2233,201 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Update Tickets by Key
+  /api/support/tickets/{key}/actions/assign:
+    post:
+      operationId: support_tickets_actions_assign_create_by_key
+      description: Assign or reassign a support ticket to an agent.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketAssignRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketAssignRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketAssignRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketAssignSerializersTicketDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Assign Tickets by Key
+  /api/support/tickets/{key}/actions/submit-csat:
+    post:
+      operationId: support_tickets_actions_submit_csat_create_by_key
+      description: Requester satisfaction rating (1-5) for a resolved ticket.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CsatRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CsatRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CsatRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketCsatSerializersTicketDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Submit Csat Tickets by Key
+  /api/support/tickets/{key}/actions/transition:
+    post:
+      operationId: support_tickets_actions_transition_create_by_key
+      description: Execute a validated lifecycle status transition on a ticket.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Support Desk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketTransitionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketTransitionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketTransitionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketTransitionSerializersTicketDetailDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Transition Tickets by Key
   /api/support/tickets/{key}/activity:
     get:
       operationId: support_tickets_activity_retrieve_by_key
@@ -2277,7 +2472,7 @@ paths:
   /api/support/tickets/{key}/assign:
     post:
       operationId: support_tickets_assign_create_by_key
-      description: Assign or reassign a support ticket to an agent.
+      description: Deprecated alias; use POST /api/support/tickets/{key}/actions/assign.
       parameters:
       - in: path
         name: key
@@ -2301,6 +2496,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      deprecated: true
       responses:
         '200':
           content:
@@ -2661,7 +2857,7 @@ paths:
   /api/support/tickets/{key}/csat:
     post:
       operationId: support_tickets_csat_create_by_key
-      description: Requester satisfaction rating (1-5) for a resolved ticket.
+      description: Deprecated alias; use POST /api/support/tickets/{key}/actions/submit-csat.
       parameters:
       - in: path
         name: key
@@ -2685,6 +2881,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      deprecated: true
       responses:
         '200':
           content:
@@ -2988,7 +3185,7 @@ paths:
   /api/support/tickets/{key}/transitions:
     post:
       operationId: support_tickets_transitions_create_by_key
-      description: Execute a validated lifecycle status transition on a ticket.
+      description: Deprecated alias; use POST /api/support/tickets/{key}/actions/transition.
       parameters:
       - in: path
         name: key
@@ -3012,6 +3209,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      deprecated: true
       responses:
         '200':
           content:

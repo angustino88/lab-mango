@@ -12078,6 +12078,104 @@
         },
         "summary": "Assign Equipment by Equipment ID"
       },
+      "put": {
+        "operationId": "labs_equipment_actions_assign_update_by_equipment_id",
+        "description": "Deprecated alias for equipment assignment.\n\nUse /api/labs/equipment/{equipment_id}/assignment instead.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentAssignment"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentAssignment"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentAssignment"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Assign Equipment by Equipment ID"
+      },
       "delete": {
         "operationId": "labs_equipment_actions_assign_destroy_by_equipment_id",
         "description": "Deprecated alias for equipment assignment. Use /api/labs/equipment/{equipment_id}/assignment instead.",
@@ -12673,7 +12771,7 @@
     "/api/labs/equipment/{equipment_id}/assignment": {
       "get": {
         "operationId": "labs_equipment_assignment_retrieve_by_equipment_id",
-        "description": "Assign equipment to a bench, or release its current assignment.",
+        "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.\n\nPOST is the deprecated way to set it (it creates nothing, so it is not a create); it stays for one release.",
         "parameters": [
           {
             "in": "path",
@@ -12721,7 +12819,106 @@
       },
       "post": {
         "operationId": "labs_equipment_assignment_create_by_equipment_id",
-        "description": "Assign equipment to a bench, or release its current assignment.",
+        "description": "Deprecated: use PUT to set the assignment (ACT-1; the assignment is a sub-resource).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentAssignment"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentAssignment"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentAssignment"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "deprecated": true,
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Assign Equipment ment by Equipment ID"
+      },
+      "put": {
+        "operationId": "labs_equipment_assignment_update_by_equipment_id",
+        "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.\n\nPOST is the deprecated way to set it (it creates nothing, so it is not a create); it stays for one release.",
         "parameters": [
           {
             "in": "path",
@@ -12815,11 +13012,11 @@
             "description": ""
           }
         },
-        "summary": "Assign Equipment ment by Equipment ID"
+        "summary": "Update Equipment Assignment by Equipment ID"
       },
       "delete": {
         "operationId": "labs_equipment_assignment_destroy_by_equipment_id",
-        "description": "Assign equipment to a bench, or release its current assignment.",
+        "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.\n\nPOST is the deprecated way to set it (it creates nothing, so it is not a create); it stays for one release.",
         "parameters": [
           {
             "in": "path",
@@ -35833,6 +36030,336 @@
         "summary": "Update Tickets by Key"
       }
     },
+    "/api/support/tickets/{key}/actions/assign": {
+      "post": {
+        "operationId": "support_tickets_actions_assign_create_by_key",
+        "description": "Assign or reassign a support ticket to an agent.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Support Desk"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketAssignRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketAssignRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketAssignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketAssignSerializersTicketDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Assign Tickets by Key"
+      }
+    },
+    "/api/support/tickets/{key}/actions/submit-csat": {
+      "post": {
+        "operationId": "support_tickets_actions_submit_csat_create_by_key",
+        "description": "Requester satisfaction rating (1-5) for a resolved ticket.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Support Desk"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CsatRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CsatRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CsatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketCsatSerializersTicketDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Submit Csat Tickets by Key"
+      }
+    },
+    "/api/support/tickets/{key}/actions/transition": {
+      "post": {
+        "operationId": "support_tickets_actions_transition_create_by_key",
+        "description": "Execute a validated lifecycle status transition on a ticket.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Support Desk"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketTransitionRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketTransitionRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketTransitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketTransitionSerializersTicketDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Transition Tickets by Key"
+      }
+    },
     "/api/support/tickets/{key}/activity": {
       "get": {
         "operationId": "support_tickets_activity_retrieve_by_key",
@@ -35906,7 +36433,7 @@
     "/api/support/tickets/{key}/assign": {
       "post": {
         "operationId": "support_tickets_assign_create_by_key",
-        "description": "Assign or reassign a support ticket to an agent.",
+        "description": "Deprecated alias; use POST /api/support/tickets/{key}/actions/assign.",
         "parameters": [
           {
             "in": "path",
@@ -35948,6 +36475,7 @@
             "cookieAuth": []
           }
         ],
+        "deprecated": true,
         "responses": {
           "200": {
             "content": {
@@ -36556,7 +37084,7 @@
     "/api/support/tickets/{key}/csat": {
       "post": {
         "operationId": "support_tickets_csat_create_by_key",
-        "description": "Requester satisfaction rating (1-5) for a resolved ticket.",
+        "description": "Deprecated alias; use POST /api/support/tickets/{key}/actions/submit-csat.",
         "parameters": [
           {
             "in": "path",
@@ -36598,6 +37126,7 @@
             "cookieAuth": []
           }
         ],
+        "deprecated": true,
         "responses": {
           "200": {
             "content": {
@@ -37106,7 +37635,7 @@
     "/api/support/tickets/{key}/transitions": {
       "post": {
         "operationId": "support_tickets_transitions_create_by_key",
-        "description": "Execute a validated lifecycle status transition on a ticket.",
+        "description": "Deprecated alias; use POST /api/support/tickets/{key}/actions/transition.",
         "parameters": [
           {
             "in": "path",
@@ -37148,6 +37677,7 @@
             "cookieAuth": []
           }
         ],
+        "deprecated": true,
         "responses": {
           "200": {
             "content": {

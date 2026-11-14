@@ -2,15 +2,42 @@
 
 from django.urls import path
 
+from core.common.api.deprecation import deprecated_alias
+
 from . import views
+
+
+def _ticket_action(verb: str):
+    return lambda key, **_: f"/api/support/tickets/{key}/actions/{verb}"
+
+
+# ACT-1: non-CRUD ticket operations are actions; the old paths stay for one release (VER-3).
+DeprecatedTicketAssign = deprecated_alias(
+    views.TicketAssignAPIView,
+    successor=_ticket_action("assign"),
+    description="Deprecated alias; use POST /api/support/tickets/{key}/actions/assign.",
+)
+DeprecatedTicketTransition = deprecated_alias(
+    views.TicketTransitionAPIView,
+    successor=_ticket_action("transition"),
+    description="Deprecated alias; use POST /api/support/tickets/{key}/actions/transition.",
+)
+DeprecatedTicketCsat = deprecated_alias(
+    views.TicketCsatAPIView,
+    successor=_ticket_action("submit-csat"),
+    description="Deprecated alias; use POST /api/support/tickets/{key}/actions/submit-csat.",
+)
 
 urlpatterns = [
     # Ticket collections and detail
     path("tickets", views.TicketListCreateAPIView.as_view(), name="ticket-list-create"),
     path("tickets/stats", views.QueueStatsAPIView.as_view(), name="ticket-queue-stats"),
     path("tickets/<str:key>", views.TicketDetailAPIView.as_view(), name="ticket-detail"),
-    path("tickets/<str:key>/assign", views.TicketAssignAPIView.as_view(), name="ticket-assign"),
-    path("tickets/<str:key>/transitions", views.TicketTransitionAPIView.as_view(), name="ticket-transition"),
+    path("tickets/<str:key>/actions/assign", views.TicketAssignAPIView.as_view(), name="ticket-assign"),
+    path("tickets/<str:key>/actions/transition", views.TicketTransitionAPIView.as_view(), name="ticket-transition"),
+    path("tickets/<str:key>/actions/submit-csat", views.TicketCsatAPIView.as_view(), name="ticket-csat"),
+    path("tickets/<str:key>/assign", DeprecatedTicketAssign.as_view(), name="ticket-assign-deprecated"),
+    path("tickets/<str:key>/transitions", DeprecatedTicketTransition.as_view(), name="ticket-transition-deprecated"),
     path("tickets/<str:key>/resources", views.TicketResourceLinkAPIView.as_view(), name="ticket-resources"),
     path("tickets/<str:key>/comments", views.TicketCommentListCreateAPIView.as_view(), name="ticket-comments"),
     path("tickets/<str:key>/comments/<int:comment_id>", views.TicketCommentDetailAPIView.as_view(), name="ticket-comment-detail"),
@@ -19,7 +46,7 @@ urlpatterns = [
     path("tickets/<str:key>/watchers", views.TicketWatcherAPIView.as_view(), name="ticket-watchers"),
     path("tickets/<str:key>/links", views.TicketLinkListCreateAPIView.as_view(), name="ticket-links"),
     path("tickets/<str:key>/links/<int:link_id>", views.TicketLinkDetailAPIView.as_view(), name="ticket-link-detail"),
-    path("tickets/<str:key>/csat", views.TicketCsatAPIView.as_view(), name="ticket-csat"),
+    path("tickets/<str:key>/csat", DeprecatedTicketCsat.as_view(), name="ticket-csat-deprecated"),
     path("tickets/<str:key>/activity", views.TicketActivityListAPIView.as_view(), name="ticket-activity"),
 
     # Direct attachments download

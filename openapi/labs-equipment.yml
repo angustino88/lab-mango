@@ -1838,6 +1838,67 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Assign Equipment by Equipment ID
+    put:
+      operationId: labs_equipment_actions_assign_update_by_equipment_id
+      description: 'Deprecated alias for equipment assignment.
+
+
+        Use /api/labs/equipment/{equipment_id}/assignment instead.'
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Assign Equipment by Equipment ID
     delete:
       operationId: labs_equipment_actions_assign_destroy_by_equipment_id
       description: Deprecated alias for equipment assignment. Use /api/labs/equipment/{equipment_id}/assignment
@@ -2209,7 +2270,12 @@ paths:
   /api/labs/equipment/{equipment_id}/assignment:
     get:
       operationId: labs_equipment_assignment_retrieve_by_equipment_id
-      description: Assign equipment to a bench, or release its current assignment.
+      description: 'The equipment''s bench assignment, a singleton sub-resource: PUT
+        sets it, DELETE releases it.
+
+
+        POST is the deprecated way to set it (it creates nothing, so it is not a create);
+        it stays for one release.'
       parameters:
       - in: path
         name: equipment_id
@@ -2237,7 +2303,72 @@ paths:
       summary: Get Equipment Assignment by Equipment ID
     post:
       operationId: labs_equipment_assignment_create_by_equipment_id
-      description: Assign equipment to a bench, or release its current assignment.
+      description: 'Deprecated: use PUT to set the assignment (ACT-1; the assignment
+        is a sub-resource).'
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Assign Equipment ment by Equipment ID
+    put:
+      operationId: labs_equipment_assignment_update_by_equipment_id
+      description: 'The equipment''s bench assignment, a singleton sub-resource: PUT
+        sets it, DELETE releases it.
+
+
+        POST is the deprecated way to set it (it creates nothing, so it is not a create);
+        it stays for one release.'
       parameters:
       - in: path
         name: equipment_id
@@ -2292,10 +2423,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Assign Equipment ment by Equipment ID
+      summary: Update Equipment Assignment by Equipment ID
     delete:
       operationId: labs_equipment_assignment_destroy_by_equipment_id
-      description: Assign equipment to a bench, or release its current assignment.
+      description: 'The equipment''s bench assignment, a singleton sub-resource: PUT
+        sets it, DELETE releases it.
+
+
+        POST is the deprecated way to set it (it creates nothing, so it is not a create);
+        it stays for one release.'
       parameters:
       - in: path
         name: equipment_id
