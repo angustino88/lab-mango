@@ -20,7 +20,6 @@ urlpatterns = [
         name="bench-action-change-lifecycle",
     ),
     path("benches/<int:bench_id>/actions/favorite", views.BenchFavoriteAPIView.as_view(), name="bench-action-favorite"),
-    path("benches/<int:bench_id>/actions/unfavorite", views.BenchUnfavoriteActionAPIView.as_view(), name="bench-action-unfavorite"),
     path("bench-groups", views.BenchGroupListCreateAPIView.as_view(), name="bench-group-list-create"),
     path("bench-groups/options", views.BenchGroupOptionsAPIView.as_view(), name="bench-group-options"),
     path("bench-groups/<int:reference_id>", views.BenchGroupDetailAPIView.as_view(), name="bench-group-detail"),

@@ -2,7 +2,6 @@
 
 from django.utils import timezone  # noqa: F401
 from drf_api_contracts import OperationContract, ResponseContract
-from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
@@ -142,28 +141,6 @@ class BenchFavoriteAPIView(BenchAPIView):
         return self._execute(lambda: services.add_favorite(bench_id=bench_id, actor=request.user))
 
     def handle_delete(self, request, bench_id, **kwargs):
-        return self._execute(lambda: services.remove_favorite(bench_id=bench_id, actor=request.user), delete=True)
-
-
-@extend_schema_view(
-    post=extend_schema(
-        deprecated=True,
-        description="Deprecated alias. Use DELETE /api/labs/benches/{bench_id}/actions/favorite instead.",
-    ),
-)
-class BenchUnfavoriteActionAPIView(BenchAPIView):
-    post_contract = operation("BenchUnfavoriteAction", None, delete=True)
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        bench_id = kwargs.get("bench_id")
-        if bench_id:
-            response["Link"] = f'</api/labs/benches/{bench_id}/actions/favorite>; rel="successor-version"'
-        return response
-
-    def handle_post(self, request, bench_id, **kwargs):
         return self._execute(lambda: services.remove_favorite(bench_id=bench_id, actor=request.user), delete=True)
 
 

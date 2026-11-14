@@ -959,63 +959,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Change Status Licenses by License ID
-  /api/labs/licenses/{license_id}/actions/unassign:
-    post:
-      operationId: labs_licenses_actions_unassign_create_by_license_id
-      description: Deprecated alias. Use DELETE /api/labs/licenses/{license_id}/actions/assign
-        instead.
-      parameters:
-      - in: path
-        name: license_id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - Licenses
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LicenseAssignmentRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/LicenseAssignmentRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/LicenseAssignmentRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '204':
-          description: No response body
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Unassign Licenses by License ID
   /api/labs/licenses/{license_id}/agreements:
     get:
       operationId: labs_licenses_agreements_retrieve_by_license_id

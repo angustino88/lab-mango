@@ -259,6 +259,19 @@ no longer in the schema and a request that sends it is rejected as an invalid qu
 | `POST /api/support/tickets/{key}/transitions` | `POST /api/support/tickets/{key}/actions/transition` |
 | `POST /api/support/tickets/{key}/csat` | `POST /api/support/tickets/{key}/actions/submit-csat` |
 | `POST /api/labs/equipment/{id}/assignment` (sets the assignment) | `PUT /api/labs/equipment/{id}/assignment` |
+| `POST /api/labs/benches/{bench_id}/actions/unfavorite` | `DELETE /api/labs/benches/{bench_id}/actions/favorite` |
+| `POST /api/labs/licenses/{license_id}/actions/unassign` | `DELETE /api/labs/licenses/{license_id}/actions/assign` |
+| `GET/POST/DELETE /api/labs/equipment/{id}/actions/assign` | `GET/PUT/DELETE /api/labs/equipment/{id}/assignment` |
+| `GET/POST /api/labs/lab-monitoring` | `GET/POST /api/labs/monitoring-events` |
+| `GET /api/labs/lab-monitoring/export` | `GET /api/labs/monitoring-events/export` |
+| `GET /api/labs/financial-report` | `GET /api/labs/expenses/report` |
+| `GET /api/labs/analytics/lab-group` | `GET /api/labs/analytics/bench-group` |
+| `GET /api/labs/analytics/dashboard-summary` | `GET /api/labs/dashboard/summary (different payload: check the schema)` |
+| `GET /api/labs/lab-dashboard/summary` | `GET /api/labs/dashboard/summary` |
+| `GET /api/labs/profile/{id}` | `GET /api/labs/benches/{id}/profile` |
+| `GET /api/labs/weekly-usage/{id}` | `GET /api/labs/benches/{id}/weekly-usage` |
+| `GET /api/labs/users/profile/{id}` | `GET /api/labs/leaderboard/users/{id}/profile` |
+| `GET /api/labs/users/weekly-usage/{id}` | `GET /api/labs/leaderboard/users/{id}/weekly-usage` |
 
 The old routes are **removed**: they are no longer routed or in the schema, so calls to them fail (404, or 405
 for `POST /api/labs/equipment/{id}/assignment`). Request and response bodies of the new routes are unchanged.

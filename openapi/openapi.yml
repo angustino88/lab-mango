@@ -42,8 +42,6 @@ paths:
     $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1booked-vs-used
   /api/labs/analytics/booking:
     $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1booking
-  /api/labs/analytics/dashboard-summary:
-    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1dashboard-summary
   /api/labs/analytics/equipment-availability:
     $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1equipment-availability
   /api/labs/analytics/finance/expense-type-breakdown:
@@ -58,8 +56,6 @@ paths:
     $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1lab-efficiency
   /api/labs/analytics/lab-equipment-status:
     $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1lab-equipment-status
-  /api/labs/analytics/lab-group:
-    $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1lab-group
   /api/labs/analytics/lab-usage-by-timeframe:
     $ref: ./labs-analytics.yml#/paths/~1api~1labs~1analytics~1lab-usage-by-timeframe
   /api/labs/analytics/lab-visits:
@@ -136,8 +132,6 @@ paths:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1favorite
   /api/labs/benches/{bench_id}/actions/place:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1place
-  /api/labs/benches/{bench_id}/actions/unfavorite:
-    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1unfavorite
   /api/labs/benches/{bench_id}/equipment:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1equipment
   /api/labs/benches/{bench_id}/image:
@@ -164,8 +158,6 @@ paths:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1benches~1{id}~1weekly-usage
   /api/labs/lab-dashboard:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1lab-dashboard
-  /api/labs/lab-dashboard/summary:
-    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1lab-dashboard~1summary
   /api/labs/leaderboard/export:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1export
   /api/labs/leaderboard/lab:
@@ -176,14 +168,6 @@ paths:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1users~1{id}~1profile
   /api/labs/leaderboard/users/{id}/weekly-usage:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1users~1{id}~1weekly-usage
-  /api/labs/profile/{id}:
-    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1profile~1{id}
-  /api/labs/users/profile/{id}:
-    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1users~1profile~1{id}
-  /api/labs/users/weekly-usage/{id}:
-    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1users~1weekly-usage~1{id}
-  /api/labs/weekly-usage/{id}:
-    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1weekly-usage~1{id}
   /api/labs/benches/{resource_id}/mapping:
     $ref: ./labs-resource-mappings.yml#/paths/~1api~1labs~1benches~1{resource_id}~1mapping
   /api/labs/equipment/{resource_id}/mapping:
@@ -342,8 +326,6 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-types~1{type_id}
   /api/labs/equipment-types/options:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment-types~1options
-  /api/labs/equipment/{equipment_id}/actions/assign:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1assign
   /api/labs/equipment/{equipment_id}/actions/change-condition:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-condition
   /api/labs/equipment/{equipment_id}/actions/change-lifecycle:
@@ -470,22 +452,10 @@ paths:
     $ref: ./labs-expense.yml#/paths/~1api~1labs~1expenses~1{expense_id}~1payments
   /api/labs/expenses/report:
     $ref: ./labs-expense.yml#/paths/~1api~1labs~1expenses~1report
-  /api/labs/financial-report:
-    $ref: ./labs-expense.yml#/paths/~1api~1labs~1financial-report
   /api/labs/rooms/{room_id}/expenses:
     $ref: ./labs-expense.yml#/paths/~1api~1labs~1rooms~1{room_id}~1expenses
   /api/labs/rooms/{room_id}/expenses/report:
     $ref: ./labs-expense.yml#/paths/~1api~1labs~1rooms~1{room_id}~1expenses~1report
-  /api/labs/lab-monitoring:
-    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1lab-monitoring
-  /api/labs/lab-monitoring/export:
-    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1lab-monitoring~1export
-  /api/labs/monitoring-events:
-    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events
-  /api/labs/monitoring-events/{id}:
-    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events~1{id}
-  /api/labs/monitoring-events/export:
-    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events~1export
   /api/labs/license-categories:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-categories
   /api/labs/license-categories/{category_id}:
@@ -524,8 +494,6 @@ paths:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1assign
   /api/labs/licenses/{license_id}/actions/change-status:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1change-status
-  /api/labs/licenses/{license_id}/actions/unassign:
-    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1unassign
   /api/labs/licenses/{license_id}/agreements:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1agreements
   /api/labs/licenses/{license_id}/history:
@@ -558,6 +526,12 @@ paths:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1vendors~1{reference_id}
   /api/labs/licenses/status-summary:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1status-summary
+  /api/labs/monitoring-events:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events
+  /api/labs/monitoring-events/{id}:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events~1{id}
+  /api/labs/monitoring-events/export:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events~1export
   /api/labs/purchase-items/{purchase_item_id}/resources:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchase-items~1{purchase_item_id}~1resources
   /api/labs/purchase-priorities:

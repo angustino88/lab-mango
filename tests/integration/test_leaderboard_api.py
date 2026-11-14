@@ -140,7 +140,7 @@ class TestLeaderboardLab:
 
 
 # ---------------------------------------------------------------------------
-# GET /api/labs/profile/<id>
+# GET /api/labs/benches/<id>/profile
 # ---------------------------------------------------------------------------
 
 
@@ -149,7 +149,7 @@ class TestLabProfile:
     async def test_unauthenticated_returns_401_or_403(self):
         from django.test import AsyncClient
 
-        for url in ("/api/labs/profile/1", "/api/labs/benches/1/profile"):
+        for url in ("/api/labs/benches/1/profile",):
             response = await AsyncClient().get(url)
             assert response.status_code in (401, 403)
 
@@ -160,15 +160,9 @@ class TestLabProfile:
             response_canon = await AsyncClient().get("/api/labs/benches/99999/profile")
             assert response_canon.status_code == 404
 
-            response_alias = await AsyncClient().get("/api/labs/profile/99999")
-            assert response_alias.status_code == 404
-            assert response_alias.headers.get("Deprecation") == "true"
-            assert "Sunset" in response_alias.headers
-            assert "/api/labs/benches/99999/profile" in response_alias.headers.get("Link", "")
-
 
 # ---------------------------------------------------------------------------
-# GET /api/labs/users/profile/<id>
+# GET /api/labs/leaderboard/users/<id>/profile
 # ---------------------------------------------------------------------------
 
 
@@ -177,7 +171,7 @@ class TestUserProfile:
     async def test_unauthenticated_returns_401_or_403(self):
         from django.test import AsyncClient
 
-        for url in ("/api/labs/users/profile/1", "/api/labs/leaderboard/users/1/profile"):
+        for url in ("/api/labs/leaderboard/users/1/profile",):
             response = await AsyncClient().get(url)
             assert response.status_code in (401, 403)
 
@@ -187,9 +181,3 @@ class TestUserProfile:
         with patch(_PATCH_APIKEY, return_value=True):
             response_canon = await AsyncClient().get("/api/labs/leaderboard/users/99999/profile")
             assert response_canon.status_code == 404
-
-            response_alias = await AsyncClient().get("/api/labs/users/profile/99999")
-            assert response_alias.status_code == 404
-            assert response_alias.headers.get("Deprecation") == "true"
-            assert "Sunset" in response_alias.headers
-            assert "/api/labs/leaderboard/users/99999/profile" in response_alias.headers.get("Link", "")

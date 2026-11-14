@@ -210,10 +210,6 @@ class TestFinancialReportAPI:
         assert payload["data"]["summary"]["budgeted"] == {"amount": "150.00", "currency": "EUR"}
         assert len(payload["data"]["items"]) == 1
 
-    def test_financial_report_canonical_alias(self, admin_client, room):
-        response = admin_client.get("/api/labs/financial-report")
-        assert response.status_code == 200
-
     def test_room_expenses_report_endpoint(self, admin_client, room):
         response = admin_client.get(f"/api/labs/rooms/{room.id}/expenses/report")
         assert response.status_code == 200
@@ -225,5 +221,5 @@ class TestFinancialReportAPI:
     def test_unauthenticated_without_api_key_rejected(self, room):
         client = APIClient()
         with patch(_PATCH_APIKEY, return_value=False):
-            response = client.get("/api/labs/financial-report")
+            response = client.get("/api/labs/expenses/report")
             assert response.status_code in (401, 403)

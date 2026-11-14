@@ -1,5 +1,4 @@
 ﻿from drf_api_contracts import OperationContract, ResponseContract
-from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -128,28 +127,7 @@ class RoomFinancialReportAPIView(ExpenseAPIView):
         return self._execute(lambda: public.get_financial_report(**params))
 
 
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for financial report. Use /api/labs/expenses/report instead.",
-    ),
-)
-class DeprecatedFinancialReportAPIView(FinancialReportAPIView):
-    """Deprecated alias for financial report.
-
-    Use /api/labs/expenses/report instead.
-    """
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        response["Link"] = '</api/labs/expenses/report>; rel="successor-version"'
-        return response
-
-
 __all__ = [
-    "DeprecatedFinancialReportAPIView",
     "ExpensePaymentListCreateAPIView",
     "FinancialReportAPIView",
     "RoomExpenseListCreateAPIView",

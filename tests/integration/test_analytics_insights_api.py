@@ -1,4 +1,4 @@
-"""Integration tests for the analytics insight endpoints (dashboard, booked-vs-used, equipment availability)."""
+"""Integration tests for the analytics insight endpoints (booked-vs-used, equipment availability)."""
 from __future__ import annotations
 
 from datetime import timedelta
@@ -13,7 +13,6 @@ from tests.factories import (
     BenchBookingFactory,
     BenchFactory,
     ComputingEquipmentFactory,
-    LaboratoryVisitEventFactory,
     LabSessionLogFactory,
     ResourceDowntimeFactory,
     UserFactory,
@@ -21,7 +20,6 @@ from tests.factories import (
 )
 
 BASE = "/api/labs/analytics"
-DASHBOARD = f"{BASE}/dashboard-summary"
 BOOKED_VS_USED = f"{BASE}/booked-vs-used"
 EQUIPMENT_AVAILABILITY = f"{BASE}/equipment-availability"
 
@@ -38,7 +36,7 @@ def auth_client(db) -> APIClient:
     return client
 
 
-ENDPOINTS = [DASHBOARD, BOOKED_VS_USED, EQUIPMENT_AVAILABILITY]
+ENDPOINTS = [BOOKED_VS_USED, EQUIPMENT_AVAILABILITY]
 
 
 @pytest.mark.django_db
@@ -66,38 +64,6 @@ class TestInsightEndpointContract:
         resp = auth_client.get(f"{url}?{QUERY}")
         assert resp.status_code == 200
         assert "data" in resp.json()
-
-
-@pytest.mark.django_db
-class TestDashboardSummary:
-    def test_counts_current_and_previous_window(self, auth_client):
-        # Current window: 2 visits. Previous window (same length, immediately before): 1 visit.
-        LaboratoryVisitEventFactory(occurred_at=WINDOW_START + timedelta(hours=1))
-        LaboratoryVisitEventFactory(occurred_at=WINDOW_START + timedelta(hours=2))
-        LaboratoryVisitEventFactory(occurred_at=WINDOW_START - timedelta(hours=1))
-
-        data = auth_client.get(f"{DASHBOARD}?{QUERY}").json()["data"]
-
-        assert data["facility_visits"]["count"] == 2
-        assert data["facility_visits"]["previous_count"] == 1
-        assert data["facility_visits"]["trend_percent"] == 100
-
-    def test_active_benches_excludes_soft_deleted(self, auth_client):
-        BenchFactory()
-        deleted = BenchFactory()
-        deleted.deleted_at = timezone.now()
-        deleted.save(update_fields=["deleted_at"])
-
-        data = auth_client.get(f"{DASHBOARD}?{QUERY}").json()["data"]
-
-        assert data["active_benches"]["count"] == 1
-
-    def test_empty_window_returns_zero_counts(self, auth_client):
-        data = auth_client.get(f"{DASHBOARD}?{QUERY}").json()["data"]
-
-        assert data["bookings"]["count"] == 0
-        assert data["facility_visits"]["count"] == 0
-        assert data["facility_visits"]["trend_percent"] == 0
 
 
 @pytest.mark.django_db

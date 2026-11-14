@@ -161,67 +161,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Expenses Report
-  /api/labs/financial-report:
-    get:
-      operationId: labs_financial_report_retrieve
-      description: Deprecated alias for financial report. Use /api/labs/expenses/report
-        instead.
-      parameters:
-      - in: query
-        name: billing_period
-        schema:
-          type: string
-          minLength: 1
-      - in: query
-        name: currency
-        schema:
-          type: string
-          default: EUR
-          minLength: 1
-      - in: query
-        name: expense_type
-        schema:
-          type: string
-          minLength: 1
-      - in: query
-        name: from_date
-        schema:
-          type: string
-          format: date
-      - in: query
-        name: room_id
-        schema:
-          type: integer
-      - in: query
-        name: status
-        schema:
-          type: string
-          minLength: 1
-      - in: query
-        name: to_date
-        schema:
-          type: string
-          format: date
-      tags:
-      - Expenses
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FinancialReportSerializersFinancialReportResponseDetailResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Financial Report
   /api/labs/rooms/{room_id}/expenses:
     get:
       operationId: labs_rooms_expenses_retrieve_by_room_id

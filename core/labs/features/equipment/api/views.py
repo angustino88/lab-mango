@@ -4,7 +4,6 @@ from typing import Any, ClassVar
 
 from asgiref.sync import sync_to_async
 from drf_api_contracts import OperationContract, ResponseContract
-from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import serializers, status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -281,41 +280,6 @@ class EquipmentPlacementAPIView(EquipmentAPIView):
     def handle_delete(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
         remove_placement(RemovePlacementInput(equipment_id=equipment_id), actor=self.acting_user)
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for equipment assignment. Use /api/labs/equipment/{equipment_id}/assignment instead.",
-    ),
-    post=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for equipment assignment. Use /api/labs/equipment/{equipment_id}/assignment instead.",
-    ),
-    delete=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for equipment assignment. Use /api/labs/equipment/{equipment_id}/assignment instead.",
-    ),
-)
-class DeprecatedEquipmentAssignmentActionAPIView(EquipmentAssignmentAPIView):
-    """Deprecated alias for equipment assignment.
-
-    Use /api/labs/equipment/{equipment_id}/assignment instead.
-    """
-
-    post_contract = OperationContract(**_ASSIGNMENT_WRITE)
-
-    def handle_post(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
-        return self.handle_put(request, equipment_id, *args, **kwargs)
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        equipment_id = kwargs.get("equipment_id")
-        if equipment_id:
-            response["Link"] = f'</api/labs/equipment/{equipment_id}/assignment>; rel="successor-version"'
-        return response
 
 
 class EquipmentLoanAPIView(EquipmentAPIView):

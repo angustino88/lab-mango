@@ -95,7 +95,6 @@ sequenceDiagram
 
 Financial report endpoints:
 - `GET /api/labs/expenses/report`
-- `GET /api/labs/financial-report`
 - `GET /api/labs/rooms/<room_id>/expenses/report`
 
 ## 7. Invariants, concurrency, failure handling

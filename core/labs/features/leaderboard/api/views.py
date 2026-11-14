@@ -5,7 +5,6 @@ from datetime import timedelta
 
 from django.utils import timezone
 from drf_api_contracts import OperationContract, ResponseContract
-from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -203,96 +202,8 @@ class LabDashboardAPIView(FeatureAPIView):
         return self.respond_data(data)
 
 
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for bench profile. Use /api/labs/benches/{id}/profile instead.",
-    ),
-)
-class DeprecatedLabProfileAPIView(LabProfileAPIView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        pk = kwargs.get("pk")
-        if pk:
-            response["Link"] = f'</api/labs/benches/{pk}/profile>; rel="successor-version"'
-        return response
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for bench weekly usage heatmap. Use /api/labs/benches/{id}/weekly-usage instead.",
-    ),
-)
-class DeprecatedLabWeeklyUsageHeatmapAPIView(LabWeeklyUsageHeatmapAPIView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        pk = kwargs.get("pk")
-        if pk:
-            response["Link"] = f'</api/labs/benches/{pk}/weekly-usage>; rel="successor-version"'
-        return response
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for user profile. Use /api/labs/leaderboard/users/{id}/profile instead.",
-    ),
-)
-class DeprecatedUserProfileAPIView(UserProfileAPIView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        pk = kwargs.get("pk")
-        if pk:
-            response["Link"] = f'</api/labs/leaderboard/users/{pk}/profile>; rel="successor-version"'
-        return response
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for user weekly usage heatmap. Use /api/labs/leaderboard/users/{id}/weekly-usage instead.",
-    ),
-)
-class DeprecatedUserWeeklyUsageHeatmapAPIView(UserWeeklyUsageHeatmapAPIView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        pk = kwargs.get("pk")
-        if pk:
-            response["Link"] = f'</api/labs/leaderboard/users/{pk}/weekly-usage>; rel="successor-version"'
-        return response
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for dashboard summary. Use /api/labs/dashboard/summary instead.",
-    ),
-)
-class DeprecatedLeaderboardDashboardSummaryAPIView(DashboardSummaryAPIView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        response["Link"] = '</api/labs/dashboard/summary>; rel="successor-version"'
-        return response
-
-
 __all__ = [
     "DashboardSummaryAPIView",
-    "DeprecatedLabProfileAPIView",
-    "DeprecatedLabWeeklyUsageHeatmapAPIView",
-    "DeprecatedLeaderboardDashboardSummaryAPIView",
-    "DeprecatedUserProfileAPIView",
-    "DeprecatedUserWeeklyUsageHeatmapAPIView",
     "LabDashboardAPIView",
     "LabProfileAPIView",
     "LabWeeklyUsageHeatmapAPIView",

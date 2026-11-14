@@ -11,12 +11,10 @@ from jsonschema import Draft4Validator
 
 from core.labs.features.analytics.api.distribution.views import (
     BenchGroupSummaryAPIView,
-    DeprecatedLabGroupSummaryAPIView,
     EquipmentStatusSummaryAPIView,
 )
 from core.labs.features.analytics.api.insights.views import (
     BookedVsUsedAPIView,
-    DashboardSummaryAPIView,
     EquipmentAvailabilityAPIView,
 )
 from core.labs.features.analytics.api.observations.views import (
@@ -71,7 +69,6 @@ def test_source_failure_is_not_reported_as_zero_cash_flow(source: str) -> None:
 def test_analytics_routes_resolve_to_capability_views() -> None:
     routes = [
         ("bench-group", BenchGroupSummaryAPIView, "analytics-bench-group"),
-        ("lab-group", DeprecatedLabGroupSummaryAPIView, "analytics-lab-group"),
         ("lab-equipment-status", EquipmentStatusSummaryAPIView, "analytics-equipment-status"),
         ("lab-efficiency", LabEfficiencyAPIView, "analytics-lab-efficiency"),
         ("project-usage", ProjectUsageAPIView, "analytics-project-usage"),
@@ -83,7 +80,6 @@ def test_analytics_routes_resolve_to_capability_views() -> None:
         ("booking", BookingCountAPIView, "analytics-booking-count"),
         ("lab-count", LabCountAPIView, "analytics-lab-count"),
         ("user-count", UserCountAPIView, "analytics-user-count"),
-        ("dashboard-summary", DashboardSummaryAPIView, "analytics-dashboard-summary"),
         ("booked-vs-used", BookedVsUsedAPIView, "analytics-booked-vs-used"),
         ("equipment-availability", EquipmentAvailabilityAPIView, "analytics-equipment-availability"),
     ]

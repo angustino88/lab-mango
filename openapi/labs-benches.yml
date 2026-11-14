@@ -1160,39 +1160,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Place Benches by Bench ID
-  /api/labs/benches/{bench_id}/actions/unfavorite:
-    post:
-      operationId: labs_benches_actions_unfavorite_create_by_bench_id
-      description: Deprecated alias. Use DELETE /api/labs/benches/{bench_id}/actions/favorite
-        instead.
-      parameters:
-      - in: path
-        name: bench_id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - Benches
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '204':
-          description: No response body
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Unfavorite Benches by Bench ID
   /api/labs/benches/{bench_id}/equipment:
     get:
       operationId: labs_benches_equipment_retrieve_by_bench_id

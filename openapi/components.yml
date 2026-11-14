@@ -79,13 +79,6 @@ components:
         * `alert_resolved` - Alert resolved
 
         * `custom` - Custom'
-    ActiveBenchesMetric:
-      type: object
-      properties:
-        count:
-          type: integer
-      required:
-      - count
     AdminCannedResponseCreate:
       type: object
       properties:
@@ -3380,19 +3373,6 @@ components:
           $ref: '#/components/schemas/ComputingActivitySummary'
       required:
       - data
-    CountTrendMetric:
-      type: object
-      properties:
-        count:
-          type: integer
-        previous_count:
-          type: integer
-        trend_percent:
-          type: integer
-      required:
-      - count
-      - previous_count
-      - trend_percent
     CountryCatalogCreate:
       type: object
       properties:
@@ -4135,55 +4115,6 @@ components:
       required:
       - data
       - meta
-    DashboardSummary:
-      type: object
-      properties:
-        generated_at:
-          type: string
-          format: date-time
-        period:
-          $ref: '#/components/schemas/ReportPeriod'
-        bookings:
-          $ref: '#/components/schemas/CountTrendMetric'
-        facility_visits:
-          $ref: '#/components/schemas/CountTrendMetric'
-        active_benches:
-          $ref: '#/components/schemas/ActiveBenchesMetric'
-      required:
-      - active_benches
-      - bookings
-      - facility_visits
-      - generated_at
-      - period
-    DashboardSummaryAnalyticsSerializersDashboardSummaryDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/DashboardSummary'
-      required:
-      - data
-    DashboardSummaryData:
-      type: object
-      description: High-level asset count and status distribution summary.
-      properties:
-        total:
-          type: integer
-        status:
-          type: object
-          additionalProperties:
-            type: integer
-      required:
-      - status
-      - total
-    DashboardSummarySerializersDashboardSummaryDataDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/DashboardSummaryData'
-      required:
-      - data
     DashboardUnpaginatedResponse:
       type: object
       description: Unpaginated envelope for dashboard laboratory listings.

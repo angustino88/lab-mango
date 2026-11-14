@@ -187,7 +187,6 @@ def test_dashboard_query_contract_documents_all_eleven_fields_and_optional_boole
         ("/api/labs/analytics/booking", {"unit"}),
         ("/api/labs/analytics/finance/summary", {"currency", "start_month", "end_month", "timezone"}),
         ("/api/labs/leaderboard/users/{id}/profile", {"start_date", "end_date"}),
-        ("/api/labs/users/profile/{id}", {"start_date", "end_date"}),
     ],
 )
 def test_representative_query_routes_keep_their_named_fields(path, expected):
@@ -214,8 +213,7 @@ def test_query_generation_preserves_explicit_override_and_other_operation_metada
     ] == [("group_id", True)]
     assert "group_id" not in {parameter["name"] for parameter in _query_parameters(members)}
 
-    profile = paths["/api/labs/users/profile/{id}"]["get"]
-    assert profile["deprecated"] is True
+    profile = paths["/api/labs/leaderboard/users/{id}/profile"]["get"]
     assert profile["tags"]
     assert any(parameter["name"] == "id" and parameter["in"] == "path" for parameter in profile["parameters"])
 

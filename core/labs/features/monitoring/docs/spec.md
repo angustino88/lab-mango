@@ -30,5 +30,3 @@ The Monitoring feature ingests real-time hardware telemetry, peripheral attach/d
 | `POST /api/labs/monitoring-events` | `MonitoringEventListCreateAPIView` | Ingest agent telemetry event. |
 | `GET /api/labs/monitoring-events/{id}` | `MonitoringEventDetailAPIView` | Single telemetry event details. |
 | `GET /api/labs/monitoring-events/export` | `MonitoringEventExportAPIView` | Stream export of monitoring events. |
-| `GET/POST /api/labs/lab-monitoring` | `ListCreateLabMonitoringAPIView` | Deprecated alias returning Sunset headers. |
-| `GET /api/labs/lab-monitoring/export` | `ExportLabMonitoringAPIView` | Deprecated alias returning Sunset headers. |

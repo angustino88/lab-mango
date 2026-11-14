@@ -55,12 +55,11 @@ The feature boundary is exposed through `public.py`:
   - `GET /leaderboard/persona`: ranked list of users with points and operational metrics
   - `GET /leaderboard/lab`: ranked list of benches by usage
   - `GET /leaderboard/export`: export ranking data
-  - `GET /profile/<id>`: bench profile statistics (404 if bench missing)
-  - `GET /weekly-usage/<id>`: bench weekly heatmap
-  - `GET /users/profile/<id>`: user profile statistics (404 if user missing)
-  - `GET /users/weekly-usage/<id>`: user weekly heatmap
+  - `GET /benches/<id>/profile`: bench profile statistics (404 if bench missing)
+  - `GET /benches/<id>/weekly-usage`: bench weekly heatmap
+  - `GET /leaderboard/users/<id>/profile`: user profile statistics (404 if user missing)
+  - `GET /leaderboard/users/<id>/weekly-usage`: user weekly heatmap
   - `GET /lab-dashboard`: polymorphic unpaginated/paginated dashboard bench list
-  - `GET /lab-dashboard/summary`: total equipment count and status breakdown
 
 ---
 

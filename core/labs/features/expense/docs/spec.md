@@ -32,4 +32,3 @@ The Expense feature manages ongoing operational overhead costs (facility rent, b
 | `GET /api/labs/rooms/{room_id}/expenses/report` | `RoomFinancialReportAPIView` | Room expenditure metrics report. |
 | `POST /api/labs/expenses/{expense_id}/payments` | `ExpensePaymentListCreateAPIView` | Record payment against expense. |
 | `GET /api/labs/expenses/report` | `FinancialReportAPIView` | Canonical facilities financial report. |
-| `GET /api/labs/financial-report` | `DeprecatedFinancialReportAPIView` | Deprecated alias returning Sunset headers. |

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from drf_api_contracts import OperationContract, ResponseContract
-from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -105,53 +104,7 @@ class MonitoringEventExportAPIView(MonitoringBaseAPIView):
         return self.respond(qs, many=True)
 
 
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for monitoring events. Use /api/labs/monitoring-events instead.",
-    ),
-    post=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for monitoring events. Use /api/labs/monitoring-events instead.",
-    ),
-)
-class ListCreateLabMonitoringAPIView(MonitoringEventListCreateAPIView):
-    """Deprecated alias for monitoring events.
-
-    Use /api/labs/monitoring-events instead.
-    """
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        response["Link"] = '</api/labs/monitoring-events>; rel="successor-version"'
-        return response
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for exporting monitoring events. Use /api/labs/monitoring-events/export instead.",
-    ),
-)
-class ExportLabMonitoringAPIView(MonitoringEventExportAPIView):
-    """Deprecated alias for exporting monitoring events.
-
-    Use /api/labs/monitoring-events/export instead.
-    """
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        response["Link"] = '</api/labs/monitoring-events/export>; rel="successor-version"'
-        return response
-
-
 __all__ = [
-    "ExportLabMonitoringAPIView",
-    "ListCreateLabMonitoringAPIView",
     "MonitoringEventDetailAPIView",
     "MonitoringEventExportAPIView",
     "MonitoringEventListCreateAPIView",

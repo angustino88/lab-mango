@@ -174,10 +174,6 @@ class TestMonitoringEventAPI:
         assert isinstance(data, list)
         assert len(data) == 1
 
-    def test_legacy_lab_monitoring_alias(self, auth_client, computer):
-        response = auth_client.get("/api/labs/lab-monitoring")
-        assert response.status_code == 200
-
     def test_create_missing_computer_returns_404(self, auth_client):
         payload = {
             "computer_sku": "NONEXISTENT-SKU-9999",

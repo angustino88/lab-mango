@@ -123,44 +123,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Analytics Booking
-  /api/labs/analytics/dashboard-summary:
-    get:
-      operationId: labs_analytics_dashboard_summary_retrieve
-      description: Deprecated alias for dashboard summary. Use /api/labs/dashboard/summary
-        instead.
-      parameters:
-      - in: query
-        name: from_date_time
-        schema:
-          type: string
-          format: date-time
-        required: true
-      - in: query
-        name: to_date_time
-        schema:
-          type: string
-          format: date-time
-        required: true
-      tags:
-      - Analytics
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardSummaryAnalyticsSerializersDashboardSummaryDetailResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Analytics Dashboard Summary
   /api/labs/analytics/equipment-availability:
     get:
       operationId: labs_analytics_equipment_availability_retrieve
@@ -589,31 +551,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Analytics Lab Equipment Status
-  /api/labs/analytics/lab-group:
-    get:
-      operationId: labs_analytics_lab_group_retrieve
-      description: Deprecated alias for bench-group summary. Use /api/labs/analytics/bench-group
-        instead.
-      tags:
-      - Analytics
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BenchGroupSummarySerializersBenchGroupSummaryListResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Analytics Lab Group
   /api/labs/analytics/lab-usage-by-timeframe:
     get:
       operationId: labs_analytics_lab_usage_by_timeframe_retrieve
@@ -1025,13 +962,6 @@ paths:
       summary: Get Analytics User Lab Usage
 components:
   schemas:
-    ActiveBenchesMetric:
-      type: object
-      properties:
-        count:
-          type: integer
-      required:
-      - count
     AnalyticsAggregatedLog:
       type: object
       description: Bucket-aggregated historical metrics row.
@@ -1170,47 +1100,6 @@ components:
       required:
       - label
       - value
-    CountTrendMetric:
-      type: object
-      properties:
-        count:
-          type: integer
-        previous_count:
-          type: integer
-        trend_percent:
-          type: integer
-      required:
-      - count
-      - previous_count
-      - trend_percent
-    DashboardSummary:
-      type: object
-      properties:
-        generated_at:
-          type: string
-          format: date-time
-        period:
-          $ref: '#/components/schemas/ReportPeriod'
-        bookings:
-          $ref: '#/components/schemas/CountTrendMetric'
-        facility_visits:
-          $ref: '#/components/schemas/CountTrendMetric'
-        active_benches:
-          $ref: '#/components/schemas/ActiveBenchesMetric'
-      required:
-      - active_benches
-      - bookings
-      - facility_visits
-      - generated_at
-      - period
-    DashboardSummaryAnalyticsSerializersDashboardSummaryDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/DashboardSummary'
-      required:
-      - data
     EquipmentAvailability:
       type: object
       properties:
