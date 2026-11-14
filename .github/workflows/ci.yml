@@ -31,13 +31,24 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # Websocket and pub/sub tests publish through Redis.
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgres://labmango:labmango@localhost:5432/labmango_ci
       DJANGO_SETTINGS_MODULE: config.settings.test
       DJANGO_SECRET_KEY: ci-only-not-a-secret-0123456789abcdef0123456789abcdef
-      # config/settings/base.py requires a broker URL at import time. Synthetic value, as in
-      # api-lint.yml: no step here connects to a broker (tests run Celery eagerly).
+      # config/settings/base.py requires a broker URL at import time. Tests run Celery eagerly; the Redis
+      # service is used by the websocket and pub/sub tests.
       CELERY_BROKER_URL: redis://localhost:6379/0
+      REDIS_URL: redis://localhost:6379/1
     steps:
       - uses: actions/checkout@v4
 
@@ -57,8 +68,10 @@ jobs:
       - name: Migrations are in sync with models
         run: uv run python manage.py makemigrations --check --dry-run
 
+      # The full suite: every JSON response a test receives is also checked against the committed
+      # OpenAPI schema (response standard DOC-4, conftest.py openapi_response_contract).
       - name: Tests
-        run: uv run pytest core/users tests/architecture -q
+        run: uv run pytest -q
 
       # Deploy check uses production settings; warnings are reported, errors fail the job.
       - name: Production deploy check

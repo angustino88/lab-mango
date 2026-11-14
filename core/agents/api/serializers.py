@@ -15,8 +15,8 @@ from core.labs.models import ComputingActivityStatus, SessionAccessType
 class AgentIdentitySerializer(serializers.ModelSerializer):
     equipment = serializers.SerializerMethodField()  # REL-3, REL-4
     state = choice_field(AgentIdentity._meta.get_field("state").choices)
-    key_algorithm = choice_field(AgentIdentity._meta.get_field("key_algorithm").choices)
-    key_storage = choice_field(AgentIdentity._meta.get_field("key_storage").choices)
+    key_algorithm = choice_field(AgentIdentity._meta.get_field("key_algorithm").choices, allow_null=True)
+    key_storage = choice_field(AgentIdentity._meta.get_field("key_storage").choices, allow_null=True)
     created_at = serializers.DateTimeField(source="created", read_only=True)
     updated_at = serializers.DateTimeField(source="modified", read_only=True)
 

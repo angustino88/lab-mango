@@ -9791,6 +9791,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         department_id:
           type: integer
           writeOnly: true

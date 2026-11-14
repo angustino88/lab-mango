@@ -15,7 +15,7 @@ class CountrySerializer(AppModelSerializer):
 
 
 class CitySerializer(AppModelSerializer):
-    country = NamedReferenceSerializer(read_only=True)  # REL-3, REL-7
+    country = NamedReferenceSerializer(read_only=True, allow_null=True)  # REL-3, REL-7
     country_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
@@ -25,7 +25,7 @@ class CitySerializer(AppModelSerializer):
 
 
 class BuildingSerializer(AppModelSerializer):
-    city = NamedReferenceSerializer(read_only=True)  # REL-3, REL-7
+    city = NamedReferenceSerializer(read_only=True, allow_null=True)  # REL-3, REL-7
     city_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:

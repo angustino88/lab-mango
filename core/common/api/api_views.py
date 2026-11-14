@@ -164,13 +164,18 @@ class AppAPIView(APIView):
         raise TypeError(f"{type(self).__name__} must configure a response contract")
 
     def respond_data(self, data: Any) -> Response:
+        """Respond with ``data`` rendered by the contract's payload serializer.
+
+        The body is the serializer's representation, so the wire is the documented schema (response standard
+        DOC-4). Contracts without a payload serializer (schema-only) return ``data`` unchanged.
+        """
         contract = self.success_contract()
         if contract.is_paginated:
             return self.list_response_sync(data)
-        response = contract.respond_data(
-            data,
-            context={"request": self.request},
-        )
+        if contract.payload_serializer is not None:
+            response = contract.serialize(data, context={"request": self.request})
+        else:
+            response = contract.respond_data(data, context={"request": self.request})
         return self._add_created_location(response)
 
     def _add_created_location(self, response: Response) -> Response:

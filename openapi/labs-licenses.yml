@@ -2860,6 +2860,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         vendor_id:
           type: integer
           writeOnly: true

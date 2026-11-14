@@ -842,14 +842,20 @@ class AgentBookingExtendAPIView(APIView):
             ),
             409: OpenApiResponse(
                 response=AgentBookingExtendErrorSerializer,
-                description="bench_not_free: another booking starts at details[0].limit",
+                description="bench_not_free: another booking starts at details[0].limit_at",
             ),
             422: OpenApiResponse(
-                response=AgentBookingExtendErrorSerializer,
+                # DOC-4: both bodies occur. anyOf, not oneOf: a refusal is also a valid generic envelope.
+                response={
+                    "anyOf": [
+                        {"$ref": "#/components/schemas/AgentBookingExtendError"},
+                        {"$ref": "#/components/schemas/ErrorEnvelope"},
+                    ]
+                },
                 description=(
-                    "validation_failed: unknown field or invalid value; extension_not_allowed: "
-                    "details[0].code says why (already_ended, not_later, too_short, needs_approval, "
-                    "bench_not_in_service)"
+                    "validation_failed: unknown field or invalid value (generic error envelope); "
+                    "extension_not_allowed: details[0].code says why (already_ended, not_later, too_short, "
+                    "needs_approval, bench_not_in_service) and details[0].limit_at gives the bound"
                 ),
             ),
             429: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Request rate exceeded"),

@@ -62,7 +62,7 @@ class TeamSummarySerializer(serializers.ModelSerializer):
 
 
 class TeamSerializer(serializers.ModelSerializer):
-    lead = UserReferenceSerializer(read_only=True)
+    lead = UserReferenceSerializer(read_only=True, allow_null=True)
     members = UserReferenceSerializer(many=True, read_only=True)
 
     class Meta:
@@ -77,7 +77,7 @@ class LabelSerializer(serializers.ModelSerializer):
 
 
 class CannedResponseSerializer(serializers.ModelSerializer):
-    team = TeamSummarySerializer(read_only=True)
+    team = TeamSummarySerializer(read_only=True, allow_null=True)
 
     class Meta:
         model = CannedResponse
@@ -85,7 +85,7 @@ class CannedResponseSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    default_team = TeamSummarySerializer(read_only=True)
+    default_team = TeamSummarySerializer(read_only=True, allow_null=True)
 
     class Meta:
         model = SupportCategory
@@ -191,7 +191,7 @@ class TicketResourceLinkSerializer(serializers.ModelSerializer):
 
     resource = serializers.SerializerMethodField()
     linked_by = UserReferenceSerializer(read_only=True)
-    unlinked_by = UserReferenceSerializer(read_only=True)
+    unlinked_by = UserReferenceSerializer(read_only=True, allow_null=True)
     badge = serializers.SerializerMethodField()
     snapshot = serializers.SerializerMethodField()
 
@@ -371,8 +371,8 @@ class TicketListSerializer(serializers.ModelSerializer):
     ticket_type = choice_field(TICKET_TYPE_CHOICES)
     source = choice_field(TICKET_SOURCE_CHOICES)
     requester = UserReferenceSerializer(read_only=True)
-    assignee = UserReferenceSerializer(read_only=True)
-    team = TeamSummarySerializer(read_only=True)
+    assignee = UserReferenceSerializer(read_only=True, allow_null=True)
+    team = TeamSummarySerializer(read_only=True, allow_null=True)
     labels = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     sla = serializers.SerializerMethodField()
 
@@ -420,11 +420,11 @@ class TicketDetailSerializer(serializers.ModelSerializer):
     source = choice_field(TICKET_SOURCE_CHOICES)
     requester = UserReferenceSerializer(read_only=True)
     created_by = UserReferenceSerializer(read_only=True)
-    assignee = UserReferenceSerializer(read_only=True)
-    resolved_by = UserReferenceSerializer(read_only=True)
-    team = TeamSummarySerializer(read_only=True)
+    assignee = UserReferenceSerializer(read_only=True, allow_null=True)
+    resolved_by = UserReferenceSerializer(read_only=True, allow_null=True)
+    team = TeamSummarySerializer(read_only=True, allow_null=True)
     labels = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
-    parent = TicketRefSerializer(read_only=True)
+    parent = TicketRefSerializer(read_only=True, allow_null=True)
     children = TicketRefSerializer(many=True, read_only=True)
     ticket_links = serializers.SerializerMethodField()
     watchers = WatcherSerializer(many=True, read_only=True)

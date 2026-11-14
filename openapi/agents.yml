@@ -173,15 +173,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentBookingExtendError'
-          description: 'bench_not_free: another booking starts at details[0].limit'
+          description: 'bench_not_free: another booking starts at details[0].limit_at'
         '422':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AgentBookingExtendError'
-          description: 'validation_failed: unknown field or invalid value; extension_not_allowed:
-            details[0].code says why (already_ended, not_later, too_short, needs_approval,
-            bench_not_in_service)'
+                anyOf:
+                - $ref: '#/components/schemas/AgentBookingExtendError'
+                - $ref: '#/components/schemas/ErrorEnvelope'
+          description: 'validation_failed: unknown field or invalid value (generic
+            error envelope); extension_not_allowed: details[0].code says why (already_ended,
+            not_later, too_short, needs_approval, bench_not_in_service) and details[0].limit_at
+            gives the bound'
         '429':
           content:
             application/json:
@@ -1109,10 +1112,12 @@ components:
         key_algorithm:
           allOf:
           - $ref: '#/components/schemas/Choice'
+          nullable: true
           readOnly: true
         key_storage:
           allOf:
           - $ref: '#/components/schemas/Choice'
+          nullable: true
           readOnly: true
         fingerprint:
           type: string

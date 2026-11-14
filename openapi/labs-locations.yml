@@ -3455,6 +3455,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         city_id:
           type: integer
           writeOnly: true
@@ -3667,6 +3668,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         country_id:
           type: integer
           writeOnly: true

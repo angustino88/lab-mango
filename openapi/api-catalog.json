@@ -758,7 +758,7 @@
           }
         },
         "409": {
-          "description": "bench_not_free: another booking starts at details[0].limit",
+          "description": "bench_not_free: another booking starts at details[0].limit_at",
           "content_type": "application/json",
           "schema": {
             "type": "object",
@@ -807,41 +807,80 @@
           }
         },
         "422": {
-          "description": "validation_failed: unknown field or invalid value; extension_not_allowed: details[0].code says why (already_ended, not_later, too_short, needs_approval, bench_not_in_service)",
+          "description": "validation_failed: unknown field or invalid value (generic error envelope); extension_not_allowed: details[0].code says why (already_ended, not_later, too_short, needs_approval, bench_not_in_service) and details[0].limit_at gives the bound",
           "content_type": "application/json",
           "schema": {
-            "type": "object",
-            "properties": {
-              "error": {
+            "anyOf": [
+              {
                 "type": "object",
                 "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
+                  "error": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "details": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      },
+                      "request_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "details",
+                      "message",
+                      "request_id"
+                    ]
                   }
                 },
                 "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
+                  "error"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "details": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      },
+                      "request_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "details",
+                      "message",
+                      "request_id"
+                    ]
+                  }
+                },
+                "required": [
+                  "error"
                 ]
               }
-            },
-            "required": [
-              "error"
             ]
           },
           "example_payload": {
@@ -1303,6 +1342,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "key_storage": {
@@ -1312,6 +1352,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "fingerprint": {
@@ -3154,6 +3195,7 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
+                      "nullable": true,
                       "readOnly": true
                     },
                     "key_storage": {
@@ -3163,6 +3205,7 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
+                      "nullable": true,
                       "readOnly": true
                     },
                     "fingerprint": {
@@ -3813,6 +3856,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "key_storage": {
@@ -3822,6 +3866,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "fingerprint": {
@@ -4069,6 +4114,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "key_storage": {
@@ -4078,6 +4124,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "fingerprint": {
@@ -4423,6 +4470,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "key_storage": {
@@ -4432,6 +4480,7 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "fingerprint": {
@@ -26936,7 +26985,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "city_id": {
                       "type": "integer",
@@ -27347,7 +27397,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "city_id": {
                     "type": "integer",
@@ -27547,7 +27598,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "country_id": {
                       "type": "integer",
@@ -27953,7 +28005,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "country_id": {
                     "type": "integer",
@@ -65193,7 +65246,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "department_id": {
                       "type": "integer",
@@ -65617,7 +65671,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "department_id": {
                     "type": "integer",
@@ -69363,7 +69418,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "vendor_id": {
                       "type": "integer",
@@ -69783,7 +69839,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "vendor_id": {
                     "type": "integer",
@@ -112350,7 +112407,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "is_active": {
                       "type": "boolean",
@@ -112636,7 +112694,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "is_active": {
                     "type": "boolean",
@@ -113033,7 +113092,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "is_active": {
                     "type": "boolean",
@@ -115908,7 +115968,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "is_active": {
                       "type": "boolean",
@@ -116170,7 +116231,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "sort_order": {
                       "type": "integer",
@@ -116488,7 +116550,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "sort_order": {
                     "type": "integer",
@@ -117118,7 +117181,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "sort_order": {
                     "type": "integer",
@@ -122181,7 +122245,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "members": {
                       "type": "array",
@@ -122502,7 +122567,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "members": {
                     "type": "array",
@@ -123128,7 +123194,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "members": {
                     "type": "array",
@@ -124126,7 +124193,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "team": {
                       "allOf": [
@@ -124135,7 +124203,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "labels": {
                       "type": "array",
@@ -124808,7 +124877,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "team": {
                     "allOf": [
@@ -124817,7 +124887,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "labels": {
                     "type": "array",
@@ -124833,7 +124904,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "children": {
                     "type": "array",
@@ -124902,7 +124974,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "reopen_count": {
                     "type": "integer",
@@ -125920,7 +125993,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "team": {
                     "allOf": [
@@ -125929,7 +126003,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "labels": {
                     "type": "array",
@@ -125945,7 +126020,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "children": {
                     "type": "array",
@@ -126014,7 +126090,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "reopen_count": {
                     "type": "integer",
@@ -126644,7 +126721,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "team": {
                     "allOf": [
@@ -126653,7 +126731,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "labels": {
                     "type": "array",
@@ -126669,7 +126748,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "children": {
                     "type": "array",
@@ -126738,7 +126818,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "reopen_count": {
                     "type": "integer",
@@ -127635,7 +127716,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "team": {
                     "allOf": [
@@ -127644,7 +127726,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "labels": {
                     "type": "array",
@@ -127660,7 +127743,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "children": {
                     "type": "array",
@@ -127729,7 +127813,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "reopen_count": {
                     "type": "integer",
@@ -130230,7 +130315,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "team": {
                     "allOf": [
@@ -130239,7 +130325,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "labels": {
                     "type": "array",
@@ -130255,7 +130342,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "children": {
                     "type": "array",
@@ -130324,7 +130412,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "reopen_count": {
                     "type": "integer",
@@ -131757,7 +131846,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "unlink_reason": {
                     "type": "string"
@@ -132585,7 +132675,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "team": {
                     "allOf": [
@@ -132594,7 +132685,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "labels": {
                     "type": "array",
@@ -132610,7 +132702,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "children": {
                     "type": "array",
@@ -132679,7 +132772,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "reopen_count": {
                     "type": "integer",

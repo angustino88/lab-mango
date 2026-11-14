@@ -295,7 +295,7 @@
 - DOC-1 The OpenAPI schema is the contract. It is updated in the same change as the code.
 - DOC-2 Every endpoint documents request, response, error cases, auth, permission-gated fields, limits and an example.
 - DOC-3 Examples in docs are valid against the schema (validated in CI).
-- DOC-4 Contract tests check responses against the schema for every endpoint, including error responses.
+- DOC-4 Contract tests check responses against the schema for every endpoint, including error responses. Implemented in the test suite: every JSON response that a test receives through Django's test clients is validated against the committed schema for its route, method and status (`core/common/openapi/response_contract.py`, wired in `conftest.py`); a mismatch fails that test. Views render responses through their contract's serializer (`respond`, `respond_data`), never as raw dicts.
 - DOC-5 Breaking-change classification (VER-2) is checked in CI by comparing schema versions.
 - DOC-6 CI fails when the generated schema violates a mechanically checkable rule (GEN-8). Checked today: REL-1, REL-2, REL-3 (shape of relation objects), REL-6 (one form per relation), REL-13, REL-15, NAM-2, NAM-3, ENU-1, BDY-7, TYP-10, plus the Spectral ruleset (`.spectral.yaml`). Known drift is listed in `core/common/openapi/contract_baseline.json`, which may only shrink: a new violation fails CI, and so does a fixed violation still listed. Which form a reference uses (REL-16) and whether a `_id` key really is a reference (NAM-8) are design decisions reviewed with the serializer, not gated. Rules that depend on runtime behavior (status codes, ETag, idempotency, ACT-2) are verified by tests, not by this gate.
 

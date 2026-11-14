@@ -678,7 +678,7 @@ class DepartmentSerializer(AppModelSerializer):
 
 
 class GroupCatalogSerializer(AppModelSerializer):
-    department = NamedReferenceSerializer(read_only=True)  # REL-3, REL-7
+    department = NamedReferenceSerializer(read_only=True, allow_null=True)  # REL-3, REL-7
     department_id = serializers.IntegerField(write_only=True, required=False)
     is_active = serializers.BooleanField(source="active", required=False)
 

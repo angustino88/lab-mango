@@ -3628,6 +3628,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         is_active:
           type: boolean
           default: true
@@ -3710,6 +3711,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         sort_order:
           type: integer
           maximum: 2147483647
@@ -4617,6 +4619,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         members:
           type: array
           items:
@@ -4974,10 +4977,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         team:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         labels:
           type: array
           items:
@@ -4987,6 +4992,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/TicketRef'
           readOnly: true
+          nullable: true
         children:
           type: array
           items:
@@ -5033,6 +5039,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         reopen_count:
           type: integer
           maximum: 2147483647
@@ -5240,10 +5247,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         team:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         labels:
           type: array
           items:
@@ -5388,6 +5397,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         unlink_reason:
           type: string
         badge:

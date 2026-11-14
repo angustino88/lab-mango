@@ -75,13 +75,19 @@ Deployed-behavior note (AGENTS.md rule 1): the Agent API and routing sync are no
 
 ## 6. Status (2026-11-14)
 
+**Runtime check (DOC-4).** `respond_data` rendered nothing: it validated the dict and sent it unchanged, so
+the schema could differ from the wire. It now renders through the payload serializer, like `respond`, and every
+JSON response produced in the test suite is validated against the committed schema (`conftest.py`). The first
+run found 47 mismatching responses on 20 routes, all fixed: relations documented as non-null that can be null
+(ticket assignee/team/parent, geo and catalog parents, agent key enums), and the agent extend 422, which has two
+bodies (`anyOf`). CI now runs the full suite, with a Redis service, instead of `core/users` and
+`tests/architecture` only.
+
 Migration complete for the gated rules: the generated schema has no violations and
 `core/common/openapi/contract_baseline.json` is empty. Any new violation now fails CI. Known gaps that the gate
 does not check, found during the migration and left for separate changes:
 
 - Money split into `amount` + `currency` fields (FMT-2, FMT-7) in expenses and license agreements.
-- Views that return `respond_data(...)` send the raw dict, so their schema is not guaranteed to match the wire
-  (analytics distribution, observations, storage, utilization; dashboard summary; equipment assignment read).
 - The leaderboard export contract declares persona rows but can return lab rows.
 - Ticket assignment is `POST /tickets/{key}/assign`, not an `actions/<verb>` route (ACT-1).
 - Monitoring event writes still accept legacy aliases (kept for deployed agents, AGENTS.md rule 1).

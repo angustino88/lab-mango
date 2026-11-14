@@ -10,7 +10,7 @@ root with the project virtualenv (`uv run ...`, or `.venv/Scripts/python.exe` on
 | Lint, changed files | `uv run ruff check <changed paths>` | every Python change | only `core/users`, `config/settings/base.py`, `config/urls.py`, `tests/architecture` |
 | Format, changed files | `uv run ruff format --check <changed paths>` | every Python change | no |
 | Types, changed files | `uv run mypy <changed paths>` | every Python change | no |
-| Focused tests | `uv run pytest <feature>/tests -q` | every behavior change, first | no |
+| Focused tests | `uv run pytest <feature>/tests -q` | every behavior change, first | full suite in `.github/workflows/ci.yml` |
 | Architecture tests | `uv run pytest tests/architecture -q` | any import or new module | yes |
 | Missing migrations | `uv run python manage.py makemigrations --check --dry-run` | models touched | yes |
 | Deploy check | `uv run python manage.py check --deploy` with `DJANGO_SETTINGS_MODULE=config.settings.production` | settings, auth, middleware touched | yes |
@@ -18,6 +18,7 @@ root with the project virtualenv (`uv run ...`, or `.venv/Scripts/python.exe` on
 | OpenAPI tests | `uv run pytest tests/unit/test_openapi*.py core/common/openapi/tests -q --ds=config.settings.test` | API/schema sources, generator, contracts package, or OpenAPI tooling changed | `.github/workflows/api-lint.yml` |
 | OpenAPI parity + validation | `uv run python manage.py spectacular_modules --output-dir openapi --check --settings=config.settings.test` | API/schema sources, generator, contracts package, dependencies, or generated files changed | `.github/workflows/api-lint.yml` |
 | API contract gate | `uv run python -m core.common.openapi.contract_rules openapi/openapi-full.json` (CI runs it as `core/common/openapi/tests/test_contract_rules.py`) | API, serializer, or schema touched | `.github/workflows/api-lint.yml` (OpenAPI tests step) |
+| API response contract (DOC-4) | runs inside every test via `conftest.py` (`openapi_response_contract`); report instead of failing with `RESPONSE_CONTRACT_REPORT=<file> uv run pytest -q` | API, serializer, view or schema touched | `.github/workflows/ci.yml` (Tests step, full suite) |
 | Spectral | see `.github/instructions/api-design.instructions.md` step 5 | `openapi/` or API/schema sources changed | `.github/workflows/api-lint.yml` |
 
 The API workflow runs from `.github/workflows/` and retains bundling and Spectral's error threshold.

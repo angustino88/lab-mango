@@ -760,10 +760,12 @@ components:
         key_algorithm:
           allOf:
           - $ref: '#/components/schemas/Choice'
+          nullable: true
           readOnly: true
         key_storage:
           allOf:
           - $ref: '#/components/schemas/Choice'
+          nullable: true
           readOnly: true
         fingerprint:
           type: string
@@ -2758,6 +2760,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         city_id:
           type: integer
           writeOnly: true
@@ -2922,6 +2925,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         is_active:
           type: boolean
           default: true
@@ -3004,6 +3008,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         sort_order:
           type: integer
           maximum: 2147483647
@@ -3131,6 +3136,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         country_id:
           type: integer
           writeOnly: true
@@ -9036,6 +9042,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         department_id:
           type: integer
           writeOnly: true
@@ -10576,6 +10583,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         vendor_id:
           type: integer
           writeOnly: true
@@ -18032,6 +18040,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         members:
           type: array
           items:
@@ -18483,10 +18492,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         team:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         labels:
           type: array
           items:
@@ -18496,6 +18507,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/TicketRef'
           readOnly: true
+          nullable: true
         children:
           type: array
           items:
@@ -18542,6 +18554,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         reopen_count:
           type: integer
           maximum: 2147483647
@@ -18749,10 +18762,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         team:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         labels:
           type: array
           items:
@@ -18897,6 +18912,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         unlink_reason:
           type: string
         badge:

@@ -63,6 +63,7 @@ def test_stable_kind_post_creates_allocation_through_endpoint(api_client, user):
     with patch(
         "core.labs.features.procurement.api.views.public.create_purchase_item_resource",
         return_value=PurchaseItemResource(
+            id=9001,  # a created allocation always has an id; the response contract checks it (DOC-4)
             purchase_item=item,
             resource_type=ContentType.objects.get_for_model(Bench),
             resource_id=bench.pk,
@@ -104,6 +105,7 @@ def test_legacy_kind_post_creates_allocation_through_endpoint(api_client, user):
     with patch(
         "core.labs.features.procurement.api.views.public.create_purchase_item_resource",
         return_value=PurchaseItemResource(
+            id=9001,  # a created allocation always has an id; the response contract checks it (DOC-4)
             purchase_item=item,
             resource_type=content_type,
             resource_id=bench.pk,

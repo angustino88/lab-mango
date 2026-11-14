@@ -252,17 +252,24 @@
                 }
               }
             },
-            "description": "bench_not_free: another booking starts at details[0].limit"
+            "description": "bench_not_free: another booking starts at details[0].limit_at"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AgentBookingExtendError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AgentBookingExtendError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    }
+                  ]
                 }
               }
             },
-            "description": "validation_failed: unknown field or invalid value; extension_not_allowed: details[0].code says why (already_ended, not_later, too_short, needs_approval, bench_not_in_service)"
+            "description": "validation_failed: unknown field or invalid value (generic error envelope); extension_not_allowed: details[0].code says why (already_ended, not_later, too_short, needs_approval, bench_not_in_service) and details[0].limit_at gives the bound"
           },
           "429": {
             "content": {
@@ -39187,6 +39194,7 @@
                 "$ref": "#/components/schemas/Choice"
               }
             ],
+            "nullable": true,
             "readOnly": true
           },
           "key_storage": {
@@ -39195,6 +39203,7 @@
                 "$ref": "#/components/schemas/Choice"
               }
             ],
+            "nullable": true,
             "readOnly": true
           },
           "fingerprint": {
@@ -41943,7 +41952,8 @@
                 "$ref": "#/components/schemas/LabsNamedReference"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "city_id": {
             "type": "integer",
@@ -42177,7 +42187,8 @@
                 "$ref": "#/components/schemas/TeamSummary"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "is_active": {
             "type": "boolean",
@@ -42292,7 +42303,8 @@
                 "$ref": "#/components/schemas/TeamSummary"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "sort_order": {
             "type": "integer",
@@ -42470,7 +42482,8 @@
                 "$ref": "#/components/schemas/LabsNamedReference"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "country_id": {
             "type": "integer",
@@ -50600,7 +50613,8 @@
                 "$ref": "#/components/schemas/LabsNamedReference"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "department_id": {
             "type": "integer",
@@ -52735,7 +52749,8 @@
                 "$ref": "#/components/schemas/LabsNamedReference"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "vendor_id": {
             "type": "integer",
@@ -62795,7 +62810,8 @@
                 "$ref": "#/components/schemas/UserReference"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "members": {
             "type": "array",
@@ -63466,7 +63482,8 @@
                 "$ref": "#/components/schemas/UserReference"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "team": {
             "allOf": [
@@ -63474,7 +63491,8 @@
                 "$ref": "#/components/schemas/TeamSummary"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "labels": {
             "type": "array",
@@ -63489,7 +63507,8 @@
                 "$ref": "#/components/schemas/TicketRef"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "children": {
             "type": "array",
@@ -63552,7 +63571,8 @@
                 "$ref": "#/components/schemas/UserReference"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "reopen_count": {
             "type": "integer",
@@ -63860,7 +63880,8 @@
                 "$ref": "#/components/schemas/UserReference"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "team": {
             "allOf": [
@@ -63868,7 +63889,8 @@
                 "$ref": "#/components/schemas/TeamSummary"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "labels": {
             "type": "array",
@@ -64065,7 +64087,8 @@
                 "$ref": "#/components/schemas/UserReference"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "unlink_reason": {
             "type": "string"
