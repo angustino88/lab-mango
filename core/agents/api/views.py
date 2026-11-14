@@ -586,7 +586,9 @@ class AgentSessionLogAPIView(APIView):
                 actor=None,  # an agent report, not a user action
             )
         except SessionLogInvalid as error:
-            details = [{"field": k, "message": str(v)} for k, v in (error.details or {}).items()]
+            # ERR-6: name the request field, not the stored column.
+            wire = {"event_id": "event_key", "login_time": "login_at", "logout_time": "logout_at"}
+            details = [{"field": wire.get(k, k), "message": str(v)} for k, v in (error.details or {}).items()]
             return _error_response(
                 status.HTTP_422_UNPROCESSABLE_ENTITY, error.code, "Invalid session log.", request, details
             )
@@ -652,9 +654,9 @@ class AgentBookingValidationAPIView(APIView):
         )
         if login is None:
             # A fixed body, not serialized: the same bytes for every failure, with no null fields.
-            return Response({"data": {"eligible": False}}, status=status.HTTP_200_OK)
+            return Response({"data": {"is_eligible": False}}, status=status.HTTP_200_OK)
         data = {
-            "eligible": True,
+            "is_eligible": True,
             "booking_code": login.booking_code,
             "starts_at": login.starts_at,
             "ends_at": login.ends_at,
@@ -719,9 +721,9 @@ class AgentBookingCheckInAPIView(APIView):
         )
         if check_in is None:
             # A fixed body, not serialized: the same bytes for every failure, with no null fields.
-            return Response({"data": {"checked_in": False}}, status=status.HTTP_200_OK)
+            return Response({"data": {"is_checked_in": False}}, status=status.HTTP_200_OK)
         data = {
-            "checked_in": True,
+            "is_checked_in": True,
             "booking_code": check_in.booking_code,
             "starts_at": check_in.starts_at,
             "ends_at": check_in.ends_at,
@@ -787,9 +789,9 @@ class AgentBookingCompleteAPIView(APIView):
         )
         if ended is None:
             # A fixed body, not serialized: the same bytes for every failure, with no null fields.
-            return Response({"data": {"completed": False}}, status=status.HTTP_200_OK)
+            return Response({"data": {"is_completed": False}}, status=status.HTTP_200_OK)
         data = {
-            "completed": True,
+            "is_completed": True,
             "booking_code": ended.booking_code,
             "starts_at": ended.starts_at,
             "ends_at": ended.ends_at,
@@ -802,7 +804,7 @@ def _extension_refusal(request: Request, status_code: int, code: str, message: s
         "field": "ends_at",
         "code": reason,
         "message": message,
-        "limit": serializers.DateTimeField().to_representation(limit) if limit is not None else None,
+        "limit_at": serializers.DateTimeField().to_representation(limit) if limit is not None else None,
     }
     return _error_response(status_code, code, message, request, [detail])
 
@@ -898,9 +900,9 @@ class AgentBookingExtendAPIView(APIView):
             )
         if extended is None:
             # A fixed body, not serialized: the same bytes for every failure, with no null fields.
-            return Response({"data": {"extended": False}}, status=status.HTTP_200_OK)
+            return Response({"data": {"is_extended": False}}, status=status.HTTP_200_OK)
         data = {
-            "extended": True,
+            "is_extended": True,
             "booking_code": extended.booking_code,
             "starts_at": extended.starts_at,
             "ends_at": extended.ends_at,
@@ -932,7 +934,7 @@ class AgentInfoAPIView(APIView):
         return Response(
             {
                 "data": {
-                    "backend_id": backend_id,
+                    "backend_key": backend_id,
                     "server_time": timezone.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "capabilities": [
                         "enrollment",

@@ -180,3 +180,31 @@ The write body is unchanged, including its legacy aliases.
 | Booked-vs-used `bench_id` + `bench_name` | `bench: {id, name}` |
 | Equipment availability `equipment_id` + `equipment_name` | `equipment: {id, name}` |
 | Finance breakdown `source` | `{value, label}` |
+
+### Agent API (`/agent/*`, `/api/agents`)
+
+| Before | After |
+| --- | --- |
+| Agent `equipment` (integer), `equipment_sku`, `equipment_name` | `equipment: {id, name}` |
+| Agent `state`, `key_algorithm`, `key_storage`; activity `status`; session log `access_type` | `{value, label}` |
+| Agent `created` / `modified` | `created_at` / `updated_at` |
+| Info `backend_id` | `backend_key` |
+| Session log `event_id`, `login_time`, `logout_time` (request and response) | `event_key`, `login_at`, `logout_at` |
+| `eligible`, `checked_in`, `completed`, `extended` | `is_eligible`, `is_checked_in`, `is_completed`, `is_extended` |
+| Extension refusal `details[].limit` | `details[].limit_at` |
+
+The stub agent (`tools/stub_agent.py`) reads `backend_key`.
+
+### Routing sync
+
+No change: its payloads follow `docs/agent-platform/routing-sync.md` (response standard GEN-7) and carry
+`x-protocol-spec` in the schema.
+
+### Licenses
+
+License product `vendor`: `{id, name, created_at, updated_at}` → `{id, name}`.
+
+### Leaderboard (wire fix)
+
+Persona, lab and export rows were sent unserialized, so `last_remote` was still on the wire. They are now
+serialized: the key is `last_remote_at`, as documented.

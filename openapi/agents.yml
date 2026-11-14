@@ -816,22 +816,13 @@ paths:
           description: Enrollment conflict
 components:
   schemas:
-    AccessTypeEnum:
-      enum:
-      - booked
-      - ad_hoc
-      - unverified_booking
-      type: string
-      description: '* `booked` - Booked
-
-        * `ad_hoc` - Ad hoc (no booking)
-
-        * `unverified_booking` - Booking not verified'
     AgentActivityData:
       type: object
       properties:
         status:
-          $ref: '#/components/schemas/ComputingActivityStatusEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         remote_user:
           type: string
         remote_user_display_name:
@@ -875,7 +866,7 @@ components:
     AgentBookingCheckInData:
       type: object
       properties:
-        checked_in:
+        is_checked_in:
           type: boolean
           description: True when the booking is now in progress for this login.
         booking_code:
@@ -894,7 +885,7 @@ components:
           nullable: true
           description: Username the booking is for; present only when checked in.
       required:
-      - checked_in
+      - is_checked_in
     AgentBookingCheckInResponse:
       type: object
       properties:
@@ -905,7 +896,7 @@ components:
     AgentBookingCompleteData:
       type: object
       properties:
-        completed:
+        is_completed:
           type: boolean
           description: True when the booking is now completed.
         booking_code:
@@ -920,7 +911,7 @@ components:
           format: date-time
           description: The booked end time, unchanged; present only when completed.
       required:
-      - completed
+      - is_completed
     AgentBookingCompleteResponse:
       type: object
       properties:
@@ -931,7 +922,7 @@ components:
     AgentBookingExtendData:
       type: object
       properties:
-        extended:
+        is_extended:
           type: boolean
           description: True when the booking now ends at ends_at.
         booking_code:
@@ -946,7 +937,7 @@ components:
           format: date-time
           description: The new end; present only when extended.
       required:
-      - extended
+      - is_extended
     AgentBookingExtendError:
       type: object
       properties:
@@ -997,7 +988,7 @@ components:
             * `bench_not_free` - bench_not_free'
         message:
           type: string
-        limit:
+        limit_at:
           type: string
           format: date-time
           nullable: true
@@ -1006,7 +997,7 @@ components:
       required:
       - code
       - field
-      - limit
+      - limit_at
       - message
     AgentBookingExtendRequest:
       type: object
@@ -1031,7 +1022,7 @@ components:
     AgentBookingValidationData:
       type: object
       properties:
-        eligible:
+        is_eligible:
           type: boolean
         booking_code:
           type: string
@@ -1049,7 +1040,7 @@ components:
           nullable: true
           description: Username the booking is for; present only when eligible.
       required:
-      - eligible
+      - is_eligible
     AgentBookingValidationRequest:
       type: object
       properties:
@@ -1107,25 +1098,21 @@ components:
           format: uuid
           readOnly: true
         equipment:
-          type: integer
-          readOnly: true
-        equipment_sku:
-          type: string
-          readOnly: true
-        equipment_name:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
           readOnly: true
         state:
           allOf:
-          - $ref: '#/components/schemas/StateEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         key_algorithm:
           allOf:
-          - $ref: '#/components/schemas/KeyAlgorithmEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         key_storage:
           allOf:
-          - $ref: '#/components/schemas/KeyStorageEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         fingerprint:
           type: string
@@ -1143,29 +1130,27 @@ components:
           format: date-time
           readOnly: true
           nullable: true
-        created:
+        created_at:
           type: string
           format: date-time
           readOnly: true
-        modified:
+        updated_at:
           type: string
           format: date-time
           readOnly: true
       required:
       - agent_uid
       - agent_version
-      - created
+      - created_at
       - enrolled_at
       - equipment
-      - equipment_name
-      - equipment_sku
       - fingerprint
       - id
       - key_algorithm
       - key_storage
       - last_seen_at
-      - modified
       - state
+      - updated_at
     AgentInfoResponse:
       type: object
       properties:
@@ -1176,8 +1161,9 @@ components:
     AgentInfoResponseData:
       type: object
       properties:
-        backend_id:
+        backend_key:
           type: string
+          description: Logical name of this department backend (routing-sync backend_id).
         server_time:
           type: string
         capabilities:
@@ -1190,7 +1176,7 @@ components:
             type: string
           description: Paths of the agent routes this backend serves, keyed by capability.
       required:
-      - backend_id
+      - backend_key
       - capabilities
       - endpoints
       - server_time
@@ -1218,53 +1204,43 @@ components:
       properties:
         id:
           type: integer
-        event_id:
+        event_key:
           type: string
           format: uuid
-        login_time:
+        login_at:
           type: string
           format: date-time
-        logout_time:
+        logout_at:
           type: string
           format: date-time
         booking_code:
           type: string
           nullable: true
         access_type:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           nullable: true
-          description: 'booked: a verified booking for this computer''s bench; ad_hoc:
-            no booking code; unverified_booking: a code that did not verify. Null
-            only for sessions stored before access types existed.
-
-
-            * `booked` - Booked
-
-            * `ad_hoc` - Ad hoc (no booking)
-
-            * `unverified_booking` - Booking not verified'
-          oneOf:
-          - $ref: '#/components/schemas/AccessTypeEnum'
-          - $ref: '#/components/schemas/NullEnum'
+          readOnly: true
       required:
       - access_type
       - booking_code
-      - event_id
+      - event_key
       - id
-      - login_time
-      - logout_time
+      - login_at
+      - logout_at
     AgentSessionLogReport:
       type: object
       description: One completed remote session, pushed once after logout. The computer
         is the signing agent's.
       properties:
-        event_id:
+        event_key:
           type: string
           format: uuid
           description: Agent-generated id of this session; repeat it on retry.
-        login_time:
+        login_at:
           type: string
           format: date-time
-        logout_time:
+        logout_at:
           type: string
           format: date-time
         active_duration_seconds:
@@ -1291,9 +1267,9 @@ components:
           maxLength: 64
       required:
       - active_duration_seconds
-      - event_id
-      - login_time
-      - logout_time
+      - event_key
+      - login_at
+      - logout_at
       - remote_user
     AgentSessionLogResponse:
       type: object
@@ -1302,6 +1278,19 @@ components:
           $ref: '#/components/schemas/AgentSessionLogData'
       required:
       - data
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     CodeEnum:
       enum:
       - already_ended
@@ -1444,11 +1433,6 @@ components:
           $ref: '#/components/schemas/ErrorBody'
       required:
       - error
-    KeyAlgorithmEnum:
-      enum:
-      - Ed25519
-      type: string
-      description: '* `Ed25519` - Ed25519'
     KeyStorageEnum:
       enum:
       - tpm
@@ -1460,9 +1444,19 @@ components:
         * `os_keystore` - OS keystore
 
         * `software` - Software key store'
-    NullEnum:
-      enum:
-      - null
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     PaginationMeta:
       type: object
       properties:
@@ -1508,20 +1502,6 @@ components:
         booking_code:
           type: string
           maxLength: 255
-    StateEnum:
-      enum:
-      - pending
-      - active
-      - revoked
-      - decommissioned
-      type: string
-      description: '* `pending` - Pending
-
-        * `active` - Active
-
-        * `revoked` - Revoked
-
-        * `decommissioned` - Decommissioned'
   securitySchemes:
     agentSignatureAuth:
       type: apiKey

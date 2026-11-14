@@ -47,7 +47,7 @@ class DashboardSummaryAPIView(FeatureAPIView):
             from_date_time=filters["from_date_time"],
             to_date_time=filters["to_date_time"],
         )
-        return self.respond_data(data)
+        return self.respond(data)
 
 
 class BookedVsUsedAPIView(FeatureAPIView):
@@ -68,7 +68,7 @@ class BookedVsUsedAPIView(FeatureAPIView):
             from_date_time=filters["from_date_time"],
             to_date_time=filters["to_date_time"],
         )
-        return self.respond_data(data)
+        return self.respond(data)
 
 
 class EquipmentAvailabilityAPIView(FeatureAPIView):
@@ -89,4 +89,4 @@ class EquipmentAvailabilityAPIView(FeatureAPIView):
             from_date_time=filters["from_date_time"],
             to_date_time=filters["to_date_time"],
         )
-        return self.respond_data(data)
+        return self.respond(data)

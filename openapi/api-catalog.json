@@ -49,7 +49,7 @@
               "data": {
                 "type": "object",
                 "properties": {
-                  "checked_in": {
+                  "is_checked_in": {
                     "type": "boolean",
                     "description": "True when the booking is now in progress for this login."
                   },
@@ -74,7 +74,7 @@
                   }
                 },
                 "required": [
-                  "checked_in"
+                  "is_checked_in"
                 ]
               }
             },
@@ -84,7 +84,7 @@
           },
           "example_payload": {
             "data": {
-              "checked_in": true,
+              "is_checked_in": true,
               "booking_code": "string",
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
@@ -335,7 +335,7 @@
               "data": {
                 "type": "object",
                 "properties": {
-                  "completed": {
+                  "is_completed": {
                     "type": "boolean",
                     "description": "True when the booking is now completed."
                   },
@@ -355,7 +355,7 @@
                   }
                 },
                 "required": [
-                  "completed"
+                  "is_completed"
                 ]
               }
             },
@@ -365,7 +365,7 @@
           },
           "example_payload": {
             "data": {
-              "completed": true,
+              "is_completed": true,
               "booking_code": "string",
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z"
@@ -622,7 +622,7 @@
               "data": {
                 "type": "object",
                 "properties": {
-                  "extended": {
+                  "is_extended": {
                     "type": "boolean",
                     "description": "True when the booking now ends at ends_at."
                   },
@@ -642,7 +642,7 @@
                   }
                 },
                 "required": [
-                  "extended"
+                  "is_extended"
                 ]
               }
             },
@@ -652,7 +652,7 @@
           },
           "example_payload": {
             "data": {
-              "extended": true,
+              "is_extended": true,
               "booking_code": "string",
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z"
@@ -951,7 +951,7 @@
               "data": {
                 "type": "object",
                 "properties": {
-                  "eligible": {
+                  "is_eligible": {
                     "type": "boolean"
                   },
                   "booking_code": {
@@ -975,7 +975,7 @@
                   }
                 },
                 "required": [
-                  "eligible"
+                  "is_eligible"
                 ]
               }
             },
@@ -985,7 +985,7 @@
           },
           "example_payload": {
             "data": {
-              "eligible": true,
+              "is_eligible": true,
               "booking_code": "string",
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
@@ -1278,15 +1278,13 @@
                     "readOnly": true
                   },
                   "equipment": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "equipment_sku": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "equipment_name": {
-                    "type": "string",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "state": {
@@ -1336,12 +1334,12 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "created": {
+                  "created_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "modified": {
+                  "updated_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
@@ -1350,18 +1348,16 @@
                 "required": [
                   "agent_uid",
                   "agent_version",
-                  "created",
+                  "created_at",
                   "enrolled_at",
                   "equipment",
-                  "equipment_name",
-                  "equipment_sku",
                   "fingerprint",
                   "id",
                   "key_algorithm",
                   "key_storage",
                   "last_seen_at",
-                  "modified",
-                  "state"
+                  "state",
+                  "updated_at"
                 ]
               }
             },
@@ -1373,9 +1369,7 @@
             "data": {
               "id": 1,
               "agent_uid": "123e4567-e89b-12d3-a456-426614174000",
-              "equipment": 1,
-              "equipment_sku": "string",
-              "equipment_name": "string",
+              "equipment": {},
               "state": {},
               "key_algorithm": {},
               "key_storage": {},
@@ -1383,8 +1377,8 @@
               "agent_version": "string",
               "last_seen_at": "2026-10-20T12:00:00Z",
               "enrolled_at": "2026-10-20T12:00:00Z",
-              "created": "2026-10-20T12:00:00Z",
-              "modified": "2026-10-20T12:00:00Z"
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
             }
           }
         },
@@ -1564,12 +1558,13 @@
                 "type": "object",
                 "properties": {
                   "status": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `offline` - Offline\n* `free` - Free\n* `active` - Active\n* `inactive` - Inactive\n* `maintaining` - Maintaining"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "remote_user": {
                     "type": "string"
@@ -1622,7 +1617,7 @@
           },
           "example_payload": {
             "data": {
-              "status": "string",
+              "status": {},
               "remote_user": "string",
               "remote_user_display_name": "string",
               "remote_computer": "string",
@@ -2118,8 +2113,9 @@
               "data": {
                 "type": "object",
                 "properties": {
-                  "backend_id": {
-                    "type": "string"
+                  "backend_key": {
+                    "type": "string",
+                    "description": "Logical name of this department backend (routing-sync backend_id)."
                   },
                   "server_time": {
                     "type": "string"
@@ -2139,7 +2135,7 @@
                   }
                 },
                 "required": [
-                  "backend_id",
+                  "backend_key",
                   "capabilities",
                   "endpoints",
                   "server_time"
@@ -2152,7 +2148,7 @@
           },
           "example_payload": {
             "data": {
-              "backend_id": "string",
+              "backend_key": "string",
               "server_time": "string",
               "capabilities": [
                 "string"
@@ -2284,16 +2280,16 @@
           "type": "object",
           "description": "One completed remote session, pushed once after logout. The computer is the signing agent's.",
           "properties": {
-            "event_id": {
+            "event_key": {
               "type": "string",
               "format": "uuid",
               "description": "Agent-generated id of this session; repeat it on retry."
             },
-            "login_time": {
+            "login_at": {
               "type": "string",
               "format": "date-time"
             },
-            "logout_time": {
+            "logout_at": {
               "type": "string",
               "format": "date-time"
             },
@@ -2328,16 +2324,16 @@
           },
           "required": [
             "active_duration_seconds",
-            "event_id",
-            "login_time",
-            "logout_time",
+            "event_key",
+            "login_at",
+            "logout_at",
             "remote_user"
           ]
         },
         "example_payload": {
-          "event_id": "123e4567-e89b-12d3-a456-426614174000",
-          "login_time": "2026-10-20T12:00:00Z",
-          "logout_time": "2026-10-20T12:00:00Z",
+          "event_key": "123e4567-e89b-12d3-a456-426614174000",
+          "login_at": "2026-10-20T12:00:00Z",
+          "logout_at": "2026-10-20T12:00:00Z",
           "active_duration_seconds": 0.0,
           "remote_user": "string",
           "remote_ip": "string",
@@ -2359,15 +2355,15 @@
                   "id": {
                     "type": "integer"
                   },
-                  "event_id": {
+                  "event_key": {
                     "type": "string",
                     "format": "uuid"
                   },
-                  "login_time": {
+                  "login_at": {
                     "type": "string",
                     "format": "date-time"
                   },
-                  "logout_time": {
+                  "logout_at": {
                     "type": "string",
                     "format": "date-time"
                   },
@@ -2376,27 +2372,23 @@
                     "nullable": true
                   },
                   "access_type": {
-                    "nullable": true,
-                    "description": "booked: a verified booking for this computer's bench; ad_hoc: no booking code; unverified_booking: a code that did not verify. Null only for sessions stored before access types existed.\n\n* `booked` - Booked\n* `ad_hoc` - Ad hoc (no booking)\n* `unverified_booking` - Booking not verified",
-                    "oneOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                    "allOf": [
                       {
                         "type": "object",
                         "description": "(max nesting depth reached)"
                       }
-                    ]
+                    ],
+                    "nullable": true,
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "access_type",
                   "booking_code",
-                  "event_id",
+                  "event_key",
                   "id",
-                  "login_time",
-                  "logout_time"
+                  "login_at",
+                  "logout_at"
                 ]
               }
             },
@@ -2407,9 +2399,9 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "event_id": "123e4567-e89b-12d3-a456-426614174000",
-              "login_time": "2026-10-20T12:00:00Z",
-              "logout_time": "2026-10-20T12:00:00Z",
+              "event_key": "123e4567-e89b-12d3-a456-426614174000",
+              "login_at": "2026-10-20T12:00:00Z",
+              "logout_at": "2026-10-20T12:00:00Z",
               "booking_code": "string",
               "access_type": {}
             }
@@ -2427,15 +2419,15 @@
                   "id": {
                     "type": "integer"
                   },
-                  "event_id": {
+                  "event_key": {
                     "type": "string",
                     "format": "uuid"
                   },
-                  "login_time": {
+                  "login_at": {
                     "type": "string",
                     "format": "date-time"
                   },
-                  "logout_time": {
+                  "logout_at": {
                     "type": "string",
                     "format": "date-time"
                   },
@@ -2444,27 +2436,23 @@
                     "nullable": true
                   },
                   "access_type": {
-                    "nullable": true,
-                    "description": "booked: a verified booking for this computer's bench; ad_hoc: no booking code; unverified_booking: a code that did not verify. Null only for sessions stored before access types existed.\n\n* `booked` - Booked\n* `ad_hoc` - Ad hoc (no booking)\n* `unverified_booking` - Booking not verified",
-                    "oneOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                    "allOf": [
                       {
                         "type": "object",
                         "description": "(max nesting depth reached)"
                       }
-                    ]
+                    ],
+                    "nullable": true,
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "access_type",
                   "booking_code",
-                  "event_id",
+                  "event_key",
                   "id",
-                  "login_time",
-                  "logout_time"
+                  "login_at",
+                  "logout_at"
                 ]
               }
             },
@@ -2475,9 +2463,9 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "event_id": "123e4567-e89b-12d3-a456-426614174000",
-              "login_time": "2026-10-20T12:00:00Z",
-              "logout_time": "2026-10-20T12:00:00Z",
+              "event_key": "123e4567-e89b-12d3-a456-426614174000",
+              "login_at": "2026-10-20T12:00:00Z",
+              "logout_at": "2026-10-20T12:00:00Z",
               "booking_code": "string",
               "access_type": {}
             }
@@ -3141,15 +3129,13 @@
                       "readOnly": true
                     },
                     "equipment": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "equipment_sku": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "equipment_name": {
-                      "type": "string",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
                       "readOnly": true
                     },
                     "state": {
@@ -3199,12 +3185,12 @@
                       "readOnly": true,
                       "nullable": true
                     },
-                    "created": {
+                    "created_at": {
                       "type": "string",
                       "format": "date-time",
                       "readOnly": true
                     },
-                    "modified": {
+                    "updated_at": {
                       "type": "string",
                       "format": "date-time",
                       "readOnly": true
@@ -3213,18 +3199,16 @@
                   "required": [
                     "agent_uid",
                     "agent_version",
-                    "created",
+                    "created_at",
                     "enrolled_at",
                     "equipment",
-                    "equipment_name",
-                    "equipment_sku",
                     "fingerprint",
                     "id",
                     "key_algorithm",
                     "key_storage",
                     "last_seen_at",
-                    "modified",
-                    "state"
+                    "state",
+                    "updated_at"
                   ]
                 }
               },
@@ -3258,9 +3242,7 @@
               {
                 "id": 1,
                 "agent_uid": "123e4567-e89b-12d3-a456-426614174000",
-                "equipment": 1,
-                "equipment_sku": "string",
-                "equipment_name": "string",
+                "equipment": {},
                 "state": {},
                 "key_algorithm": {},
                 "key_storage": {},
@@ -3268,8 +3250,8 @@
                 "agent_version": "string",
                 "last_seen_at": "2026-10-20T12:00:00Z",
                 "enrolled_at": "2026-10-20T12:00:00Z",
-                "created": "2026-10-20T12:00:00Z",
-                "modified": "2026-10-20T12:00:00Z"
+                "created_at": "2026-10-20T12:00:00Z",
+                "updated_at": "2026-10-20T12:00:00Z"
               }
             ],
             "meta": {
@@ -3806,15 +3788,13 @@
                     "readOnly": true
                   },
                   "equipment": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "equipment_sku": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "equipment_name": {
-                    "type": "string",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "state": {
@@ -3864,12 +3844,12 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "created": {
+                  "created_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "modified": {
+                  "updated_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
@@ -3878,18 +3858,16 @@
                 "required": [
                   "agent_uid",
                   "agent_version",
-                  "created",
+                  "created_at",
                   "enrolled_at",
                   "equipment",
-                  "equipment_name",
-                  "equipment_sku",
                   "fingerprint",
                   "id",
                   "key_algorithm",
                   "key_storage",
                   "last_seen_at",
-                  "modified",
-                  "state"
+                  "state",
+                  "updated_at"
                 ]
               }
             },
@@ -3901,9 +3879,7 @@
             "data": {
               "id": 1,
               "agent_uid": "123e4567-e89b-12d3-a456-426614174000",
-              "equipment": 1,
-              "equipment_sku": "string",
-              "equipment_name": "string",
+              "equipment": {},
               "state": {},
               "key_algorithm": {},
               "key_storage": {},
@@ -3911,8 +3887,8 @@
               "agent_version": "string",
               "last_seen_at": "2026-10-20T12:00:00Z",
               "enrolled_at": "2026-10-20T12:00:00Z",
-              "created": "2026-10-20T12:00:00Z",
-              "modified": "2026-10-20T12:00:00Z"
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
             }
           }
         },
@@ -4068,15 +4044,13 @@
                     "readOnly": true
                   },
                   "equipment": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "equipment_sku": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "equipment_name": {
-                    "type": "string",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "state": {
@@ -4126,12 +4100,12 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "created": {
+                  "created_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "modified": {
+                  "updated_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
@@ -4140,18 +4114,16 @@
                 "required": [
                   "agent_uid",
                   "agent_version",
-                  "created",
+                  "created_at",
                   "enrolled_at",
                   "equipment",
-                  "equipment_name",
-                  "equipment_sku",
                   "fingerprint",
                   "id",
                   "key_algorithm",
                   "key_storage",
                   "last_seen_at",
-                  "modified",
-                  "state"
+                  "state",
+                  "updated_at"
                 ]
               }
             },
@@ -4163,9 +4135,7 @@
             "data": {
               "id": 1,
               "agent_uid": "123e4567-e89b-12d3-a456-426614174000",
-              "equipment": 1,
-              "equipment_sku": "string",
-              "equipment_name": "string",
+              "equipment": {},
               "state": {},
               "key_algorithm": {},
               "key_storage": {},
@@ -4173,8 +4143,8 @@
               "agent_version": "string",
               "last_seen_at": "2026-10-20T12:00:00Z",
               "enrolled_at": "2026-10-20T12:00:00Z",
-              "created": "2026-10-20T12:00:00Z",
-              "modified": "2026-10-20T12:00:00Z"
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
             }
           }
         },
@@ -4428,15 +4398,13 @@
                     "readOnly": true
                   },
                   "equipment": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "equipment_sku": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "equipment_name": {
-                    "type": "string",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "state": {
@@ -4486,12 +4454,12 @@
                     "readOnly": true,
                     "nullable": true
                   },
-                  "created": {
+                  "created_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "modified": {
+                  "updated_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
@@ -4500,18 +4468,16 @@
                 "required": [
                   "agent_uid",
                   "agent_version",
-                  "created",
+                  "created_at",
                   "enrolled_at",
                   "equipment",
-                  "equipment_name",
-                  "equipment_sku",
                   "fingerprint",
                   "id",
                   "key_algorithm",
                   "key_storage",
                   "last_seen_at",
-                  "modified",
-                  "state"
+                  "state",
+                  "updated_at"
                 ]
               }
             },
@@ -4523,9 +4489,7 @@
             "data": {
               "id": 1,
               "agent_uid": "123e4567-e89b-12d3-a456-426614174000",
-              "equipment": 1,
-              "equipment_sku": "string",
-              "equipment_name": "string",
+              "equipment": {},
               "state": {},
               "key_algorithm": {},
               "key_storage": {},
@@ -4533,8 +4497,8 @@
               "agent_version": "string",
               "last_seen_at": "2026-10-20T12:00:00Z",
               "enrolled_at": "2026-10-20T12:00:00Z",
-              "created": "2026-10-20T12:00:00Z",
-              "modified": "2026-10-20T12:00:00Z"
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
             }
           }
         },
@@ -135950,7 +135914,8 @@
                   "epoch",
                   "head_version",
                   "mode"
-                ]
+                ],
+                "x-protocol-spec": "docs/agent-platform/routing-sync.md"
               }
             },
             "required": [
@@ -136326,7 +136291,8 @@
                   "entity_type",
                   "epoch",
                   "version"
-                ]
+                ],
+                "x-protocol-spec": "docs/agent-platform/routing-sync.md"
               }
             },
             "required": [
@@ -136682,7 +136648,8 @@
                     "required": {
                       "type": "object",
                       "description": "(max nesting depth reached)"
-                    }
+                    },
+                    "x-protocol-spec": "docs/agent-platform/routing-sync.md"
                   }
                 },
                 "required": [
@@ -136690,7 +136657,8 @@
                   "entities",
                   "limits",
                   "server_time"
-                ]
+                ],
+                "x-protocol-spec": "docs/agent-platform/routing-sync.md"
               }
             },
             "required": [
@@ -137038,7 +137006,8 @@
                   "head_version",
                   "items",
                   "next_after"
-                ]
+                ],
+                "x-protocol-spec": "docs/agent-platform/routing-sync.md"
               }
             },
             "required": [

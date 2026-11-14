@@ -2858,7 +2858,7 @@ components:
           maxLength: 255
         vendor:
           allOf:
-          - $ref: '#/components/schemas/LicenseVendorCatalogItem'
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
         vendor_id:
           type: integer

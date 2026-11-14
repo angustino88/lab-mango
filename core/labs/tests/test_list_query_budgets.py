@@ -118,8 +118,8 @@ def test_equipment_calibration_fields_match_model_properties(admin_client):
     calibrated_row = rows[equipment.pk]
     assert calibrated_row["last_calibrated_at"] is not None
     assert calibrated_row["next_calibration_due_at"] is not None
-    assert calibrated_row["calibration_overdue"] is False
+    assert calibrated_row["is_calibration_overdue"] is False
     assert parse_datetime(calibrated_row["last_calibrated_at"]) == record.performed_at
     assert parse_datetime(calibrated_row["next_calibration_due_at"]) == record.next_due_at
     assert rows[uncalibrated.pk]["last_calibrated_at"] is None
-    assert rows[uncalibrated.pk]["calibration_overdue"] is True  # required but never calibrated
+    assert rows[uncalibrated.pk]["is_calibration_overdue"] is True  # required but never calibrated

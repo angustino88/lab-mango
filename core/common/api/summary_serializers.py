@@ -36,6 +36,14 @@ naming and enum rules itself.
 """
 
 
+def protocol_payload(spec_path: str):
+    """Mark a serializer as a payload of a separate approved wire protocol (response standard GEN-7).
+
+    Its keys and values follow ``spec_path``; envelope, errors and security still follow the standard.
+    """
+    return extend_schema_serializer(extensions={"x-protocol-spec": spec_path})
+
+
 DELETED_USER_NAME = "Deleted user"
 """REL-12 placeholder for a historical user reference whose user was erased."""
 

@@ -38184,15 +38184,6 @@
         "type": "string",
         "description": "* `open` - Open\n* `restricted` - Restricted"
       },
-      "AccessTypeEnum": {
-        "enum": [
-          "booked",
-          "ad_hoc",
-          "unverified_booking"
-        ],
-        "type": "string",
-        "description": "* `booked` - Booked\n* `ad_hoc` - Ad hoc (no booking)\n* `unverified_booking` - Booking not verified"
-      },
       "ActionEnum": {
         "enum": [
           "heartbeat",
@@ -38796,7 +38787,12 @@
         "type": "object",
         "properties": {
           "status": {
-            "$ref": "#/components/schemas/ComputingActivityStatusEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
           },
           "remote_user": {
             "type": "string"
@@ -38856,7 +38852,7 @@
       "AgentBookingCheckInData": {
         "type": "object",
         "properties": {
-          "checked_in": {
+          "is_checked_in": {
             "type": "boolean",
             "description": "True when the booking is now in progress for this login."
           },
@@ -38881,7 +38877,7 @@
           }
         },
         "required": [
-          "checked_in"
+          "is_checked_in"
         ]
       },
       "AgentBookingCheckInResponse": {
@@ -38898,7 +38894,7 @@
       "AgentBookingCompleteData": {
         "type": "object",
         "properties": {
-          "completed": {
+          "is_completed": {
             "type": "boolean",
             "description": "True when the booking is now completed."
           },
@@ -38918,7 +38914,7 @@
           }
         },
         "required": [
-          "completed"
+          "is_completed"
         ]
       },
       "AgentBookingCompleteResponse": {
@@ -38935,7 +38931,7 @@
       "AgentBookingExtendData": {
         "type": "object",
         "properties": {
-          "extended": {
+          "is_extended": {
             "type": "boolean",
             "description": "True when the booking now ends at ends_at."
           },
@@ -38955,7 +38951,7 @@
           }
         },
         "required": [
-          "extended"
+          "is_extended"
         ]
       },
       "AgentBookingExtendError": {
@@ -39013,7 +39009,7 @@
           "message": {
             "type": "string"
           },
-          "limit": {
+          "limit_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -39023,7 +39019,7 @@
         "required": [
           "code",
           "field",
-          "limit",
+          "limit_at",
           "message"
         ]
       },
@@ -39059,7 +39055,7 @@
       "AgentBookingValidationData": {
         "type": "object",
         "properties": {
-          "eligible": {
+          "is_eligible": {
             "type": "boolean"
           },
           "booking_code": {
@@ -39083,7 +39079,7 @@
           }
         },
         "required": [
-          "eligible"
+          "is_eligible"
         ]
       },
       "AgentBookingValidationRequest": {
@@ -39169,21 +39165,18 @@
             "readOnly": true
           },
           "equipment": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "equipment_sku": {
-            "type": "string",
-            "readOnly": true
-          },
-          "equipment_name": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
             "readOnly": true
           },
           "state": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/StateEnum"
+                "$ref": "#/components/schemas/Choice"
               }
             ],
             "readOnly": true
@@ -39191,7 +39184,7 @@
           "key_algorithm": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/KeyAlgorithmEnum"
+                "$ref": "#/components/schemas/Choice"
               }
             ],
             "readOnly": true
@@ -39199,7 +39192,7 @@
           "key_storage": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/KeyStorageEnum"
+                "$ref": "#/components/schemas/Choice"
               }
             ],
             "readOnly": true
@@ -39224,12 +39217,12 @@
             "readOnly": true,
             "nullable": true
           },
-          "created": {
+          "created_at": {
             "type": "string",
             "format": "date-time",
             "readOnly": true
           },
-          "modified": {
+          "updated_at": {
             "type": "string",
             "format": "date-time",
             "readOnly": true
@@ -39238,18 +39231,16 @@
         "required": [
           "agent_uid",
           "agent_version",
-          "created",
+          "created_at",
           "enrolled_at",
           "equipment",
-          "equipment_name",
-          "equipment_sku",
           "fingerprint",
           "id",
           "key_algorithm",
           "key_storage",
           "last_seen_at",
-          "modified",
-          "state"
+          "state",
+          "updated_at"
         ]
       },
       "AgentInfoResponse": {
@@ -39266,8 +39257,9 @@
       "AgentInfoResponseData": {
         "type": "object",
         "properties": {
-          "backend_id": {
-            "type": "string"
+          "backend_key": {
+            "type": "string",
+            "description": "Logical name of this department backend (routing-sync backend_id)."
           },
           "server_time": {
             "type": "string"
@@ -39287,7 +39279,7 @@
           }
         },
         "required": [
-          "backend_id",
+          "backend_key",
           "capabilities",
           "endpoints",
           "server_time"
@@ -39328,15 +39320,15 @@
           "id": {
             "type": "integer"
           },
-          "event_id": {
+          "event_key": {
             "type": "string",
             "format": "uuid"
           },
-          "login_time": {
+          "login_at": {
             "type": "string",
             "format": "date-time"
           },
-          "logout_time": {
+          "logout_at": {
             "type": "string",
             "format": "date-time"
           },
@@ -39345,41 +39337,38 @@
             "nullable": true
           },
           "access_type": {
-            "nullable": true,
-            "description": "booked: a verified booking for this computer's bench; ad_hoc: no booking code; unverified_booking: a code that did not verify. Null only for sessions stored before access types existed.\n\n* `booked` - Booked\n* `ad_hoc` - Ad hoc (no booking)\n* `unverified_booking` - Booking not verified",
-            "oneOf": [
+            "allOf": [
               {
-                "$ref": "#/components/schemas/AccessTypeEnum"
-              },
-              {
-                "$ref": "#/components/schemas/NullEnum"
+                "$ref": "#/components/schemas/Choice"
               }
-            ]
+            ],
+            "nullable": true,
+            "readOnly": true
           }
         },
         "required": [
           "access_type",
           "booking_code",
-          "event_id",
+          "event_key",
           "id",
-          "login_time",
-          "logout_time"
+          "login_at",
+          "logout_at"
         ]
       },
       "AgentSessionLogReport": {
         "type": "object",
         "description": "One completed remote session, pushed once after logout. The computer is the signing agent's.",
         "properties": {
-          "event_id": {
+          "event_key": {
             "type": "string",
             "format": "uuid",
             "description": "Agent-generated id of this session; repeat it on retry."
           },
-          "login_time": {
+          "login_at": {
             "type": "string",
             "format": "date-time"
           },
-          "logout_time": {
+          "logout_at": {
             "type": "string",
             "format": "date-time"
           },
@@ -39414,9 +39403,9 @@
         },
         "required": [
           "active_duration_seconds",
-          "event_id",
-          "login_time",
-          "logout_time",
+          "event_key",
+          "login_at",
+          "logout_at",
           "remote_user"
         ]
       },
@@ -42356,7 +42345,8 @@
           "key",
           "op",
           "version"
-        ]
+        ],
+        "x-protocol-spec": "docs/agent-platform/routing-sync.md"
       },
       "ChangesResponse": {
         "type": "object",
@@ -42416,7 +42406,8 @@
           "epoch",
           "head_version",
           "mode"
-        ]
+        ],
+        "x-protocol-spec": "docs/agent-platform/routing-sync.md"
       },
       "Choice": {
         "type": "object",
@@ -44298,7 +44289,8 @@
           "entity_type",
           "epoch",
           "version"
-        ]
+        ],
+        "x-protocol-spec": "docs/agent-platform/routing-sync.md"
       },
       "DisplayResolutionCatalogCreate": {
         "type": "object",
@@ -50925,13 +50917,6 @@
           "pagination"
         ]
       },
-      "KeyAlgorithmEnum": {
-        "enum": [
-          "Ed25519"
-        ],
-        "type": "string",
-        "description": "* `Ed25519` - Ed25519"
-      },
       "KeyStorageEnum": {
         "enum": [
           "tpm",
@@ -52837,7 +52822,7 @@
           "vendor": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LicenseVendorCatalogItem"
+                "$ref": "#/components/schemas/LabsNamedReference"
               }
             ],
             "readOnly": true
@@ -60504,7 +60489,8 @@
           "key",
           "state",
           "version"
-        ]
+        ],
+        "x-protocol-spec": "docs/agent-platform/routing-sync.md"
       },
       "SnapshotResponse": {
         "type": "object",
@@ -60552,7 +60538,8 @@
           "head_version",
           "items",
           "next_after"
-        ]
+        ],
+        "x-protocol-spec": "docs/agent-platform/routing-sync.md"
       },
       "SourceEnum": {
         "enum": [
@@ -60726,16 +60713,6 @@
         "required": [
           "pagination"
         ]
-      },
-      "StateEnum": {
-        "enum": [
-          "pending",
-          "active",
-          "revoked",
-          "decommissioned"
-        ],
-        "type": "string",
-        "description": "* `pending` - Pending\n* `active` - Active\n* `revoked` - Revoked\n* `decommissioned` - Decommissioned"
       },
       "Station": {
         "type": "object",
@@ -62835,7 +62812,8 @@
           "entities",
           "limits",
           "server_time"
-        ]
+        ],
+        "x-protocol-spec": "docs/agent-platform/routing-sync.md"
       },
       "SyncStreamEntityInfo": {
         "type": "object",
@@ -62852,7 +62830,8 @@
         "required": [
           "epoch",
           "version"
-        ]
+        ],
+        "x-protocol-spec": "docs/agent-platform/routing-sync.md"
       },
       "SyncStreamLimits": {
         "type": "object",
@@ -62874,7 +62853,8 @@
           "changes_max_limit",
           "longpoll_max_wait_s",
           "snapshot_max_limit"
-        ]
+        ],
+        "x-protocol-spec": "docs/agent-platform/routing-sync.md"
       },
       "SystemStateEnum": {
         "enum": [

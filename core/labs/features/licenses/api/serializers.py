@@ -195,7 +195,7 @@ class LicenseVendorSerializer(AppModelSerializer):
 
 
 class LicenseProductSerializer(AppModelSerializer):
-    vendor = LicenseVendorSerializer(read_only=True)
+    vendor = NamedReferenceSerializer(read_only=True)  # REL-3
     vendor_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
