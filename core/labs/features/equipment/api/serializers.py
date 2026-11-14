@@ -4,14 +4,13 @@ from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.pagination import PageNumberQuerySerializer
-from core.common.api.summary_serializers import StatusSummarySerializer
+from core.common.api.summary_serializers import StatusSummarySerializer, UserReferenceSerializer
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
     MoneySerializer,
     NamedReferenceSerializer,
-    ResourceOwnerSerializer,
     ResourceWriteSerializerMixin,
     UIDNamedReferenceSerializer,
     to_choice_reference,
@@ -73,7 +72,7 @@ class EquipmentLoanSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     batch_id = serializers.IntegerField(read_only=True)
     equipment = UIDNamedReferenceSerializer(read_only=True)
-    borrower = ResourceOwnerSerializer(source="batch.borrower", read_only=True, allow_null=True)
+    borrower = UserReferenceSerializer(source="batch.borrower", read_only=True, allow_null=True)
     borrower_name = serializers.CharField(source="batch.borrower_label", read_only=True)
     borrower_contact = serializers.CharField(source="batch.borrower_contact", read_only=True)
     purpose = serializers.CharField(source="batch.purpose", read_only=True)
@@ -104,7 +103,7 @@ class EquipmentStatusChangeSerializer(serializers.Serializer):
     display_status = serializers.SerializerMethodField()
     previous_display_status = serializers.SerializerMethodField()
     occurred_at = serializers.DateTimeField(read_only=True)
-    actor = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    actor = UserReferenceSerializer(read_only=True, allow_null=True)
     reason = serializers.CharField(read_only=True)
     details = serializers.DictField(read_only=True)
 
@@ -157,7 +156,7 @@ class EquipmentLoanBatchSerializer(serializers.Serializer):
     """The loan slip: one borrower and purpose, with every item handed over on it."""
 
     id = serializers.IntegerField(read_only=True)
-    borrower = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    borrower = UserReferenceSerializer(read_only=True, allow_null=True)
     borrower_name = serializers.CharField(source="borrower_label", read_only=True)
     borrower_contact = serializers.CharField(read_only=True)
     purpose = serializers.CharField(read_only=True)

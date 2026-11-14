@@ -3062,6 +3062,19 @@ components:
           readOnly: true
       required:
       - data
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     FilterMetadata:
       type: object
       properties:
@@ -3101,9 +3114,9 @@ components:
       description: 'Computed ``availability``: problems pass down from room to station
         to bench (never stored).'
       properties:
-        value:
+        status:
           allOf:
-          - $ref: '#/components/schemas/ValueEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         blocked_by:
           allOf:
@@ -3112,35 +3125,50 @@ components:
           nullable: true
           description: The resource that blocks.
         condition:
-          type: string
-          readOnly: true
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           nullable: true
+          readOnly: true
         reason:
-          type: string
-          readOnly: true
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           nullable: true
+          readOnly: true
           description: Lifecycle status, or the downtime reason, of blocked_by.
       required:
       - blocked_by
       - condition
       - reason
-      - value
+      - status
     LabsAvailabilitySource:
       type: object
+      description: REL-13 polymorphic relation to the resource that blocks.
       properties:
-        type:
-          type: string
-          readOnly: true
         id:
           type: integer
           readOnly: true
         name:
           type: string
           readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/LabsAvailabilitySourceTypeEnum'
+          readOnly: true
       required:
       - id
       - name
       - type
+    LabsAvailabilitySourceTypeEnum:
+      enum:
+      - bench
+      - station
+      - room
+      type: string
+      description: '* `bench` - bench
+
+        * `station` - station
+
+        * `room` - room'
     LabsChoiceReference:
       type: object
       description: Standard `{value, label}` representation for enum and lifecycle
@@ -3380,14 +3408,6 @@ components:
       required:
       - resource_count
       - status
-    ValueEnum:
-      enum:
-      - available
-      - unavailable
-      type: string
-      description: '* `available` - available
-
-        * `unavailable` - unavailable'
   securitySchemes:
     cookieAuth:
       type: apiKey

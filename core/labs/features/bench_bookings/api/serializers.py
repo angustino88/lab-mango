@@ -5,12 +5,12 @@ from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.summary_serializers import UserReferenceSerializer
 from core.common.api.temporal_query import TemporalBoundField, TemporalRangeQueryMixin
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
     NamedReferenceSerializer,
-    ResourceOwnerSerializer,
     UIDNamedReferenceSerializer,
     to_choice_reference,
 )
@@ -55,7 +55,7 @@ class BenchBookingRejectActionSerializer(serializers.Serializer):
 
 
 class BenchBookingSerializer(AppModelSerializer):
-    creator = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    creator = UserReferenceSerializer(read_only=True, allow_null=True)
     bench = UIDNamedReferenceSerializer(read_only=True)
     project = NamedReferenceSerializer(read_only=True, allow_null=True)
     status = serializers.SerializerMethodField(read_only=True)

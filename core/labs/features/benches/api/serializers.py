@@ -225,7 +225,7 @@ class BenchSerializer(AppModelSerializer):
 
     @extend_schema_field(AvailabilitySerializer)
     def get_availability(self, obj) -> dict:
-        return bench_availability(obj)
+        return AvailabilitySerializer(bench_availability(obj)).data
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_activity_status(self, obj) -> dict[str, str] | None:

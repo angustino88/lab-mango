@@ -3,10 +3,10 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from core.common.api.summary_serializers import UserReferenceSerializer
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
-    ResourceOwnerSerializer,
     ResourceWriteSerializerMixin,
     to_choice_reference,
 )
@@ -32,8 +32,8 @@ class DowntimeSerializer(AppModelSerializer):
     kind = serializers.SerializerMethodField()
     reason = serializers.SerializerMethodField()
     state = serializers.SerializerMethodField()
-    actor = ResourceOwnerSerializer(source="creator", read_only=True, allow_null=True)
-    ended_by = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    actor = UserReferenceSerializer(source="creator", read_only=True, allow_null=True)
+    ended_by = UserReferenceSerializer(read_only=True, allow_null=True)
 
     class Meta:
         model = ResourceDowntime

@@ -2191,26 +2191,6 @@ components:
       required:
       - id
       - name
-    LabsResourceOwner:
-      type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-          pattern: ^[\w.@+-]+$
-          maxLength: 150
-        display_name:
-          type: string
-          maxLength: 255
-      required:
-      - id
-      - username
     LabsUIDNamedReference:
       type: object
       description: Compact `{id, uid, name}` object representation when target defines
@@ -3207,7 +3187,7 @@ components:
           readOnly: true
         actor:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         created_at:
@@ -3639,6 +3619,20 @@ components:
       required:
       - resource_count
       - status
+    UserReference:
+      type: object
+      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
+        use it without importing users.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
   securitySchemes:
     cookieAuth:
       type: apiKey

@@ -48,7 +48,7 @@ def test_hand_over_get_extend_return(client, unit, borrower):
         f"{ROOT}/{unit.pk}/actions/hand-over", {"borrower_id": borrower.pk, "due_at": _due()}, format="json"
     )
     assert opened.status_code == 200, opened.data
-    assert opened.data["data"]["borrower"]["username"] == "ln-api-borrower"
+    assert opened.data["data"]["borrower"] == {"id": borrower.pk, "name": "Ada"}
     assert opened.data["data"]["borrower_name"] == "Ada"
     assert opened.data["data"]["overdue"] is False
 

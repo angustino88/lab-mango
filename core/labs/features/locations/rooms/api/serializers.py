@@ -4,13 +4,12 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
-from core.common.api.summary_serializers import StatusSummarySerializer
+from core.common.api.summary_serializers import StatusSummarySerializer, UserReferenceSerializer
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
     NamedReferenceSerializer,
-    ResourceOwnerSerializer,
     ResourceWriteSerializerMixin,
     to_choice_reference,
 )
@@ -141,7 +140,7 @@ class RoomSlotSerializer(AppModelSerializer):
 
 class RoomStatusRecordSerializer(AppModelSerializer):
     status = serializers.SerializerMethodField(read_only=True)
-    actor = ResourceOwnerSerializer(source="creator", read_only=True, allow_null=True)
+    actor = UserReferenceSerializer(source="creator", read_only=True, allow_null=True)
 
     class Meta:
         model = RoomStatusRecord

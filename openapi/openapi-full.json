@@ -39969,7 +39969,7 @@
           "creator": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsResourceOwner"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -42412,6 +42412,24 @@
           "mode"
         ]
       },
+      "Choice": {
+        "type": "object",
+        "description": "ENU-1 ``{value, label}``.",
+        "properties": {
+          "value": {
+            "type": "string",
+            "readOnly": true
+          },
+          "label": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ]
+      },
       "CityCatalogCreate": {
         "type": "object",
         "properties": {
@@ -44614,7 +44632,7 @@
           "actor": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsResourceOwner"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -44623,7 +44641,7 @@
           "ended_by": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsResourceOwner"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -47302,7 +47320,7 @@
           "borrower": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsResourceOwner"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -47388,7 +47406,7 @@
           "borrower": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsResourceOwner"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -48890,7 +48908,7 @@
           "actor": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsResourceOwner"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -51249,10 +51267,10 @@
         "type": "object",
         "description": "Computed ``availability``: problems pass down from room to station to bench (never stored).",
         "properties": {
-          "value": {
+          "status": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/ValueEnum"
+                "$ref": "#/components/schemas/Choice"
               }
             ],
             "readOnly": true
@@ -51268,14 +51286,22 @@
             "description": "The resource that blocks."
           },
           "condition": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
           },
           "reason": {
-            "type": "string",
-            "readOnly": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
             "nullable": true,
+            "readOnly": true,
             "description": "Lifecycle status, or the downtime reason, of blocked_by."
           }
         },
@@ -51283,22 +51309,27 @@
           "blocked_by",
           "condition",
           "reason",
-          "value"
+          "status"
         ]
       },
       "LabsAvailabilitySource": {
         "type": "object",
+        "description": "REL-13 polymorphic relation to the resource that blocks.",
         "properties": {
-          "type": {
-            "type": "string",
-            "readOnly": true
-          },
           "id": {
             "type": "integer",
             "readOnly": true
           },
           "name": {
             "type": "string",
+            "readOnly": true
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsAvailabilitySourceTypeEnum"
+              }
+            ],
             "readOnly": true
           }
         },
@@ -51307,6 +51338,15 @@
           "name",
           "type"
         ]
+      },
+      "LabsAvailabilitySourceTypeEnum": {
+        "enum": [
+          "bench",
+          "station",
+          "room"
+        ],
+        "type": "string",
+        "description": "* `bench` - bench\n* `station` - station\n* `room` - room"
       },
       "LabsChoiceReference": {
         "type": "object",
@@ -51424,30 +51464,6 @@
         "required": [
           "id",
           "name"
-        ]
-      },
-      "LabsResourceOwner": {
-        "type": "object",
-        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "username": {
-            "type": "string",
-            "description": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
-            "pattern": "^[\\w.@+-]+$",
-            "maxLength": 150
-          },
-          "display_name": {
-            "type": "string",
-            "maxLength": 255
-          }
-        },
-        "required": [
-          "id",
-          "username"
         ]
       },
       "LabsStationRoomReference": {
@@ -53056,7 +53072,7 @@
           "actor": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsResourceOwner"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -59632,7 +59648,7 @@
           "actor": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsResourceOwner"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -61619,7 +61635,7 @@
           "actor": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsResourceOwner"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -64412,6 +64428,24 @@
           "data"
         ]
       },
+      "UserReference": {
+        "type": "object",
+        "description": "REL-3 user relation ``{id, name}``; duck-typed so any feature may use it without importing users.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "UserSerializersUserDetailResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
@@ -64567,14 +64601,6 @@
         "required": [
           "pagination"
         ]
-      },
-      "ValueEnum": {
-        "enum": [
-          "available",
-          "unavailable"
-        ],
-        "type": "string",
-        "description": "* `available` - available\n* `unavailable` - unavailable"
       },
       "ValueTypeEnum": {
         "enum": [

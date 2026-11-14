@@ -7,7 +7,8 @@ A component is checked in *response context* when a response reaches it, and in 
 request body reaches it. Components shared by both are checked in both, ignoring ``writeOnly`` properties on
 responses and ``readOnly`` properties on requests.
 
-Run locally: ``uv run python -m core.common.openapi.contract_rules openapi/openapi-full.json``.
+Run locally: ``uv run python -m core.common.openapi.contract_rules openapi/openapi-full.json``. After fixing
+violations, ``--prune-baseline`` removes them from the baseline (it never adds entries).
 """
 
 from __future__ import annotations
@@ -314,6 +315,12 @@ def main(argv: list[str]) -> int:
         print(f"Wrote {len(violations)} baseline entries to {BASELINE_PATH}")
         return 0
     baseline = load_baseline()
+    if "--prune-baseline" in argv:
+        # Only ever removes fixed entries; a new violation is never added.
+        kept = [v for v in violations if v.key in baseline]
+        write_baseline(kept)
+        print(f"Baseline pruned from {len(baseline)} to {len(kept)} entries")
+        return 0
     new = [v for v in violations if v.key not in baseline]
     stale = sorted(baseline - {v.key for v in violations})
     for violation in violations:

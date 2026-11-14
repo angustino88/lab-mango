@@ -24,3 +24,12 @@ the plain `value` string.
 ## Changes by feature
 
 Sections are added as each feature is migrated.
+
+### Shared Labs shapes (rooms, stations, benches, equipment, licenses, bookings, downtime)
+
+| Field | Before | After |
+| --- | --- | --- |
+| `actor`, `creator`, `borrower`, `ended_by`, `performed_by`, `auditor` | `{id, username, display_name}` | `{id, name}` |
+| `availability` | `{value, blocked_by: {type, id, name}, condition, reason}` (plain strings) | `{status, blocked_by: {id, name, type}, condition, reason}`; `status`, `condition`, `reason` are `{value, label}` |
+| Department `active` | boolean | `is_active` |
+| Service record `kind`, `result` | plain string | `{value, label}`; `created` → `created_at` |

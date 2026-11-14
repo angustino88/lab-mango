@@ -177,10 +177,10 @@ def test_bench_reads_separate_state_and_availability_source(client, coordinator,
     assert payload["lifecycle_status"]["value"] == "in_service"
     assert payload["condition"]["value"] == "operational"
     assert payload["availability"] == {
-        "value": "unavailable",
-        "blocked_by": {"type": "room", "id": room.pk, "name": "R101"},
-        "condition": "in_maintenance",
-        "reason": "maintenance",
+        "status": {"value": "unavailable", "label": "Unavailable"},
+        "blocked_by": {"id": room.pk, "name": "R101", "type": "room"},
+        "condition": {"value": "in_maintenance", "label": "In maintenance"},
+        "reason": {"value": "maintenance", "label": "Maintenance"},
     }
     assert payload["activity_status"]["value"] == "idle"
     # The deprecated bench status keeps the old four values; only the bench's own downtime changes it.
