@@ -186,11 +186,11 @@ def test_websocket_get_pagination_audit_and_precise_candidate(schema, rows, page
             **row,
             "message": "Synthetic notification",
             "details": "Synthetic details",
-            "message_type": "info",
-            "expiry_date": "2026-11-10T12:00:00Z",
+            "message_type": {"value": "info", "label": "Info"},
+            "expires_at": "2026-11-10T12:00:00Z",
             "target_user": None,
-            "created": "2026-11-09T12:00:00Z",
-            "modified": "2026-11-09T12:00:00Z",
+            "created_at": "2026-11-09T12:00:00Z",
+            "updated_at": "2026-11-09T12:00:00Z",
         }
         for row in rows
     ]

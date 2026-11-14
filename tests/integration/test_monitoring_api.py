@@ -73,8 +73,8 @@ class TestCreateMonitoringEvent:
         )
         assert response.status_code == 201
         data = response.json()["data"]
-        assert data["action"] == "heartbeat"
-        assert data["computer_id"] == computer.id
+        assert data["action"]["value"] == "heartbeat"
+        assert data["computer"]["id"] == computer.id
 
     def test_create_event_duplicate_conflict(self, monitoring_client):
         computer = ComputingEquipmentFactory(sku="COMP-EVENT-002")

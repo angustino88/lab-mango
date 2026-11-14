@@ -1,8 +1,6 @@
 """Unit tests for monitoring event serializers."""
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
 from core.labs.features.monitoring.api.serializers import (
     MonitoringEventCreateSerializer,
     MonitoringEventSerializer,
@@ -10,19 +8,30 @@ from core.labs.features.monitoring.api.serializers import (
 
 
 class TestMonitoringEventSerializer:
-    def test_details_str_returns_string(self):
-        obj = MagicMock()
-        obj.details_str = "key: val"
-        serializer = MonitoringEventSerializer()
-        data = serializer.to_representation(obj)
-        assert data["details_str"] == "key: val"
+    def _event(self):
+        from core.labs.models.monitoring.monitoring import MonitoringEvent
 
-    def test_details_str_handles_list(self):
-        obj = MagicMock()
-        obj.details_str = "item1; item2"
-        serializer = MonitoringEventSerializer()
-        data = serializer.to_representation(obj)
-        assert "item1" in data["details_str"]
+        return MonitoringEvent(
+            id=1,
+            agent_id="agent-1",
+            action="heartbeat",
+            subject_type="usb_device",
+            subject_id="usb-42",
+            subject_name="Scanner",
+            payload={"key": "val"},
+        )
+
+    def test_agent_subject_is_one_group_with_key_not_id(self):
+        data = MonitoringEventSerializer(self._event()).data
+        assert data["subject"] == {"type": "usb_device", "key": "usb-42", "name": "Scanner"}  # STR-1, NAM-8
+        assert data["agent_key"] == "agent-1"
+        assert data["action"] == {"value": "heartbeat", "label": "Heartbeat"}  # ENU-1
+
+    def test_compatibility_duplicates_are_not_returned(self):
+        data = MonitoringEventSerializer(self._event()).data
+        removed = {"source", "event_type", "category", "object_name", "object_id", "details", "details_str"}
+        assert not removed & set(data)
+        assert data["payload"] == {"key": "val"}
 
 
 class TestMonitoringEventCreateSerializer:

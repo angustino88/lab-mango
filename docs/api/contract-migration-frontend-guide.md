@@ -74,3 +74,65 @@ Sections are added as each feature is migrated.
 | --- | --- | --- |
 | Setup assignment `equipment` | `{id, uid, sku, name, kind}` | `{id, uid, name}`; the kind moves to the row as `equipment_kind: {id, name}` |
 | Reference-data `types`, `groups`, `stations`; station reference-data `types`, `rooms` | unchanged keys | unchanged; marked `x-embedded-resource` in the schema |
+
+### Expenses and financial report
+
+| Field | Before | After |
+| --- | --- | --- |
+| Expense `expense_type`, `billing_period`; payment `transaction_type` | plain string | `{value, label}` on read; written as the plain value |
+| Expense `valid_from` / `valid_until` | read and write | `start_date` / `end_date` |
+| Payment `paid_at` (a date) | read and write | `paid_date` |
+| Report `room_id` + `room_name` (items and `by_room`) | two keys | `room: {id, name}` |
+| Report `expense_type`, `billing_period`, `payment_status`, `status` | plain string | `{value, label}` |
+| Report item `valid_from` / `valid_until` | dates | `start_date` / `end_date` |
+
+### Bench bookings: lab projects
+
+| Field | Before | After |
+| --- | --- | --- |
+| `active`, `starts_on`, `ends_on` | | `is_active`, `start_date`, `end_date`; list filter `?active=` → `?is_active=` |
+
+### Procurement
+
+| Field | Before | After |
+| --- | --- | --- |
+| Purchase `status`; transaction `transaction_type`; allocation `resource_kind` | plain string | `{value, label}` on read; written as the plain value |
+| Purchase detail `created` / `modified` | | `created_at` / `updated_at` |
+
+### Monitoring events
+
+| Before | After |
+| --- | --- |
+| `computer_id`, `computer_name` | `computer: {id, name}` |
+| `bench: {id, sku, bench_name}` | `bench: {id, name}` |
+| `agent_id`, `event_id` | `agent_key`, `event_key` |
+| `action` (string) | `{value, label}` |
+| `subject_type`, `subject_id`, `subject_name` | `subject: {type, key, name}` |
+| `remote_user_displayname` | `remote_user_display_name` |
+| Duplicates `source`, `event_type`, `category`, `object_name`, `object_id`, `details`, `details_str`, `created`, `modified` | removed; use `agent_key`, `action`, `subject`, `payload`, `occurred_at`, `reported_at` |
+
+The write body is unchanged, including its legacy aliases.
+
+### Resource audit
+
+| Field | Before | After |
+| --- | --- | --- |
+| Audit `resource_type`, `resource_id`, `resource_name`, `resource_sku` | four keys | `resource: {id, name, type}` |
+| Audit `auditor` | `{id, username, display_name}` | `{id, name}` |
+| Audit `result` | plain string | `{value, label}` (written as the plain value) |
+| Catalog item `resource_type` | plain string | `{value, label}` |
+| Catalog item `expiry_date`, `deleted` | | `expires_at`, `is_deleted` |
+| Catalog `meta.server_time` | | `meta.sync_started_at` |
+
+### Leaderboard
+
+`last_remote` → `last_remote_at`.
+
+### Notifications
+
+| Field | Before | After |
+| --- | --- | --- |
+| `message_type` | plain string | `{value, label}` on read; written as the plain value |
+| `expiry_date` | read and write | `expires_at` |
+| `target_user` | integer | `{id, name}` or `null` |
+| `created` / `modified` | | `created_at` / `updated_at` |

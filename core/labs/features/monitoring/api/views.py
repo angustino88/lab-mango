@@ -62,7 +62,6 @@ class MonitoringEventListCreateAPIView(AppListAPIView, CommandAPIView):
         command = CreateMonitoringEventInput(**serializer.validated_data)
         return self._execute(
             lambda: public.create_monitoring_event(command, actor=self.acting_user),
-            project=lambda event: MonitoringEventSerializer(event).data,
         )
 
 
@@ -78,7 +77,6 @@ class MonitoringEventDetailAPIView(MonitoringBaseAPIView):
     def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
         return self._execute(
             lambda: public.get_monitoring_event(event_id=pk),
-            project=lambda event: MonitoringEventSerializer(event).data,
         )
 
 
@@ -104,7 +102,7 @@ class MonitoringEventExportAPIView(MonitoringBaseAPIView):
             from_date=request.query_params.get("from_date") or request.query_params.get("from_date_time"),
             to_date=request.query_params.get("to_date") or request.query_params.get("to_date_time"),
         )
-        return self.respond(MonitoringEventSerializer(qs, many=True).data)
+        return self.respond(qs, many=True)
 
 
 @extend_schema_view(

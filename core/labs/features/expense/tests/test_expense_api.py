@@ -47,7 +47,7 @@ class TestRoomExpenses:
                 "amount": "1200.00",
                 "currency": "EUR",
                 "billing_period": "monthly",
-                "valid_from": "2026-01-01",
+                "start_date": "2026-01-01",
             },
             format="json",
         )
@@ -60,7 +60,7 @@ class TestRoomExpenses:
         room = _room()
         response = api_client.post(
             f"/api/labs/rooms/{room.pk}/expenses",
-            {"name": "Rent", "expense_type": "rent", "amount": "10.00", "valid_from": "2026-01-01"},
+            {"name": "Rent", "expense_type": "rent", "amount": "10.00", "start_date": "2026-01-01"},
             format="json",
         )
         assert response.status_code == 403
@@ -80,8 +80,8 @@ class TestRoomExpenses:
                 "name": "Rent",
                 "expense_type": "rent",
                 "amount": "10.00",
-                "valid_from": "2026-06-01",
-                "valid_until": "2026-01-01",
+                "start_date": "2026-06-01",
+                "end_date": "2026-01-01",
             },
             format="json",
         )
@@ -103,7 +103,7 @@ class TestExpensePayments:
         )
         response = client.post(
             f"/api/labs/expenses/{expense.pk}/payments",
-            {"transaction_type": "payment", "amount": "250.00", "paid_at": "2026-02-01"},
+            {"transaction_type": "payment", "amount": "250.00", "paid_date": "2026-02-01"},
             format="json",
         )
         assert response.status_code == 201, response.content
@@ -122,7 +122,7 @@ class TestExpensePayments:
         )
         response = client.post(
             f"/api/labs/expenses/{expense.pk}/payments",
-            {"transaction_type": "payment", "amount": "0.00", "paid_at": "2026-02-01"},
+            {"transaction_type": "payment", "amount": "0.00", "paid_date": "2026-02-01"},
             format="json",
         )
         assert response.status_code in (400, 422)
@@ -159,7 +159,7 @@ class TestExpenseAccess:
         room = _room()
         response = client.post(
             f"/api/labs/rooms/{room.pk}/expenses",
-            {"name": "Rent", "expense_type": "rent", "amount": "10.00", "valid_from": "2026-01-01"},
+            {"name": "Rent", "expense_type": "rent", "amount": "10.00", "start_date": "2026-01-01"},
             format="json",
         )
         assert response.status_code == 201, response.content
@@ -170,7 +170,7 @@ class TestExpenseAccess:
         room = _room()
         response = api_client.post(
             f"/api/labs/rooms/{room.pk}/expenses",
-            {"name": "Rent", "expense_type": "rent", "amount": "10.00", "valid_from": "2026-01-01"},
+            {"name": "Rent", "expense_type": "rent", "amount": "10.00", "start_date": "2026-01-01"},
             format="json",
         )
         assert response.status_code == 403
@@ -187,7 +187,7 @@ class TestExpenseAccess:
         with patch(_PATCH_APIKEY, return_value=True):
             response = api_client.post(
                 f"/api/labs/rooms/{room.pk}/expenses",
-                {"name": "Rent", "expense_type": "rent", "amount": "10.00", "valid_from": "2026-01-01"},
+                {"name": "Rent", "expense_type": "rent", "amount": "10.00", "start_date": "2026-01-01"},
                 format="json",
             )
         assert response.status_code == 201, response.content

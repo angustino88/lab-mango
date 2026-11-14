@@ -3,6 +3,7 @@ from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
 from rest_framework import serializers
 
 from core.common.api import AppModelSerializer
+from core.common.api.summary_serializers import ChoiceSerializer, choice_field, to_choice
 from core.labs.models import Purchase, PurchaseItem, PurchaseItemResource, PurchasePriority, PurchaseTransaction
 from core.labs.models.procurement.purchase import PURCHASE_RESOURCE_MODELS
 
@@ -141,13 +142,16 @@ class PurchaseDetailSerializer(serializers.ModelSerializer):
     unpriced_line_count = serializers.SerializerMethodField()
     item_count = serializers.IntegerField(read_only=True)
     total_amount = serializers.SerializerMethodField()
+    status = choice_field(Purchase._meta.get_field("status").choices)
+    created_at = serializers.DateTimeField(source="created", read_only=True)
+    updated_at = serializers.DateTimeField(source="modified", read_only=True)
 
     class Meta:
         model = Purchase
         fields = (
             "id", "supplier", "purchase_order_number", "purchase_date", "currency", "total_amount",
             "status", "notes", "version", "item_count", "lines_total", "unpriced_line_count",
-            "created", "modified",
+            "created_at", "updated_at",
         )
         read_only_fields = fields
 
@@ -165,6 +169,7 @@ class PurchaseDetailSerializer(serializers.ModelSerializer):
 
 class PurchaseDraftHeaderOutputSerializer(serializers.ModelSerializer):
     total_amount = serializers.SerializerMethodField()
+    status = choice_field(Purchase._meta.get_field("status").choices)
 
     class Meta:
         model = Purchase
@@ -327,9 +332,9 @@ class PurchaseItemResourceSerializer(AppModelSerializer):
             return None
         return {"id": resource.pk, "name": getattr(resource, "name", str(resource))}
 
-    @extend_schema_field(serializers.ChoiceField(choices=tuple(RESOURCE_KIND_MODELS)))
-    def get_resource_kind(self, obj) -> str:
-        return obj.resource_type.model
+    @extend_schema_field(ChoiceSerializer)
+    def get_resource_kind(self, obj) -> dict[str, str] | None:
+        return to_choice(obj.resource_type.model)
 
     @extend_schema_field(_MONEY_SCHEMA)
     def get_acquisition_price(self, obj) -> dict[str, str]:
@@ -337,13 +342,24 @@ class PurchaseItemResourceSerializer(AppModelSerializer):
         return {"amount": format(obj.acquisition_price, "f"), "currency": purchase.currency}
 
 
-class PurchaseTransactionSerializer(AppModelSerializer):
-    """Write payload uses ``transaction_type``, ``amount``, ``settled_at``, ``reference``, ``notes``.
+class PurchaseTransactionWriteSerializer(serializers.ModelSerializer):
+    """Write payload (RW-1). The purchase is taken from the URL, never from the body."""
 
-    The purchase is taken from the URL, never from the body.
-    """
+    class Meta:
+        model = PurchaseTransaction
+        fields = ("transaction_type", "amount", "settled_at", "reference", "notes")
+        extra_kwargs = {
+            "transaction_type": {"required": True},
+            "amount": {"required": True},
+            "settled_at": {"required": True},
+        }
+
+
+class PurchaseTransactionSerializer(AppModelSerializer):
+    """Read shape; ``transaction_type`` is ``{value, label}`` (ENU-1)."""
 
     purchase = serializers.SerializerMethodField(read_only=True)
+    transaction_type = choice_field(PurchaseTransaction._meta.get_field("transaction_type").choices)
 
     class Meta:
         model = PurchaseTransaction
@@ -357,12 +373,7 @@ class PurchaseTransactionSerializer(AppModelSerializer):
             "notes",
             "created_at",
         )
-        read_only_fields = ("id", "created_at")
-        extra_kwargs = {
-            "transaction_type": {"required": True},
-            "amount": {"required": True},
-            "settled_at": {"required": True},
-        }
+        read_only_fields = fields
 
     def get_purchase(self, obj) -> dict[str, int | str]:
         return {"id": obj.purchase_id, "name": obj.purchase.purchase_order_number or str(obj.purchase_id)}

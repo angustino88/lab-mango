@@ -65,13 +65,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ExpensePayment'
+              $ref: '#/components/schemas/ExpensePaymentWrite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ExpensePayment'
+              $ref: '#/components/schemas/ExpensePaymentWrite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ExpensePayment'
+              $ref: '#/components/schemas/ExpensePaymentWrite'
         required: true
       security:
       - jwtAuth: []
@@ -283,13 +283,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Expense'
+              $ref: '#/components/schemas/ExpenseWrite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Expense'
+              $ref: '#/components/schemas/ExpenseWrite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Expense'
+              $ref: '#/components/schemas/ExpenseWrite'
         required: true
       security:
       - jwtAuth: []
@@ -406,10 +406,22 @@ components:
         * `quarterly` - Quarterly
 
         * `annual` - Annual'
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     Expense:
       type: object
-      description: Read and write shape for expenses. The room is taken from the URL,
-        never the body.
+      description: Read shape for expenses.
       properties:
         id:
           type: integer
@@ -423,38 +435,46 @@ components:
           readOnly: true
         name:
           type: string
-          maxLength: 255
+          readOnly: true
         expense_type:
-          $ref: '#/components/schemas/ExpenseTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         supplier:
           type: string
-          maxLength: 255
+          readOnly: true
         reference:
           type: string
-          maxLength: 255
+          readOnly: true
         amount:
           type: string
           format: decimal
           pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
         currency:
           type: string
-          maxLength: 3
+          readOnly: true
         amount_display:
           type: object
           additionalProperties:
             type: string
           readOnly: true
         billing_period:
-          $ref: '#/components/schemas/BillingPeriodEnum'
-        valid_from:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        start_date:
           type: string
           format: date
-        valid_until:
+          readOnly: true
+        end_date:
           type: string
           format: date
+          readOnly: true
           nullable: true
         notes:
           type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -466,35 +486,45 @@ components:
       required:
       - amount
       - amount_display
+      - billing_period
       - created_at
+      - currency
+      - end_date
       - expense_type
       - id
       - name
+      - notes
+      - reference
       - room
+      - start_date
+      - supplier
       - updated_at
-      - valid_from
     ExpensePayment:
       type: object
-      description: Read and write shape for payments. The expense is taken from the
-        URL, never the body.
+      description: Read shape for payments; ``paid_date`` is a calendar date (NAM-3).
       properties:
         id:
           type: integer
           readOnly: true
         transaction_type:
-          $ref: '#/components/schemas/TransactionTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         amount:
           type: string
           format: decimal
           pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_at:
+          readOnly: true
+        paid_date:
           type: string
           format: date
+          readOnly: true
         reference:
           type: string
-          maxLength: 255
+          readOnly: true
         notes:
           type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -507,7 +537,10 @@ components:
       - amount
       - created_at
       - id
-      - paid_at
+      - notes
+      - paid_date
+      - reference
+      - transaction_type
       - updated_at
     ExpensePaymentListSerializersExpensePaymentPaginatedResponse:
       type: object
@@ -561,6 +594,28 @@ components:
           $ref: '#/components/schemas/ExpensePayment'
       required:
       - data
+    ExpensePaymentWrite:
+      type: object
+      description: Write shape for payments (RW-1). The expense is taken from the
+        URL, never the body.
+      properties:
+        transaction_type:
+          $ref: '#/components/schemas/TransactionTypeEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        paid_date:
+          type: string
+          format: date
+        reference:
+          type: string
+          maxLength: 255
+        notes:
+          type: string
+      required:
+      - amount
+      - paid_date
     ExpenseTypeEnum:
       enum:
       - rent
@@ -593,15 +648,57 @@ components:
         * `service` - Service (legacy)
 
         * `other` - Other'
+    ExpenseWrite:
+      type: object
+      description: Write shape for expenses (RW-1). The room is taken from the URL,
+        never the body.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        expense_type:
+          $ref: '#/components/schemas/ExpenseTypeEnum'
+        supplier:
+          type: string
+          maxLength: 255
+        reference:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        currency:
+          type: string
+          maxLength: 3
+        billing_period:
+          $ref: '#/components/schemas/BillingPeriodEnum'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+      required:
+      - amount
+      - expense_type
+      - name
+      - start_date
     FinancialReportItem:
       type: object
+      description: One expense row of the report (REL-15).
       properties:
         id:
           type: integer
         name:
           type: string
         expense_type:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         amount:
           type: string
           format: decimal
@@ -615,30 +712,35 @@ components:
           format: decimal
           pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
         payment_status:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         currency:
           type: string
         billing_period:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         supplier:
           type: string
         reference:
           type: string
-        valid_from:
+        start_date:
           type: string
           format: date
-        valid_until:
+        end_date:
           type: string
           format: date
           nullable: true
-        room_id:
-          type: integer
-        room_name:
-          type: string
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
       required:
       - amount
       - billing_period
       - currency
+      - end_date
       - expense_type
       - id
       - name
@@ -646,16 +748,17 @@ components:
       - payment_status
       - pending_amount
       - reference
-      - room_id
-      - room_name
+      - room
+      - start_date
       - supplier
-      - valid_from
-      - valid_until
+      x-embedded-resource: true
     FinancialReportPeriodBreakdown:
       type: object
       properties:
         billing_period:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         count:
           type: integer
         amount:
@@ -709,10 +812,10 @@ components:
     FinancialReportRoomBreakdown:
       type: object
       properties:
-        room_id:
-          type: integer
-        room_name:
-          type: string
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         count:
           type: integer
         amount:
@@ -732,8 +835,7 @@ components:
       - count
       - paid_amount
       - pending_amount
-      - room_id
-      - room_name
+      - room
     FinancialReportSerializersFinancialReportResponseDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -746,7 +848,9 @@ components:
       type: object
       properties:
         status:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         count:
           type: integer
         amount:
@@ -791,7 +895,9 @@ components:
       type: object
       properties:
         expense_type:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         count:
           type: integer
         amount:
@@ -812,6 +918,19 @@ components:
       - expense_type
       - paid_amount
       - pending_amount
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     ProblemDetail:
       type: object
       properties:

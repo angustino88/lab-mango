@@ -4,14 +4,15 @@ from django.db.models import Q
 from django.utils import timezone
 from drf_api_contracts import ResponseContract, ResponseSchemaFactory
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_serializer, extend_schema_view
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.exceptions import ErrorDetail
+from rest_framework.response import Response
 
 from core.common.api.correlation import get_request_id
 from core.common.api.pagination import ResultsSetPagination
 from core.websocket.models import Notification
 
-from .serializer import NotificationSerializer
+from .serializer import NotificationSerializer, NotificationWriteSerializer
 
 
 @extend_schema_view(
@@ -70,6 +71,7 @@ from .serializer import NotificationSerializer
     ),
     post=extend_schema(
         tags=["Websocket Notifications"],
+        request=NotificationWriteSerializer,
         responses={
             201: ResponseContract.created("Notification", NotificationSerializer).schema,
             401: ResponseContract.unauthorized().schema,
@@ -87,10 +89,15 @@ class NotificationListCreateView(generics.ListCreateAPIView):
             return error
         return super().list(request, *args, **kwargs)
 
+    def get_serializer_class(self):
+        return NotificationWriteSerializer if self.request.method == "POST" else NotificationSerializer
+
     def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-        response.data = {"data": response.data}
-        return response
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        data = NotificationSerializer(serializer.instance, context=self.get_serializer_context()).data
+        return Response({"data": data}, status=status.HTTP_201_CREATED, headers=self.get_success_headers(data))
 
     def get_queryset(self):
         qs = Notification.objects.filter(expiry_date__gte=timezone.now()).filter(

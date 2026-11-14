@@ -9161,8 +9161,13 @@
                       "format": "uuid"
                     },
                     "resource_type": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "sku": {
                       "type": "string"
@@ -9186,7 +9191,7 @@
                       "type": "string",
                       "description": "Bench: setup station name. Station: room name. Room: building name. Otherwise empty."
                     },
-                    "expiry_date": {
+                    "expires_at": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true,
@@ -9196,15 +9201,15 @@
                       "type": "string",
                       "format": "date-time"
                     },
-                    "deleted": {
+                    "is_deleted": {
                       "type": "boolean",
                       "description": "True when the resource was deleted; remove it from the local copy."
                     }
                   },
                   "required": [
                     "condition",
-                    "deleted",
-                    "expiry_date",
+                    "expires_at",
+                    "is_deleted",
                     "location",
                     "name",
                     "resource_type",
@@ -9230,7 +9235,7 @@
                       "description": "(max nesting depth reached)"
                     }
                   },
-                  "server_time": {
+                  "sync_started_at": {
                     "type": "string",
                     "format": "date-time",
                     "description": "Time the sync started. Store it and send it as changed_since on the next sync."
@@ -9238,7 +9243,7 @@
                 },
                 "required": [
                   "pagination",
-                  "server_time"
+                  "sync_started_at"
                 ]
               }
             },
@@ -9258,9 +9263,9 @@
                 "status": "string",
                 "condition": "string",
                 "location": "string",
-                "expiry_date": "2026-10-20T12:00:00Z",
+                "expires_at": "2026-10-20T12:00:00Z",
                 "updated_at": "2026-10-20T12:00:00Z",
-                "deleted": true
+                "is_deleted": true
               }
             ],
             "meta": {
@@ -9268,7 +9273,7 @@
                 "type": null,
                 "description": null
               },
-              "server_time": "2026-10-20T12:00:00Z"
+              "sync_started_at": "2026-10-20T12:00:00Z"
             }
           }
         },
@@ -9443,20 +9448,13 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "resource_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_name": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_sku": {
-                      "type": "string",
+                    "resource": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "auditor": {
@@ -9469,8 +9467,13 @@
                       "readOnly": true
                     },
                     "result": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "remarks": {
                       "type": "string",
@@ -9491,10 +9494,7 @@
                     "auditor",
                     "created_at",
                     "id",
-                    "resource_id",
-                    "resource_name",
-                    "resource_sku",
-                    "resource_type",
+                    "resource",
                     "result"
                   ]
                 }
@@ -9515,10 +9515,7 @@
             "data": [
               {
                 "id": 1,
-                "resource_type": "string",
-                "resource_id": "string",
-                "resource_name": "string",
-                "resource_sku": "string",
+                "resource": {},
                 "auditor": {},
                 "result": {},
                 "remarks": "string",
@@ -9673,20 +9670,13 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "resource_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_sku": {
-                    "type": "string",
+                  "resource": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "auditor": {
@@ -9699,12 +9689,13 @@
                     "readOnly": true
                   },
                   "result": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `PASS` - Pass\n* `FAIL` - Fail\n* `NOT_ASSESSED` - Not assessed"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "remarks": {
                     "type": "string",
@@ -9725,10 +9716,7 @@
                   "auditor",
                   "created_at",
                   "id",
-                  "resource_id",
-                  "resource_name",
-                  "resource_sku",
-                  "resource_type",
+                  "resource",
                   "result"
                 ]
               }
@@ -9740,12 +9728,9 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "resource_type": "string",
-              "resource_id": "string",
-              "resource_name": "string",
-              "resource_sku": "string",
+              "resource": {},
               "auditor": {},
-              "result": "string",
+              "result": {},
               "remarks": "string",
               "audited_at": "2026-10-20T12:00:00Z",
               "created_at": "2026-10-20T12:00:00Z"
@@ -9884,20 +9869,13 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "resource_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_sku": {
-                    "type": "string",
+                  "resource": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "auditor": {
@@ -9910,12 +9888,13 @@
                     "readOnly": true
                   },
                   "result": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `PASS` - Pass\n* `FAIL` - Fail\n* `NOT_ASSESSED` - Not assessed"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "remarks": {
                     "type": "string",
@@ -9936,10 +9915,7 @@
                   "auditor",
                   "created_at",
                   "id",
-                  "resource_id",
-                  "resource_name",
-                  "resource_sku",
-                  "resource_type",
+                  "resource",
                   "result"
                 ]
               }
@@ -9951,12 +9927,9 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "resource_type": "string",
-              "resource_id": "string",
-              "resource_name": "string",
-              "resource_sku": "string",
+              "resource": {},
               "auditor": {},
-              "result": "string",
+              "result": {},
               "remarks": "string",
               "audited_at": "2026-10-20T12:00:00Z",
               "created_at": "2026-10-20T12:00:00Z"
@@ -64476,31 +64449,39 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "Read and write shape for payments. The expense is taken from the URL, never the body.",
+                  "description": "Read shape for payments; ``paid_date`` is a calendar date (NAM-3).",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
                     "transaction_type": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "amount": {
                       "type": "string",
                       "format": "decimal",
-                      "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+                      "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                      "readOnly": true
                     },
-                    "paid_at": {
+                    "paid_date": {
                       "type": "string",
-                      "format": "date"
+                      "format": "date",
+                      "readOnly": true
                     },
                     "reference": {
                       "type": "string",
-                      "maxLength": 255
+                      "readOnly": true
                     },
                     "notes": {
-                      "type": "string"
+                      "type": "string",
+                      "readOnly": true
                     },
                     "created_at": {
                       "type": "string",
@@ -64517,7 +64498,10 @@
                     "amount",
                     "created_at",
                     "id",
-                    "paid_at",
+                    "notes",
+                    "paid_date",
+                    "reference",
+                    "transaction_type",
                     "updated_at"
                   ]
                 }
@@ -64540,7 +64524,7 @@
                 "id": 1,
                 "transaction_type": {},
                 "amount": "string",
-                "paid_at": "2026-10-20",
+                "paid_date": "2026-10-20",
                 "reference": "string",
                 "notes": "string",
                 "created_at": "2026-10-20T12:00:00Z",
@@ -64688,12 +64672,8 @@
         "description": "",
         "schema": {
           "type": "object",
-          "description": "Read and write shape for payments. The expense is taken from the URL, never the body.",
+          "description": "Write shape for payments (RW-1). The expense is taken from the URL, never the body.",
           "properties": {
-            "id": {
-              "type": "integer",
-              "readOnly": true
-            },
             "transaction_type": {
               "enum": [
                 "payment",
@@ -64707,7 +64687,7 @@
               "format": "decimal",
               "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
             },
-            "paid_at": {
+            "paid_date": {
               "type": "string",
               "format": "date"
             },
@@ -64717,35 +64697,19 @@
             },
             "notes": {
               "type": "string"
-            },
-            "created_at": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
-            },
-            "updated_at": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
             }
           },
           "required": [
             "amount",
-            "created_at",
-            "id",
-            "paid_at",
-            "updated_at"
+            "paid_date"
           ]
         },
         "example_payload": {
-          "id": 1,
           "transaction_type": "payment",
           "amount": "string",
-          "paid_at": "2026-10-20",
+          "paid_date": "2026-10-20",
           "reference": "string",
-          "notes": "string",
-          "created_at": "2026-10-20T12:00:00Z",
-          "updated_at": "2026-10-20T12:00:00Z"
+          "notes": "string"
         }
       },
       "responses": {
@@ -64758,35 +64722,39 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Read and write shape for payments. The expense is taken from the URL, never the body.",
+                "description": "Read shape for payments; ``paid_date`` is a calendar date (NAM-3).",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
                   "transaction_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `payment` - Payment\n* `refund` - Refund"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "amount": {
                     "type": "string",
                     "format": "decimal",
-                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                    "readOnly": true
                   },
-                  "paid_at": {
+                  "paid_date": {
                     "type": "string",
-                    "format": "date"
+                    "format": "date",
+                    "readOnly": true
                   },
                   "reference": {
                     "type": "string",
-                    "maxLength": 255
+                    "readOnly": true
                   },
                   "notes": {
-                    "type": "string"
+                    "type": "string",
+                    "readOnly": true
                   },
                   "created_at": {
                     "type": "string",
@@ -64803,7 +64771,10 @@
                   "amount",
                   "created_at",
                   "id",
-                  "paid_at",
+                  "notes",
+                  "paid_date",
+                  "reference",
+                  "transaction_type",
                   "updated_at"
                 ]
               }
@@ -64815,9 +64786,9 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "transaction_type": "string",
+              "transaction_type": {},
               "amount": "string",
-              "paid_at": "2026-10-20",
+              "paid_date": "2026-10-20",
               "reference": "string",
               "notes": "string",
               "created_at": "2026-10-20T12:00:00Z",
@@ -66170,17 +66141,20 @@
                 "type": "array",
                 "items": {
                   "type": "object",
+                  "description": "One event; agent identifiers end in ``_key`` (NAM-8), relations are ``{id, name}`` (REL-3).",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
-                    "computer_id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "computer_name": {
-                      "type": "string",
+                    "computer": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
                       "readOnly": true
                     },
                     "bench": {
@@ -66190,10 +66164,10 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true,
-                      "nullable": true
+                      "nullable": true,
+                      "readOnly": true
                     },
-                    "agent_id": {
+                    "agent_key": {
                       "type": "string",
                       "readOnly": true
                     },
@@ -66201,7 +66175,7 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "event_id": {
+                    "event_key": {
                       "type": "string",
                       "format": "uuid",
                       "readOnly": true
@@ -66217,53 +66191,28 @@
                       "readOnly": true
                     },
                     "action": {
-                      "type": "string",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "action_name": {
                       "type": "string",
                       "readOnly": true
                     },
-                    "subject_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "subject_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "subject_name": {
-                      "type": "string",
+                    "subject": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "payload": {
-                      "readOnly": true
-                    },
-                    "source": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "event_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "category": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "object_name": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "object_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "details": {
-                      "readOnly": true
-                    },
-                    "details_str": {
-                      "type": "string",
                       "readOnly": true
                     },
                     "technical_user": {
@@ -66276,49 +66225,27 @@
                       "readOnly": true,
                       "default": ""
                     },
-                    "remote_user_displayname": {
+                    "remote_user_display_name": {
                       "type": "string",
                       "readOnly": true,
                       "default": ""
-                    },
-                    "created": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
-                    },
-                    "modified": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
                     }
                   },
                   "required": [
                     "action",
                     "action_name",
-                    "agent_id",
+                    "agent_key",
                     "agent_version",
                     "bench",
-                    "category",
-                    "computer_id",
-                    "computer_name",
-                    "created",
-                    "details",
-                    "details_str",
-                    "event_id",
-                    "event_type",
+                    "computer",
+                    "event_key",
                     "id",
-                    "modified",
-                    "object_id",
-                    "object_name",
                     "occurred_at",
                     "payload",
                     "remote_user",
-                    "remote_user_displayname",
+                    "remote_user_display_name",
                     "reported_at",
-                    "source",
-                    "subject_id",
-                    "subject_name",
-                    "subject_type",
+                    "subject",
                     "technical_user"
                   ]
                 }
@@ -66339,32 +66266,20 @@
             "data": [
               {
                 "id": 1,
-                "computer_id": 1,
-                "computer_name": "string",
+                "computer": {},
                 "bench": {},
-                "agent_id": "string",
+                "agent_key": "string",
                 "agent_version": "string",
-                "event_id": "123e4567-e89b-12d3-a456-426614174000",
+                "event_key": "123e4567-e89b-12d3-a456-426614174000",
                 "reported_at": "2026-10-20T12:00:00Z",
                 "occurred_at": "2026-10-20T12:00:00Z",
-                "action": "string",
+                "action": {},
                 "action_name": "string",
-                "subject_type": "string",
-                "subject_id": "string",
-                "subject_name": "string",
+                "subject": {},
                 "payload": null,
-                "source": "string",
-                "event_type": "string",
-                "category": "string",
-                "object_name": "string",
-                "object_id": "string",
-                "details": null,
-                "details_str": "string",
                 "technical_user": "",
                 "remote_user": "",
-                "remote_user_displayname": "",
-                "created": "2026-10-20T12:00:00Z",
-                "modified": "2026-10-20T12:00:00Z"
+                "remote_user_display_name": ""
               }
             ]
           }
@@ -66611,17 +66526,20 @@
             "properties": {
               "data": {
                 "type": "object",
+                "description": "One event; agent identifiers end in ``_key`` (NAM-8), relations are ``{id, name}`` (REL-3).",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "computer_id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "computer_name": {
-                    "type": "string",
+                  "computer": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "bench": {
@@ -66631,10 +66549,10 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true,
-                    "nullable": true
+                    "nullable": true,
+                    "readOnly": true
                   },
-                  "agent_id": {
+                  "agent_key": {
                     "type": "string",
                     "readOnly": true
                   },
@@ -66642,7 +66560,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "event_id": {
+                  "event_key": {
                     "type": "string",
                     "format": "uuid",
                     "readOnly": true
@@ -66658,53 +66576,28 @@
                     "readOnly": true
                   },
                   "action": {
-                    "type": "string",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "action_name": {
                     "type": "string",
                     "readOnly": true
                   },
-                  "subject_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "subject_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "subject_name": {
-                    "type": "string",
+                  "subject": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "payload": {
-                    "readOnly": true
-                  },
-                  "source": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "event_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "category": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "object_name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "object_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "details": {
-                    "readOnly": true
-                  },
-                  "details_str": {
-                    "type": "string",
                     "readOnly": true
                   },
                   "technical_user": {
@@ -66717,49 +66610,27 @@
                     "readOnly": true,
                     "default": ""
                   },
-                  "remote_user_displayname": {
+                  "remote_user_display_name": {
                     "type": "string",
                     "readOnly": true,
                     "default": ""
-                  },
-                  "created": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  },
-                  "modified": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
                   }
                 },
                 "required": [
                   "action",
                   "action_name",
-                  "agent_id",
+                  "agent_key",
                   "agent_version",
                   "bench",
-                  "category",
-                  "computer_id",
-                  "computer_name",
-                  "created",
-                  "details",
-                  "details_str",
-                  "event_id",
-                  "event_type",
+                  "computer",
+                  "event_key",
                   "id",
-                  "modified",
-                  "object_id",
-                  "object_name",
                   "occurred_at",
                   "payload",
                   "remote_user",
-                  "remote_user_displayname",
+                  "remote_user_display_name",
                   "reported_at",
-                  "source",
-                  "subject_id",
-                  "subject_name",
-                  "subject_type",
+                  "subject",
                   "technical_user"
                 ]
               }
@@ -66771,32 +66642,20 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "computer_id": 1,
-              "computer_name": "string",
+              "computer": {},
               "bench": {},
-              "agent_id": "string",
+              "agent_key": "string",
               "agent_version": "string",
-              "event_id": "123e4567-e89b-12d3-a456-426614174000",
+              "event_key": "123e4567-e89b-12d3-a456-426614174000",
               "reported_at": "2026-10-20T12:00:00Z",
               "occurred_at": "2026-10-20T12:00:00Z",
-              "action": "string",
+              "action": {},
               "action_name": "string",
-              "subject_type": "string",
-              "subject_id": "string",
-              "subject_name": "string",
+              "subject": {},
               "payload": null,
-              "source": "string",
-              "event_type": "string",
-              "category": "string",
-              "object_name": "string",
-              "object_id": "string",
-              "details": null,
-              "details_str": "string",
               "technical_user": "",
               "remote_user": "",
-              "remote_user_displayname": "",
-              "created": "2026-10-20T12:00:00Z",
-              "modified": "2026-10-20T12:00:00Z"
+              "remote_user_display_name": ""
             }
           }
         },
@@ -67135,17 +66994,20 @@
                 "type": "array",
                 "items": {
                   "type": "object",
+                  "description": "One event; agent identifiers end in ``_key`` (NAM-8), relations are ``{id, name}`` (REL-3).",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
-                    "computer_id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "computer_name": {
-                      "type": "string",
+                    "computer": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
                       "readOnly": true
                     },
                     "bench": {
@@ -67155,10 +67017,10 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true,
-                      "nullable": true
+                      "nullable": true,
+                      "readOnly": true
                     },
-                    "agent_id": {
+                    "agent_key": {
                       "type": "string",
                       "readOnly": true
                     },
@@ -67166,7 +67028,7 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "event_id": {
+                    "event_key": {
                       "type": "string",
                       "format": "uuid",
                       "readOnly": true
@@ -67182,53 +67044,28 @@
                       "readOnly": true
                     },
                     "action": {
-                      "type": "string",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "action_name": {
                       "type": "string",
                       "readOnly": true
                     },
-                    "subject_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "subject_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "subject_name": {
-                      "type": "string",
+                    "subject": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "payload": {
-                      "readOnly": true
-                    },
-                    "source": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "event_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "category": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "object_name": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "object_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "details": {
-                      "readOnly": true
-                    },
-                    "details_str": {
-                      "type": "string",
                       "readOnly": true
                     },
                     "technical_user": {
@@ -67241,49 +67078,27 @@
                       "readOnly": true,
                       "default": ""
                     },
-                    "remote_user_displayname": {
+                    "remote_user_display_name": {
                       "type": "string",
                       "readOnly": true,
                       "default": ""
-                    },
-                    "created": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
-                    },
-                    "modified": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
                     }
                   },
                   "required": [
                     "action",
                     "action_name",
-                    "agent_id",
+                    "agent_key",
                     "agent_version",
                     "bench",
-                    "category",
-                    "computer_id",
-                    "computer_name",
-                    "created",
-                    "details",
-                    "details_str",
-                    "event_id",
-                    "event_type",
+                    "computer",
+                    "event_key",
                     "id",
-                    "modified",
-                    "object_id",
-                    "object_name",
                     "occurred_at",
                     "payload",
                     "remote_user",
-                    "remote_user_displayname",
+                    "remote_user_display_name",
                     "reported_at",
-                    "source",
-                    "subject_id",
-                    "subject_name",
-                    "subject_type",
+                    "subject",
                     "technical_user"
                   ]
                 }
@@ -67297,32 +67112,20 @@
             "data": [
               {
                 "id": 1,
-                "computer_id": 1,
-                "computer_name": "string",
+                "computer": {},
                 "bench": {},
-                "agent_id": "string",
+                "agent_key": "string",
                 "agent_version": "string",
-                "event_id": "123e4567-e89b-12d3-a456-426614174000",
+                "event_key": "123e4567-e89b-12d3-a456-426614174000",
                 "reported_at": "2026-10-20T12:00:00Z",
                 "occurred_at": "2026-10-20T12:00:00Z",
-                "action": "string",
+                "action": {},
                 "action_name": "string",
-                "subject_type": "string",
-                "subject_id": "string",
-                "subject_name": "string",
+                "subject": {},
                 "payload": null,
-                "source": "string",
-                "event_type": "string",
-                "category": "string",
-                "object_name": "string",
-                "object_id": "string",
-                "details": null,
-                "details_str": "string",
                 "technical_user": "",
                 "remote_user": "",
-                "remote_user_displayname": "",
-                "created": "2026-10-20T12:00:00Z",
-                "modified": "2026-10-20T12:00:00Z"
+                "remote_user_display_name": ""
               }
             ]
           }
@@ -67393,7 +67196,7 @@
       ],
       "parameters": [
         {
-          "name": "active",
+          "name": "is_active",
           "in": "query",
           "required": false,
           "description": "",
@@ -67482,17 +67285,17 @@
                       "nullable": true,
                       "description": "Short unique project code, e.g. a cost-center number."
                     },
-                    "active": {
+                    "is_active": {
                       "type": "boolean",
                       "readOnly": true
                     },
-                    "starts_on": {
+                    "start_date": {
                       "type": "string",
                       "format": "date",
                       "readOnly": true,
                       "nullable": true
                     },
-                    "ends_on": {
+                    "end_date": {
                       "type": "string",
                       "format": "date",
                       "readOnly": true,
@@ -67500,12 +67303,12 @@
                     }
                   },
                   "required": [
-                    "active",
                     "code",
-                    "ends_on",
+                    "end_date",
                     "id",
+                    "is_active",
                     "name",
-                    "starts_on"
+                    "start_date"
                   ]
                 }
               }
@@ -67527,9 +67330,9 @@
                 "id": 1,
                 "name": "string",
                 "code": "string",
-                "active": true,
-                "starts_on": "2026-10-20",
-                "ends_on": "2026-10-20"
+                "is_active": true,
+                "start_date": "2026-10-20",
+                "end_date": "2026-10-20"
               }
             ]
           }
@@ -67656,7 +67459,7 @@
           "name": "active_on",
           "in": "query",
           "required": false,
-          "description": "Date within project starts_on and ends_on.",
+          "description": "Date within project start_date and end_date.",
           "schema": {
             "type": "string",
             "format": "date"
@@ -67901,17 +67704,17 @@
                     "nullable": true,
                     "description": "Short unique project code, e.g. a cost-center number."
                   },
-                  "active": {
+                  "is_active": {
                     "type": "boolean",
                     "readOnly": true
                   },
-                  "starts_on": {
+                  "start_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "ends_on": {
+                  "end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
@@ -67919,12 +67722,12 @@
                   }
                 },
                 "required": [
-                  "active",
                   "code",
-                  "ends_on",
+                  "end_date",
                   "id",
+                  "is_active",
                   "name",
-                  "starts_on"
+                  "start_date"
                 ]
               }
             },
@@ -67937,9 +67740,9 @@
               "id": 1,
               "name": "string",
               "code": "string",
-              "active": true,
-              "starts_on": "2026-10-20",
-              "ends_on": "2026-10-20"
+              "is_active": true,
+              "start_date": "2026-10-20",
+              "end_date": "2026-10-20"
             }
           }
         },
@@ -68101,7 +67904,7 @@
                       "format": "double",
                       "default": 0.0
                     },
-                    "last_remote": {
+                    "last_remote_at": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -68166,7 +67969,7 @@
                 "late_rate": 0.0,
                 "usage_efficiency": 0.0,
                 "booking_compliance": 0.0,
-                "last_remote": "2026-10-20T12:00:00Z",
+                "last_remote_at": "2026-10-20T12:00:00Z",
                 "labs_accessed": 0,
                 "total_bookings": 0,
                 "total_sessions": 1,
@@ -68297,7 +68100,7 @@
                       "type": "integer",
                       "default": 0
                     },
-                    "last_remote": {
+                    "last_remote_at": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -68336,7 +68139,7 @@
                 "points": 1,
                 "total_sessions": 1,
                 "active_users": 0,
-                "last_remote": "2026-10-20T12:00:00Z",
+                "last_remote_at": "2026-10-20T12:00:00Z",
                 "downtime_minutes": 0.0,
                 "top_projects": [
                   {}
@@ -68488,7 +68291,7 @@
                       "format": "double",
                       "default": 0.0
                     },
-                    "last_remote": {
+                    "last_remote_at": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -68553,7 +68356,7 @@
                 "late_rate": 0.0,
                 "usage_efficiency": 0.0,
                 "booking_compliance": 0.0,
-                "last_remote": "2026-10-20T12:00:00Z",
+                "last_remote_at": "2026-10-20T12:00:00Z",
                 "labs_accessed": 0,
                 "total_bookings": 0,
                 "total_sessions": 1,
@@ -81213,17 +81016,20 @@
                 "type": "array",
                 "items": {
                   "type": "object",
+                  "description": "One event; agent identifiers end in ``_key`` (NAM-8), relations are ``{id, name}`` (REL-3).",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
-                    "computer_id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "computer_name": {
-                      "type": "string",
+                    "computer": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
                       "readOnly": true
                     },
                     "bench": {
@@ -81233,10 +81039,10 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true,
-                      "nullable": true
+                      "nullable": true,
+                      "readOnly": true
                     },
-                    "agent_id": {
+                    "agent_key": {
                       "type": "string",
                       "readOnly": true
                     },
@@ -81244,7 +81050,7 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "event_id": {
+                    "event_key": {
                       "type": "string",
                       "format": "uuid",
                       "readOnly": true
@@ -81260,53 +81066,28 @@
                       "readOnly": true
                     },
                     "action": {
-                      "type": "string",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "action_name": {
                       "type": "string",
                       "readOnly": true
                     },
-                    "subject_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "subject_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "subject_name": {
-                      "type": "string",
+                    "subject": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "payload": {
-                      "readOnly": true
-                    },
-                    "source": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "event_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "category": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "object_name": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "object_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "details": {
-                      "readOnly": true
-                    },
-                    "details_str": {
-                      "type": "string",
                       "readOnly": true
                     },
                     "technical_user": {
@@ -81319,49 +81100,27 @@
                       "readOnly": true,
                       "default": ""
                     },
-                    "remote_user_displayname": {
+                    "remote_user_display_name": {
                       "type": "string",
                       "readOnly": true,
                       "default": ""
-                    },
-                    "created": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
-                    },
-                    "modified": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
                     }
                   },
                   "required": [
                     "action",
                     "action_name",
-                    "agent_id",
+                    "agent_key",
                     "agent_version",
                     "bench",
-                    "category",
-                    "computer_id",
-                    "computer_name",
-                    "created",
-                    "details",
-                    "details_str",
-                    "event_id",
-                    "event_type",
+                    "computer",
+                    "event_key",
                     "id",
-                    "modified",
-                    "object_id",
-                    "object_name",
                     "occurred_at",
                     "payload",
                     "remote_user",
-                    "remote_user_displayname",
+                    "remote_user_display_name",
                     "reported_at",
-                    "source",
-                    "subject_id",
-                    "subject_name",
-                    "subject_type",
+                    "subject",
                     "technical_user"
                   ]
                 }
@@ -81382,32 +81141,20 @@
             "data": [
               {
                 "id": 1,
-                "computer_id": 1,
-                "computer_name": "string",
+                "computer": {},
                 "bench": {},
-                "agent_id": "string",
+                "agent_key": "string",
                 "agent_version": "string",
-                "event_id": "123e4567-e89b-12d3-a456-426614174000",
+                "event_key": "123e4567-e89b-12d3-a456-426614174000",
                 "reported_at": "2026-10-20T12:00:00Z",
                 "occurred_at": "2026-10-20T12:00:00Z",
-                "action": "string",
+                "action": {},
                 "action_name": "string",
-                "subject_type": "string",
-                "subject_id": "string",
-                "subject_name": "string",
+                "subject": {},
                 "payload": null,
-                "source": "string",
-                "event_type": "string",
-                "category": "string",
-                "object_name": "string",
-                "object_id": "string",
-                "details": null,
-                "details_str": "string",
                 "technical_user": "",
                 "remote_user": "",
-                "remote_user_displayname": "",
-                "created": "2026-10-20T12:00:00Z",
-                "modified": "2026-10-20T12:00:00Z"
+                "remote_user_display_name": ""
               }
             ]
           }
@@ -81654,17 +81401,20 @@
             "properties": {
               "data": {
                 "type": "object",
+                "description": "One event; agent identifiers end in ``_key`` (NAM-8), relations are ``{id, name}`` (REL-3).",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "computer_id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "computer_name": {
-                    "type": "string",
+                  "computer": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "bench": {
@@ -81674,10 +81424,10 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true,
-                    "nullable": true
+                    "nullable": true,
+                    "readOnly": true
                   },
-                  "agent_id": {
+                  "agent_key": {
                     "type": "string",
                     "readOnly": true
                   },
@@ -81685,7 +81435,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "event_id": {
+                  "event_key": {
                     "type": "string",
                     "format": "uuid",
                     "readOnly": true
@@ -81701,53 +81451,28 @@
                     "readOnly": true
                   },
                   "action": {
-                    "type": "string",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "action_name": {
                     "type": "string",
                     "readOnly": true
                   },
-                  "subject_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "subject_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "subject_name": {
-                    "type": "string",
+                  "subject": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "payload": {
-                    "readOnly": true
-                  },
-                  "source": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "event_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "category": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "object_name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "object_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "details": {
-                    "readOnly": true
-                  },
-                  "details_str": {
-                    "type": "string",
                     "readOnly": true
                   },
                   "technical_user": {
@@ -81760,49 +81485,27 @@
                     "readOnly": true,
                     "default": ""
                   },
-                  "remote_user_displayname": {
+                  "remote_user_display_name": {
                     "type": "string",
                     "readOnly": true,
                     "default": ""
-                  },
-                  "created": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  },
-                  "modified": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
                   }
                 },
                 "required": [
                   "action",
                   "action_name",
-                  "agent_id",
+                  "agent_key",
                   "agent_version",
                   "bench",
-                  "category",
-                  "computer_id",
-                  "computer_name",
-                  "created",
-                  "details",
-                  "details_str",
-                  "event_id",
-                  "event_type",
+                  "computer",
+                  "event_key",
                   "id",
-                  "modified",
-                  "object_id",
-                  "object_name",
                   "occurred_at",
                   "payload",
                   "remote_user",
-                  "remote_user_displayname",
+                  "remote_user_display_name",
                   "reported_at",
-                  "source",
-                  "subject_id",
-                  "subject_name",
-                  "subject_type",
+                  "subject",
                   "technical_user"
                 ]
               }
@@ -81814,32 +81517,20 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "computer_id": 1,
-              "computer_name": "string",
+              "computer": {},
               "bench": {},
-              "agent_id": "string",
+              "agent_key": "string",
               "agent_version": "string",
-              "event_id": "123e4567-e89b-12d3-a456-426614174000",
+              "event_key": "123e4567-e89b-12d3-a456-426614174000",
               "reported_at": "2026-10-20T12:00:00Z",
               "occurred_at": "2026-10-20T12:00:00Z",
-              "action": "string",
+              "action": {},
               "action_name": "string",
-              "subject_type": "string",
-              "subject_id": "string",
-              "subject_name": "string",
+              "subject": {},
               "payload": null,
-              "source": "string",
-              "event_type": "string",
-              "category": "string",
-              "object_name": "string",
-              "object_id": "string",
-              "details": null,
-              "details_str": "string",
               "technical_user": "",
               "remote_user": "",
-              "remote_user_displayname": "",
-              "created": "2026-10-20T12:00:00Z",
-              "modified": "2026-10-20T12:00:00Z"
+              "remote_user_display_name": ""
             }
           }
         },
@@ -82178,17 +81869,20 @@
                 "type": "array",
                 "items": {
                   "type": "object",
+                  "description": "One event; agent identifiers end in ``_key`` (NAM-8), relations are ``{id, name}`` (REL-3).",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
-                    "computer_id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "computer_name": {
-                      "type": "string",
+                    "computer": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
                       "readOnly": true
                     },
                     "bench": {
@@ -82198,10 +81892,10 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true,
-                      "nullable": true
+                      "nullable": true,
+                      "readOnly": true
                     },
-                    "agent_id": {
+                    "agent_key": {
                       "type": "string",
                       "readOnly": true
                     },
@@ -82209,7 +81903,7 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "event_id": {
+                    "event_key": {
                       "type": "string",
                       "format": "uuid",
                       "readOnly": true
@@ -82225,53 +81919,28 @@
                       "readOnly": true
                     },
                     "action": {
-                      "type": "string",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "action_name": {
                       "type": "string",
                       "readOnly": true
                     },
-                    "subject_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "subject_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "subject_name": {
-                      "type": "string",
+                    "subject": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "payload": {
-                      "readOnly": true
-                    },
-                    "source": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "event_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "category": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "object_name": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "object_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "details": {
-                      "readOnly": true
-                    },
-                    "details_str": {
-                      "type": "string",
                       "readOnly": true
                     },
                     "technical_user": {
@@ -82284,49 +81953,27 @@
                       "readOnly": true,
                       "default": ""
                     },
-                    "remote_user_displayname": {
+                    "remote_user_display_name": {
                       "type": "string",
                       "readOnly": true,
                       "default": ""
-                    },
-                    "created": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
-                    },
-                    "modified": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
                     }
                   },
                   "required": [
                     "action",
                     "action_name",
-                    "agent_id",
+                    "agent_key",
                     "agent_version",
                     "bench",
-                    "category",
-                    "computer_id",
-                    "computer_name",
-                    "created",
-                    "details",
-                    "details_str",
-                    "event_id",
-                    "event_type",
+                    "computer",
+                    "event_key",
                     "id",
-                    "modified",
-                    "object_id",
-                    "object_name",
                     "occurred_at",
                     "payload",
                     "remote_user",
-                    "remote_user_displayname",
+                    "remote_user_display_name",
                     "reported_at",
-                    "source",
-                    "subject_id",
-                    "subject_name",
-                    "subject_type",
+                    "subject",
                     "technical_user"
                   ]
                 }
@@ -82340,32 +81987,20 @@
             "data": [
               {
                 "id": 1,
-                "computer_id": 1,
-                "computer_name": "string",
+                "computer": {},
                 "bench": {},
-                "agent_id": "string",
+                "agent_key": "string",
                 "agent_version": "string",
-                "event_id": "123e4567-e89b-12d3-a456-426614174000",
+                "event_key": "123e4567-e89b-12d3-a456-426614174000",
                 "reported_at": "2026-10-20T12:00:00Z",
                 "occurred_at": "2026-10-20T12:00:00Z",
-                "action": "string",
+                "action": {},
                 "action_name": "string",
-                "subject_type": "string",
-                "subject_id": "string",
-                "subject_name": "string",
+                "subject": {},
                 "payload": null,
-                "source": "string",
-                "event_type": "string",
-                "category": "string",
-                "object_name": "string",
-                "object_id": "string",
-                "details": null,
-                "details_str": "string",
                 "technical_user": "",
                 "remote_user": "",
-                "remote_user_displayname": "",
-                "created": "2026-10-20T12:00:00Z",
-                "modified": "2026-10-20T12:00:00Z"
+                "remote_user_display_name": ""
               }
             ]
           }
@@ -82456,17 +82091,20 @@
             "properties": {
               "data": {
                 "type": "object",
+                "description": "One event; agent identifiers end in ``_key`` (NAM-8), relations are ``{id, name}`` (REL-3).",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "computer_id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "computer_name": {
-                    "type": "string",
+                  "computer": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "bench": {
@@ -82476,10 +82114,10 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true,
-                    "nullable": true
+                    "nullable": true,
+                    "readOnly": true
                   },
-                  "agent_id": {
+                  "agent_key": {
                     "type": "string",
                     "readOnly": true
                   },
@@ -82487,7 +82125,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "event_id": {
+                  "event_key": {
                     "type": "string",
                     "format": "uuid",
                     "readOnly": true
@@ -82503,53 +82141,28 @@
                     "readOnly": true
                   },
                   "action": {
-                    "type": "string",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "action_name": {
                     "type": "string",
                     "readOnly": true
                   },
-                  "subject_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "subject_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "subject_name": {
-                    "type": "string",
+                  "subject": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "payload": {
-                    "readOnly": true
-                  },
-                  "source": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "event_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "category": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "object_name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "object_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "details": {
-                    "readOnly": true
-                  },
-                  "details_str": {
-                    "type": "string",
                     "readOnly": true
                   },
                   "technical_user": {
@@ -82562,49 +82175,27 @@
                     "readOnly": true,
                     "default": ""
                   },
-                  "remote_user_displayname": {
+                  "remote_user_display_name": {
                     "type": "string",
                     "readOnly": true,
                     "default": ""
-                  },
-                  "created": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  },
-                  "modified": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
                   }
                 },
                 "required": [
                   "action",
                   "action_name",
-                  "agent_id",
+                  "agent_key",
                   "agent_version",
                   "bench",
-                  "category",
-                  "computer_id",
-                  "computer_name",
-                  "created",
-                  "details",
-                  "details_str",
-                  "event_id",
-                  "event_type",
+                  "computer",
+                  "event_key",
                   "id",
-                  "modified",
-                  "object_id",
-                  "object_name",
                   "occurred_at",
                   "payload",
                   "remote_user",
-                  "remote_user_displayname",
+                  "remote_user_display_name",
                   "reported_at",
-                  "source",
-                  "subject_id",
-                  "subject_name",
-                  "subject_type",
+                  "subject",
                   "technical_user"
                 ]
               }
@@ -82616,32 +82207,20 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "computer_id": 1,
-              "computer_name": "string",
+              "computer": {},
               "bench": {},
-              "agent_id": "string",
+              "agent_key": "string",
               "agent_version": "string",
-              "event_id": "123e4567-e89b-12d3-a456-426614174000",
+              "event_key": "123e4567-e89b-12d3-a456-426614174000",
               "reported_at": "2026-10-20T12:00:00Z",
               "occurred_at": "2026-10-20T12:00:00Z",
-              "action": "string",
+              "action": {},
               "action_name": "string",
-              "subject_type": "string",
-              "subject_id": "string",
-              "subject_name": "string",
+              "subject": {},
               "payload": null,
-              "source": "string",
-              "event_type": "string",
-              "category": "string",
-              "object_name": "string",
-              "object_id": "string",
-              "details": null,
-              "details_str": "string",
               "technical_user": "",
               "remote_user": "",
-              "remote_user_displayname": "",
-              "created": "2026-10-20T12:00:00Z",
-              "modified": "2026-10-20T12:00:00Z"
+              "remote_user_display_name": ""
             }
           }
         },
@@ -84539,24 +84118,23 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "created": {
+                  "created_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "modified": {
+                  "updated_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
                   }
                 },
                 "required": [
-                  "created",
+                  "created_at",
                   "currency",
                   "id",
                   "item_count",
                   "lines_total",
-                  "modified",
                   "notes",
                   "purchase_date",
                   "purchase_order_number",
@@ -84564,6 +84142,7 @@
                   "supplier",
                   "total_amount",
                   "unpriced_line_count",
+                  "updated_at",
                   "version"
                 ]
               }
@@ -84592,8 +84171,8 @@
                 "currency": {}
               },
               "unpriced_line_count": 1,
-              "created": "2026-10-20T12:00:00Z",
-              "modified": "2026-10-20T12:00:00Z"
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
             }
           }
         },
@@ -87427,7 +87006,7 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "Write payload uses ``transaction_type``, ``amount``, ``settled_at``, ``reference``, ``notes``.\n\nThe purchase is taken from the URL, never from the body.",
+                  "description": "Read shape; ``transaction_type`` is ``{value, label}`` (ENU-1).",
                   "properties": {
                     "id": {
                       "type": "integer",
@@ -87442,25 +87021,33 @@
                       "readOnly": true
                     },
                     "transaction_type": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "amount": {
                       "type": "string",
                       "format": "decimal",
-                      "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+                      "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                      "readOnly": true
                     },
                     "settled_at": {
                       "type": "string",
-                      "format": "date-time"
+                      "format": "date-time",
+                      "readOnly": true
                     },
                     "reference": {
                       "type": "string",
-                      "description": "Invoice, receipt, bank transaction, or refund reference.",
-                      "maxLength": 255
+                      "readOnly": true,
+                      "description": "Invoice, receipt, bank transaction, or refund reference."
                     },
                     "notes": {
-                      "type": "string"
+                      "type": "string",
+                      "readOnly": true
                     },
                     "created_at": {
                       "type": "string",
@@ -87472,7 +87059,9 @@
                     "amount",
                     "created_at",
                     "id",
+                    "notes",
                     "purchase",
+                    "reference",
                     "settled_at",
                     "transaction_type"
                   ]
@@ -87644,26 +87233,8 @@
         "description": "",
         "schema": {
           "type": "object",
-          "description": "Write payload uses ``transaction_type``, ``amount``, ``settled_at``, ``reference``, ``notes``.\n\nThe purchase is taken from the URL, never from the body.",
+          "description": "Write payload (RW-1). The purchase is taken from the URL, never from the body.",
           "properties": {
-            "id": {
-              "type": "integer",
-              "readOnly": true
-            },
-            "purchase": {
-              "type": "object",
-              "additionalProperties": {
-                "oneOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "readOnly": true
-            },
             "transaction_type": {
               "enum": [
                 "payment",
@@ -87688,31 +87259,20 @@
             },
             "notes": {
               "type": "string"
-            },
-            "created_at": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
             }
           },
           "required": [
             "amount",
-            "created_at",
-            "id",
-            "purchase",
             "settled_at",
             "transaction_type"
           ]
         },
         "example_payload": {
-          "id": 1,
-          "purchase": {},
           "transaction_type": "payment",
           "amount": "string",
           "settled_at": "2026-10-20T12:00:00Z",
           "reference": "string",
-          "notes": "string",
-          "created_at": "2026-10-20T12:00:00Z"
+          "notes": "string"
         }
       },
       "responses": {
@@ -87725,7 +87285,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Write payload uses ``transaction_type``, ``amount``, ``settled_at``, ``reference``, ``notes``.\n\nThe purchase is taken from the URL, never from the body.",
+                "description": "Read shape; ``transaction_type`` is ``{value, label}`` (ENU-1).",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -87748,29 +87308,33 @@
                     "readOnly": true
                   },
                   "transaction_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `payment` - Payment\n* `refund` - Refund"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "amount": {
                     "type": "string",
                     "format": "decimal",
-                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                    "readOnly": true
                   },
                   "settled_at": {
                     "type": "string",
-                    "format": "date-time"
+                    "format": "date-time",
+                    "readOnly": true
                   },
                   "reference": {
                     "type": "string",
-                    "description": "Invoice, receipt, bank transaction, or refund reference.",
-                    "maxLength": 255
+                    "readOnly": true,
+                    "description": "Invoice, receipt, bank transaction, or refund reference."
                   },
                   "notes": {
-                    "type": "string"
+                    "type": "string",
+                    "readOnly": true
                   },
                   "created_at": {
                     "type": "string",
@@ -87782,7 +87346,9 @@
                   "amount",
                   "created_at",
                   "id",
+                  "notes",
                   "purchase",
+                  "reference",
                   "settled_at",
                   "transaction_type"
                 ]
@@ -87796,7 +87362,7 @@
             "data": {
               "id": 1,
               "purchase": {},
-              "transaction_type": "string",
+              "transaction_type": {},
               "amount": "string",
               "settled_at": "2026-10-20T12:00:00Z",
               "reference": "string",
@@ -88045,20 +87611,13 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "resource_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_name": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_sku": {
-                      "type": "string",
+                    "resource": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "auditor": {
@@ -88071,8 +87630,13 @@
                       "readOnly": true
                     },
                     "result": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "remarks": {
                       "type": "string",
@@ -88093,10 +87657,7 @@
                     "auditor",
                     "created_at",
                     "id",
-                    "resource_id",
-                    "resource_name",
-                    "resource_sku",
-                    "resource_type",
+                    "resource",
                     "result"
                   ]
                 }
@@ -88117,10 +87678,7 @@
             "data": [
               {
                 "id": 1,
-                "resource_type": "string",
-                "resource_id": "string",
-                "resource_name": "string",
-                "resource_sku": "string",
+                "resource": {},
                 "auditor": {},
                 "result": {},
                 "remarks": "string",
@@ -88319,20 +87877,13 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "resource_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_sku": {
-                    "type": "string",
+                  "resource": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "auditor": {
@@ -88345,12 +87896,13 @@
                     "readOnly": true
                   },
                   "result": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `PASS` - Pass\n* `FAIL` - Fail\n* `NOT_ASSESSED` - Not assessed"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "remarks": {
                     "type": "string",
@@ -88371,10 +87923,7 @@
                   "auditor",
                   "created_at",
                   "id",
-                  "resource_id",
-                  "resource_name",
-                  "resource_sku",
-                  "resource_type",
+                  "resource",
                   "result"
                 ]
               }
@@ -88386,12 +87935,9 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "resource_type": "string",
-              "resource_id": "string",
-              "resource_name": "string",
-              "resource_sku": "string",
+              "resource": {},
               "auditor": {},
-              "result": "string",
+              "result": {},
               "remarks": "string",
               "audited_at": "2026-10-20T12:00:00Z",
               "created_at": "2026-10-20T12:00:00Z"
@@ -88638,20 +88184,13 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "resource_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_name": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_sku": {
-                      "type": "string",
+                    "resource": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "auditor": {
@@ -88664,8 +88203,13 @@
                       "readOnly": true
                     },
                     "result": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "remarks": {
                       "type": "string",
@@ -88686,10 +88230,7 @@
                     "auditor",
                     "created_at",
                     "id",
-                    "resource_id",
-                    "resource_name",
-                    "resource_sku",
-                    "resource_type",
+                    "resource",
                     "result"
                   ]
                 }
@@ -88710,10 +88251,7 @@
             "data": [
               {
                 "id": 1,
-                "resource_type": "string",
-                "resource_id": "string",
-                "resource_name": "string",
-                "resource_sku": "string",
+                "resource": {},
                 "auditor": {},
                 "result": {},
                 "remarks": "string",
@@ -88912,20 +88450,13 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "resource_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_sku": {
-                    "type": "string",
+                  "resource": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "auditor": {
@@ -88938,12 +88469,13 @@
                     "readOnly": true
                   },
                   "result": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `PASS` - Pass\n* `FAIL` - Fail\n* `NOT_ASSESSED` - Not assessed"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "remarks": {
                     "type": "string",
@@ -88964,10 +88496,7 @@
                   "auditor",
                   "created_at",
                   "id",
-                  "resource_id",
-                  "resource_name",
-                  "resource_sku",
-                  "resource_type",
+                  "resource",
                   "result"
                 ]
               }
@@ -88979,12 +88508,9 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "resource_type": "string",
-              "resource_id": "string",
-              "resource_name": "string",
-              "resource_sku": "string",
+              "resource": {},
               "auditor": {},
-              "result": "string",
+              "result": {},
               "remarks": "string",
               "audited_at": "2026-10-20T12:00:00Z",
               "created_at": "2026-10-20T12:00:00Z"
@@ -89232,20 +88758,13 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "resource_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_name": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_sku": {
-                      "type": "string",
+                    "resource": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "auditor": {
@@ -89258,8 +88777,13 @@
                       "readOnly": true
                     },
                     "result": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "remarks": {
                       "type": "string",
@@ -89280,10 +88804,7 @@
                     "auditor",
                     "created_at",
                     "id",
-                    "resource_id",
-                    "resource_name",
-                    "resource_sku",
-                    "resource_type",
+                    "resource",
                     "result"
                   ]
                 }
@@ -89304,10 +88825,7 @@
             "data": [
               {
                 "id": 1,
-                "resource_type": "string",
-                "resource_id": "string",
-                "resource_name": "string",
-                "resource_sku": "string",
+                "resource": {},
                 "auditor": {},
                 "result": {},
                 "remarks": "string",
@@ -89516,20 +89034,13 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "resource_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_sku": {
-                    "type": "string",
+                  "resource": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "auditor": {
@@ -89542,12 +89053,13 @@
                     "readOnly": true
                   },
                   "result": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `PASS` - Pass\n* `FAIL` - Fail\n* `NOT_ASSESSED` - Not assessed"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "remarks": {
                     "type": "string",
@@ -89568,10 +89080,7 @@
                   "auditor",
                   "created_at",
                   "id",
-                  "resource_id",
-                  "resource_name",
-                  "resource_sku",
-                  "resource_type",
+                  "resource",
                   "result"
                 ]
               }
@@ -89583,12 +89092,9 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "resource_type": "string",
-              "resource_id": "string",
-              "resource_name": "string",
-              "resource_sku": "string",
+              "resource": {},
               "auditor": {},
-              "result": "string",
+              "result": {},
               "remarks": "string",
               "audited_at": "2026-10-20T12:00:00Z",
               "created_at": "2026-10-20T12:00:00Z"
@@ -89844,20 +89350,13 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "resource_type": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_id": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_name": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "resource_sku": {
-                      "type": "string",
+                    "resource": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "auditor": {
@@ -89870,8 +89369,13 @@
                       "readOnly": true
                     },
                     "result": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "remarks": {
                       "type": "string",
@@ -89892,10 +89396,7 @@
                     "auditor",
                     "created_at",
                     "id",
-                    "resource_id",
-                    "resource_name",
-                    "resource_sku",
-                    "resource_type",
+                    "resource",
                     "result"
                   ]
                 }
@@ -89916,10 +89417,7 @@
             "data": [
               {
                 "id": 1,
-                "resource_type": "string",
-                "resource_id": "string",
-                "resource_name": "string",
-                "resource_sku": "string",
+                "resource": {},
                 "auditor": {},
                 "result": {},
                 "remarks": "string",
@@ -90127,20 +89625,13 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "resource_type": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_id": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "resource_sku": {
-                    "type": "string",
+                  "resource": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "auditor": {
@@ -90153,12 +89644,13 @@
                     "readOnly": true
                   },
                   "result": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `PASS` - Pass\n* `FAIL` - Fail\n* `NOT_ASSESSED` - Not assessed"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "remarks": {
                     "type": "string",
@@ -90179,10 +89671,7 @@
                   "auditor",
                   "created_at",
                   "id",
-                  "resource_id",
-                  "resource_name",
-                  "resource_sku",
-                  "resource_type",
+                  "resource",
                   "result"
                 ]
               }
@@ -90194,12 +89683,9 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "resource_type": "string",
-              "resource_id": "string",
-              "resource_name": "string",
-              "resource_sku": "string",
+              "resource": {},
               "auditor": {},
-              "result": "string",
+              "result": {},
               "remarks": "string",
               "audited_at": "2026-10-20T12:00:00Z",
               "created_at": "2026-10-20T12:00:00Z"
@@ -96475,7 +95961,7 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "Read and write shape for expenses. The room is taken from the URL, never the body.",
+                  "description": "Read shape for expenses.",
                   "properties": {
                     "id": {
                       "type": "integer",
@@ -96491,28 +95977,34 @@
                     },
                     "name": {
                       "type": "string",
-                      "maxLength": 255
+                      "readOnly": true
                     },
                     "expense_type": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "supplier": {
                       "type": "string",
-                      "maxLength": 255
+                      "readOnly": true
                     },
                     "reference": {
                       "type": "string",
-                      "maxLength": 255
+                      "readOnly": true
                     },
                     "amount": {
                       "type": "string",
                       "format": "decimal",
-                      "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+                      "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                      "readOnly": true
                     },
                     "currency": {
                       "type": "string",
-                      "maxLength": 3
+                      "readOnly": true
                     },
                     "amount_display": {
                       "type": "object",
@@ -96523,20 +96015,28 @@
                       "readOnly": true
                     },
                     "billing_period": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
-                    "valid_from": {
-                      "type": "string",
-                      "format": "date"
-                    },
-                    "valid_until": {
+                    "start_date": {
                       "type": "string",
                       "format": "date",
+                      "readOnly": true
+                    },
+                    "end_date": {
+                      "type": "string",
+                      "format": "date",
+                      "readOnly": true,
                       "nullable": true
                     },
                     "notes": {
-                      "type": "string"
+                      "type": "string",
+                      "readOnly": true
                     },
                     "created_at": {
                       "type": "string",
@@ -96552,13 +96052,19 @@
                   "required": [
                     "amount",
                     "amount_display",
+                    "billing_period",
                     "created_at",
+                    "currency",
+                    "end_date",
                     "expense_type",
                     "id",
                     "name",
+                    "notes",
+                    "reference",
                     "room",
-                    "updated_at",
-                    "valid_from"
+                    "start_date",
+                    "supplier",
+                    "updated_at"
                   ]
                 }
               }
@@ -96587,8 +96093,8 @@
                 "currency": "string",
                 "amount_display": {},
                 "billing_period": {},
-                "valid_from": "2026-10-20",
-                "valid_until": "2026-10-20",
+                "start_date": "2026-10-20",
+                "end_date": "2026-10-20",
                 "notes": "string",
                 "created_at": "2026-10-20T12:00:00Z",
                 "updated_at": "2026-10-20T12:00:00Z"
@@ -96735,26 +96241,8 @@
         "description": "",
         "schema": {
           "type": "object",
-          "description": "Read and write shape for expenses. The room is taken from the URL, never the body.",
+          "description": "Write shape for expenses (RW-1). The room is taken from the URL, never the body.",
           "properties": {
-            "id": {
-              "type": "integer",
-              "readOnly": true
-            },
-            "room": {
-              "type": "object",
-              "additionalProperties": {
-                "oneOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "readOnly": true
-            },
             "name": {
               "type": "string",
               "maxLength": 255
@@ -96792,13 +96280,6 @@
               "type": "string",
               "maxLength": 3
             },
-            "amount_display": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              },
-              "readOnly": true
-            },
             "billing_period": {
               "enum": [
                 "one_time",
@@ -96809,57 +96290,37 @@
               "type": "string",
               "description": "* `one_time` - One-time\n* `monthly` - Monthly\n* `quarterly` - Quarterly\n* `annual` - Annual"
             },
-            "valid_from": {
+            "start_date": {
               "type": "string",
               "format": "date"
             },
-            "valid_until": {
+            "end_date": {
               "type": "string",
               "format": "date",
               "nullable": true
             },
             "notes": {
               "type": "string"
-            },
-            "created_at": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
-            },
-            "updated_at": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
             }
           },
           "required": [
             "amount",
-            "amount_display",
-            "created_at",
             "expense_type",
-            "id",
             "name",
-            "room",
-            "updated_at",
-            "valid_from"
+            "start_date"
           ]
         },
         "example_payload": {
-          "id": 1,
-          "room": {},
           "name": "string",
           "expense_type": "rent",
           "supplier": "string",
           "reference": "string",
           "amount": "string",
           "currency": "string",
-          "amount_display": {},
           "billing_period": "one_time",
-          "valid_from": "2026-10-20",
-          "valid_until": "2026-10-20",
-          "notes": "string",
-          "created_at": "2026-10-20T12:00:00Z",
-          "updated_at": "2026-10-20T12:00:00Z"
+          "start_date": "2026-10-20",
+          "end_date": "2026-10-20",
+          "notes": "string"
         }
       },
       "responses": {
@@ -96872,7 +96333,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Read and write shape for expenses. The room is taken from the URL, never the body.",
+                "description": "Read shape for expenses.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -96896,32 +96357,34 @@
                   },
                   "name": {
                     "type": "string",
-                    "maxLength": 255
+                    "readOnly": true
                   },
                   "expense_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `rent` - Rent\n* `utilities` - Utilities\n* `maintenance` - Maintenance\n* `calibration` - Calibration\n* `repair` - Repair\n* `service_contract` - Service contract\n* `license_fee` - License fee\n* `insurance` - Insurance\n* `service` - Service (legacy)\n* `other` - Other"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "supplier": {
                     "type": "string",
-                    "maxLength": 255
+                    "readOnly": true
                   },
                   "reference": {
                     "type": "string",
-                    "maxLength": 255
+                    "readOnly": true
                   },
                   "amount": {
                     "type": "string",
                     "format": "decimal",
-                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                    "readOnly": true
                   },
                   "currency": {
                     "type": "string",
-                    "maxLength": 3
+                    "readOnly": true
                   },
                   "amount_display": {
                     "type": "object",
@@ -96931,24 +96394,28 @@
                     "readOnly": true
                   },
                   "billing_period": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `one_time` - One-time\n* `monthly` - Monthly\n* `quarterly` - Quarterly\n* `annual` - Annual"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
-                  "valid_from": {
-                    "type": "string",
-                    "format": "date"
-                  },
-                  "valid_until": {
+                  "start_date": {
                     "type": "string",
                     "format": "date",
+                    "readOnly": true
+                  },
+                  "end_date": {
+                    "type": "string",
+                    "format": "date",
+                    "readOnly": true,
                     "nullable": true
                   },
                   "notes": {
-                    "type": "string"
+                    "type": "string",
+                    "readOnly": true
                   },
                   "created_at": {
                     "type": "string",
@@ -96964,13 +96431,19 @@
                 "required": [
                   "amount",
                   "amount_display",
+                  "billing_period",
                   "created_at",
+                  "currency",
+                  "end_date",
                   "expense_type",
                   "id",
                   "name",
+                  "notes",
+                  "reference",
                   "room",
-                  "updated_at",
-                  "valid_from"
+                  "start_date",
+                  "supplier",
+                  "updated_at"
                 ]
               }
             },
@@ -96983,15 +96456,15 @@
               "id": 1,
               "room": {},
               "name": "string",
-              "expense_type": "string",
+              "expense_type": {},
               "supplier": "string",
               "reference": "string",
               "amount": "string",
               "currency": "string",
               "amount_display": {},
-              "billing_period": "string",
-              "valid_from": "2026-10-20",
-              "valid_until": "2026-10-20",
+              "billing_period": {},
+              "start_date": "2026-10-20",
+              "end_date": "2026-10-20",
               "notes": "string",
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
@@ -111894,6 +111367,7 @@
                 "type": "array",
                 "items": {
                   "type": "object",
+                  "description": "Read shape (RW-1, ENU-1, NAM-3, REL-3).",
                   "properties": {
                     "id": {
                       "type": "integer",
@@ -111901,43 +111375,57 @@
                     },
                     "message": {
                       "type": "string",
-                      "maxLength": 255
+                      "readOnly": true
                     },
                     "details": {
                       "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "message_type": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "expiry_date": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "target_user": {
-                      "type": "integer",
                       "readOnly": true,
                       "nullable": true
                     },
-                    "created": {
+                    "message_type": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "expires_at": {
                       "type": "string",
                       "format": "date-time",
                       "readOnly": true
                     },
-                    "modified": {
+                    "target_user": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "updated_at": {
                       "type": "string",
                       "format": "date-time",
                       "readOnly": true
                     }
                   },
                   "required": [
-                    "created",
-                    "expiry_date",
+                    "created_at",
+                    "details",
+                    "expires_at",
                     "id",
-                    "modified",
-                    "target_user"
+                    "message",
+                    "message_type",
+                    "target_user",
+                    "updated_at"
                   ]
                 }
               }
@@ -111960,10 +111448,10 @@
                 "message": "string",
                 "details": "string",
                 "message_type": {},
-                "expiry_date": "2026-10-20T12:00:00Z",
-                "target_user": 1,
-                "created": "2026-10-20T12:00:00Z",
-                "modified": "2026-10-20T12:00:00Z"
+                "expires_at": "2026-10-20T12:00:00Z",
+                "target_user": {},
+                "created_at": "2026-10-20T12:00:00Z",
+                "updated_at": "2026-10-20T12:00:00Z"
               }
             ]
           }
@@ -112097,11 +111585,8 @@
         "description": "",
         "schema": {
           "type": "object",
+          "description": "Write shape (RW-1); the target user is not writable here.",
           "properties": {
-            "id": {
-              "type": "integer",
-              "readOnly": true
-            },
             "message": {
               "type": "string",
               "maxLength": 255
@@ -112122,43 +111607,20 @@
               "type": "string",
               "description": "* `success` - Success\n* `error` - Error\n* `warning` - Warning\n* `info` - Info\n* `announcement` - Announcement"
             },
-            "expiry_date": {
+            "expires_at": {
               "type": "string",
               "format": "date-time"
-            },
-            "target_user": {
-              "type": "integer",
-              "readOnly": true,
-              "nullable": true
-            },
-            "created": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
-            },
-            "modified": {
-              "type": "string",
-              "format": "date-time",
-              "readOnly": true
             }
           },
           "required": [
-            "created",
-            "expiry_date",
-            "id",
-            "modified",
-            "target_user"
+            "expires_at"
           ]
         },
         "example_payload": {
-          "id": 1,
           "message": "string",
           "details": "string",
           "message_type": "success",
-          "expiry_date": "2026-10-20T12:00:00Z",
-          "target_user": 1,
-          "created": "2026-10-20T12:00:00Z",
-          "modified": "2026-10-20T12:00:00Z"
+          "expires_at": "2026-10-20T12:00:00Z"
         }
       },
       "responses": {
@@ -112171,6 +111633,7 @@
             "properties": {
               "data": {
                 "type": "object",
+                "description": "Read shape (RW-1, ENU-1, NAM-3, REL-3).",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -112178,47 +111641,57 @@
                   },
                   "message": {
                     "type": "string",
-                    "maxLength": 255
+                    "readOnly": true
                   },
                   "details": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
-                  },
-                  "message_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `success` - Success\n* `error` - Error\n* `warning` - Warning\n* `info` - Info\n* `announcement` - Announcement"
-                  },
-                  "expiry_date": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "target_user": {
-                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   },
-                  "created": {
+                  "message_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "expires_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "modified": {
+                  "target_user": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
                   }
                 },
                 "required": [
-                  "created",
-                  "expiry_date",
+                  "created_at",
+                  "details",
+                  "expires_at",
                   "id",
-                  "modified",
-                  "target_user"
+                  "message",
+                  "message_type",
+                  "target_user",
+                  "updated_at"
                 ]
               }
             },
@@ -112231,11 +111704,11 @@
               "id": 1,
               "message": "string",
               "details": "string",
-              "message_type": "string",
-              "expiry_date": "2026-10-20T12:00:00Z",
-              "target_user": 1,
-              "created": "2026-10-20T12:00:00Z",
-              "modified": "2026-10-20T12:00:00Z"
+              "message_type": {},
+              "expires_at": "2026-10-20T12:00:00Z",
+              "target_user": {},
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
             }
           }
         },

@@ -162,18 +162,21 @@ class BenchBookingListQuerySerializer(TemporalRangeQueryMixin, PageNumberQuerySe
 class LabProjectQuerySerializer(PageNumberQuerySerializer):
     search = serializers.CharField(required=False, allow_blank=False, max_length=255)
     # default=None: query strings are HTML input, where an absent boolean would otherwise become False.
-    active = serializers.BooleanField(required=False, allow_null=True, default=None)
+    is_active = serializers.BooleanField(required=False, allow_null=True, default=None, source="active")
 
 
 class LabProjectOptionsQuerySerializer(OptionsQueryMixin):
-    active_on = serializers.DateField(required=False, help_text="Date within project starts_on and ends_on.")
+    active_on = serializers.DateField(required=False, help_text="Date within project start_date and end_date.")
 
 
 class LabProjectSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source="project_name", read_only=True)
+    is_active = serializers.BooleanField(source="active", read_only=True)
+    start_date = serializers.DateField(source="starts_on", read_only=True, allow_null=True)
+    end_date = serializers.DateField(source="ends_on", read_only=True, allow_null=True)
 
     class Meta:
         model = LabProject
-        fields = ("id", "name", "code", "active", "starts_on", "ends_on")
+        fields = ("id", "name", "code", "is_active", "start_date", "end_date")
         read_only_fields = fields
         ref_name = "LabProject"

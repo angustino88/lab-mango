@@ -77,7 +77,7 @@ def test_stable_kind_post_creates_allocation_through_endpoint(api_client, user):
         )
 
     assert response.status_code == 201, response.content
-    assert response.data["data"]["resource_kind"] == "bench"
+    assert response.data["data"]["resource_kind"]["value"] == "bench"
     command = create_allocation.call_args.args[0]
     assert isinstance(command, CreatePurchaseItemResourceInput)
     assert command.resource_type_id == ContentType.objects.get_for_model(Bench).pk
@@ -118,7 +118,7 @@ def test_legacy_kind_post_creates_allocation_through_endpoint(api_client, user):
         )
 
     assert response.status_code == 201, response.content
-    assert response.data["data"]["resource_kind"] == "bench"
+    assert response.data["data"]["resource_kind"]["value"] == "bench"
     assert create_allocation.call_args.args[0].resource_type_id == content_type.pk
 
 
@@ -260,7 +260,7 @@ def test_resource_kind_is_read_only_output_with_stable_enum(user):
     write_fields = PurchaseItemResourceCreateSerializer().fields
 
     assert output_fields["resource_kind"].read_only
-    assert output_serializer.data["resource_kind"] == "bench"
+    assert output_serializer.data["resource_kind"]["value"] == "bench"
     assert write_fields["resource_kind"].write_only
     assert set(write_fields["resource_kind"].choices) == {"bench", "equipment", "license", "station"}
     assert write_fields["resource_type_id"].write_only
@@ -307,5 +307,6 @@ def test_resource_allocation_list_query_budget(django_assert_num_queries, user):
     with django_assert_num_queries(3):
         allocations = list(list_purchase_item_resources(purchase_item_id=item.pk))
         assert [
-            PurchaseItemResourceSerializer(instance=allocation).data["resource_kind"] for allocation in allocations
+            PurchaseItemResourceSerializer(instance=allocation).data["resource_kind"]["value"]
+            for allocation in allocations
         ] == ["bench", "bench", "bench"]
