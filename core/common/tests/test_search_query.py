@@ -1,4 +1,4 @@
-"""Free-text search is `q`; `search` is a deprecated alias (request standard QRY-7, CMP-3)."""
+"""Free-text search is `q`; the former `search` alias is removed (request standard QRY-7)."""
 
 from core.common.api.search import SearchQueryMixin
 
@@ -21,16 +21,9 @@ def test_q_is_the_parameter():
     assert _validated(_Query, {"q": "bench"}) == {"q": "bench"}
 
 
-def test_search_is_mapped_onto_the_same_term():
-    assert _validated(_Query, {"search": "bench"}) == {"q": "bench"}
+def test_q_lands_under_the_owner_target_key():
     assert _validated(_LegacyTarget, {"q": "bench"}) == {"search": "bench"}
 
 
-def test_blank_search_means_no_search():
-    assert _validated(_Query, {"search": ""}) == {}
-
-
-def test_both_names_together_are_rejected():
-    serializer = _Query(data={"q": "a", "search": "b"})
-    assert not serializer.is_valid()
-    assert "search" in serializer.errors
+def test_search_is_no_longer_a_field():
+    assert "search" not in _Query().fields

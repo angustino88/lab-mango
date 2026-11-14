@@ -211,14 +211,8 @@ def _check_operations(document: dict[str, Any], found: set[Violation]) -> None:
                 continue
             where = f"{method.upper()} {path}"
             for parameter in operation.get("parameters", []):
-                if (
-                    parameter.get("in") == "query"
-                    and parameter.get("name") == "search"
-                    and not parameter.get("deprecated")
-                ):
-                    found.add(
-                        Violation("QRY-7", where, "free-text search is `q`; `search` may only be a deprecated alias")
-                    )
+                if parameter.get("in") == "query" and parameter.get("name") == "search":
+                    found.add(Violation("QRY-7", where, "free-text search is `q`; `search` is not a query parameter"))
             responses = operation.get("responses", {})
             if (
                 method.lower() == "post"

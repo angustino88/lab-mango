@@ -114,10 +114,6 @@ class FilterQuerySerializer(serializers.Serializer):
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         spec = self.filter_spec
-        if "q" in attrs and "search" in attrs:
-            raise serializers.ValidationError({"search": "Use either q or search, not both."})
-        if "search" in attrs:
-            attrs["q"] = attrs.pop("search")
         errors = {}
         ordering = attrs.get("ordering", ())
         if len({name.lstrip("-") for name in ordering}) != len(ordering):
@@ -145,7 +141,6 @@ class FilterSpec:
         ordering: Mapping[str, str] | None = None,
         default_ordering: Sequence[str] = (),
         ranges: Sequence[tuple[str, str]] = (),
-        search_alias: bool = False,
         search_distinct: bool = False,
     ) -> None:
         self.filters = tuple(filters)
@@ -153,7 +148,6 @@ class FilterSpec:
         self.ordering = dict(ordering or {})
         self.default_ordering = tuple(default_ordering)
         self.ranges = tuple(ranges)
-        self.search_alias = search_alias
         self.search_distinct = search_distinct
         names = [item.name for item in self.filters]
         if len(set(names)) != len(names) or set(names) & {"q", "search", "ordering", "page", "page_size"}:
@@ -174,9 +168,6 @@ class FilterSpec:
             )
         if self.search_fields:
             fields["q"] = serializers.CharField(required=False, min_length=1, max_length=200)
-            if self.search_alias:
-                # Existing clients may send an empty search; retain it as a legacy alias.
-                fields["search"] = serializers.CharField(required=False, allow_blank=True, max_length=255)
         if self.ordering:
             choices = [value for key in self.ordering for value in (key, f"-{key}")]
             fields["ordering"] = CSVField(
@@ -190,8 +181,6 @@ class FilterSpec:
         # page / page_size are reserved names consumed by the paginator, not filters.
         values = {key: value for key, value in values.items() if key not in PAGE_QUERY_PARAMS}
         allowed = {item.name for item in self.filters} | {"q", "ordering"}
-        if self.search_alias:
-            allowed |= {"search"}
         if set(values) - allowed:
             raise ValueError("FilterSpec.apply requires validated query values.")
         needs_distinct = False
@@ -200,7 +189,7 @@ class FilterSpec:
                 lookup = f"{item.lookup}__in" if item.multiple else item.lookup
                 queryset = queryset.filter(**{lookup: values[item.name]})
                 needs_distinct = needs_distinct or item.distinct
-        search_query = values.get("q") or (values.get("search") if self.search_alias else None)
+        search_query = values.get("q")
         if search_query:
             search = Q()
             for path in self.search_fields:

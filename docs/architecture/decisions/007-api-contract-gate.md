@@ -76,10 +76,11 @@ Deployed-behavior note (AGENTS.md rule 1): the Agent API and routing sync are no
 ## 6. Status (2026-11-14)
 
 **Money, search and actions.** Three more rules are gated and hold: money is one `{amount, currency}` object
-read and written (FMT-2, `core/common/api/money.py`), free-text search is `q` with `search` as a deprecated
-alias (QRY-7, `core/common/api/search.py`), and a POST on an item that creates nothing is an `actions/` route
-(ACT-1; old ticket paths and the equipment assignment POST are deprecated aliases, `core/common/api/deprecation.py`).
-The aliases need a `Sunset` date before they are removed; that date is the owner's decision.
+read and written (FMT-2, `core/common/api/money.py`), free-text search is `q` only (QRY-7,
+`core/common/api/search.py`), and a POST on an item that creates nothing is an `actions/` route (ACT-1). The
+aliases that first carried the old forms (`?search=`, the ticket `assign`, `transitions` and `csat` routes, and
+`POST /equipment/{id}/assignment`) are removed in the one coordinated release (ADR 002 D12), with no `Sunset`
+period; `core/common/api/deprecation.py` is deleted.
 
 **Runtime check (DOC-4).** `respond_data` rendered nothing: it validated the dict and sent it unchanged, so
 the schema could differ from the wire. It now renders through the payload serializer, like `respond`, and every

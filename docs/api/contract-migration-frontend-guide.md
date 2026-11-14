@@ -248,9 +248,8 @@ parent (a payment of an expense, a line of a purchase) must use the parent's cur
 
 ### Free-text search: `q`
 
-Every list that searches by free text takes `?q=` (QRY-7), 1 to 200 characters. `?search=` still works for
-one release: it is marked `deprecated` in the schema and the response carries `Deprecation: true`. Sending
-both is `400`. Move every call to `q`; `search` will be removed in a later release.
+Every list that searches by free text takes `?q=` (QRY-7), 1 to 200 characters. `?search=` is **removed**: it is
+no longer in the schema and a request that sends it is rejected as an invalid query. Move every call to `q`.
 
 ### Operations are actions (ACT-1)
 
@@ -261,5 +260,5 @@ both is `400`. Move every call to `q`; `search` will be removed in a later relea
 | `POST /api/support/tickets/{key}/csat` | `POST /api/support/tickets/{key}/actions/submit-csat` |
 | `POST /api/labs/equipment/{id}/assignment` (sets the assignment) | `PUT /api/labs/equipment/{id}/assignment` |
 
-The old routes keep working for one release, marked `deprecated` in the schema, with `Deprecation: true` and a
-`Link: <…>; rel="successor-version"` header on every response. Request and response bodies are unchanged.
+The old routes are **removed**: they are no longer routed or in the schema, so calls to them fail (404, or 405
+for `POST /api/labs/equipment/{id}/assignment`). Request and response bodies of the new routes are unchanged.

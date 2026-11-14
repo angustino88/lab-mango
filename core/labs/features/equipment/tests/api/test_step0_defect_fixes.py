@@ -185,7 +185,7 @@ def test_generic_create_builds_category_subtype_with_activity(coordinator, compu
     assert response.status_code == 201, response.data
     unit = Equipment.objects.get(sku="S0-GEN-1")
     assert ComputingActivity.objects.filter(computing=unit).exists()
-    listed = _client(coordinator).get(ROOT + "equipment", {"search": "S0-GEN-1"})
+    listed = _client(coordinator).get(ROOT + "equipment", {"q": "S0-GEN-1"})
     assert listed.status_code == 200
     assert [row["id"] for row in listed.data["data"]] == [unit.pk]
 

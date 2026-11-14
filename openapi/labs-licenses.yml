@@ -750,13 +750,6 @@ paths:
           maxLength: 200
           minLength: 1
       - in: query
-        name: search
-        schema:
-          type: string
-          maxLength: 255
-        deprecated: true
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-      - in: query
         name: status
         schema:
           type: string
@@ -1384,13 +1377,6 @@ paths:
           maxLength: 200
           minLength: 1
         description: Free-text search term.
-      - in: query
-        name: search
-        schema:
-          type: string
-          maxLength: 255
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-        deprecated: true
       tags:
       - Licenses
       security:
@@ -1529,13 +1515,6 @@ paths:
           maxLength: 200
           minLength: 1
         description: Free-text search term.
-      - in: query
-        name: search
-        schema:
-          type: string
-          maxLength: 255
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-        deprecated: true
       - in: query
         name: vendor_id
         schema:
@@ -1679,13 +1658,6 @@ paths:
           maxLength: 200
           minLength: 1
         description: Free-text search term.
-      - in: query
-        name: search
-        schema:
-          type: string
-          maxLength: 255
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-        deprecated: true
       tags:
       - Licenses
       security:
@@ -1824,13 +1796,6 @@ paths:
           maxLength: 200
           minLength: 1
         description: Free-text search term.
-      - in: query
-        name: search
-        schema:
-          type: string
-          maxLength: 255
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-        deprecated: true
       tags:
       - Licenses
       security:
@@ -1969,13 +1934,6 @@ paths:
           maxLength: 200
           minLength: 1
         description: Free-text search term.
-      - in: query
-        name: search
-        schema:
-          type: string
-          maxLength: 255
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-        deprecated: true
       tags:
       - Licenses
       security:

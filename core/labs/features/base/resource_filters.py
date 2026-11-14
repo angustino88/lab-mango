@@ -41,6 +41,5 @@ def resource_filter_spec(
         search_fields=search_fields,
         ordering={"sku": "sku", "name": "name", "created_at": "created", "id": "pk"},
         ranges=(("created_at_after", "created_at_before"),),
-        search_alias=True,
         search_distinct=distinct,
     )

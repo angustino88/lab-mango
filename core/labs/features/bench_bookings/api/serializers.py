@@ -103,7 +103,6 @@ class BenchBookingListQuerySerializer(TemporalRangeQueryMixin, PageNumberQuerySe
     approval_status = serializers.CharField(required=False)
     booking_code = serializers.CharField(required=False)
     q = serializers.CharField(required=False)
-    search = serializers.CharField(required=False)
     ordering = serializers.CharField(
         required=False,
         allow_blank=False,

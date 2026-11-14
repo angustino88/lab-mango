@@ -35,8 +35,8 @@ class TestListApi:
         assert response.json()["meta"]["pagination"]["count"] == 3
 
     def test_filters_by_search_and_active(self, api_client, projects):
-        assert [r["name"] for r in api_client.get(URL, {"search": "alp"}).json()["data"]] == ["Alpha"]
-        assert [r["code"] for r in api_client.get(URL, {"search": "G-1"}).json()["data"]] == ["G-1"]
+        assert [r["name"] for r in api_client.get(URL, {"q": "alp"}).json()["data"]] == ["Alpha"]
+        assert [r["code"] for r in api_client.get(URL, {"q": "G-1"}).json()["data"]] == ["G-1"]
         assert [r["name"] for r in api_client.get(URL, {"is_active": "false"}).json()["data"]] == ["Gamma"]
 
     def test_unknown_query_parameter_is_bad_request(self, api_client, projects):

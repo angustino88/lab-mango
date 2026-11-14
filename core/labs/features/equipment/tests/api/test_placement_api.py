@@ -99,7 +99,7 @@ def test_equipment_responses_include_placement(coordinator_client, unit):
     assert detail["placement"]["room"]["id"] == room.pk
     assert "storage_room" not in detail
 
-    rows = coordinator_client.get(ROOT.rstrip("/"), {"search": unit.sku}).data["data"]
+    rows = coordinator_client.get(ROOT.rstrip("/"), {"q": unit.sku}).data["data"]
     assert [row["placement"]["room"]["id"] for row in rows] == [room.pk]
 
     coordinator_client.delete(f"{ROOT}{unit.pk}/placement")
@@ -135,8 +135,8 @@ def test_list_placement_query_count_does_not_grow_with_rows(coordinator_client, 
 
 
 @pytest.mark.django_db
-def test_put_sets_the_assignment_and_post_is_a_deprecated_alias(coordinator_client, unit):
-    """ACT-1: the assignment is a sub-resource set with PUT; POST still works for one release (VER-3)."""
+def test_put_sets_the_assignment_and_post_is_removed(coordinator_client, unit):
+    """ACT-1: the assignment is a sub-resource set with PUT; POST on it no longer exists."""
     first, second = (Bench.objects.create(name=f"Assign bench {i}", sku=f"AS-BENCH-{i}") for i in (1, 2))
     url = f"{ROOT}{unit.pk}/assignment"
 
@@ -147,7 +147,4 @@ def test_put_sets_the_assignment_and_post_is_a_deprecated_alias(coordinator_clie
 
     coordinator_client.delete(url)
     post = coordinator_client.post(url, {"bench_id": second.pk}, format="json")
-    assert post.status_code == 200, post.content
-    assert post.data["data"]["bench"]["id"] == second.pk
-    assert post["Deprecation"] == "true"
-    assert post["Link"] == f'</api/labs/equipment/{unit.pk}/assignment>; rel="successor-version"'
+    assert post.status_code == 405, post.content

@@ -80,7 +80,7 @@ def test_license_list_applies_declared_search_filter():
 
     request = type("Request", (), {})()
     view = LicenseListAPIView()
-    filters = {"search": "office"}
+    filters = {"q": "office"}
     with patch.object(view, "validate_query", return_value=(filters, None)), patch(
         "core.labs.features.licenses.api.views.public.list_licenses",
         return_value=object(),

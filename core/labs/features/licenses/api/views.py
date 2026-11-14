@@ -105,7 +105,7 @@ class LicenseListAPIView(AppListAPIView, FeatureAPIView):
         if error is not None:
             return error
         filters = dict(filters)
-        search = filters.pop("search", None) or filters.pop("q", None)
+        search = filters.pop("q", None)
         return self.list_response_sync(LICENSE_FILTERS.apply(public.list_licenses(search=search), filters))
 
 

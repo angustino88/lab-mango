@@ -104,13 +104,6 @@ paths:
           * `OK` - OK
 
           * `NOK` - NOK'
-      - in: query
-        name: search
-        schema:
-          type: string
-          maxLength: 255
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-        deprecated: true
       tags:
       - Resource Audit
       security:

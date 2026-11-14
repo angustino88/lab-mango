@@ -63,7 +63,7 @@ def reference_urlpatterns(
     shape = type(f"{name}ImportShape", (serializers.ModelSerializer,), {"Meta": meta})()
     inputs: dict[str, Any] = {}
     outputs: dict[str, Any] = {"id": serializers.IntegerField(read_only=True)}
-    query: dict[str, Any] = {"search_target": "search"}  # SearchQueryMixin: q, deprecated `search`
+    query: dict[str, Any] = {"search_target": "search"}  # SearchQueryMixin: `q` lands under this key
     for field_name in resource.fields:
         field = resource.model._meta.get_field(field_name)
         wire = wire_name(field, explicit_names)

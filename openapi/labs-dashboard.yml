@@ -111,13 +111,6 @@ paths:
           maxLength: 200
           minLength: 1
         description: Free-text search term.
-      - in: query
-        name: search
-        schema:
-          type: string
-          maxLength: 255
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-        deprecated: true
       tags:
       - Dashboard
       security:

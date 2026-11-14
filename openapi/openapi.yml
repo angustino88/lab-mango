@@ -646,8 +646,6 @@ paths:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1actions~1transition
   /api/support/tickets/{key}/activity:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1activity
-  /api/support/tickets/{key}/assign:
-    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1assign
   /api/support/tickets/{key}/attachments:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1attachments
   /api/support/tickets/{key}/attachments/{attachment_id}:
@@ -656,16 +654,12 @@ paths:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1comments
   /api/support/tickets/{key}/comments/{comment_id}:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1comments~1{comment_id}
-  /api/support/tickets/{key}/csat:
-    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1csat
   /api/support/tickets/{key}/links:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1links
   /api/support/tickets/{key}/links/{link_id}:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1links~1{link_id}
   /api/support/tickets/{key}/resources:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1resources
-  /api/support/tickets/{key}/transitions:
-    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1transitions
   /api/support/tickets/{key}/watchers:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1watchers
   /api/support/tickets/stats:

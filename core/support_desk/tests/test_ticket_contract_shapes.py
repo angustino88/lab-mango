@@ -57,8 +57,8 @@ class TestTicketContractShapes:
 
 
 @pytest.mark.django_db
-def test_ticket_operations_are_actions_and_old_paths_are_deprecated(support_setup, agent_client, agent_user):
-    """ACT-1: operations are `actions/<verb>`; the old paths answer the same for one release (VER-3)."""
+def test_ticket_operations_are_actions_and_old_paths_are_removed(support_setup, agent_client, agent_user):
+    """ACT-1: operations are `actions/<verb>`; the old paths no longer exist."""
     created = _create(agent_client, support_setup)
     key = created["key"]
 
@@ -68,8 +68,6 @@ def test_ticket_operations_are_actions_and_old_paths_are_deprecated(support_setu
     assert action.status_code == 200, action.content
     assert "Deprecation" not in action
 
-    legacy = agent_client.post(f"/api/support/tickets/{key}/assign", {"assignee_id": agent_user.id}, format="json")
-    assert legacy.status_code == 200, legacy.content
-    assert legacy.json()["data"]["assignee"]["id"] == agent_user.id
-    assert legacy["Deprecation"] == "true"
-    assert legacy["Link"] == f'</api/support/tickets/{key}/actions/assign>; rel="successor-version"'
+    for old in ("assign", "transitions", "csat"):
+        removed = agent_client.post(f"/api/support/tickets/{key}/{old}", {}, format="json")
+        assert removed.status_code in (404, 405), (old, removed.status_code)

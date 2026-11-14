@@ -187,20 +187,10 @@ _ASSIGNMENT_WRITE = dict(
 )
 
 
-@extend_schema_view(
-    post=extend_schema(
-        deprecated=True,
-        description="Deprecated: use PUT to set the assignment (ACT-1; the assignment is a sub-resource).",
-    ),
-)
 class EquipmentAssignmentAPIView(EquipmentAPIView):
-    """The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.
-
-    POST is the deprecated way to set it (it creates nothing, so it is not a create); it stays for one release.
-    """
+    """The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it."""
 
     put_contract = OperationContract(**_ASSIGNMENT_WRITE)
-    post_contract = OperationContract(**_ASSIGNMENT_WRITE)
     get_contract = OperationContract(
         success=ResponseContract.success("EquipmentAssignmentDetail", EquipmentAssignmentResultSerializer),
         not_found=ResponseContract.not_found(),
@@ -209,12 +199,6 @@ class EquipmentAssignmentAPIView(EquipmentAPIView):
         success=ResponseContract.no_content(),
         not_found=ResponseContract.not_found(),
     )
-
-    def handle_post(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
-        response = self.handle_put(request, equipment_id, *args, **kwargs)
-        response["Deprecation"] = "true"  # CMP-3
-        response["Link"] = f'</api/labs/equipment/{equipment_id}/assignment>; rel="successor-version"'
-        return response
 
     def handle_put(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
         serializer, error = self.validate_request()
@@ -318,6 +302,11 @@ class DeprecatedEquipmentAssignmentActionAPIView(EquipmentAssignmentAPIView):
 
     Use /api/labs/equipment/{equipment_id}/assignment instead.
     """
+
+    post_contract = OperationContract(**_ASSIGNMENT_WRITE)
+
+    def handle_post(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        return self.handle_put(request, equipment_id, *args, **kwargs)
 
     def finalize_response(self, request, response, *args, **kwargs):
         response = super().finalize_response(request, response, *args, **kwargs)

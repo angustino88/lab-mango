@@ -64,13 +64,6 @@ paths:
           type: string
           minLength: 1
       - in: query
-        name: search
-        schema:
-          type: string
-          minLength: 1
-        deprecated: true
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-      - in: query
         name: starts_at_after
         schema:
           type: string
@@ -653,13 +646,6 @@ paths:
           maxLength: 200
           minLength: 1
         description: Free-text search term.
-      - in: query
-        name: search
-        schema:
-          type: string
-          maxLength: 255
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-        deprecated: true
       tags:
       - Bench Bookings
       security:
@@ -801,13 +787,6 @@ paths:
           maxLength: 200
           minLength: 1
         description: Free-text search term.
-      - in: query
-        name: search
-        schema:
-          type: string
-          maxLength: 255
-        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
-        deprecated: true
       tags:
       - Bench Bookings
       security:
