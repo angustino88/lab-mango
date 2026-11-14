@@ -12106,7 +12106,7 @@
       ],
       "parameters": [
         {
-          "name": "active",
+          "name": "is_active",
           "in": "query",
           "required": false,
           "description": "",
@@ -12187,30 +12187,40 @@
                     },
                     "project_name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     },
                     "code": {
                       "type": "string",
+                      "readOnly": true,
                       "nullable": true,
                       "description": "Short unique project code, e.g. a cost-center number.",
                       "maxLength": 50
                     },
-                    "starts_on": {
+                    "start_date": {
                       "type": "string",
                       "format": "date",
+                      "readOnly": true,
                       "nullable": true
                     },
-                    "ends_on": {
+                    "end_date": {
                       "type": "string",
                       "format": "date",
+                      "readOnly": true,
                       "nullable": true
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
-                    "id"
+                    "code",
+                    "end_date",
+                    "id",
+                    "is_active",
+                    "project_name",
+                    "start_date"
                   ]
                 }
               }
@@ -12232,9 +12242,9 @@
                 "id": 1,
                 "project_name": "string",
                 "code": "string",
-                "starts_on": "2026-10-20",
-                "ends_on": "2026-10-20",
-                "active": true
+                "start_date": "2026-10-20",
+                "end_date": "2026-10-20",
+                "is_active": true
               }
             ]
           }
@@ -12374,7 +12384,7 @@
           "application/x-www-form-urlencoded",
           "multipart/form-data"
         ],
-        "required": false,
+        "required": true,
         "description": "",
         "schema": {
           "type": "object",
@@ -12389,27 +12399,30 @@
               "description": "Short unique project code, e.g. a cost-center number.",
               "maxLength": 50
             },
-            "starts_on": {
+            "start_date": {
               "type": "string",
               "format": "date",
               "nullable": true
             },
-            "ends_on": {
+            "end_date": {
               "type": "string",
               "format": "date",
               "nullable": true
             },
-            "active": {
+            "is_active": {
               "type": "boolean"
             }
-          }
+          },
+          "required": [
+            "project_name"
+          ]
         },
         "example_payload": {
           "project_name": "string",
           "code": "string",
-          "starts_on": "2026-10-20",
-          "ends_on": "2026-10-20",
-          "active": true
+          "start_date": "2026-10-20",
+          "end_date": "2026-10-20",
+          "is_active": true
         }
       },
       "responses": {
@@ -12429,30 +12442,40 @@
                   },
                   "project_name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
                   "code": {
                     "type": "string",
+                    "readOnly": true,
                     "nullable": true,
                     "description": "Short unique project code, e.g. a cost-center number.",
                     "maxLength": 50
                   },
-                  "starts_on": {
+                  "start_date": {
                     "type": "string",
                     "format": "date",
+                    "readOnly": true,
                     "nullable": true
                   },
-                  "ends_on": {
+                  "end_date": {
                     "type": "string",
                     "format": "date",
+                    "readOnly": true,
                     "nullable": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
-                  "id"
+                  "code",
+                  "end_date",
+                  "id",
+                  "is_active",
+                  "project_name",
+                  "start_date"
                 ]
               }
             },
@@ -12465,9 +12488,9 @@
               "id": 1,
               "project_name": "string",
               "code": "string",
-              "starts_on": "2026-10-20",
-              "ends_on": "2026-10-20",
-              "active": true
+              "start_date": "2026-10-20",
+              "end_date": "2026-10-20",
+              "is_active": true
             }
           }
         },
@@ -12670,30 +12693,40 @@
                   },
                   "project_name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
                   "code": {
                     "type": "string",
+                    "readOnly": true,
                     "nullable": true,
                     "description": "Short unique project code, e.g. a cost-center number.",
                     "maxLength": 50
                   },
-                  "starts_on": {
+                  "start_date": {
                     "type": "string",
                     "format": "date",
+                    "readOnly": true,
                     "nullable": true
                   },
-                  "ends_on": {
+                  "end_date": {
                     "type": "string",
                     "format": "date",
+                    "readOnly": true,
                     "nullable": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
-                  "id"
+                  "code",
+                  "end_date",
+                  "id",
+                  "is_active",
+                  "project_name",
+                  "start_date"
                 ]
               }
             },
@@ -12706,9 +12739,9 @@
               "id": 1,
               "project_name": "string",
               "code": "string",
-              "starts_on": "2026-10-20",
-              "ends_on": "2026-10-20",
-              "active": true
+              "start_date": "2026-10-20",
+              "end_date": "2026-10-20",
+              "is_active": true
             }
           }
         },
@@ -19750,7 +19783,7 @@
       ],
       "parameters": [
         {
-          "name": "active",
+          "name": "is_active",
           "in": "query",
           "required": false,
           "description": "",
@@ -19831,14 +19864,17 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
                     "id",
+                    "is_active",
                     "name"
                   ]
                 }
@@ -19860,7 +19896,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "active": true
+                "is_active": true
               }
             ]
           }
@@ -20009,7 +20045,7 @@
               "type": "string",
               "maxLength": 255
             },
-            "active": {
+            "is_active": {
               "type": "boolean"
             }
           },
@@ -20019,7 +20055,7 @@
         },
         "example_payload": {
           "name": "string",
-          "active": true
+          "is_active": true
         }
       },
       "responses": {
@@ -20039,14 +20075,17 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -20059,7 +20098,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "active": true
+              "is_active": true
             }
           }
         },
@@ -20262,14 +20301,17 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -20282,7 +20324,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "active": true
+              "is_active": true
             }
           }
         },
@@ -20352,7 +20394,7 @@
       ],
       "parameters": [
         {
-          "name": "active",
+          "name": "is_active",
           "in": "query",
           "required": false,
           "description": "",
@@ -20433,14 +20475,17 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
                     "id",
+                    "is_active",
                     "name"
                   ]
                 }
@@ -20462,7 +20507,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "active": true
+                "is_active": true
               }
             ]
           }
@@ -20611,7 +20656,7 @@
               "type": "string",
               "maxLength": 255
             },
-            "active": {
+            "is_active": {
               "type": "boolean"
             }
           },
@@ -20621,7 +20666,7 @@
         },
         "example_payload": {
           "name": "string",
-          "active": true
+          "is_active": true
         }
       },
       "responses": {
@@ -20641,14 +20686,17 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -20661,7 +20709,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "active": true
+              "is_active": true
             }
           }
         },
@@ -20864,14 +20912,17 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -20884,7 +20935,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "active": true
+              "is_active": true
             }
           }
         },
@@ -41688,7 +41739,7 @@
       ],
       "parameters": [
         {
-          "name": "active",
+          "name": "is_active",
           "in": "query",
           "required": false,
           "description": "",
@@ -41769,48 +41820,55 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 120
                     },
                     "key": {
+                      "type": "string",
+                      "readOnly": true,
                       "nullable": true,
                       "description": "Stable code used by the code base (e.g. 'computing'). Filled from the name when empty. Renaming the category never changes it.",
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        },
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ]
+                      "maxLength": 32,
+                      "pattern": "^[-a-zA-Z0-9_]+$"
                     },
                     "definition": {
-                      "type": "string"
+                      "type": "string",
+                      "readOnly": true
                     },
-                    "bookable": {
+                    "is_bookable": {
                       "type": "boolean",
+                      "readOnly": true,
                       "description": "Units can be lent and reserved."
                     },
-                    "placeable_on_bench": {
+                    "is_placeable_on_bench": {
                       "type": "boolean",
+                      "readOnly": true,
                       "description": "Units can be assigned to a bench."
                     },
-                    "calibratable": {
+                    "is_calibratable": {
                       "type": "boolean",
+                      "readOnly": true,
                       "description": "Units may require calibration."
                     },
-                    "monitored": {
+                    "is_monitored": {
                       "type": "boolean",
+                      "readOnly": true,
                       "description": "Units carry computing columns and may run the monitoring agent (ComputingProfile)."
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
                     "definition",
                     "id",
+                    "is_active",
+                    "is_bookable",
+                    "is_calibratable",
+                    "is_monitored",
+                    "is_placeable_on_bench",
+                    "key",
                     "name"
                   ]
                 }
@@ -41832,13 +41890,13 @@
               {
                 "id": 1,
                 "name": "string",
-                "key": {},
+                "key": "string",
                 "definition": "string",
-                "bookable": true,
-                "placeable_on_bench": true,
-                "calibratable": true,
-                "monitored": true,
-                "active": true
+                "is_bookable": true,
+                "is_placeable_on_bench": true,
+                "is_calibratable": true,
+                "is_monitored": true,
+                "is_active": true
               }
             ]
           }
@@ -41989,49 +42047,55 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
                   "key": {
+                    "type": "string",
+                    "readOnly": true,
                     "nullable": true,
                     "description": "Stable code used by the code base (e.g. 'computing'). Filled from the name when empty. Renaming the category never changes it.",
-                    "oneOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 32,
-                        "pattern": "^[-a-zA-Z0-9_]+$"
-                      },
-                      {
-                        "type": "string",
-                        "maxLength": 0
-                      }
-                    ]
+                    "maxLength": 32,
+                    "pattern": "^[-a-zA-Z0-9_]+$"
                   },
                   "definition": {
-                    "type": "string"
+                    "type": "string",
+                    "readOnly": true
                   },
-                  "bookable": {
+                  "is_bookable": {
                     "type": "boolean",
+                    "readOnly": true,
                     "description": "Units can be lent and reserved."
                   },
-                  "placeable_on_bench": {
+                  "is_placeable_on_bench": {
                     "type": "boolean",
+                    "readOnly": true,
                     "description": "Units can be assigned to a bench."
                   },
-                  "calibratable": {
+                  "is_calibratable": {
                     "type": "boolean",
+                    "readOnly": true,
                     "description": "Units may require calibration."
                   },
-                  "monitored": {
+                  "is_monitored": {
                     "type": "boolean",
+                    "readOnly": true,
                     "description": "Units carry computing columns and may run the monitoring agent (ComputingProfile)."
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "definition",
                   "id",
+                  "is_active",
+                  "is_bookable",
+                  "is_calibratable",
+                  "is_monitored",
+                  "is_placeable_on_bench",
+                  "key",
                   "name"
                 ]
               }
@@ -42046,11 +42110,11 @@
               "name": "string",
               "key": "string",
               "definition": "string",
-              "bookable": true,
-              "placeable_on_bench": true,
-              "calibratable": true,
-              "monitored": true,
-              "active": true
+              "is_bookable": true,
+              "is_placeable_on_bench": true,
+              "is_calibratable": true,
+              "is_monitored": true,
+              "is_active": true
             }
           }
         },
@@ -42120,7 +42184,7 @@
       ],
       "parameters": [
         {
-          "name": "active",
+          "name": "is_active",
           "in": "query",
           "required": false,
           "description": "",
@@ -42201,17 +42265,22 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     },
                     "description": {
-                      "type": "string"
+                      "type": "string",
+                      "readOnly": true
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
+                    "description",
                     "id",
+                    "is_active",
                     "name"
                   ]
                 }
@@ -42234,7 +42303,7 @@
                 "id": 1,
                 "name": "string",
                 "description": "string",
-                "active": true
+                "is_active": true
               }
             ]
           }
@@ -42386,7 +42455,7 @@
             "description": {
               "type": "string"
             },
-            "active": {
+            "is_active": {
               "type": "boolean"
             }
           },
@@ -42397,7 +42466,7 @@
         "example_payload": {
           "name": "string",
           "description": "string",
-          "active": true
+          "is_active": true
         }
       },
       "responses": {
@@ -42417,17 +42486,22 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "readOnly": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
+                  "description",
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -42441,7 +42515,7 @@
               "id": 1,
               "name": "string",
               "description": "string",
-              "active": true
+              "is_active": true
             }
           }
         },
@@ -42644,17 +42718,22 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "readOnly": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
+                  "description",
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -42668,7 +42747,7 @@
               "id": 1,
               "name": "string",
               "description": "string",
-              "active": true
+              "is_active": true
             }
           }
         },
@@ -42809,6 +42888,7 @@
                     },
                     "resolution": {
                       "type": "string",
+                      "readOnly": true,
                       "description": "Label shown in the select, e.g. QHD.",
                       "maxLength": 255
                     },
@@ -42816,18 +42896,22 @@
                       "type": "integer",
                       "maximum": 32767,
                       "minimum": 0,
+                      "readOnly": true,
                       "nullable": true
                     },
                     "height_px": {
                       "type": "integer",
                       "maximum": 32767,
                       "minimum": 0,
+                      "readOnly": true,
                       "nullable": true
                     }
                   },
                   "required": [
+                    "height_px",
                     "id",
-                    "resolution"
+                    "resolution",
+                    "width_px"
                   ]
                 }
               }
@@ -43039,6 +43123,7 @@
                   },
                   "resolution": {
                     "type": "string",
+                    "readOnly": true,
                     "description": "Label shown in the select, e.g. QHD.",
                     "maxLength": 255
                   },
@@ -43046,18 +43131,22 @@
                     "type": "integer",
                     "maximum": 32767,
                     "minimum": 0,
+                    "readOnly": true,
                     "nullable": true
                   },
                   "height_px": {
                     "type": "integer",
                     "maximum": 32767,
                     "minimum": 0,
+                    "readOnly": true,
                     "nullable": true
                   }
                 },
                 "required": [
+                  "height_px",
                   "id",
-                  "resolution"
+                  "resolution",
+                  "width_px"
                 ]
               }
             },
@@ -43273,6 +43362,7 @@
                   },
                   "resolution": {
                     "type": "string",
+                    "readOnly": true,
                     "description": "Label shown in the select, e.g. QHD.",
                     "maxLength": 255
                   },
@@ -43280,18 +43370,22 @@
                     "type": "integer",
                     "maximum": 32767,
                     "minimum": 0,
+                    "readOnly": true,
                     "nullable": true
                   },
                   "height_px": {
                     "type": "integer",
                     "maximum": 32767,
                     "minimum": 0,
+                    "readOnly": true,
                     "nullable": true
                   }
                 },
                 "required": [
+                  "height_px",
                   "id",
-                  "resolution"
+                  "resolution",
+                  "width_px"
                 ]
               }
             },
@@ -43445,6 +43539,7 @@
                     },
                     "size": {
                       "type": "string",
+                      "readOnly": true,
                       "description": "Label shown in the select, e.g. 27\".",
                       "maxLength": 255
                     },
@@ -43452,11 +43547,13 @@
                       "type": "string",
                       "format": "decimal",
                       "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$",
+                      "readOnly": true,
                       "nullable": true,
                       "description": "Diagonal in inches."
                     }
                   },
                   "required": [
+                    "diagonal_in",
                     "id",
                     "size"
                   ]
@@ -43663,6 +43760,7 @@
                   },
                   "size": {
                     "type": "string",
+                    "readOnly": true,
                     "description": "Label shown in the select, e.g. 27\".",
                     "maxLength": 255
                   },
@@ -43670,11 +43768,13 @@
                     "type": "string",
                     "format": "decimal",
                     "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$",
+                    "readOnly": true,
                     "nullable": true,
                     "description": "Diagonal in inches."
                   }
                 },
                 "required": [
+                  "diagonal_in",
                   "id",
                   "size"
                 ]
@@ -43891,6 +43991,7 @@
                   },
                   "size": {
                     "type": "string",
+                    "readOnly": true,
                     "description": "Label shown in the select, e.g. 27\".",
                     "maxLength": 255
                   },
@@ -43898,11 +43999,13 @@
                     "type": "string",
                     "format": "decimal",
                     "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$",
+                    "readOnly": true,
                     "nullable": true,
                     "description": "Diagonal in inches."
                   }
                 },
                 "required": [
+                  "diagonal_in",
                   "id",
                   "size"
                 ]
@@ -43986,16 +44089,6 @@
       ],
       "parameters": [
         {
-          "name": "active",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "boolean",
-            "nullable": true
-          }
-        },
-        {
           "name": "department_id",
           "in": "query",
           "required": false,
@@ -44003,6 +44096,16 @@
           "schema": {
             "type": "integer",
             "minimum": 1
+          }
+        },
+        {
+          "name": "is_active",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
           }
         },
         {
@@ -44077,23 +44180,33 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     },
                     "description": {
-                      "type": "string"
+                      "type": "string",
+                      "readOnly": true
                     },
-                    "department_id": {
-                      "type": "integer",
+                    "department": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true,
                       "nullable": true
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
-                    "department_id",
+                    "department",
+                    "description",
                     "id",
+                    "is_active",
                     "name"
                   ]
                 }
@@ -44116,8 +44229,8 @@
                 "id": 1,
                 "name": "string",
                 "description": "string",
-                "department_id": 1,
-                "active": true
+                "department": {},
+                "is_active": true
               }
             ]
           }
@@ -44269,13 +44382,13 @@
             "description": {
               "type": "string"
             },
-            "active": {
-              "type": "boolean"
-            },
             "department_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
+            },
+            "is_active": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -44285,8 +44398,8 @@
         "example_payload": {
           "name": "string",
           "description": "string",
-          "active": true,
-          "department_id": 1
+          "department_id": 1,
+          "is_active": true
         }
       },
       "responses": {
@@ -44306,23 +44419,33 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "readOnly": true
                   },
-                  "department_id": {
-                    "type": "integer",
+                  "department": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true,
                     "nullable": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
-                  "department_id",
+                  "department",
+                  "description",
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -44336,8 +44459,8 @@
               "id": 1,
               "name": "string",
               "description": "string",
-              "department_id": 1,
-              "active": true
+              "department": {},
+              "is_active": true
             }
           }
         },
@@ -44540,23 +44663,33 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "readOnly": true
                   },
-                  "department_id": {
-                    "type": "integer",
+                  "department": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true,
                     "nullable": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
-                  "department_id",
+                  "department",
+                  "description",
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -44570,8 +44703,8 @@
               "id": 1,
               "name": "string",
               "description": "string",
-              "department_id": 1,
-              "active": true
+              "department": {},
+              "is_active": true
             }
           }
         },
@@ -44712,6 +44845,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
@@ -44912,6 +45046,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -45131,6 +45266,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -45217,16 +45353,6 @@
       ],
       "parameters": [
         {
-          "name": "active",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "boolean",
-            "nullable": true
-          }
-        },
-        {
           "name": "category_id",
           "in": "query",
           "required": false,
@@ -45234,6 +45360,16 @@
           "schema": {
             "type": "integer",
             "minimum": 1
+          }
+        },
+        {
+          "name": "is_active",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
           }
         },
         {
@@ -45308,19 +45444,27 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 120
                     },
-                    "category_id": {
-                      "type": "integer",
+                    "category": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
-                    "category_id",
+                    "category",
                     "id",
+                    "is_active",
                     "name"
                   ]
                 }
@@ -45342,8 +45486,8 @@
               {
                 "id": 1,
                 "name": "string",
-                "category_id": 1,
-                "active": true
+                "category": {},
+                "is_active": true
               }
             ]
           }
@@ -45492,12 +45636,12 @@
               "type": "string",
               "maxLength": 120
             },
-            "active": {
-              "type": "boolean"
-            },
             "category_id": {
               "type": "integer",
               "minimum": 1
+            },
+            "is_active": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -45507,8 +45651,8 @@
         },
         "example_payload": {
           "name": "string",
-          "active": true,
-          "category_id": 1
+          "category_id": 1,
+          "is_active": true
         }
       },
       "responses": {
@@ -45528,19 +45672,27 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
-                  "category_id": {
-                    "type": "integer",
+                  "category": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
-                  "category_id",
+                  "category",
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -45553,8 +45705,8 @@
             "data": {
               "id": 1,
               "name": "string",
-              "category_id": 1,
-              "active": true
+              "category": {},
+              "is_active": true
             }
           }
         },
@@ -45757,19 +45909,27 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
-                  "category_id": {
-                    "type": "integer",
+                  "category": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
-                  "category_id",
+                  "category",
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -45782,8 +45942,8 @@
             "data": {
               "id": 1,
               "name": "string",
-              "category_id": 1,
-              "active": true
+              "category": {},
+              "is_active": true
             }
           }
         },
@@ -45853,7 +46013,7 @@
       ],
       "parameters": [
         {
-          "name": "active",
+          "name": "is_active",
           "in": "query",
           "required": false,
           "description": "",
@@ -45934,6 +46094,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 120
                     },
                     "categories": {
@@ -45944,13 +46105,15 @@
                       },
                       "readOnly": true
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
                     "categories",
                     "id",
+                    "is_active",
                     "name"
                   ]
                 }
@@ -45975,7 +46138,7 @@
                 "categories": [
                   {}
                 ],
-                "active": true
+                "is_active": true
               }
             ]
           }
@@ -46124,16 +46287,16 @@
               "type": "string",
               "maxLength": 120
             },
-            "active": {
-              "type": "boolean"
-            },
-            "categories": {
+            "category_ids": {
               "type": "array",
               "items": {
                 "type": "integer",
                 "minimum": 1
               },
               "maxItems": 100
+            },
+            "is_active": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -46142,10 +46305,10 @@
         },
         "example_payload": {
           "name": "string",
-          "active": true,
-          "categories": [
+          "category_ids": [
             1
-          ]
+          ],
+          "is_active": true
         }
       },
       "responses": {
@@ -46165,22 +46328,26 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
                   "categories": {
                     "type": "array",
                     "items": {
-                      "type": "integer"
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
                     },
                     "readOnly": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "categories",
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -46194,9 +46361,9 @@
               "id": 1,
               "name": "string",
               "categories": [
-                1
+                {}
               ],
-              "active": true
+              "is_active": true
             }
           }
         },
@@ -46399,22 +46566,26 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
                   "categories": {
                     "type": "array",
                     "items": {
-                      "type": "integer"
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
                     },
                     "readOnly": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "categories",
                   "id",
+                  "is_active",
                   "name"
                 ]
               }
@@ -46428,9 +46599,9 @@
               "id": 1,
               "name": "string",
               "categories": [
-                1
+                {}
               ],
-              "active": true
+              "is_active": true
             }
           }
         },
@@ -46571,6 +46742,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
@@ -46771,6 +46943,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -46990,6 +47163,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -47147,6 +47321,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 25
                     }
                   },
@@ -47347,6 +47522,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 25
                   }
                 },
@@ -47566,6 +47742,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 25
                   }
                 },
@@ -47741,23 +47918,34 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "product_model_id": {
-                      "type": "integer",
+                    "product_model": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
-                    "definition_id": {
-                      "type": "integer",
+                    "definition": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "value": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
                   "required": [
-                    "definition_id",
+                    "definition",
                     "id",
-                    "product_model_id",
+                    "product_model",
                     "value"
                   ]
                 }
@@ -47778,8 +47966,8 @@
             "data": [
               {
                 "id": 1,
-                "product_model_id": 1,
-                "definition_id": 1,
+                "product_model": {},
+                "definition": {},
                 "value": "string"
               }
             ]
@@ -47965,23 +48153,34 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "product_model_id": {
-                    "type": "integer",
+                  "product_model": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
-                  "definition_id": {
-                    "type": "integer",
+                  "definition": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "value": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
                 "required": [
-                  "definition_id",
+                  "definition",
                   "id",
-                  "product_model_id",
+                  "product_model",
                   "value"
                 ]
               }
@@ -47993,8 +48192,8 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "product_model_id": 1,
-              "definition_id": 1,
+              "product_model": {},
+              "definition": {},
               "value": "string"
             }
           }
@@ -48196,23 +48395,34 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "product_model_id": {
-                    "type": "integer",
+                  "product_model": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
-                  "definition_id": {
-                    "type": "integer",
+                  "definition": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "value": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
                 "required": [
-                  "definition_id",
+                  "definition",
                   "id",
-                  "product_model_id",
+                  "product_model",
                   "value"
                 ]
               }
@@ -48224,8 +48434,8 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "product_model_id": 1,
-              "definition_id": 1,
+              "product_model": {},
+              "definition": {},
               "value": "string"
             }
           }
@@ -48296,16 +48506,6 @@
       ],
       "parameters": [
         {
-          "name": "active",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "boolean",
-            "nullable": true
-          }
-        },
-        {
           "name": "equipment_type_id",
           "in": "query",
           "required": false,
@@ -48313,6 +48513,16 @@
           "schema": {
             "type": "integer",
             "minimum": 1
+          }
+        },
+        {
+          "name": "is_active",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
           }
         },
         {
@@ -48397,20 +48607,32 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 120
                     },
-                    "manufacturer_id": {
-                      "type": "integer",
+                    "manufacturer": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
-                    "equipment_type_id": {
-                      "type": "integer",
+                    "equipment_type": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "default_power_draw_w": {
                       "type": "integer",
                       "maximum": 2147483647,
                       "minimum": 0,
+                      "readOnly": true,
                       "nullable": true,
                       "description": "Copied to new assets of this model when empty."
                     },
@@ -48418,17 +48640,22 @@
                       "type": "string",
                       "format": "decimal",
                       "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
+                      "readOnly": true,
                       "nullable": true,
                       "description": "Copied to new assets of this model when empty."
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
-                    "equipment_type_id",
+                    "default_power_draw_w",
+                    "default_weight_kg",
+                    "equipment_type",
                     "id",
-                    "manufacturer_id",
+                    "is_active",
+                    "manufacturer",
                     "name"
                   ]
                 }
@@ -48450,11 +48677,11 @@
               {
                 "id": 1,
                 "name": "string",
-                "manufacturer_id": 1,
-                "equipment_type_id": 1,
+                "manufacturer": {},
+                "equipment_type": {},
                 "default_power_draw_w": 1,
                 "default_weight_kg": "string",
-                "active": true
+                "is_active": true
               }
             ]
           }
@@ -48603,6 +48830,14 @@
               "type": "string",
               "maxLength": 120
             },
+            "manufacturer_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "equipment_type_id": {
+              "type": "integer",
+              "minimum": 1
+            },
             "default_power_draw_w": {
               "type": "integer",
               "maximum": 2147483647,
@@ -48617,16 +48852,8 @@
               "nullable": true,
               "description": "Copied to new assets of this model when empty."
             },
-            "active": {
+            "is_active": {
               "type": "boolean"
-            },
-            "manufacturer_id": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "equipment_type_id": {
-              "type": "integer",
-              "minimum": 1
             }
           },
           "required": [
@@ -48637,11 +48864,11 @@
         },
         "example_payload": {
           "name": "string",
+          "manufacturer_id": 1,
+          "equipment_type_id": 1,
           "default_power_draw_w": 1,
           "default_weight_kg": "string",
-          "active": true,
-          "manufacturer_id": 1,
-          "equipment_type_id": 1
+          "is_active": true
         }
       },
       "responses": {
@@ -48661,20 +48888,32 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
-                  "manufacturer_id": {
-                    "type": "integer",
+                  "manufacturer": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
-                  "equipment_type_id": {
-                    "type": "integer",
+                  "equipment_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "default_power_draw_w": {
                     "type": "integer",
                     "maximum": 2147483647,
                     "minimum": 0,
+                    "readOnly": true,
                     "nullable": true,
                     "description": "Copied to new assets of this model when empty."
                   },
@@ -48682,17 +48921,22 @@
                     "type": "string",
                     "format": "decimal",
                     "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
+                    "readOnly": true,
                     "nullable": true,
                     "description": "Copied to new assets of this model when empty."
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
-                  "equipment_type_id",
+                  "default_power_draw_w",
+                  "default_weight_kg",
+                  "equipment_type",
                   "id",
-                  "manufacturer_id",
+                  "is_active",
+                  "manufacturer",
                   "name"
                 ]
               }
@@ -48705,11 +48949,11 @@
             "data": {
               "id": 1,
               "name": "string",
-              "manufacturer_id": 1,
-              "equipment_type_id": 1,
+              "manufacturer": {},
+              "equipment_type": {},
               "default_power_draw_w": 1,
               "default_weight_kg": "string",
-              "active": true
+              "is_active": true
             }
           }
         },
@@ -48912,20 +49156,32 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
-                  "manufacturer_id": {
-                    "type": "integer",
+                  "manufacturer": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
-                  "equipment_type_id": {
-                    "type": "integer",
+                  "equipment_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "default_power_draw_w": {
                     "type": "integer",
                     "maximum": 2147483647,
                     "minimum": 0,
+                    "readOnly": true,
                     "nullable": true,
                     "description": "Copied to new assets of this model when empty."
                   },
@@ -48933,17 +49189,22 @@
                     "type": "string",
                     "format": "decimal",
                     "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
+                    "readOnly": true,
                     "nullable": true,
                     "description": "Copied to new assets of this model when empty."
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
-                  "equipment_type_id",
+                  "default_power_draw_w",
+                  "default_weight_kg",
+                  "equipment_type",
                   "id",
-                  "manufacturer_id",
+                  "is_active",
+                  "manufacturer",
                   "name"
                 ]
               }
@@ -48956,11 +49217,11 @@
             "data": {
               "id": 1,
               "name": "string",
-              "manufacturer_id": 1,
-              "equipment_type_id": 1,
+              "manufacturer": {},
+              "equipment_type": {},
               "default_power_draw_w": 1,
               "default_weight_kg": "string",
-              "active": true
+              "is_active": true
             }
           }
         },
@@ -49101,6 +49362,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
@@ -49301,6 +49563,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -49520,6 +49783,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -49677,6 +49941,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
@@ -49877,6 +50142,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -50096,6 +50362,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -50182,16 +50449,6 @@
       ],
       "parameters": [
         {
-          "name": "active",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "boolean",
-            "nullable": true
-          }
-        },
-        {
           "name": "category_id",
           "in": "query",
           "required": false,
@@ -50199,6 +50456,16 @@
           "schema": {
             "type": "integer",
             "minimum": 1
+          }
+        },
+        {
+          "name": "is_active",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
           }
         },
         {
@@ -50273,29 +50540,45 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 120
                     },
-                    "category_id": {
-                      "type": "integer",
+                    "category": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true,
                       "nullable": true
                     },
                     "unit": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 20
                     },
                     "value_type": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
-                    "category_id",
+                    "category",
                     "id",
-                    "name"
+                    "is_active",
+                    "name",
+                    "unit",
+                    "value_type"
                   ]
                 }
               }
@@ -50316,10 +50599,10 @@
               {
                 "id": 1,
                 "name": "string",
-                "category_id": 1,
+                "category": {},
                 "unit": "string",
                 "value_type": {},
-                "active": true
+                "is_active": true
               }
             ]
           }
@@ -50468,6 +50751,11 @@
               "type": "string",
               "maxLength": 120
             },
+            "category_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
             "unit": {
               "type": "string",
               "maxLength": 20
@@ -50481,13 +50769,8 @@
               "type": "string",
               "description": "* `text` - Text\n* `number` - Number\n* `boolean` - Yes / No"
             },
-            "active": {
+            "is_active": {
               "type": "boolean"
-            },
-            "category_id": {
-              "type": "integer",
-              "minimum": 1,
-              "nullable": true
             }
           },
           "required": [
@@ -50496,10 +50779,10 @@
         },
         "example_payload": {
           "name": "string",
+          "category_id": 1,
           "unit": "string",
           "value_type": "text",
-          "active": true,
-          "category_id": 1
+          "is_active": true
         }
       },
       "responses": {
@@ -50519,33 +50802,45 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
-                  "category_id": {
-                    "type": "integer",
+                  "category": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true,
                     "nullable": true
                   },
                   "unit": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 20
                   },
                   "value_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `text` - Text\n* `number` - Number\n* `boolean` - Yes / No"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
-                  "category_id",
+                  "category",
                   "id",
-                  "name"
+                  "is_active",
+                  "name",
+                  "unit",
+                  "value_type"
                 ]
               }
             },
@@ -50557,10 +50852,10 @@
             "data": {
               "id": 1,
               "name": "string",
-              "category_id": 1,
+              "category": {},
               "unit": "string",
-              "value_type": "string",
-              "active": true
+              "value_type": {},
+              "is_active": true
             }
           }
         },
@@ -50763,33 +51058,45 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
-                  "category_id": {
-                    "type": "integer",
+                  "category": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true,
                     "nullable": true
                   },
                   "unit": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 20
                   },
                   "value_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `text` - Text\n* `number` - Number\n* `boolean` - Yes / No"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
-                  "category_id",
+                  "category",
                   "id",
-                  "name"
+                  "is_active",
+                  "name",
+                  "unit",
+                  "value_type"
                 ]
               }
             },
@@ -50801,10 +51108,10 @@
             "data": {
               "id": 1,
               "name": "string",
-              "category_id": 1,
+              "category": {},
               "unit": "string",
-              "value_type": "string",
-              "active": true
+              "value_type": {},
+              "is_active": true
             }
           }
         },
@@ -50945,6 +51252,7 @@
                     },
                     "username": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
@@ -51145,6 +51453,7 @@
                   },
                   "username": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -51364,6 +51673,7 @@
                   },
                   "username": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -51450,7 +51760,7 @@
       ],
       "parameters": [
         {
-          "name": "active",
+          "name": "is_active",
           "in": "query",
           "required": false,
           "description": "",
@@ -51541,19 +51851,27 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 120
                     },
-                    "kind_id": {
-                      "type": "integer",
+                    "kind": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
-                    "active": {
-                      "type": "boolean"
+                    "is_active": {
+                      "type": "boolean",
+                      "readOnly": true
                     }
                   },
                   "required": [
                     "id",
-                    "kind_id",
+                    "is_active",
+                    "kind",
                     "name"
                   ]
                 }
@@ -51575,8 +51893,8 @@
               {
                 "id": 1,
                 "name": "string",
-                "kind_id": 1,
-                "active": true
+                "kind": {},
+                "is_active": true
               }
             ]
           }
@@ -51725,12 +52043,12 @@
               "type": "string",
               "maxLength": 120
             },
-            "active": {
-              "type": "boolean"
-            },
             "kind_id": {
               "type": "integer",
               "minimum": 1
+            },
+            "is_active": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -51740,8 +52058,8 @@
         },
         "example_payload": {
           "name": "string",
-          "active": true,
-          "kind_id": 1
+          "kind_id": 1,
+          "is_active": true
         }
       },
       "responses": {
@@ -51761,19 +52079,27 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
-                  "kind_id": {
-                    "type": "integer",
+                  "kind": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "id",
-                  "kind_id",
+                  "is_active",
+                  "kind",
                   "name"
                 ]
               }
@@ -51786,8 +52112,8 @@
             "data": {
               "id": 1,
               "name": "string",
-              "kind_id": 1,
-              "active": true
+              "kind": {},
+              "is_active": true
             }
           }
         },
@@ -51990,19 +52316,27 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 120
                   },
-                  "kind_id": {
-                    "type": "integer",
+                  "kind": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
-                  "active": {
-                    "type": "boolean"
+                  "is_active": {
+                    "type": "boolean",
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "id",
-                  "kind_id",
+                  "is_active",
+                  "kind",
                   "name"
                 ]
               }
@@ -52015,8 +52349,8 @@
             "data": {
               "id": 1,
               "name": "string",
-              "kind_id": 1,
-              "active": true
+              "kind": {},
+              "is_active": true
             }
           }
         },
@@ -71773,7 +72107,7 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "expiry_date": {
+                    "expires_at": {
                       "type": "string",
                       "format": "date-time",
                       "readOnly": true,
@@ -71815,7 +72149,7 @@
                     "category",
                     "created_at",
                     "department",
-                    "expiry_date",
+                    "expires_at",
                     "id",
                     "image_url",
                     "max_version",
@@ -71866,7 +72200,7 @@
                 "seats": 1,
                 "seats_in_use": 1,
                 "max_version": "string",
-                "expiry_date": "2026-10-20T12:00:00Z",
+                "expires_at": "2026-10-20T12:00:00Z",
                 "status": {},
                 "acquisition_price": {},
                 "created_at": "2026-10-20T12:00:00Z",
@@ -72449,6 +72783,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
@@ -72649,6 +72984,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -72868,6 +73204,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -73035,10 +73372,16 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     },
-                    "vendor_id": {
-                      "type": "integer",
+                    "vendor": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true,
                       "nullable": true
                     }
@@ -73046,7 +73389,7 @@
                   "required": [
                     "id",
                     "name",
-                    "vendor_id"
+                    "vendor"
                   ]
                 }
               }
@@ -73067,7 +73410,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "vendor_id": 1
+                "vendor": {}
               }
             ]
           }
@@ -73248,10 +73591,16 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
-                  "vendor_id": {
-                    "type": "integer",
+                  "vendor": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true,
                     "nullable": true
                   }
@@ -73259,7 +73608,7 @@
                 "required": [
                   "id",
                   "name",
-                  "vendor_id"
+                  "vendor"
                 ]
               }
             },
@@ -73271,7 +73620,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "vendor_id": 1
+              "vendor": {}
             }
           }
         },
@@ -73474,10 +73823,16 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   },
-                  "vendor_id": {
-                    "type": "integer",
+                  "vendor": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true,
                     "nullable": true
                   }
@@ -73485,7 +73840,7 @@
                 "required": [
                   "id",
                   "name",
-                  "vendor_id"
+                  "vendor"
                 ]
               }
             },
@@ -73497,7 +73852,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "vendor_id": 1
+              "vendor": {}
             }
           }
         },
@@ -73638,6 +73993,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
@@ -73838,6 +74194,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -74057,6 +74414,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -74214,6 +74572,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
@@ -74414,6 +74773,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -74633,6 +74993,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -74790,6 +75151,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
@@ -74990,6 +75352,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -75209,6 +75572,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -75544,7 +75908,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "expiry_date": {
+                  "expires_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true,
@@ -75586,7 +75950,7 @@
                   "category",
                   "created_at",
                   "department",
-                  "expiry_date",
+                  "expires_at",
                   "id",
                   "image_url",
                   "max_version",
@@ -75628,7 +75992,7 @@
               "seats": 1,
               "seats_in_use": 1,
               "max_version": "string",
-              "expiry_date": "2026-10-20T12:00:00Z",
+              "expires_at": "2026-10-20T12:00:00Z",
               "status": {},
               "acquisition_price": {},
               "created_at": "2026-10-20T12:00:00Z",
@@ -76385,7 +76749,7 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "expiry_date": {
+                  "expires_at": {
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true,
@@ -76427,7 +76791,7 @@
                   "category",
                   "created_at",
                   "department",
-                  "expiry_date",
+                  "expires_at",
                   "id",
                   "image_url",
                   "max_version",
@@ -76469,7 +76833,7 @@
               "seats": 1,
               "seats_in_use": 1,
               "max_version": "string",
-              "expiry_date": "2026-10-20T12:00:00Z",
+              "expires_at": "2026-10-20T12:00:00Z",
               "status": {},
               "acquisition_price": {},
               "created_at": "2026-10-20T12:00:00Z",
@@ -77011,12 +77375,12 @@
                       ],
                       "readOnly": true
                     },
-                    "valid_from": {
+                    "start_date": {
                       "type": "string",
                       "format": "date",
                       "readOnly": true
                     },
-                    "valid_until": {
+                    "end_date": {
                       "type": "string",
                       "format": "date",
                       "readOnly": true,
@@ -77031,11 +77395,11 @@
                   "required": [
                     "billing_period",
                     "created_at",
+                    "end_date",
                     "id",
                     "license",
                     "price",
-                    "valid_from",
-                    "valid_until"
+                    "start_date"
                   ]
                 }
               }
@@ -77058,8 +77422,8 @@
                 "license": {},
                 "price": {},
                 "billing_period": {},
-                "valid_from": "2026-10-20",
-                "valid_until": "2026-10-20",
+                "start_date": "2026-10-20",
+                "end_date": "2026-10-20",
                 "created_at": "2026-10-20T12:00:00Z"
               }
             ]
@@ -77226,11 +77590,11 @@
               "type": "string",
               "description": "* `one_time` - One-time\n* `monthly` - Monthly\n* `quarterly` - Quarterly\n* `annual` - Annual"
             },
-            "valid_from": {
+            "start_date": {
               "type": "string",
               "format": "date"
             },
-            "valid_until": {
+            "end_date": {
               "type": "string",
               "format": "date",
               "nullable": true
@@ -77238,15 +77602,15 @@
           },
           "required": [
             "price",
-            "valid_from"
+            "start_date"
           ]
         },
         "example_payload": {
           "price": "string",
           "currency": "string",
           "billing_period": "one_time",
-          "valid_from": "2026-10-20",
-          "valid_until": "2026-10-20"
+          "start_date": "2026-10-20",
+          "end_date": "2026-10-20"
         }
       },
       "responses": {
@@ -77292,12 +77656,12 @@
                     ],
                     "readOnly": true
                   },
-                  "valid_from": {
+                  "start_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true
                   },
-                  "valid_until": {
+                  "end_date": {
                     "type": "string",
                     "format": "date",
                     "readOnly": true,
@@ -77312,11 +77676,11 @@
                 "required": [
                   "billing_period",
                   "created_at",
+                  "end_date",
                   "id",
                   "license",
                   "price",
-                  "valid_from",
-                  "valid_until"
+                  "start_date"
                 ]
               }
             },
@@ -77330,8 +77694,8 @@
               "license": {},
               "price": {},
               "billing_period": {},
-              "valid_from": "2026-10-20",
-              "valid_until": "2026-10-20",
+              "start_date": "2026-10-20",
+              "end_date": "2026-10-20",
               "created_at": "2026-10-20T12:00:00Z"
             }
           }
@@ -78384,20 +78748,28 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 100
                     },
-                    "city_id": {
-                      "type": "integer",
+                    "city": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true,
                       "nullable": true
                     },
                     "address": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
                   "required": [
-                    "city_id",
+                    "address",
+                    "city",
                     "id",
                     "name"
                   ]
@@ -78420,7 +78792,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "city_id": 1,
+                "city": {},
                 "address": "string"
               }
             ]
@@ -78570,14 +78942,14 @@
               "type": "string",
               "maxLength": 100
             },
-            "address": {
-              "type": "string",
-              "maxLength": 255
-            },
             "city_id": {
               "type": "integer",
               "minimum": 1,
               "nullable": true
+            },
+            "address": {
+              "type": "string",
+              "maxLength": 255
             }
           },
           "required": [
@@ -78586,8 +78958,8 @@
         },
         "example_payload": {
           "name": "string",
-          "address": "string",
-          "city_id": 1
+          "city_id": 1,
+          "address": "string"
         }
       },
       "responses": {
@@ -78607,20 +78979,28 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 100
                   },
-                  "city_id": {
-                    "type": "integer",
+                  "city": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true,
                     "nullable": true
                   },
                   "address": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
                 "required": [
-                  "city_id",
+                  "address",
+                  "city",
                   "id",
                   "name"
                 ]
@@ -78634,7 +79014,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "city_id": 1,
+              "city": {},
               "address": "string"
             }
           }
@@ -78838,20 +79218,28 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 100
                   },
-                  "city_id": {
-                    "type": "integer",
+                  "city": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true,
                     "nullable": true
                   },
                   "address": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
                 "required": [
-                  "city_id",
+                  "address",
+                  "city",
                   "id",
                   "name"
                 ]
@@ -78865,7 +79253,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "city_id": 1,
+              "city": {},
               "address": "string"
             }
           }
@@ -79017,16 +79405,22 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 100
                     },
-                    "country_id": {
-                      "type": "integer",
+                    "country": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true,
                       "nullable": true
                     }
                   },
                   "required": [
-                    "country_id",
+                    "country",
                     "id",
                     "name"
                   ]
@@ -79049,7 +79443,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "country_id": 1
+                "country": {}
               }
             ]
           }
@@ -79230,16 +79624,22 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 100
                   },
-                  "country_id": {
-                    "type": "integer",
+                  "country": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true,
                     "nullable": true
                   }
                 },
                 "required": [
-                  "country_id",
+                  "country",
                   "id",
                   "name"
                 ]
@@ -79253,7 +79653,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "country_id": 1
+              "country": {}
             }
           }
         },
@@ -79456,16 +79856,22 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 100
                   },
-                  "country_id": {
-                    "type": "integer",
+                  "country": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true,
                     "nullable": true
                   }
                 },
                 "required": [
-                  "country_id",
+                  "country",
                   "id",
                   "name"
                 ]
@@ -79479,7 +79885,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "country_id": 1
+              "country": {}
             }
           }
         },
@@ -79620,10 +80026,12 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 100
                     },
                     "code": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 10
                     }
                   },
@@ -79832,10 +80240,12 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 100
                   },
                   "code": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 10
                   }
                 },
@@ -80057,10 +80467,12 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 100
                   },
                   "code": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 10
                   }
                 },
@@ -80220,6 +80632,7 @@
                     },
                     "name": {
                       "type": "string",
+                      "readOnly": true,
                       "maxLength": 255
                     }
                   },
@@ -80420,6 +80833,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -80639,6 +81053,7 @@
                   },
                   "name": {
                     "type": "string",
+                    "readOnly": true,
                     "maxLength": 255
                   }
                 },
@@ -95684,7 +96099,12 @@
                       "readOnly": true
                     },
                     "room": {
-                      "type": "integer",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "row_index": {
@@ -95727,7 +96147,7 @@
                       ],
                       "readOnly": true
                     },
-                    "occupied": {
+                    "is_occupied": {
                       "type": "boolean",
                       "readOnly": true,
                       "default": false
@@ -95796,8 +96216,8 @@
                     "depth_mm",
                     "id",
                     "is_accessible",
+                    "is_occupied",
                     "max_load_kg",
-                    "occupied",
                     "orientation_degrees",
                     "power_capacity_w",
                     "room",
@@ -95830,14 +96250,14 @@
             "data": [
               {
                 "id": 1,
-                "room": 1,
+                "room": {},
                 "row_index": 1,
                 "col_index": 1,
                 "slot_code": "string",
                 "slot_type": {},
                 "status": {},
                 "service_status": {},
-                "occupied": false,
+                "is_occupied": false,
                 "x_mm": 1,
                 "y_mm": 1,
                 "width_mm": 1,
@@ -98523,7 +98943,12 @@
                       "readOnly": true
                     },
                     "room": {
-                      "type": "integer",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "row_index": {
@@ -98566,7 +98991,7 @@
                       ],
                       "readOnly": true
                     },
-                    "occupied": {
+                    "is_occupied": {
                       "type": "boolean",
                       "readOnly": true,
                       "default": false
@@ -98635,8 +99060,8 @@
                     "depth_mm",
                     "id",
                     "is_accessible",
+                    "is_occupied",
                     "max_load_kg",
-                    "occupied",
                     "orientation_degrees",
                     "power_capacity_w",
                     "room",
@@ -98669,14 +99094,14 @@
             "data": [
               {
                 "id": 1,
-                "room": 1,
+                "room": {},
                 "row_index": 1,
                 "col_index": 1,
                 "slot_code": "string",
                 "slot_type": {},
                 "status": {},
                 "service_status": {},
-                "occupied": false,
+                "is_occupied": false,
                 "x_mm": 1,
                 "y_mm": 1,
                 "width_mm": 1,
@@ -108203,7 +108628,12 @@
                       "readOnly": true
                     },
                     "station": {
-                      "type": "integer",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "position_index": {
@@ -108283,7 +108713,7 @@
                       },
                       "readOnly": true
                     },
-                    "occupied": {
+                    "is_occupied": {
                       "type": "boolean",
                       "readOnly": true,
                       "default": false
@@ -108306,10 +108736,10 @@
                     "height_mm",
                     "id",
                     "is_active",
+                    "is_occupied",
                     "label",
                     "max_load_kg",
                     "network_port_count",
-                    "occupied",
                     "position_index",
                     "power_capacity_w",
                     "service_status",
@@ -108338,7 +108768,7 @@
             "data": [
               {
                 "id": 1,
-                "station": 1,
+                "station": {},
                 "position_index": 1,
                 "slot_code": "string",
                 "label": "string",
@@ -108355,7 +108785,7 @@
                 "compatible_bench_types": [
                   {}
                 ],
-                "occupied": false,
+                "is_occupied": false,
                 "created_at": "2026-10-20T12:00:00Z",
                 "updated_at": "2026-10-20T12:00:00Z"
               }
@@ -108636,7 +109066,12 @@
                     "readOnly": true
                   },
                   "station": {
-                    "type": "integer",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "position_index": {
@@ -108715,7 +109150,7 @@
                     },
                     "readOnly": true
                   },
-                  "occupied": {
+                  "is_occupied": {
                     "type": "boolean",
                     "readOnly": true,
                     "default": false
@@ -108738,10 +109173,10 @@
                   "height_mm",
                   "id",
                   "is_active",
+                  "is_occupied",
                   "label",
                   "max_load_kg",
                   "network_port_count",
-                  "occupied",
                   "position_index",
                   "power_capacity_w",
                   "service_status",
@@ -108761,7 +109196,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "station": 1,
+              "station": {},
               "position_index": 1,
               "slot_code": "string",
               "label": "string",
@@ -108778,7 +109213,7 @@
               "compatible_bench_types": [
                 1
               ],
-              "occupied": false,
+              "is_occupied": false,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
             }
@@ -109045,7 +109480,12 @@
                     "readOnly": true
                   },
                   "station": {
-                    "type": "integer",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "position_index": {
@@ -109124,7 +109564,7 @@
                     },
                     "readOnly": true
                   },
-                  "occupied": {
+                  "is_occupied": {
                     "type": "boolean",
                     "readOnly": true,
                     "default": false
@@ -109147,10 +109587,10 @@
                   "height_mm",
                   "id",
                   "is_active",
+                  "is_occupied",
                   "label",
                   "max_load_kg",
                   "network_port_count",
-                  "occupied",
                   "position_index",
                   "power_capacity_w",
                   "service_status",
@@ -109170,7 +109610,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "station": 1,
+              "station": {},
               "position_index": 1,
               "slot_code": "string",
               "label": "string",
@@ -109187,7 +109627,7 @@
               "compatible_bench_types": [
                 1
               ],
-              "occupied": false,
+              "is_occupied": false,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
             }
@@ -109419,7 +109859,12 @@
                     "readOnly": true
                   },
                   "station": {
-                    "type": "integer",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "position_index": {
@@ -109498,7 +109943,7 @@
                     },
                     "readOnly": true
                   },
-                  "occupied": {
+                  "is_occupied": {
                     "type": "boolean",
                     "readOnly": true,
                     "default": false
@@ -109521,10 +109966,10 @@
                   "height_mm",
                   "id",
                   "is_active",
+                  "is_occupied",
                   "label",
                   "max_load_kg",
                   "network_port_count",
-                  "occupied",
                   "position_index",
                   "power_capacity_w",
                   "service_status",
@@ -109544,7 +109989,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "station": 1,
+              "station": {},
               "position_index": 1,
               "slot_code": "string",
               "label": "string",
@@ -109561,7 +110006,7 @@
               "compatible_bench_types": [
                 1
               ],
-              "occupied": false,
+              "is_occupied": false,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
             }
@@ -109952,7 +110397,12 @@
                     "readOnly": true
                   },
                   "station": {
-                    "type": "integer",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "position_index": {
@@ -110031,7 +110481,7 @@
                     },
                     "readOnly": true
                   },
-                  "occupied": {
+                  "is_occupied": {
                     "type": "boolean",
                     "readOnly": true,
                     "default": false
@@ -110054,10 +110504,10 @@
                   "height_mm",
                   "id",
                   "is_active",
+                  "is_occupied",
                   "label",
                   "max_load_kg",
                   "network_port_count",
-                  "occupied",
                   "position_index",
                   "power_capacity_w",
                   "service_status",
@@ -110077,7 +110527,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "station": 1,
+              "station": {},
               "position_index": 1,
               "slot_code": "string",
               "label": "string",
@@ -110094,7 +110544,7 @@
               "compatible_bench_types": [
                 1
               ],
-              "occupied": false,
+              "is_occupied": false,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
             }

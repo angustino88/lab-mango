@@ -3,7 +3,8 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from core.common.api.summary_serializers import UserReferenceSerializer
+from core.common.api.summary_serializers import ChoiceSerializer, UserReferenceSerializer, to_choice
+from core.common.api.wire_names import relation_name
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
@@ -16,11 +17,15 @@ from core.labs.models import DowntimeKind, DowntimeReason, ResourceCondition, Re
 from core.labs.models.resource.base.downtime import DOWNTIME_CONDITIONS
 
 DOWNTIME_CONDITION_CHOICES = [(value, ResourceCondition(value).label) for value in DOWNTIME_CONDITIONS]
+STATE_CHOICES = [(value, value.capitalize()) for value in STATES]
 
 
 class DowntimeResourceSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=tuple(RESOURCE_MODELS), read_only=True)
+    """REL-13 polymorphic relation to the room, station, bench or equipment the window covers."""
+
     id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    type = serializers.ChoiceField(choices=tuple(RESOURCE_MODELS), read_only=True)
 
     class Meta:
         ref_name = "LabsDowntimeResource"
@@ -57,7 +62,10 @@ class DowntimeSerializer(AppModelSerializer):
 
     @extend_schema_field(DowntimeResourceSerializer)
     def get_resource(self, obj) -> dict:
-        return {"type": resource_type_of(obj), "id": int(obj.resource_object_id)}
+        resource_type = resource_type_of(obj)
+        target = obj.resource
+        name = relation_name(target) if target is not None else f"Deleted {resource_type}"  # REL-12
+        return {"id": int(obj.resource_object_id), "name": name, "type": resource_type}
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_condition(self, obj) -> dict[str, str] | None:
@@ -71,9 +79,9 @@ class DowntimeSerializer(AppModelSerializer):
     def get_reason(self, obj) -> dict[str, str] | None:
         return to_choice_reference(obj.reason, DowntimeReason.choices)
 
-    @extend_schema_field(serializers.ChoiceField(choices=STATES))
-    def get_state(self, obj) -> str:
-        return state_of(obj)
+    @extend_schema_field(ChoiceSerializer)
+    def get_state(self, obj) -> dict[str, str] | None:
+        return to_choice(state_of(obj), STATE_CHOICES)
 
 
 class DowntimeCreateSerializer(ResourceWriteSerializerMixin, serializers.Serializer):

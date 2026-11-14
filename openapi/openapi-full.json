@@ -4322,7 +4322,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
+            "name": "is_active",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -4434,7 +4434,8 @@
                 "$ref": "#/components/schemas/LabProjectCatalogCreate"
               }
             }
-          }
+          },
+          "required": true
         },
         "security": [
           {
@@ -7308,7 +7309,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
+            "name": "is_active",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -7533,7 +7534,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
+            "name": "is_active",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -14382,7 +14383,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
+            "name": "is_active",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -14518,7 +14519,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
+            "name": "is_active",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -15177,18 +15178,18 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
-            "schema": {
-              "type": "boolean",
-              "nullable": true
-            }
-          },
-          {
-            "in": "query",
             "name": "department_id",
             "schema": {
               "type": "integer",
               "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_active",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
             }
           },
           {
@@ -15627,18 +15628,18 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
-            "schema": {
-              "type": "boolean",
-              "nullable": true
-            }
-          },
-          {
-            "in": "query",
             "name": "category_id",
             "schema": {
               "type": "integer",
               "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_active",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
             }
           },
           {
@@ -15860,7 +15861,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
+            "name": "is_active",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -16752,18 +16753,18 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
-            "schema": {
-              "type": "boolean",
-              "nullable": true
-            }
-          },
-          {
-            "in": "query",
             "name": "equipment_type_id",
             "schema": {
               "type": "integer",
               "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_active",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
             }
           },
           {
@@ -17427,18 +17428,18 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
-            "schema": {
-              "type": "boolean",
-              "nullable": true
-            }
-          },
-          {
-            "in": "query",
             "name": "category_id",
             "schema": {
               "type": "integer",
               "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_active",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
             }
           },
           {
@@ -17877,7 +17878,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "active",
+            "name": "is_active",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -40618,7 +40619,7 @@
             "type": "string",
             "maxLength": 255
           },
-          "active": {
+          "is_active": {
             "type": "boolean"
           }
         },
@@ -40635,14 +40636,17 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
           "id",
+          "is_active",
           "name"
         ]
       },
@@ -41496,7 +41500,7 @@
             "type": "string",
             "maxLength": 255
           },
-          "active": {
+          "is_active": {
             "type": "boolean"
           }
         },
@@ -41513,14 +41517,17 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
           "id",
+          "is_active",
           "name"
         ]
       },
@@ -41895,14 +41902,14 @@
             "type": "string",
             "maxLength": 100
           },
-          "address": {
-            "type": "string",
-            "maxLength": 255
-          },
           "city_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 255
           }
         },
         "required": [
@@ -41940,7 +41947,7 @@
           "city": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/CityCatalogItem"
+                "$ref": "#/components/schemas/LabsNamedReference"
               }
             ],
             "readOnly": true
@@ -42027,20 +42034,27 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 100
           },
-          "city_id": {
-            "type": "integer",
+          "city": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true,
             "nullable": true
           },
           "address": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
         "required": [
-          "city_id",
+          "address",
+          "city",
           "id",
           "name"
         ]
@@ -42474,7 +42488,7 @@
           "country": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/CountryCatalogItem"
+                "$ref": "#/components/schemas/LabsNamedReference"
               }
             ],
             "readOnly": true
@@ -42561,16 +42575,21 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 100
           },
-          "country_id": {
-            "type": "integer",
+          "country": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true,
             "nullable": true
           }
         },
         "required": [
-          "country_id",
+          "country",
           "id",
           "name"
         ]
@@ -42972,10 +42991,12 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 100
           },
           "code": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 10
           }
         },
@@ -44022,7 +44043,7 @@
           "description": {
             "type": "string"
           },
-          "active": {
+          "is_active": {
             "type": "boolean"
           }
         },
@@ -44146,17 +44167,22 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "readOnly": true
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
+          "description",
           "id",
+          "is_active",
           "name"
         ]
       },
@@ -44321,6 +44347,7 @@
           },
           "resolution": {
             "type": "string",
+            "readOnly": true,
             "description": "Label shown in the select, e.g. QHD.",
             "maxLength": 255
           },
@@ -44328,18 +44355,22 @@
             "type": "integer",
             "maximum": 32767,
             "minimum": 0,
+            "readOnly": true,
             "nullable": true
           },
           "height_px": {
             "type": "integer",
             "maximum": 32767,
             "minimum": 0,
+            "readOnly": true,
             "nullable": true
           }
         },
         "required": [
+          "height_px",
           "id",
-          "resolution"
+          "resolution",
+          "width_px"
         ]
       },
       "DisplayResolutionReferenceCreateSerializersDisplayResolutionCatalogRecordDetailResponse": {
@@ -44457,6 +44488,7 @@
           },
           "size": {
             "type": "string",
+            "readOnly": true,
             "description": "Label shown in the select, e.g. 27\".",
             "maxLength": 255
           },
@@ -44464,11 +44496,13 @@
             "type": "string",
             "format": "decimal",
             "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$",
+            "readOnly": true,
             "nullable": true,
             "description": "Diagonal in inches."
           }
         },
         "required": [
+          "diagonal_in",
           "id",
           "size"
         ]
@@ -44602,7 +44636,7 @@
           "state": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/DowntimeStateEnum"
+                "$ref": "#/components/schemas/Choice"
               }
             ],
             "readOnly": true
@@ -44865,16 +44899,6 @@
         ],
         "type": "string",
         "description": "* `room` - room\n* `station` - station\n* `bench` - bench\n* `equipment` - equipment"
-      },
-      "DowntimeStateEnum": {
-        "enum": [
-          "scheduled",
-          "current",
-          "ended",
-          "cancelled"
-        ],
-        "type": "string",
-        "description": "* `scheduled` - scheduled\n* `current` - current\n* `ended` - ended\n* `cancelled` - cancelled"
       },
       "DraftLineInput": {
         "type": "object",
@@ -45322,49 +45346,55 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 120
           },
           "key": {
+            "type": "string",
+            "readOnly": true,
             "nullable": true,
             "description": "Stable code used by the code base (e.g. 'computing'). Filled from the name when empty. Renaming the category never changes it.",
-            "oneOf": [
-              {
-                "type": "string",
-                "maxLength": 32,
-                "pattern": "^[-a-zA-Z0-9_]+$"
-              },
-              {
-                "type": "string",
-                "maxLength": 0
-              }
-            ]
+            "maxLength": 32,
+            "pattern": "^[-a-zA-Z0-9_]+$"
           },
           "definition": {
-            "type": "string"
+            "type": "string",
+            "readOnly": true
           },
-          "bookable": {
+          "is_bookable": {
             "type": "boolean",
+            "readOnly": true,
             "description": "Units can be lent and reserved."
           },
-          "placeable_on_bench": {
+          "is_placeable_on_bench": {
             "type": "boolean",
+            "readOnly": true,
             "description": "Units can be assigned to a bench."
           },
-          "calibratable": {
+          "is_calibratable": {
             "type": "boolean",
+            "readOnly": true,
             "description": "Units may require calibration."
           },
-          "monitored": {
+          "is_monitored": {
             "type": "boolean",
+            "readOnly": true,
             "description": "Units carry computing columns and may run the monitoring agent (ComputingProfile)."
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
           "definition",
           "id",
+          "is_active",
+          "is_bookable",
+          "is_calibratable",
+          "is_monitored",
+          "is_placeable_on_bench",
+          "key",
           "name"
         ]
       },
@@ -46500,6 +46530,7 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
@@ -47036,12 +47067,12 @@
             "type": "string",
             "maxLength": 120
           },
-          "active": {
-            "type": "boolean"
-          },
           "category_id": {
             "type": "integer",
             "minimum": 1
+          },
+          "is_active": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -47132,19 +47163,26 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 120
           },
-          "category_id": {
-            "type": "integer",
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
-          "category_id",
+          "category",
           "id",
+          "is_active",
           "name"
         ]
       },
@@ -47694,16 +47732,16 @@
             "type": "string",
             "maxLength": 120
           },
-          "active": {
-            "type": "boolean"
-          },
-          "categories": {
+          "category_ids": {
             "type": "array",
             "items": {
               "type": "integer",
               "minimum": 1
             },
             "maxItems": 100
+          },
+          "is_active": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -47793,22 +47831,25 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 120
           },
           "categories": {
             "type": "array",
             "items": {
-              "type": "integer"
+              "$ref": "#/components/schemas/ReferenceRelation"
             },
             "readOnly": true
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
           "categories",
           "id",
+          "is_active",
           "name"
         ]
       },
@@ -48136,6 +48177,14 @@
             "type": "string",
             "maxLength": 120
           },
+          "manufacturer_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "equipment_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
           "default_power_draw_w": {
             "type": "integer",
             "maximum": 2147483647,
@@ -48150,16 +48199,8 @@
             "nullable": true,
             "description": "Copied to new assets of this model when empty."
           },
-          "active": {
+          "is_active": {
             "type": "boolean"
-          },
-          "manufacturer_id": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "equipment_type_id": {
-            "type": "integer",
-            "minimum": 1
           }
         },
         "required": [
@@ -48251,20 +48292,30 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 120
           },
-          "manufacturer_id": {
-            "type": "integer",
+          "manufacturer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true
           },
-          "equipment_type_id": {
-            "type": "integer",
+          "equipment_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true
           },
           "default_power_draw_w": {
             "type": "integer",
             "maximum": 2147483647,
             "minimum": 0,
+            "readOnly": true,
             "nullable": true,
             "description": "Copied to new assets of this model when empty."
           },
@@ -48272,17 +48323,22 @@
             "type": "string",
             "format": "decimal",
             "pattern": "^-?\\d{0,6}(?:\\.\\d{0,2})?$",
+            "readOnly": true,
             "nullable": true,
             "description": "Copied to new assets of this model when empty."
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
-          "equipment_type_id",
+          "default_power_draw_w",
+          "default_weight_kg",
+          "equipment_type",
           "id",
-          "manufacturer_id",
+          "is_active",
+          "manufacturer",
           "name"
         ]
       },
@@ -49086,12 +49142,12 @@
             "type": "string",
             "maxLength": 120
           },
-          "active": {
-            "type": "boolean"
-          },
           "kind_id": {
             "type": "integer",
             "minimum": 1
+          },
+          "is_active": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -49182,19 +49238,26 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 120
           },
-          "kind_id": {
-            "type": "integer",
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
           "id",
-          "kind_id",
+          "is_active",
+          "kind",
           "name"
         ]
       },
@@ -50445,13 +50508,13 @@
           "description": {
             "type": "string"
           },
-          "active": {
-            "type": "boolean"
-          },
           "department_id": {
             "type": "integer",
             "minimum": 1,
             "nullable": true
+          },
+          "is_active": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -50587,23 +50650,32 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "readOnly": true
           },
-          "department_id": {
-            "type": "integer",
+          "department": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true,
             "nullable": true
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
-          "department_id",
+          "department",
+          "description",
           "id",
+          "is_active",
           "name"
         ]
       },
@@ -50918,20 +50990,23 @@
             "description": "Short unique project code, e.g. a cost-center number.",
             "maxLength": 50
           },
-          "starts_on": {
+          "start_date": {
             "type": "string",
             "format": "date",
             "nullable": true
           },
-          "ends_on": {
+          "end_date": {
             "type": "string",
             "format": "date",
             "nullable": true
           },
-          "active": {
+          "is_active": {
             "type": "boolean"
           }
-        }
+        },
+        "required": [
+          "project_name"
+        ]
       },
       "LabProjectCatalogRecord": {
         "type": "object",
@@ -50942,30 +51017,40 @@
           },
           "project_name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           },
           "code": {
             "type": "string",
+            "readOnly": true,
             "nullable": true,
             "description": "Short unique project code, e.g. a cost-center number.",
             "maxLength": 50
           },
-          "starts_on": {
+          "start_date": {
             "type": "string",
             "format": "date",
+            "readOnly": true,
             "nullable": true
           },
-          "ends_on": {
+          "end_date": {
             "type": "string",
             "format": "date",
+            "readOnly": true,
             "nullable": true
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
-          "id"
+          "code",
+          "end_date",
+          "id",
+          "is_active",
+          "project_name",
+          "start_date"
         ]
       },
       "LabProjectDetailSerializersLabProjectDetailResponse": {
@@ -51394,7 +51479,16 @@
       },
       "LabsDowntimeResource": {
         "type": "object",
+        "description": "REL-13 polymorphic relation to the room, station, bench or equipment the window covers.",
         "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          },
           "type": {
             "allOf": [
               {
@@ -51402,14 +51496,11 @@
               }
             ],
             "readOnly": true
-          },
-          "id": {
-            "type": "integer",
-            "readOnly": true
           }
         },
         "required": [
           "id",
+          "name",
           "type"
         ]
       },
@@ -51813,7 +51904,7 @@
             "type": "string",
             "readOnly": true
           },
-          "expiry_date": {
+          "expires_at": {
             "type": "string",
             "format": "date-time",
             "readOnly": true,
@@ -51853,7 +51944,7 @@
           "category",
           "created_at",
           "department",
-          "expiry_date",
+          "expires_at",
           "id",
           "image_url",
           "max_version",
@@ -51899,17 +51990,17 @@
           "billing_period": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/BillingPeriodEnum"
+                "$ref": "#/components/schemas/Choice"
               }
             ],
             "readOnly": true
           },
-          "valid_from": {
+          "start_date": {
             "type": "string",
             "format": "date",
             "readOnly": true
           },
-          "valid_until": {
+          "end_date": {
             "type": "string",
             "format": "date",
             "readOnly": true,
@@ -51924,11 +52015,11 @@
         "required": [
           "billing_period",
           "created_at",
+          "end_date",
           "id",
           "license",
           "price",
-          "valid_from",
-          "valid_until"
+          "start_date"
         ]
       },
       "LicenseAgreementListSerializersLicenseAgreementPaginatedResponse": {
@@ -52022,11 +52113,11 @@
           "billing_period": {
             "$ref": "#/components/schemas/BillingPeriodEnum"
           },
-          "valid_from": {
+          "start_date": {
             "type": "string",
             "format": "date"
           },
-          "valid_until": {
+          "end_date": {
             "type": "string",
             "format": "date",
             "nullable": true
@@ -52034,7 +52125,7 @@
         },
         "required": [
           "price",
-          "valid_from"
+          "start_date"
         ]
       },
       "LicenseAssignActionSerializersLicenseAssignmentResultDetailResponse": {
@@ -52230,6 +52321,7 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
@@ -52699,10 +52791,15 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           },
-          "vendor_id": {
-            "type": "integer",
+          "vendor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true,
             "nullable": true
           }
@@ -52710,7 +52807,7 @@
         "required": [
           "id",
           "name",
-          "vendor_id"
+          "vendor"
         ]
       },
       "LicenseProductReferenceCreateSerializersLicenseProductCatalogRecordDetailResponse": {
@@ -52924,6 +53021,7 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
@@ -53257,6 +53355,7 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
@@ -53476,6 +53575,7 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
@@ -54127,6 +54227,7 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
@@ -54608,6 +54709,7 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 25
           }
         },
@@ -56286,23 +56388,32 @@
             "type": "integer",
             "readOnly": true
           },
-          "product_model_id": {
-            "type": "integer",
+          "product_model": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true
           },
-          "definition_id": {
-            "type": "integer",
+          "definition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true
           },
           "value": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
         "required": [
-          "definition_id",
+          "definition",
           "id",
-          "product_model_id",
+          "product_model",
           "value"
         ]
       },
@@ -57817,6 +57928,24 @@
         },
         "required": [
           "result"
+        ]
+      },
+      "ReferenceRelation": {
+        "type": "object",
+        "description": "REL-3 relation ``{id, name}`` to a related reference row.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "name"
         ]
       },
       "RefreshTokenResponse": {
@@ -59347,7 +59476,11 @@
             "readOnly": true
           },
           "room": {
-            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
             "readOnly": true
           },
           "row_index": {
@@ -59365,7 +59498,7 @@
           "slot_type": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/SlotTypeEnum"
+                "$ref": "#/components/schemas/Choice"
               }
             ],
             "readOnly": true
@@ -59387,7 +59520,7 @@
             ],
             "readOnly": true
           },
-          "occupied": {
+          "is_occupied": {
             "type": "boolean",
             "readOnly": true,
             "default": false
@@ -59456,8 +59589,8 @@
           "depth_mm",
           "id",
           "is_accessible",
+          "is_occupied",
           "max_load_kg",
-          "occupied",
           "orientation_degrees",
           "power_capacity_w",
           "room",
@@ -59906,6 +60039,7 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
@@ -60021,6 +60155,7 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
@@ -60164,18 +60299,6 @@
           "data"
         ]
       },
-      "SlotTypeEnum": {
-        "enum": [
-          "station",
-          "storage",
-          "aisle",
-          "safety",
-          "utility",
-          "reserved"
-        ],
-        "type": "string",
-        "description": "* `station` - Station\n* `storage` - Storage\n* `aisle` - Aisle\n* `safety` - Safety\n* `utility` - Utility\n* `reserved` - Reserved"
-      },
       "SnapshotItem": {
         "type": "object",
         "properties": {
@@ -60269,6 +60392,11 @@
             "type": "string",
             "maxLength": 120
           },
+          "category_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
           "unit": {
             "type": "string",
             "maxLength": 20
@@ -60276,13 +60404,8 @@
           "value_type": {
             "$ref": "#/components/schemas/ValueTypeEnum"
           },
-          "active": {
+          "is_active": {
             "type": "boolean"
-          },
-          "category_id": {
-            "type": "integer",
-            "minimum": 1,
-            "nullable": true
           }
         },
         "required": [
@@ -60298,28 +60421,43 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 120
           },
-          "category_id": {
-            "type": "integer",
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceRelation"
+              }
+            ],
             "readOnly": true,
             "nullable": true
           },
           "unit": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 20
           },
           "value_type": {
-            "$ref": "#/components/schemas/ValueTypeEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
           },
-          "active": {
-            "type": "boolean"
+          "is_active": {
+            "type": "boolean",
+            "readOnly": true
           }
         },
         "required": [
-          "category_id",
+          "category",
           "id",
-          "name"
+          "is_active",
+          "name",
+          "unit",
+          "value_type"
         ]
       },
       "SpecificationDefinitionReferenceCreateSerializersSpecificationDefinitionCatalogRecordDetailResponse": {
@@ -61197,7 +61335,11 @@
             "readOnly": true
           },
           "station": {
-            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
             "readOnly": true
           },
           "position_index": {
@@ -61274,7 +61416,7 @@
             },
             "readOnly": true
           },
-          "occupied": {
+          "is_occupied": {
             "type": "boolean",
             "readOnly": true,
             "default": false
@@ -61297,10 +61439,10 @@
           "height_mm",
           "id",
           "is_active",
+          "is_occupied",
           "label",
           "max_load_kg",
           "network_port_count",
-          "occupied",
           "position_index",
           "power_capacity_w",
           "service_status",
@@ -61762,6 +61904,7 @@
           },
           "name": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },
@@ -62669,6 +62812,7 @@
           },
           "username": {
             "type": "string",
+            "readOnly": true,
             "maxLength": 255
           }
         },

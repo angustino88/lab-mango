@@ -3420,13 +3420,13 @@ components:
         name:
           type: string
           maxLength: 100
-        address:
-          type: string
-          maxLength: 255
         city_id:
           type: integer
           minimum: 1
           nullable: true
+        address:
+          type: string
+          maxLength: 255
       required:
       - name
     BuildingCatalogDetailGeoSerializersBuildingDetailResponse:
@@ -3453,7 +3453,7 @@ components:
           maxLength: 255
         city:
           allOf:
-          - $ref: '#/components/schemas/CityCatalogItem'
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
         city_id:
           type: integer
@@ -3514,16 +3514,20 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 100
-        city_id:
-          type: integer
+        city:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
           readOnly: true
           nullable: true
         address:
           type: string
+          readOnly: true
           maxLength: 255
       required:
-      - city_id
+      - address
+      - city
       - id
       - name
     BuildingReferenceCreateSerializersBuildingCatalogRecordDetailResponse:
@@ -3662,7 +3666,7 @@ components:
           maxLength: 100
         country:
           allOf:
-          - $ref: '#/components/schemas/CountryCatalogItem'
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
         country_id:
           type: integer
@@ -3723,13 +3727,15 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 100
-        country_id:
-          type: integer
+        country:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
           readOnly: true
           nullable: true
       required:
-      - country_id
+      - country
       - id
       - name
     CityReferenceCreateSerializersCityCatalogRecordDetailResponse:
@@ -3882,9 +3888,11 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 100
         code:
           type: string
+          readOnly: true
           maxLength: 10
       required:
       - code
@@ -4517,6 +4525,19 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    ReferenceRelation:
+      type: object
+      description: REL-3 relation ``{id, name}`` to a related reference row.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     ResourceImage:
       type: object
       properties:
@@ -5148,7 +5169,8 @@ components:
           type: integer
           readOnly: true
         room:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
         row_index:
           type: integer
@@ -5161,7 +5183,7 @@ components:
           readOnly: true
         slot_type:
           allOf:
-          - $ref: '#/components/schemas/SlotTypeEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         status:
           allOf:
@@ -5173,7 +5195,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
-        occupied:
+        is_occupied:
           type: boolean
           readOnly: true
           default: false
@@ -5228,8 +5250,8 @@ components:
       - depth_mm
       - id
       - is_accessible
+      - is_occupied
       - max_load_kg
-      - occupied
       - orientation_degrees
       - power_capacity_w
       - room
@@ -5559,26 +5581,6 @@ components:
           $ref: '#/components/schemas/Room'
       required:
       - data
-    SlotTypeEnum:
-      enum:
-      - station
-      - storage
-      - aisle
-      - safety
-      - utility
-      - reserved
-      type: string
-      description: '* `station` - Station
-
-        * `storage` - Storage
-
-        * `aisle` - Aisle
-
-        * `safety` - Safety
-
-        * `utility` - Utility
-
-        * `reserved` - Reserved'
     Station:
       type: object
       description: 'Separate state fields of a room or station (design: resource-status-and-downtime.md).
@@ -6156,7 +6158,8 @@ components:
           type: integer
           readOnly: true
         station:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
         position_index:
           type: integer
@@ -6212,7 +6215,7 @@ components:
           items:
             type: integer
           readOnly: true
-        occupied:
+        is_occupied:
           type: boolean
           readOnly: true
           default: false
@@ -6231,10 +6234,10 @@ components:
       - height_mm
       - id
       - is_active
+      - is_occupied
       - label
       - max_load_kg
       - network_port_count
-      - occupied
       - position_index
       - power_capacity_w
       - service_status
@@ -6612,6 +6615,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id

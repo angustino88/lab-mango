@@ -17,6 +17,33 @@ from rest_framework.response import Response
 
 from .api_views import AppAPIView, AppListAPIView
 from .pagination import PageNumberQuerySerializer
+from .summary_serializers import choice_field
+from .wire_names import relation_name, wire_name
+
+
+class ReferenceRelationSerializer(serializers.Serializer):
+    """REL-3 relation ``{id, name}`` to a related reference row."""
+
+    id = serializers.IntegerField(source="pk", read_only=True)
+    name = serializers.SerializerMethodField()
+
+    class Meta:
+        ref_name = "ReferenceRelation"
+
+    def get_name(self, obj: Any) -> str:
+        return relation_name(obj)
+
+
+def _renamed(field: Any, *, source: str, wire: str, read_only: bool = False, **overrides: Any) -> Any:
+    """Rebuild ``field`` from its constructor arguments with the given source; DRF copies fields that way."""
+    kwargs = {**field._kwargs, **overrides}
+    if wire != source:
+        kwargs["source"] = source
+    if read_only:
+        for key in ("required", "allow_blank", "validators", "default", "write_only"):
+            kwargs.pop(key, None)
+        kwargs["read_only"] = True
+    return type(field)(*field._args, **kwargs)
 
 
 def reference_urlpatterns(
@@ -43,6 +70,7 @@ def reference_urlpatterns(
         # The owner's write rule travels with the resource into the import command's policy check.
         resource = dataclasses.replace(resource, can_write=can_write)
     name = resource.model.__name__
+    explicit_names = dict(getattr(resource, "wire_names", ()) or ())
     meta = type("Meta", (), {"model": resource.model, "fields": resource.fields, "validators": []})
     shape = type(f"{name}ImportShape", (serializers.ModelSerializer,), {"Meta": meta})()
     inputs: dict[str, Any] = {}
@@ -50,36 +78,39 @@ def reference_urlpatterns(
     query: dict[str, Any] = {"search": serializers.CharField(required=False, max_length=255)}
     for field_name in resource.fields:
         field = resource.model._meta.get_field(field_name)
+        wire = wire_name(field, explicit_names)
         if field.many_to_one:
+            # NAM-6 write input and filter `<relation>_id`; REL-3 relation object on read (NAM-8).
             inputs[field.attname] = serializers.IntegerField(
                 min_value=1, required=not field.blank, allow_null=field.null
             )
-            outputs[field.attname] = serializers.IntegerField(read_only=True, allow_null=field.null)
+            relation_source = {"source": field_name} if wire != field_name else {}
+            outputs[wire] = ReferenceRelationSerializer(read_only=True, allow_null=field.null, **relation_source)
             query[field.attname] = serializers.IntegerField(required=False, min_value=1)
         elif field.many_to_many:
-            inputs[field_name] = serializers.ListField(
-                child=serializers.IntegerField(min_value=1), max_length=100, required=not field.blank
+            # NAM-6 `<relation>_ids` input with replace semantics; REL-9 array of relation objects on read.
+            if field_name.endswith("ies"):
+                singular = f"{field_name[:-3]}y"
+            else:
+                singular = field_name[:-1] if field_name.endswith("s") else field_name
+            inputs[f"{singular}_ids"] = serializers.ListField(
+                child=serializers.IntegerField(min_value=1),
+                max_length=100,
+                required=not field.blank,
+                source=field_name,
             )
-            outputs[field_name] = serializers.SerializerMethodField()
+            outputs[wire] = ReferenceRelationSerializer(source=f"{field_name}.all", many=True, read_only=True)
         else:
-            input_field = shape.fields[field_name]
-            input_field.validators = [v for v in input_field.validators if v.__class__.__name__ != "UniqueValidator"]
-            input_field.read_only = False
-            if field_name == resource.label:
-                input_field.required = True
-                input_field.allow_blank = False
-            inputs[field_name] = input_field
-            outputs[field_name] = shape.fields[field_name].__deepcopy__({})
-            outputs[field_name].read_only = True
-    for field_name in resource.fields:
-        if resource.model._meta.get_field(field_name).many_to_many:
-
-            def related_ids(self, obj, key=field_name) -> list[int]:
-                return sorted(row.pk for row in getattr(obj, key).all())
-
-            outputs[f"get_{field_name}"] = related_ids
+            model_input = shape.fields[field_name]
+            label_rules = {"required": True, "allow_blank": False} if field_name == resource.label else {}
+            inputs[wire] = _renamed(model_input, source=field_name, wire=wire, **label_rules)
+            if field.choices:
+                # ENU-1: a choice column reads as `{value, label}` and is written as the plain value.
+                outputs[wire] = choice_field(field.choices, source=None if wire == field_name else field_name)
+            else:
+                outputs[wire] = _renamed(model_input, source=field_name, wire=wire, read_only=True)
     if "active" in resource.fields:
-        query["active"] = serializers.BooleanField(required=False, allow_null=True, default=None)
+        query["is_active"] = serializers.BooleanField(required=False, allow_null=True, default=None, source="active")
     input_serializer: Any = type(f"{name}CatalogCreate", (serializers.Serializer,), inputs)
 
     # Fields are deep-copied by DRF from their original constructor arguments.

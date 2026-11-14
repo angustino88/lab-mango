@@ -3279,7 +3279,7 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -3364,7 +3364,7 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -3780,15 +3780,15 @@ paths:
         filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
-        schema:
-          type: boolean
-          nullable: true
-      - in: query
         name: department_id
         schema:
           type: integer
           minimum: 1
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+          nullable: true
       - in: query
         name: page
         schema:
@@ -4064,15 +4064,15 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
-        schema:
-          type: boolean
-          nullable: true
-      - in: query
         name: category_id
         schema:
           type: integer
           minimum: 1
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+          nullable: true
       - in: query
         name: page
         schema:
@@ -4211,7 +4211,7 @@ paths:
         and delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -4776,15 +4776,15 @@ paths:
         and delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
-        schema:
-          type: boolean
-          nullable: true
-      - in: query
         name: equipment_type_id
         schema:
           type: integer
           minimum: 1
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+          nullable: true
       - in: query
         name: manufacturer_id
         schema:
@@ -5202,15 +5202,15 @@ paths:
         and delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
-        schema:
-          type: boolean
-          nullable: true
-      - in: query
         name: category_id
         schema:
           type: integer
           minimum: 1
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+          nullable: true
       - in: query
         name: page
         schema:
@@ -5487,7 +5487,7 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -6061,6 +6061,19 @@ components:
           readOnly: true
       required:
       - data
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     ComputingActivity:
       type: object
       description: Read projection of the live activity state.
@@ -6176,7 +6189,7 @@ components:
           maxLength: 255
         description:
           type: string
-        active:
+        is_active:
           type: boolean
       required:
       - name
@@ -6266,13 +6279,18 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
         description:
           type: string
-        active:
+          readOnly: true
+        is_active:
           type: boolean
+          readOnly: true
       required:
+      - description
       - id
+      - is_active
       - name
     DepartmentReferenceCreateSerializersDepartmentCatalogRecordDetailResponse:
       type: object
@@ -6361,21 +6379,26 @@ components:
           readOnly: true
         resolution:
           type: string
+          readOnly: true
           description: Label shown in the select, e.g. QHD.
           maxLength: 255
         width_px:
           type: integer
           maximum: 32767
           minimum: 0
+          readOnly: true
           nullable: true
         height_px:
           type: integer
           maximum: 32767
           minimum: 0
+          readOnly: true
           nullable: true
       required:
+      - height_px
       - id
       - resolution
+      - width_px
     DisplayResolutionReferenceCreateSerializersDisplayResolutionCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -6459,15 +6482,18 @@ components:
           readOnly: true
         size:
           type: string
+          readOnly: true
           description: Label shown in the select, e.g. 27".
           maxLength: 255
         diagonal_in:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          readOnly: true
           nullable: true
           description: Diagonal in inches.
       required:
+      - diagonal_in
       - id
       - size
     DisplaySizeReferenceCreateSerializersDisplaySizeCatalogRecordDetailResponse:
@@ -6699,37 +6725,48 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         key:
+          type: string
+          readOnly: true
           nullable: true
           description: Stable code used by the code base (e.g. 'computing'). Filled
             from the name when empty. Renaming the category never changes it.
-          oneOf:
-          - type: string
-            maxLength: 32
-            pattern: ^[-a-zA-Z0-9_]+$
-          - type: string
-            maxLength: 0
+          maxLength: 32
+          pattern: ^[-a-zA-Z0-9_]+$
         definition:
           type: string
-        bookable:
+          readOnly: true
+        is_bookable:
           type: boolean
+          readOnly: true
           description: Units can be lent and reserved.
-        placeable_on_bench:
+        is_placeable_on_bench:
           type: boolean
+          readOnly: true
           description: Units can be assigned to a bench.
-        calibratable:
+        is_calibratable:
           type: boolean
+          readOnly: true
           description: Units may require calibration.
-        monitored:
+        is_monitored:
           type: boolean
+          readOnly: true
           description: Units carry computing columns and may run the monitoring agent
             (ComputingProfile).
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - definition
       - id
+      - is_active
+      - is_bookable
+      - is_calibratable
+      - is_monitored
+      - is_placeable_on_bench
+      - key
       - name
     EquipmentCategoryReferenceDetailSerializersEquipmentCategoryCatalogRecordDetailResponse:
       type: object
@@ -7561,6 +7598,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -7940,11 +7978,11 @@ components:
         name:
           type: string
           maxLength: 120
-        active:
-          type: boolean
         category_id:
           type: integer
           minimum: 1
+        is_active:
+          type: boolean
       required:
       - category_id
       - name
@@ -8008,15 +8046,19 @@ components:
           readOnly: true
         name:
           type: string
-          maxLength: 120
-        category_id:
-          type: integer
           readOnly: true
-        active:
+          maxLength: 120
+        category:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
+          readOnly: true
+        is_active:
           type: boolean
+          readOnly: true
       required:
-      - category_id
+      - category
       - id
+      - is_active
       - name
     EquipmentKindReferenceCreateSerializersEquipmentKindCatalogRecordDetailResponse:
       type: object
@@ -8427,14 +8469,14 @@ components:
         name:
           type: string
           maxLength: 120
-        active:
-          type: boolean
-        categories:
+        category_ids:
           type: array
           items:
             type: integer
             minimum: 1
           maxItems: 100
+        is_active:
+          type: boolean
       required:
       - name
     EquipmentManufacturerCatalogDetailSerializersEquipmentManufacturerDetailResponse:
@@ -8497,17 +8539,20 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         categories:
           type: array
           items:
-            type: integer
+            $ref: '#/components/schemas/ReferenceRelation'
           readOnly: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - categories
       - id
+      - is_active
       - name
     EquipmentManufacturerReferenceCreateSerializersEquipmentManufacturerCatalogRecordDetailResponse:
       type: object
@@ -8756,6 +8801,12 @@ components:
         name:
           type: string
           maxLength: 120
+        manufacturer_id:
+          type: integer
+          minimum: 1
+        equipment_type_id:
+          type: integer
+          minimum: 1
         default_power_draw_w:
           type: integer
           maximum: 2147483647
@@ -8768,14 +8819,8 @@ components:
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
           description: Copied to new assets of this model when empty.
-        active:
+        is_active:
           type: boolean
-        manufacturer_id:
-          type: integer
-          minimum: 1
-        equipment_type_id:
-          type: integer
-          minimum: 1
       required:
       - equipment_type_id
       - manufacturer_id
@@ -8840,31 +8885,40 @@ components:
           readOnly: true
         name:
           type: string
-          maxLength: 120
-        manufacturer_id:
-          type: integer
           readOnly: true
-        equipment_type_id:
-          type: integer
+          maxLength: 120
+        manufacturer:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
+          readOnly: true
+        equipment_type:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
           readOnly: true
         default_power_draw_w:
           type: integer
           maximum: 2147483647
           minimum: 0
+          readOnly: true
           nullable: true
           description: Copied to new assets of this model when empty.
         default_weight_kg:
           type: string
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          readOnly: true
           nullable: true
           description: Copied to new assets of this model when empty.
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
-      - equipment_type_id
+      - default_power_draw_w
+      - default_weight_kg
+      - equipment_type
       - id
-      - manufacturer_id
+      - is_active
+      - manufacturer
       - name
     EquipmentProductModelReferenceCreateSerializersEquipmentProductModelCatalogRecordDetailResponse:
       type: object
@@ -9427,11 +9481,11 @@ components:
         name:
           type: string
           maxLength: 120
-        active:
-          type: boolean
         kind_id:
           type: integer
           minimum: 1
+        is_active:
+          type: boolean
       required:
       - kind_id
       - name
@@ -9495,15 +9549,19 @@ components:
           readOnly: true
         name:
           type: string
-          maxLength: 120
-        kind_id:
-          type: integer
           readOnly: true
-        active:
+          maxLength: 120
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
+          readOnly: true
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - id
-      - kind_id
+      - is_active
+      - kind
       - name
     EquipmentTypeReferenceCreateSerializersEquipmentTypeCatalogRecordDetailResponse:
       type: object
@@ -9739,12 +9797,12 @@ components:
           maxLength: 255
         description:
           type: string
-        active:
-          type: boolean
         department_id:
           type: integer
           minimum: 1
           nullable: true
+        is_active:
+          type: boolean
       required:
       - name
     GroupCatalogDetailSerializersGroupCatalogDetailResponse:
@@ -9841,18 +9899,24 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
         description:
           type: string
-        department_id:
-          type: integer
+          readOnly: true
+        department:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
           readOnly: true
           nullable: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
-      - department_id
+      - department
+      - description
       - id
+      - is_active
       - name
     GroupReferenceCreateSerializersGroupCatalogRecordDetailResponse:
       type: object
@@ -10048,6 +10112,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -10128,6 +10193,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 25
       required:
       - id
@@ -10415,19 +10481,22 @@ components:
         id:
           type: integer
           readOnly: true
-        product_model_id:
-          type: integer
+        product_model:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
           readOnly: true
-        definition_id:
-          type: integer
+        definition:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
           readOnly: true
         value:
           type: string
+          readOnly: true
           maxLength: 255
       required:
-      - definition_id
+      - definition
       - id
-      - product_model_id
+      - product_model
       - value
     ProductModelSpecificationReferenceCreateSerializersProductModelSpecificationCatalogRecordDetailResponse:
       type: object
@@ -10489,6 +10558,19 @@ components:
           $ref: '#/components/schemas/ProductModelSpecificationReferenceListSerializersProductModelSpecificationCatalogRecordPagination'
       required:
       - pagination
+    ReferenceRelation:
+      type: object
+      description: REL-3 relation ``{id, name}`` to a related reference row.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     ResourceImage:
       type: object
       properties:
@@ -10533,6 +10615,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -10613,6 +10696,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -10683,17 +10767,17 @@ components:
         name:
           type: string
           maxLength: 120
+        category_id:
+          type: integer
+          minimum: 1
+          nullable: true
         unit:
           type: string
           maxLength: 20
         value_type:
           $ref: '#/components/schemas/ValueTypeEnum'
-        active:
+        is_active:
           type: boolean
-        category_id:
-          type: integer
-          minimum: 1
-          nullable: true
       required:
       - name
     SpecificationDefinitionCatalogRecord:
@@ -10704,22 +10788,31 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
-        category_id:
-          type: integer
+        category:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
           readOnly: true
           nullable: true
         unit:
           type: string
+          readOnly: true
           maxLength: 20
         value_type:
-          $ref: '#/components/schemas/ValueTypeEnum'
-        active:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        is_active:
           type: boolean
+          readOnly: true
       required:
-      - category_id
+      - category
       - id
+      - is_active
       - name
+      - unit
+      - value_type
     SpecificationDefinitionReferenceCreateSerializersSpecificationDefinitionCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -10831,6 +10924,7 @@ components:
           readOnly: true
         username:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id

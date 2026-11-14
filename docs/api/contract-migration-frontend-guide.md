@@ -33,3 +33,37 @@ Sections are added as each feature is migrated.
 | `availability` | `{value, blocked_by: {type, id, name}, condition, reason}` (plain strings) | `{status, blocked_by: {id, name, type}, condition, reason}`; `status`, `condition`, `reason` are `{value, label}` |
 | Department `active` | boolean | `is_active` |
 | Service record `kind`, `result` | plain string | `{value, label}`; `created` → `created_at` |
+
+### Catalog (reference-data) records, all features
+
+| Field | Before | After |
+| --- | --- | --- |
+| Parent relation, e.g. `city_id`, `country_id`, `vendor_id`, `category_id` | bare integer | relation object named after the field: `city: {id, name}` |
+| Many-to-many, e.g. `categories` | array of ids | array of `{id, name}`; written as `category_ids` |
+| `active` (and other booleans) | boolean | `is_active`; list filter `?active=` → `?is_active=`; write key `is_active` |
+| Choice columns (e.g. `value_type`) | plain string | `{value, label}` (written as the plain value) |
+| Lab project `starts_on` / `ends_on` | date | `start_date` / `end_date` (read and write) |
+
+### Downtime
+
+| Field | Before | After |
+| --- | --- | --- |
+| `resource` | `{type, id}` | `{id, name, type}` |
+| `state` | plain string | `{value, label}` |
+
+### Licenses
+
+| Field | Before | After |
+| --- | --- | --- |
+| `expiry_date` (a date-time) | `expiry_date` | `expires_at` |
+| Agreement `valid_from` / `valid_until` | read and write | `start_date` / `end_date` |
+| Agreement `billing_period` | plain string | `{value, label}` (written as the plain value) |
+
+### Locations
+
+| Field | Before | After |
+| --- | --- | --- |
+| Room slot `room`, station slot `station` | bare integer | `{id, name}` |
+| Slot `occupied` | boolean | `is_occupied` |
+| Room slot `slot_type` | plain string | `{value, label}` |
+| City `country`, building `city` | nested object with `code` / `country` | `{id, name}` |

@@ -2117,6 +2117,19 @@ components:
           readOnly: true
       required:
       - data
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     FilterMetadata:
       type: object
       properties:
@@ -2281,7 +2294,7 @@ components:
         max_version:
           type: string
           readOnly: true
-        expiry_date:
+        expires_at:
           type: string
           format: date-time
           readOnly: true
@@ -2309,7 +2322,7 @@ components:
       - category
       - created_at
       - department
-      - expiry_date
+      - expires_at
       - id
       - image_url
       - max_version
@@ -2344,13 +2357,13 @@ components:
           readOnly: true
         billing_period:
           allOf:
-          - $ref: '#/components/schemas/BillingPeriodEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
-        valid_from:
+        start_date:
           type: string
           format: date
           readOnly: true
-        valid_until:
+        end_date:
           type: string
           format: date
           readOnly: true
@@ -2362,11 +2375,11 @@ components:
       required:
       - billing_period
       - created_at
+      - end_date
       - id
       - license
       - price
-      - valid_from
-      - valid_until
+      - start_date
     LicenseAgreementListSerializersLicenseAgreementPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -2434,16 +2447,16 @@ components:
           maxLength: 3
         billing_period:
           $ref: '#/components/schemas/BillingPeriodEnum'
-        valid_from:
+        start_date:
           type: string
           format: date
-        valid_until:
+        end_date:
           type: string
           format: date
           nullable: true
       required:
       - price
-      - valid_from
+      - start_date
     LicenseAssignActionSerializersLicenseAssignmentResultDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -2583,6 +2596,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -2915,15 +2929,17 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
-        vendor_id:
-          type: integer
+        vendor:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceRelation'
           readOnly: true
           nullable: true
       required:
       - id
       - name
-      - vendor_id
+      - vendor
     LicenseProductReferenceCreateSerializersLicenseProductCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -3076,6 +3092,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -3323,6 +3340,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -3479,6 +3497,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -3570,6 +3589,19 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    ReferenceRelation:
+      type: object
+      description: REL-3 relation ``{id, name}`` to a related reference row.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     ResourceImage:
       type: object
       properties:

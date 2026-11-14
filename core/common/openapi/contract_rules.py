@@ -319,7 +319,7 @@ def main(argv: list[str]) -> int:
         # Only ever removes fixed entries; a new violation is never added.
         kept = [v for v in violations if v.key in baseline]
         write_baseline(kept)
-        print(f"Baseline pruned from {len(baseline)} to {len(kept)} entries")
+        print(f"Baseline pruned from {len(baseline)} to {len({v.key for v in kept})} entries")
         return 0
     new = [v for v in violations if v.key not in baseline]
     stale = sorted(baseline - {v.key for v in violations})

@@ -629,7 +629,7 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -702,6 +702,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/LabProjectCatalogCreate'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -1207,16 +1208,18 @@ components:
           nullable: true
           description: Short unique project code, e.g. a cost-center number.
           maxLength: 50
-        starts_on:
+        start_date:
           type: string
           format: date
           nullable: true
-        ends_on:
+        end_date:
           type: string
           format: date
           nullable: true
-        active:
+        is_active:
           type: boolean
+      required:
+      - project_name
     LabProjectCatalogRecord:
       type: object
       properties:
@@ -1225,24 +1228,34 @@ components:
           readOnly: true
         project_name:
           type: string
+          readOnly: true
           maxLength: 255
         code:
           type: string
+          readOnly: true
           nullable: true
           description: Short unique project code, e.g. a cost-center number.
           maxLength: 50
-        starts_on:
+        start_date:
           type: string
           format: date
+          readOnly: true
           nullable: true
-        ends_on:
+        end_date:
           type: string
           format: date
+          readOnly: true
           nullable: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
+      - code
+      - end_date
       - id
+      - is_active
+      - project_name
+      - start_date
     LabProjectDetailSerializersLabProjectDetailResponse:
       type: object
       description: Base serializer for successful API responses.

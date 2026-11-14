@@ -1516,7 +1516,7 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -1658,7 +1658,7 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -2241,7 +2241,7 @@ components:
         name:
           type: string
           maxLength: 255
-        active:
+        is_active:
           type: boolean
       required:
       - name
@@ -2253,11 +2253,14 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - id
+      - is_active
       - name
     BenchGroupCreateSerializersBenchGroupDetailResponse:
       type: object
@@ -2837,7 +2840,7 @@ components:
         name:
           type: string
           maxLength: 255
-        active:
+        is_active:
           type: boolean
       required:
       - name
@@ -2849,11 +2852,14 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - id
+      - is_active
       - name
     BenchTypeCreateSerializersBenchTypeDetailResponse:
       type: object

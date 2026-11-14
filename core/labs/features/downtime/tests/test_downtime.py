@@ -89,9 +89,9 @@ def test_room_downtime_passes_down_to_bench_and_blocks_new_bookings(client, coor
     created = _schedule(client, "room", room.pk, starts_at, ends_at)
 
     assert created.status_code == 201, created.data
-    assert created.data["data"]["resource"] == {"type": "room", "id": room.pk}
+    assert created.data["data"]["resource"] == {"id": room.pk, "name": room.name, "type": "room"}
     assert created.data["data"]["kind"]["value"] == "planned"
-    assert created.data["data"]["state"] == "scheduled"
+    assert created.data["data"]["state"]["value"] == "scheduled"
     with pytest.raises(BenchBookingConflict, match="Room is in maintenance"):
         _book(bench, coordinator, starts_at + timedelta(minutes=30), ends_at + timedelta(hours=1))
     # Outside the window the bench is free.
@@ -162,9 +162,9 @@ def test_end_and_cancel_follow_the_window_state_and_are_idempotent(client, bench
     cancelled = client.post(f"{URL}/{later['id']}/actions/cancel")
     cancelled_again = client.post(f"{URL}/{later['id']}/actions/cancel")
 
-    assert (ended.status_code, ended.data["data"]["state"]) == (200, "ended")
+    assert (ended.status_code, ended.data["data"]["state"]["value"]) == (200, "ended")
     assert ended_again.data["data"]["ends_at"] == ended.data["data"]["ends_at"]
-    assert (cancelled.status_code, cancelled.data["data"]["state"]) == (200, "cancelled")
+    assert (cancelled.status_code, cancelled.data["data"]["state"]["value"]) == (200, "cancelled")
     assert cancelled_again.data["data"]["cancelled_at"] == cancelled.data["data"]["cancelled_at"]
 
 
@@ -254,8 +254,8 @@ def test_retiring_ends_current_downtime_and_cancels_planned_windows(client, benc
 
     assert response.status_code == 200, response.data
     assert current and later, (current, later)
-    assert client.get(f"{URL}/{current['id']}").data["data"]["state"] == "ended"
-    assert client.get(f"{URL}/{later['id']}").data["data"]["state"] == "cancelled"
+    assert client.get(f"{URL}/{current['id']}").data["data"]["state"]["value"] == "ended"
+    assert client.get(f"{URL}/{later['id']}").data["data"]["state"]["value"] == "cancelled"
 
 
 @pytest.mark.django_db

@@ -3,7 +3,7 @@
 from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
-from core.labs.features.base.serializers import AppModelSerializer
+from core.labs.features.base.serializers import AppModelSerializer, NamedReferenceSerializer
 from core.labs.models import Building, City, Country
 
 
@@ -15,7 +15,7 @@ class CountrySerializer(AppModelSerializer):
 
 
 class CitySerializer(AppModelSerializer):
-    country = CountrySerializer(read_only=True)
+    country = NamedReferenceSerializer(read_only=True)  # REL-3, REL-7
     country_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
@@ -25,7 +25,7 @@ class CitySerializer(AppModelSerializer):
 
 
 class BuildingSerializer(AppModelSerializer):
-    city = CitySerializer(read_only=True)
+    city = NamedReferenceSerializer(read_only=True)  # REL-3, REL-7
     city_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
