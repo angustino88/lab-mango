@@ -60,7 +60,7 @@ class TestHelpdeskEndpoints:
         )
         assert res.status_code == 201
         data = res.json()["data"]
-        assert data["ticket_type"] == "incident" and data["external_reference"] == "VENDOR-9"
+        assert data["ticket_type"]["value"] == "incident" and data["external_reference"] == "VENDOR-9"
         assert data["sla"]["state"] in {"none", "ok"}
 
     def test_watch_link_and_csat_flow(self, support_setup, requester_client, agent_client, agent_user):

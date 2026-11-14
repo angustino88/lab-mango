@@ -1,16 +1,4 @@
 {
   "description": "Known API contract drift, shrinking to empty. New entries are never added by hand: fix the code. See docs/architecture/decisions/007-api-contract-gate.md.",
-  "violations": [
-    "ENU-1 TicketDetail.source",
-    "ENU-1 TicketDetail.ticket_type",
-    "ENU-1 TicketList.source",
-    "ENU-1 TicketList.ticket_type",
-    "REL-3 ResourceTicketSummary.tickets",
-    "REL-3 TicketDetail.category",
-    "REL-3 TicketDetail.priority",
-    "REL-3 TicketDetail.status",
-    "REL-3 TicketList.category",
-    "REL-3 TicketList.priority",
-    "REL-3 TicketList.status"
-  ]
+  "violations": []
 }

@@ -208,3 +208,21 @@ License product `vendor`: `{id, name, created_at, updated_at}` → `{id, name}`.
 
 Persona, lab and export rows were sent unserialized, so `last_remote` was still on the wire. They are now
 serialized: the key is `last_remote_at`, as documented.
+
+### Support Desk tickets
+
+| Field | Before | After |
+| --- | --- | --- |
+| Every user (`requester`, `assignee`, `created_by`, `resolved_by`, `author`, `uploaded_by`, `linked_by`, `unlinked_by`, watcher `user`, team `lead` / `members`) | `{id, username, full_name}` | `{id, name}` |
+| Ticket list / detail `category`, `priority`, `status` | full catalog objects | `{id, name}`; color, rank, code and `system_state` come from the catalog endpoints |
+| `team` (tickets, categories, canned responses) | `{id, name, code}` | `{id, name}` |
+| `ticket_type`, `source`; comment `visibility`; attachment `scan_status`; activity `event_type`; link `link_type`; status `system_state`; settings `default_ticket_type` | plain string | `{value, label}` (written as the plain value) |
+| `parent`, `children`, link `ticket` | `{id, key, subject, status, system_state}` | `{id, name}`, `name` = `"<key>: <subject>"` |
+| Resource link `resource_type`, `resource_id` | two keys | `resource: {id, name, type}` |
+| Activity `correlation_id` | | `correlation_key` |
+| Status transition `from_status`, `to_status` | full status objects | `{id, name}` |
+| Status `pauses_sla` | read and write | `is_sla_paused` |
+| Transition `requires_reason`, `requires_resolution` | read and write | `is_reason_required`, `is_resolution_required` |
+| Settings `requesters_can_set_priority`, `sla_enabled`, `csat_enabled` | read and write | `can_requesters_set_priority`, `is_sla_enabled`, `is_csat_enabled` |
+| Queue stats `priority_id` + `name`, `team_id` + `name`, `user_id` + `username` | two keys each | `priority`, `team`, `assignee` as `{id, name}` (`assignee.name` is the display name) |
+| Resource ticket summary `system_state` | plain string | `{value, label}` |

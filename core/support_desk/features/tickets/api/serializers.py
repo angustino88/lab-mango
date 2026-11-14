@@ -364,9 +364,12 @@ class TicketLinkSerializer(serializers.ModelSerializer):
 
 
 class TicketListSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
-    priority = PrioritySerializer(read_only=True)
-    status = StatusSerializer(read_only=True)
+    # REL-16: lists and details show these names; the catalog endpoints hold color, rank and state (REL-5).
+    category = RelationSerializer(read_only=True, allow_null=True)
+    priority = RelationSerializer(read_only=True, allow_null=True)
+    status = RelationSerializer(read_only=True)
+    ticket_type = choice_field(TICKET_TYPE_CHOICES)
+    source = choice_field(TICKET_SOURCE_CHOICES)
     requester = UserReferenceSerializer(read_only=True)
     assignee = UserReferenceSerializer(read_only=True)
     team = TeamSummarySerializer(read_only=True)
@@ -409,9 +412,12 @@ class TicketListSerializer(serializers.ModelSerializer):
 
 
 class TicketDetailSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
-    priority = PrioritySerializer(read_only=True)
-    status = StatusSerializer(read_only=True)
+    # REL-16: lists and details show these names; the catalog endpoints hold color, rank and state (REL-5).
+    category = RelationSerializer(read_only=True, allow_null=True)
+    priority = RelationSerializer(read_only=True, allow_null=True)
+    status = RelationSerializer(read_only=True)
+    ticket_type = choice_field(TICKET_TYPE_CHOICES)
+    source = choice_field(TICKET_SOURCE_CHOICES)
     requester = UserReferenceSerializer(read_only=True)
     created_by = UserReferenceSerializer(read_only=True)
     assignee = UserReferenceSerializer(read_only=True)
@@ -611,22 +617,46 @@ class QueueStatsQuerySerializer(serializers.Serializer):
 
 
 class QueueStatsPriorityItemSerializer(serializers.Serializer):
-    priority_id = serializers.IntegerField(help_text="Primary key of the support priority.")
-    name = serializers.CharField(help_text="Name of the priority.")
+    priority = serializers.SerializerMethodField(help_text="The support priority (REL-14).")
     rank = serializers.IntegerField(help_text="Rank of the priority for ordering.")
     count = serializers.IntegerField(help_text="Number of open tickets with this priority.")
 
 
 class QueueStatsTeamItemSerializer(serializers.Serializer):
-    team_id = serializers.IntegerField(allow_null=True, help_text="Primary key of the support team, or null if unassigned.")
-    name = serializers.CharField(allow_blank=True, help_text="Name of the team.")
+    team = serializers.SerializerMethodField(help_text="The support team, or null if unassigned (REL-14).")
     count = serializers.IntegerField(help_text="Number of open tickets assigned to this team.")
 
 
 class QueueStatsAssigneeItemSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField(help_text="Primary key of the assigned user.")
-    username = serializers.CharField(help_text="Username of the assignee.")
+    assignee = serializers.SerializerMethodField(help_text="The assigned user (REL-14).")
     count = serializers.IntegerField(help_text="Number of open tickets assigned to this user.")
+
+
+def _row_relation(row: dict[str, Any], id_key: str, name_key: str) -> dict[str, Any] | None:
+    """REL-14 relation from an aggregate row that already carries the dimension's id and name."""
+    if row[id_key] is None:
+        return None
+    return {"id": row[id_key], "name": row[name_key] or str(row[id_key])}
+
+
+@extend_schema_field(RelationSerializer)
+def _get_priority(self, row) -> dict[str, Any] | None:
+    return _row_relation(row, "priority_id", "name")
+
+
+@extend_schema_field(RelationSerializer(allow_null=True))
+def _get_team(self, row) -> dict[str, Any] | None:
+    return _row_relation(row, "team_id", "name")
+
+
+@extend_schema_field(RelationSerializer)
+def _get_assignee(self, row) -> dict[str, Any] | None:
+    return _row_relation(row, "user_id", "username")
+
+
+QueueStatsPriorityItemSerializer.get_priority = _get_priority
+QueueStatsTeamItemSerializer.get_team = _get_team
+QueueStatsAssigneeItemSerializer.get_assignee = _get_assignee
 
 
 class QueueStatsSlaSerializer(serializers.Serializer):
@@ -688,12 +718,15 @@ class AttachmentUploadRequestSerializer(serializers.Serializer):
     is_restricted = serializers.BooleanField(required=False, default=False)
 
 
+@embedded_resource
 class ResourceTicketDTOItemSerializer(serializers.Serializer):
+    """A ticket row of the resource's ticket summary (REL-15)."""
+
     id = serializers.IntegerField()
     key = serializers.CharField()
     subject = serializers.CharField()
     status_name = serializers.CharField()
-    system_state = serializers.CharField()
+    system_state = choice_field(SystemState.choices())
     priority_name = serializers.CharField()
     priority_rank = serializers.IntegerField()
     created_at = serializers.DateTimeField()
@@ -764,7 +797,7 @@ class AdminStatusCreateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=50)
     color_hex = serializers.RegexField(_HEX, required=False, allow_blank=True, default="")
     is_final = serializers.BooleanField(required=False, default=False)
-    pauses_sla = serializers.BooleanField(required=False, default=False)
+    is_sla_paused = serializers.BooleanField(required=False, default=False, source="pauses_sla")
     system_state = serializers.ChoiceField(choices=SystemState.choices())
     is_initial = serializers.BooleanField(required=False, default=False)
     is_active = serializers.BooleanField(required=False, default=True)
@@ -775,7 +808,7 @@ class AdminStatusUpdateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=50, required=False)
     color_hex = serializers.RegexField(_HEX, required=False, allow_blank=True)
     is_final = serializers.BooleanField(required=False)
-    pauses_sla = serializers.BooleanField(required=False)
+    is_sla_paused = serializers.BooleanField(required=False, source="pauses_sla")
     system_state = serializers.ChoiceField(choices=SystemState.choices(), required=False)
     is_initial = serializers.BooleanField(required=False)
     is_active = serializers.BooleanField(required=False)
@@ -786,14 +819,14 @@ class AdminTransitionCreateSerializer(serializers.Serializer):
     from_status_id = serializers.IntegerField()
     to_status_id = serializers.IntegerField()
     allowed_roles = serializers.ListField(child=serializers.CharField(), required=False, default=list)
-    requires_reason = serializers.BooleanField(required=False, default=False)
-    requires_resolution = serializers.BooleanField(required=False, default=False)
+    is_reason_required = serializers.BooleanField(required=False, default=False, source="requires_reason")
+    is_resolution_required = serializers.BooleanField(required=False, default=False, source="requires_resolution")
 
 
 class AdminTransitionUpdateSerializer(serializers.Serializer):
     allowed_roles = serializers.ListField(child=serializers.CharField(), required=False)
-    requires_reason = serializers.BooleanField(required=False)
-    requires_resolution = serializers.BooleanField(required=False)
+    is_reason_required = serializers.BooleanField(required=False, source="requires_reason")
+    is_resolution_required = serializers.BooleanField(required=False, source="requires_resolution")
 
 
 class AdminSettingsUpdateSerializer(serializers.Serializer):
@@ -803,10 +836,10 @@ class AdminSettingsUpdateSerializer(serializers.Serializer):
     allowed_attachment_extensions = serializers.ListField(child=serializers.CharField(), required=False)
     max_attachments_per_ticket = serializers.IntegerField(required=False)
     comment_edit_window_minutes = serializers.IntegerField(required=False)
-    requesters_can_set_priority = serializers.BooleanField(required=False)
-    sla_enabled = serializers.BooleanField(required=False)
+    can_requesters_set_priority = serializers.BooleanField(required=False, source="requesters_can_set_priority")
+    is_sla_enabled = serializers.BooleanField(required=False, source="sla_enabled")
     sla_at_risk_percent = serializers.IntegerField(required=False, min_value=1, max_value=100)
-    csat_enabled = serializers.BooleanField(required=False)
+    is_csat_enabled = serializers.BooleanField(required=False, source="csat_enabled")
     csat_window_days = serializers.IntegerField(required=False, min_value=0)
     default_ticket_type = serializers.ChoiceField(choices=TICKET_TYPE_CHOICES, required=False)
 

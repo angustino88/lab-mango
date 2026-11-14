@@ -323,7 +323,7 @@ components:
         is_final:
           type: boolean
           default: false
-        pauses_sla:
+        is_sla_paused:
           type: boolean
           default: false
         system_state:
@@ -432,10 +432,10 @@ components:
           type: array
           items:
             type: string
-        requires_reason:
+        is_reason_required:
           type: boolean
           default: false
-        requires_resolution:
+        is_resolution_required:
           type: boolean
           default: false
       required:
@@ -12348,15 +12348,15 @@ components:
           type: integer
         comment_edit_window_minutes:
           type: integer
-        requesters_can_set_priority:
+        can_requesters_set_priority:
           type: boolean
-        sla_enabled:
+        is_sla_enabled:
           type: boolean
         sla_at_risk_percent:
           type: integer
           maximum: 100
           minimum: 1
-        csat_enabled:
+        is_csat_enabled:
           type: boolean
         csat_window_days:
           type: integer
@@ -12377,7 +12377,7 @@ components:
             maxLength: 0
         is_final:
           type: boolean
-        pauses_sla:
+        is_sla_paused:
           type: boolean
         system_state:
           $ref: '#/components/schemas/SystemStateEnum'
@@ -12416,9 +12416,9 @@ components:
           type: array
           items:
             type: string
-        requires_reason:
+        is_reason_required:
           type: boolean
-        requires_resolution:
+        is_resolution_required:
           type: boolean
     PatchedAgentActivityReport:
       type: object
@@ -14350,28 +14350,25 @@ components:
     QueueStatsAssigneeItem:
       type: object
       properties:
-        user_id:
-          type: integer
-          description: Primary key of the assigned user.
-        username:
-          type: string
-          description: Username of the assignee.
+        assignee:
+          allOf:
+          - $ref: '#/components/schemas/Relation'
+          readOnly: true
+          description: The assigned user (REL-14).
         count:
           type: integer
           description: Number of open tickets assigned to this user.
       required:
+      - assignee
       - count
-      - user_id
-      - username
     QueueStatsPriorityItem:
       type: object
       properties:
-        priority_id:
-          type: integer
-          description: Primary key of the support priority.
-        name:
-          type: string
-          description: Name of the priority.
+        priority:
+          allOf:
+          - $ref: '#/components/schemas/Relation'
+          readOnly: true
+          description: The support priority (REL-14).
         rank:
           type: integer
           description: Rank of the priority for ordering.
@@ -14380,8 +14377,7 @@ components:
           description: Number of open tickets with this priority.
       required:
       - count
-      - name
-      - priority_id
+      - priority
       - rank
     QueueStatsSla:
       type: object
@@ -14406,20 +14402,18 @@ components:
     QueueStatsTeamItem:
       type: object
       properties:
-        team_id:
-          type: integer
+        team:
+          allOf:
+          - $ref: '#/components/schemas/Relation'
           nullable: true
-          description: Primary key of the support team, or null if unassigned.
-        name:
-          type: string
-          description: Name of the team.
+          readOnly: true
+          description: The support team, or null if unassigned (REL-14).
         count:
           type: integer
           description: Number of open tickets assigned to this team.
       required:
       - count
-      - name
-      - team_id
+      - team
     ReasonEnum:
       enum:
       - maintenance
@@ -14856,6 +14850,7 @@ components:
       - meta
     ResourceTicketDTOItem:
       type: object
+      description: A ticket row of the resource's ticket summary (REL-15).
       properties:
         id:
           type: integer
@@ -14866,7 +14861,9 @@ components:
         status_name:
           type: string
         system_state:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         priority_name:
           type: string
         priority_rank:
@@ -14886,6 +14883,7 @@ components:
       - status_name
       - subject
       - system_state
+      x-embedded-resource: true
     ResourceTicketSummary:
       type: object
       properties:
@@ -16251,7 +16249,6 @@ components:
       - phone
       - walk_in
       - api
-      - system
       type: string
       description: '* `web` - Web
 
@@ -16261,9 +16258,7 @@ components:
 
         * `walk_in` - Walk In
 
-        * `api` - Api
-
-        * `system` - System'
+        * `api` - Api'
     SpecificationDefinitionCatalogCreate:
       type: object
       properties:
@@ -18359,7 +18354,7 @@ components:
           - $ref: '#/components/schemas/BlankEnum'
         source:
           allOf:
-          - $ref: '#/components/schemas/TicketCreateRequestSourceEnum'
+          - $ref: '#/components/schemas/SourceEnum'
           default: web
         external_reference:
           type: string
@@ -18403,23 +18398,6 @@ components:
       - category_id
       - description
       - subject
-    TicketCreateRequestSourceEnum:
-      enum:
-      - web
-      - email
-      - phone
-      - walk_in
-      - api
-      type: string
-      description: '* `web` - Web
-
-        * `email` - Email
-
-        * `phone` - Phone
-
-        * `walk_in` - Walk In
-
-        * `api` - Api'
     TicketCreateSerializersTicketDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -18454,9 +18432,13 @@ components:
         description:
           type: string
         ticket_type:
-          $ref: '#/components/schemas/TicketTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         source:
-          $ref: '#/components/schemas/SourceEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         impact:
           oneOf:
           - $ref: '#/components/schemas/UrgencyEnum'
@@ -18477,15 +18459,17 @@ components:
           description: Requester/agent-set target date, independent of the SLA.
         category:
           allOf:
-          - $ref: '#/components/schemas/Category'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
+          nullable: true
         priority:
           allOf:
-          - $ref: '#/components/schemas/Priority'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
+          nullable: true
         status:
           allOf:
-          - $ref: '#/components/schemas/Status'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
         requester:
           allOf:
@@ -18633,10 +18617,12 @@ components:
       - resolved_by
       - resource_links
       - sla
+      - source
       - status
       - subject
       - team
       - ticket_links
+      - ticket_type
       - updated_at
       - watchers
     TicketDetailSerializersTicketDetailDetailResponse:
@@ -18726,9 +18712,13 @@ components:
           type: string
           maxLength: 200
         ticket_type:
-          $ref: '#/components/schemas/TicketTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         source:
-          $ref: '#/components/schemas/SourceEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         impact:
           oneOf:
           - $ref: '#/components/schemas/UrgencyEnum'
@@ -18739,15 +18729,17 @@ components:
           - $ref: '#/components/schemas/BlankEnum'
         category:
           allOf:
-          - $ref: '#/components/schemas/Category'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
+          nullable: true
         priority:
           allOf:
-          - $ref: '#/components/schemas/Priority'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
+          nullable: true
         status:
           allOf:
-          - $ref: '#/components/schemas/Status'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
         requester:
           allOf:
@@ -18809,9 +18801,11 @@ components:
       - priority
       - requester
       - sla
+      - source
       - status
       - subject
       - team
+      - ticket_type
       - updated_at
     TicketListSerializersTicketListPaginatedResponse:
       type: object

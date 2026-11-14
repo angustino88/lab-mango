@@ -113862,10 +113862,10 @@
             "comment_edit_window_minutes": {
               "type": "integer"
             },
-            "requesters_can_set_priority": {
+            "can_requesters_set_priority": {
               "type": "boolean"
             },
-            "sla_enabled": {
+            "is_sla_enabled": {
               "type": "boolean"
             },
             "sla_at_risk_percent": {
@@ -113873,7 +113873,7 @@
               "maximum": 100,
               "minimum": 1
             },
-            "csat_enabled": {
+            "is_csat_enabled": {
               "type": "boolean"
             },
             "csat_window_days": {
@@ -113902,10 +113902,10 @@
           ],
           "max_attachments_per_ticket": 1,
           "comment_edit_window_minutes": 1,
-          "requesters_can_set_priority": true,
-          "sla_enabled": true,
+          "can_requesters_set_priority": true,
+          "is_sla_enabled": true,
           "sla_at_risk_percent": 1,
-          "csat_enabled": true,
+          "is_csat_enabled": true,
           "csat_window_days": 1,
           "default_ticket_type": "incident"
         }
@@ -114591,11 +114591,11 @@
                 "type": "string"
               }
             },
-            "requires_reason": {
+            "is_reason_required": {
               "type": "boolean",
               "default": false
             },
-            "requires_resolution": {
+            "is_resolution_required": {
               "type": "boolean",
               "default": false
             }
@@ -114611,8 +114611,8 @@
           "allowed_roles": [
             "string"
           ],
-          "requires_reason": false,
-          "requires_resolution": false
+          "is_reason_required": false,
+          "is_resolution_required": false
         }
       },
       "responses": {
@@ -115008,10 +115008,10 @@
                 "type": "string"
               }
             },
-            "requires_reason": {
+            "is_reason_required": {
               "type": "boolean"
             },
-            "requires_resolution": {
+            "is_resolution_required": {
               "type": "boolean"
             }
           }
@@ -115020,8 +115020,8 @@
           "allowed_roles": [
             "string"
           ],
-          "requires_reason": true,
-          "requires_resolution": true
+          "is_reason_required": true,
+          "is_resolution_required": true
         }
       },
       "responses": {
@@ -121079,7 +121079,7 @@
               "type": "boolean",
               "default": false
             },
-            "pauses_sla": {
+            "is_sla_paused": {
               "type": "boolean",
               "default": false
             },
@@ -121115,7 +121115,7 @@
           "name": "string",
           "color_hex": "",
           "is_final": false,
-          "pauses_sla": false,
+          "is_sla_paused": false,
           "system_state": "open",
           "is_initial": false,
           "is_active": true,
@@ -121745,7 +121745,7 @@
             "is_final": {
               "type": "boolean"
             },
-            "pauses_sla": {
+            "is_sla_paused": {
               "type": "boolean"
             },
             "system_state": {
@@ -121773,7 +121773,7 @@
           "name": "string",
           "color_hex": "string",
           "is_final": true,
-          "pauses_sla": true,
+          "is_sla_paused": true,
           "system_state": "open",
           "is_initial": true,
           "is_active": true,
@@ -124040,12 +124040,22 @@
                       "maxLength": 200
                     },
                     "ticket_type": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "source": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "impact": {
                       "oneOf": [
@@ -124078,7 +124088,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "priority": {
                       "allOf": [
@@ -124087,7 +124098,8 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
-                      "readOnly": true
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "status": {
                       "allOf": [
@@ -124188,9 +124200,11 @@
                     "priority",
                     "requester",
                     "sla",
+                    "source",
                     "status",
                     "subject",
                     "team",
+                    "ticket_type",
                     "updated_at"
                   ]
                 }
@@ -124688,20 +124702,22 @@
                     "type": "string"
                   },
                   "ticket_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "source": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `web` - Web\n* `email` - Email\n* `phone` - Phone\n* `walk_in` - Walk In\n* `api` - Api\n* `system` - System"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "impact": {
                     "oneOf": [
@@ -124745,7 +124761,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "priority": {
                     "allOf": [
@@ -124754,7 +124771,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "status": {
                     "allOf": [
@@ -124996,10 +125014,12 @@
                   "resolved_by",
                   "resource_links",
                   "sla",
+                  "source",
                   "status",
                   "subject",
                   "team",
                   "ticket_links",
+                  "ticket_type",
                   "updated_at",
                   "watchers"
                 ]
@@ -125016,8 +125036,8 @@
               "number": 1,
               "subject": "string",
               "description": "string",
-              "ticket_type": "string",
-              "source": "string",
+              "ticket_type": {},
+              "source": {},
               "impact": {},
               "urgency": {},
               "external_reference": "string",
@@ -125794,20 +125814,22 @@
                     "type": "string"
                   },
                   "ticket_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "source": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `web` - Web\n* `email` - Email\n* `phone` - Phone\n* `walk_in` - Walk In\n* `api` - Api\n* `system` - System"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "impact": {
                     "oneOf": [
@@ -125851,7 +125873,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "priority": {
                     "allOf": [
@@ -125860,7 +125883,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "status": {
                     "allOf": [
@@ -126102,10 +126126,12 @@
                   "resolved_by",
                   "resource_links",
                   "sla",
+                  "source",
                   "status",
                   "subject",
                   "team",
                   "ticket_links",
+                  "ticket_type",
                   "updated_at",
                   "watchers"
                 ]
@@ -126122,8 +126148,8 @@
               "number": 1,
               "subject": "string",
               "description": "string",
-              "ticket_type": "string",
-              "source": "string",
+              "ticket_type": {},
+              "source": {},
               "impact": {},
               "urgency": {},
               "external_reference": "string",
@@ -126512,20 +126538,22 @@
                     "type": "string"
                   },
                   "ticket_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "source": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `web` - Web\n* `email` - Email\n* `phone` - Phone\n* `walk_in` - Walk In\n* `api` - Api\n* `system` - System"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "impact": {
                     "oneOf": [
@@ -126569,7 +126597,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "priority": {
                     "allOf": [
@@ -126578,7 +126607,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "status": {
                     "allOf": [
@@ -126820,10 +126850,12 @@
                   "resolved_by",
                   "resource_links",
                   "sla",
+                  "source",
                   "status",
                   "subject",
                   "team",
                   "ticket_links",
+                  "ticket_type",
                   "updated_at",
                   "watchers"
                 ]
@@ -126840,8 +126872,8 @@
               "number": 1,
               "subject": "string",
               "description": "string",
-              "ticket_type": "string",
-              "source": "string",
+              "ticket_type": {},
+              "source": {},
               "impact": {},
               "urgency": {},
               "external_reference": "string",
@@ -127497,20 +127529,22 @@
                     "type": "string"
                   },
                   "ticket_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "source": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `web` - Web\n* `email` - Email\n* `phone` - Phone\n* `walk_in` - Walk In\n* `api` - Api\n* `system` - System"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "impact": {
                     "oneOf": [
@@ -127554,7 +127588,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "priority": {
                     "allOf": [
@@ -127563,7 +127598,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "status": {
                     "allOf": [
@@ -127805,10 +127841,12 @@
                   "resolved_by",
                   "resource_links",
                   "sla",
+                  "source",
                   "status",
                   "subject",
                   "team",
                   "ticket_links",
+                  "ticket_type",
                   "updated_at",
                   "watchers"
                 ]
@@ -127825,8 +127863,8 @@
               "number": 1,
               "subject": "string",
               "description": "string",
-              "ticket_type": "string",
-              "source": "string",
+              "ticket_type": {},
+              "source": {},
               "impact": {},
               "urgency": {},
               "external_reference": "string",
@@ -130086,20 +130124,22 @@
                     "type": "string"
                   },
                   "ticket_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "source": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `web` - Web\n* `email` - Email\n* `phone` - Phone\n* `walk_in` - Walk In\n* `api` - Api\n* `system` - System"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "impact": {
                     "oneOf": [
@@ -130143,7 +130183,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "priority": {
                     "allOf": [
@@ -130152,7 +130193,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "status": {
                     "allOf": [
@@ -130394,10 +130436,12 @@
                   "resolved_by",
                   "resource_links",
                   "sla",
+                  "source",
                   "status",
                   "subject",
                   "team",
                   "ticket_links",
+                  "ticket_type",
                   "updated_at",
                   "watchers"
                 ]
@@ -130414,8 +130458,8 @@
               "number": 1,
               "subject": "string",
               "description": "string",
-              "ticket_type": "string",
-              "source": "string",
+              "ticket_type": {},
+              "source": {},
               "impact": {},
               "urgency": {},
               "external_reference": "string",
@@ -132435,20 +132479,22 @@
                     "type": "string"
                   },
                   "ticket_type": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "source": {
-                    "enum": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "type": "string",
-                    "description": "* `web` - Web\n* `email` - Email\n* `phone` - Phone\n* `walk_in` - Walk In\n* `api` - Api\n* `system` - System"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "impact": {
                     "oneOf": [
@@ -132492,7 +132538,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "priority": {
                     "allOf": [
@@ -132501,7 +132548,8 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "readOnly": true
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "status": {
                     "allOf": [
@@ -132743,10 +132791,12 @@
                   "resolved_by",
                   "resource_links",
                   "sla",
+                  "source",
                   "status",
                   "subject",
                   "team",
                   "ticket_links",
+                  "ticket_type",
                   "updated_at",
                   "watchers"
                 ]
@@ -132763,8 +132813,8 @@
               "number": 1,
               "subject": "string",
               "description": "string",
-              "ticket_type": "string",
-              "source": "string",
+              "ticket_type": {},
+              "source": {},
               "impact": {},
               "urgency": {},
               "external_reference": "string",

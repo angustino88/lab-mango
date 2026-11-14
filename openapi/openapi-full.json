@@ -38568,7 +38568,7 @@
             "type": "boolean",
             "default": false
           },
-          "pauses_sla": {
+          "is_sla_paused": {
             "type": "boolean",
             "default": false
           },
@@ -38730,11 +38730,11 @@
               "type": "string"
             }
           },
-          "requires_reason": {
+          "is_reason_required": {
             "type": "boolean",
             "default": false
           },
-          "requires_resolution": {
+          "is_resolution_required": {
             "type": "boolean",
             "default": false
           }
@@ -55195,10 +55195,10 @@
           "comment_edit_window_minutes": {
             "type": "integer"
           },
-          "requesters_can_set_priority": {
+          "can_requesters_set_priority": {
             "type": "boolean"
           },
-          "sla_enabled": {
+          "is_sla_enabled": {
             "type": "boolean"
           },
           "sla_at_risk_percent": {
@@ -55206,7 +55206,7 @@
             "maximum": 100,
             "minimum": 1
           },
-          "csat_enabled": {
+          "is_csat_enabled": {
             "type": "boolean"
           },
           "csat_window_days": {
@@ -55240,7 +55240,7 @@
           "is_final": {
             "type": "boolean"
           },
-          "pauses_sla": {
+          "is_sla_paused": {
             "type": "boolean"
           },
           "system_state": {
@@ -55298,10 +55298,10 @@
               "type": "string"
             }
           },
-          "requires_reason": {
+          "is_reason_required": {
             "type": "boolean"
           },
-          "requires_resolution": {
+          "is_resolution_required": {
             "type": "boolean"
           }
         }
@@ -57892,13 +57892,14 @@
       "QueueStatsAssigneeItem": {
         "type": "object",
         "properties": {
-          "user_id": {
-            "type": "integer",
-            "description": "Primary key of the assigned user."
-          },
-          "username": {
-            "type": "string",
-            "description": "Username of the assignee."
+          "assignee": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Relation"
+              }
+            ],
+            "readOnly": true,
+            "description": "The assigned user (REL-14)."
           },
           "count": {
             "type": "integer",
@@ -57906,21 +57907,21 @@
           }
         },
         "required": [
-          "count",
-          "user_id",
-          "username"
+          "assignee",
+          "count"
         ]
       },
       "QueueStatsPriorityItem": {
         "type": "object",
         "properties": {
-          "priority_id": {
-            "type": "integer",
-            "description": "Primary key of the support priority."
-          },
-          "name": {
-            "type": "string",
-            "description": "Name of the priority."
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Relation"
+              }
+            ],
+            "readOnly": true,
+            "description": "The support priority (REL-14)."
           },
           "rank": {
             "type": "integer",
@@ -57933,8 +57934,7 @@
         },
         "required": [
           "count",
-          "name",
-          "priority_id",
+          "priority",
           "rank"
         ]
       },
@@ -57968,14 +57968,15 @@
       "QueueStatsTeamItem": {
         "type": "object",
         "properties": {
-          "team_id": {
-            "type": "integer",
+          "team": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Relation"
+              }
+            ],
             "nullable": true,
-            "description": "Primary key of the support team, or null if unassigned."
-          },
-          "name": {
-            "type": "string",
-            "description": "Name of the team."
+            "readOnly": true,
+            "description": "The support team, or null if unassigned (REL-14)."
           },
           "count": {
             "type": "integer",
@@ -57984,8 +57985,7 @@
         },
         "required": [
           "count",
-          "name",
-          "team_id"
+          "team"
         ]
       },
       "ReasonEnum": {
@@ -58563,6 +58563,7 @@
       },
       "ResourceTicketDTOItem": {
         "type": "object",
+        "description": "A ticket row of the resource's ticket summary (REL-15).",
         "properties": {
           "id": {
             "type": "integer"
@@ -58577,7 +58578,12 @@
             "type": "string"
           },
           "system_state": {
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
           },
           "priority_name": {
             "type": "string"
@@ -58603,7 +58609,8 @@
           "status_name",
           "subject",
           "system_state"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "ResourceTicketSummary": {
         "type": "object",
@@ -60439,11 +60446,10 @@
           "email",
           "phone",
           "walk_in",
-          "api",
-          "system"
+          "api"
         ],
         "type": "string",
-        "description": "* `web` - Web\n* `email` - Email\n* `phone` - Phone\n* `walk_in` - Walk In\n* `api` - Api\n* `system` - System"
+        "description": "* `web` - Web\n* `email` - Email\n* `phone` - Phone\n* `walk_in` - Walk In\n* `api` - Api"
       },
       "SpecificationDefinitionCatalogCreate": {
         "type": "object",
@@ -63256,7 +63262,7 @@
           "source": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/TicketCreateRequestSourceEnum"
+                "$ref": "#/components/schemas/SourceEnum"
               }
             ],
             "default": "web"
@@ -63319,17 +63325,6 @@
           "subject"
         ]
       },
-      "TicketCreateRequestSourceEnum": {
-        "enum": [
-          "web",
-          "email",
-          "phone",
-          "walk_in",
-          "api"
-        ],
-        "type": "string",
-        "description": "* `web` - Web\n* `email` - Email\n* `phone` - Phone\n* `walk_in` - Walk In\n* `api` - Api"
-      },
       "TicketCreateSerializersTicketDetailDetailResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
@@ -63377,10 +63372,20 @@
             "type": "string"
           },
           "ticket_type": {
-            "$ref": "#/components/schemas/TicketTypeEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
           },
           "source": {
-            "$ref": "#/components/schemas/SourceEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
           },
           "impact": {
             "oneOf": [
@@ -63416,23 +63421,25 @@
           "category": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Category"
+                "$ref": "#/components/schemas/Relation"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "priority": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Priority"
+                "$ref": "#/components/schemas/Relation"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "status": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Status"
+                "$ref": "#/components/schemas/Relation"
               }
             ],
             "readOnly": true
@@ -63645,10 +63652,12 @@
           "resolved_by",
           "resource_links",
           "sla",
+          "source",
           "status",
           "subject",
           "team",
           "ticket_links",
+          "ticket_type",
           "updated_at",
           "watchers"
         ]
@@ -63776,10 +63785,20 @@
             "maxLength": 200
           },
           "ticket_type": {
-            "$ref": "#/components/schemas/TicketTypeEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
           },
           "source": {
-            "$ref": "#/components/schemas/SourceEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
           },
           "impact": {
             "oneOf": [
@@ -63804,23 +63823,25 @@
           "category": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Category"
+                "$ref": "#/components/schemas/Relation"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "priority": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Priority"
+                "$ref": "#/components/schemas/Relation"
               }
             ],
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "status": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Status"
+                "$ref": "#/components/schemas/Relation"
               }
             ],
             "readOnly": true
@@ -63908,9 +63929,11 @@
           "priority",
           "requester",
           "sla",
+          "source",
           "status",
           "subject",
           "team",
+          "ticket_type",
           "updated_at"
         ]
       },
