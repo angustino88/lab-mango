@@ -15179,7 +15179,8 @@
                   "is_active",
                   "name",
                   "updated_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -15681,7 +15682,8 @@
                   "is_active",
                   "name",
                   "updated_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -15904,7 +15906,8 @@
                   "is_active",
                   "name",
                   "updated_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -16673,7 +16676,8 @@
                   "is_active",
                   "name",
                   "updated_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -17175,7 +17179,8 @@
                   "is_active",
                   "name",
                   "updated_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -17398,7 +17403,8 @@
                   "is_active",
                   "name",
                   "updated_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -25326,6 +25332,7 @@
                 "type": "array",
                 "items": {
                   "type": "object",
+                  "description": "An equipment assignment owned by the bench setup (REL-15); ``equipment`` is a REL-3 relation.",
                   "properties": {
                     "id": {
                       "type": "integer",
@@ -25339,6 +25346,16 @@
                         }
                       ],
                       "readOnly": true
+                    },
+                    "equipment_kind": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "role": {
                       "type": "string",
@@ -25361,11 +25378,13 @@
                   "required": [
                     "assigned_at",
                     "equipment",
+                    "equipment_kind",
                     "id",
                     "is_monitored",
                     "position",
                     "role"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -25385,6 +25404,7 @@
               {
                 "id": 1,
                 "equipment": {},
+                "equipment_kind": {},
                 "role": "string",
                 "position": 1,
                 "is_monitored": true,
@@ -99316,7 +99336,8 @@
                     "id",
                     "name",
                     "updated_at"
-                  ]
+                  ],
+                  "x-embedded-resource": true
                 }
               }
             },
@@ -99522,7 +99543,8 @@
                   "id",
                   "name",
                   "updated_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -100012,7 +100034,8 @@
                   "id",
                   "name",
                   "updated_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [
@@ -100162,7 +100185,8 @@
                   "id",
                   "name",
                   "updated_at"
-                ]
+                ],
+                "x-embedded-resource": true
               }
             },
             "required": [

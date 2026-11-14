@@ -6,7 +6,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
-from core.common.api.summary_serializers import StatusSummarySerializer, UserReferenceSerializer
+from core.common.api.summary_serializers import StatusSummarySerializer, UserReferenceSerializer, embedded_resource
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
@@ -328,6 +328,7 @@ class StationSerializer(LocationStateFieldsMixin, AppModelSerializer):
         return request.build_absolute_uri(path) if request is not None else path
 
 
+@embedded_resource
 class StationTypeSerializer(AppModelSerializer):
     class Meta:
         model = StationType
@@ -349,7 +350,10 @@ class StationStatusRecordSerializer(AppModelSerializer):
         return to_choice_reference(getattr(obj, "status", None), ResourceLifecycleStatus.choices)
 
 
+@embedded_resource
 class RoomReferenceSerializer(NamedReferenceSerializer):
+    """A room item of the station reference-data bundle (REL-15)."""
+
     sku = serializers.CharField(read_only=True)
 
     class Meta:

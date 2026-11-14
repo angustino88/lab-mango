@@ -40482,44 +40482,6 @@
           "pagination"
         ]
       },
-      "BenchEquipmentReference": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "uid": {
-            "type": "string",
-            "format": "uuid",
-            "readOnly": true
-          },
-          "sku": {
-            "type": "string",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "readOnly": true
-          },
-          "kind": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
-            "readOnly": true,
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "kind",
-          "name",
-          "sku",
-          "uid"
-        ]
-      },
       "BenchFavorite": {
         "type": "object",
         "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
@@ -40610,7 +40572,8 @@
           "is_active",
           "name",
           "updated_at"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "BenchGroupCatalogCreate": {
         "type": "object",
@@ -41346,6 +41309,7 @@
       },
       "BenchSetupEquipment": {
         "type": "object",
+        "description": "An equipment assignment owned by the bench setup (REL-15); ``equipment`` is a REL-3 relation.",
         "properties": {
           "id": {
             "type": "integer",
@@ -41354,10 +41318,19 @@
           "equipment": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/BenchEquipmentReference"
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
               }
             ],
             "readOnly": true
+          },
+          "equipment_kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
           },
           "role": {
             "type": "string",
@@ -41380,11 +41353,13 @@
         "required": [
           "assigned_at",
           "equipment",
+          "equipment_kind",
           "id",
           "is_monitored",
           "position",
           "role"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "BenchStationReference": {
         "type": "object",
@@ -41412,7 +41387,8 @@
           "name",
           "sku",
           "uid"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "BenchStatusSummary": {
         "type": "object",
@@ -41491,7 +41467,8 @@
           "is_active",
           "name",
           "updated_at"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "BenchTypeCatalogCreate": {
         "type": "object",
@@ -51559,7 +51536,7 @@
       },
       "LabsStationRoomReference": {
         "type": "object",
-        "description": "Compact `{id, name}` object representation of a related entity.",
+        "description": "A room item of the station reference-data bundle (REL-15).",
         "properties": {
           "id": {
             "type": "integer",
@@ -51578,7 +51555,8 @@
           "id",
           "name",
           "sku"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "LabsUIDNamedReference": {
         "type": "object",
@@ -61881,7 +61859,8 @@
           "id",
           "name",
           "updated_at"
-        ]
+        ],
+        "x-embedded-resource": true
       },
       "StationTypeCatalogCreate": {
         "type": "object",

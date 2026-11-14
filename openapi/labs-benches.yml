@@ -2140,33 +2140,6 @@ components:
           $ref: '#/components/schemas/BenchEquipmentListSerializersBenchSetupEquipmentPagination'
       required:
       - pagination
-    BenchEquipmentReference:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        uid:
-          type: string
-          format: uuid
-          readOnly: true
-        sku:
-          type: string
-          readOnly: true
-        name:
-          type: string
-          readOnly: true
-        kind:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
-          nullable: true
-      required:
-      - id
-      - kind
-      - name
-      - sku
-      - uid
     BenchFavorite:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -2235,6 +2208,7 @@ components:
       - is_active
       - name
       - updated_at
+      x-embedded-resource: true
     BenchGroupCatalogCreate:
       type: object
       properties:
@@ -2722,14 +2696,21 @@ components:
       - updated_at
     BenchSetupEquipment:
       type: object
+      description: An equipment assignment owned by the bench setup (REL-15); ``equipment``
+        is a REL-3 relation.
       properties:
         id:
           type: integer
           readOnly: true
         equipment:
           allOf:
-          - $ref: '#/components/schemas/BenchEquipmentReference'
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
           readOnly: true
+        equipment_kind:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
         role:
           type: string
           readOnly: true
@@ -2746,10 +2727,12 @@ components:
       required:
       - assigned_at
       - equipment
+      - equipment_kind
       - id
       - is_monitored
       - position
       - role
+      x-embedded-resource: true
     BenchStationReference:
       type: object
       properties:
@@ -2771,6 +2754,7 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     BenchStatusSummary:
       type: object
       description: The deprecated four-value status (lifecycle, with out_of_service
@@ -2834,6 +2818,7 @@ components:
       - is_active
       - name
       - updated_at
+      x-embedded-resource: true
     BenchTypeCatalogCreate:
       type: object
       properties:

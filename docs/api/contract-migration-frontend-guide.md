@@ -67,3 +67,10 @@ Sections are added as each feature is migrated.
 | Slot `occupied` | boolean | `is_occupied` |
 | Room slot `slot_type` | plain string | `{value, label}` |
 | City `country`, building `city` | nested object with `code` / `country` | `{id, name}` |
+
+### Benches
+
+| Field | Before | After |
+| --- | --- | --- |
+| Setup assignment `equipment` | `{id, uid, sku, name, kind}` | `{id, uid, name}`; the kind moves to the row as `equipment_kind: {id, name}` |
+| Reference-data `types`, `groups`, `stations`; station reference-data `types`, `rooms` | unchanged keys | unchanged; marked `x-embedded-resource` in the schema |

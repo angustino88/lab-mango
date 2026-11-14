@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from drf_spectacular.utils import extend_schema_field
+from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
 from rest_framework import serializers
 
 
@@ -26,6 +26,14 @@ class StatusSummarySerializer(serializers.Serializer):
         many=True,
         help_text="All code-defined states, including zero counts. Values are extensible.",
     )
+
+
+embedded_resource = extend_schema_serializer(extensions={"x-embedded-resource": True})
+"""Mark a serializer as an embedded resource (response standard REL-15): an owned child or a bundle item.
+
+The contract gate then checks it as a resource instead of as a relation, so it must follow REL-1 and the
+naming and enum rules itself.
+"""
 
 
 DELETED_USER_NAME = "Deleted user"

@@ -9,7 +9,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
-from core.common.api.summary_serializers import StatusSummarySerializer
+from core.common.api.summary_serializers import StatusSummarySerializer, embedded_resource
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
@@ -121,17 +121,13 @@ class BenchPlacementSerializer(StrictWriteMixin, serializers.Serializer):
 BenchListQuerySerializer = BENCH_FILTERS.serializer("BenchListQuerySerializer")
 
 
-class BenchEquipmentReferenceSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    uid = serializers.UUIDField(read_only=True)
-    sku = serializers.CharField(read_only=True)
-    name = serializers.CharField(read_only=True)
-    kind = NamedReferenceSerializer(read_only=True, allow_null=True)
-
-
+@embedded_resource
 class BenchSetupEquipmentSerializer(serializers.Serializer):
+    """An equipment assignment owned by the bench setup (REL-15); ``equipment`` is a REL-3 relation."""
+
     id = serializers.IntegerField(read_only=True)
-    equipment = BenchEquipmentReferenceSerializer(read_only=True)
+    equipment = UIDNamedReferenceSerializer(read_only=True)
+    equipment_kind = NamedReferenceSerializer(source="equipment.kind", read_only=True, allow_null=True)
     role = serializers.CharField(read_only=True)
     position = serializers.IntegerField(read_only=True)
     is_monitored = serializers.BooleanField(source="monitor", read_only=True)
@@ -354,6 +350,7 @@ class BenchReferenceWriteSerializer(StrictWriteMixin, serializers.Serializer):
     is_active = serializers.BooleanField(source="active", required=False)
 
 
+@embedded_resource
 class BenchGroupSerializer(AppModelSerializer):
     is_active = serializers.BooleanField(source="active", read_only=True)
 
@@ -363,6 +360,7 @@ class BenchGroupSerializer(AppModelSerializer):
         read_only_fields = fields
 
 
+@embedded_resource
 class BenchTypeSerializer(AppModelSerializer):
     is_active = serializers.BooleanField(source="active", read_only=True)
 
@@ -372,6 +370,7 @@ class BenchTypeSerializer(AppModelSerializer):
         read_only_fields = fields
 
 
+@embedded_resource
 class BenchStationReferenceSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     uid = serializers.UUIDField(read_only=True)

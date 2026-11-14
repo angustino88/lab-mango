@@ -4101,7 +4101,7 @@ components:
       - name
     LabsStationRoomReference:
       type: object
-      description: Compact `{id, name}` object representation of a related entity.
+      description: A room item of the station reference-data bundle (REL-15).
       properties:
         id:
           type: integer
@@ -4116,6 +4116,7 @@ components:
       - id
       - name
       - sku
+      x-embedded-resource: true
     LabsUIDNamedReference:
       type: object
       description: Compact `{id, uid, name}` object representation when target defines
@@ -6599,6 +6600,7 @@ components:
       - id
       - name
       - updated_at
+      x-embedded-resource: true
     StationTypeCatalogCreate:
       type: object
       properties:
