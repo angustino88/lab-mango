@@ -2,6 +2,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api import AppModelSerializer
+from core.common.api.money import MoneyField
 from core.common.api.summary_serializers import ChoiceSerializer, choice_field, embedded_resource, to_choice
 from core.labs.features.base.serializers import NamedReferenceSerializer
 from core.labs.models import Expense, ExpensePayment, PaymentTransactionType
@@ -23,11 +24,12 @@ class ExpenseWriteSerializer(serializers.ModelSerializer):
     billing_period = serializers.ChoiceField(choices=BILLING_PERIOD_CHOICES, required=False)
     start_date = serializers.DateField(source="valid_from")
     end_date = serializers.DateField(source="valid_until", required=False, allow_null=True)
+    cost = MoneyField(min_value=0, help_text="What the expense costs (FMT-2, FMT-7).")
 
     class Meta:
         model = Expense
         fields = (
-            "name", "expense_type", "supplier", "reference", "amount", "currency",
+            "name", "expense_type", "supplier", "reference", "cost",
             "billing_period", "start_date", "end_date", "notes",
         )
 
@@ -40,13 +42,13 @@ class ExpenseSerializer(AppModelSerializer):
     start_date = serializers.DateField(source="valid_from", read_only=True)
     end_date = serializers.DateField(source="valid_until", read_only=True, allow_null=True)
     room = serializers.SerializerMethodField(read_only=True)
-    amount_display = serializers.SerializerMethodField(read_only=True)
+    cost = MoneyField(read_only=True)
 
     class Meta:
         model = Expense
         fields = (
-            "id", "room", "name", "expense_type", "supplier", "reference", "amount", "currency",
-            "amount_display", "billing_period", "start_date", "end_date", "notes",
+            "id", "room", "name", "expense_type", "supplier", "reference", "cost",
+            "billing_period", "start_date", "end_date", "notes",
             "created_at", "updated_at",
         )
         read_only_fields = fields
@@ -54,19 +56,17 @@ class ExpenseSerializer(AppModelSerializer):
     def get_room(self, obj) -> dict[str, int | str]:
         return {"id": obj.resource_id, "name": getattr(obj.resource, "name", str(obj.resource_id))}
 
-    def get_amount_display(self, obj) -> dict[str, str]:
-        return {"amount": format(obj.amount, "f"), "currency": obj.currency}
-
 
 class ExpensePaymentWriteSerializer(serializers.ModelSerializer):
     """Write shape for payments (RW-1). The expense is taken from the URL, never the body."""
 
     transaction_type = serializers.ChoiceField(choices=PaymentTransactionType.choices, required=False)
     paid_date = serializers.DateField(source="paid_at")
+    total = MoneyField(currency="expense.currency", min_value=0, help_text="In the expense's currency.")
 
     class Meta:
         model = ExpensePayment
-        fields = ("transaction_type", "amount", "paid_date", "reference", "notes")
+        fields = ("transaction_type", "total", "paid_date", "reference", "notes")
 
 
 class ExpensePaymentSerializer(AppModelSerializer):
@@ -74,11 +74,12 @@ class ExpensePaymentSerializer(AppModelSerializer):
 
     transaction_type = choice_field(PaymentTransactionType.choices)
     paid_date = serializers.DateField(source="paid_at", read_only=True)
+    total = MoneyField(currency="expense.currency", read_only=True)
 
     class Meta:
         model = ExpensePayment
         fields = (
-            "id", "transaction_type", "amount", "paid_date", "reference", "notes",
+            "id", "transaction_type", "total", "paid_date", "reference", "notes",
             "created_at", "updated_at",
         )
         read_only_fields = fields
@@ -94,11 +95,20 @@ class FinancialReportQuerySerializer(serializers.Serializer):
     currency = serializers.CharField(required=False, default="EUR")
 
 
+def _report_currency(row, field) -> str:
+    """Every amount of a financial report is in the report's currency."""
+    return field.root.instance["currency"]
+
+
+def _report_money(source: str) -> MoneyField:
+    return MoneyField(amount=source, currency=_report_currency, read_only=True)
+
+
 class FinancialReportSummarySerializer(serializers.Serializer):
-    total_budgeted = serializers.DecimalField(max_digits=14, decimal_places=2)
-    total_paid = serializers.DecimalField(max_digits=14, decimal_places=2)
-    total_pending = serializers.DecimalField(max_digits=14, decimal_places=2)
-    total_refunded = serializers.DecimalField(max_digits=14, decimal_places=2)
+    budgeted = _report_money("total_budgeted")
+    paid = _report_money("total_paid")
+    pending = _report_money("total_pending")
+    refunded = _report_money("total_refunded")
     expense_count = serializers.IntegerField()
     payment_count = serializers.IntegerField()
 
@@ -106,30 +116,30 @@ class FinancialReportSummarySerializer(serializers.Serializer):
 class FinancialReportTypeBreakdownSerializer(serializers.Serializer):
     expense_type = serializers.SerializerMethodField()
     count = serializers.IntegerField()
-    amount = serializers.DecimalField(max_digits=14, decimal_places=2)
-    paid_amount = serializers.DecimalField(max_digits=14, decimal_places=2)
-    pending_amount = serializers.DecimalField(max_digits=14, decimal_places=2)
+    cost = _report_money("amount")
+    paid = _report_money("paid_amount")
+    pending = _report_money("pending_amount")
 
 
 class FinancialReportRoomBreakdownSerializer(serializers.Serializer):
     room = serializers.SerializerMethodField()  # REL-14
     count = serializers.IntegerField()
-    amount = serializers.DecimalField(max_digits=14, decimal_places=2)
-    paid_amount = serializers.DecimalField(max_digits=14, decimal_places=2)
-    pending_amount = serializers.DecimalField(max_digits=14, decimal_places=2)
+    cost = _report_money("amount")
+    paid = _report_money("paid_amount")
+    pending = _report_money("pending_amount")
 
 
 class FinancialReportStatusBreakdownSerializer(serializers.Serializer):
     status = serializers.SerializerMethodField()
     count = serializers.IntegerField()
-    amount = serializers.DecimalField(max_digits=14, decimal_places=2)
+    cost = _report_money("amount")
 
 
 class FinancialReportPeriodBreakdownSerializer(serializers.Serializer):
     billing_period = serializers.SerializerMethodField()
     count = serializers.IntegerField()
-    amount = serializers.DecimalField(max_digits=14, decimal_places=2)
-    paid_amount = serializers.DecimalField(max_digits=14, decimal_places=2)
+    cost = _report_money("amount")
+    paid = _report_money("paid_amount")
 
 
 @embedded_resource
@@ -139,11 +149,10 @@ class FinancialReportItemSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
     expense_type = serializers.SerializerMethodField()
-    amount = serializers.DecimalField(max_digits=14, decimal_places=2)
-    paid_amount = serializers.DecimalField(max_digits=14, decimal_places=2)
-    pending_amount = serializers.DecimalField(max_digits=14, decimal_places=2)
+    cost = _report_money("amount")
+    paid = _report_money("paid_amount")
+    pending = _report_money("pending_amount")
     payment_status = serializers.SerializerMethodField()
-    currency = serializers.CharField()
     billing_period = serializers.SerializerMethodField()
     supplier = serializers.CharField(allow_blank=True)
     reference = serializers.CharField(allow_blank=True)

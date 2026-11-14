@@ -3,6 +3,7 @@ from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
 from rest_framework import serializers
 
 from core.common.api import AppModelSerializer
+from core.common.api.money import MoneyField
 from core.common.api.summary_serializers import ChoiceSerializer, choice_field, to_choice
 from core.labs.models import Purchase, PurchaseItem, PurchaseItemResource, PurchasePriority, PurchaseTransaction
 from core.labs.models.procurement.purchase import PURCHASE_RESOURCE_MODELS
@@ -26,7 +27,9 @@ _MONEY_SCHEMA = {
 
 
 class PurchaseItemSerializer(AppModelSerializer):
-    unit_price = serializers.DecimalField(max_digits=14, decimal_places=2, write_only=True)
+    unit_price = MoneyField(
+        amount="unit_price", currency="purchase.currency", min_value=0, write_only=True, required=False
+    )
     purpose = serializers.CharField(max_length=2_000, required=False, allow_blank=False, allow_null=True)
     priority_id = serializers.IntegerField(min_value=1, required=False, allow_null=True, write_only=True)
     unit = serializers.CharField(max_length=32, required=False, allow_blank=False, allow_null=True)
@@ -45,7 +48,6 @@ class PurchaseItemSerializer(AppModelSerializer):
             "created_at",
         )
         read_only_fields = ("id", "created_at")
-        extra_kwargs = {"unit_price": {"write_only": True}}
 
     def validate(self, attrs):
         return _validate_priority_ids(attrs)
@@ -60,7 +62,7 @@ def _validate_priority_ids(attrs):
 
 class PurchaseItemReadSerializer(AppModelSerializer):
     purchase = serializers.SerializerMethodField()
-    unit_price = serializers.SerializerMethodField()
+    unit_price = MoneyField(amount="unit_price", currency="purchase.currency", read_only=True)
     purpose = serializers.CharField(read_only=True)
     unit = serializers.CharField(read_only=True)
     line_value = serializers.SerializerMethodField()
@@ -77,10 +79,6 @@ class PurchaseItemReadSerializer(AppModelSerializer):
     @extend_schema_field(serializers.DictField(child=serializers.JSONField()))
     def get_purchase(self, obj) -> dict[str, int | str]:
         return {"id": obj.purchase_id, "name": obj.purchase.purchase_order_number or str(obj.purchase_id)}
-
-    @extend_schema_field(_MONEY_SCHEMA)
-    def get_unit_price(self, obj) -> dict[str, str]:
-        return {"amount": format(obj.unit_price, "f"), "currency": obj.purchase.currency}
 
     @extend_schema_field(_MONEY_SCHEMA)
     def get_line_value(self, obj) -> dict[str, str]:
@@ -106,15 +104,14 @@ class PurchaseDraftHeaderInputSerializer(serializers.Serializer):
     supplier = serializers.CharField(max_length=255, required=False, allow_blank=False)
     purchase_date = serializers.DateField(required=False)
     purchase_order_number = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    currency = serializers.CharField(min_length=3, max_length=3, required=False)
-    total_amount = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=0, required=False)
+    total = MoneyField(amount="total_amount", currency="currency", min_value=0, required=False)
     notes = serializers.CharField(max_length=2000, required=False, allow_blank=True, allow_null=False)
 
 
 class DraftLineInputSerializer(serializers.Serializer):
     description = serializers.CharField(max_length=255, allow_blank=False)
     quantity = serializers.IntegerField(min_value=1, max_value=1_000_000)
-    unit_price = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=0)
+    unit_price = MoneyField(amount="unit_price", currency="purchase.currency", min_value=0)
     notes = serializers.CharField(max_length=2_000, required=False, allow_blank=True)
     purpose = serializers.CharField(max_length=2_000, required=False, allow_blank=False, allow_null=True)
     priority_id = serializers.IntegerField(min_value=1, required=False, allow_null=True)
@@ -127,7 +124,7 @@ class DraftLineInputSerializer(serializers.Serializer):
 class DraftLinePatchInputSerializer(serializers.Serializer):
     description = serializers.CharField(max_length=255, required=False, allow_blank=False)
     quantity = serializers.IntegerField(min_value=1, max_value=1_000_000, required=False)
-    unit_price = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=0, required=False)
+    unit_price = MoneyField(amount="unit_price", currency="purchase.currency", min_value=0, required=False)
     notes = serializers.CharField(max_length=2_000, required=False, allow_blank=True)
     purpose = serializers.CharField(max_length=2_000, required=False, allow_blank=False, allow_null=True)
     priority_id = serializers.IntegerField(min_value=1, required=False, allow_null=True)
@@ -141,7 +138,7 @@ class PurchaseDetailSerializer(serializers.ModelSerializer):
     lines_total = serializers.SerializerMethodField()
     unpriced_line_count = serializers.SerializerMethodField()
     item_count = serializers.IntegerField(read_only=True)
-    total_amount = serializers.SerializerMethodField()
+    total = MoneyField(amount="total_amount", currency="currency", read_only=True)
     status = choice_field(Purchase._meta.get_field("status").choices)
     created_at = serializers.DateTimeField(source="created", read_only=True)
     updated_at = serializers.DateTimeField(source="modified", read_only=True)
@@ -149,15 +146,11 @@ class PurchaseDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Purchase
         fields = (
-            "id", "supplier", "purchase_order_number", "purchase_date", "currency", "total_amount",
+            "id", "supplier", "purchase_order_number", "purchase_date", "total",
             "status", "notes", "version", "item_count", "lines_total", "unpriced_line_count",
             "created_at", "updated_at",
         )
         read_only_fields = fields
-
-    @extend_schema_field(_MONEY_SCHEMA)
-    def get_total_amount(self, obj) -> dict[str, str]:
-        return {"amount": format(obj.total_amount, ".2f"), "currency": obj.currency}
 
     @extend_schema_field(_MONEY_SCHEMA)
     def get_lines_total(self, obj) -> dict[str, str]:
@@ -168,17 +161,13 @@ class PurchaseDetailSerializer(serializers.ModelSerializer):
 
 
 class PurchaseDraftHeaderOutputSerializer(serializers.ModelSerializer):
-    total_amount = serializers.SerializerMethodField()
+    total = MoneyField(amount="total_amount", currency="currency", read_only=True)
     status = choice_field(Purchase._meta.get_field("status").choices)
 
     class Meta:
         model = Purchase
-        fields = ("id", "supplier", "purchase_order_number", "purchase_date", "currency", "total_amount", "status", "notes", "version")
+        fields = ("id", "supplier", "purchase_order_number", "purchase_date", "total", "status", "notes", "version")
         read_only_fields = fields
-
-    @extend_schema_field(_MONEY_SCHEMA)
-    def get_total_amount(self, obj) -> dict[str, str]:
-        return {"amount": format(obj.total_amount, ".2f"), "currency": obj.currency}
 
 
 class PurchaseItemDetailSerializer(PurchaseItemReadSerializer):
@@ -196,7 +185,7 @@ class PurchaseSerializer(AppModelSerializer):
         write_only=True,
     )
     status = serializers.SerializerMethodField(read_only=True)
-    total = serializers.SerializerMethodField(read_only=True)
+    total = MoneyField(amount="total_amount", currency="currency", min_value=0)
     item_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -206,9 +195,7 @@ class PurchaseSerializer(AppModelSerializer):
             "supplier",
             "purchase_order_number",
             "purchase_date",
-            "currency",
             "status",
-            "total_amount",
             "total",
             "item_count",
             "notes",
@@ -222,9 +209,13 @@ class PurchaseSerializer(AppModelSerializer):
     def get_status(self, obj) -> dict[str, str]:
         return {"value": obj.status, "label": obj.get_status_display()}
 
-    @extend_schema_field(_MONEY_SCHEMA)
-    def get_total(self, obj) -> dict[str, str]:
-        return {"amount": format(obj.total_amount, "f"), "currency": obj.currency}
+    def validate(self, attrs):
+        """Each line's unit price is in the purchase's currency (FMT-2); the line inputs carry no currency."""
+        currency = attrs.get("currency")
+        for index, item in enumerate(attrs.get("items", ())):
+            if item.pop("currency", currency) != currency:
+                raise serializers.ValidationError({f"items[{index}].unit_price": f"Use the purchase currency, {currency}."})
+        return attrs
 
     def get_item_count(self, obj) -> int:
         if hasattr(obj, "item_count"):
@@ -255,11 +246,8 @@ class PurchaseItemResourceCreateSerializer(AppModelSerializer):
         help_text="Legacy resource type ID.",
     )
     resource_id = serializers.IntegerField(min_value=1)
-    acquisition_price = serializers.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        min_value=0,
-        write_only=True,
+    acquisition_price = MoneyField(
+        amount="acquisition_price", currency="purchase_item.purchase.currency", min_value=0, write_only=True
     )
 
     class Meta:
@@ -345,12 +333,13 @@ class PurchaseItemResourceSerializer(AppModelSerializer):
 class PurchaseTransactionWriteSerializer(serializers.ModelSerializer):
     """Write payload (RW-1). The purchase is taken from the URL, never from the body."""
 
+    total = MoneyField(currency="purchase.currency", help_text="In the purchase's currency.")
+
     class Meta:
         model = PurchaseTransaction
-        fields = ("transaction_type", "amount", "settled_at", "reference", "notes")
+        fields = ("transaction_type", "total", "settled_at", "reference", "notes")
         extra_kwargs = {
             "transaction_type": {"required": True},
-            "amount": {"required": True},
             "settled_at": {"required": True},
         }
 
@@ -360,6 +349,7 @@ class PurchaseTransactionSerializer(AppModelSerializer):
 
     purchase = serializers.SerializerMethodField(read_only=True)
     transaction_type = choice_field(PurchaseTransaction._meta.get_field("transaction_type").choices)
+    total = MoneyField(currency="purchase.currency", read_only=True)
 
     class Meta:
         model = PurchaseTransaction
@@ -367,7 +357,7 @@ class PurchaseTransactionSerializer(AppModelSerializer):
             "id",
             "purchase",
             "transaction_type",
-            "amount",
+            "total",
             "settled_at",
             "reference",
             "notes",

@@ -3,6 +3,7 @@ from typing import Any
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from core.common.api.money import MoneyField
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.summary_serializers import (
     StatusSummarySerializer,
@@ -166,6 +167,7 @@ class LicenseAgreementSerializer(AppModelSerializer):
 
 
 class LicenseAgreementWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
+    price = MoneyField(amount="price", currency="currency", min_value=0)
     start_date = serializers.DateField(source="valid_from")
     end_date = serializers.DateField(source="valid_until", required=False, allow_null=True)
 
@@ -173,7 +175,6 @@ class LicenseAgreementWriteSerializer(ResourceWriteSerializerMixin, serializers.
         model = LicenseAgreement
         fields = (
             "price",
-            "currency",
             "billing_period",
             "start_date",
             "end_date",

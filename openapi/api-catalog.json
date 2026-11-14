@@ -64375,10 +64375,13 @@
                       ],
                       "readOnly": true
                     },
-                    "amount": {
-                      "type": "string",
-                      "format": "decimal",
-                      "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                    "total": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "paid_date": {
@@ -64406,12 +64409,12 @@
                     }
                   },
                   "required": [
-                    "amount",
                     "created_at",
                     "id",
                     "notes",
                     "paid_date",
                     "reference",
+                    "total",
                     "transaction_type",
                     "updated_at"
                   ]
@@ -64434,7 +64437,7 @@
               {
                 "id": 1,
                 "transaction_type": {},
-                "amount": "string",
+                "total": {},
                 "paid_date": "2026-10-20",
                 "reference": "string",
                 "notes": "string",
@@ -64593,10 +64596,47 @@
               "type": "string",
               "description": "* `payment` - Payment\n* `refund` - Refund"
             },
-            "amount": {
-              "type": "string",
-              "format": "decimal",
-              "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+            "total": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+                  "properties": {
+                    "amount": {
+                      "type": "string",
+                      "description": "Decimal string; never a float.",
+                      "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "ISO 4217 code, uppercase.",
+                      "pattern": "^[A-Z]{3}$"
+                    }
+                  },
+                  "required": [
+                    "amount",
+                    "currency"
+                  ]
+                }
+              ],
+              "description": "In the expense's currency.",
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "type": "string",
+                  "description": "Decimal string; never a float.",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ]
             },
             "paid_date": {
               "type": "string",
@@ -64611,13 +64651,16 @@
             }
           },
           "required": [
-            "amount",
-            "paid_date"
+            "paid_date",
+            "total"
           ]
         },
         "example_payload": {
           "transaction_type": "payment",
-          "amount": "string",
+          "total": {
+            "amount": "string",
+            "currency": "string"
+          },
           "paid_date": "2026-10-20",
           "reference": "string",
           "notes": "string"
@@ -64648,10 +64691,13 @@
                     ],
                     "readOnly": true
                   },
-                  "amount": {
-                    "type": "string",
-                    "format": "decimal",
-                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                  "total": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "paid_date": {
@@ -64679,12 +64725,12 @@
                   }
                 },
                 "required": [
-                  "amount",
                   "created_at",
                   "id",
                   "notes",
                   "paid_date",
                   "reference",
+                  "total",
                   "transaction_type",
                   "updated_at"
                 ]
@@ -64698,7 +64744,7 @@
             "data": {
               "id": 1,
               "transaction_type": {},
-              "amount": "string",
+              "total": {},
               "paid_date": "2026-10-20",
               "reference": "string",
               "notes": "string",
@@ -77294,14 +77340,24 @@
           "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
           "properties": {
             "price": {
-              "type": "string",
-              "format": "decimal",
-              "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
-              "description": "Amount charged per billing period."
-            },
-            "currency": {
-              "type": "string",
-              "maxLength": 3
+              "type": "object",
+              "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+              "properties": {
+                "amount": {
+                  "type": "string",
+                  "description": "Decimal string; never a float.",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ]
             },
             "billing_period": {
               "enum": [
@@ -77329,8 +77385,10 @@
           ]
         },
         "example_payload": {
-          "price": "string",
-          "currency": "string",
+          "price": {
+            "amount": "string",
+            "currency": "string"
+          },
           "billing_period": "one_time",
           "start_date": "2026-10-20",
           "end_date": "2026-10-20"
@@ -82687,10 +82745,46 @@
               "minimum": 1
             },
             "acquisition_price": {
-              "type": "string",
-              "format": "decimal",
-              "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-              "writeOnly": true
+              "allOf": [
+                {
+                  "type": "object",
+                  "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+                  "properties": {
+                    "amount": {
+                      "type": "string",
+                      "description": "Decimal string; never a float.",
+                      "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "ISO 4217 code, uppercase.",
+                      "pattern": "^[A-Z]{3}$"
+                    }
+                  },
+                  "required": [
+                    "amount",
+                    "currency"
+                  ]
+                }
+              ],
+              "writeOnly": true,
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "type": "string",
+                  "description": "Decimal string; never a float.",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ]
             }
           },
           "required": [
@@ -83202,11 +83296,6 @@
                       "type": "string",
                       "format": "date"
                     },
-                    "currency": {
-                      "type": "string",
-                      "description": "ISO 4217 currency code.",
-                      "maxLength": 3
-                    },
                     "status": {
                       "type": "object",
                       "additionalProperties": {
@@ -83215,24 +83304,9 @@
                       },
                       "readOnly": true
                     },
-                    "total_amount": {
-                      "type": "string",
-                      "format": "decimal",
-                      "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-                      "description": "Agreed total purchase amount."
-                    },
                     "total": {
                       "type": "object",
-                      "properties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "required": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "additionalProperties": false,
-                      "readOnly": true
+                      "description": "(max nesting depth reached)"
                     },
                     "item_count": {
                       "type": "integer",
@@ -83268,7 +83342,6 @@
                     "status",
                     "supplier",
                     "total",
-                    "total_amount",
                     "updated_at"
                   ]
                 }
@@ -83292,13 +83365,8 @@
                 "supplier": "string",
                 "purchase_order_number": "string",
                 "purchase_date": "2026-10-20",
-                "currency": "string",
                 "status": {},
-                "total_amount": "string",
-                "total": {
-                  "type": null,
-                  "description": null
-                },
+                "total": {},
                 "item_count": 1,
                 "notes": "string",
                 "created_at": "2026-10-20T12:00:00Z",
@@ -83457,11 +83525,6 @@
               "type": "string",
               "format": "date"
             },
-            "currency": {
-              "type": "string",
-              "description": "ISO 4217 currency code.",
-              "maxLength": 3
-            },
             "status": {
               "type": "object",
               "additionalProperties": {
@@ -83469,30 +83532,25 @@
               },
               "readOnly": true
             },
-            "total_amount": {
-              "type": "string",
-              "format": "decimal",
-              "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-              "description": "Agreed total purchase amount."
-            },
             "total": {
               "type": "object",
+              "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
               "properties": {
                 "amount": {
                   "type": "string",
+                  "description": "Decimal string; never a float.",
                   "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
                 },
                 "currency": {
                   "type": "string",
-                  "description": "Purchase currency code."
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
                 }
               },
               "required": [
                 "amount",
                 "currency"
-              ],
-              "additionalProperties": false,
-              "readOnly": true
+              ]
             },
             "item_count": {
               "type": "integer",
@@ -83531,9 +83589,12 @@
                     "minimum": 1
                   },
                   "unit_price": {
-                    "type": "string",
-                    "format": "decimal",
-                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "writeOnly": true
                   },
                   "notes": {
@@ -83564,8 +83625,7 @@
                 "required": [
                   "created_at",
                   "description",
-                  "id",
-                  "unit_price"
+                  "id"
                 ]
               },
               "writeOnly": true
@@ -83579,7 +83639,6 @@
             "status",
             "supplier",
             "total",
-            "total_amount",
             "updated_at"
           ]
         },
@@ -83588,9 +83647,7 @@
           "supplier": "string",
           "purchase_order_number": "string",
           "purchase_date": "2026-10-20",
-          "currency": "string",
           "status": {},
-          "total_amount": "string",
           "total": {
             "amount": "string",
             "currency": "string"
@@ -83604,7 +83661,7 @@
               "id": 1,
               "description": "string",
               "quantity": 1,
-              "unit_price": "string",
+              "unit_price": {},
               "notes": "string",
               "purpose": "string",
               "priority_id": 1,
@@ -83642,11 +83699,6 @@
                     "type": "string",
                     "format": "date"
                   },
-                  "currency": {
-                    "type": "string",
-                    "description": "ISO 4217 currency code.",
-                    "maxLength": 3
-                  },
                   "status": {
                     "type": "object",
                     "additionalProperties": {
@@ -83654,36 +83706,17 @@
                     },
                     "readOnly": true
                   },
-                  "total_amount": {
-                    "type": "string",
-                    "format": "decimal",
-                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-                    "description": "Agreed total purchase amount."
-                  },
                   "total": {
                     "type": "object",
+                    "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
                     "properties": {
-                      "amount": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "currency": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
                     },
-                    "required": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "additionalProperties": false,
-                    "readOnly": true
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
                   },
                   "item_count": {
                     "type": "integer",
@@ -83719,7 +83752,6 @@
                   "status",
                   "supplier",
                   "total",
-                  "total_amount",
                   "updated_at"
                 ]
               }
@@ -83734,12 +83766,10 @@
               "supplier": "string",
               "purchase_order_number": "string",
               "purchase_date": "2026-10-20",
-              "currency": "string",
               "status": {},
-              "total_amount": "string",
               "total": {
-                "amount": {},
-                "currency": {}
+                "type": null,
+                "description": null
               },
               "item_count": 1,
               "notes": "string",
@@ -83908,34 +83938,13 @@
                     "format": "date",
                     "readOnly": true
                   },
-                  "currency": {
-                    "type": "string",
-                    "readOnly": true,
-                    "description": "ISO 4217 currency code."
-                  },
-                  "total_amount": {
-                    "type": "object",
-                    "properties": {
-                      "amount": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "currency": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    },
-                    "required": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                  "total": {
+                    "allOf": [
                       {
                         "type": "object",
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "additionalProperties": false,
                     "readOnly": true
                   },
                   "status": {
@@ -84001,7 +84010,6 @@
                 },
                 "required": [
                   "created_at",
-                  "currency",
                   "id",
                   "item_count",
                   "lines_total",
@@ -84010,7 +84018,7 @@
                   "purchase_order_number",
                   "status",
                   "supplier",
-                  "total_amount",
+                  "total",
                   "unpriced_line_count",
                   "updated_at",
                   "version"
@@ -84027,11 +84035,7 @@
               "supplier": "string",
               "purchase_order_number": "string",
               "purchase_date": "2026-10-20",
-              "currency": "string",
-              "total_amount": {
-                "amount": {},
-                "currency": {}
-              },
+              "total": {},
               "status": {},
               "notes": "string",
               "version": 1,
@@ -84145,15 +84149,25 @@
               "type": "string",
               "maxLength": 100
             },
-            "currency": {
-              "type": "string",
-              "maxLength": 3,
-              "minLength": 3
-            },
-            "total_amount": {
-              "type": "string",
-              "format": "decimal",
-              "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+            "total": {
+              "type": "object",
+              "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+              "properties": {
+                "amount": {
+                  "type": "string",
+                  "description": "Decimal string; never a float.",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ]
             },
             "notes": {
               "type": "string",
@@ -84165,8 +84179,10 @@
           "supplier": "string",
           "purchase_date": "2026-10-20",
           "purchase_order_number": "string",
-          "currency": "string",
-          "total_amount": "string",
+          "total": {
+            "amount": "string",
+            "currency": "string"
+          },
           "notes": "string"
         }
       },
@@ -84198,34 +84214,13 @@
                     "format": "date",
                     "readOnly": true
                   },
-                  "currency": {
-                    "type": "string",
-                    "readOnly": true,
-                    "description": "ISO 4217 currency code."
-                  },
-                  "total_amount": {
-                    "type": "object",
-                    "properties": {
-                      "amount": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "currency": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    },
-                    "required": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                  "total": {
+                    "allOf": [
                       {
                         "type": "object",
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "additionalProperties": false,
                     "readOnly": true
                   },
                   "status": {
@@ -84247,14 +84242,13 @@
                   }
                 },
                 "required": [
-                  "currency",
                   "id",
                   "notes",
                   "purchase_date",
                   "purchase_order_number",
                   "status",
                   "supplier",
-                  "total_amount",
+                  "total",
                   "version"
                 ]
               }
@@ -84269,11 +84263,7 @@
               "supplier": "string",
               "purchase_order_number": "string",
               "purchase_date": "2026-10-20",
-              "currency": "string",
-              "total_amount": {
-                "amount": {},
-                "currency": {}
-              },
+              "total": {},
               "status": {},
               "notes": "string",
               "version": 1
@@ -84594,16 +84584,12 @@
                       "readOnly": true
                     },
                     "unit_price": {
-                      "type": "object",
-                      "properties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "required": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "additionalProperties": false,
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "line_value": {
@@ -84677,10 +84663,7 @@
                 "description": "string",
                 "quantity": 1,
                 "unit": "string",
-                "unit_price": {
-                  "type": null,
-                  "description": null
-                },
+                "unit_price": {},
                 "line_value": {
                   "type": null,
                   "description": null
@@ -84848,10 +84831,46 @@
               "minimum": 1
             },
             "unit_price": {
-              "type": "string",
-              "format": "decimal",
-              "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-              "writeOnly": true
+              "allOf": [
+                {
+                  "type": "object",
+                  "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+                  "properties": {
+                    "amount": {
+                      "type": "string",
+                      "description": "Decimal string; never a float.",
+                      "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "ISO 4217 code, uppercase.",
+                      "pattern": "^[A-Z]{3}$"
+                    }
+                  },
+                  "required": [
+                    "amount",
+                    "currency"
+                  ]
+                }
+              ],
+              "writeOnly": true,
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "type": "string",
+                  "description": "Decimal string; never a float.",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ]
             },
             "notes": {
               "type": "string"
@@ -84881,15 +84900,17 @@
           "required": [
             "created_at",
             "description",
-            "id",
-            "unit_price"
+            "id"
           ]
         },
         "example_payload": {
           "id": 1,
           "description": "string",
           "quantity": 1,
-          "unit_price": "string",
+          "unit_price": {
+            "amount": "string",
+            "currency": "string"
+          },
           "notes": "string",
           "purpose": "string",
           "priority_id": 1,
@@ -84931,28 +84952,12 @@
                     "readOnly": true
                   },
                   "unit_price": {
-                    "type": "object",
-                    "properties": {
-                      "amount": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "currency": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    },
-                    "required": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                    "allOf": [
                       {
                         "type": "object",
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "additionalProperties": false,
                     "readOnly": true
                   },
                   "line_value": {
@@ -85037,10 +85042,7 @@
               "description": "string",
               "quantity": 1,
               "unit": "string",
-              "unit_price": {
-                "amount": {},
-                "currency": {}
-              },
+              "unit_price": {},
               "line_value": {
                 "amount": {},
                 "currency": {}
@@ -85273,16 +85275,12 @@
                       "readOnly": true
                     },
                     "unit_price": {
-                      "type": "object",
-                      "properties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "required": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "additionalProperties": false,
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "line_value": {
@@ -85354,10 +85352,7 @@
                 "description": "string",
                 "quantity": 1,
                 "unit": "string",
-                "unit_price": {
-                  "type": null,
-                  "description": null
-                },
+                "unit_price": {},
                 "line_value": {
                   "type": null,
                   "description": null
@@ -85468,9 +85463,24 @@
               "minimum": 1
             },
             "unit_price": {
-              "type": "string",
-              "format": "decimal",
-              "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+              "type": "object",
+              "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+              "properties": {
+                "amount": {
+                  "type": "string",
+                  "description": "Decimal string; never a float.",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ]
             },
             "notes": {
               "type": "string",
@@ -85501,7 +85511,10 @@
         "example_payload": {
           "description": "string",
           "quantity": 1,
-          "unit_price": "string",
+          "unit_price": {
+            "amount": "string",
+            "currency": "string"
+          },
           "notes": "string",
           "purpose": "string",
           "priority_id": 1,
@@ -85542,28 +85555,12 @@
                     "readOnly": true
                   },
                   "unit_price": {
-                    "type": "object",
-                    "properties": {
-                      "amount": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "currency": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    },
-                    "required": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                    "allOf": [
                       {
                         "type": "object",
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "additionalProperties": false,
                     "readOnly": true
                   },
                   "line_value": {
@@ -85653,10 +85650,7 @@
               "description": "string",
               "quantity": 1,
               "unit": "string",
-              "unit_price": {
-                "amount": {},
-                "currency": {}
-              },
+              "unit_price": {},
               "line_value": {
                 "amount": {},
                 "currency": {}
@@ -85947,28 +85941,12 @@
                     "readOnly": true
                   },
                   "unit_price": {
-                    "type": "object",
-                    "properties": {
-                      "amount": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "currency": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    },
-                    "required": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                    "allOf": [
                       {
                         "type": "object",
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "additionalProperties": false,
                     "readOnly": true
                   },
                   "line_value": {
@@ -86058,10 +86036,7 @@
               "description": "string",
               "quantity": 1,
               "unit": "string",
-              "unit_price": {
-                "amount": {},
-                "currency": {}
-              },
+              "unit_price": {},
               "line_value": {
                 "amount": {},
                 "currency": {}
@@ -86180,9 +86155,24 @@
               "minimum": 1
             },
             "unit_price": {
-              "type": "string",
-              "format": "decimal",
-              "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+              "type": "object",
+              "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+              "properties": {
+                "amount": {
+                  "type": "string",
+                  "description": "Decimal string; never a float.",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ]
             },
             "notes": {
               "type": "string",
@@ -86208,7 +86198,10 @@
         "example_payload": {
           "description": "string",
           "quantity": 1,
-          "unit_price": "string",
+          "unit_price": {
+            "amount": "string",
+            "currency": "string"
+          },
           "notes": "string",
           "purpose": "string",
           "priority_id": 1,
@@ -86249,28 +86242,12 @@
                     "readOnly": true
                   },
                   "unit_price": {
-                    "type": "object",
-                    "properties": {
-                      "amount": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "currency": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    },
-                    "required": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                    "allOf": [
                       {
                         "type": "object",
                         "description": "(max nesting depth reached)"
                       }
                     ],
-                    "additionalProperties": false,
                     "readOnly": true
                   },
                   "line_value": {
@@ -86360,10 +86337,7 @@
               "description": "string",
               "quantity": 1,
               "unit": "string",
-              "unit_price": {
-                "amount": {},
-                "currency": {}
-              },
+              "unit_price": {},
               "line_value": {
                 "amount": {},
                 "currency": {}
@@ -86899,10 +86873,13 @@
                       ],
                       "readOnly": true
                     },
-                    "amount": {
-                      "type": "string",
-                      "format": "decimal",
-                      "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                    "total": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "settled_at": {
@@ -86926,13 +86903,13 @@
                     }
                   },
                   "required": [
-                    "amount",
                     "created_at",
                     "id",
                     "notes",
                     "purchase",
                     "reference",
                     "settled_at",
+                    "total",
                     "transaction_type"
                   ]
                 }
@@ -86955,7 +86932,7 @@
                 "id": 1,
                 "purchase": {},
                 "transaction_type": {},
-                "amount": "string",
+                "total": {},
                 "settled_at": "2026-10-20T12:00:00Z",
                 "reference": "string",
                 "notes": "string",
@@ -87113,10 +87090,47 @@
               "type": "string",
               "description": "* `payment` - Payment\n* `refund` - Refund"
             },
-            "amount": {
-              "type": "string",
-              "format": "decimal",
-              "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+            "total": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+                  "properties": {
+                    "amount": {
+                      "type": "string",
+                      "description": "Decimal string; never a float.",
+                      "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "ISO 4217 code, uppercase.",
+                      "pattern": "^[A-Z]{3}$"
+                    }
+                  },
+                  "required": [
+                    "amount",
+                    "currency"
+                  ]
+                }
+              ],
+              "description": "In the purchase's currency.",
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "type": "string",
+                  "description": "Decimal string; never a float.",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ]
             },
             "settled_at": {
               "type": "string",
@@ -87132,14 +87146,17 @@
             }
           },
           "required": [
-            "amount",
             "settled_at",
+            "total",
             "transaction_type"
           ]
         },
         "example_payload": {
           "transaction_type": "payment",
-          "amount": "string",
+          "total": {
+            "amount": "string",
+            "currency": "string"
+          },
           "settled_at": "2026-10-20T12:00:00Z",
           "reference": "string",
           "notes": "string"
@@ -87186,10 +87203,13 @@
                     ],
                     "readOnly": true
                   },
-                  "amount": {
-                    "type": "string",
-                    "format": "decimal",
-                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+                  "total": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "settled_at": {
@@ -87213,13 +87233,13 @@
                   }
                 },
                 "required": [
-                  "amount",
                   "created_at",
                   "id",
                   "notes",
                   "purchase",
                   "reference",
                   "settled_at",
+                  "total",
                   "transaction_type"
                 ]
               }
@@ -87233,7 +87253,7 @@
               "id": 1,
               "purchase": {},
               "transaction_type": {},
-              "amount": "string",
+              "total": {},
               "settled_at": "2026-10-20T12:00:00Z",
               "reference": "string",
               "notes": "string",
@@ -95861,22 +95881,13 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "amount": {
-                      "type": "string",
-                      "format": "decimal",
-                      "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-                      "readOnly": true
-                    },
-                    "currency": {
-                      "type": "string",
-                      "readOnly": true
-                    },
-                    "amount_display": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                    "cost": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true
                     },
                     "billing_period": {
@@ -95915,11 +95926,9 @@
                     }
                   },
                   "required": [
-                    "amount",
-                    "amount_display",
                     "billing_period",
+                    "cost",
                     "created_at",
-                    "currency",
                     "end_date",
                     "expense_type",
                     "id",
@@ -95954,9 +95963,7 @@
                 "expense_type": {},
                 "supplier": "string",
                 "reference": "string",
-                "amount": "string",
-                "currency": "string",
-                "amount_display": {},
+                "cost": {},
                 "billing_period": {},
                 "start_date": "2026-10-20",
                 "end_date": "2026-10-20",
@@ -96136,14 +96143,47 @@
               "type": "string",
               "maxLength": 255
             },
-            "amount": {
-              "type": "string",
-              "format": "decimal",
-              "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
-            },
-            "currency": {
-              "type": "string",
-              "maxLength": 3
+            "cost": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+                  "properties": {
+                    "amount": {
+                      "type": "string",
+                      "description": "Decimal string; never a float.",
+                      "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "ISO 4217 code, uppercase.",
+                      "pattern": "^[A-Z]{3}$"
+                    }
+                  },
+                  "required": [
+                    "amount",
+                    "currency"
+                  ]
+                }
+              ],
+              "description": "What the expense costs (FMT-2, FMT-7).",
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "type": "string",
+                  "description": "Decimal string; never a float.",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ]
             },
             "billing_period": {
               "enum": [
@@ -96169,7 +96209,7 @@
             }
           },
           "required": [
-            "amount",
+            "cost",
             "expense_type",
             "name",
             "start_date"
@@ -96180,8 +96220,10 @@
           "expense_type": "rent",
           "supplier": "string",
           "reference": "string",
-          "amount": "string",
-          "currency": "string",
+          "cost": {
+            "amount": "string",
+            "currency": "string"
+          },
           "billing_period": "one_time",
           "start_date": "2026-10-20",
           "end_date": "2026-10-20",
@@ -96241,21 +96283,13 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "amount": {
-                    "type": "string",
-                    "format": "decimal",
-                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-                    "readOnly": true
-                  },
-                  "currency": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "amount_display": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    },
+                  "cost": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
                     "readOnly": true
                   },
                   "billing_period": {
@@ -96294,11 +96328,9 @@
                   }
                 },
                 "required": [
-                  "amount",
-                  "amount_display",
                   "billing_period",
+                  "cost",
                   "created_at",
-                  "currency",
                   "end_date",
                   "expense_type",
                   "id",
@@ -96324,9 +96356,7 @@
               "expense_type": {},
               "supplier": "string",
               "reference": "string",
-              "amount": "string",
-              "currency": "string",
-              "amount_display": {},
+              "cost": {},
               "billing_period": {},
               "start_date": "2026-10-20",
               "end_date": "2026-10-20",

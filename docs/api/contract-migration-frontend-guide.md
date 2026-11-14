@@ -226,3 +226,22 @@ serialized: the key is `last_remote_at`, as documented.
 | Settings `requesters_can_set_priority`, `sla_enabled`, `csat_enabled` | read and write | `can_requesters_set_priority`, `is_sla_enabled`, `is_csat_enabled` |
 | Queue stats `priority_id` + `name`, `team_id` + `name`, `user_id` + `username` | two keys each | `priority`, `team`, `assignee` as `{id, name}` (`assignee.name` is the display name) |
 | Resource ticket summary `system_state` | plain string | `{value, label}` |
+
+### Money (all features)
+
+Every amount is one `{amount, currency}` object (FMT-2), named by its role (FMT-7), and the same object is
+sent on write (TYP-4): `amount` is a decimal string, `currency` is ISO 4217 uppercase. Money that belongs to a
+parent (a payment of an expense, a line of a purchase) must use the parent's currency; another currency is
+`422`.
+
+| Where | Before | After |
+| --- | --- | --- |
+| Expense (read and write) | `amount`, `currency`, `amount_display` | `cost` |
+| Expense payment (read and write) | `amount` | `total` |
+| Financial report summary | `total_budgeted`, `total_paid`, `total_pending`, `total_refunded` | `budgeted`, `paid`, `pending`, `refunded` |
+| Financial report items and breakdowns | `amount`, `paid_amount`, `pending_amount` (+ item `currency`) | `cost`, `paid`, `pending` |
+| Purchase (read and write), purchase detail, draft header | `currency`, `total_amount` (+ `total`) | `total` |
+| Purchase line `unit_price` (read and write, draft lines too) | decimal | `{amount, currency}` |
+| Purchase transaction (read and write) | `amount` | `total` |
+| Allocation `acquisition_price` (write) | decimal | `{amount, currency}` (read was already an object) |
+| License agreement write | `price`, `currency` | `price` (read was already an object) |

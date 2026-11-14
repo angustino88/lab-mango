@@ -40,6 +40,10 @@ SERVER_MANAGED_WRITE_NAMES = frozenset({"id", "uid", "created_at", "updated_at",
 """BDY-7 / WRT-1: keys a request body never writes."""
 
 _BOOLEAN_NAME = re.compile(r"^(is|has|can)_[a-z0-9_]+$")
+_MONEY_NAME = re.compile(r"(^|_)(amount|price|cost|total|budgeted|paid|pending|refunded|net)(_|$)")
+"""FMT-2: names that carry money when their value is a decimal."""
+_UNIT_SUFFIX = re.compile(r"_(hours|minutes|seconds|days|count|percent|ratio|rate|bytes|kg|mm|w)$")
+"""FMT-6: a name ending in a unit is a measurement, not money."""
 
 
 @dataclass(frozen=True, order=True)
@@ -170,7 +174,66 @@ def find_violations(document: dict[str, Any]) -> list[Violation]:
         if component.get(PROTOCOL_EXTENSION):
             continue
         _check_request_object(schema, name, component, found)
+    for name in sorted(response_components | request_components):
+        _check_money(schema, name, schema.components.get(name, {}), found)
+    _check_operations(document, found)
     return sorted(found)
+
+
+def _is_decimal(schema: Any) -> bool:
+    if not isinstance(schema, dict):
+        return False
+    types = _schema_types(schema)
+    return ("string" in types and schema.get("format") == "decimal") or bool(types & {"number"})
+
+
+def _check_money(schema: _Schema, location: str, node: dict[str, Any], found: set[Violation]) -> None:
+    """FMT-2, FMT-7, TYP-4: money is one ``{amount, currency}`` object named by its role, read and written."""
+    properties = _object_properties(node)
+    if not properties or node.get(PROTOCOL_EXTENSION) or list(properties) == ["amount", "currency"]:
+        return
+    for key, raw in properties.items():
+        resolved, _ = schema.resolve(raw)
+        if _MONEY_NAME.search(key) and not _UNIT_SUFFIX.search(key) and _is_decimal(resolved):
+            found.add(
+                Violation(
+                    "FMT-2",
+                    f"{location}.{key}",
+                    "money is one `{amount, currency}` object named by its role (FMT-7), not a bare decimal",
+                )
+            )
+
+
+def _check_operations(document: dict[str, Any], found: set[Violation]) -> None:
+    for path, path_item in document.get("paths", {}).items():
+        for method, operation in path_item.items():
+            if not isinstance(operation, dict):
+                continue
+            where = f"{method.upper()} {path}"
+            for parameter in operation.get("parameters", []):
+                if (
+                    parameter.get("in") == "query"
+                    and parameter.get("name") == "search"
+                    and not parameter.get("deprecated")
+                ):
+                    found.add(
+                        Violation("QRY-7", where, "free-text search is `q`; `search` may only be a deprecated alias")
+                    )
+            responses = operation.get("responses", {})
+            if (
+                method.lower() == "post"
+                and "{" in path
+                and "/actions/" not in path
+                and "201" not in responses
+                and not operation.get("deprecated")
+            ):
+                found.add(
+                    Violation(
+                        "ACT-1",
+                        where,
+                        "a POST on a resource that creates nothing is an action: `POST /<collection>/{id}/actions/<verb>`",
+                    )
+                )
 
 
 def _check_response_object(schema: _Schema, location: str, node: dict[str, Any], found: set[Violation]) -> None:

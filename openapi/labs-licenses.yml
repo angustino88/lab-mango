@@ -2438,13 +2438,7 @@ components:
         on update.
       properties:
         price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-          description: Amount charged per billing period.
-        currency:
-          type: string
-          maxLength: 3
+          $ref: '#/components/schemas/Money'
         billing_period:
           $ref: '#/components/schemas/BillingPeriodEnum'
         start_date:
@@ -3562,6 +3556,22 @@ components:
           $ref: '#/components/schemas/LicenseVendorReferenceListSerializersLicenseVendorCatalogRecordPagination'
       required:
       - pagination
+    Money:
+      type: object
+      description: 'FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO
+        4217 uppercase.'
+      properties:
+        amount:
+          type: string
+          description: Decimal string; never a float.
+          pattern: ^-?[0-9]+(\.[0-9]+)?$
+        currency:
+          type: string
+          description: ISO 4217 code, uppercase.
+          pattern: ^[A-Z]{3}$
+      required:
+      - amount
+      - currency
     ProblemDetail:
       type: object
       properties:

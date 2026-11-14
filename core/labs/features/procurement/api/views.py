@@ -349,6 +349,7 @@ class PurchaseItemResourceListCreateAPIView(ProcurementAPIView):
             resource_type_id=values["resource_type_id"],
             resource_id=values["resource_id"],
             acquisition_price=values["acquisition_price"],
+            currency=values.get("currency"),
         )
         return self._execute(lambda: public.create_purchase_item_resource(command, actor=self.acting_user))
 

@@ -44,8 +44,7 @@ class TestRoomExpenses:
             {
                 "name": "Rent",
                 "expense_type": "rent",
-                "amount": "1200.00",
-                "currency": "EUR",
+                "cost": {"amount": "1200.00", "currency": "EUR"},
                 "billing_period": "monthly",
                 "start_date": "2026-01-01",
             },
@@ -60,7 +59,12 @@ class TestRoomExpenses:
         room = _room()
         response = api_client.post(
             f"/api/labs/rooms/{room.pk}/expenses",
-            {"name": "Rent", "expense_type": "rent", "amount": "10.00", "start_date": "2026-01-01"},
+            {
+                "name": "Rent",
+                "expense_type": "rent",
+                "cost": {"amount": "10.00", "currency": "EUR"},
+                "start_date": "2026-01-01",
+            },
             format="json",
         )
         assert response.status_code == 403
@@ -79,7 +83,7 @@ class TestRoomExpenses:
             {
                 "name": "Rent",
                 "expense_type": "rent",
-                "amount": "10.00",
+                "cost": {"amount": "10.00", "currency": "EUR"},
                 "start_date": "2026-06-01",
                 "end_date": "2026-01-01",
             },
@@ -103,11 +107,24 @@ class TestExpensePayments:
         )
         response = client.post(
             f"/api/labs/expenses/{expense.pk}/payments",
-            {"transaction_type": "payment", "amount": "250.00", "paid_date": "2026-02-01"},
+            {
+                "transaction_type": "payment",
+                "total": {"amount": "250.00", "currency": "EUR"},
+                "paid_date": "2026-02-01",
+            },
             format="json",
         )
         assert response.status_code == 201, response.content
         assert ExpensePayment.objects.filter(expense=expense, amount=Decimal("250.00")).exists()
+        assert response.json()["data"]["total"] == {"amount": "250.00", "currency": "EUR"}
+
+        other_currency = client.post(
+            f"/api/labs/expenses/{expense.pk}/payments",
+            {"transaction_type": "payment", "total": {"amount": "1.00", "currency": "USD"}, "paid_date": "2026-02-02"},
+            format="json",
+        )
+        assert other_currency.status_code == 422, other_currency.content  # FMT-2: the expense's currency only
+        assert ExpensePayment.objects.filter(expense=expense).count() == 1
 
     def test_non_positive_payment_rejected(self, api_client, user):
         client = _admin_client(api_client, user)
@@ -122,7 +139,7 @@ class TestExpensePayments:
         )
         response = client.post(
             f"/api/labs/expenses/{expense.pk}/payments",
-            {"transaction_type": "payment", "amount": "0.00", "paid_date": "2026-02-01"},
+            {"transaction_type": "payment", "total": {"amount": "0.00", "currency": "EUR"}, "paid_date": "2026-02-01"},
             format="json",
         )
         assert response.status_code in (400, 422)
@@ -159,7 +176,12 @@ class TestExpenseAccess:
         room = _room()
         response = client.post(
             f"/api/labs/rooms/{room.pk}/expenses",
-            {"name": "Rent", "expense_type": "rent", "amount": "10.00", "start_date": "2026-01-01"},
+            {
+                "name": "Rent",
+                "expense_type": "rent",
+                "cost": {"amount": "10.00", "currency": "EUR"},
+                "start_date": "2026-01-01",
+            },
             format="json",
         )
         assert response.status_code == 201, response.content
@@ -170,7 +192,12 @@ class TestExpenseAccess:
         room = _room()
         response = api_client.post(
             f"/api/labs/rooms/{room.pk}/expenses",
-            {"name": "Rent", "expense_type": "rent", "amount": "10.00", "start_date": "2026-01-01"},
+            {
+                "name": "Rent",
+                "expense_type": "rent",
+                "cost": {"amount": "10.00", "currency": "EUR"},
+                "start_date": "2026-01-01",
+            },
             format="json",
         )
         assert response.status_code == 403
@@ -187,7 +214,12 @@ class TestExpenseAccess:
         with patch(_PATCH_APIKEY, return_value=True):
             response = api_client.post(
                 f"/api/labs/rooms/{room.pk}/expenses",
-                {"name": "Rent", "expense_type": "rent", "amount": "10.00", "start_date": "2026-01-01"},
+                {
+                    "name": "Rent",
+                    "expense_type": "rent",
+                    "cost": {"amount": "10.00", "currency": "EUR"},
+                    "start_date": "2026-01-01",
+                },
                 format="json",
             )
         assert response.status_code == 201, response.content

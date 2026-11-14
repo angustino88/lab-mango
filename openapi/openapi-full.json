@@ -44886,9 +44886,7 @@
             "minimum": 1
           },
           "unit_price": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+            "$ref": "#/components/schemas/Money"
           },
           "notes": {
             "type": "string",
@@ -49550,21 +49548,12 @@
             "type": "string",
             "readOnly": true
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-            "readOnly": true
-          },
-          "currency": {
-            "type": "string",
-            "readOnly": true
-          },
-          "amount_display": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
             "readOnly": true
           },
           "billing_period": {
@@ -49602,11 +49591,9 @@
           }
         },
         "required": [
-          "amount",
-          "amount_display",
           "billing_period",
+          "cost",
           "created_at",
-          "currency",
           "end_date",
           "expense_type",
           "id",
@@ -49635,10 +49622,12 @@
             ],
             "readOnly": true
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+          "total": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
             "readOnly": true
           },
           "paid_date": {
@@ -49666,12 +49655,12 @@
           }
         },
         "required": [
-          "amount",
           "created_at",
           "id",
           "notes",
           "paid_date",
           "reference",
+          "total",
           "transaction_type",
           "updated_at"
         ]
@@ -49757,10 +49746,13 @@
           "transaction_type": {
             "$ref": "#/components/schemas/TransactionTypeEnum"
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "total": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "description": "In the expense's currency."
           },
           "paid_date": {
             "type": "string",
@@ -49775,8 +49767,8 @@
           }
         },
         "required": [
-          "amount",
-          "paid_date"
+          "paid_date",
+          "total"
         ]
       },
       "ExpenseTypeEnum": {
@@ -49814,14 +49806,13 @@
             "type": "string",
             "maxLength": 255
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
-          },
-          "currency": {
-            "type": "string",
-            "maxLength": 3
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "description": "What the expense costs (FMT-2, FMT-7)."
           },
           "billing_period": {
             "$ref": "#/components/schemas/BillingPeriodEnum"
@@ -49840,7 +49831,7 @@
           }
         },
         "required": [
-          "amount",
+          "cost",
           "expense_type",
           "name",
           "start_date"
@@ -50246,20 +50237,29 @@
             ],
             "readOnly": true
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
-          "paid_amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "paid": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
-          "pending_amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "pending": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
           "payment_status": {
             "allOf": [
@@ -50268,9 +50268,6 @@
               }
             ],
             "readOnly": true
-          },
-          "currency": {
-            "type": "string"
           },
           "billing_period": {
             "allOf": [
@@ -50305,16 +50302,15 @@
           }
         },
         "required": [
-          "amount",
           "billing_period",
-          "currency",
+          "cost",
           "end_date",
           "expense_type",
           "id",
           "name",
-          "paid_amount",
+          "paid",
           "payment_status",
-          "pending_amount",
+          "pending",
           "reference",
           "room",
           "start_date",
@@ -50336,22 +50332,28 @@
           "count": {
             "type": "integer"
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
-          "paid_amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "paid": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           }
         },
         "required": [
-          "amount",
           "billing_period",
+          "cost",
           "count",
-          "paid_amount"
+          "paid"
         ]
       },
       "FinancialReportResponse": {
@@ -50418,27 +50420,36 @@
           "count": {
             "type": "integer"
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
-          "paid_amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "paid": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
-          "pending_amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "pending": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           }
         },
         "required": [
-          "amount",
+          "cost",
           "count",
-          "paid_amount",
-          "pending_amount",
+          "paid",
+          "pending",
           "room"
         ]
       },
@@ -50468,14 +50479,17 @@
           "count": {
             "type": "integer"
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           }
         },
         "required": [
-          "amount",
+          "cost",
           "count",
           "status"
         ]
@@ -50483,25 +50497,37 @@
       "FinancialReportSummary": {
         "type": "object",
         "properties": {
-          "total_budgeted": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "budgeted": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
-          "total_paid": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "paid": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
-          "total_pending": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "pending": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
-          "total_refunded": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "refunded": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
           "expense_count": {
             "type": "integer"
@@ -50511,12 +50537,12 @@
           }
         },
         "required": [
+          "budgeted",
           "expense_count",
+          "paid",
           "payment_count",
-          "total_budgeted",
-          "total_paid",
-          "total_pending",
-          "total_refunded"
+          "pending",
+          "refunded"
         ]
       },
       "FinancialReportTypeBreakdown": {
@@ -50533,28 +50559,37 @@
           "count": {
             "type": "integer"
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
-          "paid_amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "paid": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           },
-          "pending_amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "pending": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "readOnly": true
           }
         },
         "required": [
-          "amount",
+          "cost",
           "count",
           "expense_type",
-          "paid_amount",
-          "pending_amount"
+          "paid",
+          "pending"
         ]
       },
       "GroupCatalogCreate": {
@@ -52152,14 +52187,7 @@
         "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
         "properties": {
           "price": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
-            "description": "Amount charged per billing period."
-          },
-          "currency": {
-            "type": "string",
-            "maxLength": 3
+            "$ref": "#/components/schemas/Money"
           },
           "billing_period": {
             "$ref": "#/components/schemas/BillingPeriodEnum"
@@ -54425,6 +54453,26 @@
         "type": "string",
         "description": "* `delta` - delta\n* `reset` - reset"
       },
+      "Money": {
+        "type": "object",
+        "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Decimal string; never a float.",
+            "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 code, uppercase.",
+            "pattern": "^[A-Z]{3}$"
+          }
+        },
+        "required": [
+          "amount",
+          "currency"
+        ]
+      },
       "MonitoringEvent": {
         "type": "object",
         "description": "One event; agent identifiers end in ``_key`` (NAM-8), relations are ``{id, name}`` (REL-3).",
@@ -55540,9 +55588,7 @@
             "minimum": 1
           },
           "unit_price": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+            "$ref": "#/components/schemas/Money"
           },
           "notes": {
             "type": "string",
@@ -55767,15 +55813,8 @@
             "type": "string",
             "maxLength": 100
           },
-          "currency": {
-            "type": "string",
-            "maxLength": 3,
-            "minLength": 3
-          },
-          "total_amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "total": {
+            "$ref": "#/components/schemas/Money"
           },
           "notes": {
             "type": "string",
@@ -56627,11 +56666,6 @@
             "type": "string",
             "format": "date"
           },
-          "currency": {
-            "type": "string",
-            "description": "ISO 4217 currency code.",
-            "maxLength": 3
-          },
           "status": {
             "type": "object",
             "additionalProperties": {
@@ -56639,30 +56673,8 @@
             },
             "readOnly": true
           },
-          "total_amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-            "description": "Agreed total purchase amount."
-          },
           "total": {
-            "type": "object",
-            "properties": {
-              "amount": {
-                "type": "string",
-                "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
-              },
-              "currency": {
-                "type": "string",
-                "description": "Purchase currency code."
-              }
-            },
-            "required": [
-              "amount",
-              "currency"
-            ],
-            "additionalProperties": false,
-            "readOnly": true
+            "$ref": "#/components/schemas/Money"
           },
           "item_count": {
             "type": "integer",
@@ -56697,7 +56709,6 @@
           "status",
           "supplier",
           "total",
-          "total_amount",
           "updated_at"
         ]
       },
@@ -56721,28 +56732,12 @@
             "format": "date",
             "readOnly": true
           },
-          "currency": {
-            "type": "string",
-            "readOnly": true,
-            "description": "ISO 4217 currency code."
-          },
-          "total_amount": {
-            "type": "object",
-            "properties": {
-              "amount": {
-                "type": "string",
-                "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
-              },
-              "currency": {
-                "type": "string",
-                "description": "Purchase currency code."
+          "total": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
               }
-            },
-            "required": [
-              "amount",
-              "currency"
             ],
-            "additionalProperties": false,
             "readOnly": true
           },
           "status": {
@@ -56801,7 +56796,6 @@
         },
         "required": [
           "created_at",
-          "currency",
           "id",
           "item_count",
           "lines_total",
@@ -56810,7 +56804,7 @@
           "purchase_order_number",
           "status",
           "supplier",
-          "total_amount",
+          "total",
           "unpriced_line_count",
           "updated_at",
           "version"
@@ -56848,28 +56842,12 @@
             "format": "date",
             "readOnly": true
           },
-          "currency": {
-            "type": "string",
-            "readOnly": true,
-            "description": "ISO 4217 currency code."
-          },
-          "total_amount": {
-            "type": "object",
-            "properties": {
-              "amount": {
-                "type": "string",
-                "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
-              },
-              "currency": {
-                "type": "string",
-                "description": "Purchase currency code."
+          "total": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
               }
-            },
-            "required": [
-              "amount",
-              "currency"
             ],
-            "additionalProperties": false,
             "readOnly": true
           },
           "status": {
@@ -56890,14 +56868,13 @@
           }
         },
         "required": [
-          "currency",
           "id",
           "notes",
           "purchase_date",
           "purchase_order_number",
           "status",
           "supplier",
-          "total_amount",
+          "total",
           "version"
         ]
       },
@@ -56972,9 +56949,11 @@
             "minimum": 1
           },
           "unit_price": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
             "writeOnly": true
           },
           "notes": {
@@ -57005,8 +56984,7 @@
         "required": [
           "created_at",
           "description",
-          "id",
-          "unit_price"
+          "id"
         ]
       },
       "PurchaseItemDetail": {
@@ -57035,22 +57013,11 @@
             "readOnly": true
           },
           "unit_price": {
-            "type": "object",
-            "properties": {
-              "amount": {
-                "type": "string",
-                "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
-              },
-              "currency": {
-                "type": "string",
-                "description": "Purchase currency code."
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
               }
-            },
-            "required": [
-              "amount",
-              "currency"
             ],
-            "additionalProperties": false,
             "readOnly": true
           },
           "line_value": {
@@ -57208,22 +57175,11 @@
             "readOnly": true
           },
           "unit_price": {
-            "type": "object",
-            "properties": {
-              "amount": {
-                "type": "string",
-                "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
-              },
-              "currency": {
-                "type": "string",
-                "description": "Purchase currency code."
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
               }
-            },
-            "required": [
-              "amount",
-              "currency"
             ],
-            "additionalProperties": false,
             "readOnly": true
           },
           "line_value": {
@@ -57391,9 +57347,11 @@
             "minimum": 1
           },
           "acquisition_price": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
             "writeOnly": true
           }
         },
@@ -57641,10 +57599,12 @@
             ],
             "readOnly": true
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+          "total": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
             "readOnly": true
           },
           "settled_at": {
@@ -57668,13 +57628,13 @@
           }
         },
         "required": [
-          "amount",
           "created_at",
           "id",
           "notes",
           "purchase",
           "reference",
           "settled_at",
+          "total",
           "transaction_type"
         ]
       },
@@ -57759,10 +57719,13 @@
           "transaction_type": {
             "$ref": "#/components/schemas/TransactionTypeEnum"
           },
-          "amount": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          "total": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "description": "In the purchase's currency."
           },
           "settled_at": {
             "type": "string",
@@ -57778,8 +57741,8 @@
           }
         },
         "required": [
-          "amount",
           "settled_at",
+          "total",
           "transaction_type"
         ]
       },
