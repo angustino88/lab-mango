@@ -1,6 +1,16 @@
 """Existing insight request and response contracts."""
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+
+from core.labs.features.base.serializers import NamedReferenceSerializer
+
+
+class ReportPeriodSerializer(serializers.Serializer):
+    """NAM-9 ``period`` group read from the row's ``period_start`` / ``period_end``."""
+
+    starts_at = serializers.DateTimeField(source="period_start")
+    ends_at = serializers.DateTimeField(source="period_end")
 
 
 class InsightRangeQuerySerializer(serializers.Serializer):
@@ -27,22 +37,23 @@ class ActiveBenchesMetricSerializer(serializers.Serializer):
 
 class DashboardSummarySerializer(serializers.Serializer):
     generated_at = serializers.DateTimeField()
-    period_start = serializers.DateTimeField()
-    period_end = serializers.DateTimeField()
+    period = ReportPeriodSerializer(source="*")
     bookings = CountTrendMetricSerializer()
     facility_visits = CountTrendMetricSerializer()
     active_benches = ActiveBenchesMetricSerializer()
 
 
 class BookedVsUsedBenchSerializer(serializers.Serializer):
-    bench_id = serializers.IntegerField()
-    bench_name = serializers.CharField()
+    bench = serializers.SerializerMethodField()  # REL-14
     booked_hours = serializers.FloatField()
+
+    @extend_schema_field(NamedReferenceSerializer)
+    def get_bench(self, row) -> dict:
+        return {"id": row["bench_id"], "name": row["bench_name"]}
 
 
 class BookedVsUsedSerializer(serializers.Serializer):
-    period_start = serializers.DateTimeField()
-    period_end = serializers.DateTimeField()
+    period = ReportPeriodSerializer(source="*")
     total_booked_hours = serializers.FloatField()
     total_used_hours = serializers.FloatField()
     used_to_booked_ratio = serializers.FloatField(allow_null=True)
@@ -51,17 +62,19 @@ class BookedVsUsedSerializer(serializers.Serializer):
 
 
 class EquipmentAvailabilityItemSerializer(serializers.Serializer):
-    equipment_id = serializers.IntegerField()
-    equipment_name = serializers.CharField()
+    equipment = serializers.SerializerMethodField()  # REL-14
     uptime_percent = serializers.FloatField()
     unavailable_hours = serializers.FloatField()
     outage_count = serializers.IntegerField()
     current_status = serializers.CharField()
 
+    @extend_schema_field(NamedReferenceSerializer)
+    def get_equipment(self, row) -> dict:
+        return {"id": row["equipment_id"], "name": row["equipment_name"]}
+
 
 class EquipmentAvailabilitySerializer(serializers.Serializer):
-    period_start = serializers.DateTimeField()
-    period_end = serializers.DateTimeField()
+    period = ReportPeriodSerializer(source="*")
     equipment_count = serializers.IntegerField()
     average_uptime_percent = serializers.FloatField(allow_null=True)
     items = EquipmentAvailabilityItemSerializer(many=True)

@@ -154,3 +154,29 @@ The write body is unchanged, including its legacy aliases.
 | Reference-data `owners` | `{id, username}` | `{id, name}` |
 | Department / group catalog `active` | | `is_active`; group `department` is `{id, name}` |
 | Computing activity `status`, `modified` | | `status` is `{value, label}`; `updated_at` |
+
+### Resource mappings
+
+| Before | After |
+| --- | --- |
+| Room slot `room_id`; station `room_id`, `slot_id`; station slot `station_id` | `room`, `slot`, `station` as `{id, name}` |
+| Bench `setup_location_id`, `station_slot_id` | `setup_location`, `station_slot` as `{id, name}` |
+| Equipment `bench_id`; assignment `monitor` | `bench: {id, name}`; `is_monitored` |
+| License assignment `equipment_id`, `license_id` | `equipment`, `license` as `{id, name}` |
+
+### Dashboard
+
+| Before | After |
+| --- | --- |
+| `bench_group: {id, name, description}` | `{id, name}` |
+| `location: {station_id, station_name, room_id, room_name, building_name, slot_label}` | `location: {station, room, building, slot_label}` with `{id, name}` relations |
+| Booking `user: {id, username, display_name}` | `{id, name}` |
+
+### Analytics
+
+| Before | After |
+| --- | --- |
+| `period_start` / `period_end` (summary, booked-vs-used, equipment availability, finance) | `period: {starts_at, ends_at}` |
+| Booked-vs-used `bench_id` + `bench_name` | `bench: {id, name}` |
+| Equipment availability `equipment_id` + `equipment_name` | `equipment: {id, name}` |
+| Finance breakdown `source` | `{value, label}` |

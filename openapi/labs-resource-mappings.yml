@@ -334,6 +334,19 @@ paths:
           description: ''
 components:
   schemas:
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     MappingBench:
       type: object
       properties:
@@ -346,19 +359,22 @@ components:
           type: string
         name:
           type: string
-        setup_location_id:
-          type: integer
+        setup_location:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        station_slot_id:
-          type: integer
+        station_slot:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
       required:
       - id
       - name
-      - setup_location_id
+      - setup_location
       - sku
-      - station_slot_id
+      - station_slot
       - uid
+      x-embedded-resource: true
     MappingEquipment:
       type: object
       properties:
@@ -375,21 +391,23 @@ components:
           allOf:
           - $ref: '#/components/schemas/MappingEquipmentCategory'
           nullable: true
-        bench_id:
-          type: integer
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
         bench_assignment:
           allOf:
           - $ref: '#/components/schemas/MappingEquipmentAssignment'
           nullable: true
       required:
+      - bench
       - bench_assignment
-      - bench_id
       - category
       - id
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingEquipmentAssignment:
       type: object
       properties:
@@ -399,7 +417,7 @@ components:
           type: string
         position:
           type: integer
-        monitor:
+        is_monitored:
           type: boolean
         assigned_at:
           type: string
@@ -407,9 +425,10 @@ components:
       required:
       - assigned_at
       - id
-      - monitor
+      - is_monitored
       - position
       - role
+      x-embedded-resource: true
     MappingEquipmentCategory:
       type: object
       properties:
@@ -442,23 +461,25 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingLicenseAssignment:
       type: object
       properties:
         id:
           type: integer
-        equipment_id:
-          type: integer
-        license_id:
-          type: integer
+        equipment:
+          $ref: '#/components/schemas/LabsNamedReference'
+        license:
+          $ref: '#/components/schemas/LabsNamedReference'
         assigned_at:
           type: string
           format: date-time
       required:
       - assigned_at
-      - equipment_id
+      - equipment
       - id
-      - license_id
+      - license
+      x-embedded-resource: true
     MappingLicenseCategory:
       type: object
       properties:
@@ -515,13 +536,14 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingRoomSlot:
       type: object
       properties:
         id:
           type: integer
-        room_id:
-          type: integer
+        room:
+          $ref: '#/components/schemas/LabsNamedReference'
         row_index:
           type: integer
         col_index:
@@ -547,12 +569,13 @@ components:
       - depth_mm
       - id
       - orientation_degrees
-      - room_id
+      - room
       - row_index
       - slot_code
       - width_mm
       - x_mm
       - y_mm
+      x-embedded-resource: true
     MappingStation:
       type: object
       properties:
@@ -565,26 +588,29 @@ components:
           type: string
         name:
           type: string
-        room_id:
-          type: integer
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        slot_id:
-          type: integer
+        slot:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
       required:
       - id
       - name
-      - room_id
+      - room
       - sku
-      - slot_id
+      - slot
       - uid
+      x-embedded-resource: true
     MappingStationSlot:
       type: object
       properties:
         id:
           type: integer
-        station_id:
-          type: integer
+        station:
+          $ref: '#/components/schemas/LabsNamedReference'
         position_index:
           type: integer
         slot_code:
@@ -596,7 +622,8 @@ components:
       - label
       - position_index
       - slot_code
-      - station_id
+      - station
+      x-embedded-resource: true
     ProblemDetail:
       type: object
       properties:

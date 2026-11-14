@@ -243,6 +243,8 @@ def equipment_mapping_rows(*, equipment_ids=(), bench_ids=(), station_ids=(), ro
         .select_related("kind__category")
         .annotate(
             mapping_bench_id=Subquery(active_assignments.values("bench_id")[:1]),
+            mapping_bench_name=Subquery(active_assignments.values("bench__name")[:1]),
+            mapping_bench_sku=Subquery(active_assignments.values("bench__sku")[:1]),
             mapping_assignment_id=Subquery(active_assignments.values("id")[:1]),
             mapping_role=Subquery(active_assignments.values("role")[:1]),
             mapping_position=Subquery(active_assignments.values("position")[:1]),
@@ -284,6 +286,8 @@ def equipment_mapping_rows(*, equipment_ids=(), bench_ids=(), station_ids=(), ro
             "kind__category_id",
             "kind__category__name",
             "mapping_bench_id",
+            "mapping_bench_name",
+            "mapping_bench_sku",
             "mapping_assignment_id",
             "mapping_role",
             "mapping_position",

@@ -2679,12 +2679,8 @@ components:
     BookedVsUsed:
       type: object
       properties:
-        period_start:
-          type: string
-          format: date-time
-        period_end:
-          type: string
-          format: date-time
+        period:
+          $ref: '#/components/schemas/ReportPeriod'
         total_booked_hours:
           type: number
           format: double
@@ -2705,8 +2701,7 @@ components:
       required:
       - benches
       - official_working_hours
-      - period_end
-      - period_start
+      - period
       - total_booked_hours
       - total_used_hours
       - used_to_booked_ratio
@@ -2721,16 +2716,15 @@ components:
     BookedVsUsedBench:
       type: object
       properties:
-        bench_id:
-          type: integer
-        bench_name:
-          type: string
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         booked_hours:
           type: number
           format: double
       required:
-      - bench_id
-      - bench_name
+      - bench
       - booked_hours
     BookingCountAnalyticsResponse:
       type: object
@@ -3813,15 +3807,12 @@ components:
       - data
     DashboardBenchGroup:
       type: object
-      description: Logical bench group descriptor.
+      description: Logical bench group relation (REL-3).
       properties:
         id:
           type: integer
         name:
           type: string
-        description:
-          type: string
-          default: ''
       required:
       - id
       - name
@@ -3907,6 +3898,7 @@ components:
       - starts_at
       - status
       - user
+      x-embedded-resource: true
     DashboardBookingDetail:
       type: object
       description: Dashboard detail schedule fields without booking-user identity.
@@ -3929,6 +3921,7 @@ components:
       - id
       - starts_at
       - status
+      x-embedded-resource: true
     DashboardComputing:
       type: object
       description: Attached computing equipment and real-time remote session state.
@@ -3967,6 +3960,7 @@ components:
       - remote_ip
       - remote_user
       - remote_user_display_name
+      x-embedded-resource: true
     DashboardComputingDetail:
       type: object
       description: Dashboard detail computing summary without remote-access data.
@@ -3993,6 +3987,7 @@ components:
       - id
       - is_stale
       - last_agent_report_at
+      x-embedded-resource: true
     DashboardEquipmentActivity:
       type: object
       properties:
@@ -4025,6 +4020,7 @@ components:
       - equipment
       - id
       - name
+      x-embedded-resource: true
     DashboardEquipmentCategoryReference:
       type: object
       properties:
@@ -4076,6 +4072,7 @@ components:
       - position
       - role
       - sku
+      x-embedded-resource: true
     DashboardEquipmentReference:
       type: object
       description: Compact standard reference shape for attached equipment and licenses.
@@ -4090,6 +4087,7 @@ components:
           default: ''
       required:
       - id
+      x-embedded-resource: true
     DashboardLabItem:
       type: object
       description: Item representation in dashboard laboratory listing.
@@ -4110,31 +4108,26 @@ components:
       type: object
       description: Physical location placement details.
       properties:
-        station_id:
-          type: integer
+        station:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        station_name:
-          type: string
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        room_id:
-          type: integer
-          nullable: true
-        room_name:
-          type: string
-          nullable: true
-        building_name:
-          type: string
+        building:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
         slot_label:
           type: string
           nullable: true
       required:
-      - building_name
-      - room_id
-      - room_name
+      - building
+      - room
       - slot_label
-      - station_id
-      - station_name
+      - station
     DashboardOperationalSummary:
       type: object
       description: Aggregate metrics and status distributions for dashboard summary.
@@ -4198,12 +4191,8 @@ components:
         generated_at:
           type: string
           format: date-time
-        period_start:
-          type: string
-          format: date-time
-        period_end:
-          type: string
-          format: date-time
+        period:
+          $ref: '#/components/schemas/ReportPeriod'
         bookings:
           $ref: '#/components/schemas/CountTrendMetric'
         facility_visits:
@@ -4215,8 +4204,7 @@ components:
       - bookings
       - facility_visits
       - generated_at
-      - period_end
-      - period_start
+      - period
     DashboardSummaryAnalyticsSerializersDashboardSummaryDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -4258,18 +4246,15 @@ components:
       - data
     DashboardUser:
       type: object
-      description: User summary descriptor for booking ownership and activity.
+      description: User relation for booking ownership (REL-3).
       properties:
         id:
           type: integer
-        username:
+        name:
           type: string
-        display_name:
-          type: string
-          default: ''
       required:
       - id
-      - username
+      - name
     DepartmentCatalogCreate:
       type: object
       properties:
@@ -5058,12 +5043,8 @@ components:
     EquipmentAvailability:
       type: object
       properties:
-        period_start:
-          type: string
-          format: date-time
-        period_end:
-          type: string
-          format: date-time
+        period:
+          $ref: '#/components/schemas/ReportPeriod'
         equipment_count:
           type: integer
         average_uptime_percent:
@@ -5078,8 +5059,7 @@ components:
       - average_uptime_percent
       - equipment_count
       - items
-      - period_end
-      - period_start
+      - period
     EquipmentAvailabilityAnalyticsSerializersEquipmentAvailabilityDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -5091,10 +5071,10 @@ components:
     EquipmentAvailabilityItem:
       type: object
       properties:
-        equipment_id:
-          type: integer
-        equipment_name:
-          type: string
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         uptime_percent:
           type: number
           format: double
@@ -5107,8 +5087,7 @@ components:
           type: string
       required:
       - current_status
-      - equipment_id
-      - equipment_name
+      - equipment
       - outage_count
       - unavailable_hours
       - uptime_percent
@@ -8695,16 +8674,8 @@ components:
           type: string
         timezone:
           type: string
-        period_start:
-          type: string
-          format: date-time
-          description: Inclusive instant at local first-month midnight, represented
-            in UTC.
-        period_end:
-          type: string
-          format: date-time
-          description: Exclusive instant at local midnight following end_month, represented
-            in UTC.
+        period:
+          $ref: '#/components/schemas/FinancePeriod'
         combined:
           $ref: '#/components/schemas/FinanceTotals'
         sources:
@@ -8718,8 +8689,7 @@ components:
       - currency
       - end_month
       - items
-      - period_end
-      - period_start
+      - period
       - sources
       - start_month
       - timezone
@@ -8751,7 +8721,9 @@ components:
           description: Expense-owned type, or procurement for purchases with no expense
             type.
         source:
-          $ref: '#/components/schemas/FinanceBreakdownItemSourceEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
       required:
       - expense_type
       - net
@@ -8759,14 +8731,6 @@ components:
       - refunds
       - source
       - transaction_count
-    FinanceBreakdownItemSourceEnum:
-      enum:
-      - expense
-      - procurement
-      type: string
-      description: '* `expense` - expense
-
-        * `procurement` - procurement'
     FinanceMoney:
       type: object
       properties:
@@ -8803,16 +8767,8 @@ components:
           type: string
         timezone:
           type: string
-        period_start:
-          type: string
-          format: date-time
-          description: Inclusive instant at local first-month midnight, represented
-            in UTC.
-        period_end:
-          type: string
-          format: date-time
-          description: Exclusive instant at local midnight following end_month, represented
-            in UTC.
+        period:
+          $ref: '#/components/schemas/FinancePeriod'
         combined:
           $ref: '#/components/schemas/FinanceTotals'
         sources:
@@ -8827,8 +8783,7 @@ components:
       - currency
       - end_month
       - months
-      - period_end
-      - period_start
+      - period
       - sources
       - start_month
       - timezone
@@ -8840,6 +8795,23 @@ components:
           $ref: '#/components/schemas/FinanceMonthlyTrends'
       required:
       - data
+    FinancePeriod:
+      type: object
+      description: NAM-9 ``period`` group read from ``period_start`` / ``period_end``.
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+          description: Inclusive instant at local first-month midnight, represented
+            in UTC.
+        ends_at:
+          type: string
+          format: date-time
+          description: Exclusive instant at local midnight following end_month, represented
+            in UTC.
+      required:
+      - ends_at
+      - starts_at
     FinanceProblemResponse:
       type: object
       properties:
@@ -8868,16 +8840,8 @@ components:
           type: string
         timezone:
           type: string
-        period_start:
-          type: string
-          format: date-time
-          description: Inclusive instant at local first-month midnight, represented
-            in UTC.
-        period_end:
-          type: string
-          format: date-time
-          description: Exclusive instant at local midnight following end_month, represented
-            in UTC.
+        period:
+          $ref: '#/components/schemas/FinancePeriod'
         combined:
           $ref: '#/components/schemas/FinanceTotals'
         sources:
@@ -8886,8 +8850,7 @@ components:
       - combined
       - currency
       - end_month
-      - period_end
-      - period_start
+      - period
       - sources
       - start_month
       - timezone
@@ -11577,19 +11540,22 @@ components:
           type: string
         name:
           type: string
-        setup_location_id:
-          type: integer
+        setup_location:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        station_slot_id:
-          type: integer
+        station_slot:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
       required:
       - id
       - name
-      - setup_location_id
+      - setup_location
       - sku
-      - station_slot_id
+      - station_slot
       - uid
+      x-embedded-resource: true
     MappingEquipment:
       type: object
       properties:
@@ -11606,21 +11572,23 @@ components:
           allOf:
           - $ref: '#/components/schemas/MappingEquipmentCategory'
           nullable: true
-        bench_id:
-          type: integer
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
         bench_assignment:
           allOf:
           - $ref: '#/components/schemas/MappingEquipmentAssignment'
           nullable: true
       required:
+      - bench
       - bench_assignment
-      - bench_id
       - category
       - id
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingEquipmentAssignment:
       type: object
       properties:
@@ -11630,7 +11598,7 @@ components:
           type: string
         position:
           type: integer
-        monitor:
+        is_monitored:
           type: boolean
         assigned_at:
           type: string
@@ -11638,9 +11606,10 @@ components:
       required:
       - assigned_at
       - id
-      - monitor
+      - is_monitored
       - position
       - role
+      x-embedded-resource: true
     MappingEquipmentCategory:
       type: object
       properties:
@@ -11673,23 +11642,25 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingLicenseAssignment:
       type: object
       properties:
         id:
           type: integer
-        equipment_id:
-          type: integer
-        license_id:
-          type: integer
+        equipment:
+          $ref: '#/components/schemas/LabsNamedReference'
+        license:
+          $ref: '#/components/schemas/LabsNamedReference'
         assigned_at:
           type: string
           format: date-time
       required:
       - assigned_at
-      - equipment_id
+      - equipment
       - id
-      - license_id
+      - license
+      x-embedded-resource: true
     MappingLicenseCategory:
       type: object
       properties:
@@ -11746,13 +11717,14 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingRoomSlot:
       type: object
       properties:
         id:
           type: integer
-        room_id:
-          type: integer
+        room:
+          $ref: '#/components/schemas/LabsNamedReference'
         row_index:
           type: integer
         col_index:
@@ -11778,12 +11750,13 @@ components:
       - depth_mm
       - id
       - orientation_degrees
-      - room_id
+      - room
       - row_index
       - slot_code
       - width_mm
       - x_mm
       - y_mm
+      x-embedded-resource: true
     MappingStation:
       type: object
       properties:
@@ -11796,26 +11769,29 @@ components:
           type: string
         name:
           type: string
-        room_id:
-          type: integer
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        slot_id:
-          type: integer
+        slot:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
       required:
       - id
       - name
-      - room_id
+      - room
       - sku
-      - slot_id
+      - slot
       - uid
+      x-embedded-resource: true
     MappingStationSlot:
       type: object
       properties:
         id:
           type: integer
-        station_id:
-          type: integer
+        station:
+          $ref: '#/components/schemas/LabsNamedReference'
         position_index:
           type: integer
         slot_code:
@@ -11827,7 +11803,8 @@ components:
       - label
       - position_index
       - slot_code
-      - station_id
+      - station
+      x-embedded-resource: true
     MaterialCatalogCreate:
       type: object
       properties:
@@ -14618,6 +14595,19 @@ components:
           $ref: '#/components/schemas/RefreshTokenResponse'
       required:
       - data
+    ReportPeriod:
+      type: object
+      description: NAM-9 ``period`` group read from the row's ``period_start`` / ``period_end``.
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+      required:
+      - ends_at
+      - starts_at
     ResolutionCodeEnum:
       enum:
       - fixed

@@ -36,6 +36,19 @@ def license_mapping_rows(*, license_ids=()):
     return queryset.order_by("pk").values("id", "uid", "sku", "name", "category_id", "category__name")
 
 
+# Related display columns let the mapping render `{id, name}` relations without extra queries (REL-3).
+_LICENSE_ASSIGNMENT_MAPPING_COLUMNS = (
+    "id",
+    "equipment_id",
+    "equipment__name",
+    "equipment__sku",
+    "license_id",
+    "license__name",
+    "license__sku",
+    "assigned_at",
+)
+
+
 def active_license_assignment_mapping_rows(*, equipment_ids=(), bench_ids=(), station_ids=(), room_ids=()):
     queryset = LicenseAssignment.objects.filter(
         unassigned_at__isnull=True,
@@ -64,8 +77,8 @@ def active_license_assignment_mapping_rows(*, equipment_ids=(), bench_ids=(), st
             equipment__bench_assignments__bench__deleted_at__isnull=True,
         )
     else:
-        return queryset.none().values("id", "equipment_id", "license_id", "assigned_at")
-    return queryset.order_by("pk").values("id", "equipment_id", "license_id", "assigned_at")
+        return queryset.none().values(*_LICENSE_ASSIGNMENT_MAPPING_COLUMNS)
+    return queryset.order_by("pk").values(*_LICENSE_ASSIGNMENT_MAPPING_COLUMNS)
 
 
 def list_licenses(*, search: str | None = None) -> QuerySet[License]:

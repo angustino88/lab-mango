@@ -45,9 +45,7 @@ class ResourceMappingAPIView(AppAPIView):
             return self.respond_problem("bad_request", code="invalid_query", detail="The mapping query is invalid.")
         if result is None:
             return self.respond_problem("not_found", code="not_found", detail="Resource not found.")
-        output = ResourceMappingResponseSerializer(data=result)
-        output.is_valid(raise_exception=True)
-        return Response(output.data)
+        return Response(ResourceMappingResponseSerializer(result).data)
 
     def _validated_mapping_query(self):
         serializer = ResourceMappingQuerySerializer(data=self.request.query_params)

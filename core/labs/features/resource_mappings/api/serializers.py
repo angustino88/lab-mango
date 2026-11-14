@@ -2,6 +2,9 @@
 
 from rest_framework import serializers
 
+from core.common.api.summary_serializers import embedded_resource
+from core.labs.features.base.serializers import NamedReferenceSerializer
+
 
 class ResourceMappingQuerySerializer(serializers.Serializer):
     page_size = serializers.IntegerField(min_value=1, max_value=100, required=False, default=25)
@@ -15,6 +18,7 @@ class ResourceMappingQuerySerializer(serializers.Serializer):
     license_assignments_cursor = serializers.CharField(required=False)
 
 
+@embedded_resource
 class MappingRoomSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     uid = serializers.UUIDField(label="UID")
@@ -24,9 +28,10 @@ class MappingRoomSerializer(serializers.Serializer):
     layout_columns = serializers.IntegerField(allow_null=True)
 
 
+@embedded_resource
 class MappingRoomSlotSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    room_id = serializers.IntegerField()
+    room = NamedReferenceSerializer()
     row_index = serializers.IntegerField()
     col_index = serializers.IntegerField()
     slot_code = serializers.CharField()
@@ -37,18 +42,20 @@ class MappingRoomSlotSerializer(serializers.Serializer):
     orientation_degrees = serializers.IntegerField()
 
 
+@embedded_resource
 class MappingStationSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     uid = serializers.UUIDField(label="UID")
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
-    room_id = serializers.IntegerField(allow_null=True)
-    slot_id = serializers.IntegerField(allow_null=True)
+    room = NamedReferenceSerializer(allow_null=True)
+    slot = NamedReferenceSerializer(allow_null=True)
 
 
+@embedded_resource
 class MappingStationSlotSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    station_id = serializers.IntegerField()
+    station = NamedReferenceSerializer()
     position_index = serializers.IntegerField()
     slot_code = serializers.CharField()
     def get_fields(self):
@@ -57,13 +64,14 @@ class MappingStationSlotSerializer(serializers.Serializer):
         return fields
 
 
+@embedded_resource
 class MappingBenchSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     uid = serializers.UUIDField(label="UID")
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
-    setup_location_id = serializers.IntegerField(allow_null=True)
-    station_slot_id = serializers.IntegerField(allow_null=True)
+    setup_location = NamedReferenceSerializer(allow_null=True)
+    station_slot = NamedReferenceSerializer(allow_null=True)
 
 
 class MappingEquipmentCategorySerializer(serializers.Serializer):
@@ -76,24 +84,27 @@ class MappingLicenseCategorySerializer(serializers.Serializer):
     name = serializers.CharField(allow_blank=True, allow_null=True)
 
 
+@embedded_resource
 class MappingEquipmentAssignmentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     role = serializers.CharField()
     position = serializers.IntegerField()
-    monitor = serializers.BooleanField()
+    is_monitored = serializers.BooleanField()
     assigned_at = serializers.DateTimeField()
 
 
+@embedded_resource
 class MappingEquipmentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     uid = serializers.UUIDField(label="UID")
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
     category = MappingEquipmentCategorySerializer(allow_null=True)
-    bench_id = serializers.IntegerField(allow_null=True)
+    bench = NamedReferenceSerializer(allow_null=True)
     bench_assignment = MappingEquipmentAssignmentSerializer(allow_null=True)
 
 
+@embedded_resource
 class MappingLicenseSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     uid = serializers.UUIDField(label="UID")
@@ -102,10 +113,11 @@ class MappingLicenseSerializer(serializers.Serializer):
     category = MappingLicenseCategorySerializer(allow_null=True)
 
 
+@embedded_resource
 class MappingLicenseAssignmentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    equipment_id = serializers.IntegerField()
-    license_id = serializers.IntegerField()
+    equipment = NamedReferenceSerializer()
+    license = NamedReferenceSerializer()
     assigned_at = serializers.DateTimeField()
 
 

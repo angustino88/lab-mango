@@ -5284,13 +5284,17 @@
               "data": {
                 "type": "object",
                 "properties": {
-                  "period_start": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "period_end": {
-                    "type": "string",
-                    "format": "date-time"
+                  "period": {
+                    "type": "object",
+                    "description": "NAM-9 ``period`` group read from the row's ``period_start`` / ``period_end``.",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
                   },
                   "total_booked_hours": {
                     "type": "number",
@@ -5320,8 +5324,7 @@
                 "required": [
                   "benches",
                   "official_working_hours",
-                  "period_end",
-                  "period_start",
+                  "period",
                   "total_booked_hours",
                   "total_used_hours",
                   "used_to_booked_ratio"
@@ -5334,8 +5337,10 @@
           },
           "example_payload": {
             "data": {
-              "period_start": "2026-10-20T12:00:00Z",
-              "period_end": "2026-10-20T12:00:00Z",
+              "period": {
+                "type": null,
+                "description": null
+              },
               "total_booked_hours": 0.0,
               "total_used_hours": 0.0,
               "used_to_booked_ratio": 0.0,
@@ -5615,13 +5620,17 @@
                     "type": "string",
                     "format": "date-time"
                   },
-                  "period_start": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "period_end": {
-                    "type": "string",
-                    "format": "date-time"
+                  "period": {
+                    "type": "object",
+                    "description": "NAM-9 ``period`` group read from the row's ``period_start`` / ``period_end``.",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
                   },
                   "bookings": {
                     "type": "object",
@@ -5662,8 +5671,7 @@
                   "bookings",
                   "facility_visits",
                   "generated_at",
-                  "period_end",
-                  "period_start"
+                  "period"
                 ]
               }
             },
@@ -5674,8 +5682,10 @@
           "example_payload": {
             "data": {
               "generated_at": "2026-10-20T12:00:00Z",
-              "period_start": "2026-10-20T12:00:00Z",
-              "period_end": "2026-10-20T12:00:00Z",
+              "period": {
+                "type": null,
+                "description": null
+              },
               "bookings": {
                 "type": null,
                 "description": null
@@ -5789,13 +5799,17 @@
               "data": {
                 "type": "object",
                 "properties": {
-                  "period_start": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "period_end": {
-                    "type": "string",
-                    "format": "date-time"
+                  "period": {
+                    "type": "object",
+                    "description": "NAM-9 ``period`` group read from the row's ``period_start`` / ``period_end``.",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
                   },
                   "equipment_count": {
                     "type": "integer"
@@ -5817,8 +5831,7 @@
                   "average_uptime_percent",
                   "equipment_count",
                   "items",
-                  "period_end",
-                  "period_start"
+                  "period"
                 ]
               }
             },
@@ -5828,8 +5841,10 @@
           },
           "example_payload": {
             "data": {
-              "period_start": "2026-10-20T12:00:00Z",
-              "period_end": "2026-10-20T12:00:00Z",
+              "period": {
+                "type": null,
+                "description": null
+              },
               "equipment_count": 1,
               "average_uptime_percent": 0.0,
               "items": [
@@ -5972,15 +5987,17 @@
                   "timezone": {
                     "type": "string"
                   },
-                  "period_start": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Inclusive instant at local first-month midnight, represented in UTC."
-                  },
-                  "period_end": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Exclusive instant at local midnight following end_month, represented in UTC."
+                  "period": {
+                    "type": "object",
+                    "description": "NAM-9 ``period`` group read from ``period_start`` / ``period_end``.",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
                   },
                   "combined": {
                     "type": "object",
@@ -6017,8 +6034,7 @@
                   "currency",
                   "end_month",
                   "items",
-                  "period_end",
-                  "period_start",
+                  "period",
                   "sources",
                   "start_month",
                   "timezone"
@@ -6035,8 +6051,10 @@
               "start_month": "string",
               "end_month": "string",
               "timezone": "string",
-              "period_start": "2026-10-20T12:00:00Z",
-              "period_end": "2026-10-20T12:00:00Z",
+              "period": {
+                "type": null,
+                "description": null
+              },
               "combined": {
                 "type": null,
                 "description": null
@@ -6340,15 +6358,17 @@
                   "timezone": {
                     "type": "string"
                   },
-                  "period_start": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Inclusive instant at local first-month midnight, represented in UTC."
-                  },
-                  "period_end": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Exclusive instant at local midnight following end_month, represented in UTC."
+                  "period": {
+                    "type": "object",
+                    "description": "NAM-9 ``period`` group read from ``period_start`` / ``period_end``.",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
                   },
                   "combined": {
                     "type": "object",
@@ -6386,8 +6406,7 @@
                   "currency",
                   "end_month",
                   "months",
-                  "period_end",
-                  "period_start",
+                  "period",
                   "sources",
                   "start_month",
                   "timezone"
@@ -6404,8 +6423,10 @@
               "start_month": "string",
               "end_month": "string",
               "timezone": "string",
-              "period_start": "2026-10-20T12:00:00Z",
-              "period_end": "2026-10-20T12:00:00Z",
+              "period": {
+                "type": null,
+                "description": null
+              },
               "combined": {
                 "type": null,
                 "description": null
@@ -6709,15 +6730,17 @@
                   "timezone": {
                     "type": "string"
                   },
-                  "period_start": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Inclusive instant at local first-month midnight, represented in UTC."
-                  },
-                  "period_end": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Exclusive instant at local midnight following end_month, represented in UTC."
+                  "period": {
+                    "type": "object",
+                    "description": "NAM-9 ``period`` group read from ``period_start`` / ``period_end``.",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
                   },
                   "combined": {
                     "type": "object",
@@ -6746,8 +6769,7 @@
                   "combined",
                   "currency",
                   "end_month",
-                  "period_end",
-                  "period_start",
+                  "period",
                   "sources",
                   "start_month",
                   "timezone"
@@ -6764,8 +6786,10 @@
               "start_month": "string",
               "end_month": "string",
               "timezone": "string",
-              "period_start": "2026-10-20T12:00:00Z",
-              "period_end": "2026-10-20T12:00:00Z",
+              "period": {
+                "type": null,
+                "description": null
+              },
               "combined": {
                 "type": null,
                 "description": null

@@ -358,15 +358,12 @@ components:
       - data
     DashboardBenchGroup:
       type: object
-      description: Logical bench group descriptor.
+      description: Logical bench group relation (REL-3).
       properties:
         id:
           type: integer
         name:
           type: string
-        description:
-          type: string
-          default: ''
       required:
       - id
       - name
@@ -452,6 +449,7 @@ components:
       - starts_at
       - status
       - user
+      x-embedded-resource: true
     DashboardBookingDetail:
       type: object
       description: Dashboard detail schedule fields without booking-user identity.
@@ -474,6 +472,7 @@ components:
       - id
       - starts_at
       - status
+      x-embedded-resource: true
     DashboardComputing:
       type: object
       description: Attached computing equipment and real-time remote session state.
@@ -512,6 +511,7 @@ components:
       - remote_ip
       - remote_user
       - remote_user_display_name
+      x-embedded-resource: true
     DashboardComputingDetail:
       type: object
       description: Dashboard detail computing summary without remote-access data.
@@ -538,6 +538,7 @@ components:
       - id
       - is_stale
       - last_agent_report_at
+      x-embedded-resource: true
     DashboardEquipmentActivity:
       type: object
       properties:
@@ -570,6 +571,7 @@ components:
       - equipment
       - id
       - name
+      x-embedded-resource: true
     DashboardEquipmentCategoryReference:
       type: object
       properties:
@@ -621,6 +623,7 @@ components:
       - position
       - role
       - sku
+      x-embedded-resource: true
     DashboardEquipmentReference:
       type: object
       description: Compact standard reference shape for attached equipment and licenses.
@@ -635,35 +638,31 @@ components:
           default: ''
       required:
       - id
+      x-embedded-resource: true
     DashboardLocation:
       type: object
       description: Physical location placement details.
       properties:
-        station_id:
-          type: integer
+        station:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        station_name:
-          type: string
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        room_id:
-          type: integer
-          nullable: true
-        room_name:
-          type: string
-          nullable: true
-        building_name:
-          type: string
+        building:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
         slot_label:
           type: string
           nullable: true
       required:
-      - building_name
-      - room_id
-      - room_name
+      - building
+      - room
       - slot_label
-      - station_id
-      - station_name
+      - station
     DashboardOperationalSummary:
       type: object
       description: Aggregate metrics and status distributions for dashboard summary.
@@ -709,18 +708,28 @@ components:
       - data
     DashboardUser:
       type: object
-      description: User summary descriptor for booking ownership and activity.
+      description: User relation for booking ownership (REL-3).
       properties:
         id:
           type: integer
-        username:
+        name:
           type: string
-        display_name:
-          type: string
-          default: ''
       required:
       - id
-      - username
+      - name
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     ProblemDetail:
       type: object
       properties:
