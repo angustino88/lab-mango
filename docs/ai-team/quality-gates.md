@@ -17,6 +17,7 @@ root with the project virtualenv (`uv run ...`, or `.venv/Scripts/python.exe` on
 | OpenAPI regenerate | `uv run python manage.py spectacular_modules --output-dir openapi` | API, serializer, or schema touched | no |
 | OpenAPI tests | `uv run pytest tests/unit/test_openapi*.py core/common/openapi/tests -q --ds=config.settings.test` | API/schema sources, generator, contracts package, or OpenAPI tooling changed | `.github/workflows/api-lint.yml` |
 | OpenAPI parity + validation | `uv run python manage.py spectacular_modules --output-dir openapi --check --settings=config.settings.test` | API/schema sources, generator, contracts package, dependencies, or generated files changed | `.github/workflows/api-lint.yml` |
+| API contract gate | `uv run python -m core.common.openapi.contract_rules openapi/openapi-full.json` (CI runs it as `core/common/openapi/tests/test_contract_rules.py`) | API, serializer, or schema touched | `.github/workflows/api-lint.yml` (OpenAPI tests step) |
 | Spectral | see `.github/instructions/api-design.instructions.md` step 5 | `openapi/` or API/schema sources changed | `.github/workflows/api-lint.yml` |
 
 The API workflow runs from `.github/workflows/` and retains bundling and Spectral's error threshold.
