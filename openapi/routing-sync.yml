@@ -284,6 +284,7 @@ components:
       - key
       - op
       - version
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     ChangesResponse:
       type: object
       properties:
@@ -326,6 +327,7 @@ components:
       - epoch
       - head_version
       - mode
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     DigestResponse:
       type: object
       properties:
@@ -355,6 +357,7 @@ components:
       - entity_type
       - epoch
       - version
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     ErrorBody:
       type: object
       properties:
@@ -424,6 +427,7 @@ components:
       - key
       - state
       - version
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     SnapshotResponse:
       type: object
       properties:
@@ -458,6 +462,7 @@ components:
       - head_version
       - items
       - next_after
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     SyncInfoResponse:
       type: object
       properties:
@@ -483,6 +488,7 @@ components:
       - entities
       - limits
       - server_time
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     SyncStreamEntityInfo:
       type: object
       properties:
@@ -495,6 +501,7 @@ components:
       required:
       - epoch
       - version
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     SyncStreamLimits:
       type: object
       properties:
@@ -511,6 +518,7 @@ components:
       - changes_max_limit
       - longpoll_max_wait_s
       - snapshot_max_limit
+      x-protocol-spec: docs/agent-platform/routing-sync.md
   securitySchemes:
     routingSyncBearerAuth:
       type: http

@@ -10,6 +10,8 @@ from drf_api_contracts.serializers import ProblemDetailSerializer
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from core.common.api.summary_serializers import ChoiceSerializer, to_choice
+
 
 @extend_schema_field({"type": "string", "pattern": r"^[0-9]{4}-(0[1-9]|1[0-2])$"})
 class CalendarMonthField(serializers.DateField):
@@ -74,19 +76,27 @@ class FinanceSourcesSerializer(serializers.Serializer):
     procurement = FinanceTotalsSerializer()
 
 
+class FinancePeriodSerializer(serializers.Serializer):
+    """NAM-9 ``period`` group read from ``period_start`` / ``period_end``."""
+
+    starts_at = serializers.DateTimeField(
+        source="period_start",
+        default_timezone=datetime_timezone.utc,
+        help_text="Inclusive instant at local first-month midnight, represented in UTC.",
+    )
+    ends_at = serializers.DateTimeField(
+        source="period_end",
+        default_timezone=datetime_timezone.utc,
+        help_text="Exclusive instant at local midnight following end_month, represented in UTC.",
+    )
+
+
 class FinanceSummarySerializer(serializers.Serializer):
     currency = serializers.CharField()
     start_month = serializers.CharField()
     end_month = serializers.CharField()
     timezone = serializers.CharField()
-    period_start = serializers.DateTimeField(
-        default_timezone=datetime_timezone.utc,
-        help_text="Inclusive instant at local first-month midnight, represented in UTC.",
-    )
-    period_end = serializers.DateTimeField(
-        default_timezone=datetime_timezone.utc,
-        help_text="Exclusive instant at local midnight following end_month, represented in UTC.",
-    )
+    period = FinancePeriodSerializer(source="*")
     combined = FinanceTotalsSerializer()
     sources = FinanceSourcesSerializer()
 
@@ -110,8 +120,12 @@ class FinanceBreakdownItemSerializer(FinanceTotalsSerializer):
 
     def get_fields(self) -> dict[str, serializers.Field]:
         fields = super().get_fields()
-        fields["source"] = serializers.ChoiceField(choices=["expense", "procurement"])
+        fields["source"] = serializers.SerializerMethodField()
         return fields
+
+    @extend_schema_field(ChoiceSerializer)
+    def get_source(self, row) -> dict[str, str] | None:
+        return to_choice(row["source"], [("expense", "Expense"), ("procurement", "Procurement")])
 
 
 class FinanceBreakdownSerializer(FinanceSummarySerializer):

@@ -165,10 +165,13 @@ def test_dashboard_query_contract_documents_all_eleven_fields_and_optional_boole
         "location",
         "page",
         "page_size",
+        "q",
         "search",
     }
 
     assert Counter(parameter["name"] for parameter in parameters) == Counter({name: 1 for name in expected})
+    search = next(parameter for parameter in parameters if parameter["name"] == "search")
+    assert search["deprecated"] is True  # QRY-7: deprecated alias of `q` for one release
     for name in ("has_computing", "is_mapped", "is_booked", "is_favorite"):
         parameter = next(parameter for parameter in parameters if parameter["name"] == name)
         assert parameter["schema"]["type"] == "boolean", name

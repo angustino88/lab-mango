@@ -3,6 +3,10 @@
 from drf_spectacular.extensions import OpenApiSerializerExtension
 from rest_framework import serializers
 
+from core.common.api.summary_serializers import protocol_payload
+
+ROUTING_SYNC_SPEC = "docs/agent-platform/routing-sync.md"
+
 
 class ErrorDetailItemSerializer(serializers.Serializer):
     field = serializers.CharField(required=False)
@@ -32,17 +36,20 @@ class ErrorEnvelopeSerializer(serializers.Serializer):
     error = ErrorBodySerializer()
 
 
+@protocol_payload(ROUTING_SYNC_SPEC)
 class SyncStreamEntityInfoSerializer(serializers.Serializer):
     version = serializers.IntegerField(min_value=0)
     epoch = serializers.UUIDField()
 
 
+@protocol_payload(ROUTING_SYNC_SPEC)
 class SyncStreamLimitsSerializer(serializers.Serializer):
     snapshot_max_limit = serializers.IntegerField(min_value=1)
     changes_max_limit = serializers.IntegerField(min_value=1)
     longpoll_max_wait_s = serializers.IntegerField(min_value=0)
 
 
+@protocol_payload(ROUTING_SYNC_SPEC)
 class SyncInfoResponseDataSerializer(serializers.Serializer):
     backend_id = serializers.CharField()
     server_time = serializers.CharField()
@@ -59,6 +66,7 @@ class SnapshotQuerySerializer(serializers.Serializer):
     after = serializers.CharField(max_length=128, required=False, allow_blank=False)
 
 
+@protocol_payload(ROUTING_SYNC_SPEC)
 class SnapshotItemSerializer(serializers.Serializer):
     key = serializers.CharField(max_length=128)
     version = serializers.IntegerField(min_value=1)
@@ -66,6 +74,7 @@ class SnapshotItemSerializer(serializers.Serializer):
     data = serializers.DictField()
 
 
+@protocol_payload(ROUTING_SYNC_SPEC)
 class SnapshotResponseDataSerializer(serializers.Serializer):
     backend_id = serializers.CharField()
     entity_type = serializers.CharField()
@@ -86,6 +95,7 @@ class ChangesQuerySerializer(serializers.Serializer):
     wait = serializers.IntegerField(min_value=0, max_value=30, required=False, default=0)
 
 
+@protocol_payload(ROUTING_SYNC_SPEC)
 class ChangeItemSerializer(serializers.Serializer):
     version = serializers.IntegerField(min_value=1)
     op = serializers.ChoiceField(choices=["upsert", "delete"])
@@ -94,6 +104,7 @@ class ChangeItemSerializer(serializers.Serializer):
     data = serializers.DictField(required=False)
 
 
+@protocol_payload(ROUTING_SYNC_SPEC)
 class ChangesResponseDataSerializer(serializers.Serializer):
     backend_id = serializers.CharField()
     entity_type = serializers.CharField()
@@ -111,6 +122,7 @@ class ChangesResponseSerializer(serializers.Serializer):
     data = ChangesResponseDataSerializer()
 
 
+@protocol_payload(ROUTING_SYNC_SPEC)
 class DigestResponseDataSerializer(serializers.Serializer):
     entity_type = serializers.CharField()
     epoch = serializers.UUIDField()

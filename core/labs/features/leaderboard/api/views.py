@@ -61,7 +61,7 @@ class LeaderboardPersonaAPIView(FeatureAPIView):
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
         start_date, end_date = _date_range(request)
         data = compute_leaderboard_persona(start_date, end_date)
-        return self.respond_data(data)
+        return self.respond(data)
 
 
 class LeaderboardLabAPIView(FeatureAPIView):
@@ -78,7 +78,7 @@ class LeaderboardLabAPIView(FeatureAPIView):
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
         start_date, end_date = _date_range(request)
         data = compute_leaderboard_lab(start_date, end_date)
-        return self.respond_data(data)
+        return self.respond(data)
 
 
 class LeaderboardExportAPIView(FeatureAPIView):
@@ -95,11 +95,12 @@ class LeaderboardExportAPIView(FeatureAPIView):
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
         start_date, end_date = _date_range(request)
         export_type = request.query_params.get("type", "persona")
+        # Serialize with the row type's own serializer so the wire keys match the schema (NAM-3).
         if export_type == "lab":
-            data = compute_leaderboard_lab(start_date, end_date)
+            rows = LeaderboardLabSerializer(compute_leaderboard_lab(start_date, end_date), many=True).data
         else:
-            data = compute_leaderboard_persona(start_date, end_date)
-        return self.respond_data(data)
+            rows = LeaderboardPersonaSerializer(compute_leaderboard_persona(start_date, end_date), many=True).data
+        return Response({"data": rows})
 
 
 class LabProfileAPIView(FeatureAPIView):

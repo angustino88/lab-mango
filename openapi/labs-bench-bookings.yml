@@ -68,6 +68,8 @@ paths:
         schema:
           type: string
           minLength: 1
+        deprecated: true
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
       - in: query
         name: starts_at_after
         schema:
@@ -629,7 +631,7 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -645,11 +647,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Bench Bookings
       security:
@@ -702,6 +712,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/LabProjectCatalogCreate'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -768,7 +779,7 @@ paths:
       description: List the lab projects a booking can be charged to.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -784,11 +795,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Bench Bookings
       security:
@@ -853,7 +872,7 @@ paths:
         schema:
           type: string
           format: date
-        description: Date within project starts_on and ends_on.
+        description: Date within project start_date and end_date.
       - in: query
         name: include_ids
         schema:
@@ -919,7 +938,7 @@ components:
           readOnly: true
         creator:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         bench:
@@ -1176,26 +1195,26 @@ components:
           readOnly: true
           nullable: true
           description: Short unique project code, e.g. a cost-center number.
-        active:
+        is_active:
           type: boolean
           readOnly: true
-        starts_on:
+        start_date:
           type: string
           format: date
           readOnly: true
           nullable: true
-        ends_on:
+        end_date:
           type: string
           format: date
           readOnly: true
           nullable: true
       required:
-      - active
       - code
-      - ends_on
+      - end_date
       - id
+      - is_active
       - name
-      - starts_on
+      - start_date
     LabProjectCatalogCreate:
       type: object
       properties:
@@ -1207,16 +1226,18 @@ components:
           nullable: true
           description: Short unique project code, e.g. a cost-center number.
           maxLength: 50
-        starts_on:
+        start_date:
           type: string
           format: date
           nullable: true
-        ends_on:
+        end_date:
           type: string
           format: date
           nullable: true
-        active:
+        is_active:
           type: boolean
+      required:
+      - project_name
     LabProjectCatalogRecord:
       type: object
       properties:
@@ -1225,24 +1246,34 @@ components:
           readOnly: true
         project_name:
           type: string
+          readOnly: true
           maxLength: 255
         code:
           type: string
+          readOnly: true
           nullable: true
           description: Short unique project code, e.g. a cost-center number.
           maxLength: 50
-        starts_on:
+        start_date:
           type: string
           format: date
+          readOnly: true
           nullable: true
-        ends_on:
+        end_date:
           type: string
           format: date
+          readOnly: true
           nullable: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
+      - code
+      - end_date
       - id
+      - is_active
+      - project_name
+      - start_date
     LabProjectDetailSerializersLabProjectDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -1382,26 +1413,6 @@ components:
       required:
       - id
       - name
-    LabsResourceOwner:
-      type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-          pattern: ^[\w.@+-]+$
-          maxLength: 150
-        display_name:
-          type: string
-          maxLength: 255
-      required:
-      - id
-      - username
     LabsUIDNamedReference:
       type: object
       description: Compact `{id, uid, name}` object representation when target defines
@@ -1471,6 +1482,20 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    UserReference:
+      type: object
+      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
+        use it without importing users.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
   securitySchemes:
     cookieAuth:
       type: apiKey

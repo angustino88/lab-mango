@@ -73,6 +73,13 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: resource_type
         schema:
           type: string
@@ -101,7 +108,9 @@ paths:
         name: search
         schema:
           type: string
-          minLength: 1
+          maxLength: 255
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Resource Audit
       security:
@@ -701,7 +710,9 @@ components:
           type: string
           format: uuid
         resource_type:
-          $ref: '#/components/schemas/AuditCatalogItemResourceTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         sku:
           type: string
         name:
@@ -721,7 +732,7 @@ components:
           type: string
           description: 'Bench: setup station name. Station: room name. Room: building
             name. Otherwise empty.'
-        expiry_date:
+        expires_at:
           type: string
           format: date-time
           nullable: true
@@ -729,14 +740,14 @@ components:
         updated_at:
           type: string
           format: date-time
-        deleted:
+        is_deleted:
           type: boolean
           description: True when the resource was deleted; remove it from the local
             copy.
       required:
       - condition
-      - deleted
-      - expiry_date
+      - expires_at
+      - is_deleted
       - location
       - name
       - resource_type
@@ -745,36 +756,19 @@ components:
       - status
       - uid
       - updated_at
-    AuditCatalogItemResourceTypeEnum:
-      enum:
-      - equipment
-      - bench
-      - station
-      - room
-      - license
-      type: string
-      description: '* `equipment` - equipment
-
-        * `bench` - bench
-
-        * `station` - station
-
-        * `room` - room
-
-        * `license` - license'
     AuditCatalogMeta:
       type: object
       properties:
         pagination:
           $ref: '#/components/schemas/AuditCatalogPagination'
-        server_time:
+        sync_started_at:
           type: string
           format: date-time
           description: Time the sync started. Store it and send it as changed_since
             on the next sync.
       required:
       - pagination
-      - server_time
+      - sync_started_at
     AuditCatalogPagination:
       type: object
       properties:
@@ -828,6 +822,54 @@ components:
         * `OK` - OK
 
         * `NOK` - NOK'
+    AuditedResource:
+      type: object
+      description: REL-13 polymorphic relation to the audited resource.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/AuditedResourceTypeEnum'
+          readOnly: true
+      required:
+      - id
+      - name
+      - type
+    AuditedResourceTypeEnum:
+      enum:
+      - equipment
+      - bench
+      - station
+      - room
+      - license
+      type: string
+      description: '* `equipment` - equipment
+
+        * `bench` - bench
+
+        * `station` - station
+
+        * `room` - room
+
+        * `license` - license'
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     PatchedUpdateResourceAuditRequest:
       type: object
       description: Payload to update an existing audit record.
@@ -899,24 +941,18 @@ components:
         id:
           type: integer
           readOnly: true
-        resource_type:
-          type: string
-          readOnly: true
-        resource_id:
-          type: string
-          readOnly: true
-        resource_name:
-          type: string
-          readOnly: true
-        resource_sku:
-          type: string
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/AuditedResource'
           readOnly: true
         auditor:
           allOf:
-          - $ref: '#/components/schemas/ResourceAuditorUserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         result:
-          $ref: '#/components/schemas/ResourceAuditResultEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         remarks:
           type: string
           maxLength: 255
@@ -932,10 +968,7 @@ components:
       - auditor
       - created_at
       - id
-      - resource_id
-      - resource_name
-      - resource_sku
-      - resource_type
+      - resource
       - result
     ResourceAuditItemByIdSerializersResourceAuditItemDetailResponse:
       type: object
@@ -1093,36 +1126,6 @@ components:
           $ref: '#/components/schemas/ResourceAuditListByUidSerializersResourceAuditItemPagination'
       required:
       - pagination
-    ResourceAuditResultEnum:
-      enum:
-      - PASS
-      - FAIL
-      - NOT_ASSESSED
-      type: string
-      description: '* `PASS` - Pass
-
-        * `FAIL` - Fail
-
-        * `NOT_ASSESSED` - Not assessed'
-    ResourceAuditorUserSummary:
-      type: object
-      description: User summary for audit actor.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-          pattern: ^[\w.@+-]+$
-          maxLength: 150
-        display_name:
-          type: string
-          maxLength: 255
-      required:
-      - id
-      - username
     TypedResourceAuditItemSerializersResourceAuditItemDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -1175,6 +1178,20 @@ components:
           $ref: '#/components/schemas/TypedResourceAuditListSerializersResourceAuditItemPagination'
       required:
       - pagination
+    UserReference:
+      type: object
+      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
+        use it without importing users.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
   securitySchemes:
     cookieAuth:
       type: apiKey

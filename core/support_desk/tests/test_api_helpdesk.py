@@ -60,7 +60,7 @@ class TestHelpdeskEndpoints:
         )
         assert res.status_code == 201
         data = res.json()["data"]
-        assert data["ticket_type"] == "incident" and data["external_reference"] == "VENDOR-9"
+        assert data["ticket_type"]["value"] == "incident" and data["external_reference"] == "VENDOR-9"
         assert data["sla"]["state"] in {"none", "ok"}
 
     def test_watch_link_and_csat_flow(self, support_setup, requester_client, agent_client, agent_user):
@@ -91,7 +91,9 @@ class TestHelpdeskEndpoints:
         assert denied.status_code == 403
 
         # CSAT is refused until resolved
-        early = requester_client.post(f"/api/support/tickets/{a['key']}/csat", {"score": 5}, format="json")
+        early = requester_client.post(
+            f"/api/support/tickets/{a['key']}/actions/submit-csat", {"score": 5}, format="json"
+        )
         assert early.status_code == 422
 
     def test_stats_and_canned_responses_are_agent_only(self, support_setup, requester_client, agent_client):

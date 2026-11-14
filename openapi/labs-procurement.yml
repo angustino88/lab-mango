@@ -693,13 +693,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PurchaseTransaction'
+              $ref: '#/components/schemas/PurchaseTransactionWrite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PurchaseTransaction'
+              $ref: '#/components/schemas/PurchaseTransactionWrite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PurchaseTransaction'
+              $ref: '#/components/schemas/PurchaseTransactionWrite'
         required: true
       security:
       - jwtAuth: []
@@ -732,6 +732,19 @@ paths:
       summary: Create Purchases Transactions by Purchase ID
 components:
   schemas:
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     DraftLineInput:
       type: object
       properties:
@@ -743,9 +756,7 @@ components:
           maximum: 1000000
           minimum: 1
         unit_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          $ref: '#/components/schemas/Money'
         notes:
           type: string
           maxLength: 2000
@@ -765,6 +776,22 @@ components:
       - description
       - quantity
       - unit_price
+    Money:
+      type: object
+      description: 'FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO
+        4217 uppercase.'
+      properties:
+        amount:
+          type: string
+          description: Decimal string; never a float.
+          pattern: ^-?[0-9]+(\.[0-9]+)?$
+        currency:
+          type: string
+          description: ISO 4217 code, uppercase.
+          pattern: ^[A-Z]{3}$
+      required:
+      - amount
+      - currency
     PatchedDraftLinePatchInput:
       type: object
       properties:
@@ -776,9 +803,7 @@ components:
           maximum: 1000000
           minimum: 1
         unit_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          $ref: '#/components/schemas/Money'
         notes:
           type: string
           maxLength: 2000
@@ -806,14 +831,8 @@ components:
         purchase_order_number:
           type: string
           maxLength: 100
-        currency:
-          type: string
-          maxLength: 3
-          minLength: 3
-        total_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        total:
+          $ref: '#/components/schemas/Money'
         notes:
           type: string
           maxLength: 2000
@@ -861,34 +880,13 @@ components:
         purchase_date:
           type: string
           format: date
-        currency:
-          type: string
-          description: ISO 4217 currency code.
-          maxLength: 3
         status:
           type: object
           additionalProperties:
             type: string
           readOnly: true
-        total_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-          description: Agreed total purchase amount.
         total:
-          type: object
-          properties:
-            amount:
-              type: string
-              pattern: ^-?[0-9]+(\.[0-9]+)?$
-            currency:
-              type: string
-              description: Purchase currency code.
-          required:
-          - amount
-          - currency
-          additionalProperties: false
-          readOnly: true
+          $ref: '#/components/schemas/Money'
         item_count:
           type: integer
           readOnly: true
@@ -915,7 +913,6 @@ components:
       - status
       - supplier
       - total
-      - total_amount
       - updated_at
     PurchaseDetail:
       type: object
@@ -933,27 +930,13 @@ components:
           type: string
           format: date
           readOnly: true
-        currency:
-          type: string
-          readOnly: true
-          description: ISO 4217 currency code.
-        total_amount:
-          type: object
-          properties:
-            amount:
-              type: string
-              pattern: ^-?[0-9]+(\.[0-9]+)?$
-            currency:
-              type: string
-              description: Purchase currency code.
-          required:
-          - amount
-          - currency
-          additionalProperties: false
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/PurchaseStatusEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         notes:
           type: string
@@ -981,28 +964,27 @@ components:
         unpriced_line_count:
           type: integer
           readOnly: true
-        created:
+        created_at:
           type: string
           format: date-time
           readOnly: true
-        modified:
+        updated_at:
           type: string
           format: date-time
           readOnly: true
       required:
-      - created
-      - currency
+      - created_at
       - id
       - item_count
       - lines_total
-      - modified
       - notes
       - purchase_date
       - purchase_order_number
       - status
       - supplier
-      - total_amount
+      - total
       - unpriced_line_count
+      - updated_at
       - version
     PurchaseDetailSerializersPurchaseDetailDetailResponse:
       type: object
@@ -1028,27 +1010,13 @@ components:
           type: string
           format: date
           readOnly: true
-        currency:
-          type: string
-          readOnly: true
-          description: ISO 4217 currency code.
-        total_amount:
-          type: object
-          properties:
-            amount:
-              type: string
-              pattern: ^-?[0-9]+(\.[0-9]+)?$
-            currency:
-              type: string
-              description: Purchase currency code.
-          required:
-          - amount
-          - currency
-          additionalProperties: false
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/PurchaseStatusEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         notes:
           type: string
@@ -1057,14 +1025,13 @@ components:
           type: integer
           readOnly: true
       required:
-      - currency
       - id
       - notes
       - purchase_date
       - purchase_order_number
       - status
       - supplier
-      - total_amount
+      - total
       - version
     PurchaseDraftHeaderSerializersPurchaseDraftHeaderOutputDetailResponse:
       type: object
@@ -1118,9 +1085,8 @@ components:
           maximum: 2147483647
           minimum: 1
         unit_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          allOf:
+          - $ref: '#/components/schemas/Money'
           writeOnly: true
         notes:
           type: string
@@ -1145,7 +1111,6 @@ components:
       - created_at
       - description
       - id
-      - unit_price
     PurchaseItemDetail:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -1168,18 +1133,8 @@ components:
           type: string
           readOnly: true
         unit_price:
-          type: object
-          properties:
-            amount:
-              type: string
-              pattern: ^-?[0-9]+(\.[0-9]+)?$
-            currency:
-              type: string
-              description: Purchase currency code.
-          required:
-          - amount
-          - currency
-          additionalProperties: false
+          allOf:
+          - $ref: '#/components/schemas/Money'
           readOnly: true
         line_value:
           type: object
@@ -1295,18 +1250,8 @@ components:
           type: string
           readOnly: true
         unit_price:
-          type: object
-          properties:
-            amount:
-              type: string
-              pattern: ^-?[0-9]+(\.[0-9]+)?$
-            currency:
-              type: string
-              description: Purchase currency code.
-          required:
-          - amount
-          - currency
-          additionalProperties: false
+          allOf:
+          - $ref: '#/components/schemas/Money'
           readOnly: true
         line_value:
           type: object
@@ -1377,7 +1322,7 @@ components:
           readOnly: true
         resource_kind:
           allOf:
-          - $ref: '#/components/schemas/ResourceKindEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         acquisition_price:
           type: object
@@ -1434,9 +1379,8 @@ components:
           type: integer
           minimum: 1
         acquisition_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          allOf:
+          - $ref: '#/components/schemas/Money'
           writeOnly: true
       required:
       - acquisition_price
@@ -1584,27 +1528,9 @@ components:
           $ref: '#/components/schemas/Purchase'
       required:
       - data
-    PurchaseStatusEnum:
-      enum:
-      - draft
-      - ordered
-      - received
-      - cancelled
-      type: string
-      description: '* `draft` - Draft
-
-        * `ordered` - Ordered
-
-        * `received` - Received
-
-        * `cancelled` - Cancelled'
     PurchaseTransaction:
       type: object
-      description: 'Write payload uses ``transaction_type``, ``amount``, ``settled_at``,
-        ``reference``, ``notes``.
-
-
-        The purchase is taken from the URL, never from the body.'
+      description: Read shape; ``transaction_type`` is ``{value, label}`` (ENU-1).
       properties:
         id:
           type: integer
@@ -1617,30 +1543,36 @@ components:
             - type: string
           readOnly: true
         transaction_type:
-          $ref: '#/components/schemas/TransactionTypeEnum'
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
         settled_at:
           type: string
           format: date-time
+          readOnly: true
         reference:
           type: string
+          readOnly: true
           description: Invoice, receipt, bank transaction, or refund reference.
-          maxLength: 255
         notes:
           type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
-      - amount
       - created_at
       - id
+      - notes
       - purchase
+      - reference
       - settled_at
+      - total
       - transaction_type
     PurchaseTransactionListSerializersPurchaseTransactionPaginatedResponse:
       type: object
@@ -1694,6 +1626,30 @@ components:
           $ref: '#/components/schemas/PurchaseTransaction'
       required:
       - data
+    PurchaseTransactionWrite:
+      type: object
+      description: Write payload (RW-1). The purchase is taken from the URL, never
+        from the body.
+      properties:
+        transaction_type:
+          $ref: '#/components/schemas/TransactionTypeEnum'
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: In the purchase's currency.
+        settled_at:
+          type: string
+          format: date-time
+        reference:
+          type: string
+          description: Invoice, receipt, bank transaction, or refund reference.
+          maxLength: 255
+        notes:
+          type: string
+      required:
+      - settled_at
+      - total
+      - transaction_type
     ResourceKindEnum:
       enum:
       - bench

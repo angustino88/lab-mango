@@ -49,7 +49,7 @@ def test_get_returns_offline_default_without_creating_a_row(admin_client, comput
     response = admin_client.get(_url(computing.pk))
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["data"]["status"] == "offline"
+    assert response.json()["data"]["status"]["value"] == "offline"
     assert not ComputingActivity.objects.filter(computing=computing).exists()
 
 
@@ -79,7 +79,7 @@ def test_computing_detail_includes_activity(admin_client, computing):
     response = admin_client.get(f"/api/labs/equipment/{computing.pk}")
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["data"]["activity"]["status"] == "active"
+    assert response.json()["data"]["activity"]["status"]["value"] == "active"
     assert response.json()["data"]["activity"]["remote_user"] == "alice"
 
 

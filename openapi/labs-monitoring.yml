@@ -400,46 +400,57 @@ components:
         * `alert_resolved` - Alert resolved
 
         * `custom` - Custom'
-    MonitoringBenchMinimal:
+    Choice:
       type: object
+      description: ENU-1 ``{value, label}``.
       properties:
-        id:
-          type: integer
-          readOnly: true
-        sku:
+        value:
           type: string
           readOnly: true
-        bench_name:
+        label:
           type: string
           readOnly: true
       required:
-      - bench_name
-      - id
-      - sku
-    MonitoringEvent:
+      - label
+      - value
+    LabsNamedReference:
       type: object
+      description: Compact `{id, name}` object representation of a related entity.
       properties:
         id:
           type: integer
           readOnly: true
-        computer_id:
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+    MonitoringEvent:
+      type: object
+      description: One event; agent identifiers end in ``_key`` (NAM-8), relations
+        are ``{id, name}`` (REL-3).
+      properties:
+        id:
           type: integer
           readOnly: true
-        computer_name:
-          type: string
+        computer:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
           readOnly: true
         bench:
           allOf:
-          - $ref: '#/components/schemas/MonitoringBenchMinimal'
-          readOnly: true
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        agent_id:
+          readOnly: true
+        agent_key:
           type: string
           readOnly: true
         agent_version:
           type: string
           readOnly: true
-        event_id:
+        event_key:
           type: string
           format: uuid
           readOnly: true
@@ -452,41 +463,17 @@ components:
           format: date-time
           readOnly: true
         action:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         action_name:
           type: string
           readOnly: true
-        subject_type:
-          type: string
-          readOnly: true
-        subject_id:
-          type: string
-          readOnly: true
-        subject_name:
-          type: string
+        subject:
+          allOf:
+          - $ref: '#/components/schemas/MonitoringSubject'
           readOnly: true
         payload:
-          readOnly: true
-        source:
-          type: string
-          readOnly: true
-        event_type:
-          type: string
-          readOnly: true
-        category:
-          type: string
-          readOnly: true
-        object_name:
-          type: string
-          readOnly: true
-        object_id:
-          type: string
-          readOnly: true
-        details:
-          readOnly: true
-        details_str:
-          type: string
           readOnly: true
         technical_user:
           type: string
@@ -496,45 +483,25 @@ components:
           type: string
           readOnly: true
           default: ''
-        remote_user_displayname:
+        remote_user_display_name:
           type: string
           readOnly: true
           default: ''
-        created:
-          type: string
-          format: date-time
-          readOnly: true
-        modified:
-          type: string
-          format: date-time
-          readOnly: true
       required:
       - action
       - action_name
-      - agent_id
+      - agent_key
       - agent_version
       - bench
-      - category
-      - computer_id
-      - computer_name
-      - created
-      - details
-      - details_str
-      - event_id
-      - event_type
+      - computer
+      - event_key
       - id
-      - modified
-      - object_id
-      - object_name
       - occurred_at
       - payload
       - remote_user
-      - remote_user_displayname
+      - remote_user_display_name
       - reported_at
-      - source
-      - subject_id
-      - subject_name
-      - subject_type
+      - subject
       - technical_user
     MonitoringEventCreate:
       type: object
@@ -656,6 +623,24 @@ components:
           $ref: '#/components/schemas/MonitoringEvent'
       required:
       - data
+    MonitoringSubject:
+      type: object
+      description: 'What the agent reported on (STR-1): agent-side identifiers, not
+        API resources (NAM-8).'
+      properties:
+        type:
+          type: string
+          readOnly: true
+        key:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - key
+      - name
+      - type
     ProblemDetail:
       type: object
       properties:

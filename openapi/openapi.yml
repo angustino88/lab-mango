@@ -638,6 +638,12 @@ paths:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets
   /api/support/tickets/{key}:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}
+  /api/support/tickets/{key}/actions/assign:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1actions~1assign
+  /api/support/tickets/{key}/actions/submit-csat:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1actions~1submit-csat
+  /api/support/tickets/{key}/actions/transition:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1actions~1transition
   /api/support/tickets/{key}/activity:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1activity
   /api/support/tickets/{key}/assign:

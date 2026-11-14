@@ -254,6 +254,19 @@ paths:
       summary: End Downtimes by Downtime ID
 components:
   schemas:
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     Downtime:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -280,7 +293,7 @@ components:
           readOnly: true
         state:
           allOf:
-          - $ref: '#/components/schemas/DowntimeStateEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         starts_at:
           type: string
@@ -302,12 +315,12 @@ components:
           readOnly: true
         actor:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         ended_by:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         created_at:
@@ -482,20 +495,6 @@ components:
         * `bench` - bench
 
         * `equipment` - equipment'
-    DowntimeStateEnum:
-      enum:
-      - scheduled
-      - current
-      - ended
-      - cancelled
-      type: string
-      description: '* `scheduled` - scheduled
-
-        * `current` - current
-
-        * `ended` - ended
-
-        * `cancelled` - cancelled'
     KindEnum:
       enum:
       - planned
@@ -520,37 +519,23 @@ components:
       - value
     LabsDowntimeResource:
       type: object
+      description: REL-13 polymorphic relation to the room, station, bench or equipment
+        the window covers.
       properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
         type:
           allOf:
           - $ref: '#/components/schemas/DowntimeResourceTypeEnum'
           readOnly: true
-        id:
-          type: integer
-          readOnly: true
       required:
       - id
+      - name
       - type
-    LabsResourceOwner:
-      type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-          pattern: ^[\w.@+-]+$
-          maxLength: 150
-        display_name:
-          type: string
-          maxLength: 255
-      required:
-      - id
-      - username
     NullEnum:
       enum:
       - null
@@ -601,6 +586,20 @@ components:
         * `renovation` - Renovation
 
         * `other` - Other'
+    UserReference:
+      type: object
+      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
+        use it without importing users.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
   securitySchemes:
     cookieAuth:
       type: apiKey

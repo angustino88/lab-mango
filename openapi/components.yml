@@ -47,17 +47,6 @@ components:
       description: '* `open` - Open
 
         * `restricted` - Restricted'
-    AccessTypeEnum:
-      enum:
-      - booked
-      - ad_hoc
-      - unverified_booking
-      type: string
-      description: '* `booked` - Booked
-
-        * `ad_hoc` - Ad hoc (no booking)
-
-        * `unverified_booking` - Booking not verified'
     ActionEnum:
       enum:
       - heartbeat
@@ -334,7 +323,7 @@ components:
         is_final:
           type: boolean
           default: false
-        pauses_sla:
+        is_sla_paused:
           type: boolean
           default: false
         system_state:
@@ -443,10 +432,10 @@ components:
           type: array
           items:
             type: string
-        requires_reason:
+        is_reason_required:
           type: boolean
           default: false
-        requires_resolution:
+        is_resolution_required:
           type: boolean
           default: false
       required:
@@ -482,7 +471,9 @@ components:
       type: object
       properties:
         status:
-          $ref: '#/components/schemas/ComputingActivityStatusEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         remote_user:
           type: string
         remote_user_display_name:
@@ -526,7 +517,7 @@ components:
     AgentBookingCheckInData:
       type: object
       properties:
-        checked_in:
+        is_checked_in:
           type: boolean
           description: True when the booking is now in progress for this login.
         booking_code:
@@ -545,7 +536,7 @@ components:
           nullable: true
           description: Username the booking is for; present only when checked in.
       required:
-      - checked_in
+      - is_checked_in
     AgentBookingCheckInResponse:
       type: object
       properties:
@@ -556,7 +547,7 @@ components:
     AgentBookingCompleteData:
       type: object
       properties:
-        completed:
+        is_completed:
           type: boolean
           description: True when the booking is now completed.
         booking_code:
@@ -571,7 +562,7 @@ components:
           format: date-time
           description: The booked end time, unchanged; present only when completed.
       required:
-      - completed
+      - is_completed
     AgentBookingCompleteResponse:
       type: object
       properties:
@@ -582,7 +573,7 @@ components:
     AgentBookingExtendData:
       type: object
       properties:
-        extended:
+        is_extended:
           type: boolean
           description: True when the booking now ends at ends_at.
         booking_code:
@@ -597,7 +588,7 @@ components:
           format: date-time
           description: The new end; present only when extended.
       required:
-      - extended
+      - is_extended
     AgentBookingExtendError:
       type: object
       properties:
@@ -615,7 +606,39 @@ components:
         details:
           type: array
           items:
-            $ref: '#/components/schemas/AgentBookingExtendErrorDetail'
+            anyOf:
+            - type: object
+              required:
+              - field
+              - code
+              - message
+              - limit_at
+              properties:
+                field:
+                  type: string
+                code:
+                  type: string
+                  enum:
+                  - already_ended
+                  - not_later
+                  - too_short
+                  - needs_approval
+                  - bench_not_in_service
+                  - bench_not_free
+                message:
+                  type: string
+                limit_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+            - type: object
+              required:
+              - message
+              properties:
+                field:
+                  type: string
+                message:
+                  type: string
         request_id:
           type: string
       required:
@@ -623,42 +646,6 @@ components:
       - details
       - message
       - request_id
-    AgentBookingExtendErrorDetail:
-      type: object
-      properties:
-        field:
-          type: string
-          description: Always ends_at.
-        code:
-          allOf:
-          - $ref: '#/components/schemas/CodeEnum'
-          description: 'Why the extension was refused (stable).
-
-
-            * `already_ended` - already_ended
-
-            * `not_later` - not_later
-
-            * `too_short` - too_short
-
-            * `needs_approval` - needs_approval
-
-            * `bench_not_in_service` - bench_not_in_service
-
-            * `bench_not_free` - bench_not_free'
-        message:
-          type: string
-        limit:
-          type: string
-          format: date-time
-          nullable: true
-          description: 'too_short: earliest accepted end; needs_approval: latest accepted
-            end; bench_not_free: when the next booking starts; otherwise null.'
-      required:
-      - code
-      - field
-      - limit
-      - message
     AgentBookingExtendRequest:
       type: object
       properties:
@@ -682,7 +669,7 @@ components:
     AgentBookingValidationData:
       type: object
       properties:
-        eligible:
+        is_eligible:
           type: boolean
         booking_code:
           type: string
@@ -700,7 +687,7 @@ components:
           nullable: true
           description: Username the booking is for; present only when eligible.
       required:
-      - eligible
+      - is_eligible
     AgentBookingValidationRequest:
       type: object
       properties:
@@ -758,25 +745,23 @@ components:
           format: uuid
           readOnly: true
         equipment:
-          type: integer
-          readOnly: true
-        equipment_sku:
-          type: string
-          readOnly: true
-        equipment_name:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
           readOnly: true
         state:
           allOf:
-          - $ref: '#/components/schemas/StateEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         key_algorithm:
           allOf:
-          - $ref: '#/components/schemas/KeyAlgorithmEnum'
+          - $ref: '#/components/schemas/Choice'
+          nullable: true
           readOnly: true
         key_storage:
           allOf:
-          - $ref: '#/components/schemas/KeyStorageEnum'
+          - $ref: '#/components/schemas/Choice'
+          nullable: true
           readOnly: true
         fingerprint:
           type: string
@@ -794,29 +779,27 @@ components:
           format: date-time
           readOnly: true
           nullable: true
-        created:
+        created_at:
           type: string
           format: date-time
           readOnly: true
-        modified:
+        updated_at:
           type: string
           format: date-time
           readOnly: true
       required:
       - agent_uid
       - agent_version
-      - created
+      - created_at
       - enrolled_at
       - equipment
-      - equipment_name
-      - equipment_sku
       - fingerprint
       - id
       - key_algorithm
       - key_storage
       - last_seen_at
-      - modified
       - state
+      - updated_at
     AgentInfoResponse:
       type: object
       properties:
@@ -827,8 +810,9 @@ components:
     AgentInfoResponseData:
       type: object
       properties:
-        backend_id:
+        backend_key:
           type: string
+          description: Logical name of this department backend (routing-sync backend_id).
         server_time:
           type: string
         capabilities:
@@ -841,7 +825,7 @@ components:
             type: string
           description: Paths of the agent routes this backend serves, keyed by capability.
       required:
-      - backend_id
+      - backend_key
       - capabilities
       - endpoints
       - server_time
@@ -869,53 +853,43 @@ components:
       properties:
         id:
           type: integer
-        event_id:
+        event_key:
           type: string
           format: uuid
-        login_time:
+        login_at:
           type: string
           format: date-time
-        logout_time:
+        logout_at:
           type: string
           format: date-time
         booking_code:
           type: string
           nullable: true
         access_type:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           nullable: true
-          description: 'booked: a verified booking for this computer''s bench; ad_hoc:
-            no booking code; unverified_booking: a code that did not verify. Null
-            only for sessions stored before access types existed.
-
-
-            * `booked` - Booked
-
-            * `ad_hoc` - Ad hoc (no booking)
-
-            * `unverified_booking` - Booking not verified'
-          oneOf:
-          - $ref: '#/components/schemas/AccessTypeEnum'
-          - $ref: '#/components/schemas/NullEnum'
+          readOnly: true
       required:
       - access_type
       - booking_code
-      - event_id
+      - event_key
       - id
-      - login_time
-      - logout_time
+      - login_at
+      - logout_at
     AgentSessionLogReport:
       type: object
       description: One completed remote session, pushed once after logout. The computer
         is the signing agent's.
       properties:
-        event_id:
+        event_key:
           type: string
           format: uuid
           description: Agent-generated id of this session; repeat it on retry.
-        login_time:
+        login_at:
           type: string
           format: date-time
-        logout_time:
+        logout_at:
           type: string
           format: date-time
         active_duration_seconds:
@@ -942,9 +916,9 @@ components:
           maxLength: 64
       required:
       - active_duration_seconds
-      - event_id
-      - login_time
-      - logout_time
+      - event_key
+      - login_at
+      - logout_at
       - remote_user
     AgentSessionLogResponse:
       type: object
@@ -1050,7 +1024,9 @@ components:
           type: string
           format: uuid
         resource_type:
-          $ref: '#/components/schemas/AuditCatalogItemResourceTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         sku:
           type: string
         name:
@@ -1070,7 +1046,7 @@ components:
           type: string
           description: 'Bench: setup station name. Station: room name. Room: building
             name. Otherwise empty.'
-        expiry_date:
+        expires_at:
           type: string
           format: date-time
           nullable: true
@@ -1078,14 +1054,14 @@ components:
         updated_at:
           type: string
           format: date-time
-        deleted:
+        is_deleted:
           type: boolean
           description: True when the resource was deleted; remove it from the local
             copy.
       required:
       - condition
-      - deleted
-      - expiry_date
+      - expires_at
+      - is_deleted
       - location
       - name
       - resource_type
@@ -1094,36 +1070,19 @@ components:
       - status
       - uid
       - updated_at
-    AuditCatalogItemResourceTypeEnum:
-      enum:
-      - equipment
-      - bench
-      - station
-      - room
-      - license
-      type: string
-      description: '* `equipment` - equipment
-
-        * `bench` - bench
-
-        * `station` - station
-
-        * `room` - room
-
-        * `license` - license'
     AuditCatalogMeta:
       type: object
       properties:
         pagination:
           $ref: '#/components/schemas/AuditCatalogPagination'
-        server_time:
+        sync_started_at:
           type: string
           format: date-time
           description: Time the sync started. Store it and send it as changed_since
             on the next sync.
       required:
       - pagination
-      - server_time
+      - sync_started_at
     AuditCatalogPagination:
       type: object
       properties:
@@ -1177,6 +1136,41 @@ components:
         * `OK` - OK
 
         * `NOK` - NOK'
+    AuditedResource:
+      type: object
+      description: REL-13 polymorphic relation to the audited resource.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/AuditedResourceTypeEnum'
+          readOnly: true
+      required:
+      - id
+      - name
+      - type
+    AuditedResourceTypeEnum:
+      enum:
+      - equipment
+      - bench
+      - station
+      - room
+      - license
+      type: string
+      description: '* `equipment` - equipment
+
+        * `bench` - bench
+
+        * `station` - station
+
+        * `room` - room
+
+        * `license` - license'
     Bench:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -1368,7 +1362,7 @@ components:
           readOnly: true
         creator:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         bench:
@@ -1726,33 +1720,6 @@ components:
           $ref: '#/components/schemas/BenchEquipmentListSerializersBenchSetupEquipmentPagination'
       required:
       - pagination
-    BenchEquipmentReference:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        uid:
-          type: string
-          format: uuid
-          readOnly: true
-        sku:
-          type: string
-          readOnly: true
-        name:
-          type: string
-          readOnly: true
-        kind:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
-          nullable: true
-      required:
-      - id
-      - kind
-      - name
-      - sku
-      - uid
     BenchFavorite:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -1821,13 +1788,14 @@ components:
       - is_active
       - name
       - updated_at
+      x-embedded-resource: true
     BenchGroupCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 255
-        active:
+        is_active:
           type: boolean
       required:
       - name
@@ -1839,11 +1807,14 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - id
+      - is_active
       - name
     BenchGroupCreateSerializersBenchGroupDetailResponse:
       type: object
@@ -2335,14 +2306,21 @@ components:
       - updated_at
     BenchSetupEquipment:
       type: object
+      description: An equipment assignment owned by the bench setup (REL-15); ``equipment``
+        is a REL-3 relation.
       properties:
         id:
           type: integer
           readOnly: true
         equipment:
           allOf:
-          - $ref: '#/components/schemas/BenchEquipmentReference'
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
           readOnly: true
+        equipment_kind:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
         role:
           type: string
           readOnly: true
@@ -2359,10 +2337,12 @@ components:
       required:
       - assigned_at
       - equipment
+      - equipment_kind
       - id
       - is_monitored
       - position
       - role
+      x-embedded-resource: true
     BenchStationReference:
       type: object
       properties:
@@ -2384,6 +2364,7 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     BenchStatusSummary:
       type: object
       description: The deprecated four-value status (lifecycle, with out_of_service
@@ -2447,13 +2428,14 @@ components:
       - is_active
       - name
       - updated_at
+      x-embedded-resource: true
     BenchTypeCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 255
-        active:
+        is_active:
           type: boolean
       required:
       - name
@@ -2465,11 +2447,14 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - id
+      - is_active
       - name
     BenchTypeCreateSerializersBenchTypeDetailResponse:
       type: object
@@ -2668,12 +2653,8 @@ components:
     BookedVsUsed:
       type: object
       properties:
-        period_start:
-          type: string
-          format: date-time
-        period_end:
-          type: string
-          format: date-time
+        period:
+          $ref: '#/components/schemas/ReportPeriod'
         total_booked_hours:
           type: number
           format: double
@@ -2694,8 +2675,7 @@ components:
       required:
       - benches
       - official_working_hours
-      - period_end
-      - period_start
+      - period
       - total_booked_hours
       - total_used_hours
       - used_to_booked_ratio
@@ -2710,16 +2690,15 @@ components:
     BookedVsUsedBench:
       type: object
       properties:
-        bench_id:
-          type: integer
-        bench_name:
-          type: string
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         booked_hours:
           type: number
           format: double
       required:
-      - bench_id
-      - bench_name
+      - bench
       - booked_hours
     BookingCountAnalyticsResponse:
       type: object
@@ -2742,13 +2721,13 @@ components:
         name:
           type: string
           maxLength: 100
-        address:
-          type: string
-          maxLength: 255
         city_id:
           type: integer
           minimum: 1
           nullable: true
+        address:
+          type: string
+          maxLength: 255
       required:
       - name
     BuildingCatalogDetailGeoSerializersBuildingDetailResponse:
@@ -2775,8 +2754,9 @@ components:
           maxLength: 255
         city:
           allOf:
-          - $ref: '#/components/schemas/CityCatalogItem'
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         city_id:
           type: integer
           writeOnly: true
@@ -2836,6 +2816,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 100
         city_id:
           type: integer
@@ -2843,8 +2824,10 @@ components:
           nullable: true
         address:
           type: string
+          readOnly: true
           maxLength: 255
       required:
+      - address
       - city_id
       - id
       - name
@@ -2938,6 +2921,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         is_active:
           type: boolean
           default: true
@@ -2966,16 +2950,6 @@ components:
             $ref: '#/components/schemas/CannedResponse'
       required:
       - data
-    CapabilitiesEnum:
-      type: string
-      enum:
-      - assignable
-      - licensable
-      - status_tracking
-      - auditable
-      - bookable
-      - calibratable
-      - monitored
     CatalogOption:
       type: object
       description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
@@ -3030,6 +3004,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         sort_order:
           type: integer
           maximum: 2147483647
@@ -3065,6 +3040,7 @@ components:
       - key
       - op
       - version
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     ChangesResponse:
       type: object
       properties:
@@ -3107,6 +3083,20 @@ components:
       - epoch
       - head_version
       - mode
+      x-protocol-spec: docs/agent-platform/routing-sync.md
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     CityCatalogCreate:
       type: object
       properties:
@@ -3140,8 +3130,9 @@ components:
           maxLength: 100
         country:
           allOf:
-          - $ref: '#/components/schemas/CountryCatalogItem'
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         country_id:
           type: integer
           writeOnly: true
@@ -3201,6 +3192,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 100
         country_id:
           type: integer
@@ -3270,26 +3262,6 @@ components:
           $ref: '#/components/schemas/CityReferenceListSerializersCityCatalogRecordPagination'
       required:
       - pagination
-    CodeEnum:
-      enum:
-      - already_ended
-      - not_later
-      - too_short
-      - needs_approval
-      - bench_not_in_service
-      - bench_not_free
-      type: string
-      description: '* `already_ended` - already_ended
-
-        * `not_later` - not_later
-
-        * `too_short` - too_short
-
-        * `needs_approval` - needs_approval
-
-        * `bench_not_in_service` - bench_not_in_service
-
-        * `bench_not_free` - bench_not_free'
     CommentCreateRequest:
       type: object
       properties:
@@ -3297,25 +3269,17 @@ components:
           type: string
         visibility:
           allOf:
-          - $ref: '#/components/schemas/CommentCreateRequestVisibilityEnum'
+          - $ref: '#/components/schemas/VisibilityEnum'
           default: public
       required:
       - body
-    CommentCreateRequestVisibilityEnum:
-      enum:
-      - public
-      - internal
-      type: string
-      description: '* `public` - public
-
-        * `internal` - internal'
     ComputingActivity:
       type: object
       description: Read projection of the live activity state.
       properties:
         status:
           allOf:
-          - $ref: '#/components/schemas/ComputingActivityStatusEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         remote_user:
           type: string
@@ -3346,7 +3310,7 @@ components:
         inactive_reminder_count:
           type: integer
           readOnly: true
-        modified:
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -3354,13 +3318,13 @@ components:
       - booking_code
       - inactive_at
       - inactive_reminder_count
-      - modified
       - offline_at
       - remote_computer
       - remote_ip
       - remote_user
       - remote_user_display_name
       - status
+      - updated_at
     ComputingActivityDetailApiComputingActivityDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -3519,9 +3483,11 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 100
         code:
           type: string
+          readOnly: true
           maxLength: 10
       required:
       - code
@@ -3791,15 +3757,12 @@ components:
       - data
     DashboardBenchGroup:
       type: object
-      description: Logical bench group descriptor.
+      description: Logical bench group relation (REL-3).
       properties:
         id:
           type: integer
         name:
           type: string
-        description:
-          type: string
-          default: ''
       required:
       - id
       - name
@@ -3885,6 +3848,7 @@ components:
       - starts_at
       - status
       - user
+      x-embedded-resource: true
     DashboardBookingDetail:
       type: object
       description: Dashboard detail schedule fields without booking-user identity.
@@ -3907,6 +3871,7 @@ components:
       - id
       - starts_at
       - status
+      x-embedded-resource: true
     DashboardComputing:
       type: object
       description: Attached computing equipment and real-time remote session state.
@@ -3945,6 +3910,7 @@ components:
       - remote_ip
       - remote_user
       - remote_user_display_name
+      x-embedded-resource: true
     DashboardComputingDetail:
       type: object
       description: Dashboard detail computing summary without remote-access data.
@@ -3971,6 +3937,7 @@ components:
       - id
       - is_stale
       - last_agent_report_at
+      x-embedded-resource: true
     DashboardEquipmentActivity:
       type: object
       properties:
@@ -4003,6 +3970,7 @@ components:
       - equipment
       - id
       - name
+      x-embedded-resource: true
     DashboardEquipmentCategoryReference:
       type: object
       properties:
@@ -4054,6 +4022,7 @@ components:
       - position
       - role
       - sku
+      x-embedded-resource: true
     DashboardEquipmentReference:
       type: object
       description: Compact standard reference shape for attached equipment and licenses.
@@ -4068,6 +4037,7 @@ components:
           default: ''
       required:
       - id
+      x-embedded-resource: true
     DashboardLabItem:
       type: object
       description: Item representation in dashboard laboratory listing.
@@ -4088,31 +4058,26 @@ components:
       type: object
       description: Physical location placement details.
       properties:
-        station_id:
-          type: integer
+        station:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        station_name:
-          type: string
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        room_id:
-          type: integer
-          nullable: true
-        room_name:
-          type: string
-          nullable: true
-        building_name:
-          type: string
+        building:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
         slot_label:
           type: string
           nullable: true
       required:
-      - building_name
-      - room_id
-      - room_name
+      - building
+      - room
       - slot_label
-      - station_id
-      - station_name
+      - station
     DashboardOperationalSummary:
       type: object
       description: Aggregate metrics and status distributions for dashboard summary.
@@ -4176,12 +4141,8 @@ components:
         generated_at:
           type: string
           format: date-time
-        period_start:
-          type: string
-          format: date-time
-        period_end:
-          type: string
-          format: date-time
+        period:
+          $ref: '#/components/schemas/ReportPeriod'
         bookings:
           $ref: '#/components/schemas/CountTrendMetric'
         facility_visits:
@@ -4193,8 +4154,7 @@ components:
       - bookings
       - facility_visits
       - generated_at
-      - period_end
-      - period_start
+      - period
     DashboardSummaryAnalyticsSerializersDashboardSummaryDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -4236,18 +4196,15 @@ components:
       - data
     DashboardUser:
       type: object
-      description: User summary descriptor for booking ownership and activity.
+      description: User relation for booking ownership (REL-3).
       properties:
         id:
           type: integer
-        username:
+        name:
           type: string
-        display_name:
-          type: string
-          default: ''
       required:
       - id
-      - username
+      - name
     DepartmentCatalogCreate:
       type: object
       properties:
@@ -4256,7 +4213,7 @@ components:
           maxLength: 255
         description:
           type: string
-        active:
+        is_active:
           type: boolean
       required:
       - name
@@ -4279,7 +4236,7 @@ components:
         name:
           type: string
           maxLength: 255
-        active:
+        is_active:
           type: boolean
         created_at:
           type: string
@@ -4346,13 +4303,18 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
         description:
           type: string
-        active:
+          readOnly: true
+        is_active:
           type: boolean
+          readOnly: true
       required:
+      - description
       - id
+      - is_active
       - name
     DepartmentReferenceCreateSerializersDepartmentCatalogRecordDetailResponse:
       type: object
@@ -4443,6 +4405,7 @@ components:
       - entity_type
       - epoch
       - version
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     DisplayResolutionCatalogCreate:
       type: object
       properties:
@@ -4470,21 +4433,26 @@ components:
           readOnly: true
         resolution:
           type: string
+          readOnly: true
           description: Label shown in the select, e.g. QHD.
           maxLength: 255
         width_px:
           type: integer
           maximum: 32767
           minimum: 0
+          readOnly: true
           nullable: true
         height_px:
           type: integer
           maximum: 32767
           minimum: 0
+          readOnly: true
           nullable: true
       required:
+      - height_px
       - id
       - resolution
+      - width_px
     DisplayResolutionReferenceCreateSerializersDisplayResolutionCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -4568,15 +4536,18 @@ components:
           readOnly: true
         size:
           type: string
+          readOnly: true
           description: Label shown in the select, e.g. 27".
           maxLength: 255
         diagonal_in:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          readOnly: true
           nullable: true
           description: Diagonal in inches.
       required:
+      - diagonal_in
       - id
       - size
     DisplaySizeReferenceCreateSerializersDisplaySizeCatalogRecordDetailResponse:
@@ -4665,7 +4636,7 @@ components:
           readOnly: true
         state:
           allOf:
-          - $ref: '#/components/schemas/DowntimeStateEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         starts_at:
           type: string
@@ -4687,12 +4658,12 @@ components:
           readOnly: true
         actor:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         ended_by:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         created_at:
@@ -4867,20 +4838,6 @@ components:
         * `bench` - bench
 
         * `equipment` - equipment'
-    DowntimeStateEnum:
-      enum:
-      - scheduled
-      - current
-      - ended
-      - cancelled
-      type: string
-      description: '* `scheduled` - scheduled
-
-        * `current` - current
-
-        * `ended` - ended
-
-        * `cancelled` - cancelled'
     DraftLineInput:
       type: object
       properties:
@@ -4892,9 +4849,7 @@ components:
           maximum: 1000000
           minimum: 1
         unit_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          $ref: '#/components/schemas/Money'
         notes:
           type: string
           maxLength: 2000
@@ -5037,12 +4992,8 @@ components:
     EquipmentAvailability:
       type: object
       properties:
-        period_start:
-          type: string
-          format: date-time
-        period_end:
-          type: string
-          format: date-time
+        period:
+          $ref: '#/components/schemas/ReportPeriod'
         equipment_count:
           type: integer
         average_uptime_percent:
@@ -5057,8 +5008,7 @@ components:
       - average_uptime_percent
       - equipment_count
       - items
-      - period_end
-      - period_start
+      - period
     EquipmentAvailabilityAnalyticsSerializersEquipmentAvailabilityDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -5070,10 +5020,10 @@ components:
     EquipmentAvailabilityItem:
       type: object
       properties:
-        equipment_id:
-          type: integer
-        equipment_name:
-          type: string
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         uptime_percent:
           type: number
           format: double
@@ -5086,8 +5036,7 @@ components:
           type: string
       required:
       - current_status
-      - equipment_id
-      - equipment_name
+      - equipment
       - outage_count
       - unavailable_hours
       - uptime_percent
@@ -5185,13 +5134,14 @@ components:
         capabilities:
           type: array
           items:
-            $ref: '#/components/schemas/CapabilitiesEnum'
+            $ref: '#/components/schemas/Choice'
           readOnly: true
       required:
       - capabilities
       - definition
       - id
       - name
+      x-embedded-resource: true
     EquipmentCategoryCatalogRecord:
       type: object
       properties:
@@ -5200,37 +5150,48 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         key:
+          type: string
+          readOnly: true
           nullable: true
           description: Stable code used by the code base (e.g. 'computing'). Filled
             from the name when empty. Renaming the category never changes it.
-          oneOf:
-          - type: string
-            maxLength: 32
-            pattern: ^[-a-zA-Z0-9_]+$
-          - type: string
-            maxLength: 0
+          maxLength: 32
+          pattern: ^[-a-zA-Z0-9_]+$
         definition:
           type: string
-        bookable:
+          readOnly: true
+        is_bookable:
           type: boolean
+          readOnly: true
           description: Units can be lent and reserved.
-        placeable_on_bench:
+        is_placeable_on_bench:
           type: boolean
+          readOnly: true
           description: Units can be assigned to a bench.
-        calibratable:
+        is_calibratable:
           type: boolean
+          readOnly: true
           description: Units may require calibration.
-        monitored:
+        is_monitored:
           type: boolean
+          readOnly: true
           description: Units carry computing columns and may run the monitoring agent
             (ComputingProfile).
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - definition
       - id
+      - is_active
+      - is_bookable
+      - is_calibratable
+      - is_monitored
+      - is_placeable_on_bench
+      - key
       - name
     EquipmentCategoryReferenceDetailSerializersEquipmentCategoryCatalogRecordDetailResponse:
       type: object
@@ -5480,13 +5441,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
-        warranty_until:
-          type: string
-          format: date
-          nullable: true
-        calibration_required:
-          type: boolean
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         lifecycle_state:
           allOf:
           - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
@@ -5548,6 +5502,13 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
+        warranty_end_date:
+          type: string
+          format: date
+          nullable: true
+        is_calibration_required:
+          type: boolean
+          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         material_id:
           type: integer
           nullable: true
@@ -5672,15 +5633,14 @@ components:
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           readOnly: true
           nullable: true
-        warranty_until:
+        warranty_end_date:
           type: string
           format: date
           readOnly: true
           nullable: true
-        calibration_required:
+        is_calibration_required:
           type: boolean
           readOnly: true
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         last_calibrated_at:
           type: string
           format: date-time
@@ -5691,7 +5651,7 @@ components:
           format: date-time
           readOnly: true
           nullable: true
-        calibration_overdue:
+        is_calibration_overdue:
           type: boolean
           readOnly: true
         metadata:
@@ -5795,8 +5755,6 @@ components:
       required:
       - acquisition_price
       - activity
-      - calibration_overdue
-      - calibration_required
       - category
       - channels
       - characteristics
@@ -5813,6 +5771,8 @@ components:
       - id
       - image_url
       - interfaces
+      - is_calibration_overdue
+      - is_calibration_required
       - kind
       - last_calibrated_at
       - lifecycle_state
@@ -5839,7 +5799,7 @@ components:
       - type
       - uid
       - updated_at
-      - warranty_until
+      - warranty_end_date
       - weight_kg
     EquipmentDetailAPIViewResponseCollectionEquipmentDetailDetailResponse:
       type: object
@@ -5878,6 +5838,7 @@ components:
       required:
       - id
       - resolution
+      x-embedded-resource: true
     EquipmentDisplayResolutionReference:
       type: object
       description: '``{id, name}`` for lookups whose label column is not ``name``.'
@@ -5904,6 +5865,7 @@ components:
       required:
       - id
       - size
+      x-embedded-resource: true
     EquipmentDisplaySizeReference:
       type: object
       description: '``{id, name}`` for lookups whose label column is not ``name``.'
@@ -6062,6 +6024,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -6078,6 +6041,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentInterfaceReferenceCreateSerializersEquipmentInterfaceCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -6259,15 +6223,14 @@ components:
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           readOnly: true
           nullable: true
-        warranty_until:
+        warranty_end_date:
           type: string
           format: date
           readOnly: true
           nullable: true
-        calibration_required:
+        is_calibration_required:
           type: boolean
           readOnly: true
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         last_calibrated_at:
           type: string
           format: date-time
@@ -6278,7 +6241,7 @@ components:
           format: date-time
           readOnly: true
           nullable: true
-        calibration_overdue:
+        is_calibration_overdue:
           type: boolean
           readOnly: true
         metadata:
@@ -6373,8 +6336,6 @@ components:
           nullable: true
       required:
       - acquisition_price
-      - calibration_overdue
-      - calibration_required
       - category
       - channels
       - characteristics
@@ -6390,6 +6351,8 @@ components:
       - id
       - image_url
       - interfaces
+      - is_calibration_overdue
+      - is_calibration_required
       - kind
       - last_calibrated_at
       - lifecycle_state
@@ -6416,36 +6379,38 @@ components:
       - type
       - uid
       - updated_at
-      - warranty_until
+      - warranty_end_date
       - weight_kg
     EquipmentKind:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: Bundle item; ``category_id`` points to a category of the same bundle
+        (REL-16).
       properties:
         id:
           type: integer
           readOnly: true
-        category:
+        category_id:
           type: integer
+          readOnly: true
         name:
           type: string
           maxLength: 120
       required:
-      - category
+      - category_id
       - id
       - name
+      x-embedded-resource: true
     EquipmentKindCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 120
-        active:
-          type: boolean
         category_id:
           type: integer
           minimum: 1
+        is_active:
+          type: boolean
       required:
       - category_id
       - name
@@ -6509,15 +6474,18 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         category_id:
           type: integer
           readOnly: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - category_id
       - id
+      - is_active
       - name
     EquipmentKindReferenceCreateSerializersEquipmentKindCatalogRecordDetailResponse:
       type: object
@@ -6638,8 +6606,8 @@ components:
         * `lost` - Lost'
     EquipmentLoan:
       type: object
-      description: 'One loan line: who holds an item and until when. ``overdue`` is
-        computed (open and past ``due_at``).'
+      description: 'One loan line (REL-15): who holds an item and until when. ``is_overdue``
+        is open and past ``due_at``.'
       properties:
         id:
           type: integer
@@ -6653,7 +6621,7 @@ components:
           readOnly: true
         borrower:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         borrower_name:
@@ -6677,7 +6645,7 @@ components:
           type: string
           format: date-time
           readOnly: true
-        overdue:
+        is_overdue:
           type: boolean
           readOnly: true
         condition_out:
@@ -6708,9 +6676,10 @@ components:
       - equipment
       - handed_over_at
       - id
-      - overdue
+      - is_overdue
       - purpose
       - returned_at
+      x-embedded-resource: true
     EquipmentLoanBatch:
       type: object
       description: 'The loan slip: one borrower and purpose, with every item handed
@@ -6721,7 +6690,7 @@ components:
           readOnly: true
         borrower:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         borrower_name:
@@ -6922,20 +6891,21 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentManufacturerCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 120
-        active:
-          type: boolean
-        categories:
+        category_ids:
           type: array
           items:
             type: integer
             minimum: 1
           maxItems: 100
+        is_active:
+          type: boolean
       required:
       - name
     EquipmentManufacturerCatalogDetailSerializersEquipmentManufacturerDetailResponse:
@@ -6998,17 +6968,20 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
-        categories:
+        category_ids:
           type: array
           items:
             type: integer
           readOnly: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
-      - categories
+      - category_ids
       - id
+      - is_active
       - name
     EquipmentManufacturerReferenceCreateSerializersEquipmentManufacturerCatalogRecordDetailResponse:
       type: object
@@ -7082,6 +7055,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentNetworkingProtocolOption:
       type: object
       properties:
@@ -7094,43 +7068,21 @@ components:
       required:
       - id
       - name
-    EquipmentOwner:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          readOnly: true
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-      required:
-      - id
-      - username
+      x-embedded-resource: true
     EquipmentPlacement:
       type: object
-      description: 'Where a unit is now: exactly one of bench, station, room, or only
-        ``location_note``.'
+      description: 'Where a unit is now (REL-15): exactly one of bench, station, room,
+        or only ``location_note``.'
       properties:
         id:
           type: integer
           readOnly: true
         target_type:
           allOf:
-          - $ref: '#/components/schemas/TargetTypeEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
-          description: 'Which target is set; ``note`` means an untracked place described
+          description: Which target is set; ``note`` means an untracked place described
             by location_note.
-
-
-            * `bench` - bench
-
-            * `station` - station
-
-            * `room` - room
-
-            * `note` - note'
         bench:
           allOf:
           - $ref: '#/components/schemas/LabsUIDNamedReference'
@@ -7169,6 +7121,7 @@ components:
       - room
       - station
       - target_type
+      x-embedded-resource: true
     EquipmentPlacementDetailSerializersEquipmentPlacementDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -7218,14 +7171,15 @@ components:
           default: 0
     EquipmentProductModel:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: Bundle item; ``manufacturer_id`` points to a manufacturer of the
+        same bundle (REL-16).
       properties:
         id:
           type: integer
           readOnly: true
-        manufacturer:
+        manufacturer_id:
           type: integer
+          readOnly: true
         name:
           type: string
           maxLength: 120
@@ -7248,15 +7202,22 @@ components:
           readOnly: true
       required:
       - id
-      - manufacturer
+      - manufacturer_id
       - name
       - specifications
+      x-embedded-resource: true
     EquipmentProductModelCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 120
+        manufacturer_id:
+          type: integer
+          minimum: 1
+        equipment_type_id:
+          type: integer
+          minimum: 1
         default_power_draw_w:
           type: integer
           maximum: 2147483647
@@ -7269,14 +7230,8 @@ components:
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
           description: Copied to new assets of this model when empty.
-        active:
+        is_active:
           type: boolean
-        manufacturer_id:
-          type: integer
-          minimum: 1
-        equipment_type_id:
-          type: integer
-          minimum: 1
       required:
       - equipment_type_id
       - manufacturer_id
@@ -7341,6 +7296,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         manufacturer_id:
           type: integer
@@ -7352,19 +7308,25 @@ components:
           type: integer
           maximum: 2147483647
           minimum: 0
+          readOnly: true
           nullable: true
           description: Copied to new assets of this model when empty.
         default_weight_kg:
           type: string
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          readOnly: true
           nullable: true
           description: Copied to new assets of this model when empty.
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
+      - default_power_draw_w
+      - default_weight_kg
       - equipment_type_id
       - id
+      - is_active
       - manufacturer_id
       - name
     EquipmentProductModelReferenceCreateSerializersEquipmentProductModelCatalogRecordDetailResponse:
@@ -7458,7 +7420,7 @@ components:
         owners:
           type: array
           items:
-            $ref: '#/components/schemas/EquipmentOwner'
+            $ref: '#/components/schemas/UserReference'
           readOnly: true
         categories:
           type: array
@@ -7531,7 +7493,8 @@ components:
       - data
     EquipmentReservation:
       type: object
-      description: 'One reservation line: an item kept for a borrower over a window.'
+      description: 'One reservation line (REL-15): an item kept for a borrower over
+        a window.'
       properties:
         id:
           type: integer
@@ -7574,6 +7537,7 @@ components:
       - id
       - starts_at
       - status
+      x-embedded-resource: true
     EquipmentReservationCancel:
       type: object
       description: Reject unsupported keys and return a stable error when SKU is supplied
@@ -7784,6 +7748,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentSampleCustomerOption:
       type: object
       properties:
@@ -7796,6 +7761,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentStatusChange:
       type: object
       description: 'One change of ``display_status``. ``previous_display_status``
@@ -7824,7 +7790,7 @@ components:
           readOnly: true
         actor:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         reason:
@@ -7927,34 +7893,36 @@ components:
       required:
       - id
       - username
+      x-embedded-resource: true
     EquipmentType:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: Bundle item; ``kind_id`` points to a kind of the same bundle (REL-16).
       properties:
         id:
           type: integer
           readOnly: true
-        kind:
+        kind_id:
           type: integer
+          readOnly: true
         name:
           type: string
           maxLength: 120
       required:
       - id
-      - kind
+      - kind_id
       - name
+      x-embedded-resource: true
     EquipmentTypeCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 120
-        active:
-          type: boolean
         kind_id:
           type: integer
           minimum: 1
+        is_active:
+          type: boolean
       required:
       - kind_id
       - name
@@ -8018,14 +7986,17 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         kind_id:
           type: integer
           readOnly: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - id
+      - is_active
       - kind_id
       - name
     EquipmentTypeReferenceCreateSerializersEquipmentTypeCatalogRecordDetailResponse:
@@ -8130,13 +8101,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
-        warranty_until:
-          type: string
-          format: date
-          nullable: true
-        calibration_required:
-          type: boolean
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
           oneOf:
           - type: string
@@ -8182,6 +8146,13 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
+        warranty_end_date:
+          type: string
+          format: date
+          nullable: true
+        is_calibration_required:
+          type: boolean
+          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         material_id:
           type: integer
           nullable: true
@@ -8242,84 +8213,9 @@ components:
           $ref: '#/components/schemas/ErrorBody'
       required:
       - error
-    EventTypeEnum:
-      enum:
-      - created
-      - updated
-      - assigned
-      - unassigned
-      - status_changed
-      - priority_changed
-      - category_changed
-      - comment_added
-      - comment_edited
-      - comment_deleted
-      - attachment_added
-      - attachment_removed
-      - resource_linked
-      - resource_unlinked
-      - resolved
-      - reopened
-      - watcher_added
-      - watcher_removed
-      - ticket_linked
-      - ticket_unlinked
-      - sla_breached
-      - sla_paused
-      - sla_resumed
-      - csat_submitted
-      type: string
-      description: '* `created` - Created
-
-        * `updated` - Updated
-
-        * `assigned` - Assigned
-
-        * `unassigned` - Unassigned
-
-        * `status_changed` - Status Changed
-
-        * `priority_changed` - Priority Changed
-
-        * `category_changed` - Category Changed
-
-        * `comment_added` - Comment Added
-
-        * `comment_edited` - Comment Edited
-
-        * `comment_deleted` - Comment Deleted
-
-        * `attachment_added` - Attachment Added
-
-        * `attachment_removed` - Attachment Removed
-
-        * `resource_linked` - Resource Linked
-
-        * `resource_unlinked` - Resource Unlinked
-
-        * `resolved` - Resolved
-
-        * `reopened` - Reopened
-
-        * `watcher_added` - Watcher Added
-
-        * `watcher_removed` - Watcher Removed
-
-        * `ticket_linked` - Ticket Linked
-
-        * `ticket_unlinked` - Ticket Unlinked
-
-        * `sla_breached` - Sla Breached
-
-        * `sla_paused` - Sla Paused
-
-        * `sla_resumed` - Sla Resumed
-
-        * `csat_submitted` - Csat Submitted'
     Expense:
       type: object
-      description: Read and write shape for expenses. The room is taken from the URL,
-        never the body.
+      description: Read shape for expenses.
       properties:
         id:
           type: integer
@@ -8333,38 +8229,37 @@ components:
           readOnly: true
         name:
           type: string
-          maxLength: 255
+          readOnly: true
         expense_type:
-          $ref: '#/components/schemas/ExpenseTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         supplier:
           type: string
-          maxLength: 255
+          readOnly: true
         reference:
           type: string
-          maxLength: 255
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        currency:
-          type: string
-          maxLength: 3
-        amount_display:
-          type: object
-          additionalProperties:
-            type: string
+          readOnly: true
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
           readOnly: true
         billing_period:
-          $ref: '#/components/schemas/BillingPeriodEnum'
-        valid_from:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        start_date:
           type: string
           format: date
-        valid_until:
+          readOnly: true
+        end_date:
           type: string
           format: date
+          readOnly: true
           nullable: true
         notes:
           type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -8374,37 +8269,44 @@ components:
           format: date-time
           readOnly: true
       required:
-      - amount
-      - amount_display
+      - billing_period
+      - cost
       - created_at
+      - end_date
       - expense_type
       - id
       - name
+      - notes
+      - reference
       - room
+      - start_date
+      - supplier
       - updated_at
-      - valid_from
     ExpensePayment:
       type: object
-      description: Read and write shape for payments. The expense is taken from the
-        URL, never the body.
+      description: Read shape for payments; ``paid_date`` is a calendar date (NAM-3).
       properties:
         id:
           type: integer
           readOnly: true
         transaction_type:
-          $ref: '#/components/schemas/TransactionTypeEnum'
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_at:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid_date:
           type: string
           format: date
+          readOnly: true
         reference:
           type: string
-          maxLength: 255
+          readOnly: true
         notes:
           type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -8414,10 +8316,13 @@ components:
           format: date-time
           readOnly: true
       required:
-      - amount
       - created_at
       - id
-      - paid_at
+      - notes
+      - paid_date
+      - reference
+      - total
+      - transaction_type
       - updated_at
     ExpensePaymentListSerializersExpensePaymentPaginatedResponse:
       type: object
@@ -8471,6 +8376,28 @@ components:
           $ref: '#/components/schemas/ExpensePayment'
       required:
       - data
+    ExpensePaymentWrite:
+      type: object
+      description: Write shape for payments (RW-1). The expense is taken from the
+        URL, never the body.
+      properties:
+        transaction_type:
+          $ref: '#/components/schemas/TransactionTypeEnum'
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: In the expense's currency.
+        paid_date:
+          type: string
+          format: date
+        reference:
+          type: string
+          maxLength: 255
+        notes:
+          type: string
+      required:
+      - paid_date
+      - total
     ExpenseTypeEnum:
       enum:
       - rent
@@ -8503,6 +8430,42 @@ components:
         * `service` - Service (legacy)
 
         * `other` - Other'
+    ExpenseWrite:
+      type: object
+      description: Write shape for expenses (RW-1). The room is taken from the URL,
+        never the body.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        expense_type:
+          $ref: '#/components/schemas/ExpenseTypeEnum'
+        supplier:
+          type: string
+          maxLength: 255
+        reference:
+          type: string
+          maxLength: 255
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: What the expense costs (FMT-2, FMT-7).
+        billing_period:
+          $ref: '#/components/schemas/BillingPeriodEnum'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+      required:
+      - cost
+      - expense_type
+      - name
+      - start_date
     FacetValue:
       type: object
       properties:
@@ -8560,16 +8523,8 @@ components:
           type: string
         timezone:
           type: string
-        period_start:
-          type: string
-          format: date-time
-          description: Inclusive instant at local first-month midnight, represented
-            in UTC.
-        period_end:
-          type: string
-          format: date-time
-          description: Exclusive instant at local midnight following end_month, represented
-            in UTC.
+        period:
+          $ref: '#/components/schemas/FinancePeriod'
         combined:
           $ref: '#/components/schemas/FinanceTotals'
         sources:
@@ -8583,8 +8538,7 @@ components:
       - currency
       - end_month
       - items
-      - period_end
-      - period_start
+      - period
       - sources
       - start_month
       - timezone
@@ -8616,7 +8570,9 @@ components:
           description: Expense-owned type, or procurement for purchases with no expense
             type.
         source:
-          $ref: '#/components/schemas/FinanceBreakdownItemSourceEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
       required:
       - expense_type
       - net
@@ -8624,14 +8580,6 @@ components:
       - refunds
       - source
       - transaction_count
-    FinanceBreakdownItemSourceEnum:
-      enum:
-      - expense
-      - procurement
-      type: string
-      description: '* `expense` - expense
-
-        * `procurement` - procurement'
     FinanceMoney:
       type: object
       properties:
@@ -8668,16 +8616,8 @@ components:
           type: string
         timezone:
           type: string
-        period_start:
-          type: string
-          format: date-time
-          description: Inclusive instant at local first-month midnight, represented
-            in UTC.
-        period_end:
-          type: string
-          format: date-time
-          description: Exclusive instant at local midnight following end_month, represented
-            in UTC.
+        period:
+          $ref: '#/components/schemas/FinancePeriod'
         combined:
           $ref: '#/components/schemas/FinanceTotals'
         sources:
@@ -8692,8 +8632,7 @@ components:
       - currency
       - end_month
       - months
-      - period_end
-      - period_start
+      - period
       - sources
       - start_month
       - timezone
@@ -8705,6 +8644,23 @@ components:
           $ref: '#/components/schemas/FinanceMonthlyTrends'
       required:
       - data
+    FinancePeriod:
+      type: object
+      description: NAM-9 ``period`` group read from ``period_start`` / ``period_end``.
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+          description: Inclusive instant at local first-month midnight, represented
+            in UTC.
+        ends_at:
+          type: string
+          format: date-time
+          description: Exclusive instant at local midnight following end_month, represented
+            in UTC.
+      required:
+      - ends_at
+      - starts_at
     FinanceProblemResponse:
       type: object
       properties:
@@ -8733,16 +8689,8 @@ components:
           type: string
         timezone:
           type: string
-        period_start:
-          type: string
-          format: date-time
-          description: Inclusive instant at local first-month midnight, represented
-            in UTC.
-        period_end:
-          type: string
-          format: date-time
-          description: Exclusive instant at local midnight following end_month, represented
-            in UTC.
+        period:
+          $ref: '#/components/schemas/FinancePeriod'
         combined:
           $ref: '#/components/schemas/FinanceTotals'
         sources:
@@ -8751,8 +8699,7 @@ components:
       - combined
       - currency
       - end_month
-      - period_end
-      - period_start
+      - period
       - sources
       - start_month
       - timezone
@@ -8786,82 +8733,88 @@ components:
       - transaction_count
     FinancialReportItem:
       type: object
+      description: One expense row of the report (REL-15).
       properties:
         id:
           type: integer
         name:
           type: string
         expense_type:
-          type: string
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        pending_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        pending:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
         payment_status:
-          type: string
-        currency:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         billing_period:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         supplier:
           type: string
         reference:
           type: string
-        valid_from:
+        start_date:
           type: string
           format: date
-        valid_until:
+        end_date:
           type: string
           format: date
           nullable: true
-        room_id:
-          type: integer
-        room_name:
-          type: string
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
       required:
-      - amount
       - billing_period
-      - currency
+      - cost
+      - end_date
       - expense_type
       - id
       - name
-      - paid_amount
+      - paid
       - payment_status
-      - pending_amount
+      - pending
       - reference
-      - room_id
-      - room_name
+      - room
+      - start_date
       - supplier
-      - valid_from
-      - valid_until
+      x-embedded-resource: true
     FinancialReportPeriodBreakdown:
       type: object
       properties:
         billing_period:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         count:
           type: integer
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
       required:
-      - amount
       - billing_period
+      - cost
       - count
-      - paid_amount
+      - paid
     FinancialReportResponse:
       type: object
       properties:
@@ -8900,31 +8853,30 @@ components:
     FinancialReportRoomBreakdown:
       type: object
       properties:
-        room_id:
-          type: integer
-        room_name:
-          type: string
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         count:
           type: integer
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        pending_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        pending:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
       required:
-      - amount
+      - cost
       - count
-      - paid_amount
-      - pending_amount
-      - room_id
-      - room_name
+      - paid
+      - pending
+      - room
     FinancialReportSerializersFinancialReportResponseDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -8937,72 +8889,76 @@ components:
       type: object
       properties:
         status:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         count:
           type: integer
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
       required:
-      - amount
+      - cost
       - count
       - status
     FinancialReportSummary:
       type: object
       properties:
-        total_budgeted:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        total_paid:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        total_pending:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        total_refunded:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        budgeted:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        pending:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        refunded:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
         expense_count:
           type: integer
         payment_count:
           type: integer
       required:
+      - budgeted
       - expense_count
+      - paid
       - payment_count
-      - total_budgeted
-      - total_paid
-      - total_pending
-      - total_refunded
+      - pending
+      - refunded
     FinancialReportTypeBreakdown:
       type: object
       properties:
         expense_type:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         count:
           type: integer
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        pending_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        pending:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
       required:
-      - amount
+      - cost
       - count
       - expense_type
-      - paid_amount
-      - pending_amount
+      - paid
+      - pending
     GroupCatalogCreate:
       type: object
       properties:
@@ -9011,12 +8967,12 @@ components:
           maxLength: 255
         description:
           type: string
-        active:
-          type: boolean
         department_id:
           type: integer
           minimum: 1
           nullable: true
+        is_active:
+          type: boolean
       required:
       - name
     GroupCatalogDetailSerializersGroupCatalogDetailResponse:
@@ -9040,12 +8996,13 @@ components:
           maxLength: 255
         department:
           allOf:
-          - $ref: '#/components/schemas/DepartmentCatalogItem'
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         department_id:
           type: integer
           writeOnly: true
-        active:
+        is_active:
           type: boolean
         created_at:
           type: string
@@ -9113,18 +9070,23 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
         description:
           type: string
+          readOnly: true
         department_id:
           type: integer
           readOnly: true
           nullable: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - department_id
+      - description
       - id
+      - is_active
       - name
     GroupPermission:
       type: object
@@ -9198,11 +9160,6 @@ components:
           $ref: '#/components/schemas/GroupReferenceListSerializersGroupCatalogRecordPagination'
       required:
       - pagination
-    KeyAlgorithmEnum:
-      enum:
-      - Ed25519
-      type: string
-      description: '* `Ed25519` - Ed25519'
     KeyStorageEnum:
       enum:
       - tpm
@@ -9320,26 +9277,26 @@ components:
           readOnly: true
           nullable: true
           description: Short unique project code, e.g. a cost-center number.
-        active:
+        is_active:
           type: boolean
           readOnly: true
-        starts_on:
+        start_date:
           type: string
           format: date
           readOnly: true
           nullable: true
-        ends_on:
+        end_date:
           type: string
           format: date
           readOnly: true
           nullable: true
       required:
-      - active
       - code
-      - ends_on
+      - end_date
       - id
+      - is_active
       - name
-      - starts_on
+      - start_date
     LabProjectCatalogCreate:
       type: object
       properties:
@@ -9351,16 +9308,18 @@ components:
           nullable: true
           description: Short unique project code, e.g. a cost-center number.
           maxLength: 50
-        starts_on:
+        start_date:
           type: string
           format: date
           nullable: true
-        ends_on:
+        end_date:
           type: string
           format: date
           nullable: true
-        active:
+        is_active:
           type: boolean
+      required:
+      - project_name
     LabProjectCatalogRecord:
       type: object
       properties:
@@ -9369,24 +9328,34 @@ components:
           readOnly: true
         project_name:
           type: string
+          readOnly: true
           maxLength: 255
         code:
           type: string
+          readOnly: true
           nullable: true
           description: Short unique project code, e.g. a cost-center number.
           maxLength: 50
-        starts_on:
+        start_date:
           type: string
           format: date
+          readOnly: true
           nullable: true
-        ends_on:
+        end_date:
           type: string
           format: date
+          readOnly: true
           nullable: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
+      - code
+      - end_date
       - id
+      - is_active
+      - project_name
+      - start_date
     LabProjectDetailSerializersLabProjectDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -9595,9 +9564,9 @@ components:
       description: 'Computed ``availability``: problems pass down from room to station
         to bench (never stored).'
       properties:
-        value:
+        status:
           allOf:
-          - $ref: '#/components/schemas/ValueEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         blocked_by:
           allOf:
@@ -9606,35 +9575,50 @@ components:
           nullable: true
           description: The resource that blocks.
         condition:
-          type: string
-          readOnly: true
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           nullable: true
+          readOnly: true
         reason:
-          type: string
-          readOnly: true
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           nullable: true
+          readOnly: true
           description: Lifecycle status, or the downtime reason, of blocked_by.
       required:
       - blocked_by
       - condition
       - reason
-      - value
+      - status
     LabsAvailabilitySource:
       type: object
+      description: REL-13 polymorphic relation to the resource that blocks.
       properties:
-        type:
-          type: string
-          readOnly: true
         id:
           type: integer
           readOnly: true
         name:
           type: string
           readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/LabsAvailabilitySourceTypeEnum'
+          readOnly: true
       required:
       - id
       - name
       - type
+    LabsAvailabilitySourceTypeEnum:
+      enum:
+      - bench
+      - station
+      - room
+      type: string
+      description: '* `bench` - bench
+
+        * `station` - station
+
+        * `room` - room'
     LabsChoiceReference:
       type: object
       description: Standard `{value, label}` representation for enum and lifecycle
@@ -9671,16 +9655,22 @@ components:
       - z
     LabsDowntimeResource:
       type: object
+      description: REL-13 polymorphic relation to the room, station, bench or equipment
+        the window covers.
       properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
         type:
           allOf:
           - $ref: '#/components/schemas/DowntimeResourceTypeEnum'
           readOnly: true
-        id:
-          type: integer
-          readOnly: true
       required:
       - id
+      - name
       - type
     LabsGroupReference:
       type: object
@@ -9694,6 +9684,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     LabsMoney:
       type: object
       description: Standard `{amount, currency}` representation for monetary values.
@@ -9720,29 +9711,9 @@ components:
       required:
       - id
       - name
-    LabsResourceOwner:
-      type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-          pattern: ^[\w.@+-]+$
-          maxLength: 150
-        display_name:
-          type: string
-          maxLength: 255
-      required:
-      - id
-      - username
     LabsStationRoomReference:
       type: object
-      description: Compact `{id, name}` object representation of a related entity.
+      description: A room item of the station reference-data bundle (REL-15).
       properties:
         id:
           type: integer
@@ -9757,6 +9728,7 @@ components:
       - id
       - name
       - sku
+      x-embedded-resource: true
     LabsUIDNamedReference:
       type: object
       description: Compact `{id, uid, name}` object representation when target defines
@@ -9801,7 +9773,7 @@ components:
         active_users:
           type: integer
           default: 0
-        last_remote:
+        last_remote_at:
           type: string
           format: date-time
           nullable: true
@@ -9864,7 +9836,7 @@ components:
           type: number
           format: double
           default: 0.0
-        last_remote:
+        last_remote_at:
           type: string
           format: date-time
           nullable: true
@@ -10001,7 +9973,7 @@ components:
         max_version:
           type: string
           readOnly: true
-        expiry_date:
+        expires_at:
           type: string
           format: date-time
           readOnly: true
@@ -10029,7 +10001,7 @@ components:
       - category
       - created_at
       - department
-      - expiry_date
+      - expires_at
       - id
       - image_url
       - max_version
@@ -10064,13 +10036,13 @@ components:
           readOnly: true
         billing_period:
           allOf:
-          - $ref: '#/components/schemas/BillingPeriodEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
-        valid_from:
+        start_date:
           type: string
           format: date
           readOnly: true
-        valid_until:
+        end_date:
           type: string
           format: date
           readOnly: true
@@ -10082,11 +10054,11 @@ components:
       required:
       - billing_period
       - created_at
+      - end_date
       - id
       - license
       - price
-      - valid_from
-      - valid_until
+      - start_date
     LicenseAgreementListSerializersLicenseAgreementPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -10145,25 +10117,19 @@ components:
         on update.
       properties:
         price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-          description: Amount charged per billing period.
-        currency:
-          type: string
-          maxLength: 3
+          $ref: '#/components/schemas/Money'
         billing_period:
           $ref: '#/components/schemas/BillingPeriodEnum'
-        valid_from:
+        start_date:
           type: string
           format: date
-        valid_until:
+        end_date:
           type: string
           format: date
           nullable: true
       required:
       - price
-      - valid_from
+      - start_date
     LicenseAssignActionSerializersLicenseAssignmentResultDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -10303,6 +10269,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -10564,8 +10531,9 @@ components:
           maxLength: 255
         vendor:
           allOf:
-          - $ref: '#/components/schemas/LicenseVendorCatalogItem'
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         vendor_id:
           type: integer
           writeOnly: true
@@ -10635,6 +10603,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
         vendor_id:
           type: integer
@@ -10796,6 +10765,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -10907,7 +10877,7 @@ components:
           readOnly: true
         actor:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         created_at:
@@ -11043,6 +11013,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -11199,6 +11170,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -11299,6 +11271,25 @@ components:
         * `blocks` - Blocks
 
         * `caused_by` - Caused By'
+    LinkedResource:
+      type: object
+      description: REL-13 polymorphic relation to the linked resource; ``id`` is the
+        resource's own identifier.
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ResourceTypeEnum'
+          readOnly: true
+      required:
+      - id
+      - name
+      - type
     LinkedResourceItem:
       type: object
       properties:
@@ -11416,6 +11407,7 @@ components:
       - sku
       - station_slot_id
       - uid
+      x-embedded-resource: true
     MappingEquipment:
       type: object
       properties:
@@ -11447,6 +11439,7 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingEquipmentAssignment:
       type: object
       properties:
@@ -11456,7 +11449,7 @@ components:
           type: string
         position:
           type: integer
-        monitor:
+        is_monitored:
           type: boolean
         assigned_at:
           type: string
@@ -11464,9 +11457,10 @@ components:
       required:
       - assigned_at
       - id
-      - monitor
+      - is_monitored
       - position
       - role
+      x-embedded-resource: true
     MappingEquipmentCategory:
       type: object
       properties:
@@ -11499,6 +11493,7 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingLicenseAssignment:
       type: object
       properties:
@@ -11516,6 +11511,7 @@ components:
       - equipment_id
       - id
       - license_id
+      x-embedded-resource: true
     MappingLicenseCategory:
       type: object
       properties:
@@ -11572,6 +11568,7 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingRoomSlot:
       type: object
       properties:
@@ -11610,6 +11607,7 @@ components:
       - width_mm
       - x_mm
       - y_mm
+      x-embedded-resource: true
     MappingStation:
       type: object
       properties:
@@ -11635,6 +11633,7 @@ components:
       - sku
       - slot_id
       - uid
+      x-embedded-resource: true
     MappingStationSlot:
       type: object
       properties:
@@ -11654,6 +11653,7 @@ components:
       - position_index
       - slot_code
       - station_id
+      x-embedded-resource: true
     MaterialCatalogCreate:
       type: object
       properties:
@@ -11670,6 +11670,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -11759,46 +11760,47 @@ components:
       description: '* `delta` - delta
 
         * `reset` - reset'
-    MonitoringBenchMinimal:
+    Money:
       type: object
+      description: 'FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO
+        4217 uppercase.'
       properties:
-        id:
-          type: integer
-          readOnly: true
-        sku:
+        amount:
           type: string
-          readOnly: true
-        bench_name:
+          description: Decimal string; never a float.
+          pattern: ^-?[0-9]+(\.[0-9]+)?$
+        currency:
           type: string
-          readOnly: true
+          description: ISO 4217 code, uppercase.
+          pattern: ^[A-Z]{3}$
       required:
-      - bench_name
-      - id
-      - sku
+      - amount
+      - currency
     MonitoringEvent:
       type: object
+      description: One event; agent identifiers end in ``_key`` (NAM-8), relations
+        are ``{id, name}`` (REL-3).
       properties:
         id:
           type: integer
           readOnly: true
-        computer_id:
-          type: integer
-          readOnly: true
-        computer_name:
-          type: string
+        computer:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
           readOnly: true
         bench:
           allOf:
-          - $ref: '#/components/schemas/MonitoringBenchMinimal'
-          readOnly: true
+          - $ref: '#/components/schemas/LabsNamedReference'
           nullable: true
-        agent_id:
+          readOnly: true
+        agent_key:
           type: string
           readOnly: true
         agent_version:
           type: string
           readOnly: true
-        event_id:
+        event_key:
           type: string
           format: uuid
           readOnly: true
@@ -11811,41 +11813,17 @@ components:
           format: date-time
           readOnly: true
         action:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         action_name:
           type: string
           readOnly: true
-        subject_type:
-          type: string
-          readOnly: true
-        subject_id:
-          type: string
-          readOnly: true
-        subject_name:
-          type: string
+        subject:
+          allOf:
+          - $ref: '#/components/schemas/MonitoringSubject'
           readOnly: true
         payload:
-          readOnly: true
-        source:
-          type: string
-          readOnly: true
-        event_type:
-          type: string
-          readOnly: true
-        category:
-          type: string
-          readOnly: true
-        object_name:
-          type: string
-          readOnly: true
-        object_id:
-          type: string
-          readOnly: true
-        details:
-          readOnly: true
-        details_str:
-          type: string
           readOnly: true
         technical_user:
           type: string
@@ -11855,45 +11833,25 @@ components:
           type: string
           readOnly: true
           default: ''
-        remote_user_displayname:
+        remote_user_display_name:
           type: string
           readOnly: true
           default: ''
-        created:
-          type: string
-          format: date-time
-          readOnly: true
-        modified:
-          type: string
-          format: date-time
-          readOnly: true
       required:
       - action
       - action_name
-      - agent_id
+      - agent_key
       - agent_version
       - bench
-      - category
-      - computer_id
-      - computer_name
-      - created
-      - details
-      - details_str
-      - event_id
-      - event_type
+      - computer
+      - event_key
       - id
-      - modified
-      - object_id
-      - object_name
       - occurred_at
       - payload
       - remote_user
-      - remote_user_displayname
+      - remote_user_display_name
       - reported_at
-      - source
-      - subject_id
-      - subject_name
-      - subject_type
+      - subject
       - technical_user
     MonitoringEventCreate:
       type: object
@@ -12015,6 +11973,24 @@ components:
           $ref: '#/components/schemas/MonitoringEvent'
       required:
       - data
+    MonitoringSubject:
+      type: object
+      description: 'What the agent reported on (STR-1): agent-side identifiers, not
+        API resources (NAM-8).'
+      properties:
+        type:
+          type: string
+          readOnly: true
+        key:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - key
+      - name
+      - type
     NetworkingProtocolCatalogCreate:
       type: object
       properties:
@@ -12031,6 +12007,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 25
       required:
       - id
@@ -12097,40 +12074,48 @@ components:
       - pagination
     Notification:
       type: object
+      description: Read shape (RW-1, ENU-1, NAM-3, REL-3).
       properties:
         id:
           type: integer
           readOnly: true
         message:
           type: string
-          maxLength: 255
+          readOnly: true
         details:
           type: string
+          readOnly: true
           nullable: true
-          maxLength: 255
         message_type:
-          $ref: '#/components/schemas/MessageTypeEnum'
-        expiry_date:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        expires_at:
           type: string
           format: date-time
+          readOnly: true
         target_user:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
-        created:
+        created_at:
           type: string
           format: date-time
           readOnly: true
-        modified:
+        updated_at:
           type: string
           format: date-time
           readOnly: true
       required:
-      - created
-      - expiry_date
+      - created_at
+      - details
+      - expires_at
       - id
-      - modified
+      - message
+      - message_type
       - target_user
+      - updated_at
     NotificationSerializerNotificationDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -12183,6 +12168,24 @@ components:
           $ref: '#/components/schemas/NotificationSerializerNotificationPagination'
       required:
       - pagination
+    NotificationWrite:
+      type: object
+      description: Write shape (RW-1); the target user is not writable here.
+      properties:
+        message:
+          type: string
+          maxLength: 255
+        details:
+          type: string
+          nullable: true
+          maxLength: 255
+        message_type:
+          $ref: '#/components/schemas/MessageTypeEnum'
+        expires_at:
+          type: string
+          format: date-time
+      required:
+      - expires_at
     NullEnum:
       enum:
       - null
@@ -12319,15 +12322,15 @@ components:
           type: integer
         comment_edit_window_minutes:
           type: integer
-        requesters_can_set_priority:
+        can_requesters_set_priority:
           type: boolean
-        sla_enabled:
+        is_sla_enabled:
           type: boolean
         sla_at_risk_percent:
           type: integer
           maximum: 100
           minimum: 1
-        csat_enabled:
+        is_csat_enabled:
           type: boolean
         csat_window_days:
           type: integer
@@ -12348,7 +12351,7 @@ components:
             maxLength: 0
         is_final:
           type: boolean
-        pauses_sla:
+        is_sla_paused:
           type: boolean
         system_state:
           $ref: '#/components/schemas/SystemStateEnum'
@@ -12387,9 +12390,9 @@ components:
           type: array
           items:
             type: string
-        requires_reason:
+        is_reason_required:
           type: boolean
-        requires_resolution:
+        is_resolution_required:
           type: boolean
     PatchedAgentActivityReport:
       type: object
@@ -12558,9 +12561,7 @@ components:
           maximum: 1000000
           minimum: 1
         unit_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          $ref: '#/components/schemas/Money'
         notes:
           type: string
           maxLength: 2000
@@ -12642,13 +12643,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
-        warranty_until:
-          type: string
-          format: date
-          nullable: true
-        calibration_required:
-          type: boolean
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
           oneOf:
           - type: string
@@ -12694,6 +12688,13 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
+        warranty_end_date:
+          type: string
+          format: date
+          nullable: true
+        is_calibration_required:
+          type: boolean
+          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         material_id:
           type: integer
           nullable: true
@@ -12729,14 +12730,8 @@ components:
         purchase_order_number:
           type: string
           maxLength: 100
-        currency:
-          type: string
-          maxLength: 3
-          minLength: 3
-        total_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        total:
+          $ref: '#/components/schemas/Money'
         notes:
           type: string
           maxLength: 2000
@@ -13220,34 +13215,32 @@ components:
       - error
     ProductModelSpecification:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: A specification value owned by the product model (REL-15).
       properties:
         id:
           type: integer
           readOnly: true
-        definition_id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
+        definition:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
         unit:
           type: string
           readOnly: true
         value_type:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         value:
           type: string
           maxLength: 255
       required:
-      - definition_id
+      - definition
       - id
-      - name
       - unit
       - value
       - value_type
+      x-embedded-resource: true
     ProductModelSpecificationCatalogCreate:
       type: object
       properties:
@@ -13278,6 +13271,7 @@ components:
           readOnly: true
         value:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - definition_id
@@ -13382,34 +13376,13 @@ components:
         purchase_date:
           type: string
           format: date
-        currency:
-          type: string
-          description: ISO 4217 currency code.
-          maxLength: 3
         status:
           type: object
           additionalProperties:
             type: string
           readOnly: true
-        total_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-          description: Agreed total purchase amount.
         total:
-          type: object
-          properties:
-            amount:
-              type: string
-              pattern: ^-?[0-9]+(\.[0-9]+)?$
-            currency:
-              type: string
-              description: Purchase currency code.
-          required:
-          - amount
-          - currency
-          additionalProperties: false
-          readOnly: true
+          $ref: '#/components/schemas/Money'
         item_count:
           type: integer
           readOnly: true
@@ -13436,7 +13409,6 @@ components:
       - status
       - supplier
       - total
-      - total_amount
       - updated_at
     PurchaseDetail:
       type: object
@@ -13454,27 +13426,13 @@ components:
           type: string
           format: date
           readOnly: true
-        currency:
-          type: string
-          readOnly: true
-          description: ISO 4217 currency code.
-        total_amount:
-          type: object
-          properties:
-            amount:
-              type: string
-              pattern: ^-?[0-9]+(\.[0-9]+)?$
-            currency:
-              type: string
-              description: Purchase currency code.
-          required:
-          - amount
-          - currency
-          additionalProperties: false
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/PurchaseStatusEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         notes:
           type: string
@@ -13502,28 +13460,27 @@ components:
         unpriced_line_count:
           type: integer
           readOnly: true
-        created:
+        created_at:
           type: string
           format: date-time
           readOnly: true
-        modified:
+        updated_at:
           type: string
           format: date-time
           readOnly: true
       required:
-      - created
-      - currency
+      - created_at
       - id
       - item_count
       - lines_total
-      - modified
       - notes
       - purchase_date
       - purchase_order_number
       - status
       - supplier
-      - total_amount
+      - total
       - unpriced_line_count
+      - updated_at
       - version
     PurchaseDetailSerializersPurchaseDetailDetailResponse:
       type: object
@@ -13549,27 +13506,13 @@ components:
           type: string
           format: date
           readOnly: true
-        currency:
-          type: string
-          readOnly: true
-          description: ISO 4217 currency code.
-        total_amount:
-          type: object
-          properties:
-            amount:
-              type: string
-              pattern: ^-?[0-9]+(\.[0-9]+)?$
-            currency:
-              type: string
-              description: Purchase currency code.
-          required:
-          - amount
-          - currency
-          additionalProperties: false
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/PurchaseStatusEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         notes:
           type: string
@@ -13578,14 +13521,13 @@ components:
           type: integer
           readOnly: true
       required:
-      - currency
       - id
       - notes
       - purchase_date
       - purchase_order_number
       - status
       - supplier
-      - total_amount
+      - total
       - version
     PurchaseDraftHeaderSerializersPurchaseDraftHeaderOutputDetailResponse:
       type: object
@@ -13639,9 +13581,8 @@ components:
           maximum: 2147483647
           minimum: 1
         unit_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          allOf:
+          - $ref: '#/components/schemas/Money'
           writeOnly: true
         notes:
           type: string
@@ -13666,7 +13607,6 @@ components:
       - created_at
       - description
       - id
-      - unit_price
     PurchaseItemDetail:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -13689,18 +13629,8 @@ components:
           type: string
           readOnly: true
         unit_price:
-          type: object
-          properties:
-            amount:
-              type: string
-              pattern: ^-?[0-9]+(\.[0-9]+)?$
-            currency:
-              type: string
-              description: Purchase currency code.
-          required:
-          - amount
-          - currency
-          additionalProperties: false
+          allOf:
+          - $ref: '#/components/schemas/Money'
           readOnly: true
         line_value:
           type: object
@@ -13816,18 +13746,8 @@ components:
           type: string
           readOnly: true
         unit_price:
-          type: object
-          properties:
-            amount:
-              type: string
-              pattern: ^-?[0-9]+(\.[0-9]+)?$
-            currency:
-              type: string
-              description: Purchase currency code.
-          required:
-          - amount
-          - currency
-          additionalProperties: false
+          allOf:
+          - $ref: '#/components/schemas/Money'
           readOnly: true
         line_value:
           type: object
@@ -13898,7 +13818,7 @@ components:
           readOnly: true
         resource_kind:
           allOf:
-          - $ref: '#/components/schemas/ResourceKindEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         acquisition_price:
           type: object
@@ -13955,9 +13875,8 @@ components:
           type: integer
           minimum: 1
         acquisition_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          allOf:
+          - $ref: '#/components/schemas/Money'
           writeOnly: true
       required:
       - acquisition_price
@@ -14105,27 +14024,9 @@ components:
           $ref: '#/components/schemas/Purchase'
       required:
       - data
-    PurchaseStatusEnum:
-      enum:
-      - draft
-      - ordered
-      - received
-      - cancelled
-      type: string
-      description: '* `draft` - Draft
-
-        * `ordered` - Ordered
-
-        * `received` - Received
-
-        * `cancelled` - Cancelled'
     PurchaseTransaction:
       type: object
-      description: 'Write payload uses ``transaction_type``, ``amount``, ``settled_at``,
-        ``reference``, ``notes``.
-
-
-        The purchase is taken from the URL, never from the body.'
+      description: Read shape; ``transaction_type`` is ``{value, label}`` (ENU-1).
       properties:
         id:
           type: integer
@@ -14138,30 +14039,36 @@ components:
             - type: string
           readOnly: true
         transaction_type:
-          $ref: '#/components/schemas/TransactionTypeEnum'
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
         settled_at:
           type: string
           format: date-time
+          readOnly: true
         reference:
           type: string
+          readOnly: true
           description: Invoice, receipt, bank transaction, or refund reference.
-          maxLength: 255
         notes:
           type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
-      - amount
       - created_at
       - id
+      - notes
       - purchase
+      - reference
       - settled_at
+      - total
       - transaction_type
     PurchaseTransactionListSerializersPurchaseTransactionPaginatedResponse:
       type: object
@@ -14215,6 +14122,30 @@ components:
           $ref: '#/components/schemas/PurchaseTransaction'
       required:
       - data
+    PurchaseTransactionWrite:
+      type: object
+      description: Write payload (RW-1). The purchase is taken from the URL, never
+        from the body.
+      properties:
+        transaction_type:
+          $ref: '#/components/schemas/TransactionTypeEnum'
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: In the purchase's currency.
+        settled_at:
+          type: string
+          format: date-time
+        reference:
+          type: string
+          description: Invoice, receipt, bank transaction, or refund reference.
+          maxLength: 255
+        notes:
+          type: string
+      required:
+      - settled_at
+      - total
+      - transaction_type
     QueueStats:
       type: object
       description: Aggregate statistics and SLA metrics for the agent support queue
@@ -14309,28 +14240,25 @@ components:
     QueueStatsAssigneeItem:
       type: object
       properties:
-        user_id:
-          type: integer
-          description: Primary key of the assigned user.
-        username:
-          type: string
-          description: Username of the assignee.
+        assignee:
+          allOf:
+          - $ref: '#/components/schemas/Relation'
+          readOnly: true
+          description: The assigned user (REL-14).
         count:
           type: integer
           description: Number of open tickets assigned to this user.
       required:
+      - assignee
       - count
-      - user_id
-      - username
     QueueStatsPriorityItem:
       type: object
       properties:
-        priority_id:
-          type: integer
-          description: Primary key of the support priority.
-        name:
-          type: string
-          description: Name of the priority.
+        priority:
+          allOf:
+          - $ref: '#/components/schemas/Relation'
+          readOnly: true
+          description: The support priority (REL-14).
         rank:
           type: integer
           description: Rank of the priority for ordering.
@@ -14339,8 +14267,7 @@ components:
           description: Number of open tickets with this priority.
       required:
       - count
-      - name
-      - priority_id
+      - priority
       - rank
     QueueStatsSla:
       type: object
@@ -14365,20 +14292,18 @@ components:
     QueueStatsTeamItem:
       type: object
       properties:
-        team_id:
-          type: integer
+        team:
+          allOf:
+          - $ref: '#/components/schemas/Relation'
           nullable: true
-          description: Primary key of the support team, or null if unassigned.
-        name:
-          type: string
-          description: Name of the team.
+          readOnly: true
+          description: The support team, or null if unassigned (REL-14).
         count:
           type: integer
           description: Number of open tickets assigned to this team.
       required:
       - count
-      - name
-      - team_id
+      - team
     ReasonEnum:
       enum:
       - maintenance
@@ -14430,6 +14355,33 @@ components:
           $ref: '#/components/schemas/RefreshTokenResponse'
       required:
       - data
+    Relation:
+      type: object
+      description: REL-3 relation ``{id, name}`` to any model row; ``name`` follows
+        ``relation_name``.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+    ReportPeriod:
+      type: object
+      description: NAM-9 ``period`` group read from the row's ``period_start`` / ``period_end``.
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+      required:
+      - ends_at
+      - starts_at
     ResolutionCodeEnum:
       enum:
       - fixed
@@ -14468,24 +14420,18 @@ components:
         id:
           type: integer
           readOnly: true
-        resource_type:
-          type: string
-          readOnly: true
-        resource_id:
-          type: string
-          readOnly: true
-        resource_name:
-          type: string
-          readOnly: true
-        resource_sku:
-          type: string
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/AuditedResource'
           readOnly: true
         auditor:
           allOf:
-          - $ref: '#/components/schemas/ResourceAuditorUserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         result:
-          $ref: '#/components/schemas/ResourceAuditResultEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         remarks:
           type: string
           maxLength: 255
@@ -14501,10 +14447,7 @@ components:
       - auditor
       - created_at
       - id
-      - resource_id
-      - resource_name
-      - resource_sku
-      - resource_type
+      - resource
       - result
     ResourceAuditItemByIdSerializersResourceAuditItemDetailResponse:
       type: object
@@ -14662,36 +14605,6 @@ components:
           $ref: '#/components/schemas/ResourceAuditListByUidSerializersResourceAuditItemPagination'
       required:
       - pagination
-    ResourceAuditResultEnum:
-      enum:
-      - PASS
-      - FAIL
-      - NOT_ASSESSED
-      type: string
-      description: '* `PASS` - Pass
-
-        * `FAIL` - Fail
-
-        * `NOT_ASSESSED` - Not assessed'
-    ResourceAuditorUserSummary:
-      type: object
-      description: User summary for audit actor.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-          pattern: ^[\w.@+-]+$
-          maxLength: 150
-        display_name:
-          type: string
-          maxLength: 255
-      required:
-      - id
-      - username
     ResourceImage:
       type: object
       properties:
@@ -14827,6 +14740,7 @@ components:
       - meta
     ResourceTicketDTOItem:
       type: object
+      description: A ticket row of the resource's ticket summary (REL-15).
       properties:
         id:
           type: integer
@@ -14837,7 +14751,9 @@ components:
         status_name:
           type: string
         system_state:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         priority_name:
           type: string
         priority_rank:
@@ -14857,6 +14773,7 @@ components:
       - status_name
       - subject
       - system_state
+      x-embedded-resource: true
     ResourceTicketSummary:
       type: object
       properties:
@@ -15559,7 +15476,7 @@ components:
         id:
           type: integer
           readOnly: true
-        room:
+        room_id:
           type: integer
           readOnly: true
         row_index:
@@ -15573,7 +15490,7 @@ components:
           readOnly: true
         slot_type:
           allOf:
-          - $ref: '#/components/schemas/SlotTypeEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         status:
           allOf:
@@ -15585,7 +15502,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
-        occupied:
+        is_occupied:
           type: boolean
           readOnly: true
           default: false
@@ -15640,11 +15557,11 @@ components:
       - depth_mm
       - id
       - is_accessible
+      - is_occupied
       - max_load_kg
-      - occupied
       - orientation_degrees
       - power_capacity_w
-      - room
+      - room_id
       - row_index
       - service_status
       - slot_code
@@ -15793,7 +15710,7 @@ components:
           readOnly: true
         actor:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         created_at:
@@ -15987,6 +15904,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -16067,6 +15985,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -16131,17 +16050,6 @@ components:
           $ref: '#/components/schemas/SampleCustomerReferenceListSerializersSampleCustomerCatalogRecordPagination'
       required:
       - pagination
-    ScanStatusEnum:
-      enum:
-      - clean
-      - pending
-      - infected
-      type: string
-      description: '* `clean` - Clean
-
-        * `pending` - Pending
-
-        * `infected` - Infected'
     SendOTP:
       type: object
       properties:
@@ -16169,26 +16077,6 @@ components:
           $ref: '#/components/schemas/SendOTPResponse'
       required:
       - data
-    SlotTypeEnum:
-      enum:
-      - station
-      - storage
-      - aisle
-      - safety
-      - utility
-      - reserved
-      type: string
-      description: '* `station` - Station
-
-        * `storage` - Storage
-
-        * `aisle` - Aisle
-
-        * `safety` - Safety
-
-        * `utility` - Utility
-
-        * `reserved` - Reserved'
     SnapshotItem:
       type: object
       properties:
@@ -16208,6 +16096,7 @@ components:
       - key
       - state
       - version
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     SnapshotResponse:
       type: object
       properties:
@@ -16242,6 +16131,7 @@ components:
       - head_version
       - items
       - next_after
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     SourceEnum:
       enum:
       - web
@@ -16249,7 +16139,6 @@ components:
       - phone
       - walk_in
       - api
-      - system
       type: string
       description: '* `web` - Web
 
@@ -16259,26 +16148,24 @@ components:
 
         * `walk_in` - Walk In
 
-        * `api` - Api
-
-        * `system` - System'
+        * `api` - Api'
     SpecificationDefinitionCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 120
+        category_id:
+          type: integer
+          minimum: 1
+          nullable: true
         unit:
           type: string
           maxLength: 20
         value_type:
           $ref: '#/components/schemas/ValueTypeEnum'
-        active:
+        is_active:
           type: boolean
-        category_id:
-          type: integer
-          minimum: 1
-          nullable: true
       required:
       - name
     SpecificationDefinitionCatalogRecord:
@@ -16289,6 +16176,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         category_id:
           type: integer
@@ -16296,15 +16184,22 @@ components:
           nullable: true
         unit:
           type: string
+          readOnly: true
           maxLength: 20
         value_type:
-          $ref: '#/components/schemas/ValueTypeEnum'
-        active:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - category_id
       - id
+      - is_active
       - name
+      - unit
+      - value_type
     SpecificationDefinitionReferenceCreateSerializersSpecificationDefinitionCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -16365,20 +16260,6 @@ components:
           $ref: '#/components/schemas/SpecificationDefinitionReferenceListSerializersSpecificationDefinitionCatalogRecordPagination'
       required:
       - pagination
-    StateEnum:
-      enum:
-      - pending
-      - active
-      - revoked
-      - decommissioned
-      type: string
-      description: '* `pending` - Pending
-
-        * `active` - Active
-
-        * `revoked` - Revoked
-
-        * `decommissioned` - Decommissioned'
     Station:
       type: object
       description: 'Separate state fields of a room or station (design: resource-status-and-downtime.md).
@@ -16955,7 +16836,7 @@ components:
         id:
           type: integer
           readOnly: true
-        station:
+        station_id:
           type: integer
           readOnly: true
         position_index:
@@ -17012,7 +16893,7 @@ components:
           items:
             type: integer
           readOnly: true
-        occupied:
+        is_occupied:
           type: boolean
           readOnly: true
           default: false
@@ -17031,15 +16912,15 @@ components:
       - height_mm
       - id
       - is_active
+      - is_occupied
       - label
       - max_load_kg
       - network_port_count
-      - occupied
       - position_index
       - power_capacity_w
       - service_status
       - slot_code
-      - station
+      - station_id
       - status
       - updated_at
       - utilities
@@ -17315,7 +17196,7 @@ components:
           readOnly: true
         actor:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         created_at:
@@ -17396,6 +17277,7 @@ components:
       - id
       - name
       - updated_at
+      x-embedded-resource: true
     StationTypeCatalogCreate:
       type: object
       properties:
@@ -17412,6 +17294,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -17684,7 +17567,9 @@ components:
           type: string
           maxLength: 50
         system_state:
-          $ref: '#/components/schemas/SystemStateEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         color_hex:
           type: string
           description: Optional '#RRGGBB' badge colour.
@@ -17695,10 +17580,9 @@ components:
           type: boolean
           description: Terminal status (e.g. Closed). Entering it stamps closed_at;
             auto-close moves tickets here.
-        pauses_sla:
+        is_sla_paused:
           type: boolean
-          description: While a ticket is in this status (e.g. Waiting for Customer)
-            SLA clocks are paused.
+          readOnly: true
         sort_order:
           type: integer
           maximum: 2147483647
@@ -17712,7 +17596,9 @@ components:
       required:
       - created_at
       - id
+      - is_sla_paused
       - name
+      - system_state
     StatusTransition:
       type: object
       properties:
@@ -17721,14 +17607,14 @@ components:
           readOnly: true
         from_status:
           allOf:
-          - $ref: '#/components/schemas/Status'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
         from_status_id:
           type: integer
           writeOnly: true
         to_status:
           allOf:
-          - $ref: '#/components/schemas/Status'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
         to_status_id:
           type: integer
@@ -17736,12 +17622,12 @@ components:
         allowed_roles:
           description: List of roles allowed to trigger this transition, e.g. ['agent',
             'admin'].
-        requires_reason:
+        is_reason_required:
           type: boolean
-          description: Whether this transition requires a reason from the actor.
-        requires_resolution:
+          readOnly: true
+        is_resolution_required:
           type: boolean
-          description: Whether this transition requires a resolution summary.
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -17751,6 +17637,8 @@ components:
       - from_status
       - from_status_id
       - id
+      - is_reason_required
+      - is_resolution_required
       - to_status
       - to_status_id
     StorageQuotaCreate:
@@ -17909,22 +17797,21 @@ components:
           minimum: 0
           description: Minutes after creation during which an author may edit/delete
             their comment.
-        requesters_can_set_priority:
+        can_requesters_set_priority:
           type: boolean
-          description: If disabled, requesters describe impact/urgency and the priority
-            is derived (agents still set it).
-        sla_enabled:
+          readOnly: true
+        is_sla_enabled:
           type: boolean
-          description: Compute SLA deadlines and flag breaches from the priority targets.
+          readOnly: true
         sla_at_risk_percent:
           type: integer
           maximum: 32767
           minimum: 0
           description: A ticket is 'at risk' once this percentage of its SLA window
             has elapsed.
-        csat_enabled:
+        is_csat_enabled:
           type: boolean
-          description: Allow requesters to rate resolved tickets (1-5).
+          readOnly: true
         csat_window_days:
           type: integer
           maximum: 2147483647
@@ -17933,24 +17820,17 @@ components:
             a satisfaction rating.
         default_ticket_type:
           allOf:
-          - $ref: '#/components/schemas/TicketTypeEnum'
-          description: 'Type applied when a ticket is created without one.
-
-
-            * `incident` - Incident
-
-            * `service_request` - Service Request
-
-            * `problem` - Problem
-
-            * `change` - Change
-
-            * `question` - Question'
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         updated_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - can_requesters_set_priority
+      - default_ticket_type
+      - is_csat_enabled
+      - is_sla_enabled
       - updated_at
     SyncInfoResponse:
       type: object
@@ -17977,6 +17857,7 @@ components:
       - entities
       - limits
       - server_time
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     SyncStreamEntityInfo:
       type: object
       properties:
@@ -17989,6 +17870,7 @@ components:
       required:
       - epoch
       - version
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     SyncStreamLimits:
       type: object
       properties:
@@ -18005,6 +17887,7 @@ components:
       - changes_max_limit
       - longpoll_max_wait_s
       - snapshot_max_limit
+      x-protocol-spec: docs/agent-platform/routing-sync.md
     SystemStateEnum:
       enum:
       - open
@@ -18019,20 +17902,6 @@ components:
         * `waiting` - Waiting
 
         * `done` - Done'
-    TargetTypeEnum:
-      enum:
-      - bench
-      - station
-      - room
-      - note
-      type: string
-      description: '* `bench` - bench
-
-        * `station` - station
-
-        * `room` - room
-
-        * `note` - note'
     Team:
       type: object
       properties:
@@ -18051,12 +17920,13 @@ components:
           type: string
         lead:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         members:
           type: array
           items:
-            $ref: '#/components/schemas/UserSummary'
+            $ref: '#/components/schemas/UserReference'
           readOnly: true
         is_active:
           type: boolean
@@ -18073,6 +17943,7 @@ components:
       - name
     TeamSummary:
       type: object
+      description: REL-3 relation to a team; the code is read from the team catalog.
       properties:
         id:
           type: integer
@@ -18080,13 +17951,7 @@ components:
         name:
           type: string
           maxLength: 100
-        code:
-          type: string
-          description: Stable machine-readable identifier used by the options API.
-          maxLength: 50
-          pattern: ^[-a-zA-Z0-9_]+$
       required:
-      - code
       - id
       - name
     TechnicalUserCatalogCreate:
@@ -18105,6 +17970,7 @@ components:
           readOnly: true
         username:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -18189,7 +18055,9 @@ components:
           type: integer
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         actor_name:
           type: string
           maxLength: 255
@@ -18198,14 +18066,16 @@ components:
           format: date-time
           readOnly: true
         payload: {}
-        correlation_id:
+        correlation_key:
           type: string
-          maxLength: 64
+          readOnly: true
       required:
       - actor_name
+      - correlation_key
       - event_type
       - id
       - occurred_at
+      x-embedded-resource: true
     TicketActivityListSerializersTicketActivityListResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -18257,14 +18127,16 @@ components:
           description: Restricted attachments are visible only to support agents and
             administrators.
         scan_status:
-          $ref: '#/components/schemas/ScanStatusEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
         uploaded_by:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         download_url:
           type: string
@@ -18275,8 +18147,10 @@ components:
       - download_url
       - filename
       - id
+      - scan_status
       - size
       - uploaded_by
+      x-embedded-resource: true
     TicketAttachmentCreateSerializersTicketAttachmentDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -18293,12 +18167,14 @@ components:
           readOnly: true
         author:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         body:
           type: string
         visibility:
-          $ref: '#/components/schemas/TicketCommentVisibilityEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -18312,6 +18188,8 @@ components:
       - body
       - created_at
       - id
+      - visibility
+      x-embedded-resource: true
     TicketCommentCreateSerializersTicketCommentDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -18338,14 +18216,6 @@ components:
           $ref: '#/components/schemas/TicketComment'
       required:
       - data
-    TicketCommentVisibilityEnum:
-      enum:
-      - public
-      - internal
-      type: string
-      description: '* `public` - Public
-
-        * `internal` - Internal'
     TicketCreateRequest:
       type: object
       properties:
@@ -18375,7 +18245,7 @@ components:
           - $ref: '#/components/schemas/BlankEnum'
         source:
           allOf:
-          - $ref: '#/components/schemas/TicketCreateRequestSourceEnum'
+          - $ref: '#/components/schemas/SourceEnum'
           default: web
         external_reference:
           type: string
@@ -18419,23 +18289,6 @@ components:
       - category_id
       - description
       - subject
-    TicketCreateRequestSourceEnum:
-      enum:
-      - web
-      - email
-      - phone
-      - walk_in
-      - api
-      type: string
-      description: '* `web` - Web
-
-        * `email` - Email
-
-        * `phone` - Phone
-
-        * `walk_in` - Walk In
-
-        * `api` - Api'
     TicketCreateSerializersTicketDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -18470,9 +18323,13 @@ components:
         description:
           type: string
         ticket_type:
-          $ref: '#/components/schemas/TicketTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         source:
-          $ref: '#/components/schemas/SourceEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         impact:
           oneOf:
           - $ref: '#/components/schemas/UrgencyEnum'
@@ -18493,32 +18350,36 @@ components:
           description: Requester/agent-set target date, independent of the SLA.
         category:
           allOf:
-          - $ref: '#/components/schemas/Category'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
+          nullable: true
         priority:
           allOf:
-          - $ref: '#/components/schemas/Priority'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
+          nullable: true
         status:
           allOf:
-          - $ref: '#/components/schemas/Status'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
         requester:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         created_by:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         assignee:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         team:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         labels:
           type: array
           items:
@@ -18528,6 +18389,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/TicketRef'
           readOnly: true
+          nullable: true
         children:
           type: array
           items:
@@ -18572,8 +18434,9 @@ components:
           nullable: true
         resolved_by:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         reopen_count:
           type: integer
           maximum: 2147483647
@@ -18649,10 +18512,12 @@ components:
       - resolved_by
       - resource_links
       - sla
+      - source
       - status
       - subject
       - team
       - ticket_links
+      - ticket_type
       - updated_at
       - watchers
     TicketDetailSerializersTicketDetailDetailResponse:
@@ -18672,7 +18537,9 @@ components:
           type: integer
           readOnly: true
         link_type:
-          $ref: '#/components/schemas/LinkTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         direction:
           type: string
           readOnly: true
@@ -18680,8 +18547,8 @@ components:
           type: string
           readOnly: true
         ticket:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/TicketRef'
           readOnly: true
         created_at:
           type: string
@@ -18694,6 +18561,7 @@ components:
       - label
       - link_type
       - ticket
+      x-embedded-resource: true
     TicketLinkCreateSerializersTicketLinkDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -18739,9 +18607,13 @@ components:
           type: string
           maxLength: 200
         ticket_type:
-          $ref: '#/components/schemas/TicketTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         source:
-          $ref: '#/components/schemas/SourceEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         impact:
           oneOf:
           - $ref: '#/components/schemas/UrgencyEnum'
@@ -18752,28 +18624,32 @@ components:
           - $ref: '#/components/schemas/BlankEnum'
         category:
           allOf:
-          - $ref: '#/components/schemas/Category'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
+          nullable: true
         priority:
           allOf:
-          - $ref: '#/components/schemas/Priority'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
+          nullable: true
         status:
           allOf:
-          - $ref: '#/components/schemas/Status'
+          - $ref: '#/components/schemas/Relation'
           readOnly: true
         requester:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         assignee:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         team:
           allOf:
           - $ref: '#/components/schemas/TeamSummary'
           readOnly: true
+          nullable: true
         labels:
           type: array
           items:
@@ -18822,9 +18698,11 @@ components:
       - priority
       - requester
       - sla
+      - source
       - status
       - subject
       - team
+      - ticket_type
       - updated_at
     TicketListSerializersTicketListPaginatedResponse:
       type: object
@@ -18872,40 +18750,28 @@ components:
       - pagination
     TicketRef:
       type: object
-      description: Compact reference to another ticket.
+      description: 'REL-3 relation to another ticket; ``name`` is ``"<key>: <subject>"``.'
       properties:
         id:
           type: integer
           readOnly: true
-        key:
-          type: string
-          readOnly: true
-        subject:
-          type: string
-          maxLength: 200
-        status:
-          type: string
-          readOnly: true
-        system_state:
+        name:
           type: string
           readOnly: true
       required:
       - id
-      - key
-      - status
-      - subject
-      - system_state
+      - name
     TicketResourceLink:
       type: object
+      description: A resource link owned by the ticket (REL-15).
       properties:
         id:
           type: integer
           readOnly: true
-        resource_type:
-          $ref: '#/components/schemas/ResourceTypeEnum'
-        resource_id:
-          type: string
-          maxLength: 64
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/LinkedResource'
+          readOnly: true
         snapshot:
           type: object
           additionalProperties: {}
@@ -18918,7 +18784,7 @@ components:
           readOnly: true
         linked_by:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         unlinked_at:
           type: string
@@ -18926,8 +18792,9 @@ components:
           nullable: true
         unlinked_by:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
+          nullable: true
         unlink_reason:
           type: string
         badge:
@@ -18938,10 +18805,10 @@ components:
       - id
       - linked_at
       - linked_by
-      - resource_id
-      - resource_type
+      - resource
       - snapshot
       - unlinked_by
+      x-embedded-resource: true
     TicketResourceLinkCreateSerializersTicketResourceLinkDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -19347,6 +19214,20 @@ components:
           $ref: '#/components/schemas/UserProfile'
       required:
       - data
+    UserReference:
+      type: object
+      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
+        use it without importing users.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     UserSerializersUserDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -19355,21 +19236,6 @@ components:
           $ref: '#/components/schemas/User'
       required:
       - data
-    UserSummary:
-      type: object
-      description: Compact public user representation.
-      properties:
-        id:
-          type: integer
-        username:
-          type: string
-        full_name:
-          type: string
-          readOnly: true
-      required:
-      - full_name
-      - id
-      - username
     UserWeeklyUsageSerializersWeeklyUsageSlotListResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -19458,14 +19324,6 @@ components:
           $ref: '#/components/schemas/UsersSerializersUserPagination'
       required:
       - pagination
-    ValueEnum:
-      enum:
-      - available
-      - unavailable
-      type: string
-      description: '* `available` - available
-
-        * `unavailable` - unavailable'
     ValueTypeEnum:
       enum:
       - text
@@ -19477,12 +19335,20 @@ components:
         * `number` - Number
 
         * `boolean` - Yes / No'
+    VisibilityEnum:
+      enum:
+      - public
+      - internal
+      type: string
+      description: '* `public` - public
+
+        * `internal` - internal'
     Watcher:
       type: object
       properties:
         user:
           allOf:
-          - $ref: '#/components/schemas/UserSummary'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
         created_at:
           type: string

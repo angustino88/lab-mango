@@ -96,6 +96,27 @@ class TestLeaderboardPersona:
         assert "active-pilot" in usernames
         assert "inactive-user" not in usernames
 
+    def test_wire_rows_use_the_documented_keys(self, db, analytics_client):
+        """The response is serialized, so the wire matches the schema (NAM-3: ``last_remote_at``)."""
+        from datetime import datetime
+        from datetime import timezone as dt_timezone
+
+        from tests.factories import LabSessionLogFactory
+
+        pilot = UserFactory(username="wire-pilot", display_name="Wire Pilot")
+        LabSessionLogFactory(
+            remote_user=pilot.username,
+            login_time=datetime(2026, 4, 10, 8, 0, tzinfo=dt_timezone.utc),
+            logout_time=datetime(2026, 4, 10, 12, 0, tzinfo=dt_timezone.utc),
+        )
+        with patch(_PATCH_APIKEY, return_value=True):
+            response = analytics_client.get(
+                "/api/labs/leaderboard/persona", {"start_date": "2026-04-01", "end_date": "2026-04-30"}
+            )
+        assert response.status_code == 200
+        row = next(row for row in response.json()["data"] if row["username"] == "wire-pilot")
+        assert "last_remote_at" in row and "last_remote" not in row
+
 
 # ---------------------------------------------------------------------------
 # GET /api/labs/leaderboard/lab

@@ -15,6 +15,7 @@ urlpatterns = reference_urlpatterns(
         ("project_name", "code", "starts_on", "ends_on", "active"),
         ("project_name",),
         "project_name",
+        wire_names=(("starts_on", "start_date"), ("ends_on", "end_date")),
     ),
     prefix="bench-bookings/reference-data/projects",
     tag="Bench Bookings",

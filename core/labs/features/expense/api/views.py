@@ -10,7 +10,9 @@ from core.labs.features.base import CommandAPIView
 from core.labs.features.expense import public
 from core.labs.features.expense.api.serializers import (
     ExpensePaymentSerializer,
+    ExpensePaymentWriteSerializer,
     ExpenseSerializer,
+    ExpenseWriteSerializer,
     FinancialReportQuerySerializer,
     FinancialReportResponseSerializer,
 )
@@ -36,7 +38,7 @@ class RoomExpenseListCreateAPIView(ExpenseAPIView):
         not_found=ResponseContract.not_found(),
     )
     post_contract = OperationContract(
-        request=ExpenseSerializer,
+        request=ExpenseWriteSerializer,
         success=ResponseContract.created("RoomExpense", ExpenseSerializer),
         bad_request=ResponseContract.bad_request(),
         validation_error=ResponseContract.problem(422),
@@ -50,7 +52,7 @@ class RoomExpenseListCreateAPIView(ExpenseAPIView):
         return self._execute(lambda: public.list_room_expenses(room_id=room_id))
 
     def handle_post(self, request: Request, room_id: int, *args, **kwargs) -> Response:
-        serializer, error = self.validate_request(serializer_class=ExpenseSerializer)
+        serializer, error = self.validate_request(serializer_class=ExpenseWriteSerializer)
         if error is not None:
             return error
         command = CreateExpenseInput(room_id=room_id, **serializer.validated_data)
@@ -67,7 +69,7 @@ class ExpensePaymentListCreateAPIView(ExpenseAPIView):
         not_found=ResponseContract.not_found(),
     )
     post_contract = OperationContract(
-        request=ExpensePaymentSerializer,
+        request=ExpensePaymentWriteSerializer,
         success=ResponseContract.created("ExpensePayment", ExpensePaymentSerializer),
         bad_request=ResponseContract.bad_request(),
         validation_error=ResponseContract.problem(422),
@@ -81,7 +83,7 @@ class ExpensePaymentListCreateAPIView(ExpenseAPIView):
         return self._execute(lambda: public.list_expense_payments(expense_id=expense_id))
 
     def handle_post(self, request: Request, expense_id: int, *args, **kwargs) -> Response:
-        serializer, error = self.validate_request(serializer_class=ExpensePaymentSerializer)
+        serializer, error = self.validate_request(serializer_class=ExpensePaymentWriteSerializer)
         if error is not None:
             return error
         command = CreateExpensePaymentInput(expense_id=expense_id, **serializer.validated_data)

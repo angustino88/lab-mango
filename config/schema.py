@@ -8,6 +8,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 
 from core.common.api.options import IncludeIDsField
+from core.common.api.search import DEPRECATED_SEARCH_PARAM, SEARCH_ALIAS_DESCRIPTION
 
 
 class ProjectAutoSchema(AutoSchema):
@@ -51,6 +52,11 @@ class ProjectAutoSchema(AutoSchema):
                 # parameter-level form encoding. Leave explicit annotations untouched.
                 parameters[key]["style"] = "form"
                 parameters[key]["explode"] = False
+        search = parameters.get((DEPRECATED_SEARCH_PARAM, OpenApiParameter.QUERY))
+        if search is not None:
+            # QRY-7 / CMP-3: `search` is only a deprecated alias of `q`.
+            search["deprecated"] = True
+            search["description"] = SEARCH_ALIAS_DESCRIPTION
         return parameters
 
     def get_request_serializer(self):

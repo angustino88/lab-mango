@@ -39,7 +39,7 @@ def test_create_starts_available_with_one_record(client, path, model):
     assert body["status"] == {"value": "available", "label": "Available"}
     assert body["lifecycle_status"] == {"value": "in_service", "label": "In service"}
     assert body["condition"]["value"] == "operational"
-    assert body["availability"]["value"] == "available"
+    assert body["availability"]["status"] == {"value": "available", "label": "Available"}
     assert "operational_status" not in body
     resource = model.objects.get(pk=body["id"])
     assert resource.lifecycle_status == "in_service"

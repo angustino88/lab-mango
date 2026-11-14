@@ -5,12 +5,13 @@ from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.search import SearchQueryMixin
+from core.common.api.summary_serializers import UserReferenceSerializer
 from core.common.api.temporal_query import TemporalBoundField, TemporalRangeQueryMixin
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
     NamedReferenceSerializer,
-    ResourceOwnerSerializer,
     UIDNamedReferenceSerializer,
     to_choice_reference,
 )
@@ -55,7 +56,7 @@ class BenchBookingRejectActionSerializer(serializers.Serializer):
 
 
 class BenchBookingSerializer(AppModelSerializer):
-    creator = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    creator = UserReferenceSerializer(read_only=True, allow_null=True)
     bench = UIDNamedReferenceSerializer(read_only=True)
     project = NamedReferenceSerializer(read_only=True, allow_null=True)
     status = serializers.SerializerMethodField(read_only=True)
@@ -159,21 +160,24 @@ class BenchBookingListQuerySerializer(TemporalRangeQueryMixin, PageNumberQuerySe
         return fields
 
 
-class LabProjectQuerySerializer(PageNumberQuerySerializer):
-    search = serializers.CharField(required=False, allow_blank=False, max_length=255)
+class LabProjectQuerySerializer(SearchQueryMixin, PageNumberQuerySerializer):
+    search_target = "search"
     # default=None: query strings are HTML input, where an absent boolean would otherwise become False.
-    active = serializers.BooleanField(required=False, allow_null=True, default=None)
+    is_active = serializers.BooleanField(required=False, allow_null=True, default=None, source="active")
 
 
 class LabProjectOptionsQuerySerializer(OptionsQueryMixin):
-    active_on = serializers.DateField(required=False, help_text="Date within project starts_on and ends_on.")
+    active_on = serializers.DateField(required=False, help_text="Date within project start_date and end_date.")
 
 
 class LabProjectSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source="project_name", read_only=True)
+    is_active = serializers.BooleanField(source="active", read_only=True)
+    start_date = serializers.DateField(source="starts_on", read_only=True, allow_null=True)
+    end_date = serializers.DateField(source="ends_on", read_only=True, allow_null=True)
 
     class Meta:
         model = LabProject
-        fields = ("id", "name", "code", "active", "starts_on", "ends_on")
+        fields = ("id", "name", "code", "is_active", "start_date", "end_date")
         read_only_fields = fields
         ref_name = "LabProject"

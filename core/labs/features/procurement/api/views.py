@@ -24,6 +24,7 @@ from core.labs.features.procurement.api.serializers import (
     PurchasePriorityQuerySerializer,
     PurchaseSerializer,
     PurchaseTransactionSerializer,
+    PurchaseTransactionWriteSerializer,
 )
 from core.labs.features.procurement.exceptions import PurchaseETagRequired, PurchaseMachineWriteForbidden
 from core.labs.features.procurement.public import (
@@ -348,6 +349,7 @@ class PurchaseItemResourceListCreateAPIView(ProcurementAPIView):
             resource_type_id=values["resource_type_id"],
             resource_id=values["resource_id"],
             acquisition_price=values["acquisition_price"],
+            currency=values.get("currency"),
         )
         return self._execute(lambda: public.create_purchase_item_resource(command, actor=self.acting_user))
 
@@ -367,7 +369,7 @@ class PurchaseTransactionListCreateAPIView(ProcurementAPIView):
         success=ResponseContract.paginated("PurchaseTransactionList", PurchaseTransactionSerializer),
     )
     post_contract = OperationContract(
-        request=PurchaseTransactionSerializer,
+        request=PurchaseTransactionWriteSerializer,
         success=ResponseContract.created("PurchaseTransaction", PurchaseTransactionSerializer),
         bad_request=ResponseContract.bad_request(),
         validation_error=ResponseContract.problem(422),
@@ -381,7 +383,7 @@ class PurchaseTransactionListCreateAPIView(ProcurementAPIView):
         return self._execute(lambda: public.list_purchase_transactions(purchase_id=purchase_id))
 
     def handle_post(self, request: Request, purchase_id: int, *args, **kwargs) -> Response:
-        serializer, error = self.validate_request(serializer_class=PurchaseTransactionSerializer)
+        serializer, error = self.validate_request(serializer_class=PurchaseTransactionWriteSerializer)
         if error is not None:
             return error
         command = CreatePurchaseTransactionInput(

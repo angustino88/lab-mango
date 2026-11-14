@@ -207,7 +207,7 @@ class TestFinancialReportAPI:
         assert response.status_code == 200
         payload = response.json()
         assert "data" in payload
-        assert payload["data"]["summary"]["total_budgeted"] == "150.00"
+        assert payload["data"]["summary"]["budgeted"] == {"amount": "150.00", "currency": "EUR"}
         assert len(payload["data"]["items"]) == 1
 
     def test_financial_report_canonical_alias(self, admin_client, room):

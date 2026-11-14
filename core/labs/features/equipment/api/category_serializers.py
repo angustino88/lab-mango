@@ -1,8 +1,9 @@
 """Equipment write serializer base and write-field allowlists."""
 
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from core.common.api.summary_serializers import UserReferenceSerializer, embedded_resource
+from core.common.api.wire_names import wire_name
 from core.labs.features.base.serializers import ResourceWriteSerializerMixin
 from core.labs.models.resource.base.resource import Group
 
@@ -36,6 +37,9 @@ EQUIPMENT_WRITE_FIELDS = (
 )
 
 
+# Request keys that differ from the model column (NAM-2, NAM-3); responses use the same names.
+EQUIPMENT_WIRE_NAMES = {"warranty_until": "warranty_end_date"}
+
 # Set once at creation; afterwards only the change-lifecycle action changes it.
 EQUIPMENT_CREATE_ONLY_FIELDS = ("lifecycle_state",)
 
@@ -51,6 +55,11 @@ class EquipmentWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSe
                 continue
             model_field = model._meta.get_field(field_name)
             if not model_field.is_relation:
+                wire = wire_name(model_field, EQUIPMENT_WIRE_NAMES)
+                if wire != field_name:
+                    field = fields.pop(field_name)
+                    field.source = field_name
+                    fields[wire] = field
                 continue
             input_name = f"{field_name}_ids" if model_field.many_to_many else f"{field_name}_id"
             field = fields.pop(field_name)
@@ -94,6 +103,7 @@ class EquipmentWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSe
         return attrs
 
 
+@embedded_resource
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
@@ -103,17 +113,10 @@ class GroupSerializer(serializers.ModelSerializer):
         ref_name = "LabsGroupReference"
 
 
-class EquipmentOwnerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ("id", "username")
-        read_only_fields = fields
-
-
 class EquipmentFormReferenceSerializer(serializers.Serializer):
     kinds = EquipmentKindSerializer(many=True, read_only=True)
     types = EquipmentTypeSerializer(many=True, read_only=True)
     manufacturers = EquipmentManufacturerSerializer(many=True, read_only=True)
     product_models = EquipmentProductModelSerializer(many=True, read_only=True)
     groups = GroupSerializer(many=True, read_only=True)
-    owners = EquipmentOwnerSerializer(many=True, read_only=True)
+    owners = UserReferenceSerializer(many=True, read_only=True)

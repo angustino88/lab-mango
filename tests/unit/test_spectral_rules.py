@@ -16,7 +16,6 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 MONEY_RULE = "lm-money-is-decimal-string"
 TIME_RULE = "lm-timestamps-are-date-time"
-DATE_RULE = "lm-expense-payment-paid-at-is-date"
 STATUS_RULE = "lm-allowed-status-codes"
 ERROR_RULE = "lm-operation-documents-errors"
 
@@ -133,17 +132,18 @@ def cases() -> list[tuple[str, str, dict, bool]]:
     )
     result.extend(
         [
+            # No exceptions (ADR 007): the former ExpensePayment.paid_at date is now paid_date.
             (
                 "payment-date",
                 TIME_RULE,
                 timestamp_case("ExpensePayment", "paid_at", {"type": "string", "format": "date"}),
-                True,
+                False,
             ),
             (
                 "referenced-payment-date",
                 TIME_RULE,
                 timestamp_case("ExpensePayment", "paid_at", {"type": "string", "format": "date"}, referenced=True),
-                True,
+                False,
             ),
             (
                 "other-payment-date",
@@ -167,24 +167,6 @@ def cases() -> list[tuple[str, str, dict, bool]]:
                 "missing-timestamp-format",
                 TIME_RULE,
                 timestamp_case("OtherPayment", "created_at", {"type": "string"}),
-                False,
-            ),
-            (
-                "payment-date-guard",
-                DATE_RULE,
-                timestamp_case("ExpensePayment", "paid_at", {"type": "string", "format": "date"}),
-                True,
-            ),
-            (
-                "payment-datetime-rejected",
-                DATE_RULE,
-                timestamp_case("ExpensePayment", "paid_at", {"type": "string", "format": "date-time"}),
-                False,
-            ),
-            (
-                "payment-number-rejected",
-                DATE_RULE,
-                timestamp_case("ExpensePayment", "paid_at", {"type": "number", "format": "date"}),
                 False,
             ),
             ("304-options", STATUS_RULE, response_case("200", "304", "400"), True),
@@ -249,7 +231,7 @@ def test_spectral_contract(name: str, rule: str, fixture: dict, valid: bool, dia
 def test_audited_rule_severities_are_preserved() -> None:
     """Fails if a fix reduces any audited rule's severity."""
     rules = yaml.safe_load((ROOT / ".spectral.yaml").read_text(encoding="utf-8"))["rules"]
-    for rule in (MONEY_RULE, TIME_RULE, DATE_RULE):
+    for rule in (MONEY_RULE, TIME_RULE):
         assert rules[rule]["severity"] == "error"
     for rule in (STATUS_RULE, ERROR_RULE):
         assert rules[rule]["severity"] == "warn"

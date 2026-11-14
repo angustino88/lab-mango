@@ -139,12 +139,12 @@ def test_equipment_parent_validation_and_many_to_many(client):
     assert response.status_code == 422, response.data
     manufacturer = client.post(
         ROOT + "equipment/reference-data/manufacturers",
-        {"name": "Synthetic manufacturer", "categories": [category.pk]},
+        {"name": "Synthetic manufacturer", "category_ids": [category.pk]},
         format="json",
         HTTP_IDEMPOTENCY_KEY="manufacturer",
     )
     assert manufacturer.status_code == 201, manufacturer.data
-    assert manufacturer.data["data"]["categories"] == [category.pk]
+    assert manufacturer.data["data"]["category_ids"] == [category.pk]
 
 
 @pytest.mark.django_db(transaction=True)
@@ -182,7 +182,7 @@ def test_create_and_retrieve_every_reference_type(client):
     payloads: list[tuple[str, dict[str, Any]]] = [
         ("equipment/reference-data/kinds", {"name": "Synthetic kind", "category_id": "categories"}),
         ("equipment/reference-data/types", {"name": "Synthetic type", "kind_id": "kinds"}),
-        ("equipment/reference-data/manufacturers", {"name": "Synthetic maker", "categories": ["categories"]}),
+        ("equipment/reference-data/manufacturers", {"name": "Synthetic maker", "category_ids": ["categories"]}),
         (
             "equipment/reference-data/product-models",
             {"name": "Synthetic model", "manufacturer_id": "manufacturers", "equipment_type_id": "types"},
@@ -318,7 +318,7 @@ def test_invalid_project_dates_and_duplicate_rollback(client):
     url = ROOT + "bench-bookings/reference-data/projects"
     bad = client.post(
         url,
-        {"project_name": "Invalid period", "starts_on": "2026-12-02", "ends_on": "2026-12-01"},
+        {"project_name": "Invalid period", "start_date": "2026-12-02", "end_date": "2026-12-01"},
         format="json",
         HTTP_IDEMPOTENCY_KEY="invalid-dates",
     )

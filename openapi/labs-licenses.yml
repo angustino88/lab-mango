@@ -754,6 +754,8 @@ paths:
         schema:
           type: string
           maxLength: 255
+        deprecated: true
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
       - in: query
         name: status
         schema:
@@ -1376,11 +1378,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Licenses
       security:
@@ -1513,11 +1523,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       - in: query
         name: vendor_id
         schema:
@@ -1655,11 +1673,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Licenses
       security:
@@ -1792,11 +1818,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Licenses
       security:
@@ -1929,11 +1963,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Licenses
       security:
@@ -2117,6 +2159,19 @@ components:
           readOnly: true
       required:
       - data
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     FilterMetadata:
       type: object
       properties:
@@ -2191,26 +2246,6 @@ components:
       required:
       - id
       - name
-    LabsResourceOwner:
-      type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-          pattern: ^[\w.@+-]+$
-          maxLength: 150
-        display_name:
-          type: string
-          maxLength: 255
-      required:
-      - id
-      - username
     LabsUIDNamedReference:
       type: object
       description: Compact `{id, uid, name}` object representation when target defines
@@ -2301,7 +2336,7 @@ components:
         max_version:
           type: string
           readOnly: true
-        expiry_date:
+        expires_at:
           type: string
           format: date-time
           readOnly: true
@@ -2329,7 +2364,7 @@ components:
       - category
       - created_at
       - department
-      - expiry_date
+      - expires_at
       - id
       - image_url
       - max_version
@@ -2364,13 +2399,13 @@ components:
           readOnly: true
         billing_period:
           allOf:
-          - $ref: '#/components/schemas/BillingPeriodEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
-        valid_from:
+        start_date:
           type: string
           format: date
           readOnly: true
-        valid_until:
+        end_date:
           type: string
           format: date
           readOnly: true
@@ -2382,11 +2417,11 @@ components:
       required:
       - billing_period
       - created_at
+      - end_date
       - id
       - license
       - price
-      - valid_from
-      - valid_until
+      - start_date
     LicenseAgreementListSerializersLicenseAgreementPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -2445,25 +2480,19 @@ components:
         on update.
       properties:
         price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-          description: Amount charged per billing period.
-        currency:
-          type: string
-          maxLength: 3
+          $ref: '#/components/schemas/Money'
         billing_period:
           $ref: '#/components/schemas/BillingPeriodEnum'
-        valid_from:
+        start_date:
           type: string
           format: date
-        valid_until:
+        end_date:
           type: string
           format: date
           nullable: true
       required:
       - price
-      - valid_from
+      - start_date
     LicenseAssignActionSerializersLicenseAssignmentResultDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -2603,6 +2632,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -2864,8 +2894,9 @@ components:
           maxLength: 255
         vendor:
           allOf:
-          - $ref: '#/components/schemas/LicenseVendorCatalogItem'
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         vendor_id:
           type: integer
           writeOnly: true
@@ -2935,6 +2966,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
         vendor_id:
           type: integer
@@ -3096,6 +3128,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -3207,7 +3240,7 @@ components:
           readOnly: true
         actor:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         created_at:
@@ -3343,6 +3376,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -3499,6 +3533,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -3563,6 +3598,22 @@ components:
           $ref: '#/components/schemas/LicenseVendorReferenceListSerializersLicenseVendorCatalogRecordPagination'
       required:
       - pagination
+    Money:
+      type: object
+      description: 'FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO
+        4217 uppercase.'
+      properties:
+        amount:
+          type: string
+          description: Decimal string; never a float.
+          pattern: ^-?[0-9]+(\.[0-9]+)?$
+        currency:
+          type: string
+          description: ISO 4217 code, uppercase.
+          pattern: ^[A-Z]{3}$
+      required:
+      - amount
+      - currency
     ProblemDetail:
       type: object
       properties:
@@ -3639,6 +3690,20 @@ components:
       required:
       - resource_count
       - status
+    UserReference:
+      type: object
+      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
+        use it without importing users.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
   securitySchemes:
     cookieAuth:
       type: apiKey

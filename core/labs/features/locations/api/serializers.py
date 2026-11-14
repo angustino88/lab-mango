@@ -57,7 +57,7 @@ class LocationStateFieldsMixin(serializers.Serializer):
 
     @extend_schema_field(AvailabilitySerializer)
     def get_availability(self, obj) -> dict:
-        return location_availability(self.location_resource_type, obj)
+        return AvailabilitySerializer(location_availability(self.location_resource_type, obj)).data
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_activity_status(self, obj) -> dict[str, str] | None:

@@ -128,7 +128,7 @@ class TestMonitoringEventAPI:
         data = response.json()
         assert "data" in data
         assert len(data["data"]) == 1
-        assert data["data"][0]["action"] == "heartbeat"
+        assert data["data"][0]["action"]["value"] == "heartbeat"
 
     def test_create_monitoring_event_endpoint(self, auth_client, computer):
         payload = {
@@ -141,8 +141,8 @@ class TestMonitoringEventAPI:
         response = auth_client.post("/api/labs/monitoring-events", payload, format="json")
         assert response.status_code == 201
         data = response.json()["data"]
-        assert data["action"] == "device_inserted"
-        assert data["subject_type"] == "usb_device"
+        assert data["action"]["value"] == "device_inserted"
+        assert data["subject"]["type"] == "usb_device"
 
     def test_retrieve_event_detail_endpoint(self, auth_client, computer):
         now = timezone.now()

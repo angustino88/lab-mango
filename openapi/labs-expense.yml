@@ -65,13 +65,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ExpensePayment'
+              $ref: '#/components/schemas/ExpensePaymentWrite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ExpensePayment'
+              $ref: '#/components/schemas/ExpensePaymentWrite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ExpensePayment'
+              $ref: '#/components/schemas/ExpensePaymentWrite'
         required: true
       security:
       - jwtAuth: []
@@ -283,13 +283,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Expense'
+              $ref: '#/components/schemas/ExpenseWrite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Expense'
+              $ref: '#/components/schemas/ExpenseWrite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Expense'
+              $ref: '#/components/schemas/ExpenseWrite'
         required: true
       security:
       - jwtAuth: []
@@ -406,10 +406,22 @@ components:
         * `quarterly` - Quarterly
 
         * `annual` - Annual'
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     Expense:
       type: object
-      description: Read and write shape for expenses. The room is taken from the URL,
-        never the body.
+      description: Read shape for expenses.
       properties:
         id:
           type: integer
@@ -423,38 +435,37 @@ components:
           readOnly: true
         name:
           type: string
-          maxLength: 255
+          readOnly: true
         expense_type:
-          $ref: '#/components/schemas/ExpenseTypeEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         supplier:
           type: string
-          maxLength: 255
+          readOnly: true
         reference:
           type: string
-          maxLength: 255
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        currency:
-          type: string
-          maxLength: 3
-        amount_display:
-          type: object
-          additionalProperties:
-            type: string
+          readOnly: true
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
           readOnly: true
         billing_period:
-          $ref: '#/components/schemas/BillingPeriodEnum'
-        valid_from:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        start_date:
           type: string
           format: date
-        valid_until:
+          readOnly: true
+        end_date:
           type: string
           format: date
+          readOnly: true
           nullable: true
         notes:
           type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -464,37 +475,44 @@ components:
           format: date-time
           readOnly: true
       required:
-      - amount
-      - amount_display
+      - billing_period
+      - cost
       - created_at
+      - end_date
       - expense_type
       - id
       - name
+      - notes
+      - reference
       - room
+      - start_date
+      - supplier
       - updated_at
-      - valid_from
     ExpensePayment:
       type: object
-      description: Read and write shape for payments. The expense is taken from the
-        URL, never the body.
+      description: Read shape for payments; ``paid_date`` is a calendar date (NAM-3).
       properties:
         id:
           type: integer
           readOnly: true
         transaction_type:
-          $ref: '#/components/schemas/TransactionTypeEnum'
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_at:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid_date:
           type: string
           format: date
+          readOnly: true
         reference:
           type: string
-          maxLength: 255
+          readOnly: true
         notes:
           type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -504,10 +522,13 @@ components:
           format: date-time
           readOnly: true
       required:
-      - amount
       - created_at
       - id
-      - paid_at
+      - notes
+      - paid_date
+      - reference
+      - total
+      - transaction_type
       - updated_at
     ExpensePaymentListSerializersExpensePaymentPaginatedResponse:
       type: object
@@ -561,6 +582,28 @@ components:
           $ref: '#/components/schemas/ExpensePayment'
       required:
       - data
+    ExpensePaymentWrite:
+      type: object
+      description: Write shape for payments (RW-1). The expense is taken from the
+        URL, never the body.
+      properties:
+        transaction_type:
+          $ref: '#/components/schemas/TransactionTypeEnum'
+        total:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: In the expense's currency.
+        paid_date:
+          type: string
+          format: date
+        reference:
+          type: string
+          maxLength: 255
+        notes:
+          type: string
+      required:
+      - paid_date
+      - total
     ExpenseTypeEnum:
       enum:
       - rent
@@ -593,84 +636,126 @@ components:
         * `service` - Service (legacy)
 
         * `other` - Other'
+    ExpenseWrite:
+      type: object
+      description: Write shape for expenses (RW-1). The room is taken from the URL,
+        never the body.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        expense_type:
+          $ref: '#/components/schemas/ExpenseTypeEnum'
+        supplier:
+          type: string
+          maxLength: 255
+        reference:
+          type: string
+          maxLength: 255
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: What the expense costs (FMT-2, FMT-7).
+        billing_period:
+          $ref: '#/components/schemas/BillingPeriodEnum'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+      required:
+      - cost
+      - expense_type
+      - name
+      - start_date
     FinancialReportItem:
       type: object
+      description: One expense row of the report (REL-15).
       properties:
         id:
           type: integer
         name:
           type: string
         expense_type:
-          type: string
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        pending_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        pending:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
         payment_status:
-          type: string
-        currency:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         billing_period:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         supplier:
           type: string
         reference:
           type: string
-        valid_from:
+        start_date:
           type: string
           format: date
-        valid_until:
+        end_date:
           type: string
           format: date
           nullable: true
-        room_id:
-          type: integer
-        room_name:
-          type: string
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
       required:
-      - amount
       - billing_period
-      - currency
+      - cost
+      - end_date
       - expense_type
       - id
       - name
-      - paid_amount
+      - paid
       - payment_status
-      - pending_amount
+      - pending
       - reference
-      - room_id
-      - room_name
+      - room
+      - start_date
       - supplier
-      - valid_from
-      - valid_until
+      x-embedded-resource: true
     FinancialReportPeriodBreakdown:
       type: object
       properties:
         billing_period:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         count:
           type: integer
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
       required:
-      - amount
       - billing_period
+      - cost
       - count
-      - paid_amount
+      - paid
     FinancialReportResponse:
       type: object
       properties:
@@ -709,31 +794,30 @@ components:
     FinancialReportRoomBreakdown:
       type: object
       properties:
-        room_id:
-          type: integer
-        room_name:
-          type: string
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         count:
           type: integer
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        pending_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        pending:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
       required:
-      - amount
+      - cost
       - count
-      - paid_amount
-      - pending_amount
-      - room_id
-      - room_name
+      - paid
+      - pending
+      - room
     FinancialReportSerializersFinancialReportResponseDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -746,72 +830,105 @@ components:
       type: object
       properties:
         status:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         count:
           type: integer
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
       required:
-      - amount
+      - cost
       - count
       - status
     FinancialReportSummary:
       type: object
       properties:
-        total_budgeted:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        total_paid:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        total_pending:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        total_refunded:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        budgeted:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        pending:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        refunded:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
         expense_count:
           type: integer
         payment_count:
           type: integer
       required:
+      - budgeted
       - expense_count
+      - paid
       - payment_count
-      - total_budgeted
-      - total_paid
-      - total_pending
-      - total_refunded
+      - pending
+      - refunded
     FinancialReportTypeBreakdown:
       type: object
       properties:
         expense_type:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         count:
           type: integer
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        paid_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-        pending_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        paid:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
+        pending:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          readOnly: true
       required:
-      - amount
+      - cost
       - count
       - expense_type
-      - paid_amount
-      - pending_amount
+      - paid
+      - pending
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+    Money:
+      type: object
+      description: 'FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO
+        4217 uppercase.'
+      properties:
+        amount:
+          type: string
+          description: Decimal string; never a float.
+          pattern: ^-?[0-9]+(\.[0-9]+)?$
+        currency:
+          type: string
+          description: ISO 4217 code, uppercase.
+          pattern: ^[A-Z]{3}$
+      required:
+      - amount
+      - currency
     ProblemDetail:
       type: object
       properties:

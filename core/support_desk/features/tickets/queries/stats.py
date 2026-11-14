@@ -37,7 +37,7 @@ def get_queue_stats(*, viewer: Any, days: int = 30) -> dict[str, Any]:
     )
     by_assignee = list(
         open_qs.filter(assignee__isnull=False)
-        .values("assignee_id", "assignee__username")
+        .values("assignee_id", "assignee__username", "assignee__display_name", "assignee__name")
         .annotate(count=Count("id"))
         .order_by("-count")[:20]
     )
@@ -77,7 +77,13 @@ def get_queue_stats(*, viewer: Any, days: int = 30) -> dict[str, Any]:
         ],
         "by_team": [{"team_id": r["team_id"], "name": r["team__name"] or "", "count": r["count"]} for r in by_team],
         "by_assignee": [
-            {"user_id": r["assignee_id"], "username": r["assignee__username"], "count": r["count"]} for r in by_assignee
+            {
+                "user_id": r["assignee_id"],
+                # REL-3 user name: display name, then name, then username.
+                "username": r["assignee__display_name"] or r["assignee__name"] or r["assignee__username"],
+                "count": r["count"],
+            }
+            for r in by_assignee
         ],
         "sla": sla,
         "created": recent["created"],

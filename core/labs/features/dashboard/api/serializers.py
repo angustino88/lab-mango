@@ -10,19 +10,22 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.search import SearchQueryMixin
+from core.common.api.summary_serializers import embedded_resource, user_display_name
+from core.common.api.wire_names import relation_object
 from core.infrastructure.storage.urls import get_media_url
+from core.labs.features.base.serializers import NamedReferenceSerializer
 from core.labs.models import ComputingActivityStatus
 from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES
 
 
-class DashboardQueryFilterSerializer(PageNumberQuerySerializer):
-    """Query parameter validation for dashboard bench listing."""
+class DashboardQueryFilterSerializer(SearchQueryMixin, PageNumberQuerySerializer):
+    """Query parameter validation for dashboard bench listing.
 
-    search = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        help_text="Case-insensitive text search across bench name, SKU, location, host, and remote user.",
-    )
+    ``q`` searches bench name, SKU, location, host and remote user (``search`` is a deprecated alias).
+    """
+
+    search_target = "search"
     bench_group = serializers.IntegerField(
         required=False,
         min_value=1,
@@ -70,11 +73,10 @@ class DashboardQueryFilterSerializer(PageNumberQuerySerializer):
 
 
 class DashboardBenchGroupSerializer(serializers.Serializer):
-    """Logical bench group descriptor."""
+    """Logical bench group relation (REL-3)."""
 
     id = serializers.IntegerField()
     name = serializers.CharField()
-    description = serializers.CharField(allow_blank=True, default="")
 
 
 class DashboardBenchTypeSerializer(serializers.Serializer):
@@ -87,22 +89,20 @@ class DashboardBenchTypeSerializer(serializers.Serializer):
 class DashboardLocationSerializer(serializers.Serializer):
     """Physical location placement details."""
 
-    station_id = serializers.IntegerField(allow_null=True)
-    station_name = serializers.CharField(allow_null=True, allow_blank=True)
-    room_id = serializers.IntegerField(allow_null=True)
-    room_name = serializers.CharField(allow_null=True, allow_blank=True)
-    building_name = serializers.CharField(allow_null=True, allow_blank=True)
+    station = NamedReferenceSerializer(allow_null=True)
+    room = NamedReferenceSerializer(allow_null=True)
+    building = NamedReferenceSerializer(allow_null=True)
     slot_label = serializers.CharField(allow_null=True, allow_blank=True)
 
 
 class DashboardUserSerializer(serializers.Serializer):
-    """User summary descriptor for booking ownership and activity."""
+    """User relation for booking ownership (REL-3)."""
 
     id = serializers.IntegerField()
-    username = serializers.CharField()
-    display_name = serializers.CharField(allow_blank=True, default="")
+    name = serializers.CharField()
 
 
+@embedded_resource
 class DashboardBookingSerializer(serializers.Serializer):
     """Booking information descriptor."""
 
@@ -114,6 +114,7 @@ class DashboardBookingSerializer(serializers.Serializer):
     user = DashboardUserSerializer(allow_null=True)
 
 
+@embedded_resource
 class DashboardComputingSerializer(serializers.Serializer):
     """Attached computing equipment and real-time remote session state."""
 
@@ -129,6 +130,7 @@ class DashboardComputingSerializer(serializers.Serializer):
     remote_ip = serializers.CharField(allow_null=True)
 
 
+@embedded_resource
 class DashboardBookingDetailSerializer(serializers.Serializer):
     """Dashboard detail schedule fields without booking-user identity."""
 
@@ -139,6 +141,7 @@ class DashboardBookingDetailSerializer(serializers.Serializer):
     status = serializers.CharField()
 
 
+@embedded_resource
 class DashboardComputingDetailSerializer(serializers.Serializer):
     """Dashboard detail computing summary without remote-access data."""
 
@@ -150,6 +153,7 @@ class DashboardComputingDetailSerializer(serializers.Serializer):
     is_stale = serializers.BooleanField(allow_null=True)
 
 
+@embedded_resource
 class DashboardEquipmentReferenceSerializer(serializers.Serializer):
     """Compact standard reference shape for attached equipment and licenses."""
 
@@ -182,6 +186,7 @@ def _equipment_activity_summary(equipment: Any) -> dict[str, Any] | None:
     }
 
 
+@embedded_resource
 class DashboardEquipmentItemSerializer(serializers.Serializer):
     """Assigned equipment resource descriptor."""
 
@@ -209,6 +214,7 @@ class DashboardEquipmentItemSerializer(serializers.Serializer):
         return _equipment_activity_summary(obj)
 
 
+@embedded_resource
 class DashboardEquipmentCategoryGroupSerializer(serializers.Serializer):
     id = serializers.IntegerField(allow_null=True)
     name = serializers.CharField()
@@ -243,11 +249,7 @@ class DashboardBenchSerializer(serializers.Serializer):
         bench_group_data = None
         if instance.bench_group_id:
             group = instance.bench_group
-            bench_group_data = {
-                "id": group.id,
-                "name": group.name,
-                "description": group.description or "",
-            }
+            bench_group_data = {"id": group.id, "name": group.name}  # REL-3
 
         bench_type_data = None
         if instance.type_id:
@@ -265,11 +267,9 @@ class DashboardBenchSerializer(serializers.Serializer):
         location_data = None
         if station or slot:
             location_data = {
-                "station_id": station.id if station else None,
-                "station_name": station.name if station else None,
-                "room_id": room.id if room else None,
-                "room_name": room.name if room else None,
-                "building_name": building.name if building else None,
+                "station": relation_object(station),  # REL-3, REL-4
+                "room": relation_object(room),
+                "building": relation_object(building),
                 "slot_label": (slot.label or slot.slot_code) if slot else None,
             }
 
@@ -286,17 +286,8 @@ class DashboardBenchSerializer(serializers.Serializer):
             }
             if self.include_remote_details:
                 creator = getattr(booking, "creator", None)
-                display_name = (
-                    getattr(creator, "display_name", "") or getattr(creator, "username", "") if creator else ""
-                )
                 current_booking_data["user"] = (
-                    {
-                        "id": creator.id,
-                        "username": creator.username,
-                        "display_name": display_name,
-                    }
-                    if creator
-                    else None
+                    {"id": creator.id, "name": user_display_name(creator)} if creator else None  # REL-3
                 )
 
         active_assignments = getattr(instance, "_active_equipment_assignments", None)
@@ -498,17 +489,8 @@ class DashboardBenchDetailSerializer(DashboardBenchSerializer):
             }
             if self.include_remote_details:
                 creator = getattr(booking, "creator", None)
-                display_name = (
-                    getattr(creator, "display_name", "") or getattr(creator, "username", "") if creator else ""
-                )
                 booking_data["user"] = (
-                    {
-                        "id": creator.id,
-                        "username": creator.username,
-                        "display_name": display_name,
-                    }
-                    if creator
-                    else None
+                    {"id": creator.id, "name": user_display_name(creator)} if creator else None  # REL-3
                 )
             upcoming_list.append(booking_data)
         data["upcoming_bookings"] = upcoming_list

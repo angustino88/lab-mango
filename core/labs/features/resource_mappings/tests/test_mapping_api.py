@@ -128,7 +128,7 @@ def test_mapping_endpoints_return_flat_placement_closure(client, placement, reso
         "id": placement["equipment_assignment"].pk,
         "role": "host",
         "position": 4,
-        "monitor": True,
+        "is_monitored": True,
         "assigned_at": equipment_row["bench_assignment"]["assigned_at"],
     }
     assert data["licenses"] == [

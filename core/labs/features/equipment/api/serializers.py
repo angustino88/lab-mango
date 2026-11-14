@@ -4,20 +4,26 @@ from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.pagination import PageNumberQuerySerializer
-from core.common.api.summary_serializers import StatusSummarySerializer
+from core.common.api.summary_serializers import (
+    ChoiceSerializer,
+    StatusSummarySerializer,
+    UserReferenceSerializer,
+    choice_field,
+    embedded_resource,
+    to_choice,
+)
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
     MoneySerializer,
     NamedReferenceSerializer,
-    ResourceOwnerSerializer,
     ResourceWriteSerializerMixin,
     UIDNamedReferenceSerializer,
     to_choice_reference,
     to_money,
 )
-from core.labs.features.equipment.api.capabilities import EQUIPMENT_CAPABILITIES, category_capabilities
+from core.labs.features.equipment.api.capabilities import category_capabilities
 from core.labs.models import (
     Equipment,
     EquipmentBooking,
@@ -46,13 +52,15 @@ class ComputingActivitySummarySerializer(StatusSummarySerializer):
     """Stored live activity, including assets without telemetry as unknown."""
 
 
+PLACEMENT_TARGET_CHOICES = [("bench", "Bench"), ("station", "Station"), ("room", "Room"), ("note", "Note")]
+
+
+@embedded_resource
 class EquipmentPlacementSerializer(serializers.Serializer):
-    """Where a unit is now: exactly one of bench, station, room, or only ``location_note``."""
+    """Where a unit is now (REL-15): exactly one of bench, station, room, or only ``location_note``."""
 
     id = serializers.IntegerField(read_only=True)
-    target_type = serializers.ChoiceField(
-        choices=("bench", "station", "room", "note"),
-        read_only=True,
+    target_type = serializers.SerializerMethodField(
         help_text="Which target is set; ``note`` means an untracked place described by location_note.",
     )
     bench = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
@@ -66,21 +74,27 @@ class EquipmentPlacementSerializer(serializers.Serializer):
     class Meta:
         ref_name = "EquipmentPlacement"
 
+    @extend_schema_field(ChoiceSerializer)
+    def get_target_type(self, obj) -> dict[str, str] | None:
+        value = obj["target_type"] if isinstance(obj, dict) else obj.target_type
+        return to_choice(value, PLACEMENT_TARGET_CHOICES)
 
+
+@embedded_resource
 class EquipmentLoanSerializer(serializers.Serializer):
-    """One loan line: who holds an item and until when. ``overdue`` is computed (open and past ``due_at``)."""
+    """One loan line (REL-15): who holds an item and until when. ``is_overdue`` is open and past ``due_at``."""
 
     id = serializers.IntegerField(read_only=True)
-    batch_id = serializers.IntegerField(read_only=True)
+    batch_id = serializers.IntegerField(read_only=True)  # REL-16: the slip has no name; read it by id
     equipment = UIDNamedReferenceSerializer(read_only=True)
-    borrower = ResourceOwnerSerializer(source="batch.borrower", read_only=True, allow_null=True)
+    borrower = UserReferenceSerializer(source="batch.borrower", read_only=True, allow_null=True)
     borrower_name = serializers.CharField(source="batch.borrower_label", read_only=True)
     borrower_contact = serializers.CharField(source="batch.borrower_contact", read_only=True)
     purpose = serializers.CharField(source="batch.purpose", read_only=True)
     booking_id = serializers.IntegerField(read_only=True, allow_null=True)
     handed_over_at = serializers.DateTimeField(read_only=True)
     due_at = serializers.DateTimeField(read_only=True)
-    overdue = serializers.SerializerMethodField()
+    is_overdue = serializers.SerializerMethodField()
     condition_out = serializers.CharField(read_only=True)
     returned_at = serializers.DateTimeField(read_only=True, allow_null=True)
     condition_in = serializers.CharField(read_only=True)
@@ -89,7 +103,7 @@ class EquipmentLoanSerializer(serializers.Serializer):
     class Meta:
         ref_name = "EquipmentLoan"
 
-    def get_overdue(self, obj) -> bool:
+    def get_is_overdue(self, obj) -> bool:
         return obj.returned_at is None and obj.due_at < timezone.now()
 
 
@@ -104,7 +118,7 @@ class EquipmentStatusChangeSerializer(serializers.Serializer):
     display_status = serializers.SerializerMethodField()
     previous_display_status = serializers.SerializerMethodField()
     occurred_at = serializers.DateTimeField(read_only=True)
-    actor = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    actor = UserReferenceSerializer(read_only=True, allow_null=True)
     reason = serializers.CharField(read_only=True)
     details = serializers.DictField(read_only=True)
 
@@ -120,8 +134,9 @@ class EquipmentStatusChangeSerializer(serializers.Serializer):
         return to_choice_reference(obj.previous_display_status, EquipmentDisplayStatus.choices)
 
 
+@embedded_resource
 class EquipmentReservationSerializer(serializers.Serializer):
-    """One reservation line: an item kept for a borrower over a window."""
+    """One reservation line (REL-15): an item kept for a borrower over a window."""
 
     id = serializers.IntegerField(read_only=True)
     booking_code = serializers.CharField(read_only=True)
@@ -157,7 +172,7 @@ class EquipmentLoanBatchSerializer(serializers.Serializer):
     """The loan slip: one borrower and purpose, with every item handed over on it."""
 
     id = serializers.IntegerField(read_only=True)
-    borrower = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    borrower = UserReferenceSerializer(read_only=True, allow_null=True)
     borrower_name = serializers.CharField(source="borrower_label", read_only=True)
     borrower_contact = serializers.CharField(read_only=True)
     purpose = serializers.CharField(read_only=True)
@@ -356,7 +371,9 @@ class EquipmentSerializer(AppModelSerializer):
     group = NamedReferenceSerializer(read_only=True, allow_null=True)
     last_calibrated_at = serializers.DateTimeField(read_only=True, allow_null=True)
     next_calibration_due_at = serializers.DateTimeField(read_only=True, allow_null=True)
-    calibration_overdue = serializers.BooleanField(read_only=True)
+    is_calibration_overdue = serializers.BooleanField(source="calibration_overdue", read_only=True)
+    is_calibration_required = serializers.BooleanField(source="calibration_required", read_only=True)
+    warranty_end_date = serializers.DateField(source="warranty_until", read_only=True, allow_null=True)
     display_status = serializers.SerializerMethodField(read_only=True)
     lifecycle_state = serializers.SerializerMethodField(read_only=True)
     condition = serializers.SerializerMethodField(read_only=True)
@@ -389,11 +406,11 @@ class EquipmentSerializer(AppModelSerializer):
             "firmware_version",
             "power_draw_w",
             "weight_kg",
-            "warranty_until",
-            "calibration_required",
+            "warranty_end_date",
+            "is_calibration_required",
             "last_calibrated_at",
             "next_calibration_due_at",
-            "calibration_overdue",
+            "is_calibration_overdue",
             "metadata",
             "replacement_date",
             "display_status",
@@ -523,6 +540,7 @@ class EquipmentChangeLifecycleSerializer(ResourceWriteSerializerMixin, serialize
     )
 
 
+@embedded_resource
 class EquipmentCategorySerializer(AppModelSerializer):
     capabilities = serializers.SerializerMethodField()
 
@@ -530,54 +548,72 @@ class EquipmentCategorySerializer(AppModelSerializer):
         model = EquipmentCategory
         fields = ("id", "key", "name", "definition", "capabilities")
 
-    @extend_schema_field({"type": "array", "items": {"type": "string", "enum": list(EQUIPMENT_CAPABILITIES)}})
-    def get_capabilities(self, obj):
-        """What units of the category can do, from the category's flags (redesign step 6)."""
-        return category_capabilities(obj)
+    @extend_schema_field(ChoiceSerializer(many=True))
+    def get_capabilities(self, obj) -> list[dict[str, str]]:
+        """What units of the category can do, from the category's flags (redesign step 6); ENU-1 items."""
+        return [to_choice(value) for value in category_capabilities(obj)]
 
 
+@embedded_resource
 class EquipmentKindSerializer(AppModelSerializer):
+    """Bundle item; ``category_id`` points to a category of the same bundle (REL-16)."""
+
     class Meta:
         model = EquipmentKind
-        fields = ("id", "category", "name")
+        fields = ("id", "category_id", "name")
 
 
+@embedded_resource
 class EquipmentTypeSerializer(AppModelSerializer):
+    """Bundle item; ``kind_id`` points to a kind of the same bundle (REL-16)."""
+
     class Meta:
         model = EquipmentType
-        fields = ("id", "kind", "name")
+        fields = ("id", "kind_id", "name")
 
 
+@embedded_resource
 class EquipmentManufacturerSerializer(AppModelSerializer):
     class Meta:
         model = EquipmentManufacturer
         fields = ("id", "name")
 
 
+@embedded_resource
 class ProductModelSpecificationSerializer(AppModelSerializer):
-    name = serializers.CharField(source="definition.name", read_only=True)
+    """A specification value owned by the product model (REL-15)."""
+
+    definition = NamedReferenceSerializer(read_only=True)
     unit = serializers.CharField(source="definition.unit", read_only=True)
-    value_type = serializers.CharField(source="definition.value_type", read_only=True)
+    value_type = choice_field(
+        SpecificationDefinition._meta.get_field("value_type").choices, source="definition.value_type"
+    )
 
     class Meta:
         model = ProductModelSpecification
-        fields = ("id", "definition_id", "name", "unit", "value_type", "value")
+        fields = ("id", "definition", "unit", "value_type", "value")
 
 
+@embedded_resource
 class SpecificationDefinitionSerializer(AppModelSerializer):
+    value_type = choice_field(SpecificationDefinition._meta.get_field("value_type").choices)
+
     class Meta:
         model = SpecificationDefinition
         fields = ("id", "name", "category_id", "unit", "value_type")
 
 
+@embedded_resource
 class EquipmentProductModelSerializer(AppModelSerializer):
+    """Bundle item; ``manufacturer_id`` points to a manufacturer of the same bundle (REL-16)."""
+
     specifications = ProductModelSpecificationSerializer(many=True, read_only=True)
 
     class Meta:
         model = EquipmentProductModel
         fields = (
             "id",
-            "manufacturer",
+            "manufacturer_id",
             "name",
             "default_power_draw_w",
             "default_weight_kg",
@@ -633,19 +669,22 @@ class EquipmentPlacementWriteSerializer(ResourceWriteSerializerMixin, serializer
 
 
 class DepartmentSerializer(AppModelSerializer):
+    is_active = serializers.BooleanField(source="active", required=False)
+
     class Meta:
         model = Department
-        fields = ("id", "name", "active", "created_at", "updated_at")
+        fields = ("id", "name", "is_active", "created_at", "updated_at")
         ref_name = "DepartmentCatalogItem"
 
 
 class GroupCatalogSerializer(AppModelSerializer):
-    department = DepartmentSerializer(read_only=True)
+    department = NamedReferenceSerializer(read_only=True, allow_null=True)  # REL-3, REL-7
     department_id = serializers.IntegerField(write_only=True, required=False)
+    is_active = serializers.BooleanField(source="active", required=False)
 
     class Meta:
         model = Group
-        fields = ("id", "name", "department", "department_id", "active", "created_at", "updated_at")
+        fields = ("id", "name", "department", "department_id", "is_active", "created_at", "updated_at")
         ref_name = "GroupCatalogItem"
 
 

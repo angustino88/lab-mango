@@ -278,6 +278,8 @@ paths:
         schema:
           type: string
           maxLength: 255
+        deprecated: true
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
       - in: query
         name: size_id
         schema:
@@ -1836,6 +1838,67 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Assign Equipment by Equipment ID
+    put:
+      operationId: labs_equipment_actions_assign_update_by_equipment_id
+      description: 'Deprecated alias for equipment assignment.
+
+
+        Use /api/labs/equipment/{equipment_id}/assignment instead.'
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Assign Equipment by Equipment ID
     delete:
       operationId: labs_equipment_actions_assign_destroy_by_equipment_id
       description: Deprecated alias for equipment assignment. Use /api/labs/equipment/{equipment_id}/assignment
@@ -2207,7 +2270,12 @@ paths:
   /api/labs/equipment/{equipment_id}/assignment:
     get:
       operationId: labs_equipment_assignment_retrieve_by_equipment_id
-      description: Assign equipment to a bench, or release its current assignment.
+      description: 'The equipment''s bench assignment, a singleton sub-resource: PUT
+        sets it, DELETE releases it.
+
+
+        POST is the deprecated way to set it (it creates nothing, so it is not a create);
+        it stays for one release.'
       parameters:
       - in: path
         name: equipment_id
@@ -2235,7 +2303,72 @@ paths:
       summary: Get Equipment Assignment by Equipment ID
     post:
       operationId: labs_equipment_assignment_create_by_equipment_id
-      description: Assign equipment to a bench, or release its current assignment.
+      description: 'Deprecated: use PUT to set the assignment (ACT-1; the assignment
+        is a sub-resource).'
+      parameters:
+      - in: path
+        name: equipment_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Equipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EquipmentAssignment'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Assign Equipment ment by Equipment ID
+    put:
+      operationId: labs_equipment_assignment_update_by_equipment_id
+      description: 'The equipment''s bench assignment, a singleton sub-resource: PUT
+        sets it, DELETE releases it.
+
+
+        POST is the deprecated way to set it (it creates nothing, so it is not a create);
+        it stays for one release.'
       parameters:
       - in: path
         name: equipment_id
@@ -2290,10 +2423,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-      summary: Assign Equipment ment by Equipment ID
+      summary: Update Equipment Assignment by Equipment ID
     delete:
       operationId: labs_equipment_assignment_destroy_by_equipment_id
-      description: Assign equipment to a bench, or release its current assignment.
+      description: 'The equipment''s bench assignment, a singleton sub-resource: PUT
+        sets it, DELETE releases it.
+
+
+        POST is the deprecated way to set it (it creates nothing, so it is not a create);
+        it stays for one release.'
       parameters:
       - in: path
         name: equipment_id
@@ -2995,6 +3133,8 @@ paths:
         schema:
           type: string
           maxLength: 255
+        deprecated: true
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
       - in: query
         name: size_id
         schema:
@@ -3279,7 +3419,7 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -3295,11 +3435,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -3364,7 +3512,7 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -3380,11 +3528,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -3517,11 +3673,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -3654,11 +3818,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -3780,15 +3952,15 @@ paths:
         filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
-        schema:
-          type: boolean
-          nullable: true
-      - in: query
         name: department_id
         schema:
           type: integer
           minimum: 1
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+          nullable: true
       - in: query
         name: page
         schema:
@@ -3801,11 +3973,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -3938,11 +4118,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4064,15 +4252,15 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
-        schema:
-          type: boolean
-          nullable: true
-      - in: query
         name: category_id
         schema:
           type: integer
           minimum: 1
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+          nullable: true
       - in: query
         name: page
         schema:
@@ -4085,11 +4273,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4211,7 +4407,7 @@ paths:
         and delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -4227,11 +4423,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4364,11 +4568,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4501,11 +4713,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4649,11 +4869,19 @@ paths:
           type: integer
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4776,15 +5004,15 @@ paths:
         and delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
-        schema:
-          type: boolean
-          nullable: true
-      - in: query
         name: equipment_type_id
         schema:
           type: integer
           minimum: 1
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+          nullable: true
       - in: query
         name: manufacturer_id
         schema:
@@ -4802,11 +5030,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4939,11 +5175,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -5076,11 +5320,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -5202,15 +5454,15 @@ paths:
         and delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
-        schema:
-          type: boolean
-          nullable: true
-      - in: query
         name: category_id
         schema:
           type: integer
           minimum: 1
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+          nullable: true
       - in: query
         name: page
         schema:
@@ -5223,11 +5475,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -5361,11 +5621,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -5487,7 +5755,7 @@ paths:
         delegates filtering and access checks to the owner-provided listing callback.
       parameters:
       - in: query
-        name: active
+        name: is_active
         schema:
           type: boolean
           nullable: true
@@ -5508,11 +5776,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -6021,16 +6297,6 @@ paths:
       summary: Get Groups Options
 components:
   schemas:
-    CapabilitiesEnum:
-      type: string
-      enum:
-      - assignable
-      - licensable
-      - status_tracking
-      - auditable
-      - bookable
-      - calibratable
-      - monitored
     CatalogOption:
       type: object
       description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
@@ -6061,13 +6327,26 @@ components:
           readOnly: true
       required:
       - data
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     ComputingActivity:
       type: object
       description: Read projection of the live activity state.
       properties:
         status:
           allOf:
-          - $ref: '#/components/schemas/ComputingActivityStatusEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         remote_user:
           type: string
@@ -6098,7 +6377,7 @@ components:
         inactive_reminder_count:
           type: integer
           readOnly: true
-        modified:
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -6106,13 +6385,13 @@ components:
       - booking_code
       - inactive_at
       - inactive_reminder_count
-      - modified
       - offline_at
       - remote_computer
       - remote_ip
       - remote_user
       - remote_user_display_name
       - status
+      - updated_at
     ComputingActivityDetailApiComputingActivityDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -6121,23 +6400,6 @@ components:
           $ref: '#/components/schemas/ComputingActivity'
       required:
       - data
-    ComputingActivityStatusEnum:
-      enum:
-      - offline
-      - free
-      - active
-      - inactive
-      - maintaining
-      type: string
-      description: '* `offline` - Offline
-
-        * `free` - Free
-
-        * `active` - Active
-
-        * `inactive` - Inactive
-
-        * `maintaining` - Maintaining'
     ComputingActivitySummary:
       type: object
       description: Stored live activity, including assets without telemetry as unknown.
@@ -6176,7 +6438,7 @@ components:
           maxLength: 255
         description:
           type: string
-        active:
+        is_active:
           type: boolean
       required:
       - name
@@ -6199,7 +6461,7 @@ components:
         name:
           type: string
           maxLength: 255
-        active:
+        is_active:
           type: boolean
         created_at:
           type: string
@@ -6266,13 +6528,18 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
         description:
           type: string
-        active:
+          readOnly: true
+        is_active:
           type: boolean
+          readOnly: true
       required:
+      - description
       - id
+      - is_active
       - name
     DepartmentReferenceCreateSerializersDepartmentCatalogRecordDetailResponse:
       type: object
@@ -6361,21 +6628,26 @@ components:
           readOnly: true
         resolution:
           type: string
+          readOnly: true
           description: Label shown in the select, e.g. QHD.
           maxLength: 255
         width_px:
           type: integer
           maximum: 32767
           minimum: 0
+          readOnly: true
           nullable: true
         height_px:
           type: integer
           maximum: 32767
           minimum: 0
+          readOnly: true
           nullable: true
       required:
+      - height_px
       - id
       - resolution
+      - width_px
     DisplayResolutionReferenceCreateSerializersDisplayResolutionCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -6459,15 +6731,18 @@ components:
           readOnly: true
         size:
           type: string
+          readOnly: true
           description: Label shown in the select, e.g. 27".
           maxLength: 255
         diagonal_in:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          readOnly: true
           nullable: true
           description: Diagonal in inches.
       required:
+      - diagonal_in
       - id
       - size
     DisplaySizeReferenceCreateSerializersDisplaySizeCatalogRecordDetailResponse:
@@ -6684,13 +6959,14 @@ components:
         capabilities:
           type: array
           items:
-            $ref: '#/components/schemas/CapabilitiesEnum'
+            $ref: '#/components/schemas/Choice'
           readOnly: true
       required:
       - capabilities
       - definition
       - id
       - name
+      x-embedded-resource: true
     EquipmentCategoryCatalogRecord:
       type: object
       properties:
@@ -6699,37 +6975,48 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         key:
+          type: string
+          readOnly: true
           nullable: true
           description: Stable code used by the code base (e.g. 'computing'). Filled
             from the name when empty. Renaming the category never changes it.
-          oneOf:
-          - type: string
-            maxLength: 32
-            pattern: ^[-a-zA-Z0-9_]+$
-          - type: string
-            maxLength: 0
+          maxLength: 32
+          pattern: ^[-a-zA-Z0-9_]+$
         definition:
           type: string
-        bookable:
+          readOnly: true
+        is_bookable:
           type: boolean
+          readOnly: true
           description: Units can be lent and reserved.
-        placeable_on_bench:
+        is_placeable_on_bench:
           type: boolean
+          readOnly: true
           description: Units can be assigned to a bench.
-        calibratable:
+        is_calibratable:
           type: boolean
+          readOnly: true
           description: Units may require calibration.
-        monitored:
+        is_monitored:
           type: boolean
+          readOnly: true
           description: Units carry computing columns and may run the monitoring agent
             (ComputingProfile).
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - definition
       - id
+      - is_active
+      - is_bookable
+      - is_calibratable
+      - is_monitored
+      - is_placeable_on_bench
+      - key
       - name
     EquipmentCategoryReferenceDetailSerializersEquipmentCategoryCatalogRecordDetailResponse:
       type: object
@@ -6979,13 +7266,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
-        warranty_until:
-          type: string
-          format: date
-          nullable: true
-        calibration_required:
-          type: boolean
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         lifecycle_state:
           allOf:
           - $ref: '#/components/schemas/EquipmentLifecycleStateEnum'
@@ -7047,6 +7327,13 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
+        warranty_end_date:
+          type: string
+          format: date
+          nullable: true
+        is_calibration_required:
+          type: boolean
+          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         material_id:
           type: integer
           nullable: true
@@ -7171,15 +7458,14 @@ components:
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           readOnly: true
           nullable: true
-        warranty_until:
+        warranty_end_date:
           type: string
           format: date
           readOnly: true
           nullable: true
-        calibration_required:
+        is_calibration_required:
           type: boolean
           readOnly: true
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         last_calibrated_at:
           type: string
           format: date-time
@@ -7190,7 +7476,7 @@ components:
           format: date-time
           readOnly: true
           nullable: true
-        calibration_overdue:
+        is_calibration_overdue:
           type: boolean
           readOnly: true
         metadata:
@@ -7294,8 +7580,6 @@ components:
       required:
       - acquisition_price
       - activity
-      - calibration_overdue
-      - calibration_required
       - category
       - channels
       - characteristics
@@ -7312,6 +7596,8 @@ components:
       - id
       - image_url
       - interfaces
+      - is_calibration_overdue
+      - is_calibration_required
       - kind
       - last_calibrated_at
       - lifecycle_state
@@ -7338,7 +7624,7 @@ components:
       - type
       - uid
       - updated_at
-      - warranty_until
+      - warranty_end_date
       - weight_kg
     EquipmentDetailAPIViewResponseCollectionEquipmentDetailDetailResponse:
       type: object
@@ -7377,6 +7663,7 @@ components:
       required:
       - id
       - resolution
+      x-embedded-resource: true
     EquipmentDisplayResolutionReference:
       type: object
       description: '``{id, name}`` for lookups whose label column is not ``name``.'
@@ -7403,6 +7690,7 @@ components:
       required:
       - id
       - size
+      x-embedded-resource: true
     EquipmentDisplaySizeReference:
       type: object
       description: '``{id, name}`` for lookups whose label column is not ``name``.'
@@ -7561,6 +7849,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -7577,6 +7866,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentInterfaceReferenceCreateSerializersEquipmentInterfaceCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -7758,15 +8048,14 @@ components:
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           readOnly: true
           nullable: true
-        warranty_until:
+        warranty_end_date:
           type: string
           format: date
           readOnly: true
           nullable: true
-        calibration_required:
+        is_calibration_required:
           type: boolean
           readOnly: true
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         last_calibrated_at:
           type: string
           format: date-time
@@ -7777,7 +8066,7 @@ components:
           format: date-time
           readOnly: true
           nullable: true
-        calibration_overdue:
+        is_calibration_overdue:
           type: boolean
           readOnly: true
         metadata:
@@ -7872,8 +8161,6 @@ components:
           nullable: true
       required:
       - acquisition_price
-      - calibration_overdue
-      - calibration_required
       - category
       - channels
       - characteristics
@@ -7889,6 +8176,8 @@ components:
       - id
       - image_url
       - interfaces
+      - is_calibration_overdue
+      - is_calibration_required
       - kind
       - last_calibrated_at
       - lifecycle_state
@@ -7915,36 +8204,38 @@ components:
       - type
       - uid
       - updated_at
-      - warranty_until
+      - warranty_end_date
       - weight_kg
     EquipmentKind:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: Bundle item; ``category_id`` points to a category of the same bundle
+        (REL-16).
       properties:
         id:
           type: integer
           readOnly: true
-        category:
+        category_id:
           type: integer
+          readOnly: true
         name:
           type: string
           maxLength: 120
       required:
-      - category
+      - category_id
       - id
       - name
+      x-embedded-resource: true
     EquipmentKindCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 120
-        active:
-          type: boolean
         category_id:
           type: integer
           minimum: 1
+        is_active:
+          type: boolean
       required:
       - category_id
       - name
@@ -8008,15 +8299,18 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         category_id:
           type: integer
           readOnly: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - category_id
       - id
+      - is_active
       - name
     EquipmentKindReferenceCreateSerializersEquipmentKindCatalogRecordDetailResponse:
       type: object
@@ -8137,8 +8431,8 @@ components:
         * `lost` - Lost'
     EquipmentLoan:
       type: object
-      description: 'One loan line: who holds an item and until when. ``overdue`` is
-        computed (open and past ``due_at``).'
+      description: 'One loan line (REL-15): who holds an item and until when. ``is_overdue``
+        is open and past ``due_at``.'
       properties:
         id:
           type: integer
@@ -8152,7 +8446,7 @@ components:
           readOnly: true
         borrower:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         borrower_name:
@@ -8176,7 +8470,7 @@ components:
           type: string
           format: date-time
           readOnly: true
-        overdue:
+        is_overdue:
           type: boolean
           readOnly: true
         condition_out:
@@ -8207,9 +8501,10 @@ components:
       - equipment
       - handed_over_at
       - id
-      - overdue
+      - is_overdue
       - purpose
       - returned_at
+      x-embedded-resource: true
     EquipmentLoanBatch:
       type: object
       description: 'The loan slip: one borrower and purpose, with every item handed
@@ -8220,7 +8515,7 @@ components:
           readOnly: true
         borrower:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         borrower_name:
@@ -8421,20 +8716,21 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentManufacturerCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 120
-        active:
-          type: boolean
-        categories:
+        category_ids:
           type: array
           items:
             type: integer
             minimum: 1
           maxItems: 100
+        is_active:
+          type: boolean
       required:
       - name
     EquipmentManufacturerCatalogDetailSerializersEquipmentManufacturerDetailResponse:
@@ -8497,17 +8793,20 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
-        categories:
+        category_ids:
           type: array
           items:
             type: integer
           readOnly: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
-      - categories
+      - category_ids
       - id
+      - is_active
       - name
     EquipmentManufacturerReferenceCreateSerializersEquipmentManufacturerCatalogRecordDetailResponse:
       type: object
@@ -8581,6 +8880,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentNetworkingProtocolOption:
       type: object
       properties:
@@ -8593,43 +8893,21 @@ components:
       required:
       - id
       - name
-    EquipmentOwner:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          readOnly: true
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-      required:
-      - id
-      - username
+      x-embedded-resource: true
     EquipmentPlacement:
       type: object
-      description: 'Where a unit is now: exactly one of bench, station, room, or only
-        ``location_note``.'
+      description: 'Where a unit is now (REL-15): exactly one of bench, station, room,
+        or only ``location_note``.'
       properties:
         id:
           type: integer
           readOnly: true
         target_type:
           allOf:
-          - $ref: '#/components/schemas/TargetTypeEnum'
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
-          description: 'Which target is set; ``note`` means an untracked place described
+          description: Which target is set; ``note`` means an untracked place described
             by location_note.
-
-
-            * `bench` - bench
-
-            * `station` - station
-
-            * `room` - room
-
-            * `note` - note'
         bench:
           allOf:
           - $ref: '#/components/schemas/LabsUIDNamedReference'
@@ -8668,6 +8946,7 @@ components:
       - room
       - station
       - target_type
+      x-embedded-resource: true
     EquipmentPlacementDetailSerializersEquipmentPlacementDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -8717,14 +8996,15 @@ components:
           default: 0
     EquipmentProductModel:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: Bundle item; ``manufacturer_id`` points to a manufacturer of the
+        same bundle (REL-16).
       properties:
         id:
           type: integer
           readOnly: true
-        manufacturer:
+        manufacturer_id:
           type: integer
+          readOnly: true
         name:
           type: string
           maxLength: 120
@@ -8747,15 +9027,22 @@ components:
           readOnly: true
       required:
       - id
-      - manufacturer
+      - manufacturer_id
       - name
       - specifications
+      x-embedded-resource: true
     EquipmentProductModelCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 120
+        manufacturer_id:
+          type: integer
+          minimum: 1
+        equipment_type_id:
+          type: integer
+          minimum: 1
         default_power_draw_w:
           type: integer
           maximum: 2147483647
@@ -8768,14 +9055,8 @@ components:
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
           description: Copied to new assets of this model when empty.
-        active:
+        is_active:
           type: boolean
-        manufacturer_id:
-          type: integer
-          minimum: 1
-        equipment_type_id:
-          type: integer
-          minimum: 1
       required:
       - equipment_type_id
       - manufacturer_id
@@ -8840,6 +9121,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         manufacturer_id:
           type: integer
@@ -8851,19 +9133,25 @@ components:
           type: integer
           maximum: 2147483647
           minimum: 0
+          readOnly: true
           nullable: true
           description: Copied to new assets of this model when empty.
         default_weight_kg:
           type: string
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          readOnly: true
           nullable: true
           description: Copied to new assets of this model when empty.
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
+      - default_power_draw_w
+      - default_weight_kg
       - equipment_type_id
       - id
+      - is_active
       - manufacturer_id
       - name
     EquipmentProductModelReferenceCreateSerializersEquipmentProductModelCatalogRecordDetailResponse:
@@ -8957,7 +9245,7 @@ components:
         owners:
           type: array
           items:
-            $ref: '#/components/schemas/EquipmentOwner'
+            $ref: '#/components/schemas/UserReference'
           readOnly: true
         categories:
           type: array
@@ -9030,7 +9318,8 @@ components:
       - data
     EquipmentReservation:
       type: object
-      description: 'One reservation line: an item kept for a borrower over a window.'
+      description: 'One reservation line (REL-15): an item kept for a borrower over
+        a window.'
       properties:
         id:
           type: integer
@@ -9073,6 +9362,7 @@ components:
       - id
       - starts_at
       - status
+      x-embedded-resource: true
     EquipmentReservationCancel:
       type: object
       description: Reject unsupported keys and return a stable error when SKU is supplied
@@ -9283,6 +9573,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentSampleCustomerOption:
       type: object
       properties:
@@ -9295,6 +9586,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     EquipmentStatusChange:
       type: object
       description: 'One change of ``display_status``. ``previous_display_status``
@@ -9323,7 +9615,7 @@ components:
           readOnly: true
         actor:
           allOf:
-          - $ref: '#/components/schemas/LabsResourceOwner'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         reason:
@@ -9404,34 +9696,36 @@ components:
       required:
       - id
       - username
+      x-embedded-resource: true
     EquipmentType:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: Bundle item; ``kind_id`` points to a kind of the same bundle (REL-16).
       properties:
         id:
           type: integer
           readOnly: true
-        kind:
+        kind_id:
           type: integer
+          readOnly: true
         name:
           type: string
           maxLength: 120
       required:
       - id
-      - kind
+      - kind_id
       - name
+      x-embedded-resource: true
     EquipmentTypeCatalogCreate:
       type: object
       properties:
         name:
           type: string
           maxLength: 120
-        active:
-          type: boolean
         kind_id:
           type: integer
           minimum: 1
+        is_active:
+          type: boolean
       required:
       - kind_id
       - name
@@ -9495,14 +9789,17 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         kind_id:
           type: integer
           readOnly: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - id
+      - is_active
       - kind_id
       - name
     EquipmentTypeReferenceCreateSerializersEquipmentTypeCatalogRecordDetailResponse:
@@ -9607,13 +9904,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
-        warranty_until:
-          type: string
-          format: date
-          nullable: true
-        calibration_required:
-          type: boolean
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
           oneOf:
           - type: string
@@ -9659,6 +9949,13 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
+        warranty_end_date:
+          type: string
+          format: date
+          nullable: true
+        is_calibration_required:
+          type: boolean
+          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         material_id:
           type: integer
           nullable: true
@@ -9739,12 +10036,12 @@ components:
           maxLength: 255
         description:
           type: string
-        active:
-          type: boolean
         department_id:
           type: integer
           minimum: 1
           nullable: true
+        is_active:
+          type: boolean
       required:
       - name
     GroupCatalogDetailSerializersGroupCatalogDetailResponse:
@@ -9768,12 +10065,13 @@ components:
           maxLength: 255
         department:
           allOf:
-          - $ref: '#/components/schemas/DepartmentCatalogItem'
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
+          nullable: true
         department_id:
           type: integer
           writeOnly: true
-        active:
+        is_active:
           type: boolean
         created_at:
           type: string
@@ -9841,18 +10139,23 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
         description:
           type: string
+          readOnly: true
         department_id:
           type: integer
           readOnly: true
           nullable: true
-        active:
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - department_id
+      - description
       - id
+      - is_active
       - name
     GroupReferenceCreateSerializersGroupCatalogRecordDetailResponse:
       type: object
@@ -9940,6 +10243,7 @@ components:
       required:
       - id
       - name
+      x-embedded-resource: true
     LabsMoney:
       type: object
       description: Standard `{amount, currency}` representation for monetary values.
@@ -9966,26 +10270,6 @@ components:
       required:
       - id
       - name
-    LabsResourceOwner:
-      type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-          pattern: ^[\w.@+-]+$
-          maxLength: 150
-        display_name:
-          type: string
-          maxLength: 255
-      required:
-      - id
-      - username
     LabsUIDNamedReference:
       type: object
       description: Compact `{id, uid, name}` object representation when target defines
@@ -10068,6 +10352,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -10148,6 +10433,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 25
       required:
       - id
@@ -10281,13 +10567,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
           nullable: true
-        warranty_until:
-          type: string
-          format: date
-          nullable: true
-        calibration_required:
-          type: boolean
-          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         mac_address:
           oneOf:
           - type: string
@@ -10333,6 +10612,13 @@ components:
           type: integer
           nullable: true
           description: Owning team; must belong to the selected department.
+        warranty_end_date:
+          type: string
+          format: date
+          nullable: true
+        is_calibration_required:
+          type: boolean
+          description: History and due dates are kept as ResourceServiceRecord (kind=calibration).
         material_id:
           type: integer
           nullable: true
@@ -10385,34 +10671,32 @@ components:
       - error
     ProductModelSpecification:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: A specification value owned by the product model (REL-15).
       properties:
         id:
           type: integer
           readOnly: true
-        definition_id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
+        definition:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
         unit:
           type: string
           readOnly: true
         value_type:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/Choice'
           readOnly: true
         value:
           type: string
           maxLength: 255
       required:
-      - definition_id
+      - definition
       - id
-      - name
       - unit
       - value
       - value_type
+      x-embedded-resource: true
     ProductModelSpecificationCatalogCreate:
       type: object
       properties:
@@ -10443,6 +10727,7 @@ components:
           readOnly: true
         value:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - definition_id
@@ -10553,6 +10838,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -10633,6 +10919,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -10703,17 +10990,17 @@ components:
         name:
           type: string
           maxLength: 120
+        category_id:
+          type: integer
+          minimum: 1
+          nullable: true
         unit:
           type: string
           maxLength: 20
         value_type:
           $ref: '#/components/schemas/ValueTypeEnum'
-        active:
+        is_active:
           type: boolean
-        category_id:
-          type: integer
-          minimum: 1
-          nullable: true
       required:
       - name
     SpecificationDefinitionCatalogRecord:
@@ -10724,6 +11011,7 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           maxLength: 120
         category_id:
           type: integer
@@ -10731,15 +11019,22 @@ components:
           nullable: true
         unit:
           type: string
+          readOnly: true
           maxLength: 20
         value_type:
-          $ref: '#/components/schemas/ValueTypeEnum'
-        active:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        is_active:
           type: boolean
+          readOnly: true
       required:
       - category_id
       - id
+      - is_active
       - name
+      - unit
+      - value_type
     SpecificationDefinitionReferenceCreateSerializersSpecificationDefinitionCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -10821,20 +11116,6 @@ components:
       required:
       - resource_count
       - status
-    TargetTypeEnum:
-      enum:
-      - bench
-      - station
-      - room
-      - note
-      type: string
-      description: '* `bench` - bench
-
-        * `station` - station
-
-        * `room` - room
-
-        * `note` - note'
     TechnicalUserCatalogCreate:
       type: object
       properties:
@@ -10851,6 +11132,7 @@ components:
           readOnly: true
         username:
           type: string
+          readOnly: true
           maxLength: 255
       required:
       - id
@@ -10928,6 +11210,20 @@ components:
           $ref: '#/components/schemas/TechnicalUserReferenceListSerializersTechnicalUserCatalogRecordPagination'
       required:
       - pagination
+    UserReference:
+      type: object
+      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
+        use it without importing users.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     ValueTypeEnum:
       enum:
       - text

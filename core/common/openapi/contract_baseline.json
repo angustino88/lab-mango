@@ -1,0 +1,4 @@
+{
+  "description": "Known API contract drift, shrinking to empty. New entries are never added by hand: fix the code. See docs/architecture/decisions/007-api-contract-gate.md.",
+  "violations": []
+}

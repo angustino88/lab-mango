@@ -106,7 +106,7 @@ def enroll(args: argparse.Namespace) -> int:
     if status != 200:
         print(f"GET /agent/info failed: {status} {info}", file=sys.stderr)
         return 1
-    backend_id = info["data"]["backend_id"]
+    backend_id = info["data"]["backend_key"]
     key = Ed25519PrivateKey.generate()
     der = key.public_key().public_bytes(
         encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo

@@ -3,15 +3,19 @@ from typing import Any
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from core.common.api.money import MoneyField
 from core.common.api.options import OptionsQueryMixin
-from core.common.api.summary_serializers import StatusSummarySerializer
+from core.common.api.summary_serializers import (
+    StatusSummarySerializer,
+    UserReferenceSerializer,
+    choice_field,
+)
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
     MoneySerializer,
     NamedReferenceSerializer,
-    ResourceOwnerSerializer,
     ResourceWriteSerializerMixin,
     UIDNamedReferenceSerializer,
     to_choice_reference,
@@ -49,6 +53,7 @@ class LicenseSerializer(AppModelSerializer):
     category = NamedReferenceSerializer(read_only=True, allow_null=True)
     restriction = NamedReferenceSerializer(read_only=True, allow_null=True)
     seats_in_use = serializers.IntegerField(read_only=True)
+    expires_at = serializers.DateTimeField(source="expiry_date", read_only=True, allow_null=True)
     status = serializers.SerializerMethodField(read_only=True)
     acquisition_price = serializers.SerializerMethodField(read_only=True)
 
@@ -71,7 +76,7 @@ class LicenseSerializer(AppModelSerializer):
             "seats",
             "seats_in_use",
             "max_version",
-            "expiry_date",
+            "expires_at",
             "status",
             "acquisition_price",
             "created_at",
@@ -104,7 +109,7 @@ class LicenseStatusSerializer(ResourceWriteSerializerMixin, serializers.Serializ
 class LicenseStatusRecordSerializer(AppModelSerializer):
     license = NamedReferenceSerializer(read_only=True)
     status = serializers.SerializerMethodField(read_only=True)
-    actor = ResourceOwnerSerializer(source="creator", read_only=True, allow_null=True)
+    actor = UserReferenceSerializer(source="creator", read_only=True, allow_null=True)
 
     class Meta:
         model = LicenseStatusRecord
@@ -139,6 +144,9 @@ class LicenseAssignmentResultSerializer(serializers.Serializer):
 class LicenseAgreementSerializer(AppModelSerializer):
     license = NamedReferenceSerializer(read_only=True)
     price = serializers.SerializerMethodField(read_only=True)
+    billing_period = choice_field(LicenseAgreement._meta.get_field("billing_period").choices)
+    start_date = serializers.DateField(source="valid_from", read_only=True)
+    end_date = serializers.DateField(source="valid_until", read_only=True, allow_null=True)
 
     class Meta:
         model = LicenseAgreement
@@ -147,8 +155,8 @@ class LicenseAgreementSerializer(AppModelSerializer):
             "license",
             "price",
             "billing_period",
-            "valid_from",
-            "valid_until",
+            "start_date",
+            "end_date",
             "created_at",
         )
         read_only_fields = fields
@@ -159,21 +167,24 @@ class LicenseAgreementSerializer(AppModelSerializer):
 
 
 class LicenseAgreementWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
+    price = MoneyField(amount="price", currency="currency", min_value=0)
+    start_date = serializers.DateField(source="valid_from")
+    end_date = serializers.DateField(source="valid_until", required=False, allow_null=True)
+
     class Meta:
         model = LicenseAgreement
         fields = (
             "price",
-            "currency",
             "billing_period",
-            "valid_from",
-            "valid_until",
+            "start_date",
+            "end_date",
         )
 
     def validate(self, attrs):
         valid_until = attrs.get("valid_until")
         valid_from = attrs.get("valid_from")
         if valid_until is not None and valid_from is not None and valid_until < valid_from:
-            raise serializers.ValidationError({"valid_until": "Must be on or after valid_from."})
+            raise serializers.ValidationError({"end_date": "Must be on or after start_date."})
         return attrs
 
 
@@ -185,7 +196,7 @@ class LicenseVendorSerializer(AppModelSerializer):
 
 
 class LicenseProductSerializer(AppModelSerializer):
-    vendor = LicenseVendorSerializer(read_only=True)
+    vendor = NamedReferenceSerializer(read_only=True, allow_null=True)  # REL-3
     vendor_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:

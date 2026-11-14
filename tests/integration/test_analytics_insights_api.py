@@ -114,7 +114,7 @@ class TestBookedVsUsed:
 
         data = auth_client.get(f"{BOOKED_VS_USED}?{QUERY}").json()["data"]
 
-        assert data["benches"][0]["bench_name"] == "Bench A"
+        assert data["benches"][0]["bench"]["name"] == "Bench A"
         assert data["benches"][0]["booked_hours"] == 2.0
         assert data["total_booked_hours"] == 2.0
 
@@ -164,7 +164,7 @@ class TestEquipmentAvailability:
         data = auth_client.get(f"{EQUIPMENT_AVAILABILITY}?{QUERY}").json()["data"]
 
         item = data["items"][0]
-        assert item["equipment_id"] == equipment.pk
+        assert item["equipment"]["id"] == equipment.pk
         assert item["outage_count"] == 1
         assert item["current_status"] == "broken"
         assert item["uptime_percent"] == 25.0

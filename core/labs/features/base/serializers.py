@@ -5,33 +5,34 @@ from decimal import Decimal
 from typing import Any
 
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api import AppModelSerializer
 from core.common.api.api_views import RESOURCE_FIELD_IMMUTABLE
+from core.common.api.summary_serializers import ChoiceSerializer, UserReferenceSerializer, to_choice
 from core.labs.models.auditing.resource_audit import ResourceAudit
+from core.labs.models.resource.base.downtime import DowntimeReason
 from core.labs.models.resource.base.resource import Department
 from core.labs.models.resource.base.service_record import ResourceServiceRecord
+from core.labs.models.resource.base.status import ResourceAvailability, ResourceCondition, ResourceLifecycleStatus
 
 User = get_user_model()
 
 
-class ResourceOwnerSerializer(AppModelSerializer):
-    class Meta:
-        model = User
-        fields = ("id", "username", "display_name")
-        ref_name = "LabsResourceOwner"
-
-
 class DepartmentSerializer(AppModelSerializer):
+    is_active = serializers.BooleanField(source="active", read_only=True)
+
     class Meta:
         model = Department
-        fields = ("id", "name", "description", "active")
+        fields = ("id", "name", "description", "is_active")
         ref_name = "LabsDepartment"
 
 
 class ResourceServiceRecordSerializer(AppModelSerializer):
-    performed_by = ResourceOwnerSerializer(read_only=True, allow_null=True)
+    kind = serializers.SerializerMethodField()
+    result = serializers.SerializerMethodField()
+    performed_by = UserReferenceSerializer(read_only=True, allow_null=True)
     certificate_url = serializers.FileField(source="certificate", read_only=True, allow_null=True)
 
     class Meta:
@@ -47,13 +48,21 @@ class ResourceServiceRecordSerializer(AppModelSerializer):
             "certificate_no",
             "certificate_url",
             "notes",
-            "created",
+            "created_at",
         )
         ref_name = "LabsResourceServiceRecord"
 
+    @extend_schema_field(ChoiceSerializer)
+    def get_kind(self, obj) -> dict[str, str] | None:
+        return to_choice(obj.kind, ResourceServiceRecord.Kind.choices)
+
+    @extend_schema_field(ChoiceSerializer)
+    def get_result(self, obj) -> dict[str, str] | None:
+        return to_choice(obj.result, ResourceServiceRecord.Result.choices)
+
 
 class ResourceAuditSerializer(AppModelSerializer):
-    auditor = ResourceOwnerSerializer(read_only=True)
+    auditor = UserReferenceSerializer(read_only=True)
 
     class Meta:
         model = ResourceAudit
@@ -114,9 +123,11 @@ class Coordinate3DSerializer(serializers.Serializer):
 
 
 class AvailabilitySourceSerializer(serializers.Serializer):
-    type = serializers.CharField(read_only=True)
+    """REL-13 polymorphic relation to the resource that blocks."""
+
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(read_only=True)
+    type = serializers.ChoiceField(choices=("bench", "station", "room"), read_only=True)
 
     class Meta:
         ref_name = "LabsAvailabilitySource"
@@ -125,15 +136,25 @@ class AvailabilitySourceSerializer(serializers.Serializer):
 class AvailabilitySerializer(serializers.Serializer):
     """Computed ``availability``: problems pass down from room to station to bench (never stored)."""
 
-    value = serializers.ChoiceField(choices=("available", "unavailable"), read_only=True)
+    status = serializers.SerializerMethodField()
     blocked_by = AvailabilitySourceSerializer(read_only=True, allow_null=True, help_text="The resource that blocks.")
-    condition = serializers.CharField(read_only=True, allow_null=True)
-    reason = serializers.CharField(
-        read_only=True, allow_null=True, help_text="Lifecycle status, or the downtime reason, of blocked_by."
-    )
+    condition = serializers.SerializerMethodField()
+    reason = serializers.SerializerMethodField(help_text="Lifecycle status, or the downtime reason, of blocked_by.")
 
     class Meta:
         ref_name = "LabsAvailability"
+
+    @extend_schema_field(ChoiceSerializer)
+    def get_status(self, obj) -> dict[str, str] | None:
+        return to_choice(obj["value"], ResourceAvailability.choices)
+
+    @extend_schema_field(ChoiceSerializer(allow_null=True))
+    def get_condition(self, obj) -> dict[str, str] | None:
+        return to_choice(obj["condition"], ResourceCondition.choices)
+
+    @extend_schema_field(ChoiceSerializer(allow_null=True))
+    def get_reason(self, obj) -> dict[str, str] | None:
+        return to_choice(obj["reason"], [*ResourceLifecycleStatus.choices, *DowntimeReason.choices])
 
 
 def to_choice_reference(value: str | None, choices=None) -> dict[str, str] | None:
@@ -186,7 +207,6 @@ __all__ = (
     "MoneySerializer",
     "NamedReferenceSerializer",
     "ResourceAuditSerializer",
-    "ResourceOwnerSerializer",
     "ResourceServiceRecordSerializer",
     "ResourceWriteSerializerMixin",
     "UIDNamedReferenceSerializer",

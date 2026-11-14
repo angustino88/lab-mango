@@ -31,13 +31,13 @@ class TestListApi:
         assert response.status_code == 200
         rows = response.json()["data"]
         assert [row["name"] for row in rows] == ["Alpha", "Beta", "Gamma"]
-        assert set(rows[0]) == {"id", "name", "code", "active", "starts_on", "ends_on"}
+        assert set(rows[0]) == {"id", "name", "code", "is_active", "start_date", "end_date"}
         assert response.json()["meta"]["pagination"]["count"] == 3
 
     def test_filters_by_search_and_active(self, api_client, projects):
         assert [r["name"] for r in api_client.get(URL, {"search": "alp"}).json()["data"]] == ["Alpha"]
         assert [r["code"] for r in api_client.get(URL, {"search": "G-1"}).json()["data"]] == ["G-1"]
-        assert [r["name"] for r in api_client.get(URL, {"active": "false"}).json()["data"]] == ["Gamma"]
+        assert [r["name"] for r in api_client.get(URL, {"is_active": "false"}).json()["data"]] == ["Gamma"]
 
     def test_unknown_query_parameter_is_bad_request(self, api_client, projects):
         assert api_client.get(URL, {"bogus": "1"}).status_code == 400

@@ -29,7 +29,7 @@ def test_report_updates_the_agents_own_computer(enrolled):  # noqa: F811
 
     assert response.status_code == 200, response.json()
     data = response.json()["data"]
-    assert data["status"] == "active" and data["remote_user"] == "alice"
+    assert data["status"]["value"] == "active" and data["remote_user"] == "alice"
     activity = ComputingActivity.objects.get(computing_id=identity.equipment_id)
     assert activity.booking_code == "BK-1"
     assert activity.last_agent_report_at is not None

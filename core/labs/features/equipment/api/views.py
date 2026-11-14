@@ -177,17 +177,30 @@ class ComputingActivitySummaryAPIView(EquipmentAPIView):
         return self.respond(get_computing_activity_summary())
 
 
-class EquipmentAssignmentAPIView(EquipmentAPIView):
-    """Assign equipment to a bench, or release its current assignment."""
+_ASSIGNMENT_WRITE = dict(
+    request=EquipmentAssignmentSerializer,
+    success=ResponseContract.success("EquipmentAssignment", EquipmentAssignmentResultSerializer),
+    bad_request=ResponseContract.bad_request(),
+    validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
+    not_found=ResponseContract.not_found(),
+    conflict=ResponseContract.conflict(),
+)
 
-    post_contract = OperationContract(
-        request=EquipmentAssignmentSerializer,
-        success=ResponseContract.success("EquipmentAssignment", EquipmentAssignmentResultSerializer),
-        bad_request=ResponseContract.bad_request(),
-        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
-        not_found=ResponseContract.not_found(),
-        conflict=ResponseContract.conflict(),
-    )
+
+@extend_schema_view(
+    post=extend_schema(
+        deprecated=True,
+        description="Deprecated: use PUT to set the assignment (ACT-1; the assignment is a sub-resource).",
+    ),
+)
+class EquipmentAssignmentAPIView(EquipmentAPIView):
+    """The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.
+
+    POST is the deprecated way to set it (it creates nothing, so it is not a create); it stays for one release.
+    """
+
+    put_contract = OperationContract(**_ASSIGNMENT_WRITE)
+    post_contract = OperationContract(**_ASSIGNMENT_WRITE)
     get_contract = OperationContract(
         success=ResponseContract.success("EquipmentAssignmentDetail", EquipmentAssignmentResultSerializer),
         not_found=ResponseContract.not_found(),
@@ -198,6 +211,12 @@ class EquipmentAssignmentAPIView(EquipmentAPIView):
     )
 
     def handle_post(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        response = self.handle_put(request, equipment_id, *args, **kwargs)
+        response["Deprecation"] = "true"  # CMP-3
+        response["Link"] = f'</api/labs/equipment/{equipment_id}/assignment>; rel="successor-version"'
+        return response
+
+    def handle_put(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
         serializer, error = self.validate_request()
         if error is not None:
             return error
