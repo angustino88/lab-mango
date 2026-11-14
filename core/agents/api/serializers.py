@@ -255,33 +255,48 @@ class AgentBookingExtendResponseSerializer(serializers.Serializer):
     data = AgentBookingExtendDataSerializer()
 
 
-class AgentBookingExtendErrorDetailSerializer(serializers.Serializer):
-    field = serializers.CharField(help_text="Always ends_at.")
-    code = serializers.ChoiceField(
-        choices=(
-            "already_ended",
-            "not_later",
-            "too_short",
-            "needs_approval",
-            "bench_not_in_service",
-            "bench_not_free",
-        ),
-        help_text="Why the extension was refused (stable).",
-    )
-    message = serializers.CharField()
-    limit_at = serializers.DateTimeField(
-        allow_null=True,
-        help_text=(
-            "too_short: earliest accepted end; needs_approval: latest accepted end; "
-            "bench_not_free: when the next booking starts; otherwise null."
-        ),
-    )
+
+
+EXTENSION_REFUSAL_CODES = (
+    "already_ended",
+    "not_later",
+    "too_short",
+    "needs_approval",
+    "bench_not_in_service",
+    "bench_not_free",
+)
+
+
+@extend_schema_field(
+    {
+        # DOC-4: a refusal names why and the bound; a validation failure names only the field and message.
+        "anyOf": [
+            {
+                "type": "object",
+                "required": ["field", "code", "message", "limit_at"],
+                "properties": {
+                    "field": {"type": "string"},
+                    "code": {"type": "string", "enum": list(EXTENSION_REFUSAL_CODES)},
+                    "message": {"type": "string"},
+                    "limit_at": {"type": "string", "format": "date-time", "nullable": True},
+                },
+            },
+            {
+                "type": "object",
+                "required": ["message"],
+                "properties": {"field": {"type": "string"}, "message": {"type": "string"}},
+            },
+        ]
+    }
+)
+class _ExtendErrorDetailField(serializers.DictField):
+    """One ``details`` item of an extension refusal or of a validation failure."""
 
 
 class AgentBookingExtendErrorBodySerializer(serializers.Serializer):
     code = serializers.CharField()
     message = serializers.CharField()
-    details = AgentBookingExtendErrorDetailSerializer(many=True)
+    details = serializers.ListField(child=_ExtendErrorDetailField())
     request_id = serializers.CharField()
 
 

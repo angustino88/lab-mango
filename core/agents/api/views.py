@@ -845,13 +845,8 @@ class AgentBookingExtendAPIView(APIView):
                 description="bench_not_free: another booking starts at details[0].limit_at",
             ),
             422: OpenApiResponse(
-                # DOC-4: both bodies occur. anyOf, not oneOf: a refusal is also a valid generic envelope.
-                response={
-                    "anyOf": [
-                        {"$ref": "#/components/schemas/AgentBookingExtendError"},
-                        {"$ref": "#/components/schemas/ErrorEnvelope"},
-                    ]
-                },
+                # DOC-4: one envelope; its details items are a refusal or a validation item.
+                response=AgentBookingExtendErrorSerializer,
                 description=(
                     "validation_failed: unknown field or invalid value (generic error envelope); "
                     "extension_not_allowed: details[0].code says why (already_ended, not_later, too_short, "

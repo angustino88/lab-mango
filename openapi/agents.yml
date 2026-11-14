@@ -178,9 +178,7 @@ paths:
           content:
             application/json:
               schema:
-                anyOf:
-                - $ref: '#/components/schemas/AgentBookingExtendError'
-                - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/AgentBookingExtendError'
           description: 'validation_failed: unknown field or invalid value (generic
             error envelope); extension_not_allowed: details[0].code says why (already_ended,
             not_later, too_short, needs_approval, bench_not_in_service) and details[0].limit_at
@@ -958,7 +956,39 @@ components:
         details:
           type: array
           items:
-            $ref: '#/components/schemas/AgentBookingExtendErrorDetail'
+            anyOf:
+            - type: object
+              required:
+              - field
+              - code
+              - message
+              - limit_at
+              properties:
+                field:
+                  type: string
+                code:
+                  type: string
+                  enum:
+                  - already_ended
+                  - not_later
+                  - too_short
+                  - needs_approval
+                  - bench_not_in_service
+                  - bench_not_free
+                message:
+                  type: string
+                limit_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+            - type: object
+              required:
+              - message
+              properties:
+                field:
+                  type: string
+                message:
+                  type: string
         request_id:
           type: string
       required:
@@ -966,42 +996,6 @@ components:
       - details
       - message
       - request_id
-    AgentBookingExtendErrorDetail:
-      type: object
-      properties:
-        field:
-          type: string
-          description: Always ends_at.
-        code:
-          allOf:
-          - $ref: '#/components/schemas/CodeEnum'
-          description: 'Why the extension was refused (stable).
-
-
-            * `already_ended` - already_ended
-
-            * `not_later` - not_later
-
-            * `too_short` - too_short
-
-            * `needs_approval` - needs_approval
-
-            * `bench_not_in_service` - bench_not_in_service
-
-            * `bench_not_free` - bench_not_free'
-        message:
-          type: string
-        limit_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: 'too_short: earliest accepted end; needs_approval: latest accepted
-            end; bench_not_free: when the next booking starts; otherwise null.'
-      required:
-      - code
-      - field
-      - limit_at
-      - message
     AgentBookingExtendRequest:
       type: object
       properties:
@@ -1296,26 +1290,6 @@ components:
       required:
       - label
       - value
-    CodeEnum:
-      enum:
-      - already_ended
-      - not_later
-      - too_short
-      - needs_approval
-      - bench_not_in_service
-      - bench_not_free
-      type: string
-      description: '* `already_ended` - already_ended
-
-        * `not_later` - not_later
-
-        * `too_short` - too_short
-
-        * `needs_approval` - needs_approval
-
-        * `bench_not_in_service` - bench_not_in_service
-
-        * `bench_not_free` - bench_not_free'
     ComputingActivityStatusEnum:
       enum:
       - offline

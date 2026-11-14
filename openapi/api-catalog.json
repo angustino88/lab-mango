@@ -775,8 +775,16 @@
                   "details": {
                     "type": "array",
                     "items": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        },
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ]
                     }
                   },
                   "request_id": {
@@ -810,77 +818,46 @@
           "description": "validation_failed: unknown field or invalid value (generic error envelope); extension_not_allowed: details[0].code says why (already_ended, not_later, too_short, needs_approval, bench_not_in_service) and details[0].limit_at gives the bound",
           "content_type": "application/json",
           "schema": {
-            "anyOf": [
-              {
+            "type": "object",
+            "properties": {
+              "error": {
                 "type": "object",
                 "properties": {
-                  "error": {
-                    "type": "object",
-                    "properties": {
-                      "code": {
-                        "type": "string"
-                      },
-                      "message": {
-                        "type": "string"
-                      },
-                      "details": {
-                        "type": "array",
-                        "items": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        },
+                        {
                           "type": "object",
                           "description": "(max nesting depth reached)"
                         }
-                      },
-                      "request_id": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "code",
-                      "details",
-                      "message",
-                      "request_id"
-                    ]
+                      ]
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
                   }
                 },
                 "required": [
-                  "error"
-                ]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "error": {
-                    "type": "object",
-                    "properties": {
-                      "code": {
-                        "type": "string"
-                      },
-                      "message": {
-                        "type": "string"
-                      },
-                      "details": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      },
-                      "request_id": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "code",
-                      "details",
-                      "message",
-                      "request_id"
-                    ]
-                  }
-                },
-                "required": [
-                  "error"
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
                 ]
               }
+            },
+            "required": [
+              "error"
             ]
           },
           "example_payload": {
