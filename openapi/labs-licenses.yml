@@ -2931,15 +2931,14 @@ components:
           type: string
           readOnly: true
           maxLength: 255
-        vendor:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        vendor_id:
+          type: integer
           readOnly: true
           nullable: true
       required:
       - id
       - name
-      - vendor
+      - vendor_id
     LicenseProductReferenceCreateSerializersLicenseProductCatalogRecordDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -3589,19 +3588,6 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
-    ReferenceRelation:
-      type: object
-      description: REL-3 relation ``{id, name}`` to a related reference row.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          readOnly: true
-      required:
-      - id
-      - name
     ResourceImage:
       type: object
       properties:

@@ -7932,21 +7932,20 @@ components:
       - weight_kg
     EquipmentKind:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: Bundle item; ``category_id`` points to a category of the same bundle
+        (REL-16).
       properties:
         id:
           type: integer
           readOnly: true
-        category:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+        category_id:
+          type: integer
           readOnly: true
         name:
           type: string
           maxLength: 120
       required:
-      - category
+      - category_id
       - id
       - name
       x-embedded-resource: true
@@ -8026,15 +8025,14 @@ components:
           type: string
           readOnly: true
           maxLength: 120
-        category:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        category_id:
+          type: integer
           readOnly: true
         is_active:
           type: boolean
           readOnly: true
       required:
-      - category
+      - category_id
       - id
       - is_active
       - name
@@ -8163,9 +8161,8 @@ components:
         id:
           type: integer
           readOnly: true
-        batch:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+        batch_id:
+          type: integer
           readOnly: true
         equipment:
           allOf:
@@ -8185,11 +8182,10 @@ components:
         purpose:
           type: string
           readOnly: true
-        booking:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          nullable: true
+        booking_id:
+          type: integer
           readOnly: true
+          nullable: true
         handed_over_at:
           type: string
           format: date-time
@@ -8217,8 +8213,8 @@ components:
           readOnly: true
           nullable: true
       required:
-      - batch
-      - booking
+      - batch_id
+      - booking_id
       - borrower
       - borrower_contact
       - borrower_name
@@ -8523,16 +8519,16 @@ components:
           type: string
           readOnly: true
           maxLength: 120
-        categories:
+        category_ids:
           type: array
           items:
-            $ref: '#/components/schemas/ReferenceRelation'
+            type: integer
           readOnly: true
         is_active:
           type: boolean
           readOnly: true
       required:
-      - categories
+      - category_ids
       - id
       - is_active
       - name
@@ -8724,15 +8720,14 @@ components:
           default: 0
     EquipmentProductModel:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: Bundle item; ``manufacturer_id`` points to a manufacturer of the
+        same bundle (REL-16).
       properties:
         id:
           type: integer
           readOnly: true
-        manufacturer:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+        manufacturer_id:
+          type: integer
           readOnly: true
         name:
           type: string
@@ -8756,7 +8751,7 @@ components:
           readOnly: true
       required:
       - id
-      - manufacturer
+      - manufacturer_id
       - name
       - specifications
       x-embedded-resource: true
@@ -8852,13 +8847,11 @@ components:
           type: string
           readOnly: true
           maxLength: 120
-        manufacturer:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        manufacturer_id:
+          type: integer
           readOnly: true
-        equipment_type:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        equipment_type_id:
+          type: integer
           readOnly: true
         default_power_draw_w:
           type: integer
@@ -8880,10 +8873,10 @@ components:
       required:
       - default_power_draw_w
       - default_weight_kg
-      - equipment_type
+      - equipment_type_id
       - id
       - is_active
-      - manufacturer
+      - manufacturer_id
       - name
     EquipmentProductModelReferenceCreateSerializersEquipmentProductModelCatalogRecordDetailResponse:
       type: object
@@ -9058,11 +9051,10 @@ components:
         booking_code:
           type: string
           readOnly: true
-        batch:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          nullable: true
+        batch_id:
+          type: integer
           readOnly: true
+          nullable: true
         equipment:
           allOf:
           - $ref: '#/components/schemas/LabsUIDNamedReference'
@@ -9085,7 +9077,7 @@ components:
           type: string
           readOnly: true
       required:
-      - batch
+      - batch_id
       - booking_code
       - borrower_name
       - cancellation_reason
@@ -9431,22 +9423,20 @@ components:
       x-embedded-resource: true
     EquipmentType:
       type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
+      description: Bundle item; ``kind_id`` points to a kind of the same bundle (REL-16).
       properties:
         id:
           type: integer
           readOnly: true
-        kind:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+        kind_id:
+          type: integer
           readOnly: true
         name:
           type: string
           maxLength: 120
       required:
       - id
-      - kind
+      - kind_id
       - name
       x-embedded-resource: true
     EquipmentTypeCatalogCreate:
@@ -9525,9 +9515,8 @@ components:
           type: string
           readOnly: true
           maxLength: 120
-        kind:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        kind_id:
+          type: integer
           readOnly: true
         is_active:
           type: boolean
@@ -9535,7 +9524,7 @@ components:
       required:
       - id
       - is_active
-      - kind
+      - kind_id
       - name
     EquipmentTypeReferenceCreateSerializersEquipmentTypeCatalogRecordDetailResponse:
       type: object
@@ -9878,16 +9867,15 @@ components:
         description:
           type: string
           readOnly: true
-        department:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        department_id:
+          type: integer
           readOnly: true
           nullable: true
         is_active:
           type: boolean
           readOnly: true
       required:
-      - department
+      - department_id
       - description
       - id
       - is_active
@@ -10454,22 +10442,20 @@ components:
         id:
           type: integer
           readOnly: true
-        product_model:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        product_model_id:
+          type: integer
           readOnly: true
-        definition:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        definition_id:
+          type: integer
           readOnly: true
         value:
           type: string
           readOnly: true
           maxLength: 255
       required:
-      - definition
+      - definition_id
       - id
-      - product_model
+      - product_model_id
       - value
     ProductModelSpecificationReferenceCreateSerializersProductModelSpecificationCatalogRecordDetailResponse:
       type: object
@@ -10531,19 +10517,6 @@ components:
           $ref: '#/components/schemas/ProductModelSpecificationReferenceListSerializersProductModelSpecificationCatalogRecordPagination'
       required:
       - pagination
-    ReferenceRelation:
-      type: object
-      description: REL-3 relation ``{id, name}`` to a related reference row.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          readOnly: true
-      required:
-      - id
-      - name
     ResourceImage:
       type: object
       properties:
@@ -10763,9 +10736,8 @@ components:
           type: string
           readOnly: true
           maxLength: 120
-        category:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        category_id:
+          type: integer
           readOnly: true
           nullable: true
         unit:
@@ -10780,7 +10752,7 @@ components:
           type: boolean
           readOnly: true
       required:
-      - category
+      - category_id
       - id
       - is_active
       - name

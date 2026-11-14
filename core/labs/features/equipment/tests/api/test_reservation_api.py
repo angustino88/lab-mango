@@ -60,7 +60,7 @@ def test_reserve_list_change_hand_over(coord, items):
     lines = coord.get(ROOT + "equipment-reservations", {"borrower_name": "anna"}).data["data"]
     assert {line["equipment"]["id"] for line in lines} == {items[0].pk, items[1].pk}
     detail = coord.get(ROOT + f"equipment/{items[0].pk}").data["data"]
-    assert [row["batch"]["id"] for row in detail["reservations"]] == [slip["id"]]
+    assert [row["batch_id"] for row in detail["reservations"]] == [slip["id"]]
 
     changed = coord.patch(
         ROOT + f"equipment-reservations/{slip['id']}", {"add_equipment_ids": [items[2].pk]}, format="json"

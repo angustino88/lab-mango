@@ -67,13 +67,6 @@ def get_station_for_mapping(*, station_id):
     ).values("id", "uid", "sku", "name", "room_id", "slot_id").first()
 
 
-# Related display columns let the mapping render `{id, name}` relations without extra queries (REL-3).
-_STATION_MAPPING_COLUMNS = ("id", "uid", "sku", "name", "room_id", "room__name", "room__sku", "slot_id", "slot__slot_code")
-_STATION_SLOT_MAPPING_COLUMNS = (
-    "id", "station_id", "station__name", "station__sku", "position_index", "slot_code", "label"
-)
-
-
 def station_mapping_rows(*, station_ids=(), room_ids=()):
     queryset = Station.objects.filter(deleted_at__isnull=True)
     if station_ids:
@@ -81,8 +74,8 @@ def station_mapping_rows(*, station_ids=(), room_ids=()):
     elif room_ids:
         queryset = queryset.filter(room_id__in=room_ids)
     else:
-        return queryset.none().values(*_STATION_MAPPING_COLUMNS)
-    return queryset.order_by("pk").values(*_STATION_MAPPING_COLUMNS)
+        return queryset.none().values("id", "uid", "sku", "name", "room_id", "slot_id")
+    return queryset.order_by("pk").values("id", "uid", "sku", "name", "room_id", "slot_id")
 
 
 def station_slot_mapping_rows(*, station_ids=(), room_ids=()):
@@ -92,8 +85,8 @@ def station_slot_mapping_rows(*, station_ids=(), room_ids=()):
     elif room_ids:
         queryset = queryset.filter(station__room_id__in=room_ids)
     else:
-        return queryset.none().values(*_STATION_SLOT_MAPPING_COLUMNS)
-    return queryset.order_by("pk").values(*_STATION_SLOT_MAPPING_COLUMNS)
+        return queryset.none().values("id", "station_id", "position_index", "slot_code", "label")
+    return queryset.order_by("pk").values("id", "station_id", "position_index", "slot_code", "label")
 
 
 def station_history(*, station_id):

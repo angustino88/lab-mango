@@ -98,7 +98,7 @@ class RoomSlotSerializer(AppModelSerializer):
         read_only=True, help_text="Deprecated: available, occupied, blocked or retired (occupied is computed)."
     )
     service_status = serializers.SerializerMethodField()
-    room = NamedReferenceSerializer(read_only=True)
+    room_id = serializers.IntegerField(read_only=True)  # REL-16: slots are read under their room
     slot_type = choice_field(RoomSlot._meta.get_field("slot_type").choices)
     is_occupied = serializers.BooleanField(source="occupied", read_only=True, default=False)
 
@@ -106,7 +106,7 @@ class RoomSlotSerializer(AppModelSerializer):
         model = RoomSlot
         fields = (
             "id",
-            "room",
+            "room_id",
             "row_index",
             "col_index",
             "slot_code",

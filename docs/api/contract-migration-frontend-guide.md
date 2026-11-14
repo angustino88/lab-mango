@@ -10,7 +10,8 @@ client types from it.
 | --- | --- | --- |
 | User as `{id, username, display_name}` or `{id, username, full_name}` | `{id, name}`, `name` = full name, else username | REL-3 |
 | Lookup with extras (`{id, name, code}`, status with `color_hex`) | `{id, name}`; read extras from the lookup's catalog endpoint | REL-3, REL-5 |
-| `room_id` (and other bare `<relation>_id`) in a response | `room: {id, name}` | NAM-8, RW-2 |
+| `room_id` + `room_name` (one relation split over two keys) | `room: {id, name}` | REL-4, REL-16 |
+| A bare id under the relation's own name (`"room": 5`) | `room_id` | REL-6 |
 | Enum as `"open"` | `{"value": "open", "label": "Open"}` | ENU-1 |
 | `active`, `occupied`, `overdue` | `is_active`, `is_occupied`, `is_overdue` | NAM-2 |
 | `created`, `modified` | `created_at`, `updated_at` | NAM-3 |
@@ -38,8 +39,8 @@ Sections are added as each feature is migrated.
 
 | Field | Before | After |
 | --- | --- | --- |
-| Parent relation, e.g. `city_id`, `country_id`, `vendor_id`, `category_id` | bare integer | relation object named after the field: `city: {id, name}` |
-| Many-to-many, e.g. `categories` | array of ids | array of `{id, name}`; written as `category_ids` |
+| Parent relation, e.g. `city_id`, `country_id`, `vendor_id`, `category_id` | | unchanged (id form, REL-16) |
+| Many-to-many, e.g. `categories` | array of ids under `categories` | `category_ids` on read and write |
 | `active` (and other booleans) | boolean | `is_active`; list filter `?active=` → `?is_active=`; write key `is_active` |
 | Choice columns (e.g. `value_type`) | plain string | `{value, label}` (written as the plain value) |
 | Lab project `starts_on` / `ends_on` | date | `start_date` / `end_date` (read and write) |
@@ -63,7 +64,7 @@ Sections are added as each feature is migrated.
 
 | Field | Before | After |
 | --- | --- | --- |
-| Room slot `room`, station slot `station` | bare integer | `{id, name}` |
+| Room slot `room`, station slot `station` | integer under the relation's name | `room_id`, `station_id` |
 | Slot `occupied` | boolean | `is_occupied` |
 | Room slot `slot_type` | plain string | `{value, label}` |
 | City `country`, building `city` | nested object with `code` / `country` | `{id, name}` |
@@ -144,12 +145,11 @@ The write body is unchanged, including its legacy aliases.
 | `warranty_until` (date) | read and write | `warranty_end_date` |
 | `calibration_required` | read and write | `is_calibration_required` |
 | `calibration_overdue` | | `is_calibration_overdue` |
-| Loan `batch_id`, `booking_id` | integers | `batch: {id, name}`, `booking: {id, name}` (name = booking code) |
+| Loan `batch_id`, `booking_id` | | unchanged |
 | Loan `overdue` | | `is_overdue` |
-| Reservation `batch_id` | integer | `batch: {id, name}` |
 | Placement `target_type` | plain string | `{value, label}` |
 | Category `capabilities` | array of strings | array of `{value, label}` |
-| Kind `category`, type `kind`, product model `manufacturer` | integer | `{id, name}` |
+| Reference-data kind `category`, type `kind`, product model `manufacturer` | integer under the relation's name | `category_id`, `kind_id`, `manufacturer_id` |
 | Product model specification `definition_id`, `name` | two keys | `definition: {id, name}`; `value_type` is `{value, label}` |
 | Reference-data `owners` | `{id, username}` | `{id, name}` |
 | Department / group catalog `active` | | `is_active`; group `department` is `{id, name}` |
@@ -159,10 +159,10 @@ The write body is unchanged, including its legacy aliases.
 
 | Before | After |
 | --- | --- |
-| Room slot `room_id`; station `room_id`, `slot_id`; station slot `station_id` | `room`, `slot`, `station` as `{id, name}` |
-| Bench `setup_location_id`, `station_slot_id` | `setup_location`, `station_slot` as `{id, name}` |
-| Equipment `bench_id`; assignment `monitor` | `bench: {id, name}`; `is_monitored` |
-| License assignment `equipment_id`, `license_id` | `equipment`, `license` as `{id, name}` |
+| Assignment `monitor` | `is_monitored` |
+
+References between collections stay in the id form (`room_id`, `station_id`, `bench_id`, …): the client
+joins them inside the response (REL-16).
 
 ### Dashboard
 

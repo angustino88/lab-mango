@@ -85,7 +85,10 @@ def test_compliant_resource_passes():
     [
         ({"name": {"type": "string"}, "id": {"type": "integer"}}, ("REL-1", "Thing")),
         ({"id": {"type": "integer"}, "name": {"type": "string"}, "uid": {"type": "string"}}, ("REL-2", "Thing")),
-        ({"id": {"type": "integer"}, "room_id": {"type": "integer"}}, ("NAM-8", "Thing.room_id")),
+        (
+            {"id": {"type": "integer"}, "room_id": {"type": "integer"}, "room": {"$ref": "#/components/schemas/Ref"}},
+            ("REL-6", "Thing.room_id"),
+        ),
         ({"id": {"type": "integer"}, "active": {"type": "boolean"}}, ("NAM-2", "Thing.active")),
         (
             {"id": {"type": "integer"}, "created": {"type": "string", "format": "date-time"}},
@@ -96,8 +99,17 @@ def test_compliant_resource_passes():
     ],
 )
 def test_response_rule_violations(properties, expected):
-    components = {"Thing": {"type": "object", "properties": properties}}
+    ref = {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}}
+    components = {"Thing": {"type": "object", "properties": properties}, "Ref": ref}
     assert expected in _rules(_document(components))
+
+
+def test_id_form_reference_alone_is_allowed():
+    """REL-16: `<relation>_id` is a valid reference form when it is the only form of that relation."""
+    components = {
+        "Thing": {"type": "object", "properties": {"id": {"type": "integer"}, "room_id": {"type": "integer"}}}
+    }
+    assert _rules(_document(components)) == set()
 
 
 def test_relation_with_extra_keys_is_rejected_unless_embedded():

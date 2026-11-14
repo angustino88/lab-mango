@@ -14,7 +14,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, connection, models, transaction
 
 from core.common.api.summary_serializers import to_choice
-from core.common.api.wire_names import relation_object, wire_name
+from core.common.api.wire_names import wire_name
 
 from .contracts import CreateReferenceInput, ReferenceResource, ReferenceResult
 from .exceptions import (
@@ -35,7 +35,7 @@ def _lock(key: str) -> None:
 def project_reference(resource: ReferenceResource, instance: Any) -> dict[str, Any]:
     """Explicit projection in the catalog record shape; never serialize arbitrary model fields.
 
-    Relations are ``{id, name}`` objects (REL-3, REL-9) and keys use the shared wire names (NAM-2, NAM-3).
+    References use the id form (REL-16) and keys use the shared wire names (NAM-2, NAM-3).
     """
     explicit = dict(resource.wire_names)
     result: dict[str, Any] = {"id": instance.pk}
@@ -43,9 +43,10 @@ def project_reference(resource: ReferenceResource, instance: Any) -> dict[str, A
         field = instance._meta.get_field(name)
         key = wire_name(field, explicit)
         if field.many_to_many:
-            result[key] = [relation_object(row) for row in getattr(instance, name).order_by("pk")]
+            singular = f"{name[:-3]}y" if name.endswith("ies") else (name[:-1] if name.endswith("s") else name)
+            result[f"{singular}_ids"] = sorted(row.pk for row in getattr(instance, name).all())
         elif field.many_to_one:
-            result[key] = relation_object(getattr(instance, name))
+            result[field.attname] = getattr(instance, field.attname)
         elif field.choices:
             result[key] = to_choice(getattr(instance, name), field.choices)
         else:

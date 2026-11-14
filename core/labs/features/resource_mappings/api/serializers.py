@@ -1,9 +1,11 @@
-"""Request and response contracts for flat graphic placement mappings."""
+"""Request and response contracts for flat graphic placement mappings.
+
+References between collections use the id form (REL-16): the client joins them inside this response.
+"""
 
 from rest_framework import serializers
 
 from core.common.api.summary_serializers import embedded_resource
-from core.labs.features.base.serializers import NamedReferenceSerializer
 
 
 class ResourceMappingQuerySerializer(serializers.Serializer):
@@ -31,7 +33,7 @@ class MappingRoomSerializer(serializers.Serializer):
 @embedded_resource
 class MappingRoomSlotSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    room = NamedReferenceSerializer()
+    room_id = serializers.IntegerField()
     row_index = serializers.IntegerField()
     col_index = serializers.IntegerField()
     slot_code = serializers.CharField()
@@ -48,14 +50,14 @@ class MappingStationSerializer(serializers.Serializer):
     uid = serializers.UUIDField(label="UID")
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
-    room = NamedReferenceSerializer(allow_null=True)
-    slot = NamedReferenceSerializer(allow_null=True)
+    room_id = serializers.IntegerField(allow_null=True)
+    slot_id = serializers.IntegerField(allow_null=True)
 
 
 @embedded_resource
 class MappingStationSlotSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    station = NamedReferenceSerializer()
+    station_id = serializers.IntegerField()
     position_index = serializers.IntegerField()
     slot_code = serializers.CharField()
     def get_fields(self):
@@ -70,8 +72,8 @@ class MappingBenchSerializer(serializers.Serializer):
     uid = serializers.UUIDField(label="UID")
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
-    setup_location = NamedReferenceSerializer(allow_null=True)
-    station_slot = NamedReferenceSerializer(allow_null=True)
+    setup_location_id = serializers.IntegerField(allow_null=True)
+    station_slot_id = serializers.IntegerField(allow_null=True)
 
 
 class MappingEquipmentCategorySerializer(serializers.Serializer):
@@ -100,7 +102,7 @@ class MappingEquipmentSerializer(serializers.Serializer):
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
     category = MappingEquipmentCategorySerializer(allow_null=True)
-    bench = NamedReferenceSerializer(allow_null=True)
+    bench_id = serializers.IntegerField(allow_null=True)
     bench_assignment = MappingEquipmentAssignmentSerializer(allow_null=True)
 
 
@@ -116,8 +118,8 @@ class MappingLicenseSerializer(serializers.Serializer):
 @embedded_resource
 class MappingLicenseAssignmentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    equipment = NamedReferenceSerializer()
-    license = NamedReferenceSerializer()
+    equipment_id = serializers.IntegerField()
+    license_id = serializers.IntegerField()
     assigned_at = serializers.DateTimeField()
 
 

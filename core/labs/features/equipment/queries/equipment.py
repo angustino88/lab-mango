@@ -138,7 +138,7 @@ def with_active_loan(queryset: QuerySet) -> QuerySet:
         Prefetch(
             "loans",
             queryset=EquipmentLoan.objects.filter(returned_at__isnull=True).select_related(
-                "batch", "batch__borrower", "equipment", "booking"
+                "batch", "batch__borrower", "equipment"
             ),
             to_attr=ACTIVE_LOAN_ATTR,
         )
@@ -243,8 +243,6 @@ def equipment_mapping_rows(*, equipment_ids=(), bench_ids=(), station_ids=(), ro
         .select_related("kind__category")
         .annotate(
             mapping_bench_id=Subquery(active_assignments.values("bench_id")[:1]),
-            mapping_bench_name=Subquery(active_assignments.values("bench__name")[:1]),
-            mapping_bench_sku=Subquery(active_assignments.values("bench__sku")[:1]),
             mapping_assignment_id=Subquery(active_assignments.values("id")[:1]),
             mapping_role=Subquery(active_assignments.values("role")[:1]),
             mapping_position=Subquery(active_assignments.values("position")[:1]),
@@ -286,8 +284,6 @@ def equipment_mapping_rows(*, equipment_ids=(), bench_ids=(), station_ids=(), ro
             "kind__category_id",
             "kind__category__name",
             "mapping_bench_id",
-            "mapping_bench_name",
-            "mapping_bench_sku",
             "mapping_assignment_id",
             "mapping_role",
             "mapping_position",
@@ -345,7 +341,7 @@ def equipment_form_reference_data(*, category_id: int | None = None) -> dict[str
     manufacturers = EquipmentManufacturer.objects.filter(active=True)
     product_models = EquipmentProductModel.objects.filter(
         active=True, manufacturer__active=True, equipment_type__active=True, equipment_type__kind__active=True
-    ).select_related("manufacturer")
+    )
     if category_id is not None:
         categories = categories.filter(pk=category_id)
         kinds = kinds.filter(category_id=category_id)
@@ -367,7 +363,7 @@ def equipment_form_reference_data(*, category_id: int | None = None) -> dict[str
     return {
         "categories": categories,
         "kinds": kinds,
-        "types": EquipmentType.objects.filter(active=True, kind__active=True, kind__in=kinds).select_related("kind"),
+        "types": EquipmentType.objects.filter(active=True, kind__active=True, kind__in=kinds),
         "manufacturers": manufacturers,
         "product_models": product_models,
         "groups": Group.objects.filter(active=True),

@@ -144,7 +144,7 @@ def test_equipment_parent_validation_and_many_to_many(client):
         HTTP_IDEMPOTENCY_KEY="manufacturer",
     )
     assert manufacturer.status_code == 201, manufacturer.data
-    assert manufacturer.data["data"]["categories"] == [{"id": category.pk, "name": "Synthetic inactive"}]
+    assert manufacturer.data["data"]["category_ids"] == [category.pk]
 
 
 @pytest.mark.django_db(transaction=True)

@@ -31,7 +31,9 @@ Do not restate those rules elsewhere; cite them by rule ID.
 - Paths have no trailing slash (TRN-4). Do not add slash aliases or a versioned prefix (VER-1).
 - `id` is the URL identifier; `uid` exists only where the resource type defines it (REL-1, REL-2).
   Relations are exactly `{"id", "name"}` objects (users too: `name` is the display name), never `owner` +
-  `owner_name` siblings and never a bare `owner_id` in a response (REL-3, REL-4, NAM-8). Do not reuse an older
+  `owner_name` siblings (REL-3, REL-4). Choose per reference what the consumer needs: `owner_id` when it only
+  joins or navigates by id, `owner: {id, name}` when a person reads the name (REL-16); one form per relation,
+  never both (REL-6), never a bare id under the relation's name (`"owner": 5`). Do not reuse an older
   serializer that returns `{id, username, ...}`. An owned child or bundle item is an embedded resource marked
   `x-embedded-resource` (REL-15). Enums are `{value, label}` (ENU-1); booleans `is_`/`has_`/`can_` (NAM-2);
   date-times `_at`, dates `_date` (NAM-3).

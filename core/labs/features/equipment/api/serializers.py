@@ -55,11 +55,6 @@ class ComputingActivitySummarySerializer(StatusSummarySerializer):
 PLACEMENT_TARGET_CHOICES = [("bench", "Bench"), ("station", "Station"), ("room", "Room"), ("note", "Note")]
 
 
-def loan_slip_relation(batch_id: int | None) -> dict | None:
-    """REL-3 relation to a loan slip; the slip has no name of its own, so it is labelled by number."""
-    return None if batch_id is None else {"id": batch_id, "name": f"Loan slip {batch_id}"}
-
-
 @embedded_resource
 class EquipmentPlacementSerializer(serializers.Serializer):
     """Where a unit is now (REL-15): exactly one of bench, station, room, or only ``location_note``."""
@@ -90,13 +85,13 @@ class EquipmentLoanSerializer(serializers.Serializer):
     """One loan line (REL-15): who holds an item and until when. ``is_overdue`` is open and past ``due_at``."""
 
     id = serializers.IntegerField(read_only=True)
-    batch = serializers.SerializerMethodField()
+    batch_id = serializers.IntegerField(read_only=True)  # REL-16: the slip has no name; read it by id
     equipment = UIDNamedReferenceSerializer(read_only=True)
     borrower = UserReferenceSerializer(source="batch.borrower", read_only=True, allow_null=True)
     borrower_name = serializers.CharField(source="batch.borrower_label", read_only=True)
     borrower_contact = serializers.CharField(source="batch.borrower_contact", read_only=True)
     purpose = serializers.CharField(source="batch.purpose", read_only=True)
-    booking = serializers.SerializerMethodField()
+    booking_id = serializers.IntegerField(read_only=True, allow_null=True)
     handed_over_at = serializers.DateTimeField(read_only=True)
     due_at = serializers.DateTimeField(read_only=True)
     is_overdue = serializers.SerializerMethodField()
@@ -107,17 +102,6 @@ class EquipmentLoanSerializer(serializers.Serializer):
 
     class Meta:
         ref_name = "EquipmentLoan"
-
-    @extend_schema_field(NamedReferenceSerializer)
-    def get_batch(self, obj) -> dict | None:
-        return loan_slip_relation(obj.batch_id)
-
-    @extend_schema_field(NamedReferenceSerializer(allow_null=True))
-    def get_booking(self, obj) -> dict | None:
-        # The booking code names the booking (REL-3); it is the loan's own booking, loaded with the loan.
-        if obj.booking_id is None:
-            return None
-        return {"id": obj.booking_id, "name": obj.booking.booking_code}
 
     def get_is_overdue(self, obj) -> bool:
         return obj.returned_at is None and obj.due_at < timezone.now()
@@ -156,7 +140,7 @@ class EquipmentReservationSerializer(serializers.Serializer):
 
     id = serializers.IntegerField(read_only=True)
     booking_code = serializers.CharField(read_only=True)
-    batch = serializers.SerializerMethodField()
+    batch_id = serializers.IntegerField(read_only=True, allow_null=True)
     equipment = UIDNamedReferenceSerializer(read_only=True)
     borrower_name = serializers.SerializerMethodField()
     starts_at = serializers.DateTimeField(read_only=True)
@@ -166,10 +150,6 @@ class EquipmentReservationSerializer(serializers.Serializer):
 
     class Meta:
         ref_name = "EquipmentReservation"
-
-    @extend_schema_field(NamedReferenceSerializer(allow_null=True))
-    def get_batch(self, obj) -> dict | None:
-        return loan_slip_relation(obj.batch_id)
 
     def get_borrower_name(self, obj) -> str:
         return obj.batch.borrower_label if obj.batch_id else ""
@@ -576,20 +556,20 @@ class EquipmentCategorySerializer(AppModelSerializer):
 
 @embedded_resource
 class EquipmentKindSerializer(AppModelSerializer):
-    category = NamedReferenceSerializer(read_only=True)
+    """Bundle item; ``category_id`` points to a category of the same bundle (REL-16)."""
 
     class Meta:
         model = EquipmentKind
-        fields = ("id", "category", "name")
+        fields = ("id", "category_id", "name")
 
 
 @embedded_resource
 class EquipmentTypeSerializer(AppModelSerializer):
-    kind = NamedReferenceSerializer(read_only=True)
+    """Bundle item; ``kind_id`` points to a kind of the same bundle (REL-16)."""
 
     class Meta:
         model = EquipmentType
-        fields = ("id", "kind", "name")
+        fields = ("id", "kind_id", "name")
 
 
 @embedded_resource
@@ -616,24 +596,24 @@ class ProductModelSpecificationSerializer(AppModelSerializer):
 
 @embedded_resource
 class SpecificationDefinitionSerializer(AppModelSerializer):
-    category = NamedReferenceSerializer(read_only=True)
     value_type = choice_field(SpecificationDefinition._meta.get_field("value_type").choices)
 
     class Meta:
         model = SpecificationDefinition
-        fields = ("id", "name", "category", "unit", "value_type")
+        fields = ("id", "name", "category_id", "unit", "value_type")
 
 
 @embedded_resource
 class EquipmentProductModelSerializer(AppModelSerializer):
-    manufacturer = NamedReferenceSerializer(read_only=True)
+    """Bundle item; ``manufacturer_id`` points to a manufacturer of the same bundle (REL-16)."""
+
     specifications = ProductModelSpecificationSerializer(many=True, read_only=True)
 
     class Meta:
         model = EquipmentProductModel
         fields = (
             "id",
-            "manufacturer",
+            "manufacturer_id",
             "name",
             "default_power_draw_w",
             "default_weight_kg",

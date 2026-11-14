@@ -251,22 +251,15 @@ def get_resource_mapping(
     return {"data": data, "meta": {"pagination": pagination}}
 
 
-def _relation(row: Any, id_key: str, prefix: str, *name_keys: str, sep: str = "__") -> dict[str, Any] | None:
-    """REL-3 `{id, name}` from a row's foreign key and its joined display columns (name, then fallback)."""
-    pk = row[id_key]
-    if pk is None:
-        return None
-    name = next((row[f"{prefix}{sep}{key}"] for key in name_keys if row.get(f"{prefix}{sep}{key}")), None)
-    return {"id": pk, "name": name or str(pk)}
-
-
 def _shape_row(collection: str, row: Any) -> dict[str, Any]:
     if collection == "rooms":
         return {key: row[key] for key in ("id", "uid", "sku", "name", "layout_rows", "layout_columns")}
     if collection == "room_slots":
-        return {"id": row["id"], "room": _relation(row, "room_id", "room", "name", "sku")} | {
+        return {
             key: row[key]
             for key in (
+                "id",
+                "room_id",
                 "row_index",
                 "col_index",
                 "slot_code",
@@ -278,19 +271,11 @@ def _shape_row(collection: str, row: Any) -> dict[str, Any]:
             )
         }
     if collection == "stations":
-        return {key: row[key] for key in ("id", "uid", "sku", "name")} | {
-            "room": _relation(row, "room_id", "room", "name", "sku"),
-            "slot": _relation(row, "slot_id", "slot", "slot_code"),
-        }
+        return {key: row[key] for key in ("id", "uid", "sku", "name", "room_id", "slot_id")}
     if collection == "station_slots":
-        return {"id": row["id"], "station": _relation(row, "station_id", "station", "name", "sku")} | {
-            key: row[key] for key in ("position_index", "slot_code", "label")
-        }
+        return {key: row[key] for key in ("id", "station_id", "position_index", "slot_code", "label")}
     if collection == "benches":
-        return {key: row[key] for key in ("id", "uid", "sku", "name")} | {
-            "setup_location": _relation(row, "setup_location_id", "setup_location", "name", "sku"),
-            "station_slot": _relation(row, "station_slot_id", "station_slot", "label", "slot_code"),
-        }
+        return {key: row[key] for key in ("id", "uid", "sku", "name", "setup_location_id", "station_slot_id")}
     if collection == "equipment":
         return {
             "id": row["id"],
@@ -298,7 +283,7 @@ def _shape_row(collection: str, row: Any) -> dict[str, Any]:
             "sku": row["sku"],
             "name": row["name"],
             "category": {"id": row["kind__category_id"], "name": row["kind__category__name"]},
-            "bench": _relation(row, "mapping_bench_id", "mapping_bench", "name", "sku", sep="_"),
+            "bench_id": row["mapping_bench_id"],
             "bench_assignment": (
                 {
                     "id": row["mapping_assignment_id"],
@@ -319,9 +304,4 @@ def _shape_row(collection: str, row: Any) -> dict[str, Any]:
             "name": row["name"],
             "category": {"id": row["category_id"], "name": row["category__name"]},
         }
-    return {
-        "id": row["id"],
-        "equipment": _relation(row, "equipment_id", "equipment", "name", "sku"),
-        "license": _relation(row, "license_id", "license", "name", "sku"),
-        "assigned_at": row["assigned_at"],
-    }
+    return {key: row[key] for key in ("id", "equipment_id", "license_id", "assigned_at")}

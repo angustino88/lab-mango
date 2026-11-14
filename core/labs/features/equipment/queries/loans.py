@@ -5,7 +5,7 @@ from django.db.models.functions import Now
 
 from core.labs.models import EquipmentLoan, EquipmentLoanBatch
 
-_LOAN_JOINS = ("batch", "batch__borrower", "equipment", "booking")
+_LOAN_JOINS = ("batch", "batch__borrower", "equipment")
 
 
 def get_active_loan(*, equipment_id: int) -> EquipmentLoan:
@@ -50,7 +50,7 @@ def get_loan_batch(*, batch_id: int) -> EquipmentLoanBatch:
     """One loan slip with its loan lines, reservation lines and reminders. 4 queries. Raises ``DoesNotExist``."""
     return (
         EquipmentLoanBatch.objects.select_related("borrower", "created_by")
-        .prefetch_related("loans__equipment", "loans__booking", "reservations__equipment", "reminders")
+        .prefetch_related("loans__equipment", "reservations__equipment", "reminders")
         .get(pk=batch_id)
     )
 

@@ -34245,19 +34245,14 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                  "description": "Bundle item; ``category_id`` points to a category of the same bundle (REL-16).",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
-                    "category": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "category_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "name": {
@@ -34266,7 +34261,7 @@
                     }
                   },
                   "required": [
-                    "category",
+                    "category_id",
                     "id",
                     "name"
                   ],
@@ -34289,7 +34284,7 @@
             "data": [
               {
                 "id": 1,
-                "category": {},
+                "category_id": 1,
                 "name": "string"
               }
             ]
@@ -34647,19 +34642,14 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                "description": "Bundle item; ``category_id`` points to a category of the same bundle (REL-16).",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "category": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "category_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "name": {
@@ -34668,7 +34658,7 @@
                   }
                 },
                 "required": [
-                  "category",
+                  "category_id",
                   "id",
                   "name"
                 ],
@@ -34682,7 +34672,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "category": {},
+              "category_id": 1,
               "name": "string"
             }
           }
@@ -35060,13 +35050,8 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "batch": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "batch_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "equipment": {
@@ -35100,15 +35085,10 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "booking": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "nullable": true,
-                      "readOnly": true
+                    "booking_id": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "handed_over_at": {
                       "type": "string",
@@ -35145,8 +35125,8 @@
                     }
                   },
                   "required": [
-                    "batch",
-                    "booking",
+                    "batch_id",
+                    "booking_id",
                     "borrower",
                     "borrower_contact",
                     "borrower_name",
@@ -35180,13 +35160,13 @@
             "data": [
               {
                 "id": 1,
-                "batch": {},
+                "batch_id": 1,
                 "equipment": {},
                 "borrower": {},
                 "borrower_name": "string",
                 "borrower_contact": "string",
                 "purpose": "string",
-                "booking": {},
+                "booking_id": 1,
                 "handed_over_at": "2026-10-20T12:00:00Z",
                 "due_at": "2026-10-20T12:00:00Z",
                 "is_overdue": true,
@@ -35751,13 +35731,8 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "batch": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "batch_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "equipment": {
@@ -35791,15 +35766,10 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "booking": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "nullable": true,
-                      "readOnly": true
+                    "booking_id": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "handed_over_at": {
                       "type": "string",
@@ -35836,8 +35806,8 @@
                     }
                   },
                   "required": [
-                    "batch",
-                    "booking",
+                    "batch_id",
+                    "booking_id",
                     "borrower",
                     "borrower_contact",
                     "borrower_name",
@@ -35864,13 +35834,13 @@
             "data": [
               {
                 "id": 1,
-                "batch": {},
+                "batch_id": 1,
                 "equipment": {},
                 "borrower": {},
                 "borrower_name": "string",
                 "borrower_contact": "string",
                 "purpose": "string",
-                "booking": {},
+                "booking_id": 1,
                 "handed_over_at": "2026-10-20T12:00:00Z",
                 "due_at": "2026-10-20T12:00:00Z",
                 "is_overdue": true,
@@ -36159,13 +36129,8 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "batch": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "batch_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "equipment": {
@@ -36199,15 +36164,10 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "booking": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "nullable": true,
-                      "readOnly": true
+                    "booking_id": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "handed_over_at": {
                       "type": "string",
@@ -36244,8 +36204,8 @@
                     }
                   },
                   "required": [
-                    "batch",
-                    "booking",
+                    "batch_id",
+                    "booking_id",
                     "borrower",
                     "borrower_contact",
                     "borrower_name",
@@ -36272,13 +36232,13 @@
             "data": [
               {
                 "id": 1,
-                "batch": {},
+                "batch_id": 1,
                 "equipment": {},
                 "borrower": {},
                 "borrower_name": "string",
                 "borrower_contact": "string",
                 "purpose": "string",
-                "booking": {},
+                "booking_id": 1,
                 "handed_over_at": "2026-10-20T12:00:00Z",
                 "due_at": "2026-10-20T12:00:00Z",
                 "is_overdue": true,
@@ -37136,19 +37096,14 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                  "description": "Bundle item; ``manufacturer_id`` points to a manufacturer of the same bundle (REL-16).",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
-                    "manufacturer": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "manufacturer_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "name": {
@@ -37180,7 +37135,7 @@
                   },
                   "required": [
                     "id",
-                    "manufacturer",
+                    "manufacturer_id",
                     "name",
                     "specifications"
                   ],
@@ -37203,7 +37158,7 @@
             "data": [
               {
                 "id": 1,
-                "manufacturer": {},
+                "manufacturer_id": 1,
                 "name": "string",
                 "default_power_draw_w": 1,
                 "default_weight_kg": "string",
@@ -37576,19 +37531,14 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                "description": "Bundle item; ``manufacturer_id`` points to a manufacturer of the same bundle (REL-16).",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "manufacturer": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "manufacturer_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "name": {
@@ -37620,7 +37570,7 @@
                 },
                 "required": [
                   "id",
-                  "manufacturer",
+                  "manufacturer_id",
                   "name",
                   "specifications"
                 ],
@@ -37634,7 +37584,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "manufacturer": {},
+              "manufacturer_id": 1,
               "name": "string",
               "default_power_draw_w": 1,
               "default_weight_kg": "string",
@@ -37842,15 +37792,10 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "batch": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "nullable": true,
-                      "readOnly": true
+                    "batch_id": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true
                     },
                     "equipment": {
                       "allOf": [
@@ -37885,7 +37830,7 @@
                     }
                   },
                   "required": [
-                    "batch",
+                    "batch_id",
                     "booking_code",
                     "borrower_name",
                     "cancellation_reason",
@@ -37915,7 +37860,7 @@
               {
                 "id": 1,
                 "booking_code": "string",
-                "batch": {},
+                "batch_id": 1,
                 "equipment": {},
                 "borrower_name": "string",
                 "starts_at": "2026-10-20T12:00:00Z",
@@ -39865,19 +39810,14 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                  "description": "Bundle item; ``kind_id`` points to a kind of the same bundle (REL-16).",
                   "properties": {
                     "id": {
                       "type": "integer",
                       "readOnly": true
                     },
-                    "kind": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "kind_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "name": {
@@ -39887,7 +39827,7 @@
                   },
                   "required": [
                     "id",
-                    "kind",
+                    "kind_id",
                     "name"
                   ],
                   "x-embedded-resource": true
@@ -39909,7 +39849,7 @@
             "data": [
               {
                 "id": 1,
-                "kind": {},
+                "kind_id": 1,
                 "name": "string"
               }
             ]
@@ -40277,19 +40217,14 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                "description": "Bundle item; ``kind_id`` points to a kind of the same bundle (REL-16).",
                 "properties": {
                   "id": {
                     "type": "integer",
                     "readOnly": true
                   },
-                  "kind": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "kind_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "name": {
@@ -40299,7 +40234,7 @@
                 },
                 "required": [
                   "id",
-                  "kind",
+                  "kind_id",
                   "name"
                 ],
                 "x-embedded-resource": true
@@ -40312,7 +40247,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "kind": {},
+              "kind_id": 1,
               "name": "string"
             }
           }
@@ -44251,13 +44186,8 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "department": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "department_id": {
+                      "type": "integer",
                       "readOnly": true,
                       "nullable": true
                     },
@@ -44267,7 +44197,7 @@
                     }
                   },
                   "required": [
-                    "department",
+                    "department_id",
                     "description",
                     "id",
                     "is_active",
@@ -44293,7 +44223,7 @@
                 "id": 1,
                 "name": "string",
                 "description": "string",
-                "department": {},
+                "department_id": 1,
                 "is_active": true
               }
             ]
@@ -44490,13 +44420,8 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "department": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "department_id": {
+                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   },
@@ -44506,7 +44431,7 @@
                   }
                 },
                 "required": [
-                  "department",
+                  "department_id",
                   "description",
                   "id",
                   "is_active",
@@ -44523,7 +44448,7 @@
               "id": 1,
               "name": "string",
               "description": "string",
-              "department": {},
+              "department_id": 1,
               "is_active": true
             }
           }
@@ -44734,13 +44659,8 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "department": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "department_id": {
+                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   },
@@ -44750,7 +44670,7 @@
                   }
                 },
                 "required": [
-                  "department",
+                  "department_id",
                   "description",
                   "id",
                   "is_active",
@@ -44767,7 +44687,7 @@
               "id": 1,
               "name": "string",
               "description": "string",
-              "department": {},
+              "department_id": 1,
               "is_active": true
             }
           }
@@ -45511,13 +45431,8 @@
                       "readOnly": true,
                       "maxLength": 120
                     },
-                    "category": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "category_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "is_active": {
@@ -45526,7 +45441,7 @@
                     }
                   },
                   "required": [
-                    "category",
+                    "category_id",
                     "id",
                     "is_active",
                     "name"
@@ -45550,7 +45465,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "category": {},
+                "category_id": 1,
                 "is_active": true
               }
             ]
@@ -45739,13 +45654,8 @@
                     "readOnly": true,
                     "maxLength": 120
                   },
-                  "category": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "category_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "is_active": {
@@ -45754,7 +45664,7 @@
                   }
                 },
                 "required": [
-                  "category",
+                  "category_id",
                   "id",
                   "is_active",
                   "name"
@@ -45769,7 +45679,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "category": {},
+              "category_id": 1,
               "is_active": true
             }
           }
@@ -45976,13 +45886,8 @@
                     "readOnly": true,
                     "maxLength": 120
                   },
-                  "category": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "category_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "is_active": {
@@ -45991,7 +45896,7 @@
                   }
                 },
                 "required": [
-                  "category",
+                  "category_id",
                   "id",
                   "is_active",
                   "name"
@@ -46006,7 +45911,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "category": {},
+              "category_id": 1,
               "is_active": true
             }
           }
@@ -46161,7 +46066,7 @@
                       "readOnly": true,
                       "maxLength": 120
                     },
-                    "categories": {
+                    "category_ids": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -46175,7 +46080,7 @@
                     }
                   },
                   "required": [
-                    "categories",
+                    "category_ids",
                     "id",
                     "is_active",
                     "name"
@@ -46199,7 +46104,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "categories": [
+                "category_ids": [
                   {}
                 ],
                 "is_active": true
@@ -46395,11 +46300,10 @@
                     "readOnly": true,
                     "maxLength": 120
                   },
-                  "categories": {
+                  "category_ids": {
                     "type": "array",
                     "items": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "type": "integer"
                     },
                     "readOnly": true
                   },
@@ -46409,7 +46313,7 @@
                   }
                 },
                 "required": [
-                  "categories",
+                  "category_ids",
                   "id",
                   "is_active",
                   "name"
@@ -46424,8 +46328,8 @@
             "data": {
               "id": 1,
               "name": "string",
-              "categories": [
-                {}
+              "category_ids": [
+                1
               ],
               "is_active": true
             }
@@ -46633,11 +46537,10 @@
                     "readOnly": true,
                     "maxLength": 120
                   },
-                  "categories": {
+                  "category_ids": {
                     "type": "array",
                     "items": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
+                      "type": "integer"
                     },
                     "readOnly": true
                   },
@@ -46647,7 +46550,7 @@
                   }
                 },
                 "required": [
-                  "categories",
+                  "category_ids",
                   "id",
                   "is_active",
                   "name"
@@ -46662,8 +46565,8 @@
             "data": {
               "id": 1,
               "name": "string",
-              "categories": [
-                {}
+              "category_ids": [
+                1
               ],
               "is_active": true
             }
@@ -47982,22 +47885,12 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "product_model": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "product_model_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
-                    "definition": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "definition_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "value": {
@@ -48007,9 +47900,9 @@
                     }
                   },
                   "required": [
-                    "definition",
+                    "definition_id",
                     "id",
-                    "product_model",
+                    "product_model_id",
                     "value"
                   ]
                 }
@@ -48030,8 +47923,8 @@
             "data": [
               {
                 "id": 1,
-                "product_model": {},
-                "definition": {},
+                "product_model_id": 1,
+                "definition_id": 1,
                 "value": "string"
               }
             ]
@@ -48217,22 +48110,12 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "product_model": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "product_model_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
-                  "definition": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "definition_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "value": {
@@ -48242,9 +48125,9 @@
                   }
                 },
                 "required": [
-                  "definition",
+                  "definition_id",
                   "id",
-                  "product_model",
+                  "product_model_id",
                   "value"
                 ]
               }
@@ -48256,8 +48139,8 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "product_model": {},
-              "definition": {},
+              "product_model_id": 1,
+              "definition_id": 1,
               "value": "string"
             }
           }
@@ -48459,22 +48342,12 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "product_model": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "product_model_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
-                  "definition": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "definition_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "value": {
@@ -48484,9 +48357,9 @@
                   }
                 },
                 "required": [
-                  "definition",
+                  "definition_id",
                   "id",
-                  "product_model",
+                  "product_model_id",
                   "value"
                 ]
               }
@@ -48498,8 +48371,8 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "product_model": {},
-              "definition": {},
+              "product_model_id": 1,
+              "definition_id": 1,
               "value": "string"
             }
           }
@@ -48674,22 +48547,12 @@
                       "readOnly": true,
                       "maxLength": 120
                     },
-                    "manufacturer": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "manufacturer_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
-                    "equipment_type": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "equipment_type_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "default_power_draw_w": {
@@ -48716,10 +48579,10 @@
                   "required": [
                     "default_power_draw_w",
                     "default_weight_kg",
-                    "equipment_type",
+                    "equipment_type_id",
                     "id",
                     "is_active",
-                    "manufacturer",
+                    "manufacturer_id",
                     "name"
                   ]
                 }
@@ -48741,8 +48604,8 @@
               {
                 "id": 1,
                 "name": "string",
-                "manufacturer": {},
-                "equipment_type": {},
+                "manufacturer_id": 1,
+                "equipment_type_id": 1,
                 "default_power_draw_w": 1,
                 "default_weight_kg": "string",
                 "is_active": true
@@ -48955,22 +48818,12 @@
                     "readOnly": true,
                     "maxLength": 120
                   },
-                  "manufacturer": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "manufacturer_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
-                  "equipment_type": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "equipment_type_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "default_power_draw_w": {
@@ -48997,10 +48850,10 @@
                 "required": [
                   "default_power_draw_w",
                   "default_weight_kg",
-                  "equipment_type",
+                  "equipment_type_id",
                   "id",
                   "is_active",
-                  "manufacturer",
+                  "manufacturer_id",
                   "name"
                 ]
               }
@@ -49013,8 +48866,8 @@
             "data": {
               "id": 1,
               "name": "string",
-              "manufacturer": {},
-              "equipment_type": {},
+              "manufacturer_id": 1,
+              "equipment_type_id": 1,
               "default_power_draw_w": 1,
               "default_weight_kg": "string",
               "is_active": true
@@ -49223,22 +49076,12 @@
                     "readOnly": true,
                     "maxLength": 120
                   },
-                  "manufacturer": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "manufacturer_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
-                  "equipment_type": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "equipment_type_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "default_power_draw_w": {
@@ -49265,10 +49108,10 @@
                 "required": [
                   "default_power_draw_w",
                   "default_weight_kg",
-                  "equipment_type",
+                  "equipment_type_id",
                   "id",
                   "is_active",
-                  "manufacturer",
+                  "manufacturer_id",
                   "name"
                 ]
               }
@@ -49281,8 +49124,8 @@
             "data": {
               "id": 1,
               "name": "string",
-              "manufacturer": {},
-              "equipment_type": {},
+              "manufacturer_id": 1,
+              "equipment_type_id": 1,
               "default_power_draw_w": 1,
               "default_weight_kg": "string",
               "is_active": true
@@ -50607,13 +50450,8 @@
                       "readOnly": true,
                       "maxLength": 120
                     },
-                    "category": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "category_id": {
+                      "type": "integer",
                       "readOnly": true,
                       "nullable": true
                     },
@@ -50637,7 +50475,7 @@
                     }
                   },
                   "required": [
-                    "category",
+                    "category_id",
                     "id",
                     "is_active",
                     "name",
@@ -50663,7 +50501,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "category": {},
+                "category_id": 1,
                 "unit": "string",
                 "value_type": {},
                 "is_active": true
@@ -50869,13 +50707,8 @@
                     "readOnly": true,
                     "maxLength": 120
                   },
-                  "category": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "category_id": {
+                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   },
@@ -50899,7 +50732,7 @@
                   }
                 },
                 "required": [
-                  "category",
+                  "category_id",
                   "id",
                   "is_active",
                   "name",
@@ -50916,7 +50749,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "category": {},
+              "category_id": 1,
               "unit": "string",
               "value_type": {},
               "is_active": true
@@ -51125,13 +50958,8 @@
                     "readOnly": true,
                     "maxLength": 120
                   },
-                  "category": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "category_id": {
+                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   },
@@ -51155,7 +50983,7 @@
                   }
                 },
                 "required": [
-                  "category",
+                  "category_id",
                   "id",
                   "is_active",
                   "name",
@@ -51172,7 +51000,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "category": {},
+              "category_id": 1,
               "unit": "string",
               "value_type": {},
               "is_active": true
@@ -51918,13 +51746,8 @@
                       "readOnly": true,
                       "maxLength": 120
                     },
-                    "kind": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "kind_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "is_active": {
@@ -51935,7 +51758,7 @@
                   "required": [
                     "id",
                     "is_active",
-                    "kind",
+                    "kind_id",
                     "name"
                   ]
                 }
@@ -51957,7 +51780,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "kind": {},
+                "kind_id": 1,
                 "is_active": true
               }
             ]
@@ -52146,13 +51969,8 @@
                     "readOnly": true,
                     "maxLength": 120
                   },
-                  "kind": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "kind_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "is_active": {
@@ -52163,7 +51981,7 @@
                 "required": [
                   "id",
                   "is_active",
-                  "kind",
+                  "kind_id",
                   "name"
                 ]
               }
@@ -52176,7 +51994,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "kind": {},
+              "kind_id": 1,
               "is_active": true
             }
           }
@@ -52383,13 +52201,8 @@
                     "readOnly": true,
                     "maxLength": 120
                   },
-                  "kind": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "kind_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "is_active": {
@@ -52400,7 +52213,7 @@
                 "required": [
                   "id",
                   "is_active",
-                  "kind",
+                  "kind_id",
                   "name"
                 ]
               }
@@ -52413,7 +52226,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "kind": {},
+              "kind_id": 1,
               "is_active": true
             }
           }
@@ -57702,13 +57515,8 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "batch": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "batch_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "equipment": {
@@ -57742,15 +57550,10 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "booking": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
+                  "booking_id": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "handed_over_at": {
                     "type": "string",
@@ -57787,8 +57590,8 @@
                   }
                 },
                 "required": [
-                  "batch",
-                  "booking",
+                  "batch_id",
+                  "booking_id",
                   "borrower",
                   "borrower_contact",
                   "borrower_name",
@@ -57813,13 +57616,13 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "batch": {},
+              "batch_id": 1,
               "equipment": {},
               "borrower": {},
               "borrower_name": "string",
               "borrower_contact": "string",
               "purpose": "string",
-              "booking": {},
+              "booking_id": 1,
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
               "is_overdue": true,
@@ -58138,13 +57941,8 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "batch": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "batch_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "equipment": {
@@ -58178,15 +57976,10 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "booking": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
+                  "booking_id": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "handed_over_at": {
                     "type": "string",
@@ -58223,8 +58016,8 @@
                   }
                 },
                 "required": [
-                  "batch",
-                  "booking",
+                  "batch_id",
+                  "booking_id",
                   "borrower",
                   "borrower_contact",
                   "borrower_name",
@@ -58249,13 +58042,13 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "batch": {},
+              "batch_id": 1,
               "equipment": {},
               "borrower": {},
               "borrower_name": "string",
               "borrower_contact": "string",
               "purpose": "string",
-              "booking": {},
+              "booking_id": 1,
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
               "is_overdue": true,
@@ -58584,13 +58377,8 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "batch": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "batch_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "equipment": {
@@ -58624,15 +58412,10 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "booking": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
+                  "booking_id": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "handed_over_at": {
                     "type": "string",
@@ -58669,8 +58452,8 @@
                   }
                 },
                 "required": [
-                  "batch",
-                  "booking",
+                  "batch_id",
+                  "booking_id",
                   "borrower",
                   "borrower_contact",
                   "borrower_name",
@@ -58695,13 +58478,13 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "batch": {},
+              "batch_id": 1,
               "equipment": {},
               "borrower": {},
               "borrower_name": "string",
               "borrower_contact": "string",
               "purpose": "string",
-              "booking": {},
+              "booking_id": 1,
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
               "is_overdue": true,
@@ -60233,13 +60016,8 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "batch": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "batch_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "equipment": {
@@ -60273,15 +60051,10 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "booking": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
+                  "booking_id": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
                   },
                   "handed_over_at": {
                     "type": "string",
@@ -60318,8 +60091,8 @@
                   }
                 },
                 "required": [
-                  "batch",
-                  "booking",
+                  "batch_id",
+                  "booking_id",
                   "borrower",
                   "borrower_contact",
                   "borrower_name",
@@ -60344,13 +60117,13 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "batch": {},
+              "batch_id": 1,
               "equipment": {},
               "borrower": {},
               "borrower_name": "string",
               "borrower_contact": "string",
               "purpose": "string",
-              "booking": {},
+              "booking_id": 1,
               "handed_over_at": "2026-10-20T12:00:00Z",
               "due_at": "2026-10-20T12:00:00Z",
               "is_overdue": true,
@@ -73306,13 +73079,8 @@
                       "readOnly": true,
                       "maxLength": 255
                     },
-                    "vendor": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "vendor_id": {
+                      "type": "integer",
                       "readOnly": true,
                       "nullable": true
                     }
@@ -73320,7 +73088,7 @@
                   "required": [
                     "id",
                     "name",
-                    "vendor"
+                    "vendor_id"
                   ]
                 }
               }
@@ -73341,7 +73109,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "vendor": {}
+                "vendor_id": 1
               }
             ]
           }
@@ -73525,13 +73293,8 @@
                     "readOnly": true,
                     "maxLength": 255
                   },
-                  "vendor": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "vendor_id": {
+                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   }
@@ -73539,7 +73302,7 @@
                 "required": [
                   "id",
                   "name",
-                  "vendor"
+                  "vendor_id"
                 ]
               }
             },
@@ -73551,7 +73314,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "vendor": {}
+              "vendor_id": 1
             }
           }
         },
@@ -73757,13 +73520,8 @@
                     "readOnly": true,
                     "maxLength": 255
                   },
-                  "vendor": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "vendor_id": {
+                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   }
@@ -73771,7 +73529,7 @@
                 "required": [
                   "id",
                   "name",
-                  "vendor"
+                  "vendor_id"
                 ]
               }
             },
@@ -73783,7 +73541,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "vendor": {}
+              "vendor_id": 1
             }
           }
         },
@@ -78682,13 +78440,8 @@
                       "readOnly": true,
                       "maxLength": 100
                     },
-                    "city": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "city_id": {
+                      "type": "integer",
                       "readOnly": true,
                       "nullable": true
                     },
@@ -78700,7 +78453,7 @@
                   },
                   "required": [
                     "address",
-                    "city",
+                    "city_id",
                     "id",
                     "name"
                   ]
@@ -78723,7 +78476,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "city": {},
+                "city_id": 1,
                 "address": "string"
               }
             ]
@@ -78913,13 +78666,8 @@
                     "readOnly": true,
                     "maxLength": 100
                   },
-                  "city": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "city_id": {
+                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   },
@@ -78931,7 +78679,7 @@
                 },
                 "required": [
                   "address",
-                  "city",
+                  "city_id",
                   "id",
                   "name"
                 ]
@@ -78945,7 +78693,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "city": {},
+              "city_id": 1,
               "address": "string"
             }
           }
@@ -79152,13 +78900,8 @@
                     "readOnly": true,
                     "maxLength": 100
                   },
-                  "city": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "city_id": {
+                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   },
@@ -79170,7 +78913,7 @@
                 },
                 "required": [
                   "address",
-                  "city",
+                  "city_id",
                   "id",
                   "name"
                 ]
@@ -79184,7 +78927,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "city": {},
+              "city_id": 1,
               "address": "string"
             }
           }
@@ -79339,19 +79082,14 @@
                       "readOnly": true,
                       "maxLength": 100
                     },
-                    "country": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "country_id": {
+                      "type": "integer",
                       "readOnly": true,
                       "nullable": true
                     }
                   },
                   "required": [
-                    "country",
+                    "country_id",
                     "id",
                     "name"
                   ]
@@ -79374,7 +79112,7 @@
               {
                 "id": 1,
                 "name": "string",
-                "country": {}
+                "country_id": 1
               }
             ]
           }
@@ -79558,19 +79296,14 @@
                     "readOnly": true,
                     "maxLength": 100
                   },
-                  "country": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "country_id": {
+                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   }
                 },
                 "required": [
-                  "country",
+                  "country_id",
                   "id",
                   "name"
                 ]
@@ -79584,7 +79317,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "country": {}
+              "country_id": 1
             }
           }
         },
@@ -79790,19 +79523,14 @@
                     "readOnly": true,
                     "maxLength": 100
                   },
-                  "country": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "country_id": {
+                    "type": "integer",
                     "readOnly": true,
                     "nullable": true
                   }
                 },
                 "required": [
-                  "country",
+                  "country_id",
                   "id",
                   "name"
                 ]
@@ -79816,7 +79544,7 @@
             "data": {
               "id": 1,
               "name": "string",
-              "country": {}
+              "country_id": 1
             }
           }
         },
@@ -95712,13 +95440,8 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "room": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "room_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "row_index": {
@@ -95834,7 +95557,7 @@
                     "max_load_kg",
                     "orientation_degrees",
                     "power_capacity_w",
-                    "room",
+                    "room_id",
                     "row_index",
                     "service_status",
                     "slot_code",
@@ -95864,7 +95587,7 @@
             "data": [
               {
                 "id": 1,
-                "room": {},
+                "room_id": 1,
                 "row_index": 1,
                 "col_index": 1,
                 "slot_code": "string",
@@ -98543,13 +98266,8 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "room": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "room_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "row_index": {
@@ -98665,7 +98383,7 @@
                     "max_load_kg",
                     "orientation_degrees",
                     "power_capacity_w",
-                    "room",
+                    "room_id",
                     "row_index",
                     "service_status",
                     "slot_code",
@@ -98695,7 +98413,7 @@
             "data": [
               {
                 "id": 1,
-                "room": {},
+                "room_id": 1,
                 "row_index": 1,
                 "col_index": 1,
                 "slot_code": "string",
@@ -108232,13 +107950,8 @@
                       "type": "integer",
                       "readOnly": true
                     },
-                    "station": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
+                    "station_id": {
+                      "type": "integer",
                       "readOnly": true
                     },
                     "position_index": {
@@ -108349,7 +108062,7 @@
                     "power_capacity_w",
                     "service_status",
                     "slot_code",
-                    "station",
+                    "station_id",
                     "status",
                     "updated_at",
                     "utilities",
@@ -108373,7 +108086,7 @@
             "data": [
               {
                 "id": 1,
-                "station": {},
+                "station_id": 1,
                 "position_index": 1,
                 "slot_code": "string",
                 "label": "string",
@@ -108670,13 +108383,8 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "station": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "station_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "position_index": {
@@ -108786,7 +108494,7 @@
                   "power_capacity_w",
                   "service_status",
                   "slot_code",
-                  "station",
+                  "station_id",
                   "status",
                   "updated_at",
                   "utilities",
@@ -108801,7 +108509,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "station": {},
+              "station_id": 1,
               "position_index": 1,
               "slot_code": "string",
               "label": "string",
@@ -109084,13 +108792,8 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "station": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "station_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "position_index": {
@@ -109200,7 +108903,7 @@
                   "power_capacity_w",
                   "service_status",
                   "slot_code",
-                  "station",
+                  "station_id",
                   "status",
                   "updated_at",
                   "utilities",
@@ -109215,7 +108918,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "station": {},
+              "station_id": 1,
               "position_index": 1,
               "slot_code": "string",
               "label": "string",
@@ -109463,13 +109166,8 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "station": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "station_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "position_index": {
@@ -109579,7 +109277,7 @@
                   "power_capacity_w",
                   "service_status",
                   "slot_code",
-                  "station",
+                  "station_id",
                   "status",
                   "updated_at",
                   "utilities",
@@ -109594,7 +109292,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "station": {},
+              "station_id": 1,
               "position_index": 1,
               "slot_code": "string",
               "label": "string",
@@ -110001,13 +109699,8 @@
                     "type": "integer",
                     "readOnly": true
                   },
-                  "station": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
+                  "station_id": {
+                    "type": "integer",
                     "readOnly": true
                   },
                   "position_index": {
@@ -110117,7 +109810,7 @@
                   "power_capacity_w",
                   "service_status",
                   "slot_code",
-                  "station",
+                  "station_id",
                   "status",
                   "updated_at",
                   "utilities",
@@ -110132,7 +109825,7 @@
           "example_payload": {
             "data": {
               "id": 1,
-              "station": {},
+              "station_id": 1,
               "position_index": 1,
               "slot_code": "string",
               "label": "string",

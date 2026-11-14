@@ -42030,12 +42030,8 @@
             "readOnly": true,
             "maxLength": 100
           },
-          "city": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "city_id": {
+            "type": "integer",
             "readOnly": true,
             "nullable": true
           },
@@ -42047,7 +42043,7 @@
         },
         "required": [
           "address",
-          "city",
+          "city_id",
           "id",
           "name"
         ]
@@ -42561,18 +42557,14 @@
             "readOnly": true,
             "maxLength": 100
           },
-          "country": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "country_id": {
+            "type": "integer",
             "readOnly": true,
             "nullable": true
           }
         },
         "required": [
-          "country",
+          "country_id",
           "id",
           "name"
         ]
@@ -47008,18 +47000,14 @@
       },
       "EquipmentKind": {
         "type": "object",
-        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "description": "Bundle item; ``category_id`` points to a category of the same bundle (REL-16).",
         "properties": {
           "id": {
             "type": "integer",
             "readOnly": true
           },
-          "category": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "category_id": {
+            "type": "integer",
             "readOnly": true
           },
           "name": {
@@ -47028,7 +47016,7 @@
           }
         },
         "required": [
-          "category",
+          "category_id",
           "id",
           "name"
         ],
@@ -47140,12 +47128,8 @@
             "readOnly": true,
             "maxLength": 120
           },
-          "category": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "category_id": {
+            "type": "integer",
             "readOnly": true
           },
           "is_active": {
@@ -47154,7 +47138,7 @@
           }
         },
         "required": [
-          "category",
+          "category_id",
           "id",
           "is_active",
           "name"
@@ -47317,12 +47301,8 @@
             "type": "integer",
             "readOnly": true
           },
-          "batch": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "batch_id": {
+            "type": "integer",
             "readOnly": true
           },
           "equipment": {
@@ -47354,14 +47334,10 @@
             "type": "string",
             "readOnly": true
           },
-          "booking": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true
+          "booking_id": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true
           },
           "handed_over_at": {
             "type": "string",
@@ -47398,8 +47374,8 @@
           }
         },
         "required": [
-          "batch",
-          "booking",
+          "batch_id",
+          "booking_id",
           "borrower",
           "borrower_contact",
           "borrower_name",
@@ -47818,10 +47794,10 @@
             "readOnly": true,
             "maxLength": 120
           },
-          "categories": {
+          "category_ids": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ReferenceRelation"
+              "type": "integer"
             },
             "readOnly": true
           },
@@ -47831,7 +47807,7 @@
           }
         },
         "required": [
-          "categories",
+          "category_ids",
           "id",
           "is_active",
           "name"
@@ -48097,18 +48073,14 @@
       },
       "EquipmentProductModel": {
         "type": "object",
-        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "description": "Bundle item; ``manufacturer_id`` points to a manufacturer of the same bundle (REL-16).",
         "properties": {
           "id": {
             "type": "integer",
             "readOnly": true
           },
-          "manufacturer": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "manufacturer_id": {
+            "type": "integer",
             "readOnly": true
           },
           "name": {
@@ -48139,7 +48111,7 @@
         },
         "required": [
           "id",
-          "manufacturer",
+          "manufacturer_id",
           "name",
           "specifications"
         ],
@@ -48270,20 +48242,12 @@
             "readOnly": true,
             "maxLength": 120
           },
-          "manufacturer": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "manufacturer_id": {
+            "type": "integer",
             "readOnly": true
           },
-          "equipment_type": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "equipment_type_id": {
+            "type": "integer",
             "readOnly": true
           },
           "default_power_draw_w": {
@@ -48310,10 +48274,10 @@
         "required": [
           "default_power_draw_w",
           "default_weight_kg",
-          "equipment_type",
+          "equipment_type_id",
           "id",
           "is_active",
-          "manufacturer",
+          "manufacturer_id",
           "name"
         ]
       },
@@ -48554,14 +48518,10 @@
             "type": "string",
             "readOnly": true
           },
-          "batch": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true
+          "batch_id": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true
           },
           "equipment": {
             "allOf": [
@@ -48595,7 +48555,7 @@
           }
         },
         "required": [
-          "batch",
+          "batch_id",
           "booking_code",
           "borrower_name",
           "cancellation_reason",
@@ -49098,18 +49058,14 @@
       },
       "EquipmentType": {
         "type": "object",
-        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "description": "Bundle item; ``kind_id`` points to a kind of the same bundle (REL-16).",
         "properties": {
           "id": {
             "type": "integer",
             "readOnly": true
           },
-          "kind": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "kind_id": {
+            "type": "integer",
             "readOnly": true
           },
           "name": {
@@ -49119,7 +49075,7 @@
         },
         "required": [
           "id",
-          "kind",
+          "kind_id",
           "name"
         ],
         "x-embedded-resource": true
@@ -49230,12 +49186,8 @@
             "readOnly": true,
             "maxLength": 120
           },
-          "kind": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "kind_id": {
+            "type": "integer",
             "readOnly": true
           },
           "is_active": {
@@ -49246,7 +49198,7 @@
         "required": [
           "id",
           "is_active",
-          "kind",
+          "kind_id",
           "name"
         ]
       },
@@ -50754,12 +50706,8 @@
             "type": "string",
             "readOnly": true
           },
-          "department": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "department_id": {
+            "type": "integer",
             "readOnly": true,
             "nullable": true
           },
@@ -50769,7 +50717,7 @@
           }
         },
         "required": [
-          "department",
+          "department_id",
           "description",
           "id",
           "is_active",
@@ -52886,12 +52834,8 @@
             "readOnly": true,
             "maxLength": 255
           },
-          "vendor": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "vendor_id": {
+            "type": "integer",
             "readOnly": true,
             "nullable": true
           }
@@ -52899,7 +52843,7 @@
         "required": [
           "id",
           "name",
-          "vendor"
+          "vendor_id"
         ]
       },
       "LicenseProductReferenceCreateSerializersLicenseProductCatalogRecordDetailResponse": {
@@ -53971,29 +53915,21 @@
           "name": {
             "type": "string"
           },
-          "setup_location": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "setup_location_id": {
+            "type": "integer",
             "nullable": true
           },
-          "station_slot": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "station_slot_id": {
+            "type": "integer",
             "nullable": true
           }
         },
         "required": [
           "id",
           "name",
-          "setup_location",
+          "setup_location_id",
           "sku",
-          "station_slot",
+          "station_slot_id",
           "uid"
         ],
         "x-embedded-resource": true
@@ -54022,12 +53958,8 @@
             ],
             "nullable": true
           },
-          "bench": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "bench_id": {
+            "type": "integer",
             "nullable": true
           },
           "bench_assignment": {
@@ -54040,8 +53972,8 @@
           }
         },
         "required": [
-          "bench",
           "bench_assignment",
+          "bench_id",
           "category",
           "id",
           "name",
@@ -54134,11 +54066,11 @@
           "id": {
             "type": "integer"
           },
-          "equipment": {
-            "$ref": "#/components/schemas/LabsNamedReference"
+          "equipment_id": {
+            "type": "integer"
           },
-          "license": {
-            "$ref": "#/components/schemas/LabsNamedReference"
+          "license_id": {
+            "type": "integer"
           },
           "assigned_at": {
             "type": "string",
@@ -54147,9 +54079,9 @@
         },
         "required": [
           "assigned_at",
-          "equipment",
+          "equipment_id",
           "id",
-          "license"
+          "license_id"
         ],
         "x-embedded-resource": true
       },
@@ -54237,8 +54169,8 @@
           "id": {
             "type": "integer"
           },
-          "room": {
-            "$ref": "#/components/schemas/LabsNamedReference"
+          "room_id": {
+            "type": "integer"
           },
           "row_index": {
             "type": "integer"
@@ -54274,7 +54206,7 @@
           "depth_mm",
           "id",
           "orientation_degrees",
-          "room",
+          "room_id",
           "row_index",
           "slot_code",
           "width_mm",
@@ -54299,29 +54231,21 @@
           "name": {
             "type": "string"
           },
-          "room": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "room_id": {
+            "type": "integer",
             "nullable": true
           },
-          "slot": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "slot_id": {
+            "type": "integer",
             "nullable": true
           }
         },
         "required": [
           "id",
           "name",
-          "room",
+          "room_id",
           "sku",
-          "slot",
+          "slot_id",
           "uid"
         ],
         "x-embedded-resource": true
@@ -54332,8 +54256,8 @@
           "id": {
             "type": "integer"
           },
-          "station": {
-            "$ref": "#/components/schemas/LabsNamedReference"
+          "station_id": {
+            "type": "integer"
           },
           "position_index": {
             "type": "integer"
@@ -54350,7 +54274,7 @@
           "label",
           "position_index",
           "slot_code",
-          "station"
+          "station_id"
         ],
         "x-embedded-resource": true
       },
@@ -56533,20 +56457,12 @@
             "type": "integer",
             "readOnly": true
           },
-          "product_model": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "product_model_id": {
+            "type": "integer",
             "readOnly": true
           },
-          "definition": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "definition_id": {
+            "type": "integer",
             "readOnly": true
           },
           "value": {
@@ -56556,9 +56472,9 @@
           }
         },
         "required": [
-          "definition",
+          "definition_id",
           "id",
-          "product_model",
+          "product_model_id",
           "value"
         ]
       },
@@ -58106,24 +58022,6 @@
           "result"
         ]
       },
-      "ReferenceRelation": {
-        "type": "object",
-        "description": "REL-3 relation ``{id, name}`` to a related reference row.",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "id",
-          "name"
-        ]
-      },
       "RefreshTokenResponse": {
         "type": "object",
         "properties": {
@@ -59648,12 +59546,8 @@
             "type": "integer",
             "readOnly": true
           },
-          "room": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "room_id": {
+            "type": "integer",
             "readOnly": true
           },
           "row_index": {
@@ -59766,7 +59660,7 @@
           "max_load_kg",
           "orientation_degrees",
           "power_capacity_w",
-          "room",
+          "room_id",
           "row_index",
           "service_status",
           "slot_code",
@@ -60590,12 +60484,8 @@
             "readOnly": true,
             "maxLength": 120
           },
-          "category": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReferenceRelation"
-              }
-            ],
+          "category_id": {
+            "type": "integer",
             "readOnly": true,
             "nullable": true
           },
@@ -60618,7 +60508,7 @@
           }
         },
         "required": [
-          "category",
+          "category_id",
           "id",
           "is_active",
           "name",
@@ -61490,12 +61380,8 @@
             "type": "integer",
             "readOnly": true
           },
-          "station": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
+          "station_id": {
+            "type": "integer",
             "readOnly": true
           },
           "position_index": {
@@ -61603,7 +61489,7 @@
           "power_capacity_w",
           "service_status",
           "slot_code",
-          "station",
+          "station_id",
           "status",
           "updated_at",
           "utilities",

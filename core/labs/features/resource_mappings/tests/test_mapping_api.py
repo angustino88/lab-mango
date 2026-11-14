@@ -123,7 +123,7 @@ def test_mapping_endpoints_return_flat_placement_closure(client, placement, reso
     assert data["benches"][0]["id"] == placement["bench"].pk
     equipment_row = data["equipment"][0]
     assert equipment_row["id"] == placement["equipment"].pk
-    assert equipment_row["bench"] == {"id": placement["bench"].pk, "name": placement["bench"].name or placement["bench"].sku}
+    assert equipment_row["bench_id"] == placement["bench"].pk
     assert equipment_row["bench_assignment"] == {
         "id": placement["equipment_assignment"].pk,
         "role": "host",
@@ -143,8 +143,8 @@ def test_mapping_endpoints_return_flat_placement_closure(client, placement, reso
     assert data["license_assignments"] == [
         {
             "id": placement["license_assignment"].pk,
-            "equipment": {"id": placement["equipment"].pk, "name": placement["equipment"].name},
-            "license": {"id": placement["license"].pk, "name": "Mapping license"},
+            "equipment_id": placement["equipment"].pk,
+            "license_id": placement["license"].pk,
             "assigned_at": data["license_assignments"][0]["assigned_at"],
         }
     ]
@@ -204,7 +204,7 @@ def test_unplaced_equipment_and_soft_deleted_descendants_are_excluded(client, pl
     assert response.status_code == 200
     data = response.json()["data"]
     assert [row["id"] for row in data["equipment"]] == [equipment.pk]
-    assert data["equipment"][0]["bench"] is None
+    assert data["equipment"][0]["bench_id"] is None
     assert data["equipment"][0]["bench_assignment"] is None
     assert all(not rows for name, rows in data.items() if name != "equipment")
 

@@ -18,20 +18,7 @@ from rest_framework.response import Response
 from .api_views import AppAPIView, AppListAPIView
 from .pagination import PageNumberQuerySerializer
 from .summary_serializers import choice_field
-from .wire_names import relation_name, wire_name
-
-
-class ReferenceRelationSerializer(serializers.Serializer):
-    """REL-3 relation ``{id, name}`` to a related reference row."""
-
-    id = serializers.IntegerField(source="pk", read_only=True)
-    name = serializers.SerializerMethodField()
-
-    class Meta:
-        ref_name = "ReferenceRelation"
-
-    def get_name(self, obj: Any) -> str:
-        return relation_name(obj)
+from .wire_names import wire_name
 
 
 def _renamed(field: Any, *, source: str, wire: str, read_only: bool = False, **overrides: Any) -> Any:
@@ -80,15 +67,15 @@ def reference_urlpatterns(
         field = resource.model._meta.get_field(field_name)
         wire = wire_name(field, explicit_names)
         if field.many_to_one:
-            # NAM-6 write input and filter `<relation>_id`; REL-3 relation object on read (NAM-8).
+            # REL-16 id form: catalog records are joined by id; the same `<relation>_id` is read, written and
+            # filtered (NAM-6), and the parent catalog supplies the name.
             inputs[field.attname] = serializers.IntegerField(
                 min_value=1, required=not field.blank, allow_null=field.null
             )
-            relation_source = {"source": field_name} if wire != field_name else {}
-            outputs[wire] = ReferenceRelationSerializer(read_only=True, allow_null=field.null, **relation_source)
+            outputs[field.attname] = serializers.IntegerField(read_only=True, allow_null=field.null)
             query[field.attname] = serializers.IntegerField(required=False, min_value=1)
         elif field.many_to_many:
-            # NAM-6 `<relation>_ids` input with replace semantics; REL-9 array of relation objects on read.
+            # REL-9 / REL-16 id form: `<relation>_ids` read and written (replace semantics).
             if field_name.endswith("ies"):
                 singular = f"{field_name[:-3]}y"
             else:
@@ -99,7 +86,12 @@ def reference_urlpatterns(
                 required=not field.blank,
                 source=field_name,
             )
-            outputs[wire] = ReferenceRelationSerializer(source=f"{field_name}.all", many=True, read_only=True)
+            outputs[f"{singular}_ids"] = serializers.SerializerMethodField()
+
+            def related_ids(self, obj, key=field_name) -> list[int]:
+                return sorted(row.pk for row in getattr(obj, key).all())
+
+            outputs[f"get_{singular}_ids"] = related_ids
         else:
             model_input = shape.fields[field_name]
             label_rules = {"required": True, "allow_blank": False} if field_name == resource.label else {}

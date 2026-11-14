@@ -35,8 +35,6 @@ RELATION_SHAPES = (
 )
 """REL-3 and REL-13: the only key sequences a relation object may have."""
 
-ALLOWED_ID_SUFFIX_NAMES = frozenset({"request_id"})
-"""NAM-8: the only response keys ending in ``_id`` that are not relation inputs (ERR-4)."""
 
 SERVER_MANAGED_WRITE_NAMES = frozenset({"id", "uid", "created_at", "updated_at", "created_by", "updated_by"})
 """BDY-7 / WRT-1: keys a request body never writes."""
@@ -196,15 +194,28 @@ def _check_response_object(schema: _Schema, location: str, node: dict[str, Any],
         resolved, ref = schema.resolve(raw)
         field = f"{location}.{key}"
 
-        if (key.endswith("_id") or key.endswith("_ids")) and key not in ALLOWED_ID_SUFFIX_NAMES:
-            found.add(
-                Violation(
-                    "NAM-8",
-                    field,
-                    "responses never expose `<relation>_id`; return a relation object (RW-2) or rename a "
-                    "non-reference identifier with `_key`",
+        for suffix in ("_id", "_ids"):
+            relation = key[: -len(suffix)] if key.endswith(suffix) else None
+            if (
+                relation
+                and relation in visible
+                and _object_properties(schema.resolve(visible[relation])[0]) is not None
+            ):
+                found.add(
+                    Violation(
+                        "REL-6",
+                        field,
+                        f"`{key}` and the `{relation}` object describe one relation; keep one form (REL-16)",
+                    )
                 )
-            )
+            if relation and relation in visible and _items_of(schema.resolve(visible[relation])[0]) is not None:
+                found.add(
+                    Violation(
+                        "REL-6",
+                        field,
+                        f"`{key}` and the `{relation}` array describe one relation; keep one form (REL-16)",
+                    )
+                )
 
         types = _schema_types(resolved)
         if "boolean" in types and not _BOOLEAN_NAME.match(key):

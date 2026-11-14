@@ -36,10 +36,10 @@ is weakened. These were unclear, incomplete, or missing, and were changed:
 | REL-14 report dimensions are relations | Analytics rows exposed `room_id`, `bench_id`, `team_id` with no rule covering aggregates |
 | REL-15 embedded resources, marked `x-embedded-resource` | Owned children (current loan, placement) and bundles (reference data, mapping graph, dashboard) had no rule, so nothing distinguished them from malformed relations |
 | NAM-3 holds both ways; no raw model column names | `expiry_date` was a date-time, `paid_at` a date, `created`/`modified` leaked from models |
-| NAM-8 `_id` suffix reserved for inputs and filters; external ids use `_key` | `backend_id`, `event_id`, `correlation_id` looked like relation inputs |
+| NAM-8 `_id` means a reference by id; external ids use `_key` | `backend_id`, `event_id`, `correlation_id` looked like references |
 | NAM-9 one range vocabulary; `period` group | `period_start`, `valid_from`, `starts_on`, `warranty_until` named the same concept four ways (NAM-4) |
 | ENU-1 scope stated: every enum incl. arrays and machine APIs; not error codes or REL-13 `type` | Error `code` and discriminators were ambiguous |
-| RW-2: no bare `<relation>_id` in read shapes | REL-6 forbade mixing but did not say a response never carries the bare id |
+| REL-16 reference form chosen per serializer; REL-6 one form per relation | A first version (2026-11-14, morning) banned `_id` in responses outright; the owner rejected it the same day: each serializer decides whether its consumer needs the name (`{id, name}`) or only the id (`<relation>_id`). Over-converted payloads (catalog records, slots, mapping graph, loan slips, equipment reference bundle) went back to the id form |
 | GEN-7 protocol surfaces | Routing sync has its own approved wire spec (`routing-sync.md` CHG-5: plain `op`, `mode`, `backend_id`) read by the separate Router; the standard and that spec conflicted. The Agent API is **not** exempt (it is not deployed, and `backend-api.md` already claims ENU-1/REL-1 compliance) |
 | GEN-8, DOC-6 the gate | Rules without enforcement drifted within days |
 | Request standard link text | Pointed to a non-existent `request-response-golden-examples.md` |
@@ -50,7 +50,8 @@ checked from the schema; they stay covered by tests, and are not claimed as gate
 ## 3. Decision: the gate
 
 - `core/common/openapi/contract_rules.py` checks the generated schema: REL-1, REL-2, REL-3, REL-13, REL-15,
-  NAM-2, NAM-3, NAM-8, ENU-1, RW-2 on response shapes; BDY-7, TYP-10 on request bodies. It imports no business app.
+  REL-6, NAM-2, NAM-3, ENU-1 on response shapes; BDY-7, TYP-10 on request bodies. The choice between the two
+  reference forms (REL-16) is reviewed with each serializer and not gated. It imports no business app.
 - `core/common/openapi/tests/test_contract_rules.py` runs in `.github/workflows/api-lint.yml` (OpenAPI tests step).
   It fails on any violation not in `contract_baseline.json`, and on any baseline entry that no longer occurs,
   so the baseline only shrinks. Target: empty.

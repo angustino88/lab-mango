@@ -34,8 +34,8 @@ def room_mapping_rows(*, room_ids):
 
 def room_slot_mapping_rows(*, room_ids):
     return RoomSlot.objects.filter(room_id__in=room_ids, room__deleted_at__isnull=True).order_by("pk").values(
-        "id", "room_id", "room__name", "room__sku", "row_index", "col_index", "slot_code", "x_mm", "y_mm",
-        "width_mm", "depth_mm", "orientation_degrees"
+        "id", "room_id", "row_index", "col_index", "slot_code", "x_mm", "y_mm", "width_mm",
+        "depth_mm", "orientation_degrees"
     )
 
 

@@ -110,21 +110,6 @@ def get_bench_for_mapping(*, bench_id):
     ).values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id").first()
 
 
-# Related display columns let the mapping render `{id, name}` relations without extra queries (REL-3).
-_BENCH_MAPPING_COLUMNS = (
-    "id",
-    "uid",
-    "sku",
-    "name",
-    "setup_location_id",
-    "setup_location__name",
-    "setup_location__sku",
-    "station_slot_id",
-    "station_slot__label",
-    "station_slot__slot_code",
-)
-
-
 def bench_mapping_rows(*, bench_ids=(), station_ids=(), room_ids=()):
     queryset = Bench.objects.filter(deleted_at__isnull=True)
     if bench_ids:
@@ -134,8 +119,8 @@ def bench_mapping_rows(*, bench_ids=(), station_ids=(), room_ids=()):
     elif room_ids:
         queryset = queryset.filter(setup_location__room_id__in=room_ids, setup_location__deleted_at__isnull=True)
     else:
-        return queryset.none().values(*_BENCH_MAPPING_COLUMNS)
-    return queryset.order_by("pk").values(*_BENCH_MAPPING_COLUMNS)
+        return queryset.none().values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id")
+    return queryset.order_by("pk").values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id")
 
 
 def reference_data():

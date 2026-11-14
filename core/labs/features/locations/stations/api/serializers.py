@@ -214,7 +214,7 @@ class StationSlotSerializer(AppModelSerializer):
         read_only=True, help_text="Deprecated: available, occupied, out_of_service or retired (occupied is computed)."
     )
     service_status = serializers.SerializerMethodField()
-    station = NamedReferenceSerializer(read_only=True)
+    station_id = serializers.IntegerField(read_only=True)  # REL-16: slots are read under their station
     is_occupied = serializers.BooleanField(source="occupied", read_only=True, default=False)
     is_active = serializers.SerializerMethodField(help_text="Deprecated: service_status is in_service.")
 
@@ -222,7 +222,7 @@ class StationSlotSerializer(AppModelSerializer):
         model = StationSlot
         fields = (
             "id",
-            "station",
+            "station_id",
             *StationSlotCreateSerializer.Meta.fields,
             "is_occupied",
             "created_at",

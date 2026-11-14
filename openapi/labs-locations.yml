@@ -3516,9 +3516,8 @@ components:
           type: string
           readOnly: true
           maxLength: 100
-        city:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        city_id:
+          type: integer
           readOnly: true
           nullable: true
         address:
@@ -3527,7 +3526,7 @@ components:
           maxLength: 255
       required:
       - address
-      - city
+      - city_id
       - id
       - name
     BuildingReferenceCreateSerializersBuildingCatalogRecordDetailResponse:
@@ -3729,13 +3728,12 @@ components:
           type: string
           readOnly: true
           maxLength: 100
-        country:
-          allOf:
-          - $ref: '#/components/schemas/ReferenceRelation'
+        country_id:
+          type: integer
           readOnly: true
           nullable: true
       required:
-      - country
+      - country_id
       - id
       - name
     CityReferenceCreateSerializersCityCatalogRecordDetailResponse:
@@ -4526,19 +4524,6 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
-    ReferenceRelation:
-      type: object
-      description: REL-3 relation ``{id, name}`` to a related reference row.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          readOnly: true
-      required:
-      - id
-      - name
     ResourceImage:
       type: object
       properties:
@@ -5169,9 +5154,8 @@ components:
         id:
           type: integer
           readOnly: true
-        room:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+        room_id:
+          type: integer
           readOnly: true
         row_index:
           type: integer
@@ -5255,7 +5239,7 @@ components:
       - max_load_kg
       - orientation_degrees
       - power_capacity_w
-      - room
+      - room_id
       - row_index
       - service_status
       - slot_code
@@ -6158,9 +6142,8 @@ components:
         id:
           type: integer
           readOnly: true
-        station:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+        station_id:
+          type: integer
           readOnly: true
         position_index:
           type: integer
@@ -6243,7 +6226,7 @@ components:
       - power_capacity_w
       - service_status
       - slot_code
-      - station
+      - station_id
       - status
       - updated_at
       - utilities

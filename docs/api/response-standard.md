@@ -107,16 +107,20 @@
   - Lookup classes are defined in [ADR 002](../architecture/decisions/002-catalog-and-selector-api.md) section 4.
   - `name` is display text and may change or be localized.
   - Lookups do not carry `uid` or `code`.
-- REL-6 Never mix bare ids and relation objects for the same relation.
+- REL-6 One form per relation: a response carries either `<relation>_id` or the `<relation>` object (REL-16), never both, and never a bare id under the relation's own name (`"room": 5` is wrong; it is `"room_id": 5`).
 - REL-7 For hierarchical lookups, lists return only the most specific level. Detail responses may include ancestors as lookup objects. A child never repeats its parents inside its own object.
 - REL-8 Large related collections are sub-resources. Inline only a `*_count` and a `*_url`.
-- REL-9 Small bounded to-many relations may be arrays of relation objects on read, written as `<relation>_ids` arrays with replace semantics.
+- REL-9 Small bounded to-many relations are read in the same form REL-16 chooses for the to-one case: `<relation>_ids` (array of ids) or an array of relation objects. They are written as `<relation>_ids` arrays with replace semantics.
 - REL-10 A relation input that points to nothing returns `422` with `does_not_exist` on that field.
 - REL-11 Ids may be sequential and guessable, and `uid` is not a secret either. Access control never relies on an identifier being hard to guess (SEC-2). Where existence is sensitive, return `404`.
 - REL-12 Historical references (`created_by`, `updated_by`, and similar) survive deletion or anonymization of their target: the relation keeps its `id` and its `name` becomes a documented placeholder (for example `"Deleted user"`). A relation is `null` only if it was never set.
 - REL-13 A polymorphic relation (the target can be one of several resource types) is `{"id", "name", "type"}` (with `uid` second where all targets define it). `type` is the target resource type as a plain snake_case string (`"bench"`), the OpenAPI discriminator. It is not a display enum, so ENU-1 does not apply to it.
 - REL-14 In aggregate and report rows, a grouping dimension that is a resource is a relation object (`"room": {"id", "name"}`), never a bare `room_id`.
 - REL-15 An embedded resource is a resource representation nested in another response: a child the parent owns (current loan, placement, comments of a ticket) or an item of a documented bundle (reference data, mapping graph, dashboard). Its schema component carries `x-embedded-resource: true`, and it follows every rule for resources itself (REL-1, REL-2, NAM, ENU, FMT). Any other nested object with an `id` is a relation and has exactly the REL-3 keys.
+- REL-16 Reference form. Each serializer chooses, per reference, the form its consumer needs:
+  - `<relation>_id` (the target's id; `<relation>_ids` for to-many) when the client does not need the target's display data in this response: the target is another item of the same response (mapping graphs, sync feeds), it is the parent the client navigated from (slots listed under their room), the client resolves it from a catalog it already holds, or the target has no display name (an internal grouping such as a loan slip).
+  - `<relation>: {"id", "name"}` (REL-3) when a person reads the record and needs the name without another request: actors and users, lookups shown in lists, parents shown on a detail page, report dimensions (REL-14).
+  - The choice is part of the serializer's design and is reviewed with it. Choose the id form when unsure what the consumer shows, and never fetch names nobody displays: every relation object costs a join (PRF-1).
 
 ## 6. Types and formats (FMT)
 - FMT-1 Datetime: ISO 8601 UTC with `Z`. Date: `YYYY-MM-DD`. Duration: ISO 8601 (`PT15M`). Precision is fixed per field and documented (whole seconds by default). A field never mixes precisions (FMT-5).
@@ -146,7 +150,7 @@
 - NAM-5 No abbreviations unless industry standard (`url`, `id`, `ip`).
 - NAM-6 Write inputs for relations are `<relation>_id` (to-many: `<relation>_ids`), for entities and lookups alike.
 - NAM-7 Event types are `<resource>.<past_tense_event>` (`order.confirmed`).
-- NAM-8 The suffixes `_id` and `_ids` name relation inputs and filters only (NAM-6, QRY-5). Responses never contain a `_id` or `_ids` key (RW-2), except `request_id` (ERR-4). An identifier that is not a reference to an API resource (an external event id, a correlation id) ends in `_key`.
+- NAM-8 The suffixes `_id` and `_ids` mean a reference to an API resource by its `id`: write inputs and filters (NAM-6, QRY-5) and id-form references in responses (REL-16). `request_id` (ERR-4) is the only other use. An identifier that is not a reference to an API resource (an external event id, a correlation id, a logical backend name) ends in `_key`.
 - NAM-9 Ranges use one pair of names: date-time ranges `starts_at` / `ends_at`, date ranges `start_date` / `end_date`. A response that reports on a period carries it as the group `period: {"starts_at", "ends_at"}` (STR-1).
 
 ## 9. Enums and status (ENU)
@@ -188,7 +192,7 @@
 
 ## 12. Read vs write (RW)
 - RW-1 Separate read and write serializers.
-- RW-2 Read nests relation objects. Write accepts relation inputs per NAM-6. A read shape never carries a bare `<relation>_id`, alone or next to the relation object (REL-6, NAM-8).
+- RW-2 Read references follow REL-16 (id form or relation object, one form per relation, REL-6). Write accepts relation inputs per NAM-6.
 - RW-3 Unknown fields and read-only fields (`id`, `uid`, audit fields, computed values) in a write body return `422` (`unknown_field`, `read_only_field`). Read-only fields are marked `readOnly` in the schema.
 - RW-4 `POST` creates (`201` + `Location`). `PUT` replaces: omitted optional writable fields reset to their default or `null`. `PATCH` applies NUL-5. `DELETE` removes. Writes return the full detail shape.
 - RW-5 Concurrency: resources that can be edited concurrently return a strong `ETag`, derived from a version counter or content hash and never from `updated_at`, and require `If-Match` on `PUT`, `PATCH` and `DELETE`: missing → `428`, mismatch → `412`. Write responses return the new `ETag`.
@@ -293,7 +297,7 @@
 - DOC-3 Examples in docs are valid against the schema (validated in CI).
 - DOC-4 Contract tests check responses against the schema for every endpoint, including error responses.
 - DOC-5 Breaking-change classification (VER-2) is checked in CI by comparing schema versions.
-- DOC-6 CI fails when the generated schema violates a mechanically checkable rule (GEN-8). Checked today: REL-1, REL-2, REL-3, REL-13, REL-15, NAM-2, NAM-3, NAM-8, ENU-1, RW-2, BDY-7, TYP-10, plus the Spectral ruleset (`.spectral.yaml`). Known drift is listed in `core/common/openapi/contract_baseline.json`, which may only shrink: a new violation fails CI, and so does a fixed violation still listed. Rules that depend on runtime behavior (status codes, ETag, idempotency, ACT-2) are verified by tests, not by this gate.
+- DOC-6 CI fails when the generated schema violates a mechanically checkable rule (GEN-8). Checked today: REL-1, REL-2, REL-3 (shape of relation objects), REL-6 (one form per relation), REL-13, REL-15, NAM-2, NAM-3, ENU-1, BDY-7, TYP-10, plus the Spectral ruleset (`.spectral.yaml`). Known drift is listed in `core/common/openapi/contract_baseline.json`, which may only shrink: a new violation fails CI, and so does a fixed violation still listed. Which form a reference uses (REL-16) and whether a `_id` key really is a reference (NAM-8) are design decisions reviewed with the serializer, not gated. Rules that depend on runtime behavior (status codes, ETag, idempotency, ACT-2) are verified by tests, not by this gate.
 
 ## 25. Agent review procedure
 1. Identify which sections apply to the endpoint: plain CRUD, collection, action, async, bulk, file, stream or webhook.
