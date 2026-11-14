@@ -10,6 +10,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.search import SearchQueryMixin
 from core.common.api.summary_serializers import embedded_resource, user_display_name
 from core.common.api.wire_names import relation_object
 from core.infrastructure.storage.urls import get_media_url
@@ -18,14 +19,13 @@ from core.labs.models import ComputingActivityStatus
 from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES
 
 
-class DashboardQueryFilterSerializer(PageNumberQuerySerializer):
-    """Query parameter validation for dashboard bench listing."""
+class DashboardQueryFilterSerializer(SearchQueryMixin, PageNumberQuerySerializer):
+    """Query parameter validation for dashboard bench listing.
 
-    search = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        help_text="Case-insensitive text search across bench name, SKU, location, host, and remote user.",
-    )
+    ``q`` searches bench name, SKU, location, host and remote user (``search`` is a deprecated alias).
+    """
+
+    search_target = "search"
     bench_group = serializers.IntegerField(
         required=False,
         min_value=1,

@@ -245,3 +245,9 @@ parent (a payment of an expense, a line of a purchase) must use the parent's cur
 | Purchase transaction (read and write) | `amount` | `total` |
 | Allocation `acquisition_price` (write) | decimal | `{amount, currency}` (read was already an object) |
 | License agreement write | `price`, `currency` | `price` (read was already an object) |
+
+### Free-text search: `q`
+
+Every list that searches by free text takes `?q=` (QRY-7), 1 to 200 characters. `?search=` still works for
+one release: it is marked `deprecated` in the schema and the response carries `Deprecation: true`. Sending
+both is `400`. Move every call to `q`; `search` will be removed in a later release.

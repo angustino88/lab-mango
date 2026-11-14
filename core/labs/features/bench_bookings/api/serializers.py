@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.search import SearchQueryMixin
 from core.common.api.summary_serializers import UserReferenceSerializer
 from core.common.api.temporal_query import TemporalBoundField, TemporalRangeQueryMixin
 from core.labs.features.base.serializers import (
@@ -159,8 +160,8 @@ class BenchBookingListQuerySerializer(TemporalRangeQueryMixin, PageNumberQuerySe
         return fields
 
 
-class LabProjectQuerySerializer(PageNumberQuerySerializer):
-    search = serializers.CharField(required=False, allow_blank=False, max_length=255)
+class LabProjectQuerySerializer(SearchQueryMixin, PageNumberQuerySerializer):
+    search_target = "search"
     # default=None: query strings are HTML input, where an absent boolean would otherwise become False.
     is_active = serializers.BooleanField(required=False, allow_null=True, default=None, source="active")
 

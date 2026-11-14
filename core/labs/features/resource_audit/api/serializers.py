@@ -6,6 +6,7 @@ from rest_framework import serializers
 
 from core.common.api import AppModelSerializer
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.search import SearchQueryMixin
 from core.common.api.summary_serializers import ChoiceSerializer, UserReferenceSerializer, choice_field, to_choice
 from core.common.api.wire_names import relation_name
 from core.labs.features.resource_audit.public import (
@@ -120,8 +121,10 @@ class AuditBySkuRequestSerializer(serializers.Serializer):
         ref_name = "AuditBySkuRequest"
 
 
-class ResourceAuditListQuerySerializer(PageNumberQuerySerializer):
-    """Query filters for audits listing."""
+class ResourceAuditListQuerySerializer(SearchQueryMixin, PageNumberQuerySerializer):
+    """Query filters for audits listing; free text is ``q`` (``search`` is a deprecated alias)."""
+
+    search_target = "search"
 
     resource_type = serializers.CharField(required=False)
     result = serializers.ChoiceField(
@@ -129,7 +132,6 @@ class ResourceAuditListQuerySerializer(PageNumberQuerySerializer):
         required=False,
     )
     auditor_id = serializers.IntegerField(required=False)
-    search = serializers.CharField(required=False)
 
     class Meta:
         ref_name = "ResourceAuditListQuery"

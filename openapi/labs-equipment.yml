@@ -278,6 +278,8 @@ paths:
         schema:
           type: string
           maxLength: 255
+        deprecated: true
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
       - in: query
         name: size_id
         schema:
@@ -2995,6 +2997,8 @@ paths:
         schema:
           type: string
           maxLength: 255
+        deprecated: true
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
       - in: query
         name: size_id
         schema:
@@ -3295,11 +3299,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -3380,11 +3392,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -3517,11 +3537,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -3654,11 +3682,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -3801,11 +3837,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -3938,11 +3982,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4085,11 +4137,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4227,11 +4287,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4364,11 +4432,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4501,11 +4577,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4649,11 +4733,19 @@ paths:
           type: integer
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4802,11 +4894,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -4939,11 +5039,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -5076,11 +5184,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -5223,11 +5339,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -5361,11 +5485,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:
@@ -5508,11 +5640,19 @@ paths:
           maximum: 100
           minimum: 1
       - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
         name: search
         schema:
           type: string
           maxLength: 255
-          minLength: 1
+        description: Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.
+        deprecated: true
       tags:
       - Equipment
       security:

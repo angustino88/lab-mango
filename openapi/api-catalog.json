@@ -9387,6 +9387,17 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "resource_type",
           "in": "query",
           "required": false,
@@ -9417,10 +9428,10 @@
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -10309,7 +10320,7 @@
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
             "minLength": 1
@@ -12124,14 +12135,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -17914,7 +17935,7 @@
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
             "maxLength": 255
@@ -19807,14 +19828,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -20418,14 +20449,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -28729,12 +28770,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "Case-insensitive text search across bench name, SKU, location, host, and remote user.",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 255
           }
         }
       ],
@@ -32048,7 +32101,7 @@
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
             "maxLength": 255
@@ -40716,7 +40769,7 @@
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
             "maxLength": 255
@@ -41799,14 +41852,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -42244,14 +42307,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -42867,14 +42940,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -43518,14 +43601,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -44159,14 +44252,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -44809,14 +44912,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -45408,14 +45521,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -46043,14 +46166,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -46689,14 +46822,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -47268,14 +47411,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -47867,14 +48020,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -48524,14 +48687,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -49249,14 +49422,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -49828,14 +50011,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -50427,14 +50620,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -51124,14 +51327,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -51723,14 +51936,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -67186,14 +67409,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -71730,7 +71963,7 @@
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
             "maxLength": 255
@@ -72517,14 +72750,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -73096,14 +73339,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         },
         {
@@ -73712,14 +73965,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -74291,14 +74554,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -74870,14 +75143,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -78479,14 +78762,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -79121,14 +79414,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -79727,14 +80030,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -80333,14 +80646,24 @@
           }
         },
         {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
-            "maxLength": 255,
-            "minLength": 1
+            "maxLength": 255
           }
         }
       ],
@@ -89919,7 +90242,7 @@
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
             "maxLength": 255
@@ -100018,7 +100341,7 @@
           "name": "search",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "Deprecated alias of `q` (QRY-7); send `q`. Kept for one release.",
           "schema": {
             "type": "string",
             "maxLength": 255

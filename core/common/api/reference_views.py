@@ -17,6 +17,7 @@ from rest_framework.response import Response
 
 from .api_views import AppAPIView, AppListAPIView
 from .pagination import PageNumberQuerySerializer
+from .search import SearchQueryMixin
 from .summary_serializers import choice_field
 from .wire_names import wire_name
 
@@ -62,7 +63,7 @@ def reference_urlpatterns(
     shape = type(f"{name}ImportShape", (serializers.ModelSerializer,), {"Meta": meta})()
     inputs: dict[str, Any] = {}
     outputs: dict[str, Any] = {"id": serializers.IntegerField(read_only=True)}
-    query: dict[str, Any] = {"search": serializers.CharField(required=False, max_length=255)}
+    query: dict[str, Any] = {"search_target": "search"}  # SearchQueryMixin: q, deprecated `search`
     for field_name in resource.fields:
         field = resource.model._meta.get_field(field_name)
         wire = wire_name(field, explicit_names)
@@ -115,7 +116,7 @@ def reference_urlpatterns(
 
     input_serializer.get_fields = input_fields
     output_serializer = type(f"{name}CatalogRecord", (serializers.Serializer,), outputs)
-    query_serializer = type(f"{name}ReferenceQuery", (PageNumberQuerySerializer,), query)
+    query_serializer = type(f"{name}ReferenceQuery", (SearchQueryMixin, PageNumberQuerySerializer), query)
 
     class Collection(AppListAPIView):
         permission_classes = access

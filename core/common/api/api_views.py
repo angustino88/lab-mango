@@ -17,6 +17,7 @@ from rest_framework.response import Response
 
 from .correlation import get_request_id
 from .pagination import ResultsSetPagination
+from .search import DEPRECATED_SEARCH_PARAM
 
 RESOURCE_FIELD_IMMUTABLE = "resource_field_immutable"
 
@@ -28,6 +29,14 @@ class AppAPIView(APIView):
     @classproperty
     def view_is_async(cls) -> bool:
         return True
+
+    def finalize_response(self, request: Any, response: Any, *args: Any, **kwargs: Any) -> Any:
+        response = super().finalize_response(request, response, *args, **kwargs)
+        query_params = getattr(request, "query_params", None)
+        if query_params is not None and DEPRECATED_SEARCH_PARAM in query_params:
+            # CMP-3: a deprecated request field is still accepted and announced on the response.
+            response["Deprecation"] = "true"
+        return response
 
     def dispatch(self, request: Any, *args: Any, **kwargs: Any) -> Any:
         method = request.method.lower() if hasattr(request, "method") else ""
