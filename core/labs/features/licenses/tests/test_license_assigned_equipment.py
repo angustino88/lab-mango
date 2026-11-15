@@ -67,6 +67,8 @@ def test_assigned_equipment_follows_assign_and_unassign(client, catalog, kind):
     detail = client.get(f"/api/labs/licenses/{license_record.pk}").data["data"]
     assert [item["id"] for item in detail["assigned_equipment"]] == [first.pk, second.pk]
     assert detail["assigned_equipment"][0]["name"] == "Device EQ-AE-1"
+    assert detail["assigned_equipment"][0]["sku"] == "EQ-AE-1"
+    assert set(detail["assigned_equipment"][0]) == {"id", "uid", "sku", "name"}
     assert detail["seats_in_use"] == 2
 
     released = client.delete(

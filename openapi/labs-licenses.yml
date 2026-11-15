@@ -2160,6 +2160,29 @@ paths:
       summary: Get Licenses Status Summary
 components:
   schemas:
+    AssignedEquipment:
+      type: object
+      description: 'Equipment that holds a license seat: its identity, SKU and name.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - sku
+      - uid
+      x-embedded-resource: true
     BillingPeriodEnum:
       enum:
       - one_time
@@ -2381,7 +2404,7 @@ components:
         assigned_equipment:
           type: array
           items:
-            $ref: '#/components/schemas/LabsUIDNamedReference'
+            $ref: '#/components/schemas/AssignedEquipment'
           readOnly: true
         max_version:
           type: string

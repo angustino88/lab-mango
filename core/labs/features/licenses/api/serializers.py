@@ -9,6 +9,7 @@ from core.common.api.summary_serializers import (
     StatusSummarySerializer,
     UserReferenceSerializer,
     choice_field,
+    embedded_resource,
 )
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
@@ -41,6 +42,16 @@ class LicenseCategorySummarySerializer(serializers.Serializer):
     id = serializers.IntegerField(source="category_id_value", allow_null=True)
     name = serializers.CharField(source="category_name", allow_null=True)
     resource_count = serializers.IntegerField(min_value=0)
+
+
+@embedded_resource
+class AssignedEquipmentSerializer(serializers.Serializer):
+    """Equipment that holds a license seat: its identity, SKU and name."""
+
+    id = serializers.IntegerField(read_only=True)
+    uid = serializers.UUIDField(read_only=True)
+    sku = serializers.CharField(read_only=True)
+    name = serializers.CharField(read_only=True)
 
 
 class LicenseSerializer(AppModelSerializer):
@@ -86,7 +97,7 @@ class LicenseSerializer(AppModelSerializer):
         )
         read_only_fields = fields
 
-    @extend_schema_field(UIDNamedReferenceSerializer(many=True))
+    @extend_schema_field(AssignedEquipmentSerializer(many=True))
     def get_assigned_equipment(self, obj) -> list[dict[str, Any]]:
         """Equipment that currently holds a seat; list selectors prefetch ``active_assignments``."""
         assignments = getattr(obj, "active_assignments", None)
@@ -95,7 +106,7 @@ class LicenseSerializer(AppModelSerializer):
                 unassigned_at__isnull=True,
                 equipment__deleted_at__isnull=True,
             ).select_related("equipment")
-        return list(UIDNamedReferenceSerializer([assignment.equipment for assignment in assignments], many=True).data)
+        return list(AssignedEquipmentSerializer([assignment.equipment for assignment in assignments], many=True).data)
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
     def get_status(self, obj) -> dict[str, str] | None:

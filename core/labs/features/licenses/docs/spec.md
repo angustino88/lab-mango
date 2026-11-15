@@ -98,7 +98,7 @@ their own routes.
 
 ### 5.4 Assignment and seats
 - A license read (`GET /licenses`, `GET /licenses/{id}`, and the responses of the write routes) carries
-  `assigned_equipment`: the live equipment items that hold a seat, as `{id, uid, name}`, oldest assignment
+  `assigned_equipment`: the live equipment items that hold a seat, as `{id, uid, sku, name}`, oldest assignment
   first. Deleted equipment is left out. It is loaded with one extra query per page, not one per license.
 - Assigning is the action `POST /licenses/{id}/actions/assign` with `{equipment_id}`; releasing is
   `DELETE` on the same route. It is idempotent for the same equipment.

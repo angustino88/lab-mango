@@ -215,7 +215,7 @@ New write routes (additive, not breaking), for lab coordinators and admins:
 `identifier` (the license key) is write-only and never appears in a response. See
 `core/labs/features/licenses/docs/spec.md`.
 
-Additive on license reads: `assigned_equipment` (`[{id, uid, name}]`), the equipment currently holding a
+Additive on license reads: `assigned_equipment` (`[{id, uid, sku, name}]`), the equipment currently holding a
 seat. Assigning beyond `seats` is now `409` (it used to succeed).
 
 ### Leaderboard (wire fix)
