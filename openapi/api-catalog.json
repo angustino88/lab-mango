@@ -69385,6 +69385,14 @@
                       "type": "integer",
                       "readOnly": true
                     },
+                    "assigned_equipment": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      "readOnly": true
+                    },
                     "max_version": {
                       "type": "string",
                       "readOnly": true
@@ -69428,6 +69436,7 @@
                   },
                   "required": [
                     "acquisition_price",
+                    "assigned_equipment",
                     "category",
                     "created_at",
                     "department",
@@ -69481,6 +69490,9 @@
                 "restriction": {},
                 "seats": 1,
                 "seats_in_use": 1,
+                "assigned_equipment": [
+                  {}
+                ],
                 "max_version": "string",
                 "expires_at": "2026-10-20T12:00:00Z",
                 "status": {},
@@ -69834,6 +69846,14 @@
                     "type": "integer",
                     "readOnly": true
                   },
+                  "assigned_equipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "max_version": {
                     "type": "string",
                     "readOnly": true
@@ -69877,6 +69897,7 @@
                 },
                 "required": [
                   "acquisition_price",
+                  "assigned_equipment",
                   "category",
                   "created_at",
                   "department",
@@ -69921,6 +69942,9 @@
               "restriction": {},
               "seats": 1,
               "seats_in_use": 1,
+              "assigned_equipment": [
+                {}
+              ],
               "max_version": "string",
               "expires_at": "2026-10-20T12:00:00Z",
               "status": {},
@@ -73716,6 +73740,14 @@
                     "type": "integer",
                     "readOnly": true
                   },
+                  "assigned_equipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "max_version": {
                     "type": "string",
                     "readOnly": true
@@ -73759,6 +73791,7 @@
                 },
                 "required": [
                   "acquisition_price",
+                  "assigned_equipment",
                   "category",
                   "created_at",
                   "department",
@@ -73803,6 +73836,9 @@
               "restriction": {},
               "seats": 1,
               "seats_in_use": 1,
+              "assigned_equipment": [
+                {}
+              ],
               "max_version": "string",
               "expires_at": "2026-10-20T12:00:00Z",
               "status": {},
@@ -74105,6 +74141,14 @@
                     "type": "integer",
                     "readOnly": true
                   },
+                  "assigned_equipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "max_version": {
                     "type": "string",
                     "readOnly": true
@@ -74148,6 +74192,7 @@
                 },
                 "required": [
                   "acquisition_price",
+                  "assigned_equipment",
                   "category",
                   "created_at",
                   "department",
@@ -74192,6 +74237,9 @@
               "restriction": {},
               "seats": 1,
               "seats_in_use": 1,
+              "assigned_equipment": [
+                {}
+              ],
               "max_version": "string",
               "expires_at": "2026-10-20T12:00:00Z",
               "status": {},
@@ -75241,6 +75289,14 @@
                     "type": "integer",
                     "readOnly": true
                   },
+                  "assigned_equipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "max_version": {
                     "type": "string",
                     "readOnly": true
@@ -75284,6 +75340,7 @@
                 },
                 "required": [
                   "acquisition_price",
+                  "assigned_equipment",
                   "category",
                   "created_at",
                   "department",
@@ -75328,6 +75385,9 @@
               "restriction": {},
               "seats": 1,
               "seats_in_use": 1,
+              "assigned_equipment": [
+                {}
+              ],
               "max_version": "string",
               "expires_at": "2026-10-20T12:00:00Z",
               "status": {},

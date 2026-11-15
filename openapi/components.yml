@@ -9901,6 +9901,11 @@ components:
         seats_in_use:
           type: integer
           readOnly: true
+        assigned_equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
         max_version:
           type: string
           readOnly: true
@@ -9929,6 +9934,7 @@ components:
           readOnly: true
       required:
       - acquisition_price
+      - assigned_equipment
       - category
       - created_at
       - department

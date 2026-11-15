@@ -50963,6 +50963,13 @@
             "type": "integer",
             "readOnly": true
           },
+          "assigned_equipment": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabsUIDNamedReference"
+            },
+            "readOnly": true
+          },
           "max_version": {
             "type": "string",
             "readOnly": true
@@ -51004,6 +51011,7 @@
         },
         "required": [
           "acquisition_price",
+          "assigned_equipment",
           "category",
           "created_at",
           "department",

@@ -95,3 +95,14 @@ license as in `GET /api/labs/licenses/{id}`.
 
 Status changes, assignment, agreements, images and acquisition price (from procurement allocation) keep
 their own routes.
+
+### 5.4 Assignment and seats
+- A license read (`GET /licenses`, `GET /licenses/{id}`, and the responses of the write routes) carries
+  `assigned_equipment`: the live equipment items that hold a seat, as `{id, uid, name}`, oldest assignment
+  first. Deleted equipment is left out. It is loaded with one extra query per page, not one per license.
+- Assigning is the action `POST /licenses/{id}/actions/assign` with `{equipment_id}`; releasing is
+  `DELETE` on the same route. It is idempotent for the same equipment.
+- `seats` is the number of equipment items that may hold the license at once. An assignment beyond it is
+  `409 license_conflict`, checked under the license row lock, so concurrent assignments cannot overshoot.
+- A client that wants "create and assign" or "change the assigned equipment" calls the create or update
+  route and then the assign or release actions; each is its own transaction.

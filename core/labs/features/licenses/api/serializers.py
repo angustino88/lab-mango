@@ -53,6 +53,7 @@ class LicenseSerializer(AppModelSerializer):
     category = NamedReferenceSerializer(read_only=True, allow_null=True)
     restriction = NamedReferenceSerializer(read_only=True, allow_null=True)
     seats_in_use = serializers.IntegerField(read_only=True)
+    assigned_equipment = serializers.SerializerMethodField(read_only=True)
     expires_at = serializers.DateTimeField(source="expiry_date", read_only=True, allow_null=True)
     status = serializers.SerializerMethodField(read_only=True)
     acquisition_price = serializers.SerializerMethodField(read_only=True)
@@ -75,6 +76,7 @@ class LicenseSerializer(AppModelSerializer):
             "restriction",
             "seats",
             "seats_in_use",
+            "assigned_equipment",
             "max_version",
             "expires_at",
             "status",
@@ -83,6 +85,17 @@ class LicenseSerializer(AppModelSerializer):
             "updated_at",
         )
         read_only_fields = fields
+
+    @extend_schema_field(UIDNamedReferenceSerializer(many=True))
+    def get_assigned_equipment(self, obj) -> list[dict[str, Any]]:
+        """Equipment that currently holds a seat; list selectors prefetch ``active_assignments``."""
+        assignments = getattr(obj, "active_assignments", None)
+        if assignments is None:
+            assignments = obj.equipment_assignments.filter(
+                unassigned_at__isnull=True,
+                equipment__deleted_at__isnull=True,
+            ).select_related("equipment")
+        return list(UIDNamedReferenceSerializer([assignment.equipment for assignment in assignments], many=True).data)
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
     def get_status(self, obj) -> dict[str, str] | None:
