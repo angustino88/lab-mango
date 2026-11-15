@@ -29,7 +29,7 @@ def _absolute_imports(path: Path) -> set[str]:
 
 def test_exceptions_export_stable_errors_without_layer_imports():
     exceptions = FEATURE_ROOT / "exceptions.py"
-    assert set(_exports(exceptions)) == {"InvalidLicenseStatus", "LicenseAlreadyAssigned"}
+    assert set(_exports(exceptions)) == {"InvalidLicenseStatus", "LicenseAlreadyAssigned", "LicenseConflict"}
     assert not any(".application" in name or ".queries" in name for name in _absolute_imports(exceptions))
 
 
@@ -39,13 +39,19 @@ def test_public_module_exports_license_commands_and_queries():
         "AssignLicenseInput",
         "ChangeLicenseStatusInput",
         "CreateLicenseAgreementInput",
+        "CreateLicenseInput",
+        "DeleteLicenseInput",
         "InvalidLicenseStatus",
         "LicenseAlreadyAssigned",
+        "LicenseConflict",
         "UnassignLicenseInput",
+        "UpdateLicenseInput",
         "active_license_assignment_mapping_rows",
         "assign_license",
         "change_license_status",
+        "create_license",
         "create_license_agreement",
+        "delete_license",
         "get_active_license",
         "get_license",
         "get_license_status_summary",
@@ -57,6 +63,7 @@ def test_public_module_exports_license_commands_and_queries():
         "list_license_status_history",
         "list_licenses",
         "unassign_license",
+        "update_license",
     }
     source = (FEATURE_ROOT / "public.py").read_text(encoding="utf-8-sig")
     assert ".application import" in source
@@ -74,7 +81,7 @@ def test_api_uses_public_workflows_and_contract_errors():
 
 
 def test_application_commands_use_frozen_inputs_and_keyword_only_actor():
-    for filename in ("assignments.py", "status.py", "agreements.py"):
+    for filename in ("assignments.py", "status.py", "agreements.py", "inventory.py"):
         tree = _module(FEATURE_ROOT / "application" / filename)
         classes = [node for node in tree.body if isinstance(node, ast.ClassDef)]
         assert classes
@@ -98,8 +105,9 @@ def test_layer_package_exports_are_explicit_and_legacy_modules_absent():
     queries = FEATURE_ROOT / "queries" / "__init__.py"
     assert set(_exports(application)) == {
         "AssignLicenseInput", "ChangeLicenseStatusInput", "CreateLicenseAgreementInput",
-        "UnassignLicenseInput", "assign_license", "change_license_status",
-        "create_license_agreement", "license_images", "unassign_license",
+        "CreateLicenseInput", "DeleteLicenseInput", "UnassignLicenseInput", "UpdateLicenseInput",
+        "assign_license", "change_license_status", "create_license", "create_license_agreement",
+        "delete_license", "license_images", "unassign_license", "update_license",
     }
     assert set(_exports(queries)) == {
         "active_license_assignment_mapping_rows", "get_active_license", "get_license",
@@ -116,6 +124,10 @@ def test_layer_package_exports_are_explicit_and_legacy_modules_absent():
     }
     assert set(_exports(FEATURE_ROOT / "application" / "agreements.py")) == {
         "CreateLicenseAgreementInput", "create_license_agreement",
+    }
+    assert set(_exports(FEATURE_ROOT / "application" / "inventory.py")) == {
+        "CreateLicenseInput", "DeleteLicenseInput", "UpdateLicenseInput",
+        "create_license", "delete_license", "update_license",
     }
     assert set(_exports(FEATURE_ROOT / "queries" / "selectors.py")) == {
         "active_license_assignment_mapping_rows", "get_active_license", "get_license",

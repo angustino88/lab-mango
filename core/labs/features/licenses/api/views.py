@@ -9,7 +9,7 @@ from core.common.api.api_views import AppListAPIView
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
 from core.common.api.options import OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
-from core.labs.features.base import FeatureAPIView
+from core.labs.features.base import CommandAPIView, FeatureAPIView, operation
 from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.base.resource_images import ResourceImageAPIView
 from core.labs.features.licenses import public
@@ -20,6 +20,7 @@ from core.labs.features.licenses.api.serializers import (
     LicenseAssignmentResultSerializer,
     LicenseCategorySerializer,
     LicenseCategorySummarySerializer,
+    LicenseCreateSerializer,
     LicenseListQuerySerializer,
     LicenseProductOptionsQuerySerializer,
     LicenseProductSerializer,
@@ -29,13 +30,17 @@ from core.labs.features.licenses.api.serializers import (
     LicenseStatusSerializer,
     LicenseStatusSummarySerializer,
     LicenseTypeSerializer,
+    LicenseUpdateSerializer,
     LicenseVendorSerializer,
 )
 from core.labs.features.licenses.public import (
     AssignLicenseInput,
     ChangeLicenseStatusInput,
     CreateLicenseAgreementInput,
+    CreateLicenseInput,
+    DeleteLicenseInput,
     UnassignLicenseInput,
+    UpdateLicenseInput,
 )
 
 from ..queries.reference_data import (
@@ -89,8 +94,13 @@ class LicenseCategorySummaryAPIView(AppListAPIView, FeatureAPIView):
         return error if error is not None else self.list_response_sync(list_license_category_summary())
 
 
-class LicenseListAPIView(AppListAPIView, FeatureAPIView):
-    """List non-deleted license inventory with acquisition information."""
+def _project_license(result: Any) -> Any:
+    """Re-read a written license through the list projection (status, seats in use, price)."""
+    return public.get_license(license_id=result.pk)
+
+
+class LicenseListAPIView(AppListAPIView, CommandAPIView):
+    """List non-deleted license inventory with acquisition information, and create a license."""
 
     schema_tags = ("Licenses",)
     get_contract = OperationContract(
@@ -98,6 +108,17 @@ class LicenseListAPIView(AppListAPIView, FeatureAPIView):
         success=ResponseContract.paginated("LicenseList", LicenseSerializer),
         bad_request=ResponseContract.bad_request(),
     )
+    post_contract = operation("LicenseCreate", LicenseSerializer, request=LicenseCreateSerializer, created=True)
+
+    def handle_post(self, request: Request, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        assert serializer is not None
+        return self._execute(
+            lambda: public.create_license(CreateLicenseInput(**serializer.validated_data), actor=request.user),
+            project=_project_license,
+        )
 
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
         filters, error = self.validate_query()
@@ -117,14 +138,33 @@ class LicenseFiltersAPIView(FilterMetadataMixin, FeatureAPIView):
     )
 
 
-class LicenseRetrieveAPIView(FeatureAPIView):
-    """Retrieve a license's inventory and acquisition information."""
+class LicenseRetrieveAPIView(CommandAPIView):
+    """Retrieve a license's inventory and acquisition information; update or delete it."""
 
     schema_tags = ("Licenses",)
     get_contract = OperationContract(
         success=ResponseContract.success("LicenseDetail", LicenseSerializer),
         not_found=ResponseContract.not_found(),
     )
+    patch_contract = operation("LicenseUpdate", LicenseSerializer, request=LicenseUpdateSerializer)
+    delete_contract = operation("LicenseDelete", None, delete=True)
+
+    def handle_patch(self, request: Request, license_id: int, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request(partial=True)
+        if error is not None:
+            return error
+        assert serializer is not None
+        command = UpdateLicenseInput(license_id=license_id, changes=dict(serializer.validated_data or {}))
+        return self._execute(
+            lambda: public.update_license(command, actor=request.user),
+            project=_project_license,
+        )
+
+    def handle_delete(self, request: Request, license_id: int, *args, **kwargs) -> Response:
+        return self._execute(
+            lambda: public.delete_license(DeleteLicenseInput(license_id=license_id), actor=request.user),
+            delete=True,
+        )
 
     def handle_get(self, request: Request, license_id: int, *args, **kwargs) -> Response:
         license = public.get_license(license_id=license_id)

@@ -38,10 +38,10 @@ The Licenses feature tracks commercial software and firmware entitlements, seat 
 | Method & Path | View Class | Purpose & Contract |
 |---|---|---|
 | `GET /api/labs/licenses` | `LicenseListAPIView` | Filtered list of software licenses. |
-| `POST /api/labs/licenses` | `LicenseListAPIView` | Register software license. |
+| `POST /api/labs/licenses` | `LicenseListAPIView` | Register a license (`create_license`); see section 5. |
 | `GET /api/labs/licenses/{id}` | `LicenseRetrieveAPIView` | License details with active bindings. |
-| `PATCH /api/labs/licenses/{id}` | `LicenseRetrieveAPIView` | Update license metadata. |
-| `DELETE /api/labs/licenses/{id}` | `LicenseRetrieveAPIView` | Soft delete license. |
+| `PATCH /api/labs/licenses/{id}` | `LicenseRetrieveAPIView` | Partial update (`update_license`); `sku` is immutable; see section 5. |
+| `DELETE /api/labs/licenses/{id}` | `LicenseRetrieveAPIView` | Soft delete (`delete_license`); `409` while assigned; see section 5. |
 | `GET /api/labs/licenses/options` | `LicenseOptionsAPIView` | Selector `{id, sku, name}`. |
 | `GET /api/labs/licenses/status-summary` | `LicenseStatusSummaryAPIView` | Status count distribution. |
 | `GET /api/labs/licenses/categories/summary` | `LicenseCategorySummaryAPIView` | License counts per category. |
@@ -51,3 +51,47 @@ The Licenses feature tracks commercial software and firmware entitlements, seat 
 | `GET /api/labs/licenses/{license_id}/history` | `LicenseHistoryAPIView` | Status records (`status`, `metadata`, `actor`, `created_at`), newest first, paginated; 404 for a missing or deleted license. |
 | `GET` / `PUT` / `DELETE /api/labs/licenses/{license_id}/image` | `LicenseImageAPIView` | Read, replace (multipart, one `file` part: JPEG/PNG/GIF/WebP, at most 5 MB) or remove the image; license reads return `image_url` (see `core/labs/features/base/docs/resource-images.md`). |
 | `GET/POST /api/labs/licenses/{license_id}/agreements` | `LicenseAgreementListCreateAPIView` | Commercial agreements list. |
+
+---
+
+## 5. Inventory writes (`application/inventory.py`)
+Commands take a frozen input and a keyword-only `actor`: `create_license(CreateLicenseInput)`,
+`update_license(UpdateLicenseInput)`, `delete_license(DeleteLicenseInput)`. Access: lab coordinators and
+admins (`LABS_STAFF_ACCESS`).
+
+### 5.1 Request body (create and update)
+
+| Field | On create | Notes |
+|---|---|---|
+| `sku` | required | Fixed after creation: sending it on `PATCH` is `409 resource_field_immutable`. Unique among live licenses. |
+| `product_id`, `vendor_id`, `type_id`, `category_id` | required | Must exist. The vendor must match the product's vendor. |
+| `restriction_id`, `department_id`, `group_id`, `owner_id` | optional, nullable | Must exist. A group must belong to the department. |
+| `name`, `remark`, `max_version` | optional | |
+| `seats` | optional, default `1` | `1` to `32767`. |
+| `expires_at` | optional, nullable | Date-time (stored as `expiry_date`). |
+| `identifier` | optional | **The license key. Write-only: never returned by any endpoint and kept out of `repr` and logs.** |
+
+Unknown keys are rejected with `422`. Update is partial: only the keys sent change. Responses are the
+license as in `GET /api/labs/licenses/{id}`.
+
+### 5.2 Errors
+
+| Case | Status |
+|---|---|
+| Missing or invalid field, unknown reference, product and vendor mismatch | `422` |
+| Duplicate `sku` among live licenses | `409 license_conflict` |
+| `seats` lower than the seats in use | `409 license_conflict` |
+| Delete while the license is assigned to equipment | `409 license_conflict` |
+| Unknown or already deleted license | `404` |
+| Caller is not a coordinator or admin | `403` |
+
+### 5.3 Concurrency and idempotency
+- Update and delete lock the license row (`select_for_update`) in one transaction. Assignment commands lock
+  the same row first, so the seat and assignment counts a write reads cannot change underneath it.
+- SKU uniqueness among live licenses is a PostgreSQL constraint of `ResourceModel`; two creates racing on one
+  SKU end with one `201` and one `409`.
+- Delete is a soft delete; the SKU becomes reusable. Deleting an already deleted license is `404`.
+- Create is not idempotent: a retry after a timeout returns `409` once the first request succeeded.
+
+Status changes, assignment, agreements, images and acquisition price (from procurement allocation) keep
+their own routes.

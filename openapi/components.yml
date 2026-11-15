@@ -10325,6 +10325,80 @@ components:
           $ref: '#/components/schemas/LicenseCategorySummaryListSerializersLicenseCategorySummaryPagination'
       required:
       - pagination
+    LicenseCreate:
+      type: object
+      description: 'Inventory fields of a license. Uniqueness and relations are enforced
+        by the command and PostgreSQL.
+
+
+        ``identifier`` is the license key: accepted here, never returned by any serializer.'
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        product_id:
+          type: integer
+          minimum: 1
+        vendor_id:
+          type: integer
+          minimum: 1
+        type_id:
+          type: integer
+          minimum: 1
+        category_id:
+          type: integer
+          minimum: 1
+        restriction_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        seats:
+          type: integer
+          maximum: 32767
+          minimum: 1
+        max_version:
+          type: string
+          maxLength: 255
+        identifier:
+          type: string
+          writeOnly: true
+          maxLength: 255
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - category_id
+      - product_id
+      - sku
+      - type_id
+      - vendor_id
+    LicenseCreateSerializersLicenseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/License'
+      required:
+      - data
     LicenseDetailSerializersLicenseDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -11009,6 +11083,14 @@ components:
           $ref: '#/components/schemas/LicenseTypeReferenceListSerializersLicenseTypeCatalogRecordPagination'
       required:
       - pagination
+    LicenseUpdateSerializersLicenseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/License'
+      required:
+      - data
     LicenseVendorCatalogCreate:
       type: object
       properties:
@@ -12649,6 +12731,63 @@ components:
           type: array
           items:
             type: integer
+    PatchedLicenseUpdate:
+      type: object
+      description: 'Partial update: the same fields, none required; ``sku`` cannot
+        change after creation.'
+      properties:
+        sku:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        department_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        group_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        owner_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        remark:
+          type: string
+          maxLength: 255
+        product_id:
+          type: integer
+          minimum: 1
+        vendor_id:
+          type: integer
+          minimum: 1
+        type_id:
+          type: integer
+          minimum: 1
+        category_id:
+          type: integer
+          minimum: 1
+        restriction_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        seats:
+          type: integer
+          maximum: 32767
+          minimum: 1
+        max_version:
+          type: string
+          maxLength: 255
+        identifier:
+          type: string
+          writeOnly: true
+          maxLength: 255
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
     PatchedPurchaseDraftHeaderInput:
       type: object
       properties:

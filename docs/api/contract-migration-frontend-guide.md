@@ -204,6 +204,17 @@ No change: its payloads follow `docs/agent-platform/routing-sync.md` (response s
 
 License product `vendor`: `{id, name, created_at, updated_at}` → `{id, name}`.
 
+New write routes (additive, not breaking), for lab coordinators and admins:
+
+| Route | Body | Result |
+| --- | --- | --- |
+| `POST /api/labs/licenses` | `sku`, `product_id`, `vendor_id`, `type_id`, `category_id` required; `name`, `remark`, `max_version`, `seats`, `expires_at`, `restriction_id`, `department_id`, `group_id`, `owner_id`, `identifier` optional | `201`, the license |
+| `PATCH /api/labs/licenses/{id}` | any of the above except `sku` | `200`, the license |
+| `DELETE /api/labs/licenses/{id}` | none | `204`; `409` while the license is assigned |
+
+`identifier` (the license key) is write-only and never appears in a response. See
+`core/labs/features/licenses/docs/spec.md`.
+
 ### Leaderboard (wire fix)
 
 Persona, lab and export rows were sent unserialized, so `last_remote` was still on the wire. They are now

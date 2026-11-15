@@ -20249,7 +20249,7 @@
     "/api/labs/licenses": {
       "get": {
         "operationId": "labs_licenses_retrieve",
-        "description": "List non-deleted license inventory with acquisition information.",
+        "description": "List non-deleted license inventory with acquisition information, and create a license.",
         "parameters": [
           {
             "in": "query",
@@ -20382,12 +20382,100 @@
           }
         },
         "summary": "Get Licenses"
+      },
+      "post": {
+        "operationId": "labs_licenses_create",
+        "description": "List non-deleted license inventory with acquisition information, and create a license.",
+        "tags": [
+          "Licenses"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LicenseCreate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/LicenseCreate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/LicenseCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseCreateSerializersLicenseDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Licenses"
       }
     },
     "/api/labs/licenses/{license_id}": {
       "get": {
         "operationId": "labs_licenses_retrieve_by_license_id",
-        "description": "Retrieve a license's inventory and acquisition information.",
+        "description": "Retrieve a license's inventory and acquisition information; update or delete it.",
         "parameters": [
           {
             "in": "path",
@@ -20432,6 +20520,154 @@
           }
         },
         "summary": "Get Licenses by License ID"
+      },
+      "patch": {
+        "operationId": "labs_licenses_partial_update_by_license_id",
+        "description": "Retrieve a license's inventory and acquisition information; update or delete it.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "license_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Licenses"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedLicenseUpdate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedLicenseUpdate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedLicenseUpdate"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseUpdateSerializersLicenseDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Licenses by License ID"
+      },
+      "delete": {
+        "operationId": "labs_licenses_destroy_by_license_id",
+        "description": "Retrieve a license's inventory and acquisition information; update or delete it.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "license_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Licenses"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Delete Licenses by License ID"
       }
     },
     "/api/labs/licenses/{license_id}/actions/assign": {
@@ -51320,6 +51556,98 @@
           "pagination"
         ]
       },
+      "LicenseCreate": {
+        "type": "object",
+        "description": "Inventory fields of a license. Uniqueness and relations are enforced by the command and PostgreSQL.\n\n``identifier`` is the license key: accepted here, never returned by any serializer.",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "department_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "group_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "owner_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "remark": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "product_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "vendor_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "category_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "restriction_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "seats": {
+            "type": "integer",
+            "maximum": 32767,
+            "minimum": 1
+          },
+          "max_version": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "identifier": {
+            "type": "string",
+            "writeOnly": true,
+            "maxLength": 255
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "category_id",
+          "product_id",
+          "sku",
+          "type_id",
+          "vendor_id"
+        ]
+      },
+      "LicenseCreateSerializersLicenseDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/License"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "LicenseDetailSerializersLicenseDetailResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
@@ -52265,6 +52593,18 @@
         },
         "required": [
           "pagination"
+        ]
+      },
+      "LicenseUpdateSerializersLicenseDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/License"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "LicenseVendorCatalogCreate": {
@@ -54536,6 +54876,79 @@
             "items": {
               "type": "integer"
             }
+          }
+        }
+      },
+      "PatchedLicenseUpdate": {
+        "type": "object",
+        "description": "Partial update: the same fields, none required; ``sku`` cannot change after creation.",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "department_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "group_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "owner_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "remark": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "product_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "vendor_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "category_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "restriction_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "seats": {
+            "type": "integer",
+            "maximum": 32767,
+            "minimum": 1
+          },
+          "max_version": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "identifier": {
+            "type": "string",
+            "writeOnly": true,
+            "maxLength": 255
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
