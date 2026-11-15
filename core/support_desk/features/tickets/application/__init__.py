@@ -70,6 +70,7 @@ from core.support_desk.features.tickets.application.manage_config import (
     update_status,
     update_transition,
 )
+from core.support_desk.features.tickets.application.policies import can_manage_configuration
 from core.support_desk.features.tickets.application.submit_csat import SubmitCsatInput, submit_csat
 from core.support_desk.features.tickets.application.ticket_links import (
     LinkTicketsInput,
@@ -96,6 +97,7 @@ from core.support_desk.features.tickets.application.update_ticket import (
 from core.support_desk.features.tickets.application.watchers import WatcherInput, add_watcher, remove_watcher
 
 __all__ = [
+    "can_manage_configuration",
     "AddAttachmentInput",
     "AddCommentInput",
     "AssignTicketInput",
