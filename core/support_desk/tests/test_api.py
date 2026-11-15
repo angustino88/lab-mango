@@ -104,7 +104,7 @@ class TestTicketAPIEndpoints:
 
         # Requester cannot assign ticket (403)
         res_req_assign = requester_client.post(
-            f"/api/support/tickets/{key}/assign",
+            f"/api/support/tickets/{key}/actions/assign",
             {"assignee_id": agent_user.id},
             format="json",
         )
@@ -112,7 +112,7 @@ class TestTicketAPIEndpoints:
 
         # Agent can assign ticket (200)
         res_agent_assign = agent_client.post(
-            f"/api/support/tickets/{key}/assign",
+            f"/api/support/tickets/{key}/actions/assign",
             {"assignee_id": agent_user.id},
             format="json",
         )
@@ -136,7 +136,7 @@ class TestTicketAPIEndpoints:
 
         # Open -> In Progress
         res_t1 = agent_client.post(
-            f"/api/support/tickets/{key}/transitions",
+            f"/api/support/tickets/{key}/actions/transition",
             {"to_status_id": support_setup["status_active"].id, "version": v1},
             format="json",
         )
@@ -145,7 +145,7 @@ class TestTicketAPIEndpoints:
 
         # In Progress -> Resolved without summary returns 422 / 400
         res_t2_fail = agent_client.post(
-            f"/api/support/tickets/{key}/transitions",
+            f"/api/support/tickets/{key}/actions/transition",
             {"to_status_id": support_setup["status_resolved"].id, "version": v2, "resolution_summary": ""},
             format="json",
         )
@@ -153,7 +153,7 @@ class TestTicketAPIEndpoints:
 
         # In Progress -> Resolved with summary
         res_t2 = agent_client.post(
-            f"/api/support/tickets/{key}/transitions",
+            f"/api/support/tickets/{key}/actions/transition",
             {
                 "to_status_id": support_setup["status_resolved"].id,
                 "version": v2,
@@ -166,7 +166,7 @@ class TestTicketAPIEndpoints:
 
         # Resolved -> Open (Reopen) with reason
         res_reopen = requester_client.post(
-            f"/api/support/tickets/{key}/transitions",
+            f"/api/support/tickets/{key}/actions/transition",
             {
                 "to_status_id": support_setup["status_open"].id,
                 "version": v3,

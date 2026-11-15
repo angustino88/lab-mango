@@ -27,9 +27,9 @@ def push(identity, key, payload):
 def session_payload(**changes: object) -> dict[str, object]:
     now = timezone.now()
     payload = {
-        "event_id": "5b0f6c1e-2a7d-4c9e-9a3b-0d6e4f1a2c77",
-        "login_time": (now - timedelta(hours=3)).isoformat(),
-        "logout_time": (now - timedelta(hours=1)).isoformat(),
+        "event_key": "5b0f6c1e-2a7d-4c9e-9a3b-0d6e4f1a2c77",
+        "login_at": (now - timedelta(hours=3)).isoformat(),
+        "logout_at": (now - timedelta(hours=1)).isoformat(),
         "active_duration_seconds": 5400,
         "remote_user": "nguyen.an",
         "remote_ip": "10.20.4.17",
@@ -53,9 +53,9 @@ def test_push_stores_session_for_the_agents_computer(enrolled):  # noqa: F811
 
     assert response.status_code == 201, response.json()
     data = response.json()["data"]
-    assert data["event_id"] == payload["event_id"] and data["booking_code"] == "BK-7F3K9Q"
+    assert data["event_key"] == payload["event_key"] and data["booking_code"] == "BK-7F3K9Q"
     # The enrolled computer stands on no bench, so the code cannot verify.
-    assert data["access_type"] == "unverified_booking"
+    assert data["access_type"]["value"] == "unverified_booking"
     stored = LabSessionLog.objects.get(pk=data["id"])
     assert stored.computing_equipment_id == identity.equipment_id
     assert stored.agent_id == str(identity.agent_uid)
@@ -93,7 +93,7 @@ def test_temp_login_has_no_booking_code(enrolled, code):  # noqa: F811
 
     assert response.status_code == 201, response.json()
     assert response.json()["data"]["booking_code"] is None
-    assert response.json()["data"]["access_type"] == "ad_hoc"
+    assert response.json()["data"]["access_type"]["value"] == "ad_hoc"
 
 
 def test_booking_code_may_be_omitted(enrolled):  # noqa: F811
@@ -130,7 +130,7 @@ def test_request_cannot_name_another_computer(enrolled):  # noqa: F811
     assert not LabSessionLog.objects.filter(computing_equipment=other).exists()
 
 
-@pytest.mark.parametrize("field", ["event_id", "login_time", "logout_time", "active_duration_seconds", "remote_user"])
+@pytest.mark.parametrize("field", ["event_key", "login_at", "logout_at", "active_duration_seconds", "remote_user"])
 def test_required_fields(enrolled, field):  # noqa: F811
     identity, key, _ = enrolled
 
@@ -144,12 +144,12 @@ def test_hard_limits(enrolled):  # noqa: F811
     identity, key, _ = enrolled
     now = timezone.now()
     cases: dict[str, dict[str, object]] = {
-        "logout_time": {"logout_time": (now + timedelta(minutes=10)).isoformat()},
-        "login_time": {"login_time": (now - timedelta(days=8)).isoformat()},
+        "logout_at": {"logout_at": (now + timedelta(minutes=10)).isoformat()},
+        "login_at": {"login_at": (now - timedelta(days=8)).isoformat()},
         "active_duration_seconds": {"active_duration_seconds": 7201},
     }
     for field, changes in cases.items():
-        response = push(identity, key, session_payload(event_id=str(uuid.uuid4()), **changes))
+        response = push(identity, key, session_payload(event_key=str(uuid.uuid4()), **changes))
 
         assert response.status_code == 422, field
         assert response.json()["error"]["code"] == "validation_failed"

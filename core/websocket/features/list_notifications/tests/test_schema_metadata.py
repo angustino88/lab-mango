@@ -12,7 +12,7 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 
 from core.common.api.pagination import ResultsSetPagination
 from core.websocket.features.list_notifications.api import NotificationListCreateView
-from core.websocket.features.list_notifications.serializer import NotificationSerializer
+from core.websocket.features.list_notifications.serializer import NotificationSerializer, NotificationWriteSerializer
 from core.websocket.models import Notification
 
 
@@ -35,8 +35,10 @@ def test_get_schema_is_unchanged_and_post_schema_is_a_single_resource_envelope()
     operations = document["paths"]["/notifications"]
     assert operations["post"]["operationId"] == "notifications_create"
     before = baseline["paths"]["/notifications"]
-    for key in ("requestBody", "security"):
-        assert operations["post"].get(key) == before["post"].get(key)
+    assert operations["post"].get("security") == before["post"].get("security")
+    # RW-1: the request body is the write shape, not the read shape.
+    request_schema = operations["post"]["requestBody"]["content"]["application/json"]["schema"]
+    assert request_schema == {"$ref": "#/components/schemas/NotificationWrite"}
     post = operations["post"]
     assert set(post["responses"]) == {"201", "401"}
     created = resolve(document, post["responses"]["201"]["content"]["application/json"]["schema"])
@@ -122,7 +124,7 @@ def test_post_runtime_returns_201_envelope_and_preserves_writable_fields_and_hea
         now = timezone.now()
         return Notification(pk=7, created=now, modified=now, **validated_data)
 
-    monkeypatch.setattr(NotificationSerializer, "create", create)
+    monkeypatch.setattr(NotificationWriteSerializer, "create", create)
 
     def success_headers(view, data):
         assert set(data) == set(NotificationSerializer.Meta.fields)
@@ -130,7 +132,7 @@ def test_post_runtime_returns_201_envelope_and_preserves_writable_fields_and_hea
         return {"Location": "/notifications/7", "X-Synthetic-Create": "preserved"}
 
     monkeypatch.setattr(NotificationListCreateView, "get_success_headers", success_headers)
-    response = call_view("post", data={"message": "Synthetic", "expiry_date": "2099-01-01T00:00:00Z"})
+    response = call_view("post", data={"message": "Synthetic", "expires_at": "2099-01-01T00:00:00Z"})
     assert response.status_code == 201
     assert set(response.data) == {"data"}
     assert response.data["data"]["id"] == 7
@@ -163,13 +165,13 @@ def test_post_runtime_returns_201_envelope_and_preserves_writable_fields_and_hea
 @pytest.mark.parametrize(
     "body,status,code",
     [('{', 400, "malformed_request"), ('{}', 422, "validation_failed"),
-     ('{"expiry_date": "not-a-date"}', 422, "validation_failed")],
+     ('{"message": "Synthetic", "expires_at": "not-a-date"}', 422, "validation_failed")],
 )
 def test_post_errors_remain_unwrapped_and_do_not_create(monkeypatch, body, status, code):
     def unexpected_create(*args, **kwargs):
         pytest.fail("Invalid input must not create a notification")
 
-    monkeypatch.setattr(NotificationSerializer, "create", unexpected_create)
+    monkeypatch.setattr(NotificationWriteSerializer, "create", unexpected_create)
     request = APIRequestFactory().post("/notifications", body, content_type="application/json")
     force_authenticate(request, user=SimpleNamespace(pk=1, is_authenticated=True))
     response = NotificationListCreateView.as_view()(request)

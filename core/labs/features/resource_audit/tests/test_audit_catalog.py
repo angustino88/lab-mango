@@ -66,7 +66,7 @@ class TestAuditCatalog:
     def test_full_download_returns_every_type_with_projection(self, client, resources):
         body = client.get(URL).json()
 
-        by_type = {item["resource_type"]: item for item in body["data"]}
+        by_type = {item["resource_type"]["value"]: item for item in body["data"]}
         assert set(by_type) == {"equipment", "bench", "station", "room", "license"}
         equipment = by_type["equipment"]
         assert equipment["uid"] == str(resources["equipment"].uid)
@@ -74,7 +74,7 @@ class TestAuditCatalog:
         assert equipment["serial_number"] == "SN-001"
         assert equipment["status"] == resources["equipment"].lifecycle_state
         assert equipment["condition"] == "operational"  # computed from downtime windows
-        assert equipment["deleted"] is False
+        assert equipment["is_deleted"] is False
         assert by_type["bench"]["location"] == "Catalog station"
         assert by_type["station"]["location"] == "Catalog room"
         assert body["meta"]["pagination"] == {
@@ -83,7 +83,7 @@ class TestAuditCatalog:
             "next_cursor": None,
             "previous_cursor": None,
         }
-        assert body["meta"]["server_time"]
+        assert body["meta"]["sync_started_at"]
 
     def test_license_key_is_never_returned(self, client, resources):
         response = client.get(URL)
@@ -97,7 +97,7 @@ class TestAuditCatalog:
         uids = [item["uid"] for page in pages for item in page["data"]]
         assert len(uids) == 5 == len(set(uids))
         assert all(len(page["data"]) <= 2 for page in pages)
-        assert len({page["meta"]["server_time"] for page in pages}) == 1
+        assert len({page["meta"]["sync_started_at"] for page in pages}) == 1
 
     def test_changed_since_returns_changes_and_deletions_only(self, client, resources):
         since = timezone.now()
@@ -111,12 +111,12 @@ class TestAuditCatalog:
         by_uid = {item["uid"]: item for item in body["data"]}
         assert set(by_uid) == {str(resources["bench"].uid), str(resources["room"].uid)}
         assert by_uid[str(resources["bench"].uid)]["name"] == "Renamed bench"
-        assert by_uid[str(resources["room"].uid)]["deleted"] is True
+        assert by_uid[str(resources["room"].uid)]["is_deleted"] is True
 
     def test_full_download_excludes_deleted_rows(self, client, resources):
         Room.all_objects.filter(pk=resources["room"].pk).update(deleted_at=timezone.now())
 
-        types = {item["resource_type"] for item in client.get(URL).json()["data"]}
+        types = {item["resource_type"]["value"] for item in client.get(URL).json()["data"]}
 
         assert "room" not in types
 
@@ -198,8 +198,8 @@ class TestCatalogStatusAndDelta:
 
         items = _by_uid(client.get(URL).json())
 
-        assert items[str(resources["license"].uid)]["expiry_date"] is not None
-        assert items[str(resources["equipment"].uid)]["expiry_date"] is None
+        assert items[str(resources["license"].uid)]["expires_at"] is not None
+        assert items[str(resources["equipment"].uid)]["expires_at"] is None
 
     def test_renamed_station_returns_its_benches(self, client, resources):
         since = timezone.now()

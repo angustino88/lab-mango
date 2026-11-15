@@ -4,13 +4,12 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
-from core.common.api.summary_serializers import StatusSummarySerializer
+from core.common.api.summary_serializers import StatusSummarySerializer, UserReferenceSerializer, choice_field
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
     NamedReferenceSerializer,
-    ResourceOwnerSerializer,
     ResourceWriteSerializerMixin,
     to_choice_reference,
 )
@@ -99,20 +98,22 @@ class RoomSlotSerializer(AppModelSerializer):
         read_only=True, help_text="Deprecated: available, occupied, blocked or retired (occupied is computed)."
     )
     service_status = serializers.SerializerMethodField()
-    occupied = serializers.BooleanField(read_only=True, default=False)
+    room_id = serializers.IntegerField(read_only=True)  # REL-16: slots are read under their room
+    slot_type = choice_field(RoomSlot._meta.get_field("slot_type").choices)
+    is_occupied = serializers.BooleanField(source="occupied", read_only=True, default=False)
 
     class Meta:
         model = RoomSlot
         fields = (
             "id",
-            "room",
+            "room_id",
             "row_index",
             "col_index",
             "slot_code",
             "slot_type",
             "status",
             "service_status",
-            "occupied",
+            "is_occupied",
             "x_mm",
             "y_mm",
             "width_mm",
@@ -141,7 +142,7 @@ class RoomSlotSerializer(AppModelSerializer):
 
 class RoomStatusRecordSerializer(AppModelSerializer):
     status = serializers.SerializerMethodField(read_only=True)
-    actor = ResourceOwnerSerializer(source="creator", read_only=True, allow_null=True)
+    actor = UserReferenceSerializer(source="creator", read_only=True, allow_null=True)
 
     class Meta:
         model = RoomStatusRecord

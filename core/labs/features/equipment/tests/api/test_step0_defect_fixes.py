@@ -90,6 +90,7 @@ def test_plain_user_cannot_read_or_write_equipment(plain_user, computing_kind, c
         ("patch", f"equipment/{pk}", {"name": "renamed"}),
         ("delete", f"equipment/{pk}", None),
         ("patch", f"equipment/sku/{computing_unit.sku}", {"name": "renamed"}),
+        ("put", f"equipment/{pk}/assignment", {"bench_id": bench.pk}),
         ("post", f"equipment/{pk}/assignment", {"bench_id": bench.pk}),
         ("delete", f"equipment/{pk}/assignment", None),
         ("post", f"equipment/{pk}/actions/change-condition", {"condition": "out_of_service"}),
@@ -184,7 +185,7 @@ def test_generic_create_builds_category_subtype_with_activity(coordinator, compu
     assert response.status_code == 201, response.data
     unit = Equipment.objects.get(sku="S0-GEN-1")
     assert ComputingActivity.objects.filter(computing=unit).exists()
-    listed = _client(coordinator).get(ROOT + "equipment", {"search": "S0-GEN-1"})
+    listed = _client(coordinator).get(ROOT + "equipment", {"q": "S0-GEN-1"})
     assert listed.status_code == 200
     assert [row["id"] for row in listed.data["data"]] == [unit.pk]
 
@@ -215,8 +216,8 @@ def test_generic_create_accepts_declared_fields(coordinator, computing_kind):
             "firmware_version": "1.2.3",
             "power_draw_w": 45,
             "weight_kg": "2.25",
-            "warranty_until": "2028-01-31",
-            "calibration_required": True,
+            "warranty_end_date": "2028-01-31",
+            "is_calibration_required": True,
         },
         format="json",
     )

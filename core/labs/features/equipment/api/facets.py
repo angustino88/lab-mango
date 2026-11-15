@@ -47,7 +47,6 @@ def facet_filter_spec(list_spec: FilterSpec) -> FilterSpec:
         list_spec.filters,
         search_fields=list_spec.search_fields,
         ranges=list_spec.ranges,
-        search_alias=list_spec.search_alias,
         search_distinct=list_spec.search_distinct,
     )
 

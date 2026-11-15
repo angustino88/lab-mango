@@ -13,6 +13,9 @@ from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, connection, models, transaction
 
+from core.common.api.summary_serializers import to_choice
+from core.common.api.wire_names import wire_name
+
 from .contracts import CreateReferenceInput, ReferenceResource, ReferenceResult
 from .exceptions import (
     IdempotencyKeyReuse,
@@ -30,16 +33,24 @@ def _lock(key: str) -> None:
 
 
 def project_reference(resource: ReferenceResource, instance: Any) -> dict[str, Any]:
-    """Explicit scalar and reference-ID projection; never serialize arbitrary model fields."""
-    result = {"id": instance.pk}
+    """Explicit projection in the catalog record shape; never serialize arbitrary model fields.
+
+    References use the id form (REL-16) and keys use the shared wire names (NAM-2, NAM-3).
+    """
+    explicit = dict(resource.wire_names)
+    result: dict[str, Any] = {"id": instance.pk}
     for name in resource.fields:
         field = instance._meta.get_field(name)
+        key = wire_name(field, explicit)
         if field.many_to_many:
-            result[name] = sorted(row.pk for row in getattr(instance, name).all())
+            singular = f"{name[:-3]}y" if name.endswith("ies") else (name[:-1] if name.endswith("s") else name)
+            result[f"{singular}_ids"] = sorted(row.pk for row in getattr(instance, name).all())
         elif field.many_to_one:
-            result[f"{name}_id"] = getattr(instance, field.attname)
+            result[field.attname] = getattr(instance, field.attname)
+        elif field.choices:
+            result[key] = to_choice(getattr(instance, name), field.choices)
         else:
-            result[name] = getattr(instance, name)
+            result[key] = getattr(instance, name)
     return json.loads(json.dumps(result, cls=DjangoJSONEncoder))
 
 

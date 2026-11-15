@@ -31,8 +31,3 @@ The Leaderboard feature computes engagement metrics, classifies users into behav
 | `GET /api/labs/leaderboard/users/{id}/profile` | `UserProfileAPIView` | Canonical user ranking profile. |
 | `GET /api/labs/leaderboard/users/{id}/weekly-usage` | `UserWeeklyUsageHeatmapAPIView` | Canonical user 7-day hourly heatmap. |
 | `GET /api/labs/lab-dashboard` | `LabDashboardAPIView` | Polymorphic dashboard overview list. |
-| `GET /api/labs/lab-dashboard/summary` | `DeprecatedLeaderboardDashboardSummaryAPIView` | Deprecated alias returning Sunset headers. |
-| `GET /api/labs/profile/{id}` | `DeprecatedLabProfileAPIView` | Deprecated alias returning Sunset headers. |
-| `GET /api/labs/weekly-usage/{id}` | `DeprecatedLabWeeklyUsageHeatmapAPIView` | Deprecated alias returning Sunset headers. |
-| `GET /api/labs/users/profile/{id}` | `DeprecatedUserProfileAPIView` | Deprecated alias returning Sunset headers. |
-| `GET /api/labs/users/weekly-usage/{id}` | `DeprecatedUserWeeklyUsageHeatmapAPIView` | Deprecated alias returning Sunset headers. |

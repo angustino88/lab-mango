@@ -40,7 +40,7 @@
 
 ## 4. HTTP Transport endpoints
 
-- `GET /api/labs/monitoring-events` (and alias `/api/labs/lab-monitoring`): Paginated listing of monitoring events.
-- `POST /api/labs/monitoring-events` (and alias `/api/labs/lab-monitoring`): Ingests a new monitoring event.
+- `GET /api/labs/monitoring-events`: Paginated listing of monitoring events.
+- `POST /api/labs/monitoring-events`: Ingests a new monitoring event.
 - `GET /api/labs/monitoring-events/<id>`: Retrieves a single monitoring event.
-- `GET /api/labs/monitoring-events/export` (and alias `/api/labs/lab-monitoring/export`): Non-paginated export of monitoring events.
+- `GET /api/labs/monitoring-events/export`: Non-paginated export of monitoring events.

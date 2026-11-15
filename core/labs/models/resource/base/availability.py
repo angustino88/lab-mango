@@ -264,7 +264,7 @@ def availability(chain: list[HierarchyLevel]) -> dict[str, Any]:
             continue
         return {
             "value": ResourceAvailability.UNAVAILABLE.value,
-            "blocked_by": {"type": level.resource_type, "id": level.resource_id, "name": level.name},
+            "blocked_by": {"id": level.resource_id, "name": level.name, "type": level.resource_type},
             "condition": level.condition,
             "reason": reason,
         }

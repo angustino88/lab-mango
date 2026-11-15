@@ -58,8 +58,8 @@ def test_http_timestamps_are_utc_under_active_non_utc_zone(caller, endpoint):
     ):
         response = caller.get(BASE + endpoint, {**PARAMS, "timezone": "Europe/Berlin"})
     assert response.status_code == 200
-    assert response.json()["data"]["period_start"] == "2025-12-31T23:00:00Z"
-    assert response.json()["data"]["period_end"] == "2026-03-31T22:00:00Z"
+    assert response.json()["data"]["period"]["starts_at"] == "2025-12-31T23:00:00Z"
+    assert response.json()["data"]["period"]["ends_at"] == "2026-03-31T22:00:00Z"
 
 
 @pytest.mark.parametrize("zone", ["Asia/Tokyo", "Etc/GMT-14"])

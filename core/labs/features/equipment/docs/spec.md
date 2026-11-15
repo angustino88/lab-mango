@@ -175,7 +175,7 @@ Append-only history of lifecycle changes, written only by `change_lifecycle` and
   ]
 }
 ```
-- Query filter parity with list view (supports `assignable=true` (display status `available`), `kind`, `type`, `manufacturer`, `status` (display status), `lifecycle_state`, `search`).
+- Query filter parity with list view (supports `assignable=true` (display status `available`), `kind`, `type`, `manufacturer`, `status` (display status), `lifecycle_state`, `q`).
 - Fast query projected with `.only("id", "sku", "name")`.
 
 ---

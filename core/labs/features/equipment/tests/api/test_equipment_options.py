@@ -328,7 +328,7 @@ def test_category_reference_data_follows_category_kind_type_manufacturer_model_h
     assert {"kinds", "types", "manufacturers", "product_models", "groups", "owners"} <= set(data)
     assert set(data["product_models"][0]) == {
         "id",
-        "manufacturer",
+        "manufacturer_id",  # REL-16 id form; the bundle's manufacturers list holds the name
         "name",
         "default_power_draw_w",
         "default_weight_kg",

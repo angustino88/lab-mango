@@ -17,6 +17,7 @@ from rest_framework.response import Response
 
 from core.common.api.filtering import Filter, FilterMetadataMixin, FilterMetadataSerializer, PositiveIDField
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.summary_serializers import embedded_resource
 from core.labs.features.base.serializers import NamedReferenceSerializer
 from core.labs.features.equipment.categories.computing.api import ComputingActivitySerializer
 from core.labs.features.equipment.queries import equipment_form_reference_data, equipment_queryset
@@ -184,8 +185,9 @@ class EquipmentUpdateSerializer(EquipmentWriteSerializer):
 
 
 def _lookup_serializer(name: str, model: type, label: str) -> type[serializers.ModelSerializer]:
+    """A reference-data bundle item ``{id, <label>}`` (REL-15)."""
     meta = type("Meta", (), {"model": model, "fields": ("id", label), "read_only_fields": ("id", label)})
-    return type(name, (serializers.ModelSerializer,), {"__module__": __name__, "Meta": meta})
+    return embedded_resource(type(name, (serializers.ModelSerializer,), {"__module__": __name__, "Meta": meta}))
 
 
 def _lookups() -> dict[str, Any]:

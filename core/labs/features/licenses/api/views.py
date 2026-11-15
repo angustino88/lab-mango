@@ -1,7 +1,6 @@
 from typing import Any
 
 from drf_api_contracts import OperationContract, ResponseContract
-from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -105,7 +104,7 @@ class LicenseListAPIView(AppListAPIView, FeatureAPIView):
         if error is not None:
             return error
         filters = dict(filters)
-        search = filters.pop("search", None) or filters.pop("q", None)
+        search = filters.pop("q", None)
         return self.list_response_sync(LICENSE_FILTERS.apply(public.list_licenses(search=search), filters))
 
 
@@ -196,47 +195,6 @@ class LicenseAssignActionAPIView(FeatureAPIView):
         return self.respond(assignment)
 
     def handle_delete(self, request: Request, license_id: int, *args, **kwargs) -> Response:
-        serializer, error = self.validate_request()
-        if error is not None:
-            return error
-        assignment = public.unassign_license(
-            UnassignLicenseInput(equipment_id=serializer.validated_data["equipment_id"], license_id=license_id),
-            actor=request.user,
-        )
-        if assignment is None:
-            return self.respond_problem("not_found")
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@extend_schema_view(
-    post=extend_schema(
-        deprecated=True,
-        description="Deprecated alias. Use DELETE /api/labs/licenses/{license_id}/actions/assign instead.",
-    ),
-)
-class LicenseUnassignActionAPIView(FeatureAPIView):
-    """Release a license from an equipment via action endpoint."""
-
-    schema_tags = ("Licenses",)
-    post_contract = OperationContract(
-        request=LicenseAssignmentRequestSerializer,
-        success=ResponseContract.no_content(),
-        bad_request=ResponseContract.bad_request(),
-        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
-        not_found=ResponseContract.not_found(),
-        conflict=ResponseContract.conflict(),
-    )
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        license_id = kwargs.get("license_id")
-        if license_id:
-            response["Link"] = f'</api/labs/licenses/{license_id}/actions/assign>; rel="successor-version"'
-        return response
-
-    def handle_post(self, request: Request, license_id: int, *args, **kwargs) -> Response:
         serializer, error = self.validate_request()
         if error is not None:
             return error
@@ -536,7 +494,6 @@ __all__ = (
     "LicenseTypeDetailAPIView",
     "LicenseTypeListAPIView",
     "LicenseTypeOptionsAPIView",
-    "LicenseUnassignActionAPIView",
     "LicenseVendorDetailAPIView",
     "LicenseVendorListAPIView",
     "LicenseVendorOptionsAPIView",

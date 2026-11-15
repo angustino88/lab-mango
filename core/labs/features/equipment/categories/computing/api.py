@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from core.common.api.summary_serializers import choice_field
 from core.labs.features.base import CommandAPIView
 from core.labs.features.equipment.api.common import EQUIPMENT_PERMISSIONS
 from core.labs.features.equipment.categories.computing.queries import get_computing_activity
@@ -13,6 +14,9 @@ from core.labs.models import ComputingActivity
 
 class ComputingActivitySerializer(serializers.ModelSerializer):
     """Read projection of the live activity state."""
+
+    status = choice_field(ComputingActivity._meta.get_field("status").choices)
+    updated_at = serializers.DateTimeField(source="modified", read_only=True)
 
     class Meta:
         model = ComputingActivity
@@ -26,7 +30,7 @@ class ComputingActivitySerializer(serializers.ModelSerializer):
             "offline_at",
             "inactive_at",
             "inactive_reminder_count",
-            "modified",
+            "updated_at",
         )
         read_only_fields = fields
         ref_name = "ComputingActivity"

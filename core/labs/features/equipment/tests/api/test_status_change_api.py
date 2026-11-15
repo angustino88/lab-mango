@@ -106,10 +106,10 @@ def test_history_follows_display_status_through_bench_loan_condition_and_lifecyc
     ]
     rows = client.get(_url(unit.pk)).data["data"]
     assert rows[0]["reason"] == "End of life"
-    assert rows[0]["actor"]["username"] == "sc-coord"
+    assert rows[0]["actor"]["name"] == "Coord"
     assert rows[0]["display_status"] == {"value": "retired", "label": "Retired"}
     # A step is explained by the fact behind its new label: the condition, not the closed loan.
-    assert "borrower_name" not in rows[2]["details"] and rows[2]["actor"]["username"] == "sc-coord"
+    assert "borrower_name" not in rows[2]["details"] and rows[2]["actor"]["name"] == "Coord"
     assert rows[3]["details"]["borrower_name"] == "Ada"
     assert rows[4]["details"]["bench"] == {"id": bench.pk, "name": "Bench 1"}  # back to available: bench left
     assert rows[5]["details"]["bench"] == {"id": bench.pk, "name": "Bench 1"}

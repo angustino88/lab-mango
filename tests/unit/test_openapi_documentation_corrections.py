@@ -95,18 +95,21 @@ def resolve(document, schema):
 @pytest.mark.parametrize(
     "serializer_class,field,method",
     [
-        (procurement.PurchaseItemReadSerializer, "unit_price", "get_unit_price"),
+        # `None`: a MoneyField (FMT-2), rendered through the field itself.
+        (procurement.PurchaseItemReadSerializer, "unit_price", None),
         (procurement.PurchaseItemReadSerializer, "line_value", "get_line_value"),
-        (procurement.PurchaseDetailSerializer, "total_amount", "get_total_amount"),
+        (procurement.PurchaseDetailSerializer, "total", None),
         (procurement.PurchaseDetailSerializer, "lines_total", "get_lines_total"),
-        (procurement.PurchaseDraftHeaderOutputSerializer, "total_amount", "get_total_amount"),
-        (procurement.PurchaseSerializer, "total", "get_total"),
+        (procurement.PurchaseDraftHeaderOutputSerializer, "total", None),
+        (procurement.PurchaseSerializer, "total", None),
         (procurement.PurchaseItemResourceSerializer, "acquisition_price", "get_acquisition_price"),
     ],
 )
 def test_money_schema_matches_existing_getter(serializer_class, field, method):
     document, schema = serializer_schema(serializer_class)
     money = resolve(document, schema["properties"][field])
+    if "allOf" in money:  # a read-only $ref is wrapped as allOf: [{$ref}]
+        money = resolve(document, money["allOf"][0])
     assert money["type"] == "object"
     assert set(money["properties"]) == {"amount", "currency"}
     assert set(money["required"]) == {"amount", "currency"}
@@ -124,7 +127,8 @@ def test_money_schema_matches_existing_getter(serializer_class, field, method):
         purchase=purchase,
         purchase_item=SimpleNamespace(purchase=purchase),
     )
-    payload = getattr(serializer_class(), method)(obj)
+    serializer = serializer_class()
+    payload = getattr(serializer, method)(obj) if method else serializer.fields[field].to_representation(obj)
     expected = "12.30" if field in {"unit_price", "acquisition_price"} else "24.60"
     assert payload == {"amount": expected, "currency": "EUR"}
     assert re.fullmatch(amount["pattern"], payload["amount"])

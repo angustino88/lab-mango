@@ -25,7 +25,6 @@ The Analytics feature calculates longitudinal operational trends, booking effici
 | `GET /api/labs/analytics/finance/monthly-trends` | `FinanceMonthlyTrendsAPIView` | Longitudinal monthly spend trajectory. |
 | `GET /api/labs/analytics/finance/expense-type-breakdown` | `FinanceBreakdownAPIView` | Expense distribution by type. |
 | `GET /api/labs/analytics/bench-group` | `BenchGroupSummaryAPIView` | Canonical bench count per bench group. |
-| `GET /api/labs/analytics/lab-group` | `DeprecatedLabGroupSummaryAPIView` | Deprecated alias returning Sunset headers. |
 | `GET /api/labs/analytics/lab-equipment-status` | `EquipmentStatusSummaryAPIView` | Status distribution time-series. |
 | `GET /api/labs/analytics/lab-efficiency` | `LabEfficiencyAPIView` | Utilization efficiency ratios. |
 | `GET /api/labs/analytics/project-usage` | `ProjectUsageAPIView` | Hours utilized per project. |
@@ -39,4 +38,3 @@ The Analytics feature calculates longitudinal operational trends, booking effici
 | `GET /api/labs/analytics/user-count` | `UserCountAPIView` | Active user statistics; `?unit=day` daily chart series. |
 | `GET /api/labs/analytics/booked-vs-used` | `BookedVsUsedAPIView` | Scheduled vs confirmed run hours. |
 | `GET /api/labs/analytics/equipment-availability` | `EquipmentAvailabilityAPIView` | Uptime and readiness statistics. |
-| `GET /api/labs/analytics/dashboard-summary` | `DashboardSummaryAPIView` | Deprecated alias for dashboard summary. |

@@ -35,7 +35,7 @@ class TestResourceAuditAPI:
         assert res_create.status_code == 201
         data = res_create.json()["data"]
         audit_id = data["id"]
-        assert data["result"] == "PASS"
+        assert data["result"]["value"] == "PASS"
         assert data["remarks"] == "Full inspection by ID."
         assert data["auditor"]["id"] == user.id
 
@@ -79,7 +79,7 @@ class TestResourceAuditAPI:
             format="json",
         )
         assert res_create.status_code == 201
-        assert res_create.json()["data"]["result"] == "PASS"
+        assert res_create.json()["data"]["result"]["value"] == "PASS"
 
         # List audits by SKU
         res_list = client.get(f"/api/labs/resources/sku/{comp.sku}/audits")
@@ -103,7 +103,7 @@ class TestResourceAuditAPI:
             format="json",
         )
         assert res_create.status_code == 201
-        assert res_create.json()["data"]["result"] == "FAIL"
+        assert res_create.json()["data"]["result"]["value"] == "FAIL"
 
         # List audits by UID
         res_list = client.get(f"/api/labs/resources/uid/{bench.uid}/audits")
@@ -133,4 +133,4 @@ class TestResourceAuditAPI:
         # Filter by result
         res_fail = client.get("/api/labs/audits?result=FAIL")
         assert res_fail.status_code == 200
-        assert all(item["result"] == "FAIL" for item in res_fail.json()["data"])
+        assert all(item["result"]["value"] == "FAIL" for item in res_fail.json()["data"])

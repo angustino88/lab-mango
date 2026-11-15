@@ -289,7 +289,7 @@ def _shape_row(collection: str, row: Any) -> dict[str, Any]:
                     "id": row["mapping_assignment_id"],
                     "role": row["mapping_role"],
                     "position": row["mapping_position"],
-                    "monitor": row["mapping_monitor"],
+                    "is_monitored": row["mapping_monitor"],
                     "assigned_at": row["mapping_assigned_at"],
                 }
                 if row["mapping_assignment_id"] is not None

@@ -50,14 +50,6 @@ class TestListMonitoringEvents:
         assert "data" in payload
         assert len(payload["data"]) >= 1
 
-    def test_legacy_lab_monitoring_route_returns_entries(self, monitoring_client):
-        lab = BenchFactory()
-        LabMonitoringFactory(bench=lab)
-        response = monitoring_client.get("/api/labs/lab-monitoring")
-        assert response.status_code == 200
-        assert "data" in response.json()
-
-
 @pytest.mark.django_db
 class TestCreateMonitoringEvent:
     def test_create_heartbeat_event(self, monitoring_client):
@@ -73,8 +65,8 @@ class TestCreateMonitoringEvent:
         )
         assert response.status_code == 201
         data = response.json()["data"]
-        assert data["action"] == "heartbeat"
-        assert data["computer_id"] == computer.id
+        assert data["action"]["value"] == "heartbeat"
+        assert data["computer"]["id"] == computer.id
 
     def test_create_event_duplicate_conflict(self, monitoring_client):
         computer = ComputingEquipmentFactory(sku="COMP-EVENT-002")

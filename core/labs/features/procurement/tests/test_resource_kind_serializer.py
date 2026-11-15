@@ -36,7 +36,7 @@ def test_resource_kind_validates_to_canonical_content_type(kind, model):
         data={
             "resource_kind": kind,
             "resource_id": 1,
-            "acquisition_price": "1.00",
+            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
         }
     )
 
@@ -63,6 +63,7 @@ def test_stable_kind_post_creates_allocation_through_endpoint(api_client, user):
     with patch(
         "core.labs.features.procurement.api.views.public.create_purchase_item_resource",
         return_value=PurchaseItemResource(
+            id=9001,  # a created allocation always has an id; the response contract checks it (DOC-4)
             purchase_item=item,
             resource_type=ContentType.objects.get_for_model(Bench),
             resource_id=bench.pk,
@@ -72,12 +73,16 @@ def test_stable_kind_post_creates_allocation_through_endpoint(api_client, user):
     ) as create_allocation:
         response = api_client.post(
             f"/api/labs/purchase-items/{item.pk}/resources",
-            {"resource_kind": "bench", "resource_id": bench.pk, "acquisition_price": "1.00"},
+            {
+                "resource_kind": "bench",
+                "resource_id": bench.pk,
+                "acquisition_price": {"amount": "1.00", "currency": "EUR"},
+            },
             format="json",
         )
 
     assert response.status_code == 201, response.content
-    assert response.data["data"]["resource_kind"] == "bench"
+    assert response.data["data"]["resource_kind"]["value"] == "bench"
     command = create_allocation.call_args.args[0]
     assert isinstance(command, CreatePurchaseItemResourceInput)
     assert command.resource_type_id == ContentType.objects.get_for_model(Bench).pk
@@ -104,6 +109,7 @@ def test_legacy_kind_post_creates_allocation_through_endpoint(api_client, user):
     with patch(
         "core.labs.features.procurement.api.views.public.create_purchase_item_resource",
         return_value=PurchaseItemResource(
+            id=9001,  # a created allocation always has an id; the response contract checks it (DOC-4)
             purchase_item=item,
             resource_type=content_type,
             resource_id=bench.pk,
@@ -113,20 +119,29 @@ def test_legacy_kind_post_creates_allocation_through_endpoint(api_client, user):
     ) as create_allocation:
         response = api_client.post(
             f"/api/labs/purchase-items/{item.pk}/resources",
-            {"resource_type_id": content_type.pk, "resource_id": bench.pk, "acquisition_price": "1.00"},
+            {
+                "resource_type_id": content_type.pk,
+                "resource_id": bench.pk,
+                "acquisition_price": {"amount": "1.00", "currency": "EUR"},
+            },
             format="json",
         )
 
     assert response.status_code == 201, response.content
-    assert response.data["data"]["resource_kind"] == "bench"
+    assert response.data["data"]["resource_kind"]["value"] == "bench"
     assert create_allocation.call_args.args[0].resource_type_id == content_type.pk
 
 
 @pytest.mark.parametrize(
     "payload",
     (
-        {"resource_id": 1, "acquisition_price": "1.00"},
-        {"resource_kind": "bench", "resource_type_id": 1, "resource_id": 1, "acquisition_price": "1.00"},
+        {"resource_id": 1, "acquisition_price": {"amount": "1.00", "currency": "EUR"}},
+        {
+            "resource_kind": "bench",
+            "resource_type_id": 1,
+            "resource_id": 1,
+            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
+        },
     ),
 )
 def test_invalid_kind_input_returns_422_without_creating_allocation(api_client, user, payload):
@@ -151,7 +166,7 @@ def test_legacy_resource_type_id_is_still_accepted():
         data={
             "resource_type_id": content_type.pk,
             "resource_id": 1,
-            "acquisition_price": "1.00",
+            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
         }
     )
 
@@ -166,7 +181,7 @@ def test_matching_stable_and_legacy_inputs_are_accepted():
             "resource_kind": "bench",
             "resource_type_id": content_type.pk,
             "resource_id": 1,
-            "acquisition_price": "1.00",
+            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
         }
     )
 
@@ -179,7 +194,7 @@ def test_mismatched_stable_and_legacy_inputs_are_rejected():
             "resource_kind": "bench",
             "resource_type_id": ContentType.objects.get_for_model(Equipment).pk,
             "resource_id": 1,
-            "acquisition_price": "1.00",
+            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
         }
     )
 
@@ -191,7 +206,7 @@ def test_one_of_stable_or_legacy_input_is_required():
     serializer = PurchaseItemResourceCreateSerializer(
         data={
             "resource_id": 1,
-            "acquisition_price": "1.00",
+            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
         }
     )
 
@@ -205,7 +220,7 @@ def test_unsupported_legacy_content_type_is_rejected():
         data={
             "resource_type_id": unsupported_type.pk,
             "resource_id": 1,
-            "acquisition_price": "1.00",
+            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
         }
     )
 
@@ -225,7 +240,7 @@ def test_resource_kind_with_missing_content_type_is_validation_error(monkeypatch
         data={
             "resource_kind": "bench",
             "resource_id": 1,
-            "acquisition_price": "1.00",
+            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
         }
     )
 
@@ -260,7 +275,7 @@ def test_resource_kind_is_read_only_output_with_stable_enum(user):
     write_fields = PurchaseItemResourceCreateSerializer().fields
 
     assert output_fields["resource_kind"].read_only
-    assert output_serializer.data["resource_kind"] == "bench"
+    assert output_serializer.data["resource_kind"]["value"] == "bench"
     assert write_fields["resource_kind"].write_only
     assert set(write_fields["resource_kind"].choices) == {"bench", "equipment", "license", "station"}
     assert write_fields["resource_type_id"].write_only
@@ -307,5 +322,6 @@ def test_resource_allocation_list_query_budget(django_assert_num_queries, user):
     with django_assert_num_queries(3):
         allocations = list(list_purchase_item_resources(purchase_item_id=item.pk))
         assert [
-            PurchaseItemResourceSerializer(instance=allocation).data["resource_kind"] for allocation in allocations
+            PurchaseItemResourceSerializer(instance=allocation).data["resource_kind"]["value"]
+            for allocation in allocations
         ] == ["bench", "bench", "bench"]

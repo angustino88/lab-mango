@@ -39,7 +39,7 @@ class LeaderboardPersonaSerializer(serializers.Serializer):
     late_rate = serializers.FloatField(required=False, default=0.0)
     usage_efficiency = serializers.FloatField(required=False, default=0.0)
     booking_compliance = serializers.FloatField(required=False, default=0.0)
-    last_remote = serializers.DateTimeField(allow_null=True, required=False)
+    last_remote_at = serializers.DateTimeField(source="last_remote", allow_null=True, required=False)
     labs_accessed = serializers.IntegerField(required=False, default=0)
     total_bookings = serializers.IntegerField(required=False, default=0)
     total_sessions = serializers.IntegerField()
@@ -57,7 +57,7 @@ class LeaderboardLabSerializer(serializers.Serializer):
     points = serializers.IntegerField()
     total_sessions = serializers.IntegerField()
     active_users = serializers.IntegerField(required=False, default=0)
-    last_remote = serializers.DateTimeField(allow_null=True, required=False)
+    last_remote_at = serializers.DateTimeField(source="last_remote", allow_null=True, required=False)
     downtime_minutes = serializers.FloatField(required=False, default=0.0)
     top_projects = serializers.ListField(child=serializers.CharField(), required=False, default=list)
 

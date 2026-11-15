@@ -113,25 +113,3 @@ def test_delete_action_assign_unassigns_license(equipment, license_record, test_
     )
     assert resp.status_code == 204
     assert not LicenseAssignment.objects.filter(license=license_record, unassigned_at__isnull=True).exists()
-
-
-@pytest.mark.django_db
-def test_post_action_unassign_returns_deprecation_headers(equipment, license_record, test_user):
-    from rest_framework.test import APIClient
-
-    client = APIClient()
-    grant_labs_role(test_user, "coord")
-    client.force_authenticate(user=test_user)
-
-    cmd_assign = AssignLicenseInput(equipment_id=equipment.pk, license_id=license_record.pk)
-    assign_license(cmd_assign, actor=test_user)
-
-    resp = client.post(
-        f"/api/labs/licenses/{license_record.pk}/actions/unassign",
-        data={"equipment_id": equipment.pk},
-        format="json",
-    )
-    assert resp.status_code == 204
-    assert resp.headers.get("Deprecation") == "true"
-    assert "Sunset" in resp.headers
-    assert f"/api/labs/licenses/{license_record.pk}/actions/assign" in resp.headers.get("Link", "")

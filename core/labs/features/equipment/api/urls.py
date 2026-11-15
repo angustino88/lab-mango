@@ -32,11 +32,6 @@ urlpatterns = [
         name="equipment-activity",
     ),
     path(
-        "equipment/<int:equipment_id>/actions/assign",
-        views.DeprecatedEquipmentAssignmentActionAPIView.as_view(),
-        name="equipment-action-assign",
-    ),
-    path(
         "equipment/<int:equipment_id>/assignment",
         views.EquipmentAssignmentAPIView.as_view(),
         name="equipment-assignment-detail",

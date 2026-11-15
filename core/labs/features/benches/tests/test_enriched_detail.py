@@ -114,8 +114,18 @@ def test_pages_preserve_assignment_fields_and_computing_projection(detail):
     data = read_projection(detail, {"equipment_page_size": 1})
     equipment = data["equipment"]
     row = equipment["data"][0]
-    assert set(row) == {"id", "equipment", "role", "position", "is_monitored", "assigned_at", "computing_activity"}
+    assert set(row) == {
+        "id",
+        "equipment",
+        "equipment_kind",
+        "role",
+        "position",
+        "is_monitored",
+        "assigned_at",
+        "computing_activity",
+    }
     assert row["id"] == first.pk
+    assert set(row["equipment"]) == {"id", "uid", "name"}  # REL-3: exactly the relation keys
     assert row["computing_activity"] is None
     assert row["is_monitored"] is True
     link = equipment["meta"]["pagination"]["next"]

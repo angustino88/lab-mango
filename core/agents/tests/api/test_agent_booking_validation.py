@@ -72,7 +72,7 @@ def test_eligible_booking_returns_its_window(placed):
 
     assert response.status_code == 200, response.json()
     data = response.json()["data"]
-    assert data["eligible"] is True
+    assert data["is_eligible"] is True
     assert data["booking_code"] == "BK-OK" and data["booked_for"] == "booker"
     assert data["starts_at"] and data["ends_at"]
     booking.refresh_from_db()
@@ -91,7 +91,7 @@ def test_every_failure_gets_the_same_answer(placed):
     ]
 
     assert all(body == bodies[0] for body in bodies)
-    assert bodies[0] == {"data": {"eligible": False}}
+    assert bodies[0] == {"data": {"is_eligible": False}}
 
 
 @pytest.mark.parametrize("payload", [{"booking_code": ""}, {}, {"booking_code": "x" * 65}])
@@ -138,10 +138,10 @@ def test_check_in_starts_the_booking(placed):
 
     assert response.status_code == 200, response.json()
     data = response.json()["data"]
-    assert data["checked_in"] is True and data["booking_code"] == "BK-IN" and data["booked_for"] == "booker"
+    assert data["is_checked_in"] is True and data["booking_code"] == "BK-IN" and data["booked_for"] == "booker"
     booking.refresh_from_db()
     assert booking.status == BookingStatus.IN_PROGRESS
-    assert check_in(identity, key, {"booking_code": "BK-IN"}).json()["data"]["checked_in"] is True
+    assert check_in(identity, key, {"booking_code": "BK-IN"}).json()["data"]["is_checked_in"] is True
 
 
 def test_check_in_failures_get_the_same_answer(placed):
@@ -155,7 +155,7 @@ def test_check_in_failures_get_the_same_answer(placed):
         for code in ("BK-UNKNOWN", "BK-OTHER-BENCH", "BK-CANCELLED", "BK-LATER")
     ]
 
-    assert all(body == {"data": {"checked_in": False}} for body in bodies)
+    assert all(body == {"data": {"is_checked_in": False}} for body in bodies)
     later.refresh_from_db()
     assert later.status == BookingStatus.RESERVED
 
@@ -181,11 +181,11 @@ def test_user_ends_the_booking_after_check_in(placed):
 
     assert response.status_code == 200, response.json()
     data = response.json()["data"]
-    assert data["completed"] is True and data["booking_code"] == "BK-END"
+    assert data["is_completed"] is True and data["booking_code"] == "BK-END"
     booking.refresh_from_db()
     assert booking.status == BookingStatus.COMPLETED
-    assert complete(identity, key, {"booking_code": "BK-END"}).json()["data"]["completed"] is True
-    assert check_in(identity, key, {"booking_code": "BK-END"}).json() == {"data": {"checked_in": False}}
+    assert complete(identity, key, {"booking_code": "BK-END"}).json()["data"]["is_completed"] is True
+    assert check_in(identity, key, {"booking_code": "BK-END"}).json() == {"data": {"is_checked_in": False}}
 
 
 def test_end_failures_get_the_same_answer(placed):
@@ -198,7 +198,7 @@ def test_end_failures_get_the_same_answer(placed):
         for code in ("BK-UNKNOWN", "BK-NOT-STARTED", "BK-OTHER-BENCH")
     ]
 
-    assert all(body == {"data": {"completed": False}} for body in bodies)
+    assert all(body == {"data": {"is_completed": False}} for body in bodies)
     not_started.refresh_from_db()
     assert not_started.status == BookingStatus.RESERVED
 
@@ -217,7 +217,7 @@ def test_user_extends_the_running_booking(placed):
     response = extend(identity, key, {"booking_code": "BK-EXT", "ends_at": new_end.isoformat()})
 
     assert response.status_code == 200, response.json()
-    assert response.json()["data"]["extended"] is True
+    assert response.json()["data"]["is_extended"] is True
     booking.refresh_from_db()
     assert booking.ends_at == new_end
 
@@ -242,11 +242,11 @@ def test_refused_extension_says_why(placed):
     error = too_long.json()["error"]
     assert error["code"] == "extension_not_allowed"
     assert error["details"][0]["field"] == "ends_at" and error["details"][0]["code"] == "needs_approval"
-    assert error["details"][0]["limit"] is not None
+    assert error["details"][0]["limit_at"] is not None
     assert blocked.status_code == 409
     detail = blocked.json()["error"]["details"][0]
     assert blocked.json()["error"]["code"] == "bench_not_free" and detail["code"] == "bench_not_free"
-    assert detail["limit"] is not None
+    assert detail["limit_at"] is not None
 
 
 def test_extend_of_a_foreign_or_unknown_booking_gets_the_same_answer(placed):
@@ -260,7 +260,7 @@ def test_extend_of_a_foreign_or_unknown_booking_gets_the_same_answer(placed):
         for code in ("BK-UNKNOWN", "BK-OTHER-BENCH", "BK-NOT-STARTED")
     ]
 
-    assert all(body == {"data": {"extended": False}} for body in bodies)
+    assert all(body == {"data": {"is_extended": False}} for body in bodies)
 
 
 @pytest.mark.parametrize(

@@ -123,44 +123,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Analytics Booking
-  /api/labs/analytics/dashboard-summary:
-    get:
-      operationId: labs_analytics_dashboard_summary_retrieve
-      description: Deprecated alias for dashboard summary. Use /api/labs/dashboard/summary
-        instead.
-      parameters:
-      - in: query
-        name: from_date_time
-        schema:
-          type: string
-          format: date-time
-        required: true
-      - in: query
-        name: to_date_time
-        schema:
-          type: string
-          format: date-time
-        required: true
-      tags:
-      - Analytics
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardSummaryAnalyticsSerializersDashboardSummaryDetailResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Analytics Dashboard Summary
   /api/labs/analytics/equipment-availability:
     get:
       operationId: labs_analytics_equipment_availability_retrieve
@@ -589,31 +551,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Analytics Lab Equipment Status
-  /api/labs/analytics/lab-group:
-    get:
-      operationId: labs_analytics_lab_group_retrieve
-      description: Deprecated alias for bench-group summary. Use /api/labs/analytics/bench-group
-        instead.
-      tags:
-      - Analytics
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BenchGroupSummarySerializersBenchGroupSummaryListResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Analytics Lab Group
   /api/labs/analytics/lab-usage-by-timeframe:
     get:
       operationId: labs_analytics_lab_usage_by_timeframe_retrieve
@@ -1025,13 +962,6 @@ paths:
       summary: Get Analytics User Lab Usage
 components:
   schemas:
-    ActiveBenchesMetric:
-      type: object
-      properties:
-        count:
-          type: integer
-      required:
-      - count
     AnalyticsAggregatedLog:
       type: object
       description: Bucket-aggregated historical metrics row.
@@ -1095,12 +1025,8 @@ components:
     BookedVsUsed:
       type: object
       properties:
-        period_start:
-          type: string
-          format: date-time
-        period_end:
-          type: string
-          format: date-time
+        period:
+          $ref: '#/components/schemas/ReportPeriod'
         total_booked_hours:
           type: number
           format: double
@@ -1121,8 +1047,7 @@ components:
       required:
       - benches
       - official_working_hours
-      - period_end
-      - period_start
+      - period
       - total_booked_hours
       - total_used_hours
       - used_to_booked_ratio
@@ -1137,16 +1062,15 @@ components:
     BookedVsUsedBench:
       type: object
       properties:
-        bench_id:
-          type: integer
-        bench_name:
-          type: string
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         booked_hours:
           type: number
           format: double
       required:
-      - bench_id
-      - bench_name
+      - bench
       - booked_hours
     BookingCountAnalyticsResponse:
       type: object
@@ -1163,61 +1087,24 @@ components:
       - type: array
         items:
           $ref: '#/components/schemas/AnalyticsAggregatedLog'
-    CountTrendMetric:
+    Choice:
       type: object
+      description: ENU-1 ``{value, label}``.
       properties:
-        count:
-          type: integer
-        previous_count:
-          type: integer
-        trend_percent:
-          type: integer
-      required:
-      - count
-      - previous_count
-      - trend_percent
-    DashboardSummary:
-      type: object
-      properties:
-        generated_at:
+        value:
           type: string
-          format: date-time
-        period_start:
+          readOnly: true
+        label:
           type: string
-          format: date-time
-        period_end:
-          type: string
-          format: date-time
-        bookings:
-          $ref: '#/components/schemas/CountTrendMetric'
-        facility_visits:
-          $ref: '#/components/schemas/CountTrendMetric'
-        active_benches:
-          $ref: '#/components/schemas/ActiveBenchesMetric'
+          readOnly: true
       required:
-      - active_benches
-      - bookings
-      - facility_visits
-      - generated_at
-      - period_end
-      - period_start
-    DashboardSummaryAnalyticsSerializersDashboardSummaryDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/DashboardSummary'
-      required:
-      - data
+      - label
+      - value
     EquipmentAvailability:
       type: object
       properties:
-        period_start:
-          type: string
-          format: date-time
-        period_end:
-          type: string
-          format: date-time
+        period:
+          $ref: '#/components/schemas/ReportPeriod'
         equipment_count:
           type: integer
         average_uptime_percent:
@@ -1232,8 +1119,7 @@ components:
       - average_uptime_percent
       - equipment_count
       - items
-      - period_end
-      - period_start
+      - period
     EquipmentAvailabilityAnalyticsSerializersEquipmentAvailabilityDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -1245,10 +1131,10 @@ components:
     EquipmentAvailabilityItem:
       type: object
       properties:
-        equipment_id:
-          type: integer
-        equipment_name:
-          type: string
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         uptime_percent:
           type: number
           format: double
@@ -1261,8 +1147,7 @@ components:
           type: string
       required:
       - current_status
-      - equipment_id
-      - equipment_name
+      - equipment
       - outage_count
       - unavailable_hours
       - uptime_percent
@@ -1299,16 +1184,8 @@ components:
           type: string
         timezone:
           type: string
-        period_start:
-          type: string
-          format: date-time
-          description: Inclusive instant at local first-month midnight, represented
-            in UTC.
-        period_end:
-          type: string
-          format: date-time
-          description: Exclusive instant at local midnight following end_month, represented
-            in UTC.
+        period:
+          $ref: '#/components/schemas/FinancePeriod'
         combined:
           $ref: '#/components/schemas/FinanceTotals'
         sources:
@@ -1322,8 +1199,7 @@ components:
       - currency
       - end_month
       - items
-      - period_end
-      - period_start
+      - period
       - sources
       - start_month
       - timezone
@@ -1355,7 +1231,9 @@ components:
           description: Expense-owned type, or procurement for purchases with no expense
             type.
         source:
-          $ref: '#/components/schemas/FinanceBreakdownItemSourceEnum'
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
       required:
       - expense_type
       - net
@@ -1363,14 +1241,6 @@ components:
       - refunds
       - source
       - transaction_count
-    FinanceBreakdownItemSourceEnum:
-      enum:
-      - expense
-      - procurement
-      type: string
-      description: '* `expense` - expense
-
-        * `procurement` - procurement'
     FinanceMoney:
       type: object
       properties:
@@ -1407,16 +1277,8 @@ components:
           type: string
         timezone:
           type: string
-        period_start:
-          type: string
-          format: date-time
-          description: Inclusive instant at local first-month midnight, represented
-            in UTC.
-        period_end:
-          type: string
-          format: date-time
-          description: Exclusive instant at local midnight following end_month, represented
-            in UTC.
+        period:
+          $ref: '#/components/schemas/FinancePeriod'
         combined:
           $ref: '#/components/schemas/FinanceTotals'
         sources:
@@ -1431,8 +1293,7 @@ components:
       - currency
       - end_month
       - months
-      - period_end
-      - period_start
+      - period
       - sources
       - start_month
       - timezone
@@ -1444,6 +1305,23 @@ components:
           $ref: '#/components/schemas/FinanceMonthlyTrends'
       required:
       - data
+    FinancePeriod:
+      type: object
+      description: NAM-9 ``period`` group read from ``period_start`` / ``period_end``.
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+          description: Inclusive instant at local first-month midnight, represented
+            in UTC.
+        ends_at:
+          type: string
+          format: date-time
+          description: Exclusive instant at local midnight following end_month, represented
+            in UTC.
+      required:
+      - ends_at
+      - starts_at
     FinanceProblemResponse:
       type: object
       properties:
@@ -1472,16 +1350,8 @@ components:
           type: string
         timezone:
           type: string
-        period_start:
-          type: string
-          format: date-time
-          description: Inclusive instant at local first-month midnight, represented
-            in UTC.
-        period_end:
-          type: string
-          format: date-time
-          description: Exclusive instant at local midnight following end_month, represented
-            in UTC.
+        period:
+          $ref: '#/components/schemas/FinancePeriod'
         combined:
           $ref: '#/components/schemas/FinanceTotals'
         sources:
@@ -1490,8 +1360,7 @@ components:
       - combined
       - currency
       - end_month
-      - period_end
-      - period_start
+      - period
       - sources
       - start_month
       - timezone
@@ -1637,6 +1506,19 @@ components:
         occurred_at:
           type: string
           format: date-time
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     ProblemDetail:
       type: object
       properties:
@@ -1685,6 +1567,19 @@ components:
             $ref: '#/components/schemas/ProjectUsage'
       required:
       - data
+    ReportPeriod:
+      type: object
+      description: NAM-9 ``period`` group read from the row's ``period_start`` / ``period_end``.
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+      required:
+      - ends_at
+      - starts_at
     StorageQuotaCreate:
       type: object
       description: Input payload for recording storage quota measurements.

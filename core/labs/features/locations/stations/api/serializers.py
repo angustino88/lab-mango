@@ -6,14 +6,13 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
-from core.common.api.summary_serializers import StatusSummarySerializer
+from core.common.api.summary_serializers import StatusSummarySerializer, UserReferenceSerializer, embedded_resource
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
     ChoiceReferenceSerializer,
     Coordinate3DSerializer,
     NamedReferenceSerializer,
-    ResourceOwnerSerializer,
     ResourceWriteSerializerMixin,
     UIDNamedReferenceSerializer,
     to_choice_reference,
@@ -215,16 +214,17 @@ class StationSlotSerializer(AppModelSerializer):
         read_only=True, help_text="Deprecated: available, occupied, out_of_service or retired (occupied is computed)."
     )
     service_status = serializers.SerializerMethodField()
-    occupied = serializers.BooleanField(read_only=True, default=False)
+    station_id = serializers.IntegerField(read_only=True)  # REL-16: slots are read under their station
+    is_occupied = serializers.BooleanField(source="occupied", read_only=True, default=False)
     is_active = serializers.SerializerMethodField(help_text="Deprecated: service_status is in_service.")
 
     class Meta:
         model = StationSlot
         fields = (
             "id",
-            "station",
+            "station_id",
             *StationSlotCreateSerializer.Meta.fields,
-            "occupied",
+            "is_occupied",
             "created_at",
             "updated_at",
         )
@@ -328,6 +328,7 @@ class StationSerializer(LocationStateFieldsMixin, AppModelSerializer):
         return request.build_absolute_uri(path) if request is not None else path
 
 
+@embedded_resource
 class StationTypeSerializer(AppModelSerializer):
     class Meta:
         model = StationType
@@ -337,7 +338,7 @@ class StationTypeSerializer(AppModelSerializer):
 
 class StationStatusRecordSerializer(AppModelSerializer):
     status = serializers.SerializerMethodField(read_only=True)
-    actor = ResourceOwnerSerializer(source="creator", read_only=True, allow_null=True)
+    actor = UserReferenceSerializer(source="creator", read_only=True, allow_null=True)
 
     class Meta:
         model = StationStatusRecord
@@ -349,7 +350,10 @@ class StationStatusRecordSerializer(AppModelSerializer):
         return to_choice_reference(getattr(obj, "status", None), ResourceLifecycleStatus.choices)
 
 
+@embedded_resource
 class RoomReferenceSerializer(NamedReferenceSerializer):
+    """A room item of the station reference-data bundle (REL-15)."""
+
     sku = serializers.CharField(read_only=True)
 
     class Meta:

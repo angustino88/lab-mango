@@ -26,7 +26,12 @@ def test_priority_options_return_active_priorities():
 def test_inactive_priority_is_a_validation_error_not_a_crash():
     retired = PurchasePriority.objects.create(code="reg-retired", name="Regression retired", rank=3, is_active=False)
     serializer = DraftLineInputSerializer(
-        data={"description": "Cable", "quantity": 1, "unit_price": "1.00", "priority_id": retired.pk}
+        data={
+            "description": "Cable",
+            "quantity": 1,
+            "unit_price": {"amount": "1.00", "currency": "EUR"},
+            "priority_id": retired.pk,
+        }
     )
 
     assert not serializer.is_valid()

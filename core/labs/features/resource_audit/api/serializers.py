@@ -1,10 +1,14 @@
 """Serializers for resource auditing API endpoints."""
 
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api import AppModelSerializer
 from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.search import SearchQueryMixin
+from core.common.api.summary_serializers import ChoiceSerializer, UserReferenceSerializer, choice_field, to_choice
+from core.common.api.wire_names import relation_name
 from core.labs.features.resource_audit.public import (
     CATALOG_PAGE_SIZE_DEFAULT,
     CATALOG_PAGE_SIZE_MAX,
@@ -15,33 +19,27 @@ from core.labs.models.auditing.resource_audit import ResourceAudit
 User = get_user_model()
 
 
-class ResourceAuditorSerializer(AppModelSerializer):
-    """User summary for audit actor."""
+class AuditedResourceSerializer(serializers.Serializer):
+    """REL-13 polymorphic relation to the audited resource."""
 
-    class Meta:
-        model = User
-        fields = ("id", "username", "display_name")
-        ref_name = "ResourceAuditorUserSummary"
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    type = serializers.ChoiceField(choices=CATALOG_RESOURCE_TYPES, read_only=True)
 
 
 class ResourceAuditItemSerializer(AppModelSerializer):
     """Full detail of a recorded resource audit."""
 
-    auditor = ResourceAuditorSerializer(read_only=True)
-    resource_type = serializers.SerializerMethodField()
-    resource_id = serializers.SerializerMethodField()
-    resource_name = serializers.SerializerMethodField()
-    resource_sku = serializers.SerializerMethodField()
+    resource = serializers.SerializerMethodField()
+    auditor = UserReferenceSerializer(read_only=True)
+    result = choice_field(ResourceAudit._meta.get_field("result").choices)
     created_at = serializers.DateTimeField(source="created", read_only=True)
 
     class Meta:
         model = ResourceAudit
         fields = (
             "id",
-            "resource_type",
-            "resource_id",
-            "resource_name",
-            "resource_sku",
+            "resource",
             "auditor",
             "result",
             "remarks",
@@ -50,25 +48,12 @@ class ResourceAuditItemSerializer(AppModelSerializer):
         )
         ref_name = "ResourceAuditItem"
 
-    def get_resource_type(self, obj: ResourceAudit) -> str:
-        if obj.resource_content_type:
-            return obj.resource_content_type.model
-        return ""
-
-    def get_resource_id(self, obj: ResourceAudit) -> str:
-        return obj.resource_object_id
-
-    def get_resource_name(self, obj: ResourceAudit) -> str:
-        res = obj.resource
-        if res:
-            return getattr(res, "name", "") or str(res)
-        return ""
-
-    def get_resource_sku(self, obj: ResourceAudit) -> str:
-        res = obj.resource
-        if res:
-            return getattr(res, "sku", "") or getattr(res, "code", "")
-        return ""
+    @extend_schema_field(AuditedResourceSerializer)
+    def get_resource(self, obj: ResourceAudit) -> dict:
+        resource_type = obj.resource_content_type.model if obj.resource_content_type else ""
+        target = obj.resource
+        name = relation_name(target) if target is not None else f"Deleted {resource_type}"  # REL-12
+        return {"id": int(obj.resource_object_id), "name": name, "type": resource_type}
 
 
 AUDIT_RESULT_INPUT_CHOICES: list[str] = ["PASS", "FAIL", "NOT_ASSESSED", "OK", "NOK"]
@@ -136,8 +121,10 @@ class AuditBySkuRequestSerializer(serializers.Serializer):
         ref_name = "AuditBySkuRequest"
 
 
-class ResourceAuditListQuerySerializer(PageNumberQuerySerializer):
-    """Query filters for audits listing."""
+class ResourceAuditListQuerySerializer(SearchQueryMixin, PageNumberQuerySerializer):
+    """Query filters for audits listing; free text is ``q`` (``search`` is a deprecated alias)."""
+
+    search_target = "search"
 
     resource_type = serializers.CharField(required=False)
     result = serializers.ChoiceField(
@@ -145,7 +132,6 @@ class ResourceAuditListQuerySerializer(PageNumberQuerySerializer):
         required=False,
     )
     auditor_id = serializers.IntegerField(required=False)
-    search = serializers.CharField(required=False)
 
     class Meta:
         ref_name = "ResourceAuditListQuery"
@@ -185,7 +171,7 @@ class AuditCatalogItemSerializer(serializers.Serializer):
     """One auditable resource as the audit tool stores it offline. Never carries license keys."""
 
     uid = serializers.UUIDField()
-    resource_type = serializers.ChoiceField(choices=CATALOG_RESOURCE_TYPES)
+    resource_type = serializers.SerializerMethodField()
     sku = serializers.CharField(allow_blank=True)
     name = serializers.CharField(allow_blank=True)
     serial_number = serializers.CharField(allow_blank=True, help_text="Equipment only; empty for other types.")
@@ -204,12 +190,20 @@ class AuditCatalogItemSerializer(serializers.Serializer):
         allow_blank=True,
         help_text="Bench: setup station name. Station: room name. Room: building name. Otherwise empty.",
     )
-    expiry_date = serializers.DateTimeField(allow_null=True, help_text="License expiry; null for other types.")
+    expires_at = serializers.DateTimeField(
+        source="expiry_date", allow_null=True, help_text="License expiry; null for other types."
+    )
     updated_at = serializers.DateTimeField()
-    deleted = serializers.BooleanField(help_text="True when the resource was deleted; remove it from the local copy.")
+    is_deleted = serializers.BooleanField(
+        source="deleted", help_text="True when the resource was deleted; remove it from the local copy."
+    )
 
     class Meta:
         ref_name = "AuditCatalogItem"
+
+    @extend_schema_field(ChoiceSerializer)
+    def get_resource_type(self, row) -> dict[str, str] | None:
+        return to_choice(row["resource_type"], [(value, value.capitalize()) for value in CATALOG_RESOURCE_TYPES])
 
 
 class AuditCatalogPaginationSerializer(serializers.Serializer):
@@ -224,7 +218,8 @@ class AuditCatalogPaginationSerializer(serializers.Serializer):
 
 class AuditCatalogMetaSerializer(serializers.Serializer):
     pagination = AuditCatalogPaginationSerializer()
-    server_time = serializers.DateTimeField(
+    sync_started_at = serializers.DateTimeField(
+        source="server_time",
         help_text="Time the sync started. Store it and send it as changed_since on the next sync.",
     )
 

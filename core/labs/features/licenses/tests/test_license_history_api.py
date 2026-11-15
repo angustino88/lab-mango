@@ -67,7 +67,7 @@ def test_history_lists_status_changes_newest_first_with_actor(client, coordinato
     ]
     assert rows[0]["metadata"] == {"ticket": "T-1"}
     assert rows[0]["license"]["id"] == license_record.pk
-    assert rows[0]["actor"] == {"id": coordinator.pk, "username": "lic-hist-coord", "display_name": "Coord"}
+    assert rows[0]["actor"] == {"id": coordinator.pk, "name": "Coord"}
     assert set(rows[0]) == {"id", "license", "status", "metadata", "actor", "created_at"}
     assert response.data["meta"]["pagination"]["count"] == 2
 

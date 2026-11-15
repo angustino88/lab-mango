@@ -96,6 +96,27 @@ class TestLeaderboardPersona:
         assert "active-pilot" in usernames
         assert "inactive-user" not in usernames
 
+    def test_wire_rows_use_the_documented_keys(self, db, analytics_client):
+        """The response is serialized, so the wire matches the schema (NAM-3: ``last_remote_at``)."""
+        from datetime import datetime
+        from datetime import timezone as dt_timezone
+
+        from tests.factories import LabSessionLogFactory
+
+        pilot = UserFactory(username="wire-pilot", display_name="Wire Pilot")
+        LabSessionLogFactory(
+            remote_user=pilot.username,
+            login_time=datetime(2026, 4, 10, 8, 0, tzinfo=dt_timezone.utc),
+            logout_time=datetime(2026, 4, 10, 12, 0, tzinfo=dt_timezone.utc),
+        )
+        with patch(_PATCH_APIKEY, return_value=True):
+            response = analytics_client.get(
+                "/api/labs/leaderboard/persona", {"start_date": "2026-04-01", "end_date": "2026-04-30"}
+            )
+        assert response.status_code == 200
+        row = next(row for row in response.json()["data"] if row["username"] == "wire-pilot")
+        assert "last_remote_at" in row and "last_remote" not in row
+
 
 # ---------------------------------------------------------------------------
 # GET /api/labs/leaderboard/lab
@@ -119,7 +140,7 @@ class TestLeaderboardLab:
 
 
 # ---------------------------------------------------------------------------
-# GET /api/labs/profile/<id>
+# GET /api/labs/benches/<id>/profile
 # ---------------------------------------------------------------------------
 
 
@@ -128,7 +149,7 @@ class TestLabProfile:
     async def test_unauthenticated_returns_401_or_403(self):
         from django.test import AsyncClient
 
-        for url in ("/api/labs/profile/1", "/api/labs/benches/1/profile"):
+        for url in ("/api/labs/benches/1/profile",):
             response = await AsyncClient().get(url)
             assert response.status_code in (401, 403)
 
@@ -139,15 +160,9 @@ class TestLabProfile:
             response_canon = await AsyncClient().get("/api/labs/benches/99999/profile")
             assert response_canon.status_code == 404
 
-            response_alias = await AsyncClient().get("/api/labs/profile/99999")
-            assert response_alias.status_code == 404
-            assert response_alias.headers.get("Deprecation") == "true"
-            assert "Sunset" in response_alias.headers
-            assert "/api/labs/benches/99999/profile" in response_alias.headers.get("Link", "")
-
 
 # ---------------------------------------------------------------------------
-# GET /api/labs/users/profile/<id>
+# GET /api/labs/leaderboard/users/<id>/profile
 # ---------------------------------------------------------------------------
 
 
@@ -156,7 +171,7 @@ class TestUserProfile:
     async def test_unauthenticated_returns_401_or_403(self):
         from django.test import AsyncClient
 
-        for url in ("/api/labs/users/profile/1", "/api/labs/leaderboard/users/1/profile"):
+        for url in ("/api/labs/leaderboard/users/1/profile",):
             response = await AsyncClient().get(url)
             assert response.status_code in (401, 403)
 
@@ -166,9 +181,3 @@ class TestUserProfile:
         with patch(_PATCH_APIKEY, return_value=True):
             response_canon = await AsyncClient().get("/api/labs/leaderboard/users/99999/profile")
             assert response_canon.status_code == 404
-
-            response_alias = await AsyncClient().get("/api/labs/users/profile/99999")
-            assert response_alias.status_code == 404
-            assert response_alias.headers.get("Deprecation") == "true"
-            assert "Sunset" in response_alias.headers
-            assert "/api/labs/leaderboard/users/99999/profile" in response_alias.headers.get("Link", "")

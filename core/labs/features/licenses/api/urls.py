@@ -12,7 +12,6 @@ from .views import (
     LicenseRetrieveAPIView,
     LicenseStatusAPIView,
     LicenseStatusSummaryAPIView,
-    LicenseUnassignActionAPIView,
 )
 
 urlpatterns = [
@@ -25,7 +24,6 @@ urlpatterns = [
     path("licenses/<int:license_id>/actions/change-status", LicenseStatusAPIView.as_view(), name="license-change-status"),
     path("licenses/<int:license_id>/history", LicenseHistoryAPIView.as_view(), name="license-history"),
     path("licenses/<int:license_id>/actions/assign", LicenseAssignActionAPIView.as_view(), name="license-action-assign"),
-    path("licenses/<int:license_id>/actions/unassign", LicenseUnassignActionAPIView.as_view(), name="license-action-unassign"),
     path("licenses/<int:license_id>/agreements", LicenseAgreementListCreateAPIView.as_view(), name="license-agreements"),
 
     # License lookup catalogs and options

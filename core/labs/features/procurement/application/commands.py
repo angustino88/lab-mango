@@ -1,6 +1,6 @@
 """Atomic purchase and acquisition-cost allocation commands."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, IntegrityError, connection, transaction
 
+from core.common.domain.money import check_currency
 from core.labs.features.procurement.exceptions import (
     PurchaseAllocationConflict,
     PurchaseDraftConflict,
@@ -47,6 +48,7 @@ class CreatePurchaseItemInput:
     quantity: int = 1
     unit_price: Decimal = Decimal("0.00")
     notes: str = ""
+    currency: str | None = None  # the submitted unit price's currency; must be the purchase's (FMT-2)
 
 
 @dataclass(frozen=True)
@@ -67,6 +69,7 @@ class CreatePurchaseItemResourceInput:
     resource_type_id: int
     resource_id: int
     acquisition_price: Decimal
+    currency: str | None = None  # must be the purchase's (FMT-2)
 
 
 @dataclass(frozen=True)
@@ -77,6 +80,7 @@ class CreatePurchaseTransactionInput:
     settled_at: datetime
     reference: str = ""
     notes: str = ""
+    currency: str | None = None  # must be the purchase's (FMT-2)
 
 
 @dataclass(frozen=True)
@@ -88,6 +92,7 @@ class DraftLineInput:
     purpose: str | None = None
     priority_id: int | None = None
     unit: str | None = None
+    currency: str | None = None  # must be the purchase's (FMT-2)
 
 
 @dataclass(frozen=True)
@@ -356,6 +361,7 @@ def update_purchase_draft(command: UpdatePurchaseDraftInput, *, actor) -> Purcha
 @transaction.atomic
 def create_draft_line(command: CreateDraftLineInput, *, actor) -> PurchaseItem:
     purchase = _locked_draft(command.purchase_id)
+    check_currency(command.line.currency, purchase.currency, field="unit_price")
     if purchase.items.count() >= 500:
         raise PurchaseDraftValidationFailed("A purchase cannot have more than 500 lines.", details={"items": "Line limit exceeded."})
     priority = _validate_draft_line(command.line)
@@ -383,6 +389,9 @@ def create_draft_line(command: CreateDraftLineInput, *, actor) -> PurchaseItem:
 @transaction.atomic
 def update_draft_line(command: UpdateDraftLineInput, *, actor) -> PurchaseItem:
     purchase = _locked_draft(command.purchase_id)
+    changes = dict(command.changes)
+    check_currency(changes.pop("currency", None), purchase.currency, field="unit_price")
+    command = replace(command, changes=changes)
     item = PurchaseItem.objects.select_for_update().filter(pk=command.item_id, purchase_id=purchase.pk).first()
     if item is None:
         raise PurchaseNotFound("Purchase line not found.")
@@ -510,6 +519,7 @@ def create_purchase(command: CreatePurchaseInput, *, actor) -> Purchase:
 @transaction.atomic
 def create_purchase_item(command: CreatePurchaseItemInput, *, actor) -> PurchaseItem:
     purchase = Purchase.objects.select_for_update().get(pk=command.purchase_id)
+    check_currency(command.currency, purchase.currency, field="unit_price")
     if not command.description.strip() or command.quantity < 1 or command.unit_price < 0:
         raise ValidationError({"items": "Purchase item descriptions, quantities, and prices are invalid."})
     item = PurchaseItem(
@@ -539,6 +549,7 @@ def create_purchase_item_resource(
     # parent id without a lock, then lock parent and line in the shared order.
     item_purchase_id = PurchaseItem.objects.values_list("purchase_id", flat=True).get(pk=command.purchase_item_id)
     purchase = Purchase.objects.select_for_update().get(pk=item_purchase_id)
+    check_currency(command.currency, purchase.currency, field="acquisition_price")
     item = PurchaseItem.objects.select_for_update().get(pk=command.purchase_item_id, purchase_id=purchase.pk)
     resource_type = ContentType.objects.get(pk=command.resource_type_id)
     if (resource_type.app_label, resource_type.model) not in PURCHASE_RESOURCE_MODELS:
@@ -572,6 +583,7 @@ def create_purchase_transaction(
     actor,
 ) -> PurchaseTransaction:
     purchase = Purchase.objects.select_for_update().get(pk=command.purchase_id)
+    check_currency(command.currency, purchase.currency, field="total")
     record = PurchaseTransaction(
         purchase=purchase,
         transaction_type=command.transaction_type,

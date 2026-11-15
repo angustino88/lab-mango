@@ -5,7 +5,6 @@ from datetime import timedelta
 
 from django.utils import timezone
 from drf_api_contracts import OperationContract, ResponseContract
-from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -61,7 +60,7 @@ class LeaderboardPersonaAPIView(FeatureAPIView):
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
         start_date, end_date = _date_range(request)
         data = compute_leaderboard_persona(start_date, end_date)
-        return self.respond_data(data)
+        return self.respond(data)
 
 
 class LeaderboardLabAPIView(FeatureAPIView):
@@ -78,7 +77,7 @@ class LeaderboardLabAPIView(FeatureAPIView):
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
         start_date, end_date = _date_range(request)
         data = compute_leaderboard_lab(start_date, end_date)
-        return self.respond_data(data)
+        return self.respond(data)
 
 
 class LeaderboardExportAPIView(FeatureAPIView):
@@ -95,11 +94,12 @@ class LeaderboardExportAPIView(FeatureAPIView):
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
         start_date, end_date = _date_range(request)
         export_type = request.query_params.get("type", "persona")
+        # Serialize with the row type's own serializer so the wire keys match the schema (NAM-3).
         if export_type == "lab":
-            data = compute_leaderboard_lab(start_date, end_date)
+            rows = LeaderboardLabSerializer(compute_leaderboard_lab(start_date, end_date), many=True).data
         else:
-            data = compute_leaderboard_persona(start_date, end_date)
-        return self.respond_data(data)
+            rows = LeaderboardPersonaSerializer(compute_leaderboard_persona(start_date, end_date), many=True).data
+        return Response({"data": rows})
 
 
 class LabProfileAPIView(FeatureAPIView):
@@ -202,96 +202,8 @@ class LabDashboardAPIView(FeatureAPIView):
         return self.respond_data(data)
 
 
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for bench profile. Use /api/labs/benches/{id}/profile instead.",
-    ),
-)
-class DeprecatedLabProfileAPIView(LabProfileAPIView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        pk = kwargs.get("pk")
-        if pk:
-            response["Link"] = f'</api/labs/benches/{pk}/profile>; rel="successor-version"'
-        return response
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for bench weekly usage heatmap. Use /api/labs/benches/{id}/weekly-usage instead.",
-    ),
-)
-class DeprecatedLabWeeklyUsageHeatmapAPIView(LabWeeklyUsageHeatmapAPIView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        pk = kwargs.get("pk")
-        if pk:
-            response["Link"] = f'</api/labs/benches/{pk}/weekly-usage>; rel="successor-version"'
-        return response
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for user profile. Use /api/labs/leaderboard/users/{id}/profile instead.",
-    ),
-)
-class DeprecatedUserProfileAPIView(UserProfileAPIView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        pk = kwargs.get("pk")
-        if pk:
-            response["Link"] = f'</api/labs/leaderboard/users/{pk}/profile>; rel="successor-version"'
-        return response
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for user weekly usage heatmap. Use /api/labs/leaderboard/users/{id}/weekly-usage instead.",
-    ),
-)
-class DeprecatedUserWeeklyUsageHeatmapAPIView(UserWeeklyUsageHeatmapAPIView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        pk = kwargs.get("pk")
-        if pk:
-            response["Link"] = f'</api/labs/leaderboard/users/{pk}/weekly-usage>; rel="successor-version"'
-        return response
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for dashboard summary. Use /api/labs/dashboard/summary instead.",
-    ),
-)
-class DeprecatedLeaderboardDashboardSummaryAPIView(DashboardSummaryAPIView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        response["Link"] = '</api/labs/dashboard/summary>; rel="successor-version"'
-        return response
-
-
 __all__ = [
     "DashboardSummaryAPIView",
-    "DeprecatedLabProfileAPIView",
-    "DeprecatedLabWeeklyUsageHeatmapAPIView",
-    "DeprecatedLeaderboardDashboardSummaryAPIView",
-    "DeprecatedUserProfileAPIView",
-    "DeprecatedUserWeeklyUsageHeatmapAPIView",
     "LabDashboardAPIView",
     "LabProfileAPIView",
     "LabWeeklyUsageHeatmapAPIView",

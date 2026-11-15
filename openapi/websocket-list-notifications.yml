@@ -75,13 +75,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Notification'
+              $ref: '#/components/schemas/NotificationWrite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Notification'
+              $ref: '#/components/schemas/NotificationWrite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Notification'
+              $ref: '#/components/schemas/NotificationWrite'
         required: true
       security:
       - jwtAuth: []
@@ -102,6 +102,19 @@ paths:
       summary: Create Notifications
 components:
   schemas:
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     MessageTypeEnum:
       enum:
       - success
@@ -121,40 +134,48 @@ components:
         * `announcement` - Announcement'
     Notification:
       type: object
+      description: Read shape (RW-1, ENU-1, NAM-3, REL-3).
       properties:
         id:
           type: integer
           readOnly: true
         message:
           type: string
-          maxLength: 255
+          readOnly: true
         details:
           type: string
+          readOnly: true
           nullable: true
-          maxLength: 255
         message_type:
-          $ref: '#/components/schemas/MessageTypeEnum'
-        expiry_date:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        expires_at:
           type: string
           format: date-time
+          readOnly: true
         target_user:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
-        created:
+        created_at:
           type: string
           format: date-time
           readOnly: true
-        modified:
+        updated_at:
           type: string
           format: date-time
           readOnly: true
       required:
-      - created
-      - expiry_date
+      - created_at
+      - details
+      - expires_at
       - id
-      - modified
+      - message
+      - message_type
       - target_user
+      - updated_at
     NotificationSerializerNotificationDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -207,6 +228,24 @@ components:
           $ref: '#/components/schemas/NotificationSerializerNotificationPagination'
       required:
       - pagination
+    NotificationWrite:
+      type: object
+      description: Write shape (RW-1); the target user is not writable here.
+      properties:
+        message:
+          type: string
+          maxLength: 255
+        details:
+          type: string
+          nullable: true
+          maxLength: 255
+        message_type:
+          $ref: '#/components/schemas/MessageTypeEnum'
+        expires_at:
+          type: string
+          format: date-time
+      required:
+      - expires_at
     ProblemDetail:
       type: object
       properties:
@@ -234,6 +273,20 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    UserReference:
+      type: object
+      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
+        use it without importing users.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
   securitySchemes:
     cookieAuth:
       type: apiKey

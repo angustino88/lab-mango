@@ -135,7 +135,7 @@ def test_operator_lifecycle_workflow(api_client, admin_user, computing_equipment
     detail_resp = api_client.get(f"/api/agents/{agent.pk}")
     assert detail_resp.status_code == 200
     assert detail_resp.data["data"]["agent_uid"] == agent_uid
-    assert detail_resp.data["data"]["state"] == "pending"
+    assert detail_resp.data["data"]["state"]["value"] == "pending"
 
     # 4. Issue recovery grant
     grant_resp = api_client.post(f"/api/agents/{agent.pk}/enrollment-grants", {"ttl_minutes": 15}, format="json")
@@ -149,7 +149,7 @@ def test_agent_info_and_heartbeat(api_client, admin_user, computing_equipment):
     info_resp = api_client.get("/agent/info")
     assert info_resp.status_code == 200
     assert "capabilities" in info_resp.data["data"]
-    assert info_resp.data["data"]["backend_id"] == getattr(settings, "BACKEND_ID", "dept_a")
+    assert info_resp.data["data"]["backend_key"] == getattr(settings, "BACKEND_ID", "dept_a")
 
     # 2. Unsigned heartbeat, even for an unknown agent, is rejected without revealing existence
     hb_resp = api_client.post("/agent/heartbeat", {"agent_uid": str(uuid.uuid4())}, format="json")
@@ -203,7 +203,7 @@ def test_agent_enrollment_and_heartbeat_flow(api_client, admin_user, computing_e
     }
     enroll_resp = api_client.post("/agent/enrollments", enroll_payload, format="json")
     assert enroll_resp.status_code == 201
-    assert enroll_resp.data["data"]["state"] == "active"
+    assert enroll_resp.data["data"]["state"]["value"] == "active"
     assert enroll_resp.data["data"]["agent_version"] == "1.0.0"
 
     # 4. Device sends a heartbeat signed with its enrolled key
@@ -223,7 +223,7 @@ def test_agent_enrollment_and_heartbeat_flow(api_client, admin_user, computing_e
     agent = AgentIdentity.objects.get(agent_uid=agent_uid)
     revoke_resp = api_client.post(f"/api/agents/{agent.pk}/actions/revoke")
     assert revoke_resp.status_code == 200
-    assert revoke_resp.data["data"]["state"] == "revoked"
+    assert revoke_resp.data["data"]["state"]["value"] == "revoked"
 
     # Subsequent signed heartbeat fails because the agent is no longer active
     api_client.force_authenticate(user=None)

@@ -2,15 +2,23 @@
 
 import math
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.agents.models import AgentIdentity
+from core.common.api.summary_serializers import choice_field
+from core.common.api.wire_names import relation_object
+from core.labs.features.base.serializers import NamedReferenceSerializer
 from core.labs.models import ComputingActivityStatus, SessionAccessType
 
 
 class AgentIdentitySerializer(serializers.ModelSerializer):
-    equipment_sku = serializers.CharField(source="equipment.sku", read_only=True)
-    equipment_name = serializers.CharField(source="equipment.name", read_only=True)
+    equipment = serializers.SerializerMethodField()  # REL-3, REL-4
+    state = choice_field(AgentIdentity._meta.get_field("state").choices)
+    key_algorithm = choice_field(AgentIdentity._meta.get_field("key_algorithm").choices, allow_null=True)
+    key_storage = choice_field(AgentIdentity._meta.get_field("key_storage").choices, allow_null=True)
+    created_at = serializers.DateTimeField(source="created", read_only=True)
+    updated_at = serializers.DateTimeField(source="modified", read_only=True)
 
     class Meta:
         model = AgentIdentity
@@ -18,8 +26,6 @@ class AgentIdentitySerializer(serializers.ModelSerializer):
             "id",
             "agent_uid",
             "equipment",
-            "equipment_sku",
-            "equipment_name",
             "state",
             "key_algorithm",
             "key_storage",
@@ -27,10 +33,14 @@ class AgentIdentitySerializer(serializers.ModelSerializer):
             "agent_version",
             "last_seen_at",
             "enrolled_at",
-            "created",
-            "modified",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = fields
+
+    @extend_schema_field(NamedReferenceSerializer(allow_null=True))
+    def get_equipment(self, obj) -> dict | None:
+        return relation_object(obj.equipment)
 
 
 class AgentDetailResponseSerializer(serializers.Serializer):
@@ -109,7 +119,7 @@ class AgentActivityReportSerializer(serializers.Serializer):
 
 
 class AgentActivityDataSerializer(serializers.Serializer):
-    status = serializers.ChoiceField(choices=ComputingActivityStatus.choices)
+    status = choice_field(ComputingActivityStatus.choices)
     remote_user = serializers.CharField(allow_blank=True)
     remote_user_display_name = serializers.CharField(allow_blank=True)
     remote_computer = serializers.CharField(allow_blank=True)
@@ -125,7 +135,7 @@ class AgentActivityResponseSerializer(serializers.Serializer):
 
 
 class AgentInfoResponseDataSerializer(serializers.Serializer):
-    backend_id = serializers.CharField()
+    backend_key = serializers.CharField(help_text="Logical name of this department backend (routing-sync backend_id).")
     server_time = serializers.CharField()
     capabilities = serializers.ListField(child=serializers.CharField())
     endpoints = serializers.DictField(
@@ -141,9 +151,11 @@ class AgentInfoResponseSerializer(serializers.Serializer):
 class AgentSessionLogReportSerializer(serializers.Serializer):
     """One completed remote session, pushed once after logout. The computer is the signing agent's."""
 
-    event_id = serializers.UUIDField(help_text="Agent-generated id of this session; repeat it on retry.")
-    login_time = serializers.DateTimeField()
-    logout_time = serializers.DateTimeField()
+    event_key = serializers.UUIDField(
+        source="event_id", help_text="Agent-generated id of this session; repeat it on retry."
+    )
+    login_at = serializers.DateTimeField(source="login_time")
+    logout_at = serializers.DateTimeField(source="logout_time")
     active_duration_seconds = serializers.FloatField(min_value=0)
     remote_user = serializers.CharField(max_length=255)
     remote_ip = serializers.IPAddressField(required=False, allow_null=True)
@@ -165,19 +177,13 @@ class AgentSessionLogReportSerializer(serializers.Serializer):
 
 class AgentSessionLogDataSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    event_id = serializers.UUIDField()
-    login_time = serializers.DateTimeField()
-    logout_time = serializers.DateTimeField()
+    event_key = serializers.UUIDField(source="event_id")
+    login_at = serializers.DateTimeField(source="login_time")
+    logout_at = serializers.DateTimeField(source="logout_time")
     booking_code = serializers.CharField(allow_null=True)
-    access_type = serializers.ChoiceField(
-        choices=SessionAccessType.choices,
-        allow_null=True,
-        help_text=(
-            "booked: a verified booking for this computer's bench; ad_hoc: no booking code; "
-            "unverified_booking: a code that did not verify. Null only for sessions stored before "
-            "access types existed."
-        ),
-    )
+    # access_type: booked (a verified booking for this computer's bench), ad_hoc (no booking code),
+    # unverified_booking (a code that did not verify); null only for sessions stored before access types.
+    access_type = choice_field(SessionAccessType.choices, allow_null=True)
 
 
 class AgentSessionLogResponseSerializer(serializers.Serializer):
@@ -189,7 +195,7 @@ class AgentBookingValidationRequestSerializer(serializers.Serializer):
 
 
 class AgentBookingValidationDataSerializer(serializers.Serializer):
-    eligible = serializers.BooleanField()
+    is_eligible = serializers.BooleanField()
     booking_code = serializers.CharField(required=False, help_text="Present only when eligible.")
     starts_at = serializers.DateTimeField(required=False, help_text="Present only when eligible.")
     ends_at = serializers.DateTimeField(required=False, help_text="Present only when eligible.")
@@ -205,7 +211,7 @@ class AgentBookingValidationResponseSerializer(serializers.Serializer):
 
 
 class AgentBookingCheckInDataSerializer(serializers.Serializer):
-    checked_in = serializers.BooleanField(help_text="True when the booking is now in progress for this login.")
+    is_checked_in = serializers.BooleanField(help_text="True when the booking is now in progress for this login.")
     booking_code = serializers.CharField(required=False, help_text="Present only when checked in.")
     starts_at = serializers.DateTimeField(required=False, help_text="Present only when checked in.")
     ends_at = serializers.DateTimeField(required=False, help_text="Present only when checked in.")
@@ -221,7 +227,7 @@ class AgentBookingCheckInResponseSerializer(serializers.Serializer):
 
 
 class AgentBookingCompleteDataSerializer(serializers.Serializer):
-    completed = serializers.BooleanField(help_text="True when the booking is now completed.")
+    is_completed = serializers.BooleanField(help_text="True when the booking is now completed.")
     booking_code = serializers.CharField(required=False, help_text="Present only when completed.")
     starts_at = serializers.DateTimeField(required=False, help_text="Present only when completed.")
     ends_at = serializers.DateTimeField(
@@ -239,7 +245,7 @@ class AgentBookingExtendRequestSerializer(serializers.Serializer):
 
 
 class AgentBookingExtendDataSerializer(serializers.Serializer):
-    extended = serializers.BooleanField(help_text="True when the booking now ends at ends_at.")
+    is_extended = serializers.BooleanField(help_text="True when the booking now ends at ends_at.")
     booking_code = serializers.CharField(required=False, help_text="Present only when extended.")
     starts_at = serializers.DateTimeField(required=False, help_text="Present only when extended.")
     ends_at = serializers.DateTimeField(required=False, help_text="The new end; present only when extended.")
@@ -249,33 +255,48 @@ class AgentBookingExtendResponseSerializer(serializers.Serializer):
     data = AgentBookingExtendDataSerializer()
 
 
-class AgentBookingExtendErrorDetailSerializer(serializers.Serializer):
-    field = serializers.CharField(help_text="Always ends_at.")
-    code = serializers.ChoiceField(
-        choices=(
-            "already_ended",
-            "not_later",
-            "too_short",
-            "needs_approval",
-            "bench_not_in_service",
-            "bench_not_free",
-        ),
-        help_text="Why the extension was refused (stable).",
-    )
-    message = serializers.CharField()
-    limit = serializers.DateTimeField(
-        allow_null=True,
-        help_text=(
-            "too_short: earliest accepted end; needs_approval: latest accepted end; "
-            "bench_not_free: when the next booking starts; otherwise null."
-        ),
-    )
+
+
+EXTENSION_REFUSAL_CODES = (
+    "already_ended",
+    "not_later",
+    "too_short",
+    "needs_approval",
+    "bench_not_in_service",
+    "bench_not_free",
+)
+
+
+@extend_schema_field(
+    {
+        # DOC-4: a refusal names why and the bound; a validation failure names only the field and message.
+        "anyOf": [
+            {
+                "type": "object",
+                "required": ["field", "code", "message", "limit_at"],
+                "properties": {
+                    "field": {"type": "string"},
+                    "code": {"type": "string", "enum": list(EXTENSION_REFUSAL_CODES)},
+                    "message": {"type": "string"},
+                    "limit_at": {"type": "string", "format": "date-time", "nullable": True},
+                },
+            },
+            {
+                "type": "object",
+                "required": ["message"],
+                "properties": {"field": {"type": "string"}, "message": {"type": "string"}},
+            },
+        ]
+    }
+)
+class _ExtendErrorDetailField(serializers.DictField):
+    """One ``details`` item of an extension refusal or of a validation failure."""
 
 
 class AgentBookingExtendErrorBodySerializer(serializers.Serializer):
     code = serializers.CharField()
     message = serializers.CharField()
-    details = AgentBookingExtendErrorDetailSerializer(many=True)
+    details = serializers.ListField(child=_ExtendErrorDetailField())
     request_id = serializers.CharField()
 
 

@@ -24,7 +24,6 @@ def spec():
         ordering={"sku": "sku", "created_at": "created"},
         default_ordering=("sku",),
         ranges=(("created_after", "created_before"),),
-        search_alias=True,
     )
 
 
@@ -54,7 +53,7 @@ def test_csv_and_combined_fields_are_typed(spec):
         ("favorite=1", "favorite"),
         ("favorite=False", "favorite"),
         ("q=", "q"),
-        ("q=a&search=b", "search"),
+        ("search=a", "search"),
         ("ordering=unknown", "ordering"),
         ("ordering=sku,-sku", "ordering"),
         ("created_after=2026-01-01T00:00:00", "created_after"),
@@ -68,10 +67,10 @@ def test_invalid_filters_are_rejected(spec, query, field):
     assert field in serializer.errors
 
 
-def test_legacy_search_alias_is_preserved(spec):
+def test_legacy_search_alias_is_removed(spec):
     serializer = spec.serializer("TestQuery")(data=QueryDict("search=legacy"))
-    assert serializer.is_valid(), serializer.errors
-    assert serializer.validated_data == {"q": "legacy"}
+    assert not serializer.is_valid()
+    assert "search" in serializer.errors
 
 
 def test_apply_preserves_queryset_and_combines_filters(spec):
@@ -149,10 +148,10 @@ def test_distinct_only_for_supplied_filter(values, expected):
 
 
 @pytest.mark.parametrize(
-    "values,expected", [({}, False), ({"search": ""}, False), ({"q": "x"}, True), ({"search": "x"}, True)]
+    "values,expected", [({}, False), ({"q": "x"}, True)]
 )
 def test_search_distinct_only_for_nonempty_search(values, expected):
-    spec = FilterSpec([], search_fields=("name",), search_alias=True, search_distinct=True)
+    spec = FilterSpec([], search_fields=("name",), search_distinct=True)
     queryset = Mock()
     queryset.filter.return_value = queryset
     queryset.distinct.return_value = queryset

@@ -4,7 +4,6 @@ from typing import Any, ClassVar
 
 from asgiref.sync import sync_to_async
 from drf_api_contracts import OperationContract, ResponseContract
-from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import serializers, status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -177,17 +176,20 @@ class ComputingActivitySummaryAPIView(EquipmentAPIView):
         return self.respond(get_computing_activity_summary())
 
 
-class EquipmentAssignmentAPIView(EquipmentAPIView):
-    """Assign equipment to a bench, or release its current assignment."""
+_ASSIGNMENT_WRITE = dict(
+    request=EquipmentAssignmentSerializer,
+    success=ResponseContract.success("EquipmentAssignment", EquipmentAssignmentResultSerializer),
+    bad_request=ResponseContract.bad_request(),
+    validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
+    not_found=ResponseContract.not_found(),
+    conflict=ResponseContract.conflict(),
+)
 
-    post_contract = OperationContract(
-        request=EquipmentAssignmentSerializer,
-        success=ResponseContract.success("EquipmentAssignment", EquipmentAssignmentResultSerializer),
-        bad_request=ResponseContract.bad_request(),
-        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
-        not_found=ResponseContract.not_found(),
-        conflict=ResponseContract.conflict(),
-    )
+
+class EquipmentAssignmentAPIView(EquipmentAPIView):
+    """The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it."""
+
+    put_contract = OperationContract(**_ASSIGNMENT_WRITE)
     get_contract = OperationContract(
         success=ResponseContract.success("EquipmentAssignmentDetail", EquipmentAssignmentResultSerializer),
         not_found=ResponseContract.not_found(),
@@ -197,7 +199,7 @@ class EquipmentAssignmentAPIView(EquipmentAPIView):
         not_found=ResponseContract.not_found(),
     )
 
-    def handle_post(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+    def handle_put(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
         serializer, error = self.validate_request()
         if error is not None:
             return error
@@ -278,36 +280,6 @@ class EquipmentPlacementAPIView(EquipmentAPIView):
     def handle_delete(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
         remove_placement(RemovePlacementInput(equipment_id=equipment_id), actor=self.acting_user)
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@extend_schema_view(
-    get=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for equipment assignment. Use /api/labs/equipment/{equipment_id}/assignment instead.",
-    ),
-    post=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for equipment assignment. Use /api/labs/equipment/{equipment_id}/assignment instead.",
-    ),
-    delete=extend_schema(
-        deprecated=True,
-        description="Deprecated alias for equipment assignment. Use /api/labs/equipment/{equipment_id}/assignment instead.",
-    ),
-)
-class DeprecatedEquipmentAssignmentActionAPIView(EquipmentAssignmentAPIView):
-    """Deprecated alias for equipment assignment.
-
-    Use /api/labs/equipment/{equipment_id}/assignment instead.
-    """
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response["Deprecation"] = "true"
-        response["Sunset"] = "Wed, 01 Jul 2027 00:00:00 GMT"
-        equipment_id = kwargs.get("equipment_id")
-        if equipment_id:
-            response["Link"] = f'</api/labs/equipment/{equipment_id}/assignment>; rel="successor-version"'
-        return response
 
 
 class EquipmentLoanAPIView(EquipmentAPIView):

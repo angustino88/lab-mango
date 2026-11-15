@@ -2,7 +2,7 @@
 
 > **Implementation status:** The redesign is in progress. This document describes the target contract; it does not imply that every active endpoint has been audited or migrated. Existing endpoints that differ are drift to fix, not patterns to copy.
 
-This standard covers everything a client sends: methods, headers, path and query parameters, bodies, uploads, authentication and limits. It pairs with [response-standard.md](response-standard.md) (what the server returns) and [request-response-golden-examples.md](request-golden-examples.md) (concrete requests). Per-endpoint field lists live in the OpenAPI schema, not here.
+This standard covers everything a client sends: methods, headers, path and query parameters, bodies, uploads, authentication and limits. It pairs with [response-standard.md](response-standard.md) (what the server returns) and [request-golden-examples.md](request-golden-examples.md) (concrete requests). Per-endpoint field lists live in the OpenAPI schema, not here.
 
 ## 0. Scope and basis (SCP)
 - SCP-1 Applies to every HTTP/JSON API request, including file upload, bulk, action and search requests. Streaming and webhook payloads are covered by the response standard.

@@ -53,7 +53,7 @@ def test_history_rows_name_the_actor(client, coordinator, room, station, kind):
     # Records hold the lifecycle; the deprecated value written is kept in metadata.
     assert [row["status"]["value"] for row in rows] == ["in_service", "in_service"]
     assert [row["metadata"]["legacy_status"] for row in rows] == ["available", "maintenance"]
-    assert rows[0]["actor"] == {"id": coordinator.pk, "username": "loc-hist-coord", "display_name": "Coord"}
+    assert rows[0]["actor"] == {"id": coordinator.pk, "name": "Coord"}
     assert set(rows[0]) == {"id", kind, "status", "metadata", "actor", "created_at"}
 
 

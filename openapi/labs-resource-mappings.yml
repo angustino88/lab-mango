@@ -359,6 +359,7 @@ components:
       - sku
       - station_slot_id
       - uid
+      x-embedded-resource: true
     MappingEquipment:
       type: object
       properties:
@@ -390,6 +391,7 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingEquipmentAssignment:
       type: object
       properties:
@@ -399,7 +401,7 @@ components:
           type: string
         position:
           type: integer
-        monitor:
+        is_monitored:
           type: boolean
         assigned_at:
           type: string
@@ -407,9 +409,10 @@ components:
       required:
       - assigned_at
       - id
-      - monitor
+      - is_monitored
       - position
       - role
+      x-embedded-resource: true
     MappingEquipmentCategory:
       type: object
       properties:
@@ -442,6 +445,7 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingLicenseAssignment:
       type: object
       properties:
@@ -459,6 +463,7 @@ components:
       - equipment_id
       - id
       - license_id
+      x-embedded-resource: true
     MappingLicenseCategory:
       type: object
       properties:
@@ -515,6 +520,7 @@ components:
       - name
       - sku
       - uid
+      x-embedded-resource: true
     MappingRoomSlot:
       type: object
       properties:
@@ -553,6 +559,7 @@ components:
       - width_mm
       - x_mm
       - y_mm
+      x-embedded-resource: true
     MappingStation:
       type: object
       properties:
@@ -578,6 +585,7 @@ components:
       - sku
       - slot_id
       - uid
+      x-embedded-resource: true
     MappingStationSlot:
       type: object
       properties:
@@ -597,6 +605,7 @@ components:
       - position_index
       - slot_code
       - station_id
+      x-embedded-resource: true
     ProblemDetail:
       type: object
       properties:

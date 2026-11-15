@@ -188,14 +188,13 @@ def test_repeated_parameters_and_search_parity(inventory):
     repeated = client.get(f"{BASE}/facets?dimension=kind&dimension=type")
     assert repeated.status_code == 400 and repeated.data["error"]["code"] == "invalid_query"
     for path, search in ((BASE, "Facet maker 0"), (BASE, "FACET-0")):
-        for alias in ("q", "search"):
-            listed = client.get(path, {alias: search})
-            facets = client.get(f"{path}/facets", {"dimension": "kind", alias: search})
-            assert facets.status_code == 200
-            assert (
-                sum(row["equipment_count"] for row in facets.data["data"])
-                == listed.data["meta"]["pagination"]["count"]
-            )
+        listed = client.get(path, {"q": search})
+        facets = client.get(f"{path}/facets", {"dimension": "kind", "q": search})
+        assert facets.status_code == 200
+        assert (
+            sum(row["equipment_count"] for row in facets.data["data"])
+            == listed.data["meta"]["pagination"]["count"]
+        )
 
 
 @pytest.mark.django_db

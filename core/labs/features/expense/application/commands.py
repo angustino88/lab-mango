@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from core.common.domain.money import check_currency
 from core.labs.models import Expense, ExpensePayment, Room
 from core.labs.models.finance.expense import EXPENSE_RESOURCE_MODELS
 
@@ -35,6 +36,7 @@ class CreateExpensePaymentInput:
     paid_at: date
     reference: str = ""
     notes: str = ""
+    currency: str | None = None  # the submitted money's currency; must be the expense's (FMT-2)
 
 
 @transaction.atomic
@@ -67,6 +69,7 @@ def create_expense(command: CreateExpenseInput, *, actor) -> Expense:
 @transaction.atomic
 def create_expense_payment(command: CreateExpensePaymentInput, *, actor) -> ExpensePayment:
     expense = Expense.objects.select_for_update().get(pk=command.expense_id)
+    check_currency(command.currency, expense.currency, field="total")
     payment = ExpensePayment(
         expense=expense,
         transaction_type=command.transaction_type,

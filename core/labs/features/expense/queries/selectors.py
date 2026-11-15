@@ -27,7 +27,8 @@ def list_room_expenses(*, room_id: int) -> QuerySet[Expense]:
 
 def list_expense_payments(*, expense_id: int) -> QuerySet[ExpensePayment]:
     Expense.objects.get(pk=expense_id)
-    return ExpensePayment.objects.filter(expense_id=expense_id).order_by("-paid_at", "pk")
+    # `total.currency` is the expense's: join it once, not once per payment (PRF-1).
+    return ExpensePayment.objects.filter(expense_id=expense_id).select_related("expense").order_by("-paid_at", "pk")
 
 
 def get_financial_report(

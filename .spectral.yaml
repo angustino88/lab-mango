@@ -165,11 +165,9 @@ rules:
     description: "FMT-1/NAM-3: fields ending in `_at` are ISO 8601 date-time."
     message: "{{path}}: `_at` field must use format date-time (FMT-1)."
     severity: error
-    # Existing DateField: only components.schemas.ExpensePayment.properties.paid_at
-    # is a calendar date, guarded separately below; every other _at keeps this rule.
-    # Source paths avoid re-linting the exception under dereferenced envelope aliases.
+    # No exceptions: the former ExpensePayment.paid_at date is now paid_date (ADR 007).
     resolved: false
-    given: "$..properties[?(@property.match(/_at$/) && @path !== \"$['components']['schemas']['ExpensePayment']['properties']['paid_at']\")]"
+    given: "$..properties[?(@property.match(/_at$/))]"
     then:
       - field: format
         function: defined
@@ -177,22 +175,6 @@ rules:
         function: enumeration
         functionOptions:
           values: [date-time]
-
-  lm-expense-payment-paid-at-is-date:
-    description: "Documented FMT-1/NAM-3 exception: ExpensePayment.paid_at is an existing DateField, not a timestamp."
-    message: "{{path}}: ExpensePayment.paid_at must remain a string with format date."
-    severity: error
-    resolved: false
-    given: "$.components.schemas.ExpensePayment.properties.paid_at"
-    then:
-      function: schema
-      functionOptions:
-        schema:
-          type: object
-          required: [type, format]
-          properties:
-            type: {const: string}
-            format: {const: date}
 
   lm-properties-snake-case:
     description: "NAM-1: JSON property names are snake_case."

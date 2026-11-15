@@ -108,31 +108,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Lab Dashboard
-  /api/labs/lab-dashboard/summary:
-    get:
-      operationId: labs_lab_dashboard_summary_retrieve
-      description: Deprecated alias for dashboard summary. Use /api/labs/dashboard/summary
-        instead.
-      tags:
-      - Leaderboard
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardSummarySerializersDashboardSummaryDataDetailResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Lab Dashboard Summary
   /api/labs/leaderboard/export:
     get:
       operationId: labs_leaderboard_export_retrieve
@@ -327,174 +302,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Leaderboard Users Weekly Usage by ID
-  /api/labs/profile/{id}:
-    get:
-      operationId: labs_profile_retrieve_by_id
-      description: Deprecated alias for bench profile. Use /api/labs/benches/{id}/profile
-        instead.
-      parameters:
-      - in: query
-        name: end_date
-        schema:
-          type: string
-          minLength: 1
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      - in: query
-        name: start_date
-        schema:
-          type: string
-          minLength: 1
-      tags:
-      - Leaderboard
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LabProfileSerializersLabProfileDetailResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Profile by ID
-  /api/labs/users/profile/{id}:
-    get:
-      operationId: labs_users_profile_retrieve_by_id
-      description: Deprecated alias for user profile. Use /api/labs/leaderboard/users/{id}/profile
-        instead.
-      parameters:
-      - in: query
-        name: end_date
-        schema:
-          type: string
-          minLength: 1
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      - in: query
-        name: start_date
-        schema:
-          type: string
-          minLength: 1
-      tags:
-      - Leaderboard
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserProfileSerializersUserProfileDetailResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Users Profile by ID
-  /api/labs/users/weekly-usage/{id}:
-    get:
-      operationId: labs_users_weekly_usage_retrieve_by_id
-      description: Deprecated alias for user weekly usage heatmap. Use /api/labs/leaderboard/users/{id}/weekly-usage
-        instead.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - Leaderboard
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserWeeklyUsageSerializersWeeklyUsageSlotListResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Users Weekly Usage by ID
-  /api/labs/weekly-usage/{id}:
-    get:
-      operationId: labs_weekly_usage_retrieve_by_id
-      description: Deprecated alias for bench weekly usage heatmap. Use /api/labs/benches/{id}/weekly-usage
-        instead.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - Leaderboard
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LabWeeklyUsageSerializersWeeklyUsageSlotListResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Weekly Usage by ID
 components:
   schemas:
     DashboardLabItem:
@@ -527,27 +334,6 @@ components:
       required:
       - data
       - meta
-    DashboardSummaryData:
-      type: object
-      description: High-level asset count and status distribution summary.
-      properties:
-        total:
-          type: integer
-        status:
-          type: object
-          additionalProperties:
-            type: integer
-      required:
-      - status
-      - total
-    DashboardSummarySerializersDashboardSummaryDataDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/DashboardSummaryData'
-      required:
-      - data
     DashboardUnpaginatedResponse:
       type: object
       description: Unpaginated envelope for dashboard laboratory listings.
@@ -628,7 +414,7 @@ components:
         active_users:
           type: integer
           default: 0
-        last_remote:
+        last_remote_at:
           type: string
           format: date-time
           nullable: true
@@ -691,7 +477,7 @@ components:
           type: number
           format: double
           default: 0.0
-        last_remote:
+        last_remote_at:
           type: string
           format: date-time
           nullable: true

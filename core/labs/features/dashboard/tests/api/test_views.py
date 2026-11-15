@@ -136,7 +136,7 @@ class TestDashboardOverviewAPI:
             creator=user,
         )
 
-        response = client.get(f"/api/labs/dashboard?search={bench.sku}")
+        response = client.get(f"/api/labs/dashboard?q={bench.sku}")
         assert response.status_code == 200
         items = response.json()["data"]
         assert len(items) >= 1
@@ -170,7 +170,7 @@ class TestDashboardOverviewAPI:
             assigned_at=now,
         )
 
-        response = client.get(f"/api/labs/dashboard?search={bench.sku}")
+        response = client.get(f"/api/labs/dashboard?q={bench.sku}")
         assert response.status_code == 200
         item = next(i for i in response.json()["data"] if i["id"] == bench.id)
 
@@ -225,7 +225,7 @@ class TestDashboardOverviewAPI:
             assigned_at=now,
         )
 
-        response = client.get(f"/api/labs/dashboard?search={bench.sku}")
+        response = client.get(f"/api/labs/dashboard?q={bench.sku}")
         assert response.status_code == 200
         item = next(i for i in response.json()["data"] if i["id"] == bench.id)
 
@@ -262,13 +262,13 @@ class TestDashboardOverviewAPI:
 
         BenchFavorite.objects.create(user=user, bench=fav_bench)
 
-        resp_fav = client.get(f"/api/labs/dashboard?is_favorite=true&search={fav_bench.sku}")
+        resp_fav = client.get(f"/api/labs/dashboard?is_favorite=true&q={fav_bench.sku}")
         assert resp_fav.status_code == 200
         fav_items = resp_fav.json()["data"]
         assert len(fav_items) == 1
         assert fav_items[0]["id"] == fav_bench.id
 
-        resp_non_fav = client.get(f"/api/labs/dashboard?is_favorite=false&search={other_bench.sku}")
+        resp_non_fav = client.get(f"/api/labs/dashboard?is_favorite=false&q={other_bench.sku}")
         assert resp_non_fav.status_code == 200
         non_fav_items = resp_non_fav.json()["data"]
         assert other_bench.id in [i["id"] for i in non_fav_items]
@@ -288,11 +288,11 @@ class TestDashboardOverviewAPI:
             status=BookingStatus.RESERVED,
         )
 
-        resp_booked = client.get(f"/api/labs/dashboard?is_booked=true&search={booked.sku}")
+        resp_booked = client.get(f"/api/labs/dashboard?is_booked=true&q={booked.sku}")
         assert resp_booked.status_code == 200
         assert [i["id"] for i in resp_booked.json()["data"]] == [booked.id]
 
-        resp_free = client.get(f"/api/labs/dashboard?is_booked=false&search={free.sku}")
+        resp_free = client.get(f"/api/labs/dashboard?is_booked=false&q={free.sku}")
         assert resp_free.status_code == 200
         assert [i["id"] for i in resp_free.json()["data"]] == [free.id]
 
@@ -303,7 +303,7 @@ class TestDashboardOverviewAPI:
         other_name = f"Audio Lab {uuid.uuid4().hex[:6]}"
         make_bench(name=other_name)
 
-        response = client.get(f"/api/labs/dashboard?search={bench_match.sku}")
+        response = client.get(f"/api/labs/dashboard?q={bench_match.sku}")
         assert response.status_code == 200
         items = response.json()["data"]
         assert len(items) == 1
@@ -318,11 +318,11 @@ class TestDashboardOverviewAPI:
         comp = ComputingEquipmentFactory()
         EquipmentAssignment.objects.create(bench=bench_comp, equipment=comp, assigned_at=now)
 
-        resp_with = client.get(f"/api/labs/dashboard?has_computing=true&search={bench_comp.sku}")
+        resp_with = client.get(f"/api/labs/dashboard?has_computing=true&q={bench_comp.sku}")
         assert resp_with.status_code == 200
         assert [i["id"] for i in resp_with.json()["data"]] == [bench_comp.id]
 
-        resp_without = client.get(f"/api/labs/dashboard?has_computing=false&search={bench_plain.sku}")
+        resp_without = client.get(f"/api/labs/dashboard?has_computing=false&q={bench_plain.sku}")
         assert resp_without.status_code == 200
         assert [i["id"] for i in resp_without.json()["data"]] == [bench_plain.id]
 
@@ -339,11 +339,11 @@ class TestDashboardOverviewAPI:
         bench_mapped.setup_location = station
         bench_mapped.save(update_fields=["setup_location"])
 
-        resp_mapped = client.get(f"/api/labs/dashboard?is_mapped=true&search={bench_mapped.sku}")
+        resp_mapped = client.get(f"/api/labs/dashboard?is_mapped=true&q={bench_mapped.sku}")
         assert resp_mapped.status_code == 200
         assert [i["id"] for i in resp_mapped.json()["data"]] == [bench_mapped.id]
 
-        resp_unmapped = client.get(f"/api/labs/dashboard?is_mapped=false&search={bench_unmapped.sku}")
+        resp_unmapped = client.get(f"/api/labs/dashboard?is_mapped=false&q={bench_unmapped.sku}")
         assert resp_unmapped.status_code == 200
         assert [i["id"] for i in resp_unmapped.json()["data"]] == [bench_unmapped.id]
 
@@ -588,7 +588,7 @@ class TestDashboardBenchDetailAPI:
             creator=user,
         )
 
-        response = client.get(f"/api/labs/dashboard?search={bench.sku}")
+        response = client.get(f"/api/labs/dashboard?q={bench.sku}")
         assert response.status_code == 200
         item = next(row for row in response.json()["data"] if row["id"] == bench.pk)
         assert item["computing"]["ip_address"] == "192.0.2.20"

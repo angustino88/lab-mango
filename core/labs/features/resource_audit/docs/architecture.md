@@ -17,6 +17,6 @@ The `resource_audit` feature provides unified lifecycle auditing and compliance 
 - `GET`, `POST /api/labs/resources/sku/{sku}/audits`: Resource audit collection by business SKU.
 - `GET`, `POST /api/labs/resources/uid/{uid}/audits`: Resource audit collection by system UUID.
 - `GET`, `POST /api/labs/resources/{resource_type}/{resource_id}/audits`: Resource-scoped audit collection.
-- `GET /api/labs/audits`: Global audit query with multi-field filters (`resource_type`, `result`, `auditor_id`, `search`).
+- `GET /api/labs/audits`: Global audit query with multi-field filters (`resource_type`, `result`, `auditor_id`, `q`).
 - `GET`, `PATCH`, `DELETE /api/labs/audits/{id}`: Single audit resource inspection and lifecycle management.
 - `GET /api/labs/audits/options`: Selector standard options endpoint returning `{ "id", "sku", "name" }`.

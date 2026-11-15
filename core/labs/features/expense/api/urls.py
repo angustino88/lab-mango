@@ -2,7 +2,6 @@
 from django.urls import path
 
 from .views import (
-    DeprecatedFinancialReportAPIView,
     ExpensePaymentListCreateAPIView,
     FinancialReportAPIView,
     RoomExpenseListCreateAPIView,
@@ -29,10 +28,5 @@ urlpatterns = [
         "expenses/report",
         FinancialReportAPIView.as_view(),
         name="expense-financial-report",
-    ),
-    path(
-        "financial-report",
-        DeprecatedFinancialReportAPIView.as_view(),
-        name="financial-report",
     ),
 ]
