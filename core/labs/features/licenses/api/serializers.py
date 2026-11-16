@@ -9,6 +9,7 @@ from core.common.api.summary_serializers import (
     StatusSummarySerializer,
     UserReferenceSerializer,
     choice_field,
+    embedded_resource,
 )
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
@@ -43,6 +44,16 @@ class LicenseCategorySummarySerializer(serializers.Serializer):
     resource_count = serializers.IntegerField(min_value=0)
 
 
+@embedded_resource
+class AssignedEquipmentSerializer(serializers.Serializer):
+    """Equipment that holds a license seat: its identity, SKU and name."""
+
+    id = serializers.IntegerField(read_only=True)
+    uid = serializers.UUIDField(read_only=True)
+    sku = serializers.CharField(read_only=True)
+    name = serializers.CharField(read_only=True)
+
+
 class LicenseSerializer(AppModelSerializer):
     image_url = ResourceImageURLField()
     owner = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -53,6 +64,7 @@ class LicenseSerializer(AppModelSerializer):
     category = NamedReferenceSerializer(read_only=True, allow_null=True)
     restriction = NamedReferenceSerializer(read_only=True, allow_null=True)
     seats_in_use = serializers.IntegerField(read_only=True)
+    assigned_equipment = serializers.SerializerMethodField(read_only=True)
     expires_at = serializers.DateTimeField(source="expiry_date", read_only=True, allow_null=True)
     status = serializers.SerializerMethodField(read_only=True)
     acquisition_price = serializers.SerializerMethodField(read_only=True)
@@ -75,6 +87,7 @@ class LicenseSerializer(AppModelSerializer):
             "restriction",
             "seats",
             "seats_in_use",
+            "assigned_equipment",
             "max_version",
             "expires_at",
             "status",
@@ -83,6 +96,17 @@ class LicenseSerializer(AppModelSerializer):
             "updated_at",
         )
         read_only_fields = fields
+
+    @extend_schema_field(AssignedEquipmentSerializer(many=True))
+    def get_assigned_equipment(self, obj) -> list[dict[str, Any]]:
+        """Equipment that currently holds a seat; list selectors prefetch ``active_assignments``."""
+        assignments = getattr(obj, "active_assignments", None)
+        if assignments is None:
+            assignments = obj.equipment_assignments.filter(
+                unassigned_at__isnull=True,
+                equipment__deleted_at__isnull=True,
+            ).select_related("equipment")
+        return list(AssignedEquipmentSerializer([assignment.equipment for assignment in assignments], many=True).data)
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
     def get_status(self, obj) -> dict[str, str] | None:
@@ -99,6 +123,59 @@ class LicenseSerializer(AppModelSerializer):
 
 
 LicenseListQuerySerializer = LICENSE_FILTERS.serializer("LicenseListQuerySerializer")
+
+
+class LicenseCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
+    """Inventory fields of a license. Uniqueness and relations are enforced by the command and PostgreSQL.
+
+    ``identifier`` is the license key: accepted here, never returned by any serializer.
+    """
+
+    department_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    group_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    owner_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    product_id = serializers.IntegerField(min_value=1)
+    vendor_id = serializers.IntegerField(min_value=1)
+    type_id = serializers.IntegerField(min_value=1)
+    category_id = serializers.IntegerField(min_value=1)
+    restriction_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
+    seats = serializers.IntegerField(min_value=1, max_value=32767, required=False)
+    identifier = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=255)
+    expires_at = serializers.DateTimeField(source="expiry_date", required=False, allow_null=True)
+
+    class Meta:
+        model = License
+        fields = (
+            "sku",
+            "name",
+            "department_id",
+            "group_id",
+            "owner_id",
+            "remark",
+            "product_id",
+            "vendor_id",
+            "type_id",
+            "category_id",
+            "restriction_id",
+            "seats",
+            "max_version",
+            "identifier",
+            "expires_at",
+        )
+        validators: list[Any] = []
+        extra_kwargs: dict[str, Any] = {"sku": {"validators": []}}
+
+
+class LicenseUpdateSerializer(LicenseCreateSerializer):
+    """Partial update: the same fields, none required; ``sku`` cannot change after creation."""
+
+    class Meta(LicenseCreateSerializer.Meta):
+        extra_kwargs: dict[str, Any] = {}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ResourceWriteSerializerMixin refuses immutable fields (sku) when the context says "update".
+        self._context = {**getattr(self, "_context", {}), "resource_update": True}
 
 
 class LicenseStatusSerializer(ResourceWriteSerializerMixin, serializers.Serializer):

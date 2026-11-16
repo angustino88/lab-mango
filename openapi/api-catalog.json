@@ -1,8 +1,8 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 457,
-  "generated_at": "2026-11-14",
+  "total_endpoints": 460,
+  "generated_at": "2026-11-15",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -69137,7 +69137,7 @@
       "method": "GET",
       "operation_id": "labs_licenses_retrieve",
       "summary": "Get Licenses",
-      "description": "List non-deleted license inventory with acquisition information.",
+      "description": "List non-deleted license inventory with acquisition information, and create a license.",
       "tags": [
         "Licenses"
       ],
@@ -69385,6 +69385,14 @@
                       "type": "integer",
                       "readOnly": true
                     },
+                    "assigned_equipment": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      "readOnly": true
+                    },
                     "max_version": {
                       "type": "string",
                       "readOnly": true
@@ -69428,6 +69436,7 @@
                   },
                   "required": [
                     "acquisition_price",
+                    "assigned_equipment",
                     "category",
                     "created_at",
                     "department",
@@ -69481,6 +69490,9 @@
                 "restriction": {},
                 "seats": 1,
                 "seats_in_use": 1,
+                "assigned_equipment": [
+                  {}
+                ],
                 "max_version": "string",
                 "expires_at": "2026-10-20T12:00:00Z",
                 "status": {},
@@ -69546,6 +69558,563 @@
         },
         "404": {
           "description": "The requested page does not exist (page beyond the last page).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/licenses",
+      "method": "POST",
+      "operation_id": "labs_licenses_create",
+      "summary": "Create Licenses",
+      "description": "List non-deleted license inventory with acquisition information, and create a license.",
+      "tags": [
+        "Licenses"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Inventory fields of a license. Uniqueness and relations are enforced by the command and PostgreSQL.\n\n``identifier`` is the license key: accepted here, never returned by any serializer.",
+          "properties": {
+            "sku": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "department_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "group_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "owner_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "remark": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "product_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "vendor_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "type_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "category_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "restriction_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "seats": {
+              "type": "integer",
+              "maximum": 32767,
+              "minimum": 1
+            },
+            "max_version": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "identifier": {
+              "type": "string",
+              "writeOnly": true,
+              "maxLength": 255
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          },
+          "required": [
+            "category_id",
+            "product_id",
+            "sku",
+            "type_id",
+            "vendor_id"
+          ]
+        },
+        "example_payload": {
+          "sku": "string",
+          "name": "string",
+          "department_id": 1,
+          "group_id": 1,
+          "owner_id": 1,
+          "remark": "string",
+          "product_id": 1,
+          "vendor_id": 1,
+          "type_id": 1,
+          "category_id": 1,
+          "restriction_id": 1,
+          "seats": 1,
+          "max_version": "string",
+          "identifier": "string",
+          "expires_at": "2026-10-20T12:00:00Z"
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "uid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "readOnly": true
+                  },
+                  "sku": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "owner": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "department": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "remark": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "product": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "vendor": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "category": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "restriction": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "seats": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "description": "How many assets may use the license at the same time."
+                  },
+                  "seats_in_use": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "assigned_equipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "max_version": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "expires_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "status": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true
+                  },
+                  "acquisition_price": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "acquisition_price",
+                  "assigned_equipment",
+                  "category",
+                  "created_at",
+                  "department",
+                  "expires_at",
+                  "id",
+                  "image_url",
+                  "max_version",
+                  "name",
+                  "owner",
+                  "product",
+                  "remark",
+                  "restriction",
+                  "seats",
+                  "seats_in_use",
+                  "sku",
+                  "status",
+                  "type",
+                  "uid",
+                  "updated_at",
+                  "vendor"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "uid": "123e4567-e89b-12d3-a456-426614174000",
+              "sku": "string",
+              "name": "string",
+              "owner": {},
+              "department": {},
+              "remark": "string",
+              "image_url": "https://example.com/resource",
+              "product": {},
+              "vendor": {},
+              "type": {},
+              "category": {},
+              "restriction": {},
+              "seats": 1,
+              "seats_in_use": 1,
+              "assigned_equipment": [
+                {}
+              ],
+              "max_version": "string",
+              "expires_at": "2026-10-20T12:00:00Z",
+              "status": {},
+              "acquisition_price": {},
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
           "content_type": "application/json",
           "schema": {
             "type": "object",
@@ -73037,7 +73606,7 @@
       "method": "GET",
       "operation_id": "labs_licenses_retrieve_by_license_id",
       "summary": "Get Licenses by License ID",
-      "description": "Retrieve a license's inventory and acquisition information.",
+      "description": "Retrieve a license's inventory and acquisition information; update or delete it.",
       "tags": [
         "Licenses"
       ],
@@ -73171,6 +73740,14 @@
                     "type": "integer",
                     "readOnly": true
                   },
+                  "assigned_equipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "max_version": {
                     "type": "string",
                     "readOnly": true
@@ -73214,6 +73791,7 @@
                 },
                 "required": [
                   "acquisition_price",
+                  "assigned_equipment",
                   "category",
                   "created_at",
                   "department",
@@ -73258,6 +73836,9 @@
               "restriction": {},
               "seats": 1,
               "seats_in_use": 1,
+              "assigned_equipment": [
+                {}
+              ],
               "max_version": "string",
               "expires_at": "2026-10-20T12:00:00Z",
               "status": {},
@@ -73268,6 +73849,702 @@
           }
         },
         "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/licenses/{license_id}",
+      "method": "PATCH",
+      "operation_id": "labs_licenses_partial_update_by_license_id",
+      "summary": "Update Licenses by License ID",
+      "description": "Retrieve a license's inventory and acquisition information; update or delete it.",
+      "tags": [
+        "Licenses"
+      ],
+      "parameters": [
+        {
+          "name": "license_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": false,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Partial update: the same fields, none required; ``sku`` cannot change after creation.",
+          "properties": {
+            "sku": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "department_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "group_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "owner_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "remark": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "product_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "vendor_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "type_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "category_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "restriction_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true
+            },
+            "seats": {
+              "type": "integer",
+              "maximum": 32767,
+              "minimum": 1
+            },
+            "max_version": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "identifier": {
+              "type": "string",
+              "writeOnly": true,
+              "maxLength": 255
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          }
+        },
+        "example_payload": {
+          "sku": "string",
+          "name": "string",
+          "department_id": 1,
+          "group_id": 1,
+          "owner_id": 1,
+          "remark": "string",
+          "product_id": 1,
+          "vendor_id": 1,
+          "type_id": 1,
+          "category_id": 1,
+          "restriction_id": 1,
+          "seats": 1,
+          "max_version": "string",
+          "identifier": "string",
+          "expires_at": "2026-10-20T12:00:00Z"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "uid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "readOnly": true
+                  },
+                  "sku": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "owner": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "department": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "remark": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "product": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "vendor": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "category": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "restriction": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "seats": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "description": "How many assets may use the license at the same time."
+                  },
+                  "seats_in_use": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "assigned_equipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "max_version": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "expires_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "status": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true
+                  },
+                  "acquisition_price": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "acquisition_price",
+                  "assigned_equipment",
+                  "category",
+                  "created_at",
+                  "department",
+                  "expires_at",
+                  "id",
+                  "image_url",
+                  "max_version",
+                  "name",
+                  "owner",
+                  "product",
+                  "remark",
+                  "restriction",
+                  "seats",
+                  "seats_in_use",
+                  "sku",
+                  "status",
+                  "type",
+                  "uid",
+                  "updated_at",
+                  "vendor"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "uid": "123e4567-e89b-12d3-a456-426614174000",
+              "sku": "string",
+              "name": "string",
+              "owner": {},
+              "department": {},
+              "remark": "string",
+              "image_url": "https://example.com/resource",
+              "product": {},
+              "vendor": {},
+              "type": {},
+              "category": {},
+              "restriction": {},
+              "seats": 1,
+              "seats_in_use": 1,
+              "assigned_equipment": [
+                {}
+              ],
+              "max_version": "string",
+              "expires_at": "2026-10-20T12:00:00Z",
+              "status": {},
+              "acquisition_price": {},
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/licenses/{license_id}",
+      "method": "DELETE",
+      "operation_id": "labs_licenses_destroy_by_license_id",
+      "summary": "Delete Licenses by License ID",
+      "description": "Retrieve a license's inventory and acquisition information; update or delete it.",
+      "tags": [
+        "Licenses"
+      ],
+      "parameters": [
+        {
+          "name": "license_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -74012,6 +75289,14 @@
                     "type": "integer",
                     "readOnly": true
                   },
+                  "assigned_equipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "max_version": {
                     "type": "string",
                     "readOnly": true
@@ -74055,6 +75340,7 @@
                 },
                 "required": [
                   "acquisition_price",
+                  "assigned_equipment",
                   "category",
                   "created_at",
                   "department",
@@ -74099,6 +75385,9 @@
               "restriction": {},
               "seats": 1,
               "seats_in_use": 1,
+              "assigned_equipment": [
+                {}
+              ],
               "max_version": "string",
               "expires_at": "2026-10-20T12:00:00Z",
               "status": {},

@@ -10,6 +10,14 @@ from .assignments import (
     assign_license,
     unassign_license,
 )
+from .inventory import (
+    CreateLicenseInput,
+    DeleteLicenseInput,
+    UpdateLicenseInput,
+    create_license,
+    delete_license,
+    update_license,
+)
 from .status import ChangeLicenseStatusInput, change_license_status
 
 # Image use cases (replace/remove) for this resource; see core/labs/features/base/resource_image_commands.py.
@@ -21,9 +29,15 @@ __all__ = [
     "AssignLicenseInput",
     "ChangeLicenseStatusInput",
     "CreateLicenseAgreementInput",
+    "CreateLicenseInput",
+    "DeleteLicenseInput",
     "UnassignLicenseInput",
+    "UpdateLicenseInput",
     "assign_license",
     "change_license_status",
+    "create_license",
     "create_license_agreement",
+    "delete_license",
     "unassign_license",
+    "update_license",
 ]

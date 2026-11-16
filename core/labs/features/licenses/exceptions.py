@@ -18,4 +18,11 @@ class InvalidLicenseStatus(Conflict):
     default_message = "The requested license status is not allowed."
 
 
-__all__ = ["InvalidLicenseStatus", "LicenseAlreadyAssigned"]
+class LicenseConflict(Conflict):
+    """Raised when a license write collides with existing data or live use."""
+
+    code = "license_conflict"
+    default_message = "The license write conflicts with an existing license or its current use."
+
+
+__all__ = ["InvalidLicenseStatus", "LicenseAlreadyAssigned", "LicenseConflict"]

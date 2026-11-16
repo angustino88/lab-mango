@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from core.labs.features.licenses.exceptions import LicenseAlreadyAssigned
+from core.labs.features.licenses.exceptions import LicenseAlreadyAssigned, LicenseConflict
 from core.labs.models import Equipment, License, LicenseAssignment
 
 
@@ -32,6 +32,11 @@ def assign_license(command: AssignLicenseInput, *, actor):
     ).first()
     if assignment:
         return assignment
+    # Seats are the number of equipment items that may use the license at once. The license row is
+    # locked above, so concurrent assignments of one license are checked one after another.
+    in_use = LicenseAssignment.objects.filter(license=license_record, unassigned_at__isnull=True).count()
+    if in_use >= license_record.seats:
+        raise LicenseConflict("All seats of this license are already in use.")
     try:
         with transaction.atomic():
             assignment = LicenseAssignment(

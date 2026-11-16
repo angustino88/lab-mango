@@ -80,7 +80,7 @@ class PurchaseDetailAPIView(ProcurementAPIView):
         )
 
     def _detail_response(self, purchase):
-        response = self.respond(PurchaseDetailSerializer(purchase).data)
+        response = self.respond(purchase)
         response["ETag"] = public.purchase_etag(purchase)
         return response
 
@@ -118,7 +118,7 @@ class PurchaseDraftHeaderAPIView(ProcurementAPIView):
         return result
 
     def _draft_response(self, purchase):
-        response = self.respond(PurchaseDraftHeaderOutputSerializer(purchase).data)
+        response = self.respond(purchase)
         response["ETag"] = public.purchase_etag(purchase)
         return response
 

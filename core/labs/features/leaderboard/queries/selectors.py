@@ -163,8 +163,8 @@ def compute_leaderboard_lab(
     result = []
     for bench in benches:
         sessions = LabSessionLog.objects.filter(
-            computing_equipment__equipmentassignment__bench=bench,
-            computing_equipment__equipmentassignment__unassigned_at__isnull=True,
+            computing_equipment__bench_assignments__bench=bench,
+            computing_equipment__bench_assignments__unassigned_at__isnull=True,
             login_time__gte=start_date,
             login_time__lte=end_date,
         )
@@ -195,8 +195,8 @@ def get_lab_profile(pk: int, start_date: datetime, end_date: datetime) -> dict[s
         raise ResourceNotFoundError(f"Bench {pk} not found")
 
     sessions = LabSessionLog.objects.filter(
-        computing_equipment__equipmentassignment__bench=bench,
-        computing_equipment__equipmentassignment__unassigned_at__isnull=True,
+        computing_equipment__bench_assignments__bench=bench,
+        computing_equipment__bench_assignments__unassigned_at__isnull=True,
         login_time__gte=start_date,
         login_time__lte=end_date,
     )
