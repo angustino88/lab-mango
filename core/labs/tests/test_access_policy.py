@@ -5,7 +5,8 @@
   bookings (own bookings are enforced per object).
 * Plain Labs user also reads the organisation lookups (departments, groups) other screens need
   (equipment R9, owner decision 2026-11-10).
-* Coordinator and admin: everything.
+* Coordinator and admin: everything, except the admin-only areas below.
+* Admin only: the data workbook import, template download included (owner decision 2026-11-16).
 
 The test walks the URL configuration, so a new Labs route that is not covered fails here.
 """
@@ -26,6 +27,7 @@ pytestmark = pytest.mark.django_db
 
 MEMBER_READ_FEATURES = ("dashboard", "leaderboard", "bench_bookings")
 MEMBER_WRITE_FEATURES = ("bench_bookings",)
+ADMIN_ONLY_FEATURES = ("workbook_import",)
 _factory = APIRequestFactory()
 _URS_IDS = itertools.count(880000)
 
@@ -74,6 +76,7 @@ def test_every_labs_route_follows_the_policy():
     no_role = _user("policy-none")
     plain = _user("policy-plain", "user")
     coordinator = _user("policy-coord", "coord")
+    admin = _user("policy-admin", "admin")
     problems = []
     for view_class, route in sorted(views.items(), key=lambda item: item[1]):
         feature = _feature(view_class)
@@ -86,7 +89,12 @@ def test_every_labs_route_follows_the_policy():
                 problems.append(f"{route}: no-role user can read")
             if _permits(view_class, plain, "GET") is not expected_plain:
                 problems.append(f"{route}: plain user read should be {expected_plain}")
-            if not _permits(view_class, coordinator, "GET"):
+            if feature in ADMIN_ONLY_FEATURES:
+                if _permits(view_class, coordinator, "GET"):
+                    problems.append(f"{route}: coordinator can read an admin-only area")
+                if not _permits(view_class, admin, "GET"):
+                    problems.append(f"{route}: admin cannot read")
+            elif not _permits(view_class, coordinator, "GET"):
                 problems.append(f"{route}: coordinator cannot read")
         if feature in MEMBER_READ_FEATURES and feature not in MEMBER_WRITE_FEATURES:
             writes = ["POST", "PUT", "PATCH", "DELETE"]  # read-only areas: deny even unimplemented writes
@@ -95,6 +103,8 @@ def test_every_labs_route_follows_the_policy():
                 problems.append(f"{route}: no-role user can {method}")
             if feature not in MEMBER_WRITE_FEATURES and _permits(view_class, plain, method):
                 problems.append(f"{route}: plain user can {method}")
+            if feature in ADMIN_ONLY_FEATURES and _permits(view_class, coordinator, method):
+                problems.append(f"{route}: coordinator can {method} in an admin-only area")
     assert not problems, "Labs access policy violations:\n" + "\n".join(problems)
 
 

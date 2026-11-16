@@ -1,0 +1,336 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/workbook-imports/actions/apply:
+    post:
+      operationId: labs_workbook_imports_actions_apply_create
+      description: 'Import a data workbook: every row is created, or nothing when
+        any row has an error (422 lists them).'
+      tags:
+      - Workbook Import
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkbookUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkbookImportApplySerializersImportReportDetailResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Apply Workbook Imports
+  /api/labs/workbook-imports/actions/check:
+    post:
+      operationId: labs_workbook_imports_actions_check_create
+      description: 'Check a data workbook: run every row and roll back. Always 200
+        with the full report; saves nothing.'
+      tags:
+      - Workbook Import
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkbookUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkbookImportCheckSerializersImportReportDetailResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Check Workbook Imports
+  /api/labs/workbook-imports/template:
+    get:
+      operationId: labs_workbook_imports_template_retrieve
+      description: Download the data workbook template (.xlsx), with the current reference
+        data filled in.
+      tags:
+      - Workbook Import
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Workbook Imports Template
+components:
+  schemas:
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+    ImportProblem:
+      type: object
+      properties:
+        sheet:
+          type: string
+          description: Sheet name as in the workbook.
+        row:
+          type: integer
+          nullable: true
+          description: Excel row number; null for a sheet-level problem.
+        column:
+          type: string
+          nullable: true
+          description: Column name as in the template; null when general.
+        severity:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        code:
+          type: string
+          description: Stable snake_case problem code.
+        message:
+          type: string
+      required:
+      - code
+      - column
+      - message
+      - row
+      - severity
+      - sheet
+    ImportReport:
+      type: object
+      properties:
+        is_dry_run:
+          type: boolean
+          description: 'True for a check: nothing was saved.'
+        is_valid:
+          type: boolean
+          description: True when the workbook has no errors and can be applied.
+        template_version:
+          type: string
+          nullable: true
+        summary:
+          allOf:
+          - $ref: '#/components/schemas/ImportSummary'
+          readOnly: true
+        sheets:
+          type: array
+          items:
+            $ref: '#/components/schemas/SheetOutcome'
+        problems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportProblem'
+        unknown_sheets:
+          type: array
+          items:
+            type: string
+          description: Sheets that were not read.
+      required:
+      - is_dry_run
+      - is_valid
+      - problems
+      - sheets
+      - summary
+      - template_version
+      - unknown_sheets
+    ImportSummary:
+      type: object
+      properties:
+        created:
+          type: integer
+        existing:
+          type: integer
+        error_count:
+          type: integer
+        warning_count:
+          type: integer
+      required:
+      - created
+      - error_count
+      - existing
+      - warning_count
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    SheetOutcome:
+      type: object
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        rows:
+          type: integer
+          description: Non-empty data rows read.
+        created:
+          type: integer
+          description: Rows that create a record (or would, for a check).
+        existing:
+          type: integer
+          description: Reference rows that match an existing record and are kept as
+            is.
+        failed:
+          type: integer
+        ignored_columns:
+          type: array
+          items:
+            type: string
+      required:
+      - created
+      - existing
+      - failed
+      - ignored_columns
+      - key
+      - name
+      - rows
+    WorkbookImportApplySerializersImportReportDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ImportReport'
+      required:
+      - data
+    WorkbookImportCheckSerializersImportReportDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ImportReport'
+      required:
+      - data
+    WorkbookUpload:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: The data workbook (.xlsx), at most 10 MB and 5,000 rows per
+            sheet.
+      required:
+      - file
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Workbook Import
+  description: Workbook Import endpoints
