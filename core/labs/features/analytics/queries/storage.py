@@ -19,11 +19,13 @@ def list_storage_quota_measurements(
     if log_date:
         queryset = queryset.filter(measured_at__date=log_date.date())
 
+    # Highest utilization first, so a top-N cut keeps the fullest accounts rather than the latest rows.
+    measurements = sorted(queryset, key=lambda item: (-float(item.utilization_percent), -item.pk))
     if top_n is not None and top_n > 0:
-        queryset = queryset[:top_n]
+        measurements = measurements[:top_n]
 
     results = []
-    for item in queryset:
+    for item in measurements:
         results.append({
             "username": item.account_identifier,
             "account_identifier": item.account_identifier,
