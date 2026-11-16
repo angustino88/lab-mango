@@ -550,6 +550,12 @@ paths:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1items~1draft
   /api/labs/purchases/{purchase_id}/transactions:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1transactions
+  /api/labs/workbook-imports/actions/apply:
+    $ref: ./labs-workbook-import.yml#/paths/~1api~1labs~1workbook-imports~1actions~1apply
+  /api/labs/workbook-imports/actions/check:
+    $ref: ./labs-workbook-import.yml#/paths/~1api~1labs~1workbook-imports~1actions~1check
+  /api/labs/workbook-imports/template:
+    $ref: ./labs-workbook-import.yml#/paths/~1api~1labs~1workbook-imports~1template
   /api/login:
     $ref: ./users-auth-login.yml#/paths/~1api~1login
   /api/logout:
@@ -716,3 +722,5 @@ tags:
   description: User Profiles endpoints
 - name: Websocket Notifications
   description: Websocket Notifications endpoints
+- name: Workbook Import
+  description: Workbook Import endpoints
