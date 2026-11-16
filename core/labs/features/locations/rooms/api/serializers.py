@@ -73,7 +73,10 @@ class RoomCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerial
 
 class RoomUpdateSerializer(RoomCreateSerializer):
     class Meta(RoomCreateSerializer.Meta):
-        extra_kwargs = {}
+        # The SKU stays without DRF's unique validator: it reported "<model> with this sku already exists"
+        # for the record's own unchanged SKU. The update command rejects a changed SKU under its row lock;
+        # the partial unique constraint remains the uniqueness guard.
+        extra_kwargs = {"sku": {"validators": []}}
 
 
 class RoomStatusWriteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):

@@ -9,6 +9,11 @@ urlpatterns = [
         name="workbook-import-template",
     ),
     path(
+        "workbook-imports/export",
+        views.WorkbookExportAPIView.as_view(),
+        name="workbook-import-export",
+    ),
+    path(
         "workbook-imports/actions/check",
         views.WorkbookImportCheckAPIView.as_view(),
         name="workbook-import-action-check",

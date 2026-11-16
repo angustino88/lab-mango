@@ -23,6 +23,7 @@ def test_enum_registry_preserves_existing_names_and_choice_hashes() -> None:
         "b7d056b64c1fe0f4": "EquipmentDisplayStatusEnum",
         "21abcf9aa8c290a6": "EquipmentLifecycleStateEnum",
         "c23a21501f38221e": "LicenseStatusEnum",
+        "ff5970c909e77bf2": "ModeEnum",  # routing sync: delta, reset
         "c6340131decdfe99": "PurchaseStatusEnum",
         "0ca2b20fe2f28609": "ResourceAuditResultEnum",
         "241789807f273812": "ResourceTypeEnum",
@@ -34,6 +35,7 @@ def test_enum_registry_preserves_existing_names_and_choice_hashes() -> None:
         "1800d01ae51a5646": "SystemStateEnum",
         "604305f882ced4b6": "TicketTypeEnum",
         "70d6cee90699d25a": "UrgencyEnum",
+        "c7a20840aa49e3bc": "WorkbookImportModeEnum",  # create, upsert
     }
 
 

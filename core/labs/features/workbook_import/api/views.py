@@ -6,6 +6,7 @@ import hashlib
 from typing import Any
 
 from django.http import HttpResponse
+from django.utils import timezone
 from drf_api_contracts import OperationContract, ResponseContract
 from drf_spectacular.types import OpenApiTypes
 from rest_framework import status
@@ -28,7 +29,7 @@ from core.users.public import IsLabAdminReadWrite
 from ..application import ImportWorkbookInput, import_workbook
 from ..contracts import ERROR, SheetRows
 from ..exceptions import WorkbookImportNotAllowed, WorkbookRejected
-from ..queries import readme_rows, template_sheets
+from ..queries import export_rows, readme_rows, template_sheets
 from ..queries.sheets import (
     CHOICE_LISTS,
     FIRST_DATA_ROW,
@@ -129,6 +130,7 @@ class _WorkbookUploadAPIView(WorkbookImportAPIView):
             file_digest=hashlib.sha256(data).hexdigest(),
             dry_run=self.dry_run,
             template_version=version,
+            mode=serializer.validated_data["mode"],
         )
         return command, None
 
@@ -155,30 +157,40 @@ class _WorkbookUploadAPIView(WorkbookImportAPIView):
 
 
 class WorkbookImportCheckAPIView(_WorkbookUploadAPIView):
-    """Check a data workbook: run every row and roll back. Always 200 with the full report; saves nothing."""
+    """Check a data workbook: run every row and roll back. Always 200 with the full report; saves nothing.
+
+    ``mode=upsert`` reports rows whose asset tag exists as updated (or unchanged) instead of as errors.
+    """
 
     post_contract = _upload_contract("WorkbookImportCheck")
     dry_run = True
 
 
 class WorkbookImportApplyAPIView(_WorkbookUploadAPIView):
-    """Import a data workbook: every row is created, or nothing when any row has an error (422 lists them)."""
+    """Import a data workbook: every row is written, or nothing when any row has an error (422 lists them).
+
+    ``mode=create`` (default) creates every row; ``mode=upsert`` updates records whose asset tag exists. The asset
+    tag never changes.
+    """
 
     post_contract = _upload_contract("WorkbookImportApply")
     dry_run = False
 
 
-def _template_layouts() -> list[SheetLayout]:
+def _template_layouts(
+    data: dict[str, list[tuple[Any, ...]]] | None = None, notes: tuple[tuple[str, str], ...] = ()
+) -> list[SheetLayout]:
+    readme = readme_rows()
     layouts = [
         SheetLayout(
             name="README",
             title="",
             plain=True,
             columns=(ColumnLayout("", width=22), ColumnLayout("", width=110)),
-            rows=tuple(readme_rows()),
+            rows=(*readme[:3], *notes, *readme[3:]),
         )
     ]
-    for sheet, columns, rows in template_sheets():
+    for sheet, columns, rows in template_sheets(data):
         layouts.append(
             SheetLayout(
                 name=sheet.name,
@@ -240,4 +252,38 @@ class WorkbookImportTemplateAPIView(WorkbookImportAPIView):
         return response
 
 
-__all__ = ["WorkbookImportApplyAPIView", "WorkbookImportCheckAPIView", "WorkbookImportTemplateAPIView"]
+class WorkbookExportAPIView(WorkbookImportAPIView):
+    """Download the current data as a data workbook (.xlsx): the template with spaces and equipment filled in.
+
+    Edit the file and upload it with ``mode=upsert`` to update the records; the asset tag identifies each record.
+    """
+
+    get_contract = OperationContract(
+        success=ResponseContract.documented(status.HTTP_200_OK, OpenApiTypes.BINARY),
+        forbidden=ResponseContract.forbidden(),
+    )
+
+    def handle_get(self, request: Request, *args: Any, **kwargs: Any) -> HttpResponse:
+        data, truncated = export_rows()
+        exported_at = timezone.localtime()
+        notes: list[tuple[str, str]] = [("Exported", f"{exported_at:%Y-%m-%d %H:%M}")]
+        if truncated:
+            notes.append(
+                (
+                    "Incomplete",
+                    f"{', '.join(truncated)}: more than {MAX_DATA_ROWS} rows; only the first {MAX_DATA_ROWS} "
+                    "(by asset tag) are in this file.",
+                )
+            )
+        content = build_workbook(_template_layouts(data, tuple(notes)))
+        response = HttpResponse(content, content_type=XLSX_CONTENT_TYPE)
+        response["Content-Disposition"] = f'attachment; filename="labmango-data-export-{exported_at:%Y%m%d-%H%M}.xlsx"'
+        return response
+
+
+__all__ = [
+    "WorkbookExportAPIView",
+    "WorkbookImportApplyAPIView",
+    "WorkbookImportCheckAPIView",
+    "WorkbookImportTemplateAPIView",
+]

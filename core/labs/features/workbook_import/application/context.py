@@ -12,7 +12,7 @@ from django.db import IntegrityError, transaction
 
 from core.common.domain.errors import DomainError
 
-from ..contracts import ERROR, WARNING, ImportProblem, ImportReport, SheetOutcome, SheetRows
+from ..contracts import ERROR, MODE_CREATE, MODE_UPSERT, WARNING, ImportProblem, ImportReport, SheetOutcome, SheetRows
 from ..queries.sheets import (
     NOT_YET_IMPORTED,
     TEMPLATE_ONLY,
@@ -81,8 +81,9 @@ class RowFailed(Exception):
 
 
 class ImportRun:
-    def __init__(self, *, actor: Any, report: ImportReport, file_digest: str) -> None:
+    def __init__(self, *, actor: Any, report: ImportReport, file_digest: str, mode: str = MODE_CREATE) -> None:
         self.actor = actor
+        self.mode = mode
         self.report = report
         self.file_digest = file_digest
         self.bound: dict[str, BoundSheet] = {}
@@ -90,6 +91,30 @@ class ImportRun:
         self.failed_keys: dict[tuple[str, str], tuple[str, int]] = {}
         # Files written by commands (computing .rdp files); deleted again when the run is rolled back.
         self.written_files: list[tuple[Any, str]] = []
+
+    @property
+    def upsert(self) -> bool:
+        return self.mode == MODE_UPSERT
+
+    def existing(self, model: Any, row: Row, *, select_related: tuple[str, ...] = ()) -> Any | None:
+        """The active record with the row's asset tag, or ``None``.
+
+        Create mode refuses an existing asset tag with a clear message instead of a constraint conflict.
+        The owner's update command locks the row; the active-SKU constraint fails the whole import when a
+        concurrent import creates the same tag.
+        """
+        sku = row.get("sku")
+        if sku is None:
+            return None
+        found = model._default_manager.select_related(*select_related).filter(sku=sku, deleted_at__isnull=True).first()
+        if found is not None and not self.upsert:
+            raise self.fail(
+                row,
+                f"Asset tag '{sku}' already exists. Import with mode Update existing (upsert) to change it.",
+                key="sku",
+                code="already_exists",
+            )
+        return found
 
     def failed_row(self, model: Any, value: Any) -> tuple[str, int] | None:
         return self.failed_keys.get((model._meta.label_lower, str(value).casefold()))
@@ -280,7 +305,7 @@ class ImportRun:
         return [] if bound is None else bound.rows
 
     def each(self, key: str, handler: Callable[[Row], str | None], *, natural_key: str = "sku") -> None:
-        """Run ``handler`` per valid row; it returns ``"created"`` or ``"existing"``. Duplicates fail."""
+        """Run ``handler`` per valid row; it returns ``"created"``, ``"updated"`` or ``"existing"``. Duplicates fail."""
         bound = self.bound.get(key)
         if bound is None:
             return
@@ -307,6 +332,8 @@ class ImportRun:
                 self._remember_failure(bound, row, natural_key)
             elif result == "created":
                 bound.outcome.created += 1
+            elif result == "updated":
+                bound.outcome.updated += 1
             elif result == "existing":
                 bound.outcome.existing += 1
 

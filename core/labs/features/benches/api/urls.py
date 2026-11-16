@@ -9,6 +9,7 @@ urlpatterns = [
     path("benches", views.BenchListCreateAPIView.as_view(), name="bench-list-create"),
     path("benches/filters", views.BenchFiltersAPIView.as_view(), name="bench-filters"),
     path("benches/options", views.BenchSelectAPIView.as_view(), name="bench-options"),
+    path("benches/booking-choices", views.BookingBenchChoicesAPIView.as_view(), name="bench-booking-choices"),
     path("benches/reference-data", views.BenchReferenceDataAPIView.as_view(), name="bench-reference-data"),
     path("benches/<int:bench_id>", views.BenchDetailAPIView.as_view(), name="bench-detail"),
     path("benches/<int:bench_id>/image", views.BenchImageAPIView.as_view(), name="bench-image"),

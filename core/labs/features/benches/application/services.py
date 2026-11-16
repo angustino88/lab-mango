@@ -13,6 +13,7 @@ from django.db.models.deletion import ProtectedError
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
+from core.labs.features.base.immutable import drop_unchanged_immutable_fields
 from core.labs.features.benches.exceptions import BenchConflict
 from core.labs.models import (
     Bench,
@@ -203,7 +204,7 @@ def update_bench(*, bench_id, actor, **data):
     old_slot_id = bench.station_slot_id
     previous = bench.lifecycle_status
     old_station_id = bench.setup_location_id
-    data = dict(data)
+    data = drop_unchanged_immutable_fields(bench, data)
     _take_lifecycle(bench, data)
     _apply(bench, data, WRITE_FIELDS)
     if bench.setup_location_id is not None and bench.setup_location_id != old_station_id:

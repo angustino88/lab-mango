@@ -86,7 +86,10 @@ class BenchCreateSerializer(StrictWriteMixin, serializers.ModelSerializer):
 
 class BenchUpdateSerializer(BenchCreateSerializer):
     class Meta(BenchCreateSerializer.Meta):
-        extra_kwargs = {}
+        # The SKU stays without DRF's unique validator: it reported "<model> with this sku already exists"
+        # for the record's own unchanged SKU. The update command rejects a changed SKU under its row lock;
+        # the partial unique constraint remains the uniqueness guard.
+        extra_kwargs = {"sku": {"validators": []}}
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
@@ -384,3 +387,32 @@ class BenchReferenceDataSerializer(serializers.Serializer):
     stations = BenchStationReferenceSerializer(many=True, read_only=True)
     lifecycle_statuses = ChoiceReferenceSerializer(many=True, read_only=True)
     statuses = ChoiceReferenceSerializer(many=True, read_only=True, help_text="Deprecated four-value status.")
+
+
+class BookingBenchChoicesQuerySerializer(OptionsQueryMixin):
+    """``q`` matches the bench SKU or name and the name, SKU or hostname of a computer on it."""
+
+
+@embedded_resource
+class BenchComputerSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    sku = serializers.CharField(read_only=True)
+    name = serializers.CharField(read_only=True, allow_blank=True)
+    hostname = serializers.CharField(read_only=True, allow_blank=True, help_text="Empty when not reported yet.")
+
+
+class BookingBenchChoiceSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    sku = serializers.CharField(read_only=True)
+    name = serializers.CharField(read_only=True, allow_blank=True)
+    computers = BenchComputerSerializer(many=True, read_only=True, help_text="Computers on the bench now.")
+
+
+class BookingBenchChoicesSerializer(serializers.Serializer):
+    choices = BookingBenchChoiceSerializer(many=True, read_only=True)
+
+    def get_fields(self):
+        # Published as ``data``; a class attribute of that name would shadow ``Serializer.data``.
+        fields = super().get_fields()
+        fields["data"] = fields.pop("choices")
+        return fields

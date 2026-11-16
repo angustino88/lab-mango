@@ -320,6 +320,49 @@ def active_bench_assignment_mapping_rows(*, bench_ids=(), equipment_ids=(), stat
     )
 
 
+def bench_assignment_subquery(*, category_id=None, search=None) -> QuerySet:
+    """Active placements of live units on the outer bench (``OuterRef("pk")``), for ``Exists`` / count annotations.
+
+    ``category_id`` keeps units of one equipment category; ``search`` matches the unit's SKU or name.
+    """
+    queryset = EquipmentAssignment.objects.filter(
+        bench_id=OuterRef("pk"), unassigned_at__isnull=True, equipment__deleted_at__isnull=True
+    )
+    if category_id is not None:
+        queryset = queryset.filter(equipment__kind__category_id=category_id)
+    if search:
+        queryset = queryset.filter(Q(equipment__sku__icontains=search) | Q(equipment__name__icontains=search))
+    return queryset
+
+
+def bench_computers(*, bench_ids) -> dict[int, list[dict[str, Any]]]:
+    """The computers on each bench now: units of a monitored category, with their hostname. One query.
+
+    Returns ``{bench_id: [{"id", "sku", "name", "hostname"}]}`` ordered by placement position, then name.
+    """
+    rows = (
+        EquipmentAssignment.objects.filter(
+            bench_id__in=list(bench_ids),
+            unassigned_at__isnull=True,
+            equipment__deleted_at__isnull=True,
+            equipment__kind__category__monitored=True,
+        )
+        .order_by("bench_id", "position", "equipment__name", "equipment_id")
+        .values("bench_id", "equipment_id", "equipment__sku", "equipment__name", "equipment__computing_profile__hostname")
+    )
+    computers: dict[int, list[dict[str, Any]]] = {}
+    for row in rows:
+        computers.setdefault(row["bench_id"], []).append(
+            {
+                "id": row["equipment_id"],
+                "sku": row["equipment__sku"],
+                "name": row["equipment__name"],
+                "hostname": row["equipment__computing_profile__hostname"] or "",
+            }
+        )
+    return computers
+
+
 # Typed foreign keys and the computing profile read by the equipment collection (step 6).
 TYPED_JOINS = ("material", "size", "resolution", "protocol", "customer", "computing_profile__technical_user", "activity")
 TYPED_PREFETCHES = ("interfaces", "characteristics")

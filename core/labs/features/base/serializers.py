@@ -172,6 +172,10 @@ def to_money(amount: Any, currency: Any) -> dict[str, Any] | None:
     return {"amount": format(decimal_amount, "f"), "currency": currency}
 
 
+def _normalized(value):
+    return value.strip() if isinstance(value, str) else value
+
+
 class ResourceWriteSerializerMixin:
     """Reject unsupported keys and return a stable error when SKU is supplied on update."""
 
@@ -182,6 +186,13 @@ class ResourceWriteSerializerMixin:
         if isinstance(data, Mapping):
             immutable = set(data) & set(self.immutable_update_fields)
             is_update = self.instance is not None or self.context.get("resource_update", False)
+            if is_update and self.instance is not None:
+                # An unchanged identifier (forms send the whole record back) is accepted and ignored.
+                immutable = {
+                    name
+                    for name in immutable
+                    if _normalized(data[name]) != _normalized(getattr(self.instance, name, None))
+                }
             if is_update and immutable:
                 names = ", ".join(sorted(immutable))
                 raise serializers.ValidationError(

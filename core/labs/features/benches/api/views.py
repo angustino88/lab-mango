@@ -2,12 +2,13 @@
 
 from django.utils import timezone  # noqa: F401
 from drf_api_contracts import OperationContract, ResponseContract
+from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
 from core.common.api.options import OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
-from core.labs.features.base import CommandAPIView, operation
+from core.labs.features.base import LABS_MEMBER_ACCESS, CommandAPIView, FeatureAPIView, operation
 from core.labs.features.base.access import LABS_STAFF_ACCESS
 from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.base.resource_images import ResourceImageAPIView
@@ -40,6 +41,8 @@ from .serializers import (
     BenchStatusSummarySerializer,
     BenchTypeSerializer,
     BenchUpdateSerializer,
+    BookingBenchChoicesQuerySerializer,
+    BookingBenchChoicesSerializer,
 )
 
 
@@ -181,6 +184,43 @@ class BenchSelectAPIView(OptionsAPIView):
 
     def select(self, *, actor, filters):
         return selectors.list_bench_options(actor=actor, **filters)
+
+
+BOOKING_BENCH_CHOICES_MAX_RESULTS = 1000
+
+
+class BookingBenchChoicesAPIView(FeatureAPIView):
+    """Benches to pick when booking, each with the computers on it, so people find a bench by computer name.
+
+    Not an options endpoint (OPT-4 allows only id, sku and name there). In-service benches ordered by name;
+    ``include_ids`` adds the bench of an existing booking. At most 1000 rows, else ``400 too_many_results``.
+    """
+
+    permission_classes = LABS_MEMBER_ACCESS
+    schema_tags = ("Benches",)
+    get_contract = OperationContract(
+        query=BookingBenchChoicesQuerySerializer,
+        success=ResponseContract.documented(200, BookingBenchChoicesSerializer),
+        bad_request=ResponseContract.bad_request(),
+    )
+
+    def handle_get(self, request, *args, **kwargs):
+        serializer = BookingBenchChoicesQuerySerializer(data=request.query_params)
+        unknown = set(request.query_params) - set(serializer.fields)
+        if unknown:
+            return self.respond_problem(
+                "bad_request", code="invalid_query", errors={key: ["Unknown query parameter."] for key in sorted(unknown)}
+            )
+        if not serializer.is_valid():
+            return self.respond_problem("bad_request", code="invalid_query", errors=serializer.errors)
+        choices = selectors.list_booking_bench_choices(**serializer.validated_data)
+        if len(choices) > BOOKING_BENCH_CHOICES_MAX_RESULTS:
+            return self.respond_problem(
+                "bad_request",
+                code="too_many_results",
+                detail=f"More than {BOOKING_BENCH_CHOICES_MAX_RESULTS} benches match; narrow the search with q.",
+            )
+        return Response(BookingBenchChoicesSerializer({"data": choices}).data)
 
 
 class BenchGroupOptionsAPIView(OptionsAPIView):

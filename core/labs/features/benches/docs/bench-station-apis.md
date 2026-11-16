@@ -86,6 +86,7 @@ authentication backend, not the domain error table below.
 | `/benches/{bench_id}/place` | PATCH 200 | Change only station association/slot |
 | `/benches/{bench_id}/favorite` | POST 200, DELETE 204 | Idempotently add/remove the caller's membership |
 | `/benches/options` | GET 200 | Compact workspace choices (OPT-1 selector; `id`, `sku`, `name` only) |
+| `/benches/booking-choices` | GET 200 | Benches to book: in-service benches ordered by name, each with `computers` (`id`, `sku`, `name`, `hostname`) on it now. People book by the computer they remote into, so `q` also matches computer name, SKU and hostname. `include_ids` adds an existing booking's bench. Labs members; at most 1000 rows, else `400 too_many_results`; two queries. Not an options endpoint, because OPT-4 allows only `id`, `sku`, `name` there |
 | `/benches/reference-data` | GET 200 | Active types/groups, live stations, lifecycle choices |
 | `/bench-groups` | GET 200, POST 201 | List/create reference data |
 | `/bench-groups/{reference_id}` | GET 200, PATCH 200, DELETE 204 | Update/retire reference data |

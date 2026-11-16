@@ -1,10 +1,12 @@
 # Workbook import: spec
 
 - Tier: T2 (new public API, cross-feature writes, data entry for every resource type)
-- Status: slice 1 implemented on branch `claude/epic-mayer-a4p14n`; needs human approval before merge.
-- Owner decisions (2026-11-16): one workbook; create only; Labs administrators only; reference data is
-  imported from its own sheets, never created from a typo in an equipment row; the v1 data-collection
-  template is a reference and may be improved to fit the system.
+- Status: slice 1 implemented on branch `claude/epic-mayer-a4p14n`; slice 2 (update mode and export, section 7)
+  on branch `claude/happy-planck-wjwljm`. Both need human approval before merge.
+- Owner decisions (2026-11-16): one workbook; create only (slice 1; slice 2 adds an opt-in update mode at the
+  owner's request); Labs administrators only; reference data is imported from its own sheets, never created from
+  a typo in an equipment row; the v1 data-collection template is a reference and may be improved to fit the system;
+  the asset tag (SKU) can never be changed once a record is created.
 
 ## 1. What it does
 
@@ -114,3 +116,49 @@ Costs, and the equipment purchase and calibration columns. Each is a later slice
 existing references, all-or-nothing with error paths, create-only, the v1 headers and status mapping, administrator
 access, a non-xlsx upload, the template round trip (download → check is valid with 0 created), and cell parsing
 (numbers, decimals with a comma, Yes/No, `YYYY-Qn`, utilities, choices, the formula guard on export).
+`test_upsert_export.py`: create mode names an existing tag (`already_exists`), an unchanged re-import in upsert
+reports every row unchanged, changed cells update while blank cells keep values, new tags are created, a
+different tag never renames a record, access/lifecycle changes and the open-downtime warning, the export round
+trip (export → upsert check: 0 created, 0 updated), export → edit → upsert applies the edit, export access, and an
+unknown mode.
+
+## 7. Slice 2: update mode (upsert) and export
+
+Design note (T2: public API addition, changed write behaviour behind an opt-in flag).
+
+| Endpoint / field | Change |
+|---|---|
+| `POST …/actions/check`, `…/actions/apply` | Optional multipart field `mode`: `create` (default, slice 1 behaviour) or `upsert` |
+| Report | Adds `mode {value,label}`, `summary.updated`, `sheets[].updated`. `existing` now also counts unchanged rows in upsert |
+| `GET /api/labs/workbook-imports/export` | New. The template with Rooms, Stations, Station Slots, Benches, Equipment and Bench Placements filled with the current data. Labs administrators only, like the other endpoints |
+
+Compatibility: additive only. Without `mode`, Check and Apply behave as in slice 1; the only visible difference is
+that an existing asset tag in create mode is now reported as `already_exists` with a message naming the tag and the
+update mode, instead of the generic constraint `conflict`.
+
+Rules of update mode:
+
+| Rule | Why |
+|---|---|
+| A row is matched by its exact asset tag among active records; no match creates the record | The asset tag is the business key and the active-SKU constraint already enforces it |
+| The asset tag never changes (also enforced by the update APIs: `409 resource_field_immutable`) | Owner decision; bookings, labels and integrations refer to it |
+| A blank cell keeps the stored value; an import cannot clear a field | Exported files and partial files are both safe to upload |
+| A row equal to the stored record is `existing` and writes nothing (values compared ignoring 2 vs 2.0, spacing) | The report shows what really changes; re-importing an export is a no-op |
+| Updates go through the owners' update commands: `update_room`, `update_station`, `update_station_slot`, `update_bench`, `update_equipment`, `change_*_lifecycle`, `change_condition`, `change_lifecycle`, `place_equipment`; grid changes re-run `generate_room_slots` | Same validation and row locks as the app |
+| Space condition: operational → maintenance / out of service opens a downtime; any other change is a warning (`condition_not_changed`) | Ending or changing an open downtime is a decision about that window (bookings, reason), made in the app |
+| Equipment condition and lifecycle use the equipment commands, which handle both directions | |
+| Detail-sheet rows are written as given (counted as updated) | Relations and many-to-many values are not diffed in this slice |
+| Bench placement on the same bench is `existing`; a different role/position is a warning; another bench moves the unit (`updated`) | `place_equipment` closes the old placement in the same transaction |
+
+Race guard: as slice 1 (one transaction; the owners' row locks; the active-SKU, slot and placement constraints).
+A concurrent create of the same asset tag fails the whole import. Idempotency: applying the same upsert file twice
+leaves the data as after the first apply; the second report shows the rows as unchanged.
+
+Export: one query per sheet plus one prefetch (condition is a correlated-subquery annotation); at most 5,000 rows
+per sheet (what one import accepts). A longer sheet is cut and the README says which (`Incomplete`). Values are
+written in the importer's own format (choice labels, Yes/No, names, related asset tags, `name=value` utilities,
+local wall-clock datetimes). Equipment lifecycle states that an import cannot set (lost, retired, transferred out,
+loaned) are exported blank, which keeps them. Not exported in this slice: the equipment detail sheets.
+
+Residual risks: an export holds all inventory data (administrators only, no personal data beyond owner logins
+already in the Users sheet); a detail sheet re-applies its values even when equal.

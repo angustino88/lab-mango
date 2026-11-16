@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.labs.features.benches.public import change_bench_lifecycle, create_bench
+from core.labs.features.benches.public import change_bench_lifecycle, create_bench, update_bench
 from core.labs.features.downtime.public import ScheduleDowntimeInput, schedule_downtime
 from core.labs.features.locations.public import (
     change_room_lifecycle,
@@ -13,8 +13,12 @@ from core.labs.features.locations.public import (
     create_station,
     create_station_slot,
     generate_room_slots,
+    update_room,
+    update_station,
+    update_station_slot,
 )
 from core.labs.models import (
+    Bench,
     BenchGroup,
     BenchType,
     Building,
@@ -30,6 +34,7 @@ from core.labs.models.resource.base.resource import Department, Group
 
 from .context import ImportRun, Row
 from .references import Catalog
+from .updates import apply_space_state, changed_fields, given_space_state
 
 IMPORT_NOTE = "Imported from the data workbook."
 
@@ -151,6 +156,7 @@ def import_spaces(run: ImportRun) -> None:
             ),
         )
         data.update(_owned(run, catalog, row))
+        existing = run.existing(Room, row)
         country = catalog.country(row)
         if country is not None:
             data["country_id"] = country
@@ -160,6 +166,8 @@ def import_spaces(run: ImportRun) -> None:
         building = catalog.optional(row, "building", Building, "name", **({"city_id": city} if city else {}))
         if building is not None:
             data["building_id"] = building
+        if existing is not None:
+            return _update_room(run, row, existing, data, (lifecycle, access, condition))
         created = create_room(actor=run.actor, **data)
         if created.layout_rows and created.layout_columns:
             generate_room_slots(room_id=created.pk, actor=run.actor)
@@ -205,9 +213,12 @@ def import_spaces(run: ImportRun) -> None:
         station_type = catalog.optional(row, "type", StationType)
         if station_type is not None:
             data["type_id"] = station_type
+        existing = run.existing(Station, row)
         room_id = _by_sku(run, catalog, row, "room", Room)
         if room_id is not None:
             data["room_id"] = room_id
+        elif existing is not None:
+            room_id = existing.room_id
         if row.get("slot") is not None:
             if room_id is None:
                 raise run.fail(row, "A room slot needs the Room Asset Tag.", key="slot")
@@ -215,6 +226,8 @@ def import_spaces(run: ImportRun) -> None:
         coordinates = [row.get(key) for key in ("position_x", "position_y", "position_z")]
         if any(value is not None for value in coordinates):
             data["position"] = [float(value or 0) for value in coordinates]
+        if existing is not None:
+            return _update_station(run, row, existing, data, (lifecycle, access, condition))
         created = create_station(actor=run.actor, **data)
         if access == "restricted":
             change_station_lifecycle(
@@ -254,6 +267,21 @@ def import_spaces(run: ImportRun) -> None:
             ),
         )
         types = catalog.many(row, "compatible_bench_types", BenchType)
+        existing = (
+            StationSlot.objects.filter(station_id=station_id, slot_code__iexact=row.get("slot_code")).first()
+            if run.upsert
+            else None
+        )
+        if existing is not None:
+            changes = changed_fields(existing, data)
+            changes.pop("slot_code", None)  # matched case-insensitively; the stored spelling is kept
+            stored_types = sorted(existing.compatible_bench_types.values_list("pk", flat=True))
+            if types and sorted(types) != stored_types:
+                changes["compatible_bench_types"] = types
+            if not changes:
+                return "existing"
+            update_station_slot(station_id=station_id, slot_id=existing.pk, actor=run.actor, **changes)
+            return "updated"
         create_station_slot(station_id=station_id, actor=run.actor, compatible_bench_types=types, **data)
         return "created"
 
@@ -280,9 +308,10 @@ def import_spaces(run: ImportRun) -> None:
             ),
         )
         data.update(_owned(run, catalog, row, with_department=False))
+        existing = run.existing(Bench, row)
         department = row.get("department")
         if department is not None:
-            group_id = data.get("group_id")
+            group_id = data.get("group_id", existing.group_id if existing is not None else None)
             group_department = (
                 None
                 if group_id is None
@@ -303,12 +332,16 @@ def import_spaces(run: ImportRun) -> None:
         station_id = _by_sku(run, catalog, row, "station", Station)
         if station_id is not None:
             data["setup_location_id"] = station_id
+        elif existing is not None:
+            station_id = existing.setup_location_id
         if row.get("station_slot") is not None:
             if station_id is None:
                 raise run.fail(row, "A station slot needs the Station Asset Tag.", key="station_slot")
             data["station_slot_id"] = catalog.one(
                 row, "station_slot", StationSlot, "slot_code", row.get("station_slot"), station_id=station_id
             )
+        if existing is not None:
+            return _update_bench(run, row, existing, data, (lifecycle, None, condition))
         # Created in service (or planned); retirement is a lifecycle change after the downtime check.
         data["lifecycle_status"] = "planned" if lifecycle == "planned" else "in_service"
         created = create_bench(actor=run.actor, **data)
@@ -318,6 +351,78 @@ def import_spaces(run: ImportRun) -> None:
         return "created"
 
     run.each("benches", bench)
+
+
+def _metadata_free(change: Any) -> Any:
+    """``change_bench_lifecycle`` takes no metadata; drop it so the shared state helper can call it."""
+
+    def call(*, metadata: Any = None, **kwargs: Any) -> Any:
+        return change(**kwargs)
+
+    return call
+
+
+def _update_room(run: ImportRun, row: Row, room: Room, data: dict[str, Any], state: tuple) -> str:
+    lifecycle, access, condition = given_space_state(row, state)
+    changes = changed_fields(room, data)
+    if changes:
+        update_room(room_id=room.pk, actor=run.actor, **changes)
+        if {"layout_rows", "layout_columns"} & changes.keys():
+            room.refresh_from_db(fields=("layout_rows", "layout_columns"))
+            if room.layout_rows and room.layout_columns:
+                generate_room_slots(room_id=room.pk, actor=run.actor)
+        room.refresh_from_db()
+    state_changed = apply_space_state(
+        run,
+        row,
+        room,
+        lifecycle=lifecycle,
+        access=access,
+        condition=condition,
+        change_lifecycle=lambda **kwargs: change_room_lifecycle(room_id=room.pk, actor=run.actor, **kwargs),
+        open_downtime=lambda value: open_downtime(run, "room", room.pk, value),
+    )
+    return "updated" if changes or state_changed else "existing"
+
+
+def _update_station(run: ImportRun, row: Row, station: Station, data: dict[str, Any], state: tuple) -> str:
+    lifecycle, access, condition = given_space_state(row, state)
+    changes = changed_fields(station, data)
+    if changes:
+        update_station(station_id=station.pk, actor=run.actor, **changes)
+        station.refresh_from_db()
+    state_changed = apply_space_state(
+        run,
+        row,
+        station,
+        lifecycle=lifecycle,
+        access=access,
+        condition=condition,
+        change_lifecycle=lambda **kwargs: change_station_lifecycle(station_id=station.pk, actor=run.actor, **kwargs),
+        open_downtime=lambda value: open_downtime(run, "station", station.pk, value),
+    )
+    return "updated" if changes or state_changed else "existing"
+
+
+def _update_bench(run: ImportRun, row: Row, bench: Bench, data: dict[str, Any], state: tuple) -> str:
+    lifecycle, _, condition = given_space_state(row, state)
+    changes = changed_fields(bench, data)
+    if changes:
+        update_bench(bench_id=bench.pk, actor=run.actor, **changes)
+        bench.refresh_from_db()
+    state_changed = apply_space_state(
+        run,
+        row,
+        bench,
+        lifecycle=lifecycle,
+        access=None,
+        condition=condition,
+        change_lifecycle=_metadata_free(
+            lambda **kwargs: change_bench_lifecycle(bench_id=bench.pk, actor=run.actor, **kwargs)
+        ),
+        open_downtime=lambda value: open_downtime(run, "bench", bench.pk, value),
+    )
+    return "updated" if changes or state_changed else "existing"
 
 
 __all__ = ["IMPORT_NOTE", "import_spaces", "open_downtime", "space_state"]

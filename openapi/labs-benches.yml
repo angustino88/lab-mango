@@ -1326,6 +1326,58 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Benches Image by Bench ID
+  /api/labs/benches/booking-choices:
+    get:
+      operationId: labs_benches_booking_choices_retrieve
+      description: 'Benches to pick when booking, each with the computers on it, so
+        people find a bench by computer name.
+
+
+        Not an options endpoint (OPT-4 allows only id, sku and name there). In-service
+        benches ordered by name;
+
+        ``include_ids`` adds the bench of an existing booking. At most 1000 rows,
+        else ``400 too_many_results``.'
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Benches
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingBenchChoices'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Benches Booking Choices
   /api/labs/benches/filters:
     get:
       operationId: labs_benches_filters_retrieve
@@ -1959,6 +2011,28 @@ components:
       - type
       - uid
       - updated_at
+    BenchComputer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        hostname:
+          type: string
+          readOnly: true
+          description: Empty when not reported yet.
+      required:
+      - hostname
+      - id
+      - name
+      - sku
+      x-embedded-resource: true
     BenchCreate:
       type: object
       description: Preserve the benches module's established strict-write helper.
@@ -2985,6 +3059,39 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Bench'
+      required:
+      - data
+    BookingBenchChoice:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        computers:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchComputer'
+          readOnly: true
+          description: Computers on the bench now.
+      required:
+      - computers
+      - id
+      - name
+      - sku
+    BookingBenchChoices:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingBenchChoice'
+          readOnly: true
       required:
       - data
     CatalogOption:

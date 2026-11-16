@@ -166,7 +166,70 @@ class ResourceMappingResponseSerializer(serializers.Serializer):
         return fields
 
 
+_MAPPING_STATE_CHOICES = (
+    ("fully_mapped", "Fully mapped"),
+    ("needs_equipment", "Needs equipment"),
+    ("needs_placement", "Needs placement"),
+)
+
+
+class BenchMappingListQuerySerializer(serializers.Serializer):
+    """Allowlisted query of the bench mapping list (COL-3, COL-4)."""
+
+    q = serializers.CharField(
+        required=False,
+        max_length=100,
+        help_text="Matches the SKU or name of the bench, its station, its room or a unit placed on it.",
+    )
+    room_id = serializers.IntegerField(required=False, min_value=1)
+    station_id = serializers.IntegerField(required=False, min_value=1)
+    bench_id = serializers.IntegerField(required=False, min_value=1)
+    equipment_category_id = serializers.IntegerField(
+        required=False, min_value=1, help_text="Benches with at least one unit of this equipment category."
+    )
+    state = serializers.ChoiceField(
+        choices=_MAPPING_STATE_CHOICES,
+        required=False,
+        help_text="needs_placement: no station in a room. needs_equipment: placed, no units. fully_mapped: both.",
+    )
+    page = serializers.IntegerField(required=False, min_value=1, default=1)
+    page_size = serializers.IntegerField(required=False, min_value=1, max_value=100, default=25)
+
+
+class BenchMappingSummarySerializer(serializers.Serializer):
+    benches = serializers.IntegerField(min_value=0, help_text="Benches matching the filters (state not applied).")
+    fully_mapped = serializers.IntegerField(min_value=0)
+    needs_equipment = serializers.IntegerField(min_value=0)
+    needs_placement = serializers.IntegerField(min_value=0)
+    equipment = serializers.IntegerField(min_value=0, help_text="Units placed on those benches.")
+
+
+class BenchMappingPageSerializer(serializers.Serializer):
+    count = serializers.IntegerField(min_value=0)
+    page = serializers.IntegerField(min_value=1)
+    page_size = serializers.IntegerField(min_value=1)
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+
+
+class BenchMappingListMetaSerializer(serializers.Serializer):
+    pagination = BenchMappingPageSerializer()
+    summary = BenchMappingSummarySerializer()
+
+
+class BenchMappingListResponseSerializer(serializers.Serializer):
+    """A page of benches (``data.benches``) and only the rows they reference in the other collections."""
+
+    def get_fields(self):
+        fields = super().get_fields()
+        fields["data"] = ResourceMappingDataSerializer()
+        fields["meta"] = BenchMappingListMetaSerializer()
+        return fields
+
+
 __all__ = (
+    "BenchMappingListQuerySerializer",
+    "BenchMappingListResponseSerializer",
     "ResourceMappingQuerySerializer",
     "ResourceMappingResponseSerializer",
 )

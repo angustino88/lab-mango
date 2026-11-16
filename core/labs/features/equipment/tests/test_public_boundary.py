@@ -63,6 +63,8 @@ def test_public_module_exports_supported_queries_and_commands():
     assert set(_exports(public)) == {
         "ActiveEquipmentBenchAssignment",
         "AssignEquipmentInput",
+        "bench_assignment_subquery",
+        "bench_computers",
         "CancelEquipmentBookingsForDowntimeInput",
         "ChangeConditionInput",
         "ChangeLifecycleInput",

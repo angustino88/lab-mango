@@ -6903,6 +6903,74 @@
         }
       }
     },
+    "/api/labs/benches/booking-choices": {
+      "get": {
+        "operationId": "labs_benches_booking_choices_retrieve",
+        "description": "Benches to pick when booking, each with the computers on it, so people find a bench by computer name.\n\nNot an options endpoint (OPT-4 allows only id, sku and name there). In-service benches ordered by name;\n``include_ids`` adds the bench of an existing booking. At most 1000 rows, else ``400 too_many_results``.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_ids",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxItems": 50,
+              "uniqueItems": true
+            },
+            "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+            "style": "form",
+            "explode": false
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "description": "Search text (1 to 100 characters)."
+          }
+        ],
+        "tags": [
+          "Benches"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingBenchChoices"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Benches Booking Choices"
+      }
+    },
     "/api/labs/benches/filters": {
       "get": {
         "operationId": "labs_benches_filters_retrieve",
@@ -25055,6 +25123,134 @@
         "summary": "Create Purchases Transactions by Purchase ID"
       }
     },
+    "/api/labs/resource-mappings": {
+      "get": {
+        "operationId": "labs_resource_mappings_retrieve",
+        "description": "One page of benches (ordered by SKU) with their station, room, slots, placed units and licenses, in the flat collection shape of the mapping reads. Filters and search run on the server; meta.summary counts the whole filtered set (before state).",
+        "summary": "List bench mappings",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bench_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "equipment_category_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Benches with at least one unit of this equipment category."
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "description": "Matches the SKU or name of the bench, its station, its room or a unit placed on it."
+          },
+          {
+            "in": "query",
+            "name": "room_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "enum": [
+                "fully_mapped",
+                "needs_equipment",
+                "needs_placement"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "needs_placement: no station in a room. needs_equipment: placed, no units. fully_mapped: both.\n\n* `fully_mapped` - Fully mapped\n* `needs_equipment` - Needs equipment\n* `needs_placement` - Needs placement"
+          },
+          {
+            "in": "query",
+            "name": "station_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Resource Mappings"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchMappingListResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/labs/resources/{resource_type}/{resource_id}/audits": {
       "get": {
         "operationId": "labs_resources_audits_retrieve_by_resource_type_resource_id",
@@ -30251,7 +30447,7 @@
     "/api/labs/workbook-imports/actions/apply": {
       "post": {
         "operationId": "labs_workbook_imports_actions_apply_create",
-        "description": "Import a data workbook: every row is created, or nothing when any row has an error (422 lists them).",
+        "description": "Import a data workbook: every row is written, or nothing when any row has an error (422 lists them).\n\n``mode=create`` (default) creates every row; ``mode=upsert`` updates records whose asset tag exists. The asset\ntag never changes.",
         "tags": [
           "Workbook Import"
         ],
@@ -30341,7 +30537,7 @@
     "/api/labs/workbook-imports/actions/check": {
       "post": {
         "operationId": "labs_workbook_imports_actions_check_create",
-        "description": "Check a data workbook: run every row and roll back. Always 200 with the full report; saves nothing.",
+        "description": "Check a data workbook: run every row and roll back. Always 200 with the full report; saves nothing.\n\n``mode=upsert`` reports rows whose asset tag exists as updated (or unchanged) instead of as errors.",
         "tags": [
           "Workbook Import"
         ],
@@ -30426,6 +30622,47 @@
           }
         },
         "summary": "Check Workbook Imports"
+      }
+    },
+    "/api/labs/workbook-imports/export": {
+      "get": {
+        "operationId": "labs_workbook_imports_export_retrieve",
+        "description": "Download the current data as a data workbook (.xlsx): the template with spaces and equipment filled in.\n\nEdit the file and upload it with ``mode=upsert`` to update the records; the asset tag identifies each record.",
+        "tags": [
+          "Workbook Import"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Workbook Imports Export"
       }
     },
     "/api/labs/workbook-imports/template": {
@@ -39640,6 +39877,35 @@
           "data"
         ]
       },
+      "BenchComputer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "sku": {
+            "type": "string",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "hostname": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Empty when not reported yet."
+          }
+        },
+        "required": [
+          "hostname",
+          "id",
+          "name",
+          "sku"
+        ],
+        "x-embedded-resource": true
+      },
       "BenchCreate": {
         "type": "object",
         "description": "Preserve the benches module's established strict-write helper.",
@@ -40220,6 +40486,105 @@
         },
         "required": [
           "pagination"
+        ]
+      },
+      "BenchMappingListMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/BenchMappingPage"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/BenchMappingSummary"
+          }
+        },
+        "required": [
+          "pagination",
+          "summary"
+        ]
+      },
+      "BenchMappingListResponse": {
+        "type": "object",
+        "description": "A page of benches (``data.benches``) and only the rows they reference in the other collections.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ResourceMappingData"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/BenchMappingListMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "BenchMappingPage": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "BenchMappingSummary": {
+        "type": "object",
+        "properties": {
+          "benches": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Benches matching the filters (state not applied)."
+          },
+          "fully_mapped": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "needs_equipment": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "needs_placement": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "equipment": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Units placed on those benches."
+          }
+        },
+        "required": [
+          "benches",
+          "equipment",
+          "fully_mapped",
+          "needs_equipment",
+          "needs_placement"
         ]
       },
       "BenchPlaceActionSerializersBenchDetailResponse": {
@@ -41197,6 +41562,52 @@
         "required": [
           "bench",
           "booked_hours"
+        ]
+      },
+      "BookingBenchChoice": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "sku": {
+            "type": "string",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "computers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BenchComputer"
+            },
+            "readOnly": true,
+            "description": "Computers on the bench now."
+          }
+        },
+        "required": [
+          "computers",
+          "id",
+          "name",
+          "sku"
+        ]
+      },
+      "BookingBenchChoices": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingBenchChoice"
+            },
+            "readOnly": true
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "BookingCountAnalyticsResponse": {
@@ -50158,6 +50569,14 @@
             "type": "string",
             "nullable": true
           },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
           "summary": {
             "allOf": [
               {
@@ -50189,6 +50608,7 @@
         "required": [
           "is_dry_run",
           "is_valid",
+          "mode",
           "problems",
           "sheets",
           "summary",
@@ -50200,6 +50620,9 @@
         "type": "object",
         "properties": {
           "created": {
+            "type": "integer"
+          },
+          "updated": {
             "type": "integer"
           },
           "existing": {
@@ -50216,6 +50639,7 @@
           "created",
           "error_count",
           "existing",
+          "updated",
           "warning_count"
         ]
       },
@@ -59887,9 +60311,13 @@
             "type": "integer",
             "description": "Rows that create a record (or would, for a check)."
           },
+          "updated": {
+            "type": "integer",
+            "description": "Rows that change an existing record (upsert mode only)."
+          },
           "existing": {
             "type": "integer",
-            "description": "Reference rows that match an existing record and are kept as is."
+            "description": "Rows that match an existing record and change nothing (reference rows; unchanged rows in upsert)."
           },
           "failed": {
             "type": "integer"
@@ -59908,7 +60336,8 @@
           "ignored_columns",
           "key",
           "name",
-          "rows"
+          "rows",
+          "updated"
         ]
       },
       "SnapshotItem": {
@@ -64449,6 +64878,14 @@
           "data"
         ]
       },
+      "WorkbookImportModeEnum": {
+        "enum": [
+          "create",
+          "upsert"
+        ],
+        "type": "string",
+        "description": "* `create` - Create new\n* `upsert` - Update existing"
+      },
       "WorkbookUpload": {
         "type": "object",
         "properties": {
@@ -64456,6 +64893,15 @@
             "type": "string",
             "format": "binary",
             "description": "The data workbook (.xlsx), at most 10 MB and 5,000 rows per sheet."
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkbookImportModeEnum"
+              }
+            ],
+            "default": "create",
+            "description": "create (default): an existing asset tag is an error. upsert: an existing asset tag updates that record; blank cells keep stored values; the asset tag never changes.\n\n* `create` - Create new\n* `upsert` - Update existing"
           }
         },
         "required": [

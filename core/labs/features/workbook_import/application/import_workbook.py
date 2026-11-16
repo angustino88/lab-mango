@@ -7,7 +7,7 @@ from typing import Any
 
 from django.db import transaction
 
-from ..contracts import ImportReport, SheetRows
+from ..contracts import MODE_CREATE, MODES, ImportReport, SheetRows
 from ..exceptions import WorkbookImportNotAllowed, WorkbookRejected
 from ..queries.sheets import SHEETS
 from .context import ImportRun
@@ -24,6 +24,8 @@ class ImportWorkbookInput:
     file_digest: str
     dry_run: bool = True
     template_version: str | None = None
+    # ``create`` (default): every asset tag must be new. ``upsert``: an existing asset tag updates its record.
+    mode: str = MODE_CREATE
 
 
 class _Rollback(Exception):
@@ -43,8 +45,10 @@ def import_workbook(command: ImportWorkbookInput, *, actor: Any) -> ImportReport
     """
     if not can_import_workbook(actor):
         raise WorkbookImportNotAllowed("Only Labs administrators can import workbooks.")
-    report = ImportReport(dry_run=command.dry_run, template_version=command.template_version)
-    run = ImportRun(actor=actor, report=report, file_digest=command.file_digest)
+    if command.mode not in MODES:
+        raise ValueError(f"Unknown import mode {command.mode!r}.")
+    report = ImportReport(dry_run=command.dry_run, template_version=command.template_version, mode=command.mode)
+    run = ImportRun(actor=actor, report=report, file_digest=command.file_digest, mode=command.mode)
     try:
         with transaction.atomic():
             run.bind(command.sheets, SHEETS)

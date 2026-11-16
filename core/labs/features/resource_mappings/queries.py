@@ -8,7 +8,12 @@ from typing import Any, cast
 from django.core import signing
 from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 
-from core.labs.features.benches.public import bench_mapping_rows, get_bench_for_mapping
+from core.labs.features.benches.public import (
+    bench_mapping_list,
+    bench_mapping_rows,
+    bench_mapping_summary,
+    get_bench_for_mapping,
+)
 from core.labs.features.equipment.public import (
     equipment_mapping_rows,
     get_equipment_for_mapping,
@@ -40,6 +45,10 @@ _CURSOR_SALT = "labs.resource-mappings.cursor"
 
 class MappingQueryError(ValueError):
     """A mapping cursor is malformed, expired, or bound to another collection/context."""
+
+
+class MappingPageNotFound(LookupError):
+    """The requested page of the bench mapping list is beyond the last page."""
 
 
 def _root_resource(resource_type: str, resource_id: int) -> Any | None:
@@ -249,6 +258,66 @@ def get_resource_mapping(
         pagination[collection] = page_meta
 
     return {"data": data, "meta": {"pagination": pagination}}
+
+
+def list_bench_mappings(
+    *,
+    page: int = 1,
+    page_size: int = DEFAULT_PAGE_SIZE,
+    state: str | None = None,
+    q: str | None = None,
+    room_id: int | None = None,
+    station_id: int | None = None,
+    bench_id: int | None = None,
+    equipment_category_id: int | None = None,
+) -> dict[str, Any]:
+    """One page of benches with everything they are mapped to, in the flat collection shape of a mapping read.
+
+    The page holds benches (ordered by SKU); the other collections hold only the rows those benches reference:
+    their stations and occupied station slots, the stations' rooms and occupied room slots, the units placed on
+    the benches and the licenses active on those units. ``summary`` counts the whole filtered set before ``state``
+    narrows it, so the overview does not depend on the page.
+
+    Query budget: summary 1, count 0 (from the summary), benches 1, then one query per related collection (7):
+    fixed, whatever the page size.
+    """
+    scoped = bench_mapping_list(
+        q=q, room_id=room_id, station_id=station_id, bench_id=bench_id, equipment_category_id=equipment_category_id
+    )
+    summary = bench_mapping_summary(scoped)
+    count = summary[state] if state else summary["benches"]
+    if state:
+        scoped = scoped.filter(mapping_state=state)
+    offset = (page - 1) * page_size
+    if page > 1 and offset >= count:
+        raise MappingPageNotFound(f"Page {page} is beyond the last page.")
+    benches = list(
+        scoped.values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id")[offset : offset + page_size]
+    )
+    bench_ids = [bench["id"] for bench in benches]
+    station_ids = sorted({bench["setup_location_id"] for bench in benches if bench["setup_location_id"]})
+    station_slot_ids = [bench["station_slot_id"] for bench in benches if bench["station_slot_id"]]
+    stations = list(station_mapping_rows(station_ids=station_ids)) if station_ids else []
+    room_ids = sorted({station["room_id"] for station in stations if station["room_id"]})
+    room_slot_ids = [station["slot_id"] for station in stations if station["slot_id"]]
+    license_assignments = list(active_license_assignment_mapping_rows(bench_ids=bench_ids)) if bench_ids else []
+    license_ids = sorted({row["license_id"] for row in license_assignments})
+    rows: dict[str, list[Any]] = {
+        "rooms": list(room_mapping_rows(room_ids=room_ids)),
+        "room_slots": list(room_slot_mapping_rows(room_ids=room_ids).filter(pk__in=room_slot_ids))
+        if room_slot_ids
+        else [],
+        "stations": stations,
+        "station_slots": list(station_slot_mapping_rows(station_ids=station_ids).filter(pk__in=station_slot_ids))
+        if station_slot_ids
+        else [],
+        "benches": benches,
+        "equipment": list(equipment_mapping_rows(bench_ids=bench_ids)) if bench_ids else [],
+        "licenses": list(license_mapping_rows(license_ids=license_ids)) if license_ids else [],
+        "license_assignments": license_assignments,
+    }
+    data = {collection: [_shape_row(collection, row) for row in rows[collection]] for collection in COLLECTIONS}
+    return {"data": data, "count": count, "summary": summary}
 
 
 def _shape_row(collection: str, row: Any) -> dict[str, Any]:

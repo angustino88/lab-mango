@@ -111,9 +111,14 @@ def template_rows() -> dict[str, list[tuple[Any, ...]]]:
     return rows
 
 
-def template_sheets() -> list[tuple[Sheet, tuple[Column, ...], list[tuple[Any, ...]]]]:
-    """Every declared sheet with its template columns and reference rows, in import order."""
-    rows = template_rows()
+def template_sheets(
+    data: dict[str, list[tuple[Any, ...]]] | None = None,
+) -> list[tuple[Sheet, tuple[Column, ...], list[tuple[Any, ...]]]]:
+    """Every declared sheet with its template columns and rows, in import order.
+
+    Reference sheets hold the current reference data; ``data`` (the export) fills the other sheets.
+    """
+    rows = {**template_rows(), **(data or {})}
     return [(sheet, template_columns(sheet), rows.get(sheet.key, [])) for sheet in SHEETS]
 
 
@@ -134,9 +139,27 @@ README_ROWS: tuple[tuple[str, str], ...] = (
         "they are matched by name and never changed. Add new values below them.",
     ),
     (
-        "Create only",
-        "Rooms, stations, benches and equipment are always created. An asset tag that already "
-        "exists is an error; change existing records in the app.",
+        "New or update",
+        "Choose the mode when you upload. Create new (default): every asset tag must be new; one that "
+        "already exists is an error. Update existing: a row whose asset tag exists updates that record, "
+        "any other row is created. Rooms, stations, station slots, benches, equipment and bench placements "
+        "can be updated; reference rows are only ever matched.",
+    ),
+    (
+        "Asset tag",
+        "The asset tag (SKU) identifies a record and can never be changed, in the app or by an import. "
+        "To use another tag, create a new record.",
+    ),
+    (
+        "Blank cells",
+        "In update mode a blank cell keeps the stored value; an import never clears a field. "
+        "Rows that match the stored record are reported as unchanged.",
+    ),
+    (
+        "Export",
+        "Export downloads this workbook filled with the current data. Edit it and upload it with "
+        "Update existing. Lifecycle is left blank for equipment the import cannot set (lost, retired, "
+        "transferred); blank keeps it. An open downtime is ended or changed in the app, not by an import.",
     ),
     (
         "Equipment",
