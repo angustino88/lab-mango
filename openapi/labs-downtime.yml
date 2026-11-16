@@ -588,7 +588,7 @@ components:
         * `other` - Other'
     UserReference:
       type: object
-      description: 'REL-3 user relation ``{id, username, display_name, name}``.
+      description: 'REL-3 user relation ``{id, username, display_name}``.
 
 
         Every user field (owner, creator, actor, auditor, borrower, ...) has this
@@ -597,10 +597,7 @@ components:
         display name and still offer the username. ``display_name`` is the display
         name, then the full name, then the
 
-        username. ``name`` repeats ``display_name`` for existing clients and is deprecated.
-        Duck-typed so any feature may
-
-        use it without importing users.'
+        username. Duck-typed so any feature may use it without importing users.'
       properties:
         id:
           type: integer
@@ -611,14 +608,9 @@ components:
         display_name:
           type: string
           readOnly: true
-        name:
-          type: string
-          readOnly: true
-          description: 'Deprecated: same value as `display_name`.'
       required:
       - display_name
       - id
-      - name
       - username
   securitySchemes:
     cookieAuth:

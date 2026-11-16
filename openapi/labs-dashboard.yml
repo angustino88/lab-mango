@@ -717,13 +717,9 @@ components:
           type: string
         display_name:
           type: string
-        name:
-          type: string
-          description: 'Deprecated: same value as `display_name`.'
       required:
       - display_name
       - id
-      - name
       - username
     LabsNamedReference:
       type: object

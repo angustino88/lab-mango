@@ -57,7 +57,6 @@ def test_history_rows_name_the_actor(client, coordinator, room, station, kind):
         "id": coordinator.pk,
         "username": coordinator.username,
         "display_name": "Coord",
-        "name": "Coord",
     }
     assert set(rows[0]) == {"id", kind, "status", "metadata", "actor", "created_at"}
 

@@ -71,7 +71,6 @@ def test_history_lists_status_changes_newest_first_with_actor(client, coordinato
         "id": coordinator.pk,
         "username": coordinator.username,
         "display_name": "Coord",
-        "name": "Coord",
     }
     assert set(rows[0]) == {"id", "license", "status", "metadata", "actor", "created_at"}
     assert response.data["meta"]["pagination"]["count"] == 2

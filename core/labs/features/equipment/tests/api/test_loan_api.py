@@ -52,7 +52,6 @@ def test_hand_over_get_extend_return(client, unit, borrower):
         "id": borrower.pk,
         "username": borrower.username,
         "display_name": "Ada",
-        "name": "Ada",
     }
     assert opened.data["data"]["borrower_name"] == "Ada"
     assert opened.data["data"]["is_overdue"] is False

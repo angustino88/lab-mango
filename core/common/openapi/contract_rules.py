@@ -32,7 +32,7 @@ RELATION_SHAPES = (
     ("id", "uid", "name"),
     ("id", "name", "type"),
     ("id", "uid", "name", "type"),
-    ("id", "username", "display_name", "name"),
+    ("id", "username", "display_name"),
 )
 """REL-3 and REL-13: the only key sequences a relation object may have; the last is the user relation."""
 

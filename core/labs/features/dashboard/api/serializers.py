@@ -101,7 +101,6 @@ class DashboardUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     username = serializers.CharField(allow_blank=True)
     display_name = serializers.CharField()
-    name = serializers.CharField(help_text="Deprecated: same value as `display_name`.")
 
 
 @embedded_resource

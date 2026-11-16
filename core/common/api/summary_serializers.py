@@ -67,23 +67,20 @@ def user_reference(user: Any) -> dict[str, Any]:
         "id": user.pk if hasattr(user, "pk") else user.id,
         "username": (getattr(user, "username", "") or "").strip(),
         "display_name": user_display_name(user),
-        "name": user_display_name(user),
     }
 
 
 class UserReferenceSerializer(serializers.Serializer):
-    """REL-3 user relation ``{id, username, display_name, name}``.
+    """REL-3 user relation ``{id, username, display_name}``.
 
     Every user field (owner, creator, actor, auditor, borrower, ...) has this one shape, so a client can show the
     display name and still offer the username. ``display_name`` is the display name, then the full name, then the
-    username. ``name`` repeats ``display_name`` for existing clients and is deprecated. Duck-typed so any feature may
-    use it without importing users.
+    username. Duck-typed so any feature may use it without importing users.
     """
 
     id = serializers.IntegerField(read_only=True)
     username = serializers.SerializerMethodField()
     display_name = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField(help_text="Deprecated: same value as `display_name`.")
 
     class Meta:
         ref_name = "UserReference"
@@ -92,9 +89,6 @@ class UserReferenceSerializer(serializers.Serializer):
         return (getattr(obj, "username", "") or "").strip()
 
     def get_display_name(self, obj: Any) -> str:
-        return user_display_name(obj)
-
-    def get_name(self, obj: Any) -> str:
         return user_display_name(obj)
 
 

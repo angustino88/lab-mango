@@ -655,7 +655,7 @@ def _get_assignee(self, row) -> dict[str, Any] | None:
     if row["user_id"] is None:
         return None
     display_name = row["display_name"] or row["username"] or str(row["user_id"])
-    return {"id": row["user_id"], "username": row["username"] or "", "display_name": display_name, "name": display_name}
+    return {"id": row["user_id"], "username": row["username"] or "", "display_name": display_name}
 
 
 QueueStatsPriorityItemSerializer.get_priority = _get_priority
