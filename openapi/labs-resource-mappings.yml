@@ -168,6 +168,99 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+  /api/labs/resource-mappings:
+    get:
+      operationId: labs_resource_mappings_retrieve
+      description: One page of benches (ordered by SKU) with their station, room,
+        slots, placed units and licenses, in the flat collection shape of the mapping
+        reads. Filters and search run on the server; meta.summary counts the whole
+        filtered set (before state).
+      summary: List bench mappings
+      parameters:
+      - in: query
+        name: bench_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: equipment_category_id
+        schema:
+          type: integer
+          minimum: 1
+        description: Benches with at least one unit of this equipment category.
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 25
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Matches the SKU or name of the bench, its station, its room or
+          a unit placed on it.
+      - in: query
+        name: room_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: state
+        schema:
+          enum:
+          - fully_mapped
+          - needs_equipment
+          - needs_placement
+          type: string
+          minLength: 1
+        description: 'needs_placement: no station in a room. needs_equipment: placed,
+          no units. fully_mapped: both.
+
+
+          * `fully_mapped` - Fully mapped
+
+          * `needs_equipment` - Needs equipment
+
+          * `needs_placement` - Needs placement'
+      - in: query
+        name: station_id
+        schema:
+          type: integer
+          minimum: 1
+      tags:
+      - Resource Mappings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchMappingListResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
   /api/labs/rooms/{resource_id}/mapping:
     get:
       operationId: labs_rooms_mapping_retrieve_by_resource_id
@@ -334,6 +427,80 @@ paths:
           description: ''
 components:
   schemas:
+    BenchMappingListMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchMappingPage'
+        summary:
+          $ref: '#/components/schemas/BenchMappingSummary'
+      required:
+      - pagination
+      - summary
+    BenchMappingListResponse:
+      type: object
+      description: A page of benches (``data.benches``) and only the rows they reference
+        in the other collections.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceMappingData'
+        meta:
+          $ref: '#/components/schemas/BenchMappingListMeta'
+      required:
+      - data
+      - meta
+    BenchMappingPage:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchMappingSummary:
+      type: object
+      properties:
+        benches:
+          type: integer
+          minimum: 0
+          description: Benches matching the filters (state not applied).
+        fully_mapped:
+          type: integer
+          minimum: 0
+        needs_equipment:
+          type: integer
+          minimum: 0
+        needs_placement:
+          type: integer
+          minimum: 0
+        equipment:
+          type: integer
+          minimum: 0
+          description: Units placed on those benches.
+      required:
+      - benches
+      - equipment
+      - fully_mapped
+      - needs_equipment
+      - needs_placement
     MappingBench:
       type: object
       properties:

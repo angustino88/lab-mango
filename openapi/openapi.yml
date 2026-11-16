@@ -136,6 +136,8 @@ paths:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1equipment
   /api/labs/benches/{bench_id}/image:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1image
+  /api/labs/benches/booking-choices:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1booking-choices
   /api/labs/benches/filters:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1filters
   /api/labs/benches/options:
@@ -172,6 +174,8 @@ paths:
     $ref: ./labs-resource-mappings.yml#/paths/~1api~1labs~1benches~1{resource_id}~1mapping
   /api/labs/equipment/{resource_id}/mapping:
     $ref: ./labs-resource-mappings.yml#/paths/~1api~1labs~1equipment~1{resource_id}~1mapping
+  /api/labs/resource-mappings:
+    $ref: ./labs-resource-mappings.yml#/paths/~1api~1labs~1resource-mappings
   /api/labs/rooms/{resource_id}/mapping:
     $ref: ./labs-resource-mappings.yml#/paths/~1api~1labs~1rooms~1{resource_id}~1mapping
   /api/labs/stations/{resource_id}/mapping:

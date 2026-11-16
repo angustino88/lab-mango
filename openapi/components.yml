@@ -1591,6 +1591,28 @@ components:
           $ref: '#/components/schemas/BenchBooking'
       required:
       - data
+    BenchComputer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        hostname:
+          type: string
+          readOnly: true
+          description: Empty when not reported yet.
+      required:
+      - hostname
+      - id
+      - name
+      - sku
+      x-embedded-resource: true
     BenchCreate:
       type: object
       description: Preserve the benches module's established strict-write helper.
@@ -2006,6 +2028,80 @@ components:
           $ref: '#/components/schemas/BenchListSerializersBenchPagination'
       required:
       - pagination
+    BenchMappingListMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchMappingPage'
+        summary:
+          $ref: '#/components/schemas/BenchMappingSummary'
+      required:
+      - pagination
+      - summary
+    BenchMappingListResponse:
+      type: object
+      description: A page of benches (``data.benches``) and only the rows they reference
+        in the other collections.
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceMappingData'
+        meta:
+          $ref: '#/components/schemas/BenchMappingListMeta'
+      required:
+      - data
+      - meta
+    BenchMappingPage:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchMappingSummary:
+      type: object
+      properties:
+        benches:
+          type: integer
+          minimum: 0
+          description: Benches matching the filters (state not applied).
+        fully_mapped:
+          type: integer
+          minimum: 0
+        needs_equipment:
+          type: integer
+          minimum: 0
+        needs_placement:
+          type: integer
+          minimum: 0
+        equipment:
+          type: integer
+          minimum: 0
+          description: Units placed on those benches.
+      required:
+      - benches
+      - equipment
+      - fully_mapped
+      - needs_equipment
+      - needs_placement
     BenchPlaceActionSerializersBenchDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -2716,6 +2812,39 @@ components:
       required:
       - bench
       - booked_hours
+    BookingBenchChoice:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        computers:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchComputer'
+          readOnly: true
+          description: Computers on the bench now.
+      required:
+      - computers
+      - id
+      - name
+      - sku
+    BookingBenchChoices:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingBenchChoice'
+          readOnly: true
+      required:
+      - data
     BookingCountAnalyticsResponse:
       type: object
       description: Schema-only envelope; create the proxy fresh to retain its explicit

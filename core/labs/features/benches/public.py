@@ -13,7 +13,10 @@ from .application import (
 )
 from .exceptions import BenchConflict
 from .queries.selectors import (
+    MAPPING_STATES,
+    bench_mapping_list,
     bench_mapping_rows,
+    bench_mapping_summary,
     get_bench,
     get_bench_for_mapping,
     get_reference,
@@ -29,7 +32,10 @@ __all__ = (
     "BenchConflict",
     "change_bench_lifecycle",
     "create_bench",
+    "MAPPING_STATES",
+    "bench_mapping_list",
     "bench_mapping_rows",
+    "bench_mapping_summary",
     "delete_bench",
     "get_bench",
     "get_bench_for_mapping",

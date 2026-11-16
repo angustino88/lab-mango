@@ -1,7 +1,22 @@
 """Bench projections never create equipment, statuses, or audit records."""
 
-from django.db.models import BooleanField, Count, Exists, OuterRef, Q, Value
+from django.db.models import (
+    BooleanField,
+    Case,
+    CharField,
+    Count,
+    Exists,
+    IntegerField,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce
 
+from core.labs.features.equipment.public import bench_assignment_subquery, bench_computers
 from core.labs.models import Bench, BenchFavorite, BenchGroup, BenchType, ResourceLifecycleStatus, Station
 from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES, with_bench_state
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
@@ -123,6 +138,91 @@ def bench_mapping_rows(*, bench_ids=(), station_ids=(), room_ids=()):
     return queryset.order_by("pk").values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id")
 
 
+MAPPING_FULLY_MAPPED = "fully_mapped"
+MAPPING_NEEDS_EQUIPMENT = "needs_equipment"
+MAPPING_NEEDS_PLACEMENT = "needs_placement"
+MAPPING_STATES = (MAPPING_FULLY_MAPPED, MAPPING_NEEDS_EQUIPMENT, MAPPING_NEEDS_PLACEMENT)
+
+
+def bench_mapping_list(*, q=None, room_id=None, station_id=None, bench_id=None, equipment_category_id=None):
+    """Active benches with their mapping completeness, ordered by SKU, for the bench-rooted mapping list.
+
+    Annotations: ``mapping_has_station``, ``mapping_has_room`` (through a live station), ``mapping_equipment_count``
+    (units placed on the bench now) and ``mapping_state``: ``needs_placement`` (no live station in a live room),
+    ``needs_equipment`` (placed, nothing on it) or ``fully_mapped``. ``q`` matches the bench, its station, its room
+    and the units on it (SKU or name). Each count and match is one correlated subquery, never a query per row.
+    """
+    placed = Q(setup_location__isnull=False, setup_location__deleted_at__isnull=True)
+    in_room = placed & Q(setup_location__room__isnull=False, setup_location__room__deleted_at__isnull=True)
+    units = (
+        bench_assignment_subquery().order_by().values("bench_id").annotate(units=Count("pk")).values("units")
+    )
+    queryset = Bench.objects.filter(deleted_at__isnull=True).annotate(
+        mapping_has_station=Case(When(placed, then=Value(True)), default=Value(False), output_field=BooleanField()),
+        mapping_has_room=Case(When(in_room, then=Value(True)), default=Value(False), output_field=BooleanField()),
+        mapping_equipment_count=Coalesce(Subquery(units, output_field=IntegerField()), Value(0)),
+    ).annotate(
+        mapping_state=Case(
+            When(mapping_has_room=False, then=Value(MAPPING_NEEDS_PLACEMENT)),
+            When(mapping_equipment_count=0, then=Value(MAPPING_NEEDS_EQUIPMENT)),
+            default=Value(MAPPING_FULLY_MAPPED),
+            output_field=CharField(),
+        )
+    )
+    if bench_id is not None:
+        queryset = queryset.filter(pk=bench_id)
+    if station_id is not None:
+        queryset = queryset.filter(setup_location_id=station_id)
+    if room_id is not None:
+        queryset = queryset.filter(setup_location__room_id=room_id, setup_location__deleted_at__isnull=True)
+    if equipment_category_id is not None:
+        queryset = queryset.filter(Exists(bench_assignment_subquery(category_id=equipment_category_id)))
+    if q:
+        queryset = queryset.filter(
+            Q(sku__icontains=q)
+            | Q(name__icontains=q)
+            | Q(description__icontains=q)
+            | Q(setup_location__sku__icontains=q)
+            | Q(setup_location__name__icontains=q)
+            | Q(setup_location__room__sku__icontains=q)
+            | Q(setup_location__room__name__icontains=q)
+            | Q(Exists(bench_assignment_subquery(search=q)))
+        )
+    return queryset.order_by("sku", "pk")
+
+
+def bench_mapping_summary(queryset):
+    """Counts over a ``bench_mapping_list`` queryset, in one aggregate query."""
+    totals = queryset.order_by().aggregate(
+        benches=Count("pk"),
+        fully_mapped=Count("pk", filter=Q(mapping_state=MAPPING_FULLY_MAPPED)),
+        needs_equipment=Count("pk", filter=Q(mapping_state=MAPPING_NEEDS_EQUIPMENT)),
+        needs_placement=Count("pk", filter=Q(mapping_state=MAPPING_NEEDS_PLACEMENT)),
+        equipment=Sum("mapping_equipment_count"),
+    )
+    return {key: value or 0 for key, value in totals.items()}
+
+
+def list_booking_bench_choices(*, q=None, include_ids=None):
+    """Benches a person picks when booking: in-service benches, with the computers on each (name, hostname).
+
+    People know the computer they remote into, not the bench SKU, so ``q`` also matches a computer's name, SKU
+    or hostname. ``include_ids`` adds benches regardless of state (an existing booking's bench). Ordered by name.
+    Two queries: the benches, then their computers.
+    """
+    queryset = Bench.objects.filter(deleted_at__isnull=True, lifecycle_status=ResourceLifecycleStatus.IN_SERVICE)
+    if q:
+        computer_match = bench_assignment_subquery(search=q) | bench_assignment_subquery().filter(
+            equipment__computing_profile__hostname__icontains=q
+        )
+        queryset = queryset.filter(Q(sku__icontains=q) | Q(name__icontains=q) | Q(Exists(computer_match)))
+    if include_ids:
+        queryset = queryset | Bench.objects.filter(pk__in=include_ids, deleted_at__isnull=True)
+    benches = list(queryset.distinct().order_by("name", "pk").values("id", "sku", "name"))
+    computers = bench_computers(bench_ids=[bench["id"] for bench in benches])
+    return [{**bench, "computers": computers.get(bench["id"], [])} for bench in benches]
+
+
 def reference_data():
     return {
         "types": BenchType.objects.filter(active=True).order_by("name", "pk"),
@@ -159,6 +259,7 @@ def _reference_model(model):
 
 __all__ = [
     "get_bench", "get_bench_for_mapping", "get_reference", "list_bench_equipment", "list_bench_options", "list_benches",
-    "bench_mapping_rows",
+    "bench_mapping_rows", "bench_mapping_list", "bench_mapping_summary", "list_booking_bench_choices",
+    "MAPPING_STATES",
     "list_references", "reference_data",
 ]

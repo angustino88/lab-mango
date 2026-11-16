@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 464,
+  "total_endpoints": 466,
   "generated_at": "2026-11-16",
   "endpoints": [
     {
@@ -18759,6 +18759,160 @@
           }
         },
         "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/benches/booking-choices",
+      "method": "GET",
+      "operation_id": "labs_benches_booking_choices_retrieve",
+      "summary": "Get Benches Booking Choices",
+      "description": "Benches to pick when booking, each with the computers on it, so people find a bench by computer name.\n\nNot an options endpoint (OPT-4 allows only id, sku and name there). In-service benches ordered by name;\n``include_ids`` adds the bench of an existing booking. At most 1000 rows, else ``400 too_many_results``.",
+      "tags": [
+        "Benches"
+      ],
+      "parameters": [
+        {
+          "name": "include_ids",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 50,
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Search text (1 to 100 characters).",
+          "schema": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "sku": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "computers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      "readOnly": true,
+                      "description": "Computers on the bench now."
+                    }
+                  },
+                  "required": [
+                    "computers",
+                    "id",
+                    "name",
+                    "sku"
+                  ]
+                },
+                "readOnly": true
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": [
+              {
+                "id": 1,
+                "sku": "string",
+                "name": "string",
+                "computers": [
+                  {}
+                ]
+              }
+            ]
+          }
+        },
+        "400": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -85627,6 +85781,370 @@
           }
         },
         "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/resource-mappings",
+      "method": "GET",
+      "operation_id": "labs_resource_mappings_retrieve",
+      "summary": "List bench mappings",
+      "description": "One page of benches (ordered by SKU) with their station, room, slots, placed units and licenses, in the flat collection shape of the mapping reads. Filters and search run on the server; meta.summary counts the whole filtered set (before state).",
+      "tags": [
+        "Resource Mappings"
+      ],
+      "parameters": [
+        {
+          "name": "bench_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "equipment_category_id",
+          "in": "query",
+          "required": false,
+          "description": "Benches with at least one unit of this equipment category.",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1,
+            "default": 25
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Matches the SKU or name of the bench, its station, its room or a unit placed on it.",
+          "schema": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        },
+        {
+          "name": "room_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "description": "needs_placement: no station in a room. needs_equipment: placed, no units. fully_mapped: both.\n\n* `fully_mapped` - Fully mapped\n* `needs_equipment` - Needs equipment\n* `needs_placement` - Needs placement",
+          "schema": {
+            "enum": [
+              "fully_mapped",
+              "needs_equipment",
+              "needs_placement"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "station_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "A page of benches (``data.benches``) and only the rows they reference in the other collections.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "rooms": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "room_slots": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "stations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "station_slots": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "benches": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "equipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "licenses": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "license_assignments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "benches",
+                  "equipment",
+                  "license_assignments",
+                  "licenses",
+                  "room_slots",
+                  "rooms",
+                  "station_slots",
+                  "stations"
+                ]
+              },
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "summary": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination",
+                  "summary"
+                ]
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "rooms": [
+                {}
+              ],
+              "room_slots": [
+                {}
+              ],
+              "stations": [
+                {}
+              ],
+              "station_slots": [
+                {}
+              ],
+              "benches": [
+                {}
+              ],
+              "equipment": [
+                {}
+              ],
+              "licenses": [
+                {}
+              ],
+              "license_assignments": [
+                {}
+              ]
+            },
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              },
+              "summary": {
+                "type": null,
+                "description": null
+              }
+            }
+          }
+        },
+        "400": {
           "description": "",
           "content_type": "application/json",
           "schema": {

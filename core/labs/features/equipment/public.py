@@ -61,6 +61,8 @@ from .exceptions import (
 from .queries.equipment import (
     active_bench_assignment_mapping_rows,
     active_equipment_bench_assignment,
+    bench_assignment_subquery,
+    bench_computers,
     equipment_mapping_rows,
     get_equipment_for_mapping,
     list_equipment,
@@ -146,6 +148,8 @@ __all__ = (
     "sync_computing_activity",
     "create_equipment",
     "delete_equipment",
+    "bench_assignment_subquery",
+    "bench_computers",
     "equipment_mapping_rows",
     "get_equipment_for_mapping",
     "list_equipment",
