@@ -9,7 +9,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.common.api.options import OptionsQueryMixin
-from core.common.api.summary_serializers import StatusSummarySerializer, embedded_resource
+from core.common.api.summary_serializers import StatusSummarySerializer, UserReferenceSerializer, embedded_resource
 from core.labs.features.base.resource_images import ResourceImageURLField
 from core.labs.features.base.serializers import (
     AppModelSerializer,
@@ -146,7 +146,7 @@ class BenchSerializer(AppModelSerializer):
     image_url = ResourceImageURLField()
     group = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
-    owner = NamedReferenceSerializer(read_only=True, allow_null=True)
+    owner = UserReferenceSerializer(read_only=True, allow_null=True)
     type = NamedReferenceSerializer(read_only=True, allow_null=True)
     bench_group = NamedReferenceSerializer(read_only=True, allow_null=True)
     setup_location = UIDNamedReferenceSerializer(read_only=True, allow_null=True)

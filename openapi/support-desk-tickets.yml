@@ -4232,7 +4232,7 @@ components:
       properties:
         assignee:
           allOf:
-          - $ref: '#/components/schemas/Relation'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           description: The assigned user (REL-14).
         count:
@@ -5498,18 +5498,38 @@ components:
         * `3` - Low'
     UserReference:
       type: object
-      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
-        use it without importing users.
+      description: 'REL-3 user relation ``{id, username, display_name, name}``.
+
+
+        Every user field (owner, creator, actor, auditor, borrower, ...) has this
+        one shape, so a client can show the
+
+        display name and still offer the username. ``display_name`` is the display
+        name, then the full name, then the
+
+        username. ``name`` repeats ``display_name`` for existing clients and is deprecated.
+        Duck-typed so any feature may
+
+        use it without importing users.'
       properties:
         id:
           type: integer
           readOnly: true
+        username:
+          type: string
+          readOnly: true
+        display_name:
+          type: string
+          readOnly: true
         name:
           type: string
           readOnly: true
+          description: 'Deprecated: same value as `display_name`.'
       required:
+      - display_name
       - id
       - name
+      - username
     VisibilityEnum:
       enum:
       - public

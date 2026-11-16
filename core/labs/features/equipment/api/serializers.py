@@ -366,7 +366,7 @@ class EquipmentSerializer(AppModelSerializer):
     type = NamedReferenceSerializer(read_only=True, allow_null=True)
     manufacturer = NamedReferenceSerializer(read_only=True, allow_null=True)
     product_model = NamedReferenceSerializer(read_only=True, allow_null=True)
-    owner = NamedReferenceSerializer(read_only=True, allow_null=True)
+    owner = UserReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
     group = NamedReferenceSerializer(read_only=True, allow_null=True)
     last_calibrated_at = serializers.DateTimeField(read_only=True, allow_null=True)

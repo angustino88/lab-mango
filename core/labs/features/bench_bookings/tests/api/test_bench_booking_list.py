@@ -457,6 +457,15 @@ class TestBenchBookingList:
         assert rows[other.pk]["booking_code"] == ""
         assert rows[other.pk]["creator"]["id"] == other.creator_id
 
+    @pytest.mark.parametrize("role", ["coord", "admin"])
+    def test_booking_calendar_shows_code_to_coordinators_and_admins(self, actor, make_booking, role):
+        _role(actor, role, 80113)
+        other = self._stranger_booking(make_booking)
+
+        rows = _client(actor).get(URL, {"view_side": "booking_calendar"}).json()["data"]
+
+        assert [row["booking_code"] for row in rows] == [other.booking_code]
+
     def test_booking_calendar_hides_cancelled_bookings_of_others(self, actor, make_booking):
         _role(actor, "user", 80109)
         self._stranger_booking(make_booking, status="cancelled")

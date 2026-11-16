@@ -713,11 +713,18 @@ components:
       properties:
         id:
           type: integer
+        username:
+          type: string
+        display_name:
+          type: string
         name:
           type: string
+          description: 'Deprecated: same value as `display_name`.'
       required:
+      - display_name
       - id
       - name
+      - username
     LabsNamedReference:
       type: object
       description: Compact `{id, name}` object representation of a related entity.

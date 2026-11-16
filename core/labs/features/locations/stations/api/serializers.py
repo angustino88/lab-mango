@@ -253,7 +253,7 @@ class StationSerializer(LocationStateFieldsMixin, AppModelSerializer):
     image_url = ResourceImageURLField()
     group = NamedReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
-    owner = NamedReferenceSerializer(read_only=True, allow_null=True)
+    owner = UserReferenceSerializer(read_only=True, allow_null=True)
     type = NamedReferenceSerializer(read_only=True, allow_null=True)
     room = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
     slot = NamedReferenceSerializer(read_only=True, allow_null=True)

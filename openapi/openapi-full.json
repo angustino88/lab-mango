@@ -39342,7 +39342,7 @@
           "owner": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -40822,7 +40822,7 @@
           "owner": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -43635,13 +43635,22 @@
           "id": {
             "type": "integer"
           },
-          "name": {
+          "username": {
             "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "Deprecated: same value as `display_name`."
           }
         },
         "required": [
+          "display_name",
           "id",
-          "name"
+          "name",
+          "username"
         ]
       },
       "DepartmentCatalogCreate": {
@@ -45530,7 +45539,7 @@
           "owner": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -46360,7 +46369,7 @@
           "owner": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -51677,7 +51686,7 @@
           "owner": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -57825,7 +57834,7 @@
           "assignee": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Relation"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -58635,7 +58644,7 @@
           "owner": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -60626,7 +60635,7 @@
           "owner": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/LabsNamedReference"
+                "$ref": "#/components/schemas/UserReference"
               }
             ],
             "readOnly": true,
@@ -64633,20 +64642,31 @@
       },
       "UserReference": {
         "type": "object",
-        "description": "REL-3 user relation ``{id, name}``; duck-typed so any feature may use it without importing users.",
+        "description": "REL-3 user relation ``{id, username, display_name, name}``.\n\nEvery user field (owner, creator, actor, auditor, borrower, ...) has this one shape, so a client can show the\ndisplay name and still offer the username. ``display_name`` is the display name, then the full name, then the\nusername. ``name`` repeats ``display_name`` for existing clients and is deprecated. Duck-typed so any feature may\nuse it without importing users.",
         "properties": {
           "id": {
             "type": "integer",
             "readOnly": true
           },
-          "name": {
+          "username": {
             "type": "string",
             "readOnly": true
+          },
+          "display_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Deprecated: same value as `display_name`."
           }
         },
         "required": [
+          "display_name",
           "id",
-          "name"
+          "name",
+          "username"
         ]
       },
       "UserSerializersUserDetailResponse": {
