@@ -141,7 +141,10 @@ class StationCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSer
 
 class StationUpdateSerializer(StationCreateSerializer):
     class Meta(StationCreateSerializer.Meta):
-        extra_kwargs = {}
+        # The SKU stays without DRF's unique validator: it reported "<model> with this sku already exists"
+        # for the record's own unchanged SKU. The update command rejects a changed SKU under its row lock;
+        # the partial unique constraint remains the uniqueness guard.
+        extra_kwargs = {"sku": {"validators": []}}
 
 
 class StationSlotCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):

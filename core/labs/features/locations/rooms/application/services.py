@@ -3,6 +3,7 @@
 from django.core.exceptions import ValidationError
 
 from core.common.db.transactions import apply_fields, atomic_command
+from core.labs.features.base.immutable import drop_unchanged_immutable_fields
 from core.labs.features.equipment.public import has_active_placements
 from core.labs.features.locations.application.lifecycle import apply_legacy_status, apply_lifecycle, record_initial
 from core.labs.features.locations.rooms.application.policies import RoomConflict, grid_positions
@@ -73,6 +74,7 @@ def create_room(*, actor, **data):
 @_room_atomic_command
 def update_room(*, room_id, actor, **data):
     room = _lock_room(room_id)
+    data = drop_unchanged_immutable_fields(room, data)
     _apply(room, data, ROOM_WRITE_FIELDS)
     _check_layout_fits(room)
     room.save(actor=actor)

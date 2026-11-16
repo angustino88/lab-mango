@@ -10,6 +10,7 @@ Downtime writers lock room, then stations, then benches: the same order.
 from django.core.exceptions import ValidationError
 
 from core.common.db.transactions import apply_fields, atomic_command
+from core.labs.features.base.immutable import drop_unchanged_immutable_fields
 from core.labs.features.equipment.public import has_active_placements
 from core.labs.features.locations.application.lifecycle import apply_legacy_status, apply_lifecycle, record_initial
 from core.labs.features.locations.exceptions import LocationConflict
@@ -123,6 +124,7 @@ def update_station(*, station_id, actor, **data):
     station, rooms = _lock_station_with_rooms(station_id, data)
     old_slot_id = station.slot_id
     old_room_id = station.room_id
+    data = drop_unchanged_immutable_fields(station, data)
     _apply(station, data, STATION_WRITE_FIELDS)
     if station.room_id is not None and station.room_id != old_room_id:
         _ensure_bookings_fit_new_room(station, rooms[station.room_id])
