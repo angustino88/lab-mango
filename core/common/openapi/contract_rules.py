@@ -32,8 +32,9 @@ RELATION_SHAPES = (
     ("id", "uid", "name"),
     ("id", "name", "type"),
     ("id", "uid", "name", "type"),
+    ("id", "username", "display_name"),
 )
-"""REL-3 and REL-13: the only key sequences a relation object may have."""
+"""REL-3 and REL-13: the only key sequences a relation object may have; the last is the user relation."""
 
 
 SERVER_MANAGED_WRITE_NAMES = frozenset({"id", "uid", "created_at", "updated_at", "created_by", "updated_by"})

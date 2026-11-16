@@ -649,9 +649,13 @@ def _get_team(self, row) -> dict[str, Any] | None:
     return _row_relation(row, "team_id", "name")
 
 
-@extend_schema_field(RelationSerializer)
+@extend_schema_field(UserReferenceSerializer)
 def _get_assignee(self, row) -> dict[str, Any] | None:
-    return _row_relation(row, "user_id", "username")
+    """REL-3 user relation from an aggregate row that carries the assignee's id, username and display name."""
+    if row["user_id"] is None:
+        return None
+    display_name = row["display_name"] or row["username"] or str(row["user_id"])
+    return {"id": row["user_id"], "username": row["username"] or "", "display_name": display_name}
 
 
 QueueStatsPriorityItemSerializer.get_priority = _get_priority

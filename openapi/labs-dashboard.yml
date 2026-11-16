@@ -713,11 +713,14 @@ components:
       properties:
         id:
           type: integer
-        name:
+        username:
+          type: string
+        display_name:
           type: string
       required:
+      - display_name
       - id
-      - name
+      - username
     LabsNamedReference:
       type: object
       description: Compact `{id, name}` object representation of a related entity.

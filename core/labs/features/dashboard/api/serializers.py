@@ -11,7 +11,7 @@ from rest_framework import serializers
 
 from core.common.api.pagination import PageNumberQuerySerializer
 from core.common.api.search import SearchQueryMixin
-from core.common.api.summary_serializers import embedded_resource, user_display_name
+from core.common.api.summary_serializers import embedded_resource, user_reference
 from core.common.api.wire_names import relation_object
 from core.infrastructure.storage.urls import get_media_url
 from core.labs.features.base.serializers import NamedReferenceSerializer
@@ -99,7 +99,8 @@ class DashboardUserSerializer(serializers.Serializer):
     """User relation for booking ownership (REL-3)."""
 
     id = serializers.IntegerField()
-    name = serializers.CharField()
+    username = serializers.CharField(allow_blank=True)
+    display_name = serializers.CharField()
 
 
 @embedded_resource
@@ -287,7 +288,7 @@ class DashboardBenchSerializer(serializers.Serializer):
             if self.include_remote_details:
                 creator = getattr(booking, "creator", None)
                 current_booking_data["user"] = (
-                    {"id": creator.id, "name": user_display_name(creator)} if creator else None  # REL-3
+                    user_reference(creator) if creator else None  # REL-3
                 )
 
         active_assignments = getattr(instance, "_active_equipment_assignments", None)
@@ -490,7 +491,7 @@ class DashboardBenchDetailSerializer(DashboardBenchSerializer):
             if self.include_remote_details:
                 creator = getattr(booking, "creator", None)
                 booking_data["user"] = (
-                    {"id": creator.id, "name": user_display_name(creator)} if creator else None  # REL-3
+                    user_reference(creator) if creator else None  # REL-3
                 )
             upcoming_list.append(booking_data)
         data["upcoming_bookings"] = upcoming_list

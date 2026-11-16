@@ -176,7 +176,7 @@ class RoomObservationSerializer(AppModelSerializer):
 class RoomSerializer(LocationStateFieldsMixin, AppModelSerializer):
     image_url = ResourceImageURLField()
     group = NamedReferenceSerializer(read_only=True, allow_null=True)
-    owner = NamedReferenceSerializer(read_only=True, allow_null=True)
+    owner = UserReferenceSerializer(read_only=True, allow_null=True)
     country = NamedReferenceSerializer(read_only=True, allow_null=True)
     city = NamedReferenceSerializer(read_only=True, allow_null=True)
     building = NamedReferenceSerializer(read_only=True, allow_null=True)

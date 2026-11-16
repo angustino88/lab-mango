@@ -79,8 +79,9 @@ def get_queue_stats(*, viewer: Any, days: int = 30) -> dict[str, Any]:
         "by_assignee": [
             {
                 "user_id": r["assignee_id"],
-                # REL-3 user name: display name, then name, then username.
-                "username": r["assignee__display_name"] or r["assignee__name"] or r["assignee__username"],
+                "username": r["assignee__username"],
+                # REL-3 user display name: display name, then name, then username.
+                "display_name": r["assignee__display_name"] or r["assignee__name"] or r["assignee__username"],
                 "count": r["count"],
             }
             for r in by_assignee

@@ -1217,7 +1217,7 @@ components:
           nullable: true
         owner:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         remark:
@@ -2268,7 +2268,7 @@ components:
           nullable: true
         owner:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         remark:
@@ -4283,11 +4283,14 @@ components:
       properties:
         id:
           type: integer
-        name:
+        username:
+          type: string
+        display_name:
           type: string
       required:
+      - display_name
       - id
-      - name
+      - username
     DepartmentCatalogCreate:
       type: object
       properties:
@@ -5673,7 +5676,7 @@ components:
           description: Label that already existed on the asset before it was registered.
         owner:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         department:
@@ -6263,7 +6266,7 @@ components:
           description: Label that already existed on the asset before it was registered.
         owner:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         department:
@@ -10096,7 +10099,7 @@ components:
           readOnly: true
         owner:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         department:
@@ -14561,7 +14564,7 @@ components:
       properties:
         assignee:
           allOf:
-          - $ref: '#/components/schemas/Relation'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           description: The assigned user (REL-14).
         count:
@@ -15171,7 +15174,7 @@ components:
           nullable: true
         owner:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         remark:
@@ -16647,7 +16650,7 @@ components:
           nullable: true
         owner:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         remark:
@@ -19570,18 +19573,30 @@ components:
       - data
     UserReference:
       type: object
-      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
-        use it without importing users.
+      description: 'REL-3 user relation ``{id, username, display_name}``.
+
+
+        Every user field (owner, creator, actor, auditor, borrower, ...) has this
+        one shape, so a client can show the
+
+        display name and still offer the username. ``display_name`` is the display
+        name, then the full name, then the
+
+        username. Duck-typed so any feature may use it without importing users.'
       properties:
         id:
           type: integer
           readOnly: true
-        name:
+        username:
+          type: string
+          readOnly: true
+        display_name:
           type: string
           readOnly: true
       required:
+      - display_name
       - id
-      - name
+      - username
     UserSerializersUserDetailResponse:
       type: object
       description: Base serializer for successful API responses.

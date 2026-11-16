@@ -434,19 +434,63 @@ class TestBenchBookingList:
         assert response.json()["error"]["code"] == "invalid_query"
         assert response.json()["error"]["details"][0]["field"] == "unexpected_window"
 
-    def test_booking_calendar_view_side_does_not_bypass_creator_scope(self, actor, make_booking):
+    def _stranger_booking(self, make_booking, **kwargs):
+        # Later than the actor's own booking in these tests: one bench cannot hold overlapping bookings.
+        booking = make_booking(
+            starts_at=timezone.now() + timedelta(days=3), ends_at=timezone.now() + timedelta(days=4), **kwargs
+        )
+        booking.creator = UserFactory(username=f"booking-calendar-stranger-{booking.pk}")
+        booking.save(update_fields=["creator"])
+        return booking
+
+    def test_booking_calendar_shows_others_reserving_bookings_without_their_code(self, actor, make_booking):
         _role(actor, "user", 80107)
-        lower = timezone.now() - timedelta(days=1)
-        own = make_booking(starts_at=lower, ends_at=timezone.now() + timedelta(days=2))
-        stranger = UserFactory(username="booking-calendar-stranger")
-        hidden = make_booking(starts_at=lower, ends_at=timezone.now() + timedelta(days=2), status="cancelled")
-        hidden.creator = stranger
-        hidden.save(update_fields=["creator"])
+        own = make_booking(starts_at=timezone.now() - timedelta(days=1), ends_at=timezone.now() + timedelta(days=2))
+        other = self._stranger_booking(make_booking)
 
         response = _client(actor).get(URL, {"view_side": "booking_calendar"})
 
         assert response.status_code == 200
-        assert {item["id"] for item in response.json()["data"]} == {own.pk}
+        rows = {item["id"]: item for item in response.json()["data"]}
+        assert set(rows) == {own.pk, other.pk}
+        assert rows[own.pk]["booking_code"] == own.booking_code
+        assert rows[other.pk]["booking_code"] == ""
+        assert rows[other.pk]["creator"]["id"] == other.creator_id
+
+    @pytest.mark.parametrize("role", ["coord", "admin"])
+    def test_booking_calendar_shows_code_to_coordinators_and_admins(self, actor, make_booking, role):
+        _role(actor, role, 80113)
+        other = self._stranger_booking(make_booking)
+
+        rows = _client(actor).get(URL, {"view_side": "booking_calendar"}).json()["data"]
+
+        assert [row["booking_code"] for row in rows] == [other.booking_code]
+
+    def test_booking_calendar_hides_cancelled_bookings_of_others(self, actor, make_booking):
+        _role(actor, "user", 80109)
+        self._stranger_booking(make_booking, status="cancelled")
+
+        response = _client(actor).get(URL, {"view_side": "booking_calendar"})
+
+        assert response.status_code == 200
+        assert response.json()["data"] == []
+
+    def test_other_views_stay_creator_scoped(self, actor, make_booking):
+        _role(actor, "user", 80110)
+        self._stranger_booking(make_booking)
+
+        assert _client(actor).get(URL).json()["data"] == []
+
+    def test_booking_calendar_code_filters_cannot_probe_others_codes(self, actor, make_booking):
+        _role(actor, "user", 80111)
+        other = self._stranger_booking(make_booking)
+        client = _client(actor)
+
+        by_code = client.get(URL, {"view_side": "booking_calendar", "booking_code": other.booking_code})
+        by_search = client.get(URL, {"view_side": "booking_calendar", "q": other.booking_code[:10]})
+
+        assert by_code.json()["data"] == []
+        assert by_search.json()["data"] == []
 
     def test_range_query_count_remains_bounded(self, actor, bench, project, make_booking, django_assert_num_queries):
         _role(actor, "user", 80108)

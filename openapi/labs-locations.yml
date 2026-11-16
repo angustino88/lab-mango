@@ -4586,7 +4586,7 @@ components:
           nullable: true
         owner:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         remark:
@@ -5595,7 +5595,7 @@ components:
           nullable: true
         owner:
           allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
+          - $ref: '#/components/schemas/UserReference'
           readOnly: true
           nullable: true
         remark:
@@ -6882,18 +6882,30 @@ components:
       - status
     UserReference:
       type: object
-      description: REL-3 user relation ``{id, name}``; duck-typed so any feature may
-        use it without importing users.
+      description: 'REL-3 user relation ``{id, username, display_name}``.
+
+
+        Every user field (owner, creator, actor, auditor, borrower, ...) has this
+        one shape, so a client can show the
+
+        display name and still offer the username. ``display_name`` is the display
+        name, then the full name, then the
+
+        username. Duck-typed so any feature may use it without importing users.'
       properties:
         id:
           type: integer
           readOnly: true
-        name:
+        username:
+          type: string
+          readOnly: true
+        display_name:
           type: string
           readOnly: true
       required:
+      - display_name
       - id
-      - name
+      - username
   securitySchemes:
     cookieAuth:
       type: apiKey

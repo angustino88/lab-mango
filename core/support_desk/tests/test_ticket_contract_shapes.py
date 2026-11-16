@@ -19,7 +19,7 @@ class TestTicketContractShapes:
             assert set(row["status"]) == {"id", "name"}
             assert row["ticket_type"] == {"value": "incident", "label": "Incident"}
             assert set(row["source"]) == {"value", "label"}
-            assert set(row["requester"]) == {"id", "name"}
+            assert set(row["requester"]) == {"id", "username", "display_name"}
 
     def test_queue_stats_dimensions_are_relations(self, support_setup, agent_client, agent_user):
         created = _create(agent_client, support_setup)
@@ -36,7 +36,7 @@ class TestTicketContractShapes:
         for row in stats["by_team"]:
             assert row["team"] is None or set(row["team"]) == {"id", "name"}
         assignee_row = next(row for row in stats["by_assignee"] if row["assignee"]["id"] == agent_user.id)
-        assert set(assignee_row["assignee"]) == {"id", "name"} and assignee_row["assignee"]["name"]
+        assert set(assignee_row["assignee"]) == {"id", "username", "display_name"} and assignee_row["assignee"]["display_name"]
 
     def test_admin_boolean_names_match_on_read_and_write(self, support_setup, admin_client):
         settings = admin_client.patch(

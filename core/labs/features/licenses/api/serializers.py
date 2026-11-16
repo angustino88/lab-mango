@@ -56,7 +56,7 @@ class AssignedEquipmentSerializer(serializers.Serializer):
 
 class LicenseSerializer(AppModelSerializer):
     image_url = ResourceImageURLField()
-    owner = NamedReferenceSerializer(read_only=True, allow_null=True)
+    owner = UserReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
     product = NamedReferenceSerializer(read_only=True, allow_null=True)
     vendor = NamedReferenceSerializer(read_only=True, allow_null=True)

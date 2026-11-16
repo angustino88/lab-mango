@@ -16,6 +16,7 @@ from core.labs.features.base.serializers import (
     to_choice_reference,
 )
 from core.labs.models import BenchBooking, BookingStatus, LabProject
+from core.users.public import LabsRole, has_labs_role
 
 _ORDERING_HELP = (
     "Use unique comma-separated fields from starts_at, ends_at, created_at, id; "
@@ -79,6 +80,21 @@ class BenchBookingSerializer(AppModelSerializer):
             "updated_at",
         )
         read_only_fields = fields
+
+    def to_representation(self, instance):
+        """The booking code is a login credential for the agent: only its creator and coordinators see it.
+
+        Without a request in the context (internal projection) the row is returned unchanged.
+        """
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        actor = getattr(request, "user", None)
+        if request is not None and not (
+            getattr(actor, "is_authenticated", False)
+            and (instance.creator_id == actor.pk or has_labs_role(actor, LabsRole.COORDINATOR))
+        ):
+            data["booking_code"] = ""
+        return data
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_status(self, obj) -> dict[str, str] | None:
