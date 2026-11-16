@@ -39,6 +39,9 @@ def list_bench_bookings(
 ) -> QuerySet[BenchBooking]:
     """Coordinators see the schedule; everyone else sees only bookings they created.
 
+    ``view_side=booking_calendar`` is the shared schedule: every signed-in user sees which slots are taken, so it
+    lists everyone's *reserving* bookings (cancelled, expired and rejected ones free the slot and stay private).
+    The serializer withholds ``booking_code`` from rows the caller did not create.
     The explicit my_booking filter narrows elevated users to their own records.
     API keys and actors without a real authenticated user have no personal scope.
     """
@@ -64,7 +67,16 @@ def list_bench_bookings(
         if not any(path.lstrip("-") == "pk" for path in ordering_paths):
             ordering_paths.append("pk")
         bookings = bookings.order_by(*ordering_paths)
-    bookings = visible_to(bookings, actor=actor)
+    shared_calendar = False
+    if view_side == "booking_calendar" and getattr(actor, "is_authenticated", False):
+        if not has_labs_role(actor, LabsRole.COORDINATOR):
+            shared_calendar = True
+            bookings = bookings.filter(
+                status__in=Booking.ACTIVE_STATUSES,
+                approval_status__in=Booking.RESERVING_APPROVAL_STATUSES,
+            )
+    else:
+        bookings = visible_to(bookings, actor=actor)
     if view_side == "my_booking" and getattr(actor, "is_authenticated", False):
         bookings = bookings.filter(creator_id=actor.pk)
 
@@ -85,6 +97,9 @@ def list_bench_bookings(
     if approval_status:
         bookings = bookings.filter(approval_status__iexact=approval_status)
     if booking_code:
+        # On the shared calendar a code may only match the caller's own rows: matching others' would be a guessing oracle.
+        if shared_calendar:
+            bookings = bookings.filter(creator_id=actor.pk)
         bookings = bookings.filter(booking_code__iexact=booking_code)
     if starts_at_after is not None:
         bookings = bookings.filter(ends_at__gt=starts_at_after)
@@ -93,10 +108,11 @@ def list_bench_bookings(
 
     search_term = q or search
     if search_term:
+        code_match = Q(booking_code__icontains=search_term)
+        if shared_calendar:
+            code_match &= Q(creator_id=actor.pk)
         bookings = bookings.filter(
-            Q(booking_code__icontains=search_term)
-            | Q(bench__name__icontains=search_term)
-            | Q(bench__sku__icontains=search_term)
+            code_match | Q(bench__name__icontains=search_term) | Q(bench__sku__icontains=search_term)
         )
 
     return bookings
