@@ -9156,6 +9156,10 @@ components:
         template_version:
           type: string
           nullable: true
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
         summary:
           allOf:
           - $ref: '#/components/schemas/ImportSummary'
@@ -9176,6 +9180,7 @@ components:
       required:
       - is_dry_run
       - is_valid
+      - mode
       - problems
       - sheets
       - summary
@@ -9185,6 +9190,8 @@ components:
       type: object
       properties:
         created:
+          type: integer
+        updated:
           type: integer
         existing:
           type: integer
@@ -9196,6 +9203,7 @@ components:
       - created
       - error_count
       - existing
+      - updated
       - warning_count
     KeyStorageEnum:
       enum:
@@ -16272,10 +16280,13 @@ components:
         created:
           type: integer
           description: Rows that create a record (or would, for a check).
+        updated:
+          type: integer
+          description: Rows that change an existing record (upsert mode only).
         existing:
           type: integer
-          description: Reference rows that match an existing record and are kept as
-            is.
+          description: Rows that match an existing record and change nothing (reference
+            rows; unchanged rows in upsert).
         failed:
           type: integer
         ignored_columns:
@@ -16290,6 +16301,7 @@ components:
       - key
       - name
       - rows
+      - updated
     SnapshotItem:
       type: object
       properties:
@@ -19608,6 +19620,14 @@ components:
           $ref: '#/components/schemas/ImportReport'
       required:
       - data
+    WorkbookImportModeEnum:
+      enum:
+      - create
+      - upsert
+      type: string
+      description: '* `create` - Create new
+
+        * `upsert` - Update existing'
     WorkbookUpload:
       type: object
       properties:
@@ -19616,6 +19636,18 @@ components:
           format: binary
           description: The data workbook (.xlsx), at most 10 MB and 5,000 rows per
             sheet.
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/WorkbookImportModeEnum'
+          default: create
+          description: 'create (default): an existing asset tag is an error. upsert:
+            an existing asset tag updates that record; blank cells keep stored values;
+            the asset tag never changes.
+
+
+            * `create` - Create new
+
+            * `upsert` - Update existing'
       required:
       - file
   securitySchemes:

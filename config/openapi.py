@@ -25,6 +25,9 @@ ENUM_NAME_OVERRIDES: dict[str, str | list[str]] = {
     "EquipmentDisplayStatusEnum": "core.labs.models.EquipmentDisplayStatus",
     "EquipmentLifecycleStateEnum": "core.labs.models.EquipmentLifecycleState",
     "LicenseStatusEnum": "core.labs.models.LicenseStatus",
+    # Routing sync change-feed ``mode`` (core/routing/queries/selectors.py): pinned so the workbook import
+    # ``mode`` field does not rename it.
+    "ModeEnum": ["delta", "reset"],
     "PurchaseStatusEnum": "core.labs.models.procurement.purchase.PurchaseStatus",
     "ResourceAuditResultEnum": "core.labs.models.auditing.resource_audit.ResourceAudit.Result",
     "ResourceTypeEnum": "core.support_desk.contracts.ResourceType.choices",
@@ -46,4 +49,7 @@ ENUM_NAME_OVERRIDES: dict[str, str | list[str]] = {
     "SystemStateEnum": "core.support_desk.contracts.SystemState.choices",
     "TicketTypeEnum": "core.support_desk.contracts.TicketType.choices",
     "UrgencyEnum": "core.support_desk.contracts.Urgency.choices",
+    # Workbook import upload ``mode`` (workbook_import/contracts.py MODES): pinned so it does not take the
+    # routing-sync ``ModeEnum`` name.
+    "WorkbookImportModeEnum": "core.labs.features.workbook_import.contracts.MODE_CHOICES",
 }

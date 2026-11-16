@@ -30251,7 +30251,7 @@
     "/api/labs/workbook-imports/actions/apply": {
       "post": {
         "operationId": "labs_workbook_imports_actions_apply_create",
-        "description": "Import a data workbook: every row is created, or nothing when any row has an error (422 lists them).",
+        "description": "Import a data workbook: every row is written, or nothing when any row has an error (422 lists them).\n\n``mode=create`` (default) creates every row; ``mode=upsert`` updates records whose asset tag exists. The asset\ntag never changes.",
         "tags": [
           "Workbook Import"
         ],
@@ -30341,7 +30341,7 @@
     "/api/labs/workbook-imports/actions/check": {
       "post": {
         "operationId": "labs_workbook_imports_actions_check_create",
-        "description": "Check a data workbook: run every row and roll back. Always 200 with the full report; saves nothing.",
+        "description": "Check a data workbook: run every row and roll back. Always 200 with the full report; saves nothing.\n\n``mode=upsert`` reports rows whose asset tag exists as updated (or unchanged) instead of as errors.",
         "tags": [
           "Workbook Import"
         ],
@@ -30426,6 +30426,47 @@
           }
         },
         "summary": "Check Workbook Imports"
+      }
+    },
+    "/api/labs/workbook-imports/export": {
+      "get": {
+        "operationId": "labs_workbook_imports_export_retrieve",
+        "description": "Download the current data as a data workbook (.xlsx): the template with spaces and equipment filled in.\n\nEdit the file and upload it with ``mode=upsert`` to update the records; the asset tag identifies each record.",
+        "tags": [
+          "Workbook Import"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Workbook Imports Export"
       }
     },
     "/api/labs/workbook-imports/template": {
@@ -50158,6 +50199,14 @@
             "type": "string",
             "nullable": true
           },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
           "summary": {
             "allOf": [
               {
@@ -50189,6 +50238,7 @@
         "required": [
           "is_dry_run",
           "is_valid",
+          "mode",
           "problems",
           "sheets",
           "summary",
@@ -50200,6 +50250,9 @@
         "type": "object",
         "properties": {
           "created": {
+            "type": "integer"
+          },
+          "updated": {
             "type": "integer"
           },
           "existing": {
@@ -50216,6 +50269,7 @@
           "created",
           "error_count",
           "existing",
+          "updated",
           "warning_count"
         ]
       },
@@ -59887,9 +59941,13 @@
             "type": "integer",
             "description": "Rows that create a record (or would, for a check)."
           },
+          "updated": {
+            "type": "integer",
+            "description": "Rows that change an existing record (upsert mode only)."
+          },
           "existing": {
             "type": "integer",
-            "description": "Reference rows that match an existing record and are kept as is."
+            "description": "Rows that match an existing record and change nothing (reference rows; unchanged rows in upsert)."
           },
           "failed": {
             "type": "integer"
@@ -59908,7 +59966,8 @@
           "ignored_columns",
           "key",
           "name",
-          "rows"
+          "rows",
+          "updated"
         ]
       },
       "SnapshotItem": {
@@ -64449,6 +64508,14 @@
           "data"
         ]
       },
+      "WorkbookImportModeEnum": {
+        "enum": [
+          "create",
+          "upsert"
+        ],
+        "type": "string",
+        "description": "* `create` - Create new\n* `upsert` - Update existing"
+      },
       "WorkbookUpload": {
         "type": "object",
         "properties": {
@@ -64456,6 +64523,15 @@
             "type": "string",
             "format": "binary",
             "description": "The data workbook (.xlsx), at most 10 MB and 5,000 rows per sheet."
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkbookImportModeEnum"
+              }
+            ],
+            "default": "create",
+            "description": "create (default): an existing asset tag is an error. upsert: an existing asset tag updates that record; blank cells keep stored values; the asset tag never changes.\n\n* `create` - Create new\n* `upsert` - Update existing"
           }
         },
         "required": [

@@ -8,10 +8,12 @@ from django.db.models import Model
 
 from core.labs.features.equipment.public import (
     ChangeConditionInput,
+    ChangeLifecycleInput,
     CreateEquipmentInput,
     PlaceEquipmentInput,
     UpdateEquipmentInput,
     change_condition,
+    change_lifecycle,
     create_equipment,
     place_equipment,
     update_equipment,
@@ -27,6 +29,7 @@ from core.labs.models import (
     Room,
 )
 from core.labs.models.resource.base.resource import Department, Group
+from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 from core.labs.models.resource.equipment.computing import ComputingProfile, TechnicalUser
 from core.labs.models.resource.equipment.display import DisplayResolution, DisplaySize
 from core.labs.models.resource.equipment.networking import NetworkingProtocol
@@ -36,8 +39,36 @@ from ..queries.sheets import SHEETS
 from .context import ImportRun, Row
 from .references import Catalog
 from .spaces import IMPORT_NOTE
+from .updates import current_condition, same_value
 
 DETAIL_SHEETS = tuple(sheet for sheet in SHEETS if sheet.detail_category)
+# Values that come from a detail sheet (and the computing profile); an update writes them as given.
+_DETAIL_KEYS = frozenset(
+    {
+        "computing",
+        "mac_address",
+        "size",
+        "resolution",
+        "material",
+        "protocol",
+        "customer",
+        "interfaces",
+        "characteristics",
+        "channels",
+        "power_rating",
+        "dimensions",
+    }
+)
+# Equipment row value key → model attribute holding the same id, for comparing an update with the unit.
+_ID_ATTRIBUTES = {
+    "kind": "kind_id",
+    "type": "type_id",
+    "manufacturer": "manufacturer_id",
+    "product_model": "product_model_id",
+    "department": "department_id",
+    "group": "group_id",
+    "owner": "owner_id",
+}
 
 # Old equipment status (template v1) → (lifecycle, condition, note, error).
 _LEGACY_EQUIPMENT_STATUS: dict[str, tuple[str | None, str | None, str | None, str | None]] = {
@@ -164,9 +195,11 @@ def import_equipment(run: ImportRun) -> None:
             run.row_error(detail, "Add this unit to the Equipment sheet first.", key="sku", code="unknown_reference")
 
     storage: dict[str, int] = {}
+    updated_details: set[str] = set()
 
     def unit(row: Row) -> str:
         lifecycle, condition = _equipment_state(run, row)
+        existing = run.existing(Equipment, row)
         category = catalog.category(row)
         kind_id = catalog.kind(row)
         values: dict[str, Any] = {"kind": kind_id, "sku": row.get("sku"), "lifecycle_state": lifecycle}
@@ -227,6 +260,27 @@ def import_equipment(run: ImportRun) -> None:
             values["computing"] = computing
         if row.get("remark") is not None:
             run.row_warning(row, "Equipment has no remarks field; put the note in Details.", key="remark")
+        if existing is not None:
+            explicit_condition = row.get("condition")
+            if (
+                explicit_condition is None
+                and row.get("legacy_status") is not None
+                and row.get("lifecycle_state") is None
+            ):
+                explicit_condition = condition or "operational"
+            explicit_lifecycle = row.get("lifecycle_state")
+            if explicit_lifecycle is None and row.get("legacy_status") is not None:
+                explicit_lifecycle = lifecycle
+            return _update_unit(
+                existing,
+                row,
+                values,
+                computing=computing,
+                technical_user=technical_user,
+                has_detail=detail is not None,
+                lifecycle=explicit_lifecycle,
+                condition=explicit_condition,
+            )
         created = create_equipment(CreateEquipmentInput(fields=tuple(values.items())), actor=run.actor)
         if technical_user is not None:
             update_equipment(
@@ -247,6 +301,74 @@ def import_equipment(run: ImportRun) -> None:
             storage[row.get("sku").casefold()] = row.number
         return "created"
 
+    def _update_unit(
+        unit: Equipment,
+        row: Row,
+        values: dict[str, Any],
+        *,
+        computing: dict[str, Any],
+        technical_user: Any,
+        has_detail: bool,
+        lifecycle: str | None,
+        condition: str | None,
+    ) -> str:
+        """Update one existing unit: changed general fields, detail fields, condition, lifecycle, storage."""
+        values = {key: value for key, value in values.items() if key not in ("sku", "lifecycle_state")}
+        general = {key: value for key, value in values.items() if key not in _DETAIL_KEYS}
+        # References are written by id (``kind_id``), the form the update command can set on the row.
+        changes = {
+            _ID_ATTRIBUTES.get(key, key): value
+            for key, value in general.items()
+            if not same_value(getattr(unit, _ID_ATTRIBUTES.get(key, key), None), value)
+        }
+        if has_detail:
+            # Detail fields (relations, many-to-many) are written as given.
+            changes.update({key: value for key, value in values.items() if key in _DETAIL_KEYS - {"computing"}})
+            hostname = computing.get("hostname")
+            if hostname is not None:
+                stored = (
+                    ComputingProfile.objects.filter(equipment_id=unit.pk).values_list("hostname", flat=True).first()
+                )
+                if not same_value(stored, hostname):
+                    run.row_warning(
+                        row,
+                        "The hostname is set when the unit is registered; change it in the app. Not changed.",
+                        key="sku",
+                        code="hostname_not_changed",
+                    )
+            if technical_user is not None:
+                changes["computing"] = {"technical_user": technical_user}
+            updated_details.add(row.get("sku").casefold())
+        changed = bool(changes)
+        if changes:
+            update_equipment(
+                UpdateEquipmentInput(equipment_id=unit.pk, fields=tuple(changes.items())), actor=run.actor
+            )
+            _remember_rdp_file(run, unit.pk)
+        if condition is not None and condition != current_condition(unit):
+            change_condition(
+                ChangeConditionInput(equipment_id=unit.pk, condition=condition, reason=IMPORT_NOTE), actor=run.actor
+            )
+            changed = True
+        if lifecycle is not None and lifecycle != unit.lifecycle_state:
+            change_lifecycle(
+                ChangeLifecycleInput(equipment_id=unit.pk, lifecycle_state=lifecycle, reason=IMPORT_NOTE),
+                actor=run.actor,
+            )
+            changed = True
+        if row.get("storage_room") is not None:
+            room_id = catalog.one(row, "storage_room", Room, "sku", row.get("storage_room"))
+            stored_in = (
+                EquipmentAssignment.objects.filter(equipment_id=unit.pk, unassigned_at__isnull=True)
+                .values_list("room_id", flat=True)
+                .first()
+            )
+            if stored_in != room_id:
+                place_equipment(PlaceEquipmentInput(equipment_id=unit.pk, room_id=room_id), actor=run.actor)
+                changed = True
+            storage[row.get("sku").casefold()] = row.number
+        return "updated" if changed else "existing"
+
     run.each("equipment", unit)
     for sheet in DETAIL_SHEETS:
         bound = run.bound.get(sheet.key)
@@ -255,6 +377,8 @@ def import_equipment(run: ImportRun) -> None:
         for row in bound.rows:
             if row.failed:
                 bound.outcome.failed += 1
+            elif row.get("sku") and row.get("sku").casefold() in updated_details:
+                bound.outcome.updated += 1
             elif row.get("sku") and row.get("sku").casefold() in used:
                 bound.outcome.created += 1
 
@@ -279,17 +403,34 @@ def import_equipment(run: ImportRun) -> None:
             )
         bench_id = catalog.one(row, "bench", Bench, "sku", row.get("bench"))
         equipment_id = catalog.one(row, "equipment", Equipment, "sku", sku)
+        role, position = row.get("role", "default"), row.get("position", 0)
+        current = (
+            EquipmentAssignment.objects.filter(equipment_id=equipment_id, unassigned_at__isnull=True)
+            .values("bench_id", "role", "position")
+            .first()
+        )
+        if current is not None and current["bench_id"] == bench_id:
+            placed.add(sku.casefold())
+            if (current["role"], current["position"]) == (role, position):
+                return "existing"
+            run.row_warning(
+                row,
+                "The unit is already on this bench; role and position are changed in the app.",
+                key="role",
+                code="placement_not_changed",
+            )
+            return "existing"
         place_equipment(
             PlaceEquipmentInput(
                 equipment_id=equipment_id,
                 bench_id=bench_id,
-                role=row.get("role", "default"),
-                position=row.get("position", 0),
+                role=role,
+                position=position,
             ),
             actor=run.actor,
         )
         placed.add(sku.casefold())
-        return "created"
+        return "created" if current is None else "updated"
 
     run.each("bench_placements", placement, natural_key="__row__")
     for row in run.rows("equipment"):
