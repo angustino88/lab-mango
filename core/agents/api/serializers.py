@@ -6,7 +6,8 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.agents.models import AgentIdentity
-from core.common.api.summary_serializers import choice_field
+from core.agents.queries import AgentHealth, GrantStatus, agent_health, grant_status
+from core.common.api.summary_serializers import ChoiceSerializer, UserReferenceSerializer, choice_field, to_choice
 from core.common.api.wire_names import relation_object
 from core.labs.features.base.serializers import NamedReferenceSerializer
 from core.labs.models import ComputingActivityStatus, SessionAccessType
@@ -17,6 +18,13 @@ class AgentIdentitySerializer(serializers.ModelSerializer):
     state = choice_field(AgentIdentity._meta.get_field("state").choices)
     key_algorithm = choice_field(AgentIdentity._meta.get_field("key_algorithm").choices, allow_null=True)
     key_storage = choice_field(AgentIdentity._meta.get_field("key_storage").choices, allow_null=True)
+    health = serializers.SerializerMethodField(
+        help_text=(
+            "Derived liveness for display: online, stale or offline from last_seen_at for an active agent; "
+            "never_seen before the first heartbeat; awaiting_enrollment while pending; retired once revoked "
+            "or decommissioned."
+        )
+    )
     created_at = serializers.DateTimeField(source="created", read_only=True)
     updated_at = serializers.DateTimeField(source="modified", read_only=True)
 
@@ -27,6 +35,7 @@ class AgentIdentitySerializer(serializers.ModelSerializer):
             "agent_uid",
             "equipment",
             "state",
+            "health",
             "key_algorithm",
             "key_storage",
             "fingerprint",
@@ -41,6 +50,10 @@ class AgentIdentitySerializer(serializers.ModelSerializer):
     @extend_schema_field(NamedReferenceSerializer(allow_null=True))
     def get_equipment(self, obj) -> dict | None:
         return relation_object(obj.equipment)
+
+    @extend_schema_field(ChoiceSerializer())
+    def get_health(self, obj) -> dict | None:
+        return to_choice(agent_health(obj), AgentHealth.choices)
 
 
 class AgentDetailResponseSerializer(serializers.Serializer):
@@ -62,6 +75,53 @@ class AgentListMetaSerializer(serializers.Serializer):
 class AgentListResponseSerializer(serializers.Serializer):
     data = serializers.ListField(child=AgentIdentitySerializer())
     meta = AgentListMetaSerializer()
+
+
+class AgentListQuerySerializer(serializers.Serializer):
+    """Optional narrowing of ``GET /api/agents``; values are comma-separated lists."""
+
+    equipment = serializers.CharField(required=False)
+    equipment_uid = serializers.UUIDField(required=False)
+    state = serializers.CharField(required=False)
+
+    def validate_equipment(self, value: str) -> list[int]:
+        parts = [part.strip() for part in value.split(",") if part.strip()]
+        if not parts or len(parts) > 100 or not all(part.isdigit() and int(part) > 0 for part in parts):
+            raise serializers.ValidationError("Give 1 to 100 comma-separated positive equipment ids.")
+        return [int(part) for part in parts]
+
+    def validate_state(self, value: str) -> list[str]:
+        parts = [part.strip() for part in value.split(",") if part.strip()]
+        if not parts or any(part not in AgentIdentity.State.values for part in parts):
+            raise serializers.ValidationError(
+                f"Give comma-separated states from: {', '.join(AgentIdentity.State.values)}."
+            )
+        return parts
+
+
+class EnrollmentGrantSerializer(serializers.Serializer):
+    """Metadata of one enrollment grant; the clear grant is shown only once, when issued."""
+
+    id = serializers.IntegerField()
+    status = serializers.SerializerMethodField()
+    expires_at = serializers.DateTimeField()
+    used_at = serializers.DateTimeField(allow_null=True)
+    revoked_at = serializers.DateTimeField(allow_null=True)
+    created_at = serializers.DateTimeField(source="created")
+    created_by = UserReferenceSerializer(source="creator", allow_null=True)
+
+    @extend_schema_field(ChoiceSerializer())
+    def get_status(self, obj) -> dict | None:
+        return to_choice(grant_status(obj), GrantStatus.choices)
+
+
+class EnrollmentGrantListResponseSerializer(serializers.Serializer):
+    data = serializers.ListField(child=EnrollmentGrantSerializer())
+    meta = AgentListMetaSerializer()
+
+
+class EnrollmentGrantResponseSerializer(serializers.Serializer):
+    data = EnrollmentGrantSerializer()
 
 
 class CreateAgentGrantRequestSerializer(serializers.Serializer):

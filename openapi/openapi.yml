@@ -32,6 +32,8 @@ paths:
     $ref: ./agents.yml#/paths/~1api~1agents~1{id}~1actions~1revoke
   /api/agents/{id}/enrollment-grants:
     $ref: ./agents.yml#/paths/~1api~1agents~1{id}~1enrollment-grants
+  /api/agents/{id}/enrollment-grants/{grant_id}/actions/revoke:
+    $ref: ./agents.yml#/paths/~1api~1agents~1{id}~1enrollment-grants~1{grant_id}~1actions~1revoke
   /api/aad-login:
     $ref: ./users-auth-aad-login.yml#/paths/~1api~1aad-login
   /api/csrf-token:
