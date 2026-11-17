@@ -15,14 +15,15 @@ from core.agents.models import AgentIdentity, EnrollmentGrant
 
 
 class AgentHealth(models.TextChoices):
-    """Operator-facing liveness, derived from state and ``last_seen_at``; never persisted."""
+    """Liveness of an active agent, derived from ``last_seen_at``; never persisted.
+
+    Health describes only an enrolled (active) agent. Pending, revoked and decommissioned agents have
+    no health: their lifecycle ``state`` says everything, and the two must not be merged.
+    """
 
     ONLINE = "online", "Online"
-    STALE = "stale", "Stale"
+    DELAYED = "delayed", "Delayed"
     OFFLINE = "offline", "Offline"
-    NEVER_SEEN = "never_seen", "Never seen"
-    AWAITING_ENROLLMENT = "awaiting_enrollment", "Awaiting enrollment"
-    RETIRED = "retired", "Retired"
 
 
 class GrantStatus(models.TextChoices):
@@ -34,19 +35,20 @@ class GrantStatus(models.TextChoices):
     EXPIRED = "expired", "Expired"
 
 
-def agent_health(identity: AgentIdentity, *, now: datetime | None = None) -> str:
-    """Classify an identity's liveness for display; thresholds come from ``AGENT_HEALTH_*_S``."""
-    if identity.state == AgentIdentity.State.PENDING:
-        return AgentHealth.AWAITING_ENROLLMENT
+def agent_health(identity: AgentIdentity, *, now: datetime | None = None) -> str | None:
+    """Online within ``AGENT_HEALTH_ONLINE_S``, delayed until ``AGENT_HEALTH_OFFLINE_S``, else offline.
+
+    An active agent that has never sent a heartbeat is offline. Non-active agents return ``None``.
+    """
     if identity.state != AgentIdentity.State.ACTIVE:
-        return AgentHealth.RETIRED
+        return None
     if identity.last_seen_at is None:
-        return AgentHealth.NEVER_SEEN
+        return AgentHealth.OFFLINE
     age = ((now or timezone.now()) - identity.last_seen_at).total_seconds()
     if age <= settings.AGENT_HEALTH_ONLINE_S:
         return AgentHealth.ONLINE
     if age <= settings.AGENT_HEALTH_OFFLINE_S:
-        return AgentHealth.STALE
+        return AgentHealth.DELAYED
     return AgentHealth.OFFLINE
 
 

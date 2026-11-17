@@ -95,29 +95,30 @@ def test_list_rejects_more_than_100_equipment_ids(client):
 
 @pytest.mark.django_db
 @override_settings(AGENT_HEALTH_ONLINE_S=60, AGENT_HEALTH_OFFLINE_S=300)
-def test_health_is_derived_from_state_and_last_seen():
+def test_health_has_three_values_for_active_agents_only():
     now = timezone.now()
-    identity = AgentIdentity(state=AgentIdentity.State.PENDING)
-    assert agent_health(identity, now=now) == AgentHealth.AWAITING_ENROLLMENT
-    identity.state = AgentIdentity.State.ACTIVE
-    assert agent_health(identity, now=now) == AgentHealth.NEVER_SEEN
+    identity = AgentIdentity(state=AgentIdentity.State.ACTIVE)
+    assert agent_health(identity, now=now) == AgentHealth.OFFLINE  # never sent a heartbeat
     identity.last_seen_at = now - timedelta(seconds=60)
     assert agent_health(identity, now=now) == AgentHealth.ONLINE
     identity.last_seen_at = now - timedelta(seconds=61)
-    assert agent_health(identity, now=now) == AgentHealth.STALE
+    assert agent_health(identity, now=now) == AgentHealth.DELAYED
     identity.last_seen_at = now - timedelta(seconds=301)
     assert agent_health(identity, now=now) == AgentHealth.OFFLINE
-    for state in (AgentIdentity.State.REVOKED, AgentIdentity.State.DECOMMISSIONED):
+    for state in (AgentIdentity.State.PENDING, AgentIdentity.State.REVOKED, AgentIdentity.State.DECOMMISSIONED):
         identity.state = state
-        assert agent_health(identity, now=now) == AgentHealth.RETIRED
+        assert agent_health(identity, now=now) is None
 
 
 @pytest.mark.django_db
-def test_detail_carries_health_choice(client):
+def test_detail_health_is_null_until_enrolled_then_a_choice(client):
     issued = _issue(client, _computer("health"))
     agent = AgentIdentity.objects.get(agent_uid=issued["agent_uid"])
-    resp = client.get(f"/api/agents/{agent.pk}")
-    assert resp.data["data"]["health"] == {"value": "awaiting_enrollment", "label": "Awaiting enrollment"}
+    assert client.get(f"/api/agents/{agent.pk}").data["data"]["health"] is None
+    AgentIdentity.objects.filter(pk=agent.pk).update(
+        state=AgentIdentity.State.ACTIVE, public_key="k", public_key_sha256="h", last_seen_at=timezone.now()
+    )
+    assert client.get(f"/api/agents/{agent.pk}").data["data"]["health"] == {"value": "online", "label": "Online"}
 
 
 @pytest.mark.django_db

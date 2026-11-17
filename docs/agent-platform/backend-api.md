@@ -204,10 +204,10 @@ Labs coordinator role (admin implies it); reads require authentication only.
 
 **Operator console reads (2026-11-17).** `GET /api/agents` accepts `equipment` (comma-separated ids, 1..100),
 `equipment_uid` and `state` (comma-separated) filters so the computing inventory can show each unit's agent.
-Every agent carries a derived `health` choice: `online` / `stale` / `offline` from `last_seen_at` against
-`AGENT_HEALTH_ONLINE_S` (default 180) and `AGENT_HEALTH_OFFLINE_S` (default 900) for an active agent,
-`never_seen` before the first heartbeat, `awaiting_enrollment` while pending and `retired` once revoked or
-decommissioned. It is display policy only and never changes state or authentication.
+An active agent carries a derived `health` choice: `online` within `AGENT_HEALTH_ONLINE_S` (default 180) of
+its last heartbeat, `delayed` until `AGENT_HEALTH_OFFLINE_S` (default 900), `offline` after that or before the
+first heartbeat. `health` is null for pending, revoked and decommissioned agents, whose `state` is the answer;
+it is display policy only and never changes state or authentication.
 `GET /api/agents/{id}/enrollment-grants` pages grant metadata (`usable` / `redeemed` / `revoked` / `expired`,
 issuer, timestamps); the clear grant is returned only by the call that issues it.
 `POST /api/agents/{id}/enrollment-grants/{grant_id}/actions/revoke` (coordinator) revokes an unredeemed grant

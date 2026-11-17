@@ -1319,8 +1319,9 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true,
-                    "description": "Derived liveness for display: online, stale or offline from last_seen_at for an active agent; never_seen before the first heartbeat; awaiting_enrollment while pending; retired once revoked or decommissioned."
+                    "description": "Liveness of an active agent from last_seen_at: online, delayed or offline (also offline before the first heartbeat). Null while pending and once revoked or decommissioned; read state then."
                   },
                   "key_algorithm": {
                     "allOf": [
@@ -3212,8 +3213,9 @@
                           "description": "(max nesting depth reached)"
                         }
                       ],
+                      "nullable": true,
                       "readOnly": true,
-                      "description": "Derived liveness for display: online, stale or offline from last_seen_at for an active agent; never_seen before the first heartbeat; awaiting_enrollment while pending; retired once revoked or decommissioned."
+                      "description": "Liveness of an active agent from last_seen_at: online, delayed or offline (also offline before the first heartbeat). Null while pending and once revoked or decommissioned; read state then."
                     },
                     "key_algorithm": {
                       "allOf": [
@@ -3885,8 +3887,9 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true,
-                    "description": "Derived liveness for display: online, stale or offline from last_seen_at for an active agent; never_seen before the first heartbeat; awaiting_enrollment while pending; retired once revoked or decommissioned."
+                    "description": "Liveness of an active agent from last_seen_at: online, delayed or offline (also offline before the first heartbeat). Null while pending and once revoked or decommissioned; read state then."
                   },
                   "key_algorithm": {
                     "allOf": [
@@ -4155,8 +4158,9 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true,
-                    "description": "Derived liveness for display: online, stale or offline from last_seen_at for an active agent; never_seen before the first heartbeat; awaiting_enrollment while pending; retired once revoked or decommissioned."
+                    "description": "Liveness of an active agent from last_seen_at: online, delayed or offline (also offline before the first heartbeat). Null while pending and once revoked or decommissioned; read state then."
                   },
                   "key_algorithm": {
                     "allOf": [
@@ -4523,8 +4527,9 @@
                         "description": "(max nesting depth reached)"
                       }
                     ],
+                    "nullable": true,
                     "readOnly": true,
-                    "description": "Derived liveness for display: online, stale or offline from last_seen_at for an active agent; never_seen before the first heartbeat; awaiting_enrollment while pending; retired once revoked or decommissioned."
+                    "description": "Liveness of an active agent from last_seen_at: online, delayed or offline (also offline before the first heartbeat). Null while pending and once revoked or decommissioned; read state then."
                   },
                   "key_algorithm": {
                     "allOf": [

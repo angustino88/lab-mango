@@ -20,9 +20,8 @@ class AgentIdentitySerializer(serializers.ModelSerializer):
     key_storage = choice_field(AgentIdentity._meta.get_field("key_storage").choices, allow_null=True)
     health = serializers.SerializerMethodField(
         help_text=(
-            "Derived liveness for display: online, stale or offline from last_seen_at for an active agent; "
-            "never_seen before the first heartbeat; awaiting_enrollment while pending; retired once revoked "
-            "or decommissioned."
+            "Liveness of an active agent from last_seen_at: online, delayed or offline (also offline before "
+            "the first heartbeat). Null while pending and once revoked or decommissioned; read state then."
         )
     )
     created_at = serializers.DateTimeField(source="created", read_only=True)
@@ -51,7 +50,7 @@ class AgentIdentitySerializer(serializers.ModelSerializer):
     def get_equipment(self, obj) -> dict | None:
         return relation_object(obj.equipment)
 
-    @extend_schema_field(ChoiceSerializer())
+    @extend_schema_field(ChoiceSerializer(allow_null=True))
     def get_health(self, obj) -> dict | None:
         return to_choice(agent_health(obj), AgentHealth.choices)
 
