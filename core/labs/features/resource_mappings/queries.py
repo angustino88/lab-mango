@@ -292,7 +292,9 @@ def list_bench_mappings(
     if page > 1 and offset >= count:
         raise MappingPageNotFound(f"Page {page} is beyond the last page.")
     benches = list(
-        scoped.values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id")[offset : offset + page_size]
+        scoped.values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id", "image")[
+            offset : offset + page_size
+        ]
     )
     bench_ids = [bench["id"] for bench in benches]
     station_ids = sorted({bench["setup_location_id"] for bench in benches if bench["setup_location_id"]})
@@ -322,7 +324,7 @@ def list_bench_mappings(
 
 def _shape_row(collection: str, row: Any) -> dict[str, Any]:
     if collection == "rooms":
-        return {key: row[key] for key in ("id", "uid", "sku", "name", "layout_rows", "layout_columns")}
+        return {key: row[key] for key in ("id", "uid", "sku", "name", "layout_rows", "layout_columns", "image")}
     if collection == "room_slots":
         return {
             key: row[key]
@@ -340,17 +342,18 @@ def _shape_row(collection: str, row: Any) -> dict[str, Any]:
             )
         }
     if collection == "stations":
-        return {key: row[key] for key in ("id", "uid", "sku", "name", "room_id", "slot_id")}
+        return {key: row[key] for key in ("id", "uid", "sku", "name", "room_id", "slot_id", "image")}
     if collection == "station_slots":
         return {key: row[key] for key in ("id", "station_id", "position_index", "slot_code", "label")}
     if collection == "benches":
-        return {key: row[key] for key in ("id", "uid", "sku", "name", "setup_location_id", "station_slot_id")}
+        return {key: row[key] for key in ("id", "uid", "sku", "name", "setup_location_id", "station_slot_id", "image")}
     if collection == "equipment":
         return {
             "id": row["id"],
             "uid": row["uid"],
             "sku": row["sku"],
             "name": row["name"],
+            "image": row["image"],
             "category": {"id": row["kind__category_id"], "name": row["kind__category__name"]},
             "bench_id": row["mapping_bench_id"],
             "bench_assignment": (

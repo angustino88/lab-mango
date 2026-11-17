@@ -272,7 +272,7 @@ def equipment_mapping_rows(*, equipment_ids=(), bench_ids=(), station_ids=(), ro
             bench_assignments__bench__setup_location__deleted_at__isnull=True,
         )
     else:
-        return queryset.none().values("id", "uid", "sku", "name", "kind__category_id", "kind__category__name")
+        return queryset.none().values("id", "uid", "sku", "name", "image", "kind__category_id", "kind__category__name")
     return (
         queryset.order_by("pk")
         .distinct()
@@ -281,6 +281,7 @@ def equipment_mapping_rows(*, equipment_ids=(), bench_ids=(), station_ids=(), ro
             "uid",
             "sku",
             "name",
+            "image",
             "kind__category_id",
             "kind__category__name",
             "mapping_bench_id",
