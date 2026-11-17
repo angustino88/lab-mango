@@ -18464,6 +18464,17 @@
                       "readOnly": true,
                       "nullable": true
                     },
+                    "room": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
+                      "readOnly": true,
+                      "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
+                    },
                     "status": {
                       "allOf": [
                         {
@@ -18605,6 +18616,7 @@
                     "requested_load_kg",
                     "requested_power_w",
                     "required_utilities",
+                    "room",
                     "setup_location",
                     "setup_location_path",
                     "sku",
@@ -18646,6 +18658,7 @@
                 "documentation_url": "https://example.com/resource",
                 "setup_location": {},
                 "station_slot": {},
+                "room": {},
                 "status": {},
                 "lifecycle_status": {},
                 "condition": {},
@@ -19103,6 +19116,17 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "room": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -19244,6 +19268,7 @@
                   "requested_load_kg",
                   "requested_power_w",
                   "required_utilities",
+                  "room",
                   "setup_location",
                   "setup_location_path",
                   "sku",
@@ -19276,6 +19301,7 @@
               "documentation_url": "https://example.com/resource",
               "setup_location": {},
               "station_slot": {},
+              "room": {},
               "status": {},
               "lifecycle_status": {},
               "condition": {},
@@ -21780,6 +21806,17 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "room": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -21921,6 +21958,7 @@
                   "requested_load_kg",
                   "requested_power_w",
                   "required_utilities",
+                  "room",
                   "setup_location",
                   "setup_location_path",
                   "sku",
@@ -21953,6 +21991,7 @@
               "documentation_url": "https://example.com/resource",
               "setup_location": {},
               "station_slot": {},
+              "room": {},
               "status": {},
               "lifecycle_status": {},
               "condition": {},
@@ -22366,6 +22405,17 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "room": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -22507,6 +22557,7 @@
                   "requested_load_kg",
                   "requested_power_w",
                   "required_utilities",
+                  "room",
                   "setup_location",
                   "setup_location_path",
                   "sku",
@@ -22539,6 +22590,7 @@
               "documentation_url": "https://example.com/resource",
               "setup_location": {},
               "station_slot": {},
+              "room": {},
               "status": {},
               "lifecycle_status": {},
               "condition": {},
@@ -23055,6 +23107,17 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "room": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -23196,6 +23259,7 @@
                   "requested_load_kg",
                   "requested_power_w",
                   "required_utilities",
+                  "room",
                   "setup_location",
                   "setup_location_path",
                   "sku",
@@ -23228,6 +23292,7 @@
               "documentation_url": "https://example.com/resource",
               "setup_location": {},
               "station_slot": {},
+              "room": {},
               "status": {},
               "lifecycle_status": {},
               "condition": {},
@@ -23769,6 +23834,17 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "room": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -23910,6 +23986,7 @@
                   "requested_load_kg",
                   "requested_power_w",
                   "required_utilities",
+                  "room",
                   "setup_location",
                   "setup_location_path",
                   "sku",
@@ -23942,6 +24019,7 @@
               "documentation_url": "https://example.com/resource",
               "setup_location": {},
               "station_slot": {},
+              "room": {},
               "status": {},
               "lifecycle_status": {},
               "condition": {},
@@ -24661,6 +24739,17 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "room": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -24802,6 +24891,7 @@
                   "requested_load_kg",
                   "requested_power_w",
                   "required_utilities",
+                  "room",
                   "setup_location",
                   "setup_location_path",
                   "sku",
@@ -24834,6 +24924,7 @@
               "documentation_url": "https://example.com/resource",
               "setup_location": {},
               "station_slot": {},
+              "room": {},
               "status": {},
               "lifecycle_status": {},
               "condition": {},
@@ -25238,6 +25329,17 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "room": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -25379,6 +25481,7 @@
                   "requested_load_kg",
                   "requested_power_w",
                   "required_utilities",
+                  "room",
                   "setup_location",
                   "setup_location_path",
                   "sku",
@@ -25411,6 +25514,7 @@
               "documentation_url": "https://example.com/resource",
               "setup_location": {},
               "station_slot": {},
+              "room": {},
               "status": {},
               "lifecycle_status": {},
               "condition": {},

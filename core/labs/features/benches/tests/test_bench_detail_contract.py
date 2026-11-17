@@ -190,3 +190,30 @@ def test_bench_detail_requires_authentication(bench_api):
     response = APIClient().get(f"/api/labs/benches/{bench.pk}")
 
     assert response.status_code == 401
+
+
+def test_bench_room_is_the_room_of_its_station(bench_api):
+    from core.labs.models import Room, Station
+
+    client, bench = bench_api
+    room = Room.objects.create(sku="ROOM-RM-1", name="Lab A")
+    bench.setup_location = Station.objects.create(sku="ROOM-ST-1", name="Station 1", room=room)
+    bench.save(update_fields=["setup_location"])
+
+    detail = client.get(f"/api/labs/benches/{bench.pk}").data["data"]
+    listed = next(row for row in client.get("/api/labs/benches").data["data"] if row["id"] == bench.pk)
+
+    expected = {"id": room.pk, "uid": str(room.uid), "sku": "ROOM-RM-1", "name": "Lab A"}
+    assert {key: detail["room"][key] for key in expected} == expected
+    assert listed["room"]["id"] == room.pk
+
+
+def test_bench_room_is_null_when_unplaced_or_station_has_no_room(bench_api):
+    from core.labs.models import Station
+
+    client, bench = bench_api
+    assert client.get(f"/api/labs/benches/{bench.pk}").data["data"]["room"] is None
+
+    bench.setup_location = Station.objects.create(sku="ROOM-ST-2", name="Station 2")
+    bench.save(update_fields=["setup_location"])
+    assert client.get(f"/api/labs/benches/{bench.pk}").data["data"]["room"] is None
