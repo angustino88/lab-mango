@@ -1264,6 +1264,13 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsBenchRoomReference'
+          nullable: true
+          readOnly: true
+          description: Room of the station the bench is set up on; null when the bench
+            is unplaced or the station has no room.
         status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -1366,6 +1373,7 @@ components:
       - requested_load_kg
       - requested_power_w
       - required_utilities
+      - room
       - setup_location
       - setup_location_path
       - sku
@@ -2315,6 +2323,13 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsBenchRoomReference'
+          nullable: true
+          readOnly: true
+          description: Room of the station the bench is set up on; null when the bench
+            is unplaced or the station has no room.
         status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -2417,6 +2432,7 @@ components:
       - requested_load_kg
       - requested_power_w
       - required_utilities
+      - room
       - setup_location
       - setup_location_path
       - sku
@@ -9861,6 +9877,29 @@ components:
         * `station` - station
 
         * `room` - room'
+    LabsBenchRoomReference:
+      type: object
+      description: The room of the station a bench is set up on.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - sku
+      - uid
+      x-embedded-resource: true
     LabsChoiceReference:
       type: object
       description: Standard `{value, label}` representation for enum and lifecycle

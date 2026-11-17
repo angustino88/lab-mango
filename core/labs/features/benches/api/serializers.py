@@ -142,6 +142,16 @@ class BenchEquipmentListQuerySerializer(serializers.Serializer):
     page_size = serializers.IntegerField(min_value=1, max_value=100, required=False)
 
 
+@embedded_resource
+class BenchRoomReferenceSerializer(UIDNamedReferenceSerializer):
+    """The room of the station a bench is set up on."""
+
+    sku = serializers.CharField(read_only=True)
+
+    class Meta:
+        ref_name = "LabsBenchRoomReference"
+
+
 class BenchSerializer(AppModelSerializer):
     image_url = ResourceImageURLField()
     group = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -151,6 +161,9 @@ class BenchSerializer(AppModelSerializer):
     bench_group = NamedReferenceSerializer(read_only=True, allow_null=True)
     setup_location = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
     station_slot = NamedReferenceSerializer(read_only=True, allow_null=True)
+    room = serializers.SerializerMethodField(
+        help_text="Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
+    )
     status = serializers.SerializerMethodField(
         read_only=True, help_text="Deprecated: use lifecycle_status, condition, availability and activity_status."
     )
@@ -181,6 +194,7 @@ class BenchSerializer(AppModelSerializer):
             "documentation_url",
             "setup_location",
             "station_slot",
+            "room",
             "status",
             "lifecycle_status",
             "condition",
@@ -202,6 +216,14 @@ class BenchSerializer(AppModelSerializer):
             "equipment_url",
         )
         read_only_fields = fields
+
+    @extend_schema_field(BenchRoomReferenceSerializer(allow_null=True))
+    def get_room(self, obj) -> dict[str, Any] | None:
+        station = obj.setup_location
+        room = getattr(station, "room", None) if station is not None else None
+        if room is None or room.deleted_at is not None:
+            return None
+        return BenchRoomReferenceSerializer(room).data
 
     def get_equipment_count(self, obj) -> int:
         return getattr(obj, "equipment_count", 0)
