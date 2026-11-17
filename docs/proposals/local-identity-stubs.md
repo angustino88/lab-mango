@@ -1,8 +1,8 @@
 # Design: Local identity stubs for routing tests (stub Entra, stub users, stub agents)
 
 - Tier: **T2** (authentication configuration, system checks, a new user-lifecycle caller, dev tooling that
-  creates users and lab data) · Status: **Draft, revision 2: open questions resolved as recommendations, awaiting
-  owner approval** · Date: 2026-11-17
+  creates users and lab data) · Status: **Implemented on branch `claude/routing-subs-agent-user-tests-i72c6q`;
+  awaiting Security / QA / independent review and owner approval before merge** · Date: 2026-11-17
 - Required reviews: Security (owner of AUTH rules and system checks), QA, Independent review; human owner
   approval before merge.
 - Related: `docs/agent-platform/routing-sync.md` section 15 (stubs and tooling), ADR 004.
@@ -412,3 +412,28 @@ as the design baseline; per `AGENTS.md`, the human owner still confirms them whe
 | D5 | End-to-end flows in CI? | **Fixture-level tests in CI** (AC-1–4, 7–11, run by the normal `pytest` gate); **`stub_scenario.py all` local only** for now, with an optional manual `workflow_dispatch` job as a later DevOps change | Fixture tests give CI the auth, routing and idempotency coverage cheaply. The full scenario needs a running server, a JWKS server and possibly two backends; putting it in every PR is slow and flaky. Adding a workflow is a CI change (T2, DevOps), so it stays a separate decision |
 
 Remaining owner decisions: approve this design (T2), and whether to schedule the D5 manual CI job.
+
+## Implementation notes (2026-11-17)
+
+The owner asked for every stub to live under `tools/`. The result differs from the sections above as follows;
+behavior, guards and decisions D1–D5 are unchanged.
+
+| Design said | Implemented as | Why |
+|---|---|---|
+| `tools/stub_entra.py`, `tools/stub_scenario.py`, `tools/stub_common.py` | `tools/stubs/{entra,scenario,common}.py`, one entry point `python -m tools.stubs <tool>` | Owner request: one folder |
+| `manage.py stub_identities` in `core.users` | `tools/stubs/identities.py` (Django script). The guards, the caller label and the lifecycle calls stay in `core/users/features/lifecycle/stub.py`, exported through `core.users.public` | Tooling in `tools/`; enforcement stays next to the code it protects |
+| `manage.py stub_lab` in `core.labs`, `reset` | `tools/stubs/lab.py`; `seed`, `list`, `clear-bookings` (no destructive `reset`) | Labs has no public create command for equipment or projects. The seed creates reference rows as `tests/factories.py` does and places computers with the public `place_equipment` command. Natural keys: `STUB-` SKUs (`equipment_active_sku_unique`, bench SKU) and project `code` (unique) |
+| `tests/stubs/entra.py` fixture | `tools/stubs/testing.py` (`stub_entra_environment`) + `tests/stubs/conftest.py` | Reusable from any test |
+| Stub agent extension | `tools/stubs/agent.py`; `tools/stub_agent.py` and `tools/stub_router.py` are thin shims with the same CLI (rule 1) | |
+| Stub `URSGroup` linked through `ensure_linked_group` | Django group `stub-<role>` linked directly | `tests/architecture/test_users_feature_boundaries.py`: `lifecycle` must not import `urs_sync` |
+
+Found while implementing:
+- `POST /api/aad-login` needs the CSRF cookie and header (`CookieCSRFPermission`); the stub login does `GET
+  /api/csrf-token` first, like the browser.
+- `IsLabCoordinator` lets every Labs role **read** agents; only coordinators and admins write. The `operator-authz`
+  scenario asserts that (user reads 200, user grant 403, no-role read 403).
+- The default login throttle (10/min) is too low for scenarios; the printed `.env` block raises it locally.
+- Seeding activity before the binding keeps inactive personas out of the routing stream entirely (no transient
+  upsert).
+- Not covered by an automated race test: concurrent `lab seed` runs (each row is still protected by its unique
+  constraint).

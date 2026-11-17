@@ -127,6 +127,12 @@ ENTRA_BIND_ALLOWED_DOMAINS = [
 ]
 ENTRA_BIND_DORMANT_WARNING_DAYS = env.int("ENTRA_BIND_DORMANT_WARNING_DAYS", default=180)
 ENTRA_FRONTEND_LOGIN_URL = env("ENTRA_FRONTEND_LOGIN_URL", default="/")
+# Local development only (docs/proposals/local-identity-stubs.md): accept tokens from the stub Entra issuer in
+# tools/stubs, whose signing keys are served on loopback. users.E014 refuses it outside DEBUG or with any
+# tenant but ENTRA_STUB_TENANT_ID; production.py forces it off. The stub tenant is a version-0 UUID, which
+# Entra never issues, and users.E015 refuses it in production.
+ENTRA_STUB_ISSUER_ENABLED = env.bool("ENTRA_STUB_ISSUER_ENABLED", default=False)
+ENTRA_STUB_TENANT_ID = "00000000-0000-0000-0000-0000000057ab"
 
 AUTH_USER_MODEL = "users.User"
 BACKEND_ID = env("BACKEND_ID", default="dept_a")

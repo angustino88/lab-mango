@@ -58,6 +58,42 @@ def check_entra_access_token_configuration(app_configs, **kwargs):
         UUID(settings.AAD_TENANT_ID)
     except (ValueError, TypeError, AttributeError):
         errors.append(Error("AAD_TENANT_ID must be a UUID while Entra access tokens are on.", id="users.E012"))
-    if not str(settings.AAD_JWKS_URL).startswith("https://login.microsoftonline.com/"):
+    jwks_url = str(settings.AAD_JWKS_URL)
+    stub_jwks = getattr(settings, "ENTRA_STUB_ISSUER_ENABLED", False) and is_loopback_http_url(jwks_url)
+    if not jwks_url.startswith("https://login.microsoftonline.com/") and not stub_jwks:
         errors.append(Error("AAD_JWKS_URL must be a Microsoft login HTTPS URL.", id="users.E013"))
     return errors
+
+
+def is_loopback_http_url(url: str) -> bool:
+    """An ``http(s)://`` URL on 127.0.0.1 or localhost: where the local stub issuer serves its keys."""
+    parts = urlsplit(url)
+    return parts.scheme in {"http", "https"} and parts.hostname in {"127.0.0.1", "localhost"}
+
+
+@register(Tags.security)
+def check_entra_stub_issuer(app_configs, **kwargs):
+    """The local stub issuer runs only in DEBUG, never with SSO-only, and only for the reserved stub tenant."""
+    errors = []
+    stub_tenant = _uuid_or_none(getattr(settings, "ENTRA_STUB_TENANT_ID", None))
+    if getattr(settings, "ENTRA_STUB_ISSUER_ENABLED", False):
+        if settings.ENTRA_SSO_ONLY or not settings.DEBUG:
+            errors.append(
+                Error("ENTRA_STUB_ISSUER_ENABLED is for local development (DEBUG, not SSO-only).", id="users.E014")
+            )
+        if stub_tenant is None or _uuid_or_none(settings.AAD_TENANT_ID) != stub_tenant:
+            errors.append(
+                Error("ENTRA_STUB_ISSUER_ENABLED requires AAD_TENANT_ID = ENTRA_STUB_TENANT_ID.", id="users.E014")
+            )
+    if settings.ENTRA_SSO_ONLY and stub_tenant is not None:
+        tenants = [settings.AAD_TENANT_ID, *getattr(settings, "ROUTING_SYNC_ENTRA_TENANT_IDS", [])]
+        if stub_tenant in {_uuid_or_none(tenant) for tenant in tenants}:
+            errors.append(Error("The stub Entra tenant must not be configured in production.", id="users.E015"))
+    return errors
+
+
+def _uuid_or_none(value) -> UUID | None:
+    try:
+        return UUID(str(value))
+    except (ValueError, TypeError, AttributeError):
+        return None

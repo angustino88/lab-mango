@@ -44,6 +44,21 @@ from core.users.features.lifecycle.public import (
 from core.users.features.lifecycle.public import (
     set_user_active as _set_user_active,
 )
+from core.users.features.lifecycle.stub import (
+    STUB_USERNAME_PREFIX,
+    StubIdentitiesDisabled,
+    StubUserInput,
+    StubUserResult,
+    StubUserState,
+    ensure_stub_user,
+    list_stub_users,
+    stub_bind_entra_identity,
+    stub_delete_user,
+    stub_replace_entra_identity,
+    stub_set_user_active,
+    stub_tenant_id,
+    stub_unlink_entra_identity,
+)
 from core.users.features.urs_sync.mapping import ensure_linked_group as _ensure_linked_group
 from core.users.models import EntraIdentity, User
 
@@ -183,4 +198,18 @@ __all__ = [
     "resolve_teams_recipient",
     "users_holding_labs_role",
     "with_entra_access_token",
+    # Local stub identities (tools/stubs); refuse unless the stub issuer is enabled in DEBUG.
+    "STUB_USERNAME_PREFIX",
+    "StubIdentitiesDisabled",
+    "StubUserInput",
+    "StubUserResult",
+    "StubUserState",
+    "ensure_stub_user",
+    "list_stub_users",
+    "stub_bind_entra_identity",
+    "stub_delete_user",
+    "stub_replace_entra_identity",
+    "stub_set_user_active",
+    "stub_tenant_id",
+    "stub_unlink_entra_identity",
 ]
