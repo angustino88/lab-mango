@@ -462,6 +462,8 @@ paths:
     $ref: ./labs-expense.yml#/paths/~1api~1labs~1rooms~1{room_id}~1expenses
   /api/labs/rooms/{room_id}/expenses/report:
     $ref: ./labs-expense.yml#/paths/~1api~1labs~1rooms~1{room_id}~1expenses~1report
+  /api/labs/lab-sessions:
+    $ref: ./labs-lab-sessions.yml#/paths/~1api~1labs~1lab-sessions
   /api/labs/license-categories:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1license-categories
   /api/labs/license-categories/{category_id}:
@@ -696,6 +698,8 @@ tags:
   description: Equipment endpoints
 - name: Expenses
   description: Expenses endpoints
+- name: Lab Sessions
+  description: Lab Sessions endpoints
 - name: Leaderboard
   description: Leaderboard endpoints
 - name: Licenses

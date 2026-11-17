@@ -16503,6 +16503,133 @@ components:
           $ref: '#/components/schemas/SendOTPResponse'
       required:
       - data
+    SessionLogItem:
+      type: object
+      description: One completed remote session as pushed by the agent, with the links
+        derived from it.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        login_at:
+          type: string
+          format: date-time
+          readOnly: true
+        logout_at:
+          type: string
+          format: date-time
+          readOnly: true
+        duration_minutes:
+          type: number
+          format: double
+          nullable: true
+          readOnly: true
+          description: Logout minus login, in minutes.
+        active_minutes:
+          type: number
+          format: double
+          nullable: true
+          readOnly: true
+          description: Time the user was active, in minutes.
+        computer:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        host_name:
+          type: string
+          readOnly: true
+          nullable: true
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        remote_user:
+          type: string
+          readOnly: true
+          nullable: true
+        remote_user_display_name:
+          type: string
+          readOnly: true
+          nullable: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserReference'
+          readOnly: true
+          nullable: true
+        access_type:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          nullable: true
+          readOnly: true
+        booking_code:
+          type: string
+          readOnly: true
+          nullable: true
+        booking_id:
+          type: integer
+          readOnly: true
+          nullable: true
+      required:
+      - access_type
+      - active_minutes
+      - bench
+      - booking_code
+      - booking_id
+      - computer
+      - duration_minutes
+      - host_name
+      - id
+      - login_at
+      - logout_at
+      - remote_user
+      - remote_user_display_name
+      - user
+    SessionLogListSerializersSessionLogItemPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/SessionLogListSerializersSessionLogItemPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionLogItem'
+      required:
+      - data
+      - meta
+    SessionLogListSerializersSessionLogItemPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    SessionLogListSerializersSessionLogItemPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/SessionLogListSerializersSessionLogItemPagination'
+      required:
+      - pagination
     SheetOutcome:
       type: object
       properties:

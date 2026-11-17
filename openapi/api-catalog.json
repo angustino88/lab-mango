@@ -1,8 +1,8 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 468,
-  "generated_at": "2026-11-17",
+  "total_endpoints": 469,
+  "generated_at": "2026-11-18",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -66182,6 +66182,419 @@
         },
         "404": {
           "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/lab-sessions",
+      "method": "GET",
+      "operation_id": "labs_lab_sessions_retrieve",
+      "summary": "Get Lab Sessions",
+      "description": "List completed remote sessions (newest login first). Lab coordinators and admins only (O11).",
+      "tags": [
+        "Lab Sessions"
+      ],
+      "parameters": [
+        {
+          "name": "access_type",
+          "in": "query",
+          "required": false,
+          "description": "* `booked` - Booked\n* `ad_hoc` - Ad hoc (no booking)\n* `unverified_booking` - Booking not verified",
+          "schema": {
+            "enum": [
+              "booked",
+              "ad_hoc",
+              "unverified_booking"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "bench_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "computer_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": true,
+          "description": "Last login day, inclusive (server time zone).",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        {
+          "name": "ordering",
+          "in": "query",
+          "required": false,
+          "description": "Default -login_time (newest first). The row id always breaks ties.\n\n* `-active_duration_seconds` - -active_duration_seconds\n* `-login_time` - -login_time\n* `-logout_time` - -logout_time\n* `active_duration_seconds` - active_duration_seconds\n* `login_time` - login_time\n* `logout_time` - logout_time",
+          "schema": {
+            "enum": [
+              "-active_duration_seconds",
+              "-login_time",
+              "-logout_time",
+              "active_duration_seconds",
+              "login_time",
+              "logout_time"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Free-text search term.",
+          "schema": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": true,
+          "description": "First login day, inclusive (server time zone).",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        {
+          "name": "user_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "One completed remote session as pushed by the agent, with the links derived from it.",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "login_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "logout_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "duration_minutes": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "readOnly": true,
+                      "description": "Logout minus login, in minutes."
+                    },
+                    "active_minutes": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "readOnly": true,
+                      "description": "Time the user was active, in minutes."
+                    },
+                    "computer": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "host_name": {
+                      "type": "string",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "bench": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "remote_user": {
+                      "type": "string",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "remote_user_display_name": {
+                      "type": "string",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "user": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "access_type": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
+                      "readOnly": true
+                    },
+                    "booking_code": {
+                      "type": "string",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "booking_id": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "access_type",
+                    "active_minutes",
+                    "bench",
+                    "booking_code",
+                    "booking_id",
+                    "computer",
+                    "duration_minutes",
+                    "host_name",
+                    "id",
+                    "login_at",
+                    "logout_at",
+                    "remote_user",
+                    "remote_user_display_name",
+                    "user"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "login_at": "2026-10-20T12:00:00Z",
+                "logout_at": "2026-10-20T12:00:00Z",
+                "duration_minutes": 0.0,
+                "active_minutes": 0.0,
+                "computer": {},
+                "host_name": "string",
+                "bench": {},
+                "remote_user": "string",
+                "remote_user_display_name": "string",
+                "user": {},
+                "access_type": {},
+                "booking_code": "string",
+                "booking_id": 1
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "The requested page does not exist (page beyond the last page).",
           "content_type": "application/json",
           "schema": {
             "type": "object",

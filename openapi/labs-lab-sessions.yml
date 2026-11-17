@@ -1,0 +1,354 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/lab-sessions:
+    get:
+      operationId: labs_lab_sessions_retrieve
+      description: List completed remote sessions (newest login first). Lab coordinators
+        and admins only (O11).
+      parameters:
+      - in: query
+        name: access_type
+        schema:
+          enum:
+          - booked
+          - ad_hoc
+          - unverified_booking
+          type: string
+          minLength: 1
+        description: '* `booked` - Booked
+
+          * `ad_hoc` - Ad hoc (no booking)
+
+          * `unverified_booking` - Booking not verified'
+      - in: query
+        name: bench_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: computer_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: Last login day, inclusive (server time zone).
+        required: true
+      - in: query
+        name: ordering
+        schema:
+          enum:
+          - -active_duration_seconds
+          - -login_time
+          - -logout_time
+          - active_duration_seconds
+          - login_time
+          - logout_time
+          type: string
+          minLength: 1
+        description: 'Default -login_time (newest first). The row id always breaks
+          ties.
+
+
+          * `-active_duration_seconds` - -active_duration_seconds
+
+          * `-login_time` - -login_time
+
+          * `-logout_time` - -logout_time
+
+          * `active_duration_seconds` - active_duration_seconds
+
+          * `login_time` - login_time
+
+          * `logout_time` - logout_time'
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 200
+          minLength: 1
+        description: Free-text search term.
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: First login day, inclusive (server time zone).
+        required: true
+      - in: query
+        name: user_id
+        schema:
+          type: integer
+          minimum: 1
+      tags:
+      - Lab Sessions
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionLogListSerializersSessionLogItemPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
+      summary: Get Lab Sessions
+components:
+  schemas:
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+    LabsUIDNamedReference:
+      type: object
+      description: Compact `{id, uid, name}` object representation when target defines
+        a UUID.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - uid
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    SessionLogItem:
+      type: object
+      description: One completed remote session as pushed by the agent, with the links
+        derived from it.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        login_at:
+          type: string
+          format: date-time
+          readOnly: true
+        logout_at:
+          type: string
+          format: date-time
+          readOnly: true
+        duration_minutes:
+          type: number
+          format: double
+          nullable: true
+          readOnly: true
+          description: Logout minus login, in minutes.
+        active_minutes:
+          type: number
+          format: double
+          nullable: true
+          readOnly: true
+          description: Time the user was active, in minutes.
+        computer:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        host_name:
+          type: string
+          readOnly: true
+          nullable: true
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        remote_user:
+          type: string
+          readOnly: true
+          nullable: true
+        remote_user_display_name:
+          type: string
+          readOnly: true
+          nullable: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserReference'
+          readOnly: true
+          nullable: true
+        access_type:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          nullable: true
+          readOnly: true
+        booking_code:
+          type: string
+          readOnly: true
+          nullable: true
+        booking_id:
+          type: integer
+          readOnly: true
+          nullable: true
+      required:
+      - access_type
+      - active_minutes
+      - bench
+      - booking_code
+      - booking_id
+      - computer
+      - duration_minutes
+      - host_name
+      - id
+      - login_at
+      - logout_at
+      - remote_user
+      - remote_user_display_name
+      - user
+    SessionLogListSerializersSessionLogItemPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/SessionLogListSerializersSessionLogItemPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionLogItem'
+      required:
+      - data
+      - meta
+    SessionLogListSerializersSessionLogItemPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    SessionLogListSerializersSessionLogItemPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/SessionLogListSerializersSessionLogItemPagination'
+      required:
+      - pagination
+    UserReference:
+      type: object
+      description: 'REL-3 user relation ``{id, username, display_name}``.
+
+
+        Every user field (owner, creator, actor, auditor, borrower, ...) has this
+        one shape, so a client can show the
+
+        display name and still offer the username. ``display_name`` is the display
+        name, then the full name, then the
+
+        username. Duck-typed so any feature may use it without importing users.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        display_name:
+          type: string
+          readOnly: true
+      required:
+      - display_name
+      - id
+      - username
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Lab Sessions
+  description: Lab Sessions endpoints
