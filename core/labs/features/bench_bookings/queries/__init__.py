@@ -2,6 +2,7 @@
 
 from .bench_bookings import (
     bench_downtime_blocker,
+    bench_has_computing,
     bench_parent_blocker,
     conflicting_bench_bookings,
     find_bench_booking_for_agent_login,
@@ -18,6 +19,7 @@ from .lab_projects import get_lab_project, list_lab_projects
 
 __all__ = [
     "bench_downtime_blocker",
+    "bench_has_computing",
     "bench_parent_blocker",
     "conflicting_bench_bookings",
     "find_bench_booking_for_agent_login",

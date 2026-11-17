@@ -68,6 +68,12 @@ def ensure_bench_accepts_bookings(bench, *, parent_blocker: str | None = None) -
         raise ValidationError({"bench": parent_blocker})
 
 
+def ensure_bench_has_computing(*, has_computing: bool) -> None:
+    """A booking is made for the computer people remote into, so the bench needs one mapped."""
+    if not has_computing:
+        raise ValidationError({"bench": "This bench has no computing resource mapped, so it cannot be booked."})
+
+
 def ensure_no_downtime(blocker: str | None) -> None:
     """No downtime window of the bench, its station or its room may overlap the booking (design rule 3)."""
     if blocker is not None:
