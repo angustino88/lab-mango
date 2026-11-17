@@ -385,6 +385,8 @@ class TestDashboardSummaryAPI:
         bench_1 = make_bench(lifecycle_status="in_service")
         bench_2 = make_bench(lifecycle_status="in_service")
 
+        for bench in (bench_1, bench_2):  # the summary counts only benches with computing assigned
+            EquipmentAssignment.objects.create(bench=bench, equipment=ComputingEquipmentFactory(), assigned_at=now)
         BenchFavorite.objects.create(user=user, bench=bench_1)
 
         BenchBooking.objects.create(

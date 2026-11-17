@@ -32,6 +32,7 @@ def test_create_records_inside_existing_transaction():
         patch.object(create_module, "lock_benches", return_value={3: MagicMock()}),
         patch.object(create_module, "conflicting_bench_bookings"),
         patch.object(create_module, "bench_parent_blocker", return_value=None),
+        patch.object(create_module, "bench_has_computing", return_value=True),
         patch.object(create_module, "bench_downtime_blocker", return_value=None),
         patch.object(create_module, "generate_booking_code"),
         patch.object(create_module, "BenchBooking", return_value=item),

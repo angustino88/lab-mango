@@ -18,13 +18,14 @@ from core.labs.models import (
     Bench,
     BenchBooking,
     BookingStatus,
+    EquipmentAssignment,
     ResourceDowntime,
     Room,
     Station,
     StationType,
 )
 from core.users.models import User
-from tests.factories import grant_labs_role
+from tests.factories import create_computing_equipment, grant_labs_role
 
 URL = "/api/labs/downtimes"
 
@@ -51,9 +52,19 @@ def station(room):
     return Station.objects.create(name="ST-01", sku="ST-01", room=room, type=StationType.objects.create(name="Desk"))
 
 
+def _with_computer(bench):
+    """A bench needs a computer mapped to be booked."""
+    EquipmentAssignment.objects.create(
+        bench=bench,
+        equipment=create_computing_equipment(sku=f"PC-{bench.sku}", name=f"PC {bench.sku}"),
+        assigned_at=timezone.now() - timedelta(hours=1),
+    )
+    return bench
+
+
 @pytest.fixture
 def bench(station):
-    return Bench.objects.create(name="B-Radar-01", sku="B-RADAR-01", setup_location=station)
+    return _with_computer(Bench.objects.create(name="B-Radar-01", sku="B-RADAR-01", setup_location=station))
 
 
 def _window(hours_from_now=1, hours=2):
@@ -320,7 +331,7 @@ def test_resource_lists_compute_state_in_a_constant_number_of_queries(client, co
     def add_tree(index):
         room = Room.objects.create(sku=f"R-{index}")
         station = Station.objects.create(sku=f"S-{index}", room=room)
-        bench = Bench.objects.create(sku=f"B-{index}", setup_location=station)
+        bench = _with_computer(Bench.objects.create(sku=f"B-{index}", setup_location=station))
         _book(bench, coordinator, timezone.now() + timedelta(hours=2), timezone.now() + timedelta(hours=3))
         ResourceDowntime.for_new_resource(room, condition="in_maintenance", starts_at=timezone.now()).save()
 

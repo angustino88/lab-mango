@@ -197,7 +197,20 @@ class TestGetDashboardSummary:
 
         bench_1 = BenchFactory(lifecycle_status="in_service")
         bench_2 = BenchFactory(lifecycle_status="in_service")
-        set_condition(BenchFactory(lifecycle_status="in_service"), "out_of_service")
+        bench_3 = BenchFactory(lifecycle_status="in_service")
+        set_condition(bench_3, "out_of_service")
+        # A bench with no computing assigned is left out of every count (the list does not show it either).
+        bare = BenchFactory(lifecycle_status="in_service")
+        BenchFavorite.objects.create(user=user, bench=bare)
+        BenchBooking.objects.create(
+            bench=bare,
+            booking_code="BK-DASH-SUM-BARE",
+            starts_at=now - timedelta(minutes=30),
+            ends_at=now + timedelta(minutes=30),
+            status=BookingStatus.IN_PROGRESS,
+        )
+        for extra in (bench_1, bench_3):
+            EquipmentAssignment.objects.create(bench=extra, equipment=ComputingEquipmentFactory(), assigned_at=now)
 
         BenchFavorite.objects.create(user=user, bench=bench_1)
 

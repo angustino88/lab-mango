@@ -203,11 +203,11 @@ def bench_mapping_summary(queryset):
     return {key: value or 0 for key, value in totals.items()}
 
 
-def list_booking_bench_choices(*, q=None, include_ids=None):
+def list_booking_bench_choices(*, q=None, include_ids=None, has_computing=None):
     """Benches a person picks when booking: in-service benches, with the computers on each (name, hostname).
 
     People know the computer they remote into, not the bench SKU, so ``q`` also matches a computer's name, SKU
-    or hostname. ``include_ids`` adds benches regardless of state (an existing booking's bench). Ordered by name.
+    or hostname. ``has_computing=True`` keeps only benches with a computer placed on them. ``include_ids`` adds benches regardless of state (an existing booking's bench). Ordered by name.
     Two queries: the benches, then their computers.
     """
     queryset = Bench.objects.filter(deleted_at__isnull=True, lifecycle_status=ResourceLifecycleStatus.IN_SERVICE)
@@ -216,6 +216,9 @@ def list_booking_bench_choices(*, q=None, include_ids=None):
             equipment__computing_profile__hostname__icontains=q
         )
         queryset = queryset.filter(Q(sku__icontains=q) | Q(name__icontains=q) | Q(Exists(computer_match)))
+    if has_computing is not None:
+        has_computer = Exists(bench_assignment_subquery().filter(equipment__kind__category__monitored=True))
+        queryset = queryset.filter(has_computer if has_computing else ~has_computer)
     if include_ids:
         queryset = queryset | Bench.objects.filter(pk__in=include_ids, deleted_at__isnull=True)
     benches = list(queryset.distinct().order_by("name", "pk").values("id", "sku", "name"))

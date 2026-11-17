@@ -2,7 +2,7 @@
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
   "total_endpoints": 466,
-  "generated_at": "2026-11-16",
+  "generated_at": "2026-11-17",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -18823,6 +18823,16 @@
         "Benches"
       ],
       "parameters": [
+        {
+          "name": "has_computing",
+          "in": "query",
+          "required": false,
+          "description": "When true, only benches with a computer (monitored equipment) placed on them. Benches named in include_ids are still returned.",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
         {
           "name": "include_ids",
           "in": "query",

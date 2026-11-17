@@ -392,6 +392,14 @@ class BenchReferenceDataSerializer(serializers.Serializer):
 class BookingBenchChoicesQuerySerializer(OptionsQueryMixin):
     """``q`` matches the bench SKU or name and the name, SKU or hostname of a computer on it."""
 
+    has_computing = serializers.BooleanField(
+        required=False,
+        default=None,
+        allow_null=True,
+        help_text="When true, only benches with a computer (monitored equipment) placed on them. "
+        "Benches named in include_ids are still returned.",
+    )
+
 
 @embedded_resource
 class BenchComputerSerializer(serializers.Serializer):
