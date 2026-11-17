@@ -75,14 +75,15 @@ def get_bench_efficiency_rankings(
     logs = LabSessionLog.objects.filter(
         login_time__lt=to_date_time,
         logout_time__gt=from_date_time,
-    ).select_related("computing_equipment")
+    ).select_related("computing_equipment", "bench")
 
     durations: dict[tuple[str, str], float] = defaultdict(float)
     bookings: dict[tuple[str, str], set[str]] = defaultdict(set)
 
     for log in logs:
         eq_name = getattr(log.computing_equipment, "name", None) or log.host_name or "N/A"
-        bench_name = "Default Lab"
+        # The bench the computer stood on at login (resolved when the session was stored).
+        bench_name = (log.bench.name or log.bench.sku) if log.bench is not None else "No bench"
         key = (bench_name, eq_name)
         if log.booking_code:
             bookings[key].add(log.booking_code)

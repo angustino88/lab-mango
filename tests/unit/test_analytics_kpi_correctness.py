@@ -18,6 +18,7 @@ from core.labs.features.analytics.queries.utilization import (
 from core.labs.models import ActiveLaboratoryObservation
 from tests.factories import (
     BenchBookingFactory,
+    BenchFactory,
     ComputingEquipmentFactory,
     LabSessionLogFactory,
     StorageQuotaMeasurementFactory,
@@ -88,6 +89,19 @@ class TestEfficiencyBounds:
 
         assert rows
         assert all(0.0 <= row["efficiency"] <= 1.0 for row in rows)
+
+    def test_efficiency_rows_name_the_session_bench(self):
+        start = datetime(2024, 4, 1, 9, 0, tzinfo=UTC)
+        on_bench = LabSessionLogFactory(
+            bench=BenchFactory(name="HIL-01"), login_time=start, logout_time=start + timedelta(hours=1)
+        )
+        LabSessionLogFactory(login_time=start, logout_time=start + timedelta(hours=1))
+
+        rows = get_bench_efficiency_rankings(from_date_time=start, to_date_time=start + timedelta(hours=2))
+
+        names = {(row["lab_name"], row["computer_name"]) for row in rows}
+        assert ("HIL-01", on_bench.computing_equipment.name) in names
+        assert any(lab == "No bench" for lab, _ in names)
 
     def test_compliance_is_capped_at_one(self):
         user_booking_start = timezone.now() - timedelta(hours=1)
