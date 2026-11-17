@@ -7,6 +7,8 @@
   (equipment R9, owner decision 2026-11-10).
 * Coordinator and admin: everything, except the admin-only areas below.
 * Admin only: the data workbook import, template download included (owner decision 2026-11-16).
+* Plain Labs user also reads the booking bench picker (benches/booking-choices), which the booking screen
+  needs (owner decision 2026-11-17).
 
 The test walks the URL configuration, so a new Labs route that is not covered fails here.
 """
@@ -28,6 +30,7 @@ pytestmark = pytest.mark.django_db
 MEMBER_READ_FEATURES = ("dashboard", "leaderboard", "bench_bookings")
 MEMBER_WRITE_FEATURES = ("bench_bookings",)
 ADMIN_ONLY_FEATURES = ("workbook_import",)
+MEMBER_READ_ROUTES = ("api/labs/benches/booking-choices",)
 _factory = APIRequestFactory()
 _URS_IDS = itertools.count(880000)
 
@@ -84,7 +87,11 @@ def test_every_labs_route_follows_the_policy():
         read = "GET" in methods
         writes = [m for m in methods if m != "GET"]
         if read:
-            expected_plain = feature in MEMBER_READ_FEATURES or view_class.permission_classes == ORGANIZATION_PERMISSIONS
+            expected_plain = (
+                feature in MEMBER_READ_FEATURES
+                or route in MEMBER_READ_ROUTES
+                or view_class.permission_classes == ORGANIZATION_PERMISSIONS
+            )
             if _permits(view_class, no_role, "GET"):
                 problems.append(f"{route}: no-role user can read")
             if _permits(view_class, plain, "GET") is not expected_plain:
