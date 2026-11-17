@@ -6,6 +6,7 @@ from .connections import (
     DeviceMatchStatus,
     DeviceObservationBatch,
     DeviceObservationCursor,
+    ExpectedDevice,
 )
 from .monitoring import MonitoringEvent, MonitoringEventAction
 
@@ -15,6 +16,7 @@ __all__ = [
     "DeviceMatchStatus",
     "DeviceObservationBatch",
     "DeviceObservationCursor",
+    "ExpectedDevice",
     "MonitoringEvent",
     "MonitoringEventAction",
 ]

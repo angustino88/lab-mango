@@ -1,7 +1,10 @@
 """Ordered device observations; independent of equipment lifecycle and activity."""
 
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
+from model_utils.models import TimeStampedModel
+
+from core.common.models import UserStampedModel
 
 
 class DeviceConnectionState(models.TextChoices):
@@ -125,4 +128,23 @@ class DeviceConnection(models.Model):
                 condition=Q(state="disconnected"),
                 name="device_connection_detached_idx",
             ),
+        ]
+
+
+class ExpectedDevice(TimeStampedModel, UserStampedModel):
+    """Equipment a coordinator expects to be plugged into one computing unit.
+
+    Drives the "expected but missing" state and, when ``notify_on_disconnect`` is set, an
+    in-app alert to the creator when that equipment is observed disconnected.
+    """
+
+    computing = models.ForeignKey("labs.Equipment", related_name="expected_devices", on_delete=models.PROTECT)
+    equipment = models.ForeignKey("labs.Equipment", related_name="expected_on", on_delete=models.CASCADE)
+    notify_on_disconnect = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ("computing_id", "equipment_id")
+        constraints = [
+            models.UniqueConstraint(fields=("computing", "equipment"), name="expected_device_unique"),
+            models.CheckConstraint(condition=~Q(computing=F("equipment")), name="expected_device_not_self"),
         ]

@@ -359,7 +359,6 @@ def test_read_api_enforces_existing_labs_access_and_validates_computing_filter(c
     assert response.data["data"][0]["interface"] is None
     assert response.data["data"][0]["interface_name"] == "USB"
     for params, code in (
-        ({}, "validation_failed"),
         ({"computing_id": "no"}, "validation_failed"),
         ({"computing_id": command.computing_id, "unknown": "value"}, "invalid_query"),
     ):

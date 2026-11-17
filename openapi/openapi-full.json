@@ -9225,16 +9225,31 @@
     "/api/labs/device-connections": {
       "get": {
         "operationId": "labs_device_connections_retrieve",
-        "description": "HTTP mapping for domain commands and selector projections.",
+        "description": "List observed devices lab-wide or for one computing unit, connected first.",
         "parameters": [
+          {
+            "in": "query",
+            "name": "bench_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
           {
             "in": "query",
             "name": "computing_id",
             "schema": {
               "type": "integer",
               "minimum": 1
-            },
-            "required": true
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_attention_required",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
           },
           {
             "in": "query",
@@ -9252,6 +9267,28 @@
               "maximum": 100,
               "minimum": 1
             }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "enum": [
+                "connected",
+                "disconnected"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `connected` - Connected\n* `disconnected` - Disconnected"
           }
         ],
         "tags": [
@@ -9298,6 +9335,216 @@
           }
         },
         "summary": "Get Device Connections"
+      }
+    },
+    "/api/labs/device-connections/{connection_id}": {
+      "get": {
+        "operationId": "labs_device_connections_retrieve_by_connection_id",
+        "description": "Read one observed device with its recent connection history.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Monitoring"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceConnectionDetailConnectionsDeviceConnectionDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Device Connections by Connection ID"
+      }
+    },
+    "/api/labs/device-connections/{connection_id}/actions/link": {
+      "post": {
+        "operationId": "labs_device_connections_actions_link_create_by_connection_id",
+        "description": "Record the observed serial on an inventory unit and re-match its observations.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Monitoring"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDeviceConnectionRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDeviceConnectionRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDeviceConnectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceConnectionLinkActionConnectionsDeviceConnectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Link Device Connections by Connection ID"
+      }
+    },
+    "/api/labs/device-connections/summary": {
+      "get": {
+        "operationId": "labs_device_connections_summary_retrieve",
+        "description": "Count connected, unmatched, unconfirmed and expected-but-missing devices.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bench_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Monitoring"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceConnectionSummaryConnectionsDeviceConnectionSummaryDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Device Connections Summary"
       }
     },
     "/api/labs/downtimes": {
@@ -18622,6 +18869,343 @@
           }
         },
         "summary": "Update Equipment UID by UID"
+      }
+    },
+    "/api/labs/expected-devices": {
+      "get": {
+        "operationId": "labs_expected_devices_retrieve",
+        "description": "List expected devices with their presence, or expect a device on a computing unit.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bench_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "computing_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "presence",
+            "schema": {
+              "enum": [
+                "present",
+                "missing",
+                "unconfirmed"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `present` - Present\n* `missing` - Missing\n* `unconfirmed` - Unconfirmed"
+          }
+        ],
+        "tags": [
+          "Monitoring"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpectedDeviceListConnectionsExpectedDevicePaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
+          }
+        },
+        "summary": "Get Expected Devices"
+      },
+      "post": {
+        "operationId": "labs_expected_devices_create",
+        "description": "List expected devices with their presence, or expect a device on a computing unit.",
+        "tags": [
+          "Monitoring"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpectedDeviceRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpectedDeviceRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpectedDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpectedDeviceCreateConnectionsExpectedDeviceDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Expected Devices"
+      }
+    },
+    "/api/labs/expected-devices/{expected_device_id}": {
+      "patch": {
+        "operationId": "labs_expected_devices_partial_update_by_expected_device_id",
+        "description": "Change disconnect alerts for an expected device, or stop expecting it.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "expected_device_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Monitoring"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedUpdateExpectedDeviceRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedUpdateExpectedDeviceRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedUpdateExpectedDeviceRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpectedDeviceUpdateConnectionsExpectedDeviceDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Expected Devices by Expected Device ID"
+      },
+      "delete": {
+        "operationId": "labs_expected_devices_destroy_by_expected_device_id",
+        "description": "Change disconnect alerts for an expected device, or stop expecting it.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "expected_device_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Monitoring"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Delete Expected Devices by Expected Device ID"
       }
     },
     "/api/labs/expenses/{expense_id}/payments": {
@@ -43287,6 +43871,27 @@
           "equipment_uid"
         ]
       },
+      "CreateExpectedDeviceRequest": {
+        "type": "object",
+        "properties": {
+          "computing_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "equipment_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "is_disconnect_alert_enabled": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "computing_id",
+          "equipment_id"
+        ]
+      },
       "CreateGrantForAgentRequest": {
         "type": "object",
         "properties": {
@@ -44386,6 +44991,15 @@
           "computing": {
             "$ref": "#/components/schemas/LabsUIDNamedReference"
           },
+          "bench": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
           "equipment": {
             "allOf": [
               {
@@ -44441,23 +45055,35 @@
             ],
             "readOnly": true
           },
+          "is_attention_required": {
+            "type": "boolean"
+          },
+          "expected_device_id": {
+            "type": "integer",
+            "nullable": true
+          },
           "observed_at": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "readOnly": true
           },
           "received_at": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "readOnly": true
           }
         },
         "required": [
+          "bench",
           "collector_key",
           "computing",
           "equipment",
+          "expected_device_id",
           "freshness",
           "id",
           "interface",
           "interface_name",
+          "is_attention_required",
           "match_status",
           "name",
           "observation_key",
@@ -44465,6 +45091,184 @@
           "received_at",
           "serial_number",
           "state"
+        ]
+      },
+      "DeviceConnectionChange": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "is_complete": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_complete",
+          "observed_at",
+          "sequence",
+          "state"
+        ]
+      },
+      "DeviceConnectionDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "computing": {
+            "$ref": "#/components/schemas/LabsUIDNamedReference"
+          },
+          "bench": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "equipment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "nullable": true
+          },
+          "interface": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true
+          },
+          "interface_name": {
+            "type": "string"
+          },
+          "collector_key": {
+            "type": "string"
+          },
+          "observation_key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serial_number": {
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "match_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "freshness": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "is_attention_required": {
+            "type": "boolean"
+          },
+          "expected_device_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceConnectionChange"
+            }
+          }
+        },
+        "required": [
+          "bench",
+          "collector_key",
+          "computing",
+          "equipment",
+          "expected_device_id",
+          "first_seen_at",
+          "freshness",
+          "history",
+          "id",
+          "interface",
+          "interface_name",
+          "is_attention_required",
+          "match_status",
+          "name",
+          "observation_key",
+          "observed_at",
+          "received_at",
+          "serial_number",
+          "state"
+        ]
+      },
+      "DeviceConnectionDetailConnectionsDeviceConnectionDetailDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceConnectionDetail"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "DeviceConnectionLinkActionConnectionsDeviceConnectionDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceConnection"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "DeviceConnectionListConnectionsDeviceConnectionPaginatedResponse": {
@@ -44527,6 +45331,45 @@
         },
         "required": [
           "pagination"
+        ]
+      },
+      "DeviceConnectionSummary": {
+        "type": "object",
+        "properties": {
+          "connected": {
+            "type": "integer"
+          },
+          "needs_matching": {
+            "type": "integer"
+          },
+          "unconfirmed": {
+            "type": "integer"
+          },
+          "missing": {
+            "type": "integer"
+          },
+          "computing_units": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "computing_units",
+          "connected",
+          "missing",
+          "needs_matching",
+          "unconfirmed"
+        ]
+      },
+      "DeviceConnectionSummaryConnectionsDeviceConnectionSummaryDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceConnectionSummary"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "DeviceObservation": {
@@ -49946,6 +50789,147 @@
           "error"
         ]
       },
+      "ExpectedDevice": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "computing": {
+            "$ref": "#/components/schemas/LabsUIDNamedReference"
+          },
+          "bench": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "equipment": {
+            "$ref": "#/components/schemas/LabsUIDNamedReference"
+          },
+          "presence": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "is_disconnect_alert_enabled": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "bench",
+          "computing",
+          "created_at",
+          "equipment",
+          "id",
+          "is_disconnect_alert_enabled",
+          "last_seen_at",
+          "presence"
+        ]
+      },
+      "ExpectedDeviceCreateConnectionsExpectedDeviceDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ExpectedDevice"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ExpectedDeviceListConnectionsExpectedDevicePaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/ExpectedDeviceListConnectionsExpectedDevicePaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpectedDevice"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "ExpectedDeviceListConnectionsExpectedDevicePagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "ExpectedDeviceListConnectionsExpectedDevicePaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/ExpectedDeviceListConnectionsExpectedDevicePagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "ExpectedDeviceUpdateConnectionsExpectedDeviceDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ExpectedDevice"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "Expense": {
         "type": "object",
         "description": "Read shape for expenses.",
@@ -54438,6 +55422,18 @@
         "type": "string",
         "description": "* `planned` - Planned\n* `in_service` - In service\n* `retired` - Retired"
       },
+      "LinkDeviceConnectionRequest": {
+        "type": "object",
+        "properties": {
+          "equipment_id": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "equipment_id"
+        ]
+      },
       "LinkResourceRequest": {
         "type": "object",
         "properties": {
@@ -57107,6 +58103,14 @@
             "type": "string",
             "nullable": true,
             "maxLength": 32
+          }
+        }
+      },
+      "PatchedUpdateExpectedDeviceRequest": {
+        "type": "object",
+        "properties": {
+          "is_disconnect_alert_enabled": {
+            "type": "boolean"
           }
         }
       },

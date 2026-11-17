@@ -13,6 +13,9 @@ observed state, nullable inventory/interface matches and timestamps. Check
 constraints enforce state/match enums and positive sequences. These concrete models
 have no inheritance. Computing-equipment relationships use PROTECT; the derived equipment and
 interface matches use SET NULL so inventory deletes are never blocked by history.
+`ExpectedDevice` (time- and user-stamped) records equipment a coordinator expects on one
+computing unit, unique per pair (`expected_device_unique`) and never the unit itself
+(`expected_device_not_self`); it protects the computing unit and cascades with the equipment.
 Their feature owner is Monitoring; see its
 [connection contract](../../features/monitoring/docs/device-connections.md) for
 transactions, freshness, additive migrations and rollback. Existing `MonitoringEvent`

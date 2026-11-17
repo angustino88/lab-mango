@@ -66,6 +66,9 @@ def test_public_module_exports_supported_queries_and_commands():
     public = FEATURE_ROOT / "public.py"
     assert set(_exports(public)) == {
         "lock_monitoring_computing",
+        "claim_equipment_serial",
+        "active_bench_assignments",
+        "equipment_ids_on_bench",
         "match_observed_devices",
         "monitoring_interfaces",
         "ActiveEquipmentBenchAssignment",

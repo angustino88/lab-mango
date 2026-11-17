@@ -7,7 +7,7 @@ Hand-written: the pg_trgm and btree_gist extensions (first; reverse is a no-op b
 database-wide) and the four default purchase priorities (last).
 
 Folded 2026-11-17: device connection monitoring (DeviceConnection, DeviceObservationCursor,
-DeviceObservationBatch) and the equipment serial-number index
+DeviceObservationBatch, ExpectedDevice) and the equipment serial-number index
 (core/labs/features/monitoring/docs/device-connections.md).
 """
 
@@ -9014,6 +9014,91 @@ class Migration(migrations.Migration):
                 condition=models.Q(("sequence__gte", 1)),
                 name="device_cursor_sequence_positive",
             ),
+        ),
+        migrations.CreateModel(
+            name="ExpectedDevice",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                ("notify_on_disconnect", models.BooleanField(default=False)),
+                (
+                    "computing",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="expected_devices",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "creator",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_creator",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Created by",
+                    ),
+                ),
+                (
+                    "equipment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="expected_on",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "last_modified_by",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_last_modified_by",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Last modified by",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("computing_id", "equipment_id"),
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("computing", "equipment"), name="expected_device_unique"
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(
+                            ("computing", models.F("equipment")), _negated=True
+                        ),
+                        name="expected_device_not_self",
+                    ),
+                ],
+            },
         ),
         migrations.RunPython(seed_purchase_priorities, unseed_purchase_priorities),
     ]

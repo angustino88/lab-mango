@@ -44,6 +44,7 @@ from .monitoring import (
     DeviceMatchStatus,
     DeviceObservationBatch,
     DeviceObservationCursor,
+    ExpectedDevice,
     MonitoringEvent,
     MonitoringEventAction,
 )
@@ -186,6 +187,7 @@ __all__ = [
     "DeviceMatchStatus",
     "DeviceObservationBatch",
     "DeviceObservationCursor",
+    "ExpectedDevice",
     "MonitoringEventAction",
     "PaymentTransactionType",
     "ProductModelSpecification",

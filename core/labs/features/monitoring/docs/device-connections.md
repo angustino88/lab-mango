@@ -140,6 +140,38 @@ computing equipment cannot report. `equipment` and `interface` are derived match
 referenced inventory row clears them (`SET NULL`) instead of blocking the delete. The UI fetches only while
 open, polls every 30 seconds, and provides pagination, loading, empty and retry states.
 
+## Lab-wide monitoring, inventory linking and expected devices
+
+All endpoints below use the Labs staff policy (coordinators and admins, or an enabled API key).
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/labs/device-connections` | Paginated list. `computing_id` is optional; filters `bench_id`, `state`, `is_attention_required` (`true`/`false`) and `q` (device, serial, equipment or computing name/SKU). Ordered by computing unit, connected first, newest observation first. Rows add `bench` (`{id, name}` or null), `is_attention_required` and `expected_device_id`. |
+| `GET /api/labs/device-connections/summary` | `connected` (connected and fresh), `needs_matching`, `unconfirmed` (last reported connected, not fresh), `missing` (expected, agent reporting, not connected) and `computing_units`; optional `bench_id`. Two aggregate queries. |
+| `GET /api/labs/device-connections/{id}` | One row plus `first_seen_at` and `history`: state changes, newest first, derived from the latest 200 `inventory_snapshot` events of its collector (at most 20 changes). A complete snapshot that omits the device records it disconnected. |
+| `POST /api/labs/device-connections/{id}/actions/link` | Body `{equipment_id}`. Records the observed serial on that active unit (through the equipment feature's `update_equipment`, so the change is stamped and validated), then re-matches every observation with that serial. 409 `serial_unavailable` (no serial reported), `equipment_serial_conflict` (the unit holds another serial; never overwritten), `equipment_serial_in_use` (another active unit holds it). Repeating a successful link is a no-op. |
+| `GET /api/labs/expected-devices` | Paginated; filters `computing_id`, `bench_id`, `presence`. Each row has `presence`: `present`, `missing` or `unconfirmed`, plus `last_seen_at`. Missing first. |
+| `POST /api/labs/expected-devices` | Body `{computing_id, equipment_id, is_disconnect_alert_enabled}`. 409 `expected_device_exists` on a duplicate (`expected_device_unique`); 422 when the unit is expected on itself (`expected_device_not_self`). |
+| `PATCH /api/labs/expected-devices/{id}` | Body `{is_disconnect_alert_enabled}`. |
+| `DELETE /api/labs/expected-devices/{id}` | 204; 404 when already gone. |
+
+`is_attention_required` is true when a row is not matched to exactly one unit, or was last reported
+connected and is no longer fresh. Presence is `unconfirmed` whenever no collector of the
+computing unit reported within the freshness window, because losing the agent never proves a
+device left.
+
+**Disconnect alerts.** When a report moves a matched device from connected to disconnected
+(an explicit detach or a complete snapshot that omits it) and an `ExpectedDevice` for that
+computing unit and equipment has its disconnect alert enabled (`notify_on_disconnect`), the expectation's creator receives an
+in-app `Notification` (warning, kept 7 days). The row is written in the reporting transaction;
+the websocket push to that user's channel only (never the broadcast channel) runs after commit.
+Repeated snapshots of an already-disconnected device do not alert again.
+
+**Lock order for linking.** Reporting computing unit → target equipment row → projection rows,
+the same parent-first order as ingestion. Serial numbers are not unique in the schema; a
+concurrent link of one serial to two units can still create a duplicate, which matching then
+reports as `ambiguous` instead of choosing.
+
 ## Retention
 
 Celery beat runs `labs.monitoring.purge_device_observation_history` daily at 02:40

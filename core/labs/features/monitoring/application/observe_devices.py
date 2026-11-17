@@ -23,6 +23,7 @@ from core.common.contracts import ActorContext
 from core.common.db.idempotency import try_claim_operation
 from core.common.domain.errors import Forbidden, ValidationFailed
 from core.labs.features.equipment.public import lock_monitoring_computing, match_observed_devices
+from core.labs.features.monitoring.application.alerts import notify_expected_disconnects
 from core.labs.features.monitoring.contracts import DeviceObservationInput, ObservationAcknowledgment
 from core.labs.features.monitoring.exceptions import (
     ObservationConflict,
@@ -156,7 +157,7 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
         )
         if not is_applied:
             return _ack(batch)
-        _apply_projection(command, received_at=received_at)
+        detached_equipment = _apply_projection(command, received_at=received_at)
         DeviceObservationCursor.objects.update_or_create(
             computing_id=command.computing_id,
             collector_key=command.collector_key,
@@ -185,10 +186,14 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
                 "devices": [asdict(device) for device in command.devices],
             },
         )
+        notify_expected_disconnects(
+            computing_id=command.computing_id, equipment_ids=detached_equipment, observed_at=command.collected_at
+        )
         return _ack(batch)
 
 
-def _apply_projection(command: DeviceObservationInput, *, received_at) -> None:
+def _apply_projection(command: DeviceObservationInput, *, received_at) -> set[int]:
+    """Write the projection; return equipment ids that went from connected to disconnected."""
     connections = DeviceConnection.objects.filter(
         computing_id=command.computing_id, collector_key=command.collector_key
     )
@@ -217,6 +222,7 @@ def _apply_projection(command: DeviceObservationInput, *, received_at) -> None:
         tuple((device.serial_number, device.interface_name) for device in effective_devices)
     )
     create, update = [], []
+    detached_equipment: set[int] = set()
     for device in effective_devices:
         match = matches[(device.serial_number, device.interface_name)]
         row = present.get(device.observation_key)
@@ -230,6 +236,11 @@ def _apply_projection(command: DeviceObservationInput, *, received_at) -> None:
             create.append(row)
         else:
             update.append(row)
+            detaches = (
+                row.state == DeviceConnectionState.CONNECTED and device.state == DeviceConnectionState.DISCONNECTED
+            )
+            if detaches and row.equipment_id:
+                detached_equipment.add(row.equipment_id)
         row.equipment_id, row.interface_id, row.match_status = match.equipment_id, match.interface_id, match.status
         row.generation_key, row.sequence = command.generation_key, command.sequence
         row.name, row.serial_number, row.interface_name = device.name, device.serial_number, device.interface_name
@@ -239,13 +250,16 @@ def _apply_projection(command: DeviceObservationInput, *, received_at) -> None:
     if command.is_complete:
         # SQL-bounded reconciliation; omitted records are confirmed absent by
         # this scoped full snapshot. Their identities remain historical.
-        connections.filter(state=DeviceConnectionState.CONNECTED).exclude(observation_key__in=input_keys).update(
+        omitted = connections.filter(state=DeviceConnectionState.CONNECTED).exclude(observation_key__in=input_keys)
+        detached_equipment.update(omitted.filter(equipment_id__isnull=False).values_list("equipment_id", flat=True))
+        omitted.update(
             state=DeviceConnectionState.DISCONNECTED,
             generation_key=command.generation_key,
             sequence=command.sequence,
             observed_at=command.collected_at,
             received_at=received_at,
         )
+    return detached_equipment
 
 
 @dataclass(frozen=True, slots=True)

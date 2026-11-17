@@ -452,6 +452,16 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1groups~1options
   /api/labs/device-connections:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1device-connections
+  /api/labs/device-connections/{connection_id}:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1device-connections~1{connection_id}
+  /api/labs/device-connections/{connection_id}/actions/link:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1device-connections~1{connection_id}~1actions~1link
+  /api/labs/device-connections/summary:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1device-connections~1summary
+  /api/labs/expected-devices:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices
+  /api/labs/expected-devices/{expected_device_id}:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices~1{expected_device_id}
   /api/labs/monitoring-events:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events
   /api/labs/monitoring-events/{id}:
