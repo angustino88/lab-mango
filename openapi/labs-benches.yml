@@ -1340,6 +1340,13 @@ paths:
         else ``400 too_many_results``.'
       parameters:
       - in: query
+        name: has_computing
+        schema:
+          type: boolean
+          nullable: true
+        description: When true, only benches with a computer (monitored equipment)
+          placed on them. Benches named in include_ids are still returned.
+      - in: query
         name: include_ids
         schema:
           type: array

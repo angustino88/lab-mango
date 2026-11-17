@@ -11,6 +11,7 @@ from core.labs.models import (
     Booking,
     BookingApprovalStatus,
     BookingStatus,
+    EquipmentAssignment,
     LabProject,
     ResourceDowntime,
     ResourceLifecycleStatus,
@@ -211,6 +212,16 @@ def bench_parent_blocker(*, bench) -> str | None:
     if row["room__lifecycle_status"] not in (None, ResourceLifecycleStatus.IN_SERVICE):
         return f"Room {row['room__name'] or row['room__sku']} is {row['room__lifecycle_status']}."
     return None
+
+
+def bench_has_computing(*, bench_id: int) -> bool:
+    """Whether a computer (unit of a monitored category) is placed on the bench now. One query."""
+    return EquipmentAssignment.objects.filter(
+        bench_id=bench_id,
+        unassigned_at__isnull=True,
+        equipment__deleted_at__isnull=True,
+        equipment__kind__category__monitored=True,
+    ).exists()
 
 
 def bench_downtime_blocker(*, bench, starts_at, ends_at) -> str | None:

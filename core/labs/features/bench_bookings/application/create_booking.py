@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from core.labs.features.bench_bookings.queries import (
     bench_downtime_blocker,
+    bench_has_computing,
     bench_parent_blocker,
     conflicting_bench_bookings,
     project_exists,
@@ -36,6 +37,7 @@ def create_bench_booking(*, actor, data: CreateBenchBookingInput) -> BenchBookin
     with transaction.atomic():
         bench = lock_benches((data.bench_id,))[data.bench_id]
         policies.ensure_bench_accepts_bookings(bench, parent_blocker=bench_parent_blocker(bench=bench))
+        policies.ensure_bench_has_computing(has_computing=bench_has_computing(bench_id=data.bench_id))
         if data.project_id is not None:
             policies.ensure_project_exists(exists=project_exists(project_id=data.project_id))
         conflicts = conflicting_bench_bookings(

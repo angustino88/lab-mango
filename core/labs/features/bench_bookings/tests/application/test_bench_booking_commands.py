@@ -28,6 +28,7 @@ from core.labs.features.bench_bookings.exceptions import (
 )
 from core.labs.models import (
     AgentIdentity,
+    Bench,
     BenchBooking,
     BookingApprovalStatus,
     BookingStatus,
@@ -383,6 +384,24 @@ class TestBookingApprovalDecisions:
 
 
 @pytest.mark.django_db
+class TestBenchNeedsComputing:
+    def test_create_rejects_a_bench_without_computing(self, actor, now):
+        bare = Bench.objects.create(sku="BB-BARE-01", name="Bare bench")
+        with pytest.raises(ValidationError) as error:
+            _create(actor, bare.pk, now + timedelta(hours=1), now + timedelta(hours=2))
+        assert "no computing resource" in str(error.value)
+        assert not BenchBooking.objects.filter(bench=bare).exists()
+
+    def test_moving_a_booking_to_a_bench_without_computing_is_rejected(self, actor, make_booking, now):
+        bare = Bench.objects.create(sku="BB-BARE-02", name="Bare bench 2")
+        booking = make_booking(starts_at=now + timedelta(hours=2), ends_at=now + timedelta(hours=3))
+        with pytest.raises(ValidationError):
+            update_bench_booking(
+                actor=actor,
+                data=UpdateBenchBookingInput(booking_id=booking.pk, fields={"bench_id": bare.pk}),
+            )
+
+
 class TestCreate:
     def test_accepts_start_up_to_ten_minutes_in_the_past(self, actor, bench, now):
         # Acceptance example: at 11:40, a booking starting 11:30 is accepted.
@@ -857,8 +876,8 @@ class TestAgentEndTimeUpdate:
             update_agent_booking_end_time,
         )
 
-        category = EquipmentCategory.objects.create(name="Computing", definition="Computing equipment")
-        kind = EquipmentKind.objects.create(category=category, name="Computer")
+        category, _ = EquipmentCategory.objects.get_or_create(name="Computing", defaults={"definition": "Computing equipment"})
+        kind, _ = EquipmentKind.objects.get_or_create(category=category, name="Computer")
         equipment = create_computing_equipment(
             sku=f"AGENT-BOOKING-{uuid.uuid4().hex[:8]}", kind=kind, name="Unassigned"
         )

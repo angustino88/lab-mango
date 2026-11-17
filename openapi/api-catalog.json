@@ -19523,6 +19523,16 @@
       ],
       "parameters": [
         {
+          "name": "has_computing",
+          "in": "query",
+          "required": false,
+          "description": "When true, only benches with a computer (monitored equipment) placed on them. Benches named in include_ids are still returned.",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        {
           "name": "include_ids",
           "in": "query",
           "required": false,

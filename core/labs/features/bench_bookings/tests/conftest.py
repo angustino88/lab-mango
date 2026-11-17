@@ -5,7 +5,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
-from core.labs.models import Bench, BenchBooking, BookingStatus
+from core.labs.models import Bench, BenchBooking, BookingStatus, EquipmentAssignment
 from core.labs.models.booking.reference_data import LabProject
 from core.users.tests.factories import UserFactory
 
@@ -18,14 +18,27 @@ def actor(db):
     return grant_labs_role(UserFactory(username="bench-booking-actor"), "user")
 
 
+def place_computer(bench, *, sku):
+    """Put a computer on the bench: a bench without one cannot be booked."""
+    from tests.factories import create_computing_equipment
+
+    EquipmentAssignment.objects.create(
+        bench=bench,
+        equipment=create_computing_equipment(sku=sku, name=f"{sku}-NAME"),
+        position=0,
+        assigned_at=timezone.now() - timedelta(hours=1),
+    )
+    return bench
+
+
 @pytest.fixture()
 def bench(db):
-    return Bench.objects.create(sku="BB-BENCH-01", name="Bench 01")
+    return place_computer(Bench.objects.create(sku="BB-BENCH-01", name="Bench 01"), sku="BB-PC-01")
 
 
 @pytest.fixture()
 def other_bench(db):
-    return Bench.objects.create(sku="BB-BENCH-02", name="Bench 02")
+    return place_computer(Bench.objects.create(sku="BB-BENCH-02", name="Bench 02"), sku="BB-PC-02")
 
 
 @pytest.fixture()

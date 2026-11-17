@@ -75,6 +75,19 @@ def test_include_ids_adds_the_bench_of_an_existing_booking(client, benches):
     assert "BK-B-3" in [bench["sku"] for bench in data]
 
 
+def test_has_computing_keeps_only_benches_with_a_computer(client, benches):
+    data = client.get(URL, {"has_computing": "true"}).json()["data"]
+
+    assert [bench["sku"] for bench in data] == ["BK-B-1"]  # BK-B-2 has no computer
+
+
+def test_has_computing_still_includes_the_bench_of_an_existing_booking(client, benches):
+    params = {"has_computing": "true", "include_ids": str(benches["video"].pk)}
+    data = client.get(URL, params).json()["data"]
+
+    assert [bench["sku"] for bench in data] == ["BK-B-1", "BK-B-2"]
+
+
 def test_unknown_parameter_is_400(client, benches):
     response = client.get(URL, {"status": "in_service"})
 

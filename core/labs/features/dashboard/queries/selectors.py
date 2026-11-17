@@ -209,31 +209,43 @@ def list_dashboard_benches(
     return queryset.order_by("name", "id")
 
 
+def _benches_with_computing() -> QuerySet[Bench]:
+    """Live benches with a computing unit placed on them: the benches the dashboard lists and people can book."""
+    computing_subquery = EquipmentAssignment.objects.filter(
+        bench_id=OuterRef("pk"),
+        unassigned_at__isnull=True,
+        equipment__deleted_at__isnull=True,
+        equipment__computing_profile__isnull=False,
+    )
+    return Bench.objects.filter(Exists(computing_subquery), deleted_at__isnull=True)
+
+
 def get_dashboard_summary(actor: Any = None) -> dict[str, Any]:
-    """Calculate aggregate dashboard statistics across benches and computing assets."""
+    """Calculate aggregate dashboard statistics across benches with computing assets (the ones the list shows)."""
     now = timezone.now()
 
-    total_benches = Bench.objects.filter(deleted_at__isnull=True).count()
+    benches = _benches_with_computing()
+    total_benches = benches.count()
 
     active_bookings_count = BenchBooking.objects.filter(
         starts_at__lte=now,
         ends_at__gte=now,
         status__in=[BookingStatus.RESERVED, BookingStatus.IN_PROGRESS],
-        bench__deleted_at__isnull=True,
+        bench__in=benches,
     ).count()
 
     favorited_benches_count = 0
     if actor is not None and getattr(actor, "is_authenticated", False):
         favorited_benches_count = BenchFavorite.objects.filter(
             user=actor,
-            bench__deleted_at__isnull=True,
+            bench__in=benches,
         ).count()
 
     lifecycle_distribution: dict[str, int] = {
         choice[0]: 0 for choice in LEGACY_BENCH_STATUSES
     }
     lifecycle_rows = (
-        _with_legacy_status(Bench.objects.filter(deleted_at__isnull=True))
+        _with_legacy_status(benches)
         .values("legacy_status")
         .annotate(total=Count("id"))
     )

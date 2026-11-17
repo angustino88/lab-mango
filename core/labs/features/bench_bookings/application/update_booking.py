@@ -12,6 +12,7 @@ from core.common.api.permissions import is_owner
 from core.labs.features.bench_bookings.exceptions import BenchBookingConflict, BenchBookingPermissionDenied
 from core.labs.features.bench_bookings.queries import (
     bench_downtime_blocker,
+    bench_has_computing,
     bench_parent_blocker,
     conflicting_bench_bookings,
     project_exists,
@@ -106,6 +107,7 @@ def update_bench_booking(*, actor, data: UpdateBenchBookingInput) -> BenchBookin
         if bench_changed:
             target = benches[target_bench_id]
             policies.ensure_bench_accepts_bookings(target, parent_blocker=bench_parent_blocker(bench=target))
+            policies.ensure_bench_has_computing(has_computing=bench_has_computing(bench_id=target_bench_id))
 
         for name, value in data.fields.items():
             setattr(booking, name, value)
