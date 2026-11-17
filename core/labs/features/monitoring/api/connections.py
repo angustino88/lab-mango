@@ -18,7 +18,7 @@ from core.labs.models.monitoring import DeviceConnectionState, DeviceMatchStatus
 
 class DeviceConnectionSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    computer = UIDNamedReferenceSerializer()
+    computing = UIDNamedReferenceSerializer()
     equipment = UIDNamedReferenceSerializer(allow_null=True)
     interface = NamedReferenceSerializer(allow_null=True)
     interface_name = serializers.CharField()
@@ -34,7 +34,7 @@ class DeviceConnectionSerializer(serializers.Serializer):
 
 
 class DeviceConnectionQuerySerializer(PageNumberQuerySerializer):
-    computer_id = serializers.IntegerField(min_value=1)
+    computing_id = serializers.IntegerField(min_value=1)
 
 
 class DeviceConnectionListAPIView(AppListAPIView, CommandAPIView):
@@ -58,4 +58,4 @@ class DeviceConnectionListAPIView(AppListAPIView, CommandAPIView):
         if error is not None:
             return error
         assert params is not None
-        return self._execute(lambda: list_device_connections(computer_id=params["computer_id"]))
+        return self._execute(lambda: list_device_connections(computing_id=params["computing_id"]))

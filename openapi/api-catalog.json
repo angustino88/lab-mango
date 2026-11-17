@@ -31169,7 +31169,7 @@
       ],
       "parameters": [
         {
-          "name": "computer_id",
+          "name": "computing_id",
           "in": "query",
           "required": true,
           "description": "",
@@ -31236,7 +31236,7 @@
                     "id": {
                       "type": "integer"
                     },
-                    "computer": {
+                    "computing": {
                       "type": "object",
                       "description": "(max nesting depth reached)"
                     },
@@ -31311,7 +31311,7 @@
                   },
                   "required": [
                     "collector_key",
-                    "computer",
+                    "computing",
                     "equipment",
                     "freshness",
                     "id",
@@ -31343,7 +31343,7 @@
             "data": [
               {
                 "id": 1,
-                "computer": {},
+                "computing": {},
                 "equipment": {},
                 "interface": {},
                 "interface_name": "string",

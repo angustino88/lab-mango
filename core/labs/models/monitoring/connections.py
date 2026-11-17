@@ -17,13 +17,13 @@ class DeviceMatchStatus(models.TextChoices):
 
 
 class DeviceObservationCursor(models.Model):
-    """Last applied batch of one collector on one computer.
+    """Last applied batch of one collector on one computing equipment.
 
     Sequences are contiguous within a generation, so the cursor's timestamps confirm the
     whole collector state, including devices the latest incremental batch did not mention.
     """
 
-    computer = models.ForeignKey(
+    computing = models.ForeignKey(
         "labs.Equipment",
         related_name="deviceobservationcursor_set",
         related_query_name="deviceobservationcursor",
@@ -38,7 +38,7 @@ class DeviceObservationCursor(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=("computer", "collector_key"), name="device_cursor_computer_collector"),
+            models.UniqueConstraint(fields=("computing", "collector_key"), name="device_cursor_computing_collector"),
             models.CheckConstraint(condition=Q(sequence__gte=1), name="device_cursor_sequence_positive"),
         ]
 
@@ -46,7 +46,7 @@ class DeviceObservationCursor(models.Model):
 class DeviceObservationBatch(models.Model):
     """Idempotency receipt for one reported batch; purged after the retention window."""
 
-    computer = models.ForeignKey(
+    computing = models.ForeignKey(
         "labs.Equipment",
         related_name="deviceobservationbatch_set",
         related_query_name="deviceobservationbatch",
@@ -63,10 +63,10 @@ class DeviceObservationBatch(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=("computer", "generation_key", "batch_key"), name="device_batch_replay_key"
+                fields=("computing", "generation_key", "batch_key"), name="device_batch_replay_key"
             ),
             models.UniqueConstraint(
-                fields=("computer", "generation_key", "collector_key", "sequence"), name="device_batch_sequence"
+                fields=("computing", "generation_key", "collector_key", "sequence"), name="device_batch_sequence"
             ),
             models.CheckConstraint(condition=Q(sequence__gte=1), name="device_batch_sequence_positive"),
         ]
@@ -74,13 +74,13 @@ class DeviceObservationBatch(models.Model):
 
 
 class DeviceConnection(models.Model):
-    """Current projection of one observed device instance on one computer collector.
+    """Current projection of one observed device instance on one computing-equipment collector.
 
     ``equipment`` and ``interface`` are derived inventory matches. They are cleared, not
     protected, when the referenced inventory row is removed.
     """
 
-    computer = models.ForeignKey("labs.Equipment", related_name="device_connections", on_delete=models.PROTECT)
+    computing = models.ForeignKey("labs.Equipment", related_name="device_connections", on_delete=models.PROTECT)
     equipment = models.ForeignKey(
         "labs.Equipment", null=True, blank=True, related_name="observed_connections", on_delete=models.SET_NULL
     )
@@ -109,7 +109,7 @@ class DeviceConnection(models.Model):
         ordering = ("collector_key", "observation_key", "pk")
         constraints = [
             models.UniqueConstraint(
-                fields=("computer", "collector_key", "observation_key"), name="device_connection_observation"
+                fields=("computing", "collector_key", "observation_key"), name="device_connection_observation"
             ),
             models.CheckConstraint(condition=Q(sequence__gte=1), name="device_connection_sequence_positive"),
             models.CheckConstraint(

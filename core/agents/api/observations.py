@@ -128,7 +128,7 @@ class AgentDeviceObservationsAPIView(CommandAPIView):
         command = ReportDeviceObservationsInput(
             identity,
             DeviceObservationInput(
-                computer_id=identity.equipment_id,
+                computing_id=identity.equipment_id,
                 agent_key=str(identity.agent_uid),
                 batch_key=batch_key,
                 **serializer.validated_data,

@@ -22,7 +22,7 @@ from django.utils import timezone
 from core.common.contracts import ActorContext
 from core.common.db.idempotency import try_claim_operation
 from core.common.domain.errors import Forbidden, ValidationFailed
-from core.labs.features.equipment.public import lock_monitoring_computer, match_observed_devices
+from core.labs.features.equipment.public import lock_monitoring_computing, match_observed_devices
 from core.labs.features.monitoring.contracts import DeviceObservationInput, ObservationAcknowledgment
 from core.labs.features.monitoring.exceptions import (
     ObservationConflict,
@@ -57,13 +57,13 @@ _PROJECTION_FIELDS = (
 )
 
 
-def observation_operation_scope(*, computer_id: int, generation_key: UUID, batch_key: UUID) -> bytes:
+def observation_operation_scope(*, computing_id: int, generation_key: UUID, batch_key: UUID) -> bytes:
     """Advisory-claim scope shared by every caller that reports one batch.
 
     PostgreSQL advisory locks are reentrant per session, so an adapter may claim the
     same scope before taking its own locks and then call :func:`observe_devices`.
     """
-    return f"POST:/agent/device-observations/actions/report:{computer_id}:{generation_key}:{batch_key}".encode()
+    return f"POST:/agent/device-observations/actions/report:{computing_id}:{generation_key}:{batch_key}".encode()
 
 
 def _validate(command: DeviceObservationInput) -> None:
@@ -110,28 +110,28 @@ def _disposition(command: DeviceObservationInput, cursor: DeviceObservationCurso
 
 
 def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> ObservationAcknowledgment:
-    if command.computer_id not in actor.equipment_ids or "monitoring:report" not in actor.capabilities:
-        raise Forbidden("The principal cannot report for this computer.")
+    if command.computing_id not in actor.equipment_ids or "monitoring:report" not in actor.capabilities:
+        raise Forbidden("The principal cannot report for this computing equipment.")
     _validate(command)
     content_hash = _content_hash(command)
     with transaction.atomic():
         scope = observation_operation_scope(
-            computer_id=command.computer_id, generation_key=command.generation_key, batch_key=command.batch_key
+            computing_id=command.computing_id, generation_key=command.generation_key, batch_key=command.batch_key
         )
         if not try_claim_operation(scope):
             raise ObservationInProgress("This request is still running.")
         # Reentrant when called by the authenticated agent workflow. Also protects
         # internal callers against cursor creation races.
-        lock_monitoring_computer(command.computer_id)
+        lock_monitoring_computing(command.computing_id)
         replay = DeviceObservationBatch.objects.filter(
-            computer_id=command.computer_id, generation_key=command.generation_key, batch_key=command.batch_key
+            computing_id=command.computing_id, generation_key=command.generation_key, batch_key=command.batch_key
         ).first()
         if replay:
             if replay.content_hash != content_hash:
                 raise ObservationKeyReuse("This idempotency key was already used with different content.")
             return _ack(replay, replayed=True)
         if DeviceObservationBatch.objects.filter(
-            computer_id=command.computer_id,
+            computing_id=command.computing_id,
             generation_key=command.generation_key,
             collector_key=command.collector_key,
             sequence=command.sequence,
@@ -139,13 +139,13 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
             raise ObservationConflict("This sequence was already used by another batch.")
         cursor = (
             DeviceObservationCursor.objects.select_for_update()
-            .filter(computer_id=command.computer_id, collector_key=command.collector_key)
+            .filter(computing_id=command.computing_id, collector_key=command.collector_key)
             .first()
         )
         is_applied = _disposition(command, cursor)
         received_at = timezone.now()
         batch = DeviceObservationBatch.objects.create(
-            computer_id=command.computer_id,
+            computing_id=command.computing_id,
             generation_key=command.generation_key,
             batch_key=command.batch_key,
             collector_key=command.collector_key,
@@ -158,7 +158,7 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
             return _ack(batch)
         _apply_projection(command, received_at=received_at)
         DeviceObservationCursor.objects.update_or_create(
-            computer_id=command.computer_id,
+            computing_id=command.computing_id,
             collector_key=command.collector_key,
             defaults={
                 "generation_key": command.generation_key,
@@ -169,7 +169,8 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
             },
         )
         MonitoringEvent.objects.create(
-            computer_id=command.computer_id,
+            # MonitoringEvent predates this feature and keeps its deployed field name.
+            computer_id=command.computing_id,
             agent_id=command.agent_key,
             event_id=uuid5(command.generation_key, str(command.batch_key)),
             action=MonitoringEventAction.INVENTORY_SNAPSHOT,
@@ -188,7 +189,9 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
 
 
 def _apply_projection(command: DeviceObservationInput, *, received_at) -> None:
-    connections = DeviceConnection.objects.filter(computer_id=command.computer_id, collector_key=command.collector_key)
+    connections = DeviceConnection.objects.filter(
+        computing_id=command.computing_id, collector_key=command.collector_key
+    )
     input_keys = [device.observation_key for device in command.devices]
     retained_connected = (
         0
@@ -219,7 +222,7 @@ def _apply_projection(command: DeviceObservationInput, *, received_at) -> None:
         row = present.get(device.observation_key)
         if row is None:
             row = DeviceConnection(
-                computer_id=command.computer_id,
+                computing_id=command.computing_id,
                 collector_key=command.collector_key,
                 observation_key=device.observation_key,
                 first_seen_at=received_at,
@@ -247,12 +250,12 @@ def _apply_projection(command: DeviceObservationInput, *, received_at) -> None:
 
 @dataclass(frozen=True, slots=True)
 class InvalidateDeviceConnectionsInput:
-    computer_id: int
+    computing_id: int
 
 
 def invalidate_device_connections(command: InvalidateDeviceConnectionsInput, *, actor: ActorContext) -> None:
     """Lifecycle holds identity lock; invalidation never acquires an equipment lock."""
-    if command.computer_id not in actor.equipment_ids or "monitoring:invalidate" not in actor.capabilities:
-        raise Forbidden("The principal cannot invalidate this computer.")
+    if command.computing_id not in actor.equipment_ids or "monitoring:invalidate" not in actor.capabilities:
+        raise Forbidden("The principal cannot invalidate this computing equipment.")
     with transaction.atomic():
-        DeviceObservationCursor.objects.filter(computer_id=command.computer_id).update(is_current=False)
+        DeviceObservationCursor.objects.filter(computing_id=command.computing_id).update(is_current=False)

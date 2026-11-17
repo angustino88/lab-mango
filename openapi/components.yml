@@ -4492,7 +4492,7 @@ components:
       properties:
         id:
           type: integer
-        computer:
+        computing:
           $ref: '#/components/schemas/LabsUIDNamedReference'
         equipment:
           allOf:
@@ -4532,7 +4532,7 @@ components:
           format: date-time
       required:
       - collector_key
-      - computer
+      - computing
       - equipment
       - freshness
       - id

@@ -48,7 +48,7 @@ from tests.factories import ComputingEquipmentFactory
 
 def observe_devices(command):
     actor = ActorContext(
-        command.agent_key, "system", frozenset({"monitoring:report"}), frozenset({command.computer_id})
+        command.agent_key, "system", frozenset({"monitoring:report"}), frozenset({command.computing_id})
     )
     return execute_observations(command, actor=actor)
 
@@ -57,14 +57,14 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def computer():
+def computing():
     return ComputingEquipmentFactory()
 
 
 @pytest.fixture
-def command(computer):
+def command(computing):
     return DeviceObservationInput(
-        computer_id=computer.pk,
+        computing_id=computing.pk,
         agent_key=str(uuid4()),
         generation_key=uuid4(),
         batch_key=uuid4(),
@@ -80,17 +80,17 @@ def next_report(command, **changes):
     return replace(command, sequence=command.sequence + 1, batch_key=uuid4(), **changes)
 
 
-def test_complete_snapshot_matches_serial_and_declared_interface_without_changing_inventory(command, computer):
+def test_complete_snapshot_matches_serial_and_declared_interface_without_changing_inventory(command, computing):
     interface = EquipmentInterface.objects.create(name="USB")
-    peripheral = Equipment.objects.create(sku="DEVICE-1", name="Scope", serial_number="SERIAL-1", kind=computer.kind)
+    peripheral = Equipment.objects.create(sku="DEVICE-1", name="Scope", serial_number="SERIAL-1", kind=computing.kind)
     peripheral.interfaces.add(interface)
 
     ack = observe_devices(command)
 
     connection = DeviceConnection.objects.get()
     assert ack.disposition == "applied" and not ack.is_replayed
-    assert (connection.computer_id, connection.equipment_id, connection.interface_id) == (
-        computer.pk,
+    assert (connection.computing_id, connection.equipment_id, connection.interface_id) == (
+        computing.pk,
         peripheral.pk,
         interface.pk,
     )
@@ -99,12 +99,12 @@ def test_complete_snapshot_matches_serial_and_declared_interface_without_changin
     peripheral.refresh_from_db()
     assert peripheral.serial_number == "SERIAL-1"
     event = MonitoringEvent.objects.get()
-    assert event.computer_id == computer.pk and event.payload["devices"][0]["observation_key"] == "usb-port-1"
+    assert event.computer_id == computing.pk and event.payload["devices"][0]["observation_key"] == "usb-port-1"
 
 
-def test_detach_without_serial_preserves_identity_but_reconnect_without_serial_does_not(command, computer):
+def test_detach_without_serial_preserves_identity_but_reconnect_without_serial_does_not(command, computing):
     interface = EquipmentInterface.objects.create(name="USB")
-    peripheral = Equipment.objects.create(sku="DETACH-1", name="Probe", serial_number="SERIAL-1", kind=computer.kind)
+    peripheral = Equipment.objects.create(sku="DETACH-1", name="Probe", serial_number="SERIAL-1", kind=computing.kind)
     peripheral.interfaces.add(interface)
     observe_devices(command)
     detached = replace(command.devices[0], state="disconnected", serial_number="", name="")
@@ -118,8 +118,8 @@ def test_detach_without_serial_preserves_identity_but_reconnect_without_serial_d
     assert connection.equipment_id is None and connection.serial_number == ""
 
 
-def test_casefold_colliding_interface_references_are_ambiguous(command, computer):
-    peripheral = Equipment.objects.create(sku="CASE-1", name="Probe", serial_number="SERIAL-1", kind=computer.kind)
+def test_casefold_colliding_interface_references_are_ambiguous(command, computing):
+    peripheral = Equipment.objects.create(sku="CASE-1", name="Probe", serial_number="SERIAL-1", kind=computing.kind)
     peripheral.interfaces.add(
         EquipmentInterface.objects.create(name="USB"), EquipmentInterface.objects.create(name="usb")
     )
@@ -136,13 +136,13 @@ def test_casefold_colliding_interface_references_are_ambiguous(command, computer
         ("duplicate_serial", "ambiguous"),
     ],
 )
-def test_matching_keeps_unknown_incompatible_and_ambiguous_devices_unresolved(command, computer, scenario, expected):
+def test_matching_keeps_unknown_incompatible_and_ambiguous_devices_unresolved(command, computing, scenario, expected):
     if scenario != "unknown" and scenario != "blank_serial":
         interface = EquipmentInterface.objects.create(name="USB" if scenario == "duplicate_serial" else "Ethernet")
         count = 2 if scenario == "duplicate_serial" else 1
         for index in range(count):
             equipment = Equipment.objects.create(
-                sku=f"DUP-{index}", name="Same serial", serial_number="SERIAL-1", kind=computer.kind
+                sku=f"DUP-{index}", name="Same serial", serial_number="SERIAL-1", kind=computing.kind
             )
             equipment.interfaces.add(interface)
     if scenario == "blank_serial":
@@ -159,7 +159,7 @@ def test_exact_replay_preserves_ack_event_count_and_freshness_and_changed_conten
         replay = observe_devices(command)
         assert replay.is_replayed
         assert replace(replay, is_replayed=False) == original
-        assert list_device_connections(computer_id=command.computer_id).get().freshness == "stale"
+        assert list_device_connections(computing_id=command.computing_id).get().freshness == "stale"
     with pytest.raises(ObservationKeyReuse) as error:
         observe_devices(replace(command, devices=(replace(command.devices[0], name="Changed"),)))
     assert error.value.code == "idempotency_key_reuse"
@@ -260,23 +260,23 @@ def test_new_generation_requires_full_snapshot_and_reconciles_previous_connectio
 def test_invalidation_makes_state_unknown_and_requires_full_snapshot_even_for_same_generation(command):
     observe_devices(command)
     invalidate_device_connections(
-        InvalidateDeviceConnectionsInput(command.computer_id),
+        InvalidateDeviceConnectionsInput(command.computing_id),
         actor=ActorContext(
-            command.agent_key, "system", frozenset({"monitoring:invalidate"}), frozenset({command.computer_id})
+            command.agent_key, "system", frozenset({"monitoring:invalidate"}), frozenset({command.computing_id})
         ),
     )
-    assert list_device_connections(computer_id=command.computer_id).get().freshness == "unknown"
+    assert list_device_connections(computing_id=command.computing_id).get().freshness == "unknown"
     with pytest.raises(ObservationConflict):
         observe_devices(next_report(command, is_complete=False))
     observe_devices(next_report(command, devices=()))
-    current = list_device_connections(computer_id=command.computer_id).get()
+    current = list_device_connections(computing_id=command.computing_id).get()
     assert current.freshness == "fresh" and current.state == "disconnected"
 
 
 def test_freshness_considers_collection_time_as_well_as_server_receipt(command):
     old = replace(command, collected_at=timezone.now() - timedelta(minutes=5))
     observe_devices(old)
-    assert list_device_connections(computer_id=command.computer_id).get().freshness == "stale"
+    assert list_device_connections(computing_id=command.computing_id).get().freshness == "stale"
 
 
 @pytest.mark.parametrize(
@@ -315,32 +315,32 @@ def test_event_storage_failure_rolls_back_batch_cursor_and_connections(command, 
     assert not DeviceObservationCursor.objects.exists()
 
 
-def test_projection_serializes_multiple_related_devices_in_one_query(command, computer, django_assert_num_queries):
+def test_projection_serializes_multiple_related_devices_in_one_query(command, computing, django_assert_num_queries):
     from core.users.models import User
 
     interface = EquipmentInterface.objects.create(name="USB")
     devices = []
     for index in range(3):
         equipment = Equipment.objects.create(
-            sku=f"BUDGET-{index}", name=f"Device {index}", serial_number=f"SERIAL-{index}", kind=computer.kind
+            sku=f"BUDGET-{index}", name=f"Device {index}", serial_number=f"SERIAL-{index}", kind=computing.kind
         )
         equipment.interfaces.add(interface)
         devices.append(DeviceObservation(f"port-{index}", "USB", "connected", f"Device {index}", f"SERIAL-{index}"))
     observe_devices(replace(command, devices=tuple(devices)))
     with django_assert_num_queries(1):
-        data = DeviceConnectionSerializer(list_device_connections(computer_id=computer.pk), many=True).data
+        data = DeviceConnectionSerializer(list_device_connections(computing_id=computing.pk), many=True).data
     assert len(data) == 3 and all(row["equipment"] and row["interface"] for row in data)
     client = APIClient()
     client.force_authenticate(
         User.objects.create_user(username="query-budget-admin", is_superuser=True, is_staff=True)
     )
     with django_assert_num_queries(2):
-        response = client.get("/api/labs/device-connections", {"computer_id": computer.pk})
+        response = client.get("/api/labs/device-connections", {"computing_id": computing.pk})
     assert response.status_code == 200, response.data
     assert response.data["meta"]["pagination"]["count"] == 3
 
 
-def test_read_api_enforces_existing_labs_access_and_validates_computer_filter(command):
+def test_read_api_enforces_existing_labs_access_and_validates_computing_filter(command):
     from core.users.models import User
     from tests.factories import grant_labs_role
 
@@ -348,11 +348,11 @@ def test_read_api_enforces_existing_labs_access_and_validates_computer_filter(co
     user = User.objects.create_user(username="device-reader")
     client = APIClient()
     client.force_authenticate(user)
-    response = client.get("/api/labs/device-connections", {"computer_id": command.computer_id})
+    response = client.get("/api/labs/device-connections", {"computing_id": command.computing_id})
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "permission_denied"
     grant_labs_role(user, "coord")
-    response = client.get("/api/labs/device-connections", {"computer_id": command.computer_id})
+    response = client.get("/api/labs/device-connections", {"computing_id": command.computing_id})
     assert response.status_code == 200, response.data
     assert response.data["meta"]["pagination"]["count"] == 1
     assert response.data["data"][0]["state"]["value"] == "connected"
@@ -360,8 +360,8 @@ def test_read_api_enforces_existing_labs_access_and_validates_computer_filter(co
     assert response.data["data"][0]["interface_name"] == "USB"
     for params, code in (
         ({}, "validation_failed"),
-        ({"computer_id": "no"}, "validation_failed"),
-        ({"computer_id": command.computer_id, "unknown": "value"}, "invalid_query"),
+        ({"computing_id": "no"}, "validation_failed"),
+        ({"computing_id": command.computing_id, "unknown": "value"}, "invalid_query"),
     ):
         response = client.get("/api/labs/device-connections", params)
         assert response.status_code == 400, response.data
@@ -430,11 +430,11 @@ def test_concurrent_sequences_converge_on_newest_state(command):
 
 
 @pytest.mark.parametrize("capabilities,scope", [(frozenset(), True), (frozenset({"monitoring:report"}), False)])
-def test_reporting_requires_explicit_capability_and_computer_scope(command, capabilities, scope):
+def test_reporting_requires_explicit_capability_and_computing_scope(command, capabilities, scope):
     from core.common.domain.errors import Forbidden
 
     actor = ActorContext(
-        command.agent_key, "agent", capabilities, frozenset({command.computer_id}) if scope else frozenset()
+        command.agent_key, "agent", capabilities, frozenset({command.computing_id}) if scope else frozenset()
     )
     with pytest.raises(Forbidden):
         execute_observations(command, actor=actor)
@@ -447,7 +447,7 @@ def test_invalidation_requires_scoped_capability(command):
     observe_devices(command)
     actor = ActorContext("other", "system", frozenset({"monitoring:invalidate"}), frozenset())
     with pytest.raises(Forbidden):
-        invalidate_device_connections(InvalidateDeviceConnectionsInput(command.computer_id), actor=actor)
+        invalidate_device_connections(InvalidateDeviceConnectionsInput(command.computing_id), actor=actor)
     assert DeviceObservationCursor.objects.get().is_current
 
 
@@ -480,16 +480,16 @@ def test_contiguous_incremental_keep_alive_confirms_devices_it_does_not_mention(
     with freeze_time(later):
         observe_devices(next_report(command, is_complete=False, devices=(), collected_at=later))
     with freeze_time(start + timedelta(seconds=200)):
-        connection = list_device_connections(computer_id=command.computer_id).get()
+        connection = list_device_connections(computing_id=command.computing_id).get()
         assert connection.freshness == "fresh" and connection.state == "connected"
     with freeze_time(later + timedelta(seconds=121)):
-        assert list_device_connections(computer_id=command.computer_id).get().freshness == "stale"
+        assert list_device_connections(computing_id=command.computing_id).get().freshness == "stale"
 
 
-def test_soft_deleted_inventory_is_never_a_match_candidate(command, computer):
+def test_soft_deleted_inventory_is_never_a_match_candidate(command, computing):
     interface = EquipmentInterface.objects.create(name="USB")
-    active = Equipment.objects.create(sku="ACTIVE-1", name="Active", serial_number="SERIAL-1", kind=computer.kind)
-    retired = Equipment.objects.create(sku="RETIRED-1", name="Retired", serial_number="SERIAL-1", kind=computer.kind)
+    active = Equipment.objects.create(sku="ACTIVE-1", name="Active", serial_number="SERIAL-1", kind=computing.kind)
+    retired = Equipment.objects.create(sku="RETIRED-1", name="Retired", serial_number="SERIAL-1", kind=computing.kind)
     active.interfaces.add(interface)
     retired.interfaces.add(interface)
     Equipment.all_objects.filter(pk=retired.pk).update(deleted_at=timezone.now())
@@ -498,17 +498,17 @@ def test_soft_deleted_inventory_is_never_a_match_candidate(command, computer):
     assert connection.match_status == "matched" and connection.equipment_id == active.pk
 
 
-def test_soft_deleted_computer_cannot_report(command, computer):
-    Equipment.all_objects.filter(pk=computer.pk).update(deleted_at=timezone.now())
+def test_soft_deleted_computing_cannot_report(command, computing):
+    Equipment.all_objects.filter(pk=computing.pk).update(deleted_at=timezone.now())
     with pytest.raises(Conflict) as error:
         observe_devices(command)
     assert error.value.code == "equipment_unavailable"
     assert not DeviceObservationBatch.objects.exists()
 
 
-def test_removing_matched_inventory_clears_the_derived_match(command, computer):
+def test_removing_matched_inventory_clears_the_derived_match(command, computing):
     interface = EquipmentInterface.objects.create(name="USB")
-    peripheral = Equipment.objects.create(sku="GONE-1", name="Scope", serial_number="SERIAL-1", kind=computer.kind)
+    peripheral = Equipment.objects.create(sku="GONE-1", name="Scope", serial_number="SERIAL-1", kind=computing.kind)
     peripheral.interfaces.add(interface)
     observe_devices(command)
     peripheral.interfaces.clear()
@@ -535,7 +535,7 @@ def test_listing_puts_connected_devices_first_then_most_recently_observed(comman
                 ),
             )
         )
-    keys = [row.observation_key for row in list_device_connections(computer_id=command.computer_id)]
+    keys = [row.observation_key for row in list_device_connections(computing_id=command.computing_id)]
     assert keys == ["port-c", "port-b", "port-a"]
 
 

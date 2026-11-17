@@ -56,7 +56,7 @@ NESTED = [path for path, nested in PAGINATED_LISTS.items() if nested]
 # Lists that reject a request without one of their own parameters.
 REQUIRED_QUERY = {
     "/api/labs/equipment/facets": {"dimension": "kind"},
-    "/api/labs/device-connections": {"computer_id": 999999},
+    "/api/labs/device-connections": {"computing_id": 999999},
 }
 
 

@@ -1,4 +1,4 @@
-"""Strict, bounded snapshots; the computer is always credential-derived."""
+"""Strict, bounded snapshots; the computing equipment is always credential-derived."""
 
 import re
 import unicodedata

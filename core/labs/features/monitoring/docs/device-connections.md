@@ -5,7 +5,7 @@ hardware behavior are not verified in the selected repositories.
 
 ## Ownership and behavior
 
-An enrolled computer agent reports device observations. Equipment matches exact,
+An enrolled computing-equipment agent reports device observations. Equipment matches exact,
 nonblank serial numbers against the equipment-declared interfaces (interface names
 are case-insensitive). Capability names alone never identify an asset. Unknown
 serials remain `unmatched`; incompatible interfaces are `interface_mismatch`;
@@ -19,7 +19,7 @@ JSON and its operator write behavior are preserved; the UI uses the typed API.
 
 ```mermaid
 flowchart LR
-    A[Signed computer agent] --> I[Snapshot intake]
+    A[Signed computing agent] --> I[Snapshot intake]
     E[Equipment serials and interfaces] --> M[Public matching query]
     I --> M
     I --> T[Monitoring transaction]
@@ -36,10 +36,10 @@ flowchart LR
 | --- | --- | --- |
 | `GET /agent/monitoring-policy` | Existing signed agent authentication | Current `generation_key`, limits and up to 200 catalog interface names |
 | `POST /agent/device-observations/actions/report` | Existing signed agent authentication | Report action acknowledgment; UUID `Idempotency-Key` header required |
-| `GET /api/labs/device-connections?computer_id=42` | Existing Labs coordinator/admin or enabled API key policy | Paginated typed connections, maximum page size 100 |
+| `GET /api/labs/device-connections?computing_id=42` | Existing Labs coordinator/admin or enabled API key policy | Paginated typed connections, maximum page size 100 |
 
 `/agent/info` advertises the new capability and paths. The server derives the
-reporting computer from the signing identity. Client-selected computer/agent fields
+reporting computing equipment from the signing identity. Client-selected computing/agent fields
 and unknown nested fields are rejected. Catalog hints do not claim OS collector
 support. Report network devices only through explicitly configured targets.
 
@@ -64,7 +64,7 @@ Example POST body; replace the generation with the actual policy result:
 
 Collector keys are lowercase slugs, maximum 32 characters. Device strings are
 bounded to 255 characters. Send at most 200 records and 256 KiB, with at most 200
-connected devices per computer/collector across partial updates. Sequence is a
+connected devices per computing equipment/collector across partial updates. Sequence is a
 persisted positive integer, maximum 9007199254740991. Collection time must be
 timezone-aware and no more than five minutes in the future.
 
@@ -93,7 +93,7 @@ sequences are acknowledged as stale without changing current state. Receipts are
 purged after `DEVICE_OBSERVATION_RECEIPT_RETENTION_DAYS` (default 14), so retries must
 complete within that window; see [Retention](#retention).
 
-Read rows contain computer/equipment references `{id, uid, name}` and lookup interface
+Read rows contain computing/equipment references `{id, uid, name}` and lookup interface
 references `{id, name}`, nullable unresolved
 references, reported `interface_name`, serial/name evidence, collector/observation
 keys, enum-shaped state/match/freshness, and observed/received timestamps.
@@ -104,7 +104,7 @@ keys, enum-shaped state/match/freshness, and observed/received timestamps.
 | --- | --- |
 | Authenticated identity stays valid through commit | Equipment → identity locks; recheck ACTIVE, fingerprint, enrollment time and equipment |
 | No cross-enrollment sequence reset | Server-derived generation from agent/key/enrollment; first generation report must be complete |
-| One ordered collector cursor | `device_cursor_computer_collector`, positive-sequence check and parent lock |
+| One ordered collector cursor | `device_cursor_computing_collector`, positive-sequence check and parent lock |
 | Durable batch/sequence identity | `device_batch_replay_key`, `device_batch_sequence`, content hash and original receipt |
 | One projection per device instance | `device_connection_observation`, valid-enum and positive-sequence checks |
 | No partial writes or side effects | One transaction for receipt, projections, cursor and existing `MonitoringEvent` |
@@ -135,8 +135,8 @@ typed records and completeness flag. Inventory lookups use a bounded joined resu
 not measured on production data. Reads use one joined serialization query or two
 with pagination, verified with multiple related rows. Rows are ordered connected first,
 then by most recent observation, with collector/observation key as a stable tiebreak.
-Only active (not soft-deleted) inventory is a match candidate, and a soft-deleted
-computer cannot report. `equipment` and `interface` are derived matches: removing the
+Only active (not soft-deleted) inventory is a match candidate, and soft-deleted
+computing equipment cannot report. `equipment` and `interface` are derived matches: removing the
 referenced inventory row clears them (`SET NULL`) instead of blocking the delete. The UI fetches only while
 open, polls every 30 seconds, and provides pagination, loading, empty and retry states.
 
@@ -155,16 +155,14 @@ Connected projections and cursors are current state and are never purged. A late
 duplicate after its receipt is gone is either stale (at or behind the cursor) or needs
 a complete snapshot, so it cannot rewind state. `inventory_snapshot` monitoring events
 follow the monitoring-event history policy and are not purged here; each is bounded to
-200 devices. Partial indexes on `received_at` keep both purge scans bounded.
+200 devices. Indexes on `received_at` (partial for detached rows) keep both purge scans bounded.
 
 ## Compatibility and rollout
 
-This is an additive T2 change. Apply `0002_device_observations` (new tables, five-second
-lock timeout) and `0003_equipment_serial_lookup` (`CREATE INDEX CONCURRENTLY` on
-`labs_equipment.serial_number`, non-atomic, five-second lock timeout that restores the
-session setting), deploy backend, then frontend, then the agent collector. Development
-databases that applied the earlier unmerged iterations of these migrations
-(`0002`–`0006`, `_safe` variants) must run `migrate labs 0001` before migrating again.
+This is an additive T2 change. The tables, constraints and the equipment serial-number
+index are folded into `labs/0001_initial` (ADR 005: one initial migration until the first
+database is deployed). Development databases must be recreated, as with every 0001 fold.
+Deploy backend, then frontend, then the agent collector.
 
 Rollback frontend/API first; retaining new tables and index is compatible with old
 code. Migration reversal deletes new monitoring/replay data and requires an archive
@@ -187,7 +185,7 @@ integration requires agent source and representative devices.
 | TRN-4, NAM-3/8 | pass | No slash aliases; `_at` times and `_key` external identifiers |
 | REL-3, ENU-1 | pass | Named references and enum value/label objects |
 | RW-6 | pass | Required UUID header, canonical hash, durable replay body/header |
-| COL-1/4/5, PRF-2 | pass | Required computer filter, capped pagination, stable order and query budgets |
+| COL-1/4/5, PRF-2 | pass | Required computing filter, capped pagination, stable order and query budgets |
 | ACB/BLK | not applicable | One atomic reporting action, not generic bulk operations |
 
 
@@ -217,11 +215,8 @@ reads declare private/no-cache; errors and POST responses declare no-store. Vary
 Accept and Accept-Language. Transport header, connection and slow-client deadlines remain
 responsibilities of the deployed HTTP server/gateway; no production gateway was exercised.
 
-Migrations are `0002_device_observations` and `0003_equipment_serial_lookup` only. A
-failed concurrent index build may leave an INVALID index; inspect PostgreSQL metadata
-and remove only the failed index concurrently before retry. Schema rollback requires
-stopping writers and exporting new data first; application-only rollback can retain
-the expanded schema.
+Schema changes live in `labs/0001_initial` (ADR 005). Application-only rollback can
+retain the expanded schema.
 
 
 The new intake is a collection-level reporting action under ACT-1/ACB-1:

@@ -9229,7 +9229,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "computer_id",
+            "name": "computing_id",
             "schema": {
               "type": "integer",
               "minimum": 1
@@ -44383,7 +44383,7 @@
           "id": {
             "type": "integer"
           },
-          "computer": {
+          "computing": {
             "$ref": "#/components/schemas/LabsUIDNamedReference"
           },
           "equipment": {
@@ -44452,7 +44452,7 @@
         },
         "required": [
           "collector_key",
-          "computer",
+          "computing",
           "equipment",
           "freshness",
           "id",

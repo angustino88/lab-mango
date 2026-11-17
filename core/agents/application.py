@@ -30,7 +30,7 @@ from core.agents.models import AgentIdentity, EnrollmentGrant
 from core.common.contracts import ActorContext
 from core.common.db.idempotency import try_claim_operation
 from core.common.domain.errors import Conflict
-from core.labs.features.equipment.public import lock_monitoring_computer
+from core.labs.features.equipment.public import lock_monitoring_computing
 from core.labs.features.monitoring.contracts import DeviceObservationInput, ObservationAcknowledgment
 from core.labs.features.monitoring.public import (
     InvalidateDeviceConnectionsInput,
@@ -449,13 +449,13 @@ def report_device_observations(command: ReportDeviceObservationsInput, *, actor:
     identity = command.identity
     observation = command.observation
     scope = observation_operation_scope(
-        computer_id=identity.equipment_id,
+        computing_id=identity.equipment_id,
         generation_key=observation.generation_key,
         batch_key=observation.batch_key,
     )
     if not try_claim_operation(scope):
         raise Conflict("This request is still running.", code="request_in_progress")
-    lock_monitoring_computer(identity.equipment_id)
+    lock_monitoring_computing(identity.equipment_id)
     current = AgentIdentity.objects.select_for_update().get(pk=identity.pk)
     if (
         current.state != AgentIdentity.State.ACTIVE

@@ -16,7 +16,7 @@ class DeviceObservation:
 
 @dataclass(frozen=True, slots=True)
 class DeviceObservationInput:
-    computer_id: int
+    computing_id: int
     agent_key: str
     generation_key: UUID
     batch_key: UUID

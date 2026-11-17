@@ -10,7 +10,7 @@ paths:
       description: HTTP mapping for domain commands and selector projections.
       parameters:
       - in: query
-        name: computer_id
+        name: computing_id
         schema:
           type: integer
           minimum: 1
@@ -296,7 +296,7 @@ components:
       properties:
         id:
           type: integer
-        computer:
+        computing:
           $ref: '#/components/schemas/LabsUIDNamedReference'
         equipment:
           allOf:
@@ -336,7 +336,7 @@ components:
           format: date-time
       required:
       - collector_key
-      - computer
+      - computing
       - equipment
       - freshness
       - id

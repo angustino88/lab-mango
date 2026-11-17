@@ -25,18 +25,20 @@ class ConnectionAnnotations(TypedDict):
     freshness: str
 
 
-def list_device_connections(*, computer_id: int) -> QuerySet[WithAnnotations[DeviceConnection, ConnectionAnnotations]]:
+def list_device_connections(
+    *, computing_id: int
+) -> QuerySet[WithAnnotations[DeviceConnection, ConnectionAnnotations]]:
     """Connected devices first, then most recently observed; ties break on a stable key."""
     current = DeviceObservationCursor.objects.filter(
-        computer_id=OuterRef("computer_id"),
+        computing_id=OuterRef("computing_id"),
         collector_key=OuterRef("collector_key"),
         generation_key=OuterRef("generation_key"),
         is_current=True,
     )
     cutoff = timezone.now() - FRESHNESS_WINDOW
     return (
-        DeviceConnection.objects.filter(computer_id=computer_id)
-        .select_related("computer", "equipment", "interface")
+        DeviceConnection.objects.filter(computing_id=computing_id)
+        .select_related("computing", "equipment", "interface")
         .annotate(
             is_current_generation=Exists(current),
             confirmed_received_at=Subquery(current.values("last_received_at")[:1]),

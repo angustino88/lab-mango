@@ -32,7 +32,7 @@ def report_device_observations(identity, values, *, batch_key):
     command = ReportDeviceObservationsInput(
         identity,
         DeviceObservationInput(
-            computer_id=identity.equipment_id, agent_key=str(identity.agent_uid), batch_key=batch_key, **values
+            computing_id=identity.equipment_id, agent_key=str(identity.agent_uid), batch_key=batch_key, **values
         ),
     )
     return execute_observations(command, actor=identity)
@@ -74,7 +74,7 @@ def payload(identity, **changes):
     }
 
 
-def test_signed_report_is_idempotent_and_listed_only_for_own_computer(enrolled):
+def test_signed_report_is_idempotent_and_listed_only_for_own_computing(enrolled):
     identity, key, _ = enrolled
     client = APIClient()
     policy_headers: dict[str, Any] = signed_headers(
@@ -89,13 +89,13 @@ def test_signed_report_is_idempotent_and_listed_only_for_own_computer(enrolled):
     replay = send(identity, key, data, batch_key=batch_key)
     assert replay.status_code == 200 and replay.data == first.data
     assert replay["Idempotency-Replayed"] == "true"
-    assert DeviceConnection.objects.get().computer_id == identity.equipment_id
+    assert DeviceConnection.objects.get().computing_id == identity.equipment_id
     assert DeviceObservationBatch.objects.count() == MonitoringEvent.objects.count() == 1
     changed = send(identity, key, {**data, "sequence": 2}, batch_key=batch_key)
     assert changed.status_code == 422 and changed.data["error"]["code"] == "idempotency_key_reuse"
 
 
-@pytest.mark.parametrize("field", ["computer_id", "agent_id", "equipment_id", "last_seen_at"])
+@pytest.mark.parametrize("field", ["computing_id", "agent_id", "equipment_id", "last_seen_at"])
 def test_foreign_identity_and_server_fields_are_rejected(enrolled, field):
     identity, key, _ = enrolled
     response = send(identity, key, payload(identity, **{field: 123}))
@@ -204,7 +204,7 @@ def test_unsigned_and_revoked_agents_cannot_report(enrolled):
     assert response.status_code == 401
     assert send(identity, key, payload(identity)).status_code == 200
     transition_agent_state(identity.agent_uid, AgentIdentity.State.REVOKED, actor=actor)
-    assert list_device_connections(computer_id=identity.equipment_id).get().freshness == "unknown"
+    assert list_device_connections(computing_id=identity.equipment_id).get().freshness == "unknown"
     assert send(identity, key, payload(identity, sequence=2)).status_code == 401
     assert DeviceObservationBatch.objects.count() == 1
 
@@ -213,7 +213,7 @@ def test_recovery_invalidates_observations_and_stale_authentication_is_fenced(en
     identity, key, actor = enrolled
     assert send(identity, key, payload(identity)).status_code == 200
     issue_grant_for_agent(identity.pk, 10, actor=actor)
-    assert list_device_connections(computer_id=identity.equipment_id).get().freshness == "unknown"
+    assert list_device_connections(computing_id=identity.equipment_id).get().freshness == "unknown"
     values = {
         **payload(identity),
         "generation_key": generation_key(identity),
@@ -276,4 +276,4 @@ def test_revocation_racing_a_report_cannot_leave_current_connections(enrolled):
         revoked = executor.submit(revoke)
         assert reported.result(timeout=20) in {"accepted", "revoked"}
         revoked.result(timeout=20)
-    assert all(row.freshness == "unknown" for row in list_device_connections(computer_id=identity.equipment_id))
+    assert all(row.freshness == "unknown" for row in list_device_connections(computing_id=identity.equipment_id))

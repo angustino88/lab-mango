@@ -25,7 +25,7 @@ from .application.loans import (
     return_equipment,
     return_equipment_batch,
 )
-from .application.monitoring_locks import lock_monitoring_computer
+from .application.monitoring_locks import lock_monitoring_computing
 from .application.place_equipment import (
     PlaceEquipmentInput,
     RemovePlacementInput,
@@ -83,7 +83,7 @@ from .queries.summaries import (
 )
 
 __all__ = (
-    "lock_monitoring_computer",
+    "lock_monitoring_computing",
     "match_observed_devices",
     "monitoring_interfaces",
     "CancelEquipmentBookingsForDowntimeInput",

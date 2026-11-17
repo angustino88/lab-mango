@@ -221,10 +221,10 @@ def test_connection_read_keeps_uid_references_utc_and_existing_admin_access(enro
     operator.save(update_fields=("is_staff", "is_superuser"))
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(operator).access_token}")
-    response = client.get("/api/labs/device-connections", {"computer_id": identity.equipment_id})
+    response = client.get("/api/labs/device-connections", {"computing_id": identity.equipment_id})
     assert response.status_code == 200, response.data
     row = response.data["data"][0]
-    assert list(row["computer"]) == ["id", "uid", "name"]
+    assert list(row["computing"]) == ["id", "uid", "name"]
     assert row["equipment"] == {"id": peripheral.pk, "uid": str(peripheral.uid), "name": "Probe"}
     assert row["interface"] == {"id": interface.pk, "name": "USB"}
     assert all(re.fullmatch(UTC_MICROSECONDS, row[field]) for field in ("observed_at", "received_at"))
@@ -232,7 +232,7 @@ def test_connection_read_keeps_uid_references_utc_and_existing_admin_access(enro
 
     unexpected_body = client.generic(
         "GET",
-        f"/api/labs/device-connections?computer_id={identity.equipment_id}",
+        f"/api/labs/device-connections?computing_id={identity.equipment_id}",
         "{}",
         content_type="application/json",
     )
