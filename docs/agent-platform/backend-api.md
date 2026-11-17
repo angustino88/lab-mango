@@ -202,6 +202,18 @@ and coordinator writes (`PATCH /api/labs/equipment/.../activity`) are removed; t
 signs requests (or prints one-use signed headers to paste into an API client). Operator writes under `/api/agents` require the
 Labs coordinator role (admin implies it); reads require authentication only.
 
+**Operator console reads (2026-11-17).** `GET /api/agents` accepts `equipment` (comma-separated ids, 1..100),
+`equipment_uid` and `state` (comma-separated) filters so the computing inventory can show each unit's agent.
+An active agent carries a derived `health` choice: `online` within `AGENT_HEALTH_ONLINE_S` (default 180) of
+its last heartbeat, `delayed` until `AGENT_HEALTH_OFFLINE_S` (default 900), `offline` after that or before the
+first heartbeat. `health` is null for pending, revoked and decommissioned agents, whose `state` is the answer;
+it is display policy only and never changes state or authentication.
+`GET /api/agents/{id}/enrollment-grants` pages grant metadata (`usable` / `redeemed` / `revoked` / `expired`,
+issuer, timestamps); the clear grant is returned only by the call that issues it.
+`POST /api/agents/{id}/enrollment-grants/{grant_id}/actions/revoke` (coordinator) revokes an unredeemed grant
+through `revoke_enrollment_grant`; it is idempotent, a redeemed grant is `409 grant_redeemed`, and a pending
+agent left without a usable grant becomes revoked so the computer can be enrolled again.
+
 ### 4.4 Booking capability (design scope; implementation still gated)
 
 | Method / path | Purpose / permission |

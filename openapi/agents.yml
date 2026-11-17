@@ -506,6 +506,18 @@ paths:
       summary: List enrolled and pending agents
       parameters:
       - in: query
+        name: equipment
+        schema:
+          type: string
+        description: Comma-separated computing equipment ids (1..100); returns only
+          their agents.
+      - in: query
+        name: equipment_uid
+        schema:
+          type: string
+          format: uuid
+        description: Computing equipment UID; returns only its agents.
+      - in: query
         name: page
         schema:
           type: integer
@@ -518,6 +530,11 @@ paths:
           minimum: 1
           maximum: 100
         description: Page size (1..100, default 25)
+      - in: query
+        name: state
+        schema:
+          type: string
+        description: 'Comma-separated agent states: pending, active, revoked, decommissioned.'
       tags:
       - Agents (operator)
       security:
@@ -535,7 +552,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
-          description: Invalid page or page_size
+          description: Invalid page, page_size or filter value
         '404':
           content:
             application/json:
@@ -752,9 +769,64 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Conflict
   /api/agents/{id}/enrollment-grants:
+    get:
+      operationId: list_agent_grants
+      description: Newest first. The clear grant is returned only once, by the call
+        that issues it.
+      summary: List an agent's enrollment grants (metadata only)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+        description: Page number (>= 1)
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Page size (1..100, default 25)
+      tags:
+      - Agents (operator)
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentGrantListResponse'
+          description: Page of grants
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Invalid page or page_size
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Agent not found or page out of range
     post:
       operationId: create_agent_recovery_grant
-      description: Issue a new or recovery enrollment grant for an existing agent.
+      description: List an agent's enrollment grants, or issue a new or recovery grant
+        for it.
       summary: Issue a recovery enrollment grant for an agent's equipment
       parameters:
       - in: path
@@ -815,6 +887,60 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Enrollment conflict
+  /api/agents/{id}/enrollment-grants/{grant_id}/actions/revoke:
+    post:
+      operationId: revoke_agent_grant
+      description: 'Idempotent: revoking a revoked grant returns it unchanged. When
+        a pending agent is left with no usable grant it becomes revoked, freeing the
+        computer for a new enrollment.'
+      summary: Revoke an unredeemed enrollment grant
+      parameters:
+      - in: path
+        name: grant_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Agents (operator)
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentGrantResponse'
+          description: Grant revoked
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Caller is not a lab coordinator or admin
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Agent or grant not found
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          description: Grant was already redeemed
 components:
   schemas:
     AgentActivityData:
@@ -1103,6 +1229,14 @@ components:
           allOf:
           - $ref: '#/components/schemas/Choice'
           readOnly: true
+        health:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          nullable: true
+          readOnly: true
+          description: 'Liveness of an active agent from last_seen_at: online, delayed
+            or offline (also offline before the first heartbeat). Null while pending
+            and once revoked or decommissioned; read state then.'
         key_algorithm:
           allOf:
           - $ref: '#/components/schemas/Choice'
@@ -1144,6 +1278,7 @@ components:
       - enrolled_at
       - equipment
       - fingerprint
+      - health
       - id
       - key_algorithm
       - key_storage
@@ -1352,6 +1487,43 @@ components:
       - key_storage
       - proof
       - public_key
+    EnrollmentGrant:
+      type: object
+      description: Metadata of one enrollment grant; the clear grant is shown only
+        once, when issued.
+      properties:
+        id:
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+        used_at:
+          type: string
+          format: date-time
+          nullable: true
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/UserReference'
+          nullable: true
+      required:
+      - created_at
+      - created_by
+      - expires_at
+      - id
+      - revoked_at
+      - status
+      - used_at
     EnrollmentGrantIssued:
       type: object
       properties:
@@ -1376,6 +1548,25 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/EnrollmentGrantIssued'
+      required:
+      - data
+    EnrollmentGrantListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrollmentGrant'
+        meta:
+          $ref: '#/components/schemas/AgentListMeta'
+      required:
+      - data
+      - meta
+    EnrollmentGrantResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/EnrollmentGrant'
       required:
       - data
     ErrorBody:
@@ -1481,6 +1672,32 @@ components:
         booking_code:
           type: string
           maxLength: 255
+    UserReference:
+      type: object
+      description: 'REL-3 user relation ``{id, username, display_name}``.
+
+
+        Every user field (owner, creator, actor, auditor, borrower, ...) has this
+        one shape, so a client can show the
+
+        display name and still offer the username. ``display_name`` is the display
+        name, then the full name, then the
+
+        username. Duck-typed so any feature may use it without importing users.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        display_name:
+          type: string
+          readOnly: true
+      required:
+      - display_name
+      - id
+      - username
   securitySchemes:
     agentSignatureAuth:
       type: apiKey

@@ -12,6 +12,7 @@ from .views import (
     AgentDetailAPIView,
     AgentEnrollmentAPIView,
     AgentGrantCreateAPIView,
+    AgentGrantRevokeActionAPIView,
     AgentHeartbeatAPIView,
     AgentInfoAPIView,
     AgentListCreateAPIView,
@@ -23,6 +24,11 @@ urlpatterns = [
     path("api/agents", AgentListCreateAPIView.as_view(), name="agent-list-create"),
     path("api/agents/<int:pk>", AgentDetailAPIView.as_view(), name="agent-detail"),
     path("api/agents/<int:pk>/enrollment-grants", AgentGrantCreateAPIView.as_view(), name="agent-grant-create"),
+    path(
+        "api/agents/<int:pk>/enrollment-grants/<int:grant_id>/actions/revoke",
+        AgentGrantRevokeActionAPIView.as_view(),
+        name="agent-grant-revoke",
+    ),
     path("api/agents/<int:pk>/actions/revoke", AgentRevokeActionAPIView.as_view(), name="agent-action-revoke"),
     path(
         "api/agents/<int:pk>/actions/decommission",

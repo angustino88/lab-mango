@@ -24,6 +24,7 @@ from core.agents.application import (
     enroll_agent,
     issue_grant_for_agent,
     record_agent_heartbeat,
+    revoke_enrollment_grant,
     transition_agent_state,
 )
 from core.agents.contracts import CreateEnrollmentGrantInput
@@ -34,7 +35,8 @@ from core.agents.exceptions import (
     AgentRequestUnauthenticated,
     EnrollmentGrantInvalid,
 )
-from core.agents.models import AgentIdentity
+from core.agents.models import AgentIdentity, EnrollmentGrant
+from core.agents.queries import agent_grants, agent_list
 from core.common.api.correlation import get_request_id
 from core.common.api.pagination import ResultsSetPagination
 from core.labs.features.bench_bookings.public import (
@@ -81,6 +83,7 @@ from .serializers import (
     AgentHeartbeatResponseSerializer,
     AgentIdentitySerializer,
     AgentInfoResponseSerializer,
+    AgentListQuerySerializer,
     AgentListResponseSerializer,
     AgentSessionLogDataSerializer,
     AgentSessionLogReportSerializer,
@@ -89,6 +92,9 @@ from .serializers import (
     CreateGrantForAgentRequestSerializer,
     EnrollAgentRequestSerializer,
     EnrollmentGrantIssuedResponseSerializer,
+    EnrollmentGrantListResponseSerializer,
+    EnrollmentGrantResponseSerializer,
+    EnrollmentGrantSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -133,18 +139,54 @@ class AgentListCreateAPIView(APIView):
                 required=False,
                 description="Page size (1..100, default 25)",
             ),
+            OpenApiParameter(
+                "equipment",
+                str,
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Comma-separated computing equipment ids (1..100); returns only their agents.",
+            ),
+            OpenApiParameter(
+                "equipment_uid",
+                {"type": "string", "format": "uuid"},
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Computing equipment UID; returns only its agents.",
+            ),
+            OpenApiParameter(
+                "state",
+                str,
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Comma-separated agent states: pending, active, revoked, decommissioned.",
+            ),
         ],
         responses={
             200: OpenApiResponse(response=AgentListResponseSerializer, description="Page of agents"),
-            400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Invalid page or page_size"),
+            400: OpenApiResponse(
+                response=ErrorEnvelopeSerializer, description="Invalid page, page_size or filter value"
+            ),
             404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Page out of range"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
         },
         tags=["Agents (Operator)"],
     )
     def get(self, request: Request) -> Response:
+        query = AgentListQuerySerializer(data=request.query_params)
+        if not query.is_valid():
+            return _error_response(
+                status.HTTP_400_BAD_REQUEST,
+                "invalid_request",
+                "Invalid agent filter.",
+                request,
+                details=[{"field": k, "message": str(v[0])} for k, v in query.errors.items()],
+            )
         # COL-1: bounded page-number pagination; pk tie-breaker keeps pages stable.
-        agents = AgentIdentity.objects.select_related("equipment").order_by("-created", "-pk")
+        agents = agent_list(
+            equipment_ids=query.validated_data.get("equipment", ()),
+            equipment_uid=query.validated_data.get("equipment_uid"),
+            states=query.validated_data.get("state", ()),
+        )
         paginator = ResultsSetPagination()
         page = paginator.paginate_queryset(agents, request, view=self)
         return paginator.get_paginated_response(AgentIdentitySerializer(page, many=True).data)
@@ -220,10 +262,44 @@ class AgentDetailAPIView(APIView):
 
 
 class AgentGrantCreateAPIView(APIView):
-    """Issue a new or recovery enrollment grant for an existing agent."""
+    """List an agent's enrollment grants, or issue a new or recovery grant for it."""
 
     # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
     permission_classes = [IsLabCoordinator]
+
+    @extend_schema(
+        operation_id="list_agent_grants",
+        summary="List an agent's enrollment grants (metadata only)",
+        description="Newest first. The clear grant is returned only once, by the call that issues it.",
+        parameters=[
+            OpenApiParameter(
+                "page",
+                {"type": "integer", "minimum": 1},
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Page number (>= 1)",
+            ),
+            OpenApiParameter(
+                "page_size",
+                {"type": "integer", "minimum": 1, "maximum": 100},
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Page size (1..100, default 25)",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(response=EnrollmentGrantListResponseSerializer, description="Page of grants"),
+            400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Invalid page or page_size"),
+            401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
+            404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Agent not found or page out of range"),
+        },
+        tags=["Agents (Operator)"],
+    )
+    def get(self, request: Request, pk: int) -> Response:
+        agent = get_object_or_404(AgentIdentity, pk=pk)
+        paginator = ResultsSetPagination()
+        page = paginator.paginate_queryset(agent_grants(agent.pk), request, view=self)
+        return paginator.get_paginated_response(EnrollmentGrantSerializer(page, many=True).data)
 
     @extend_schema(
         operation_id="create_agent_recovery_grant",
@@ -267,6 +343,40 @@ class AgentGrantCreateAPIView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class AgentGrantRevokeActionAPIView(APIView):
+    """Revoke one unredeemed enrollment grant of an agent."""
+
+    # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
+    permission_classes = [IsLabCoordinator]
+
+    @extend_schema(
+        operation_id="revoke_agent_grant",
+        summary="Revoke an unredeemed enrollment grant",
+        description=(
+            "Idempotent: revoking a revoked grant returns it unchanged. When a pending agent is left "
+            "with no usable grant it becomes revoked, freeing the computer for a new enrollment."
+        ),
+        request=None,
+        responses={
+            200: OpenApiResponse(response=EnrollmentGrantResponseSerializer, description="Grant revoked"),
+            401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
+            403: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"),
+            404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Agent or grant not found"),
+            409: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Grant was already redeemed"),
+        },
+        tags=["Agents (Operator)"],
+    )
+    def post(self, request: Request, pk: int, grant_id: int) -> Response:
+        # A grant's agent never changes, so this ownership check cannot race the revoke below.
+        get_object_or_404(EnrollmentGrant, pk=grant_id, agent_id=pk)
+        try:
+            revoke_enrollment_grant(grant_id, actor=request.user)
+        except EnrollmentGrantInvalid as exc:
+            return _error_response(status.HTTP_409_CONFLICT, "grant_redeemed", str(exc), request)
+        grant = EnrollmentGrant.objects.select_related("creator").get(pk=grant_id)
+        return Response({"data": EnrollmentGrantSerializer(grant).data}, status=status.HTTP_200_OK)
 
 
 class AgentRevokeActionAPIView(APIView):

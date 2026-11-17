@@ -746,6 +746,14 @@ components:
           allOf:
           - $ref: '#/components/schemas/Choice'
           readOnly: true
+        health:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          nullable: true
+          readOnly: true
+          description: 'Liveness of an active agent from last_seen_at: online, delayed
+            or offline (also offline before the first heartbeat). Null while pending
+            and once revoked or decommissioned; read state then.'
         key_algorithm:
           allOf:
           - $ref: '#/components/schemas/Choice'
@@ -787,6 +795,7 @@ components:
       - enrolled_at
       - equipment
       - fingerprint
+      - health
       - id
       - key_algorithm
       - key_storage
@@ -4989,6 +4998,43 @@ components:
       - key_storage
       - proof
       - public_key
+    EnrollmentGrant:
+      type: object
+      description: Metadata of one enrollment grant; the clear grant is shown only
+        once, when issued.
+      properties:
+        id:
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+        used_at:
+          type: string
+          format: date-time
+          nullable: true
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/UserReference'
+          nullable: true
+      required:
+      - created_at
+      - created_by
+      - expires_at
+      - id
+      - revoked_at
+      - status
+      - used_at
     EnrollmentGrantIssued:
       type: object
       properties:
@@ -5013,6 +5059,25 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/EnrollmentGrantIssued'
+      required:
+      - data
+    EnrollmentGrantListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrollmentGrant'
+        meta:
+          $ref: '#/components/schemas/AgentListMeta'
+      required:
+      - data
+      - meta
+    EnrollmentGrantResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/EnrollmentGrant'
       required:
       - data
     EquipmentAssignment:
