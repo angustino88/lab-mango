@@ -4,6 +4,53 @@ info:
   version: 1.0.0
   description: LabMango Backend REST API
 paths:
+  /api/labs/device-connections:
+    get:
+      operationId: labs_device_connections_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: query
+        name: computer_id
+        schema:
+          type: integer
+          minimum: 1
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Monitoring
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceConnectionListConnectionsDeviceConnectionPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
+      summary: Get Device Connections
   /api/labs/monitoring-events:
     get:
       operationId: labs_monitoring_events_retrieve
@@ -244,6 +291,108 @@ components:
       required:
       - label
       - value
+    DeviceConnection:
+      type: object
+      properties:
+        id:
+          type: integer
+        computer:
+          $ref: '#/components/schemas/LabsUIDNamedReference'
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          nullable: true
+        interface:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
+        interface_name:
+          type: string
+        collector_key:
+          type: string
+        observation_key:
+          type: string
+        name:
+          type: string
+        serial_number:
+          type: string
+        state:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        match_status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        freshness:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        observed_at:
+          type: string
+          format: date-time
+        received_at:
+          type: string
+          format: date-time
+      required:
+      - collector_key
+      - computer
+      - equipment
+      - freshness
+      - id
+      - interface
+      - interface_name
+      - match_status
+      - name
+      - observation_key
+      - observed_at
+      - received_at
+      - serial_number
+      - state
+    DeviceConnectionListConnectionsDeviceConnectionPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/DeviceConnectionListConnectionsDeviceConnectionPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceConnection'
+      required:
+      - data
+      - meta
+    DeviceConnectionListConnectionsDeviceConnectionPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    DeviceConnectionListConnectionsDeviceConnectionPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/DeviceConnectionListConnectionsDeviceConnectionPagination'
+      required:
+      - pagination
     LabsNamedReference:
       type: object
       description: Compact `{id, name}` object representation of a related entity.
@@ -257,6 +406,25 @@ components:
       required:
       - id
       - name
+    LabsUIDNamedReference:
+      type: object
+      description: Compact `{id, uid, name}` object representation when target defines
+        a UUID.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - uid
     MonitoringEvent:
       type: object
       description: One event; agent identifiers end in ``_key`` (NAM-8), relations
@@ -373,8 +541,6 @@ components:
         event_id:
           type: string
           format: uuid
-        source:
-          type: string
         event_type:
           type: string
         category:
@@ -384,6 +550,8 @@ components:
         object_id:
           type: string
         details: {}
+        source:
+          type: string
     MonitoringEventDetailSerializersMonitoringEventDetailResponse:
       type: object
       description: Base serializer for successful API responses.

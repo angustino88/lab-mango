@@ -247,6 +247,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Request rate exceeded
+  /agent/device-observations/actions/report:
+    post:
+      operationId: agent_device_observations_actions_report_create
+      description: HTTP mapping for domain commands and selector projections.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Durable UUID batch key; reuse on retry with the same content.
+        required: true
+      tags:
+      - Agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceObservationReport'
+        required: true
+      security:
+      - observationSignatureAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDeviceObservationsObservationSerializersObservationAcknowledgmentDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Report Agent Device Observations
   /agent/enrollments:
     post:
       operationId: enroll_agent
@@ -428,6 +493,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Anonymous or user request rate exceeded
+  /agent/monitoring-policy:
+    get:
+      operationId: agent_monitoring_policy_retrieve
+      description: HTTP mapping for domain commands and selector projections.
+      tags:
+      - Agents
+      security:
+      - observationSignatureAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentMonitoringPolicyObservationSerializersMonitoringPolicyDetailResponse'
+          description: ''
+        '304':
+          description: Policy unchanged
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Agent Monitoring Policy
   /agent/session-logs:
     post:
       operationId: agent_record_session_log
@@ -1186,6 +1287,14 @@ components:
           $ref: '#/components/schemas/AgentIdentity'
       required:
       - data
+    AgentDeviceObservationsObservationSerializersObservationAcknowledgmentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ObservationAcknowledgment'
+      required:
+      - data
     AgentHeartbeatRequest:
       type: object
       properties:
@@ -1333,6 +1442,14 @@ components:
       required:
       - data
       - meta
+    AgentMonitoringPolicyObservationSerializersMonitoringPolicyDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/MonitoringPolicy'
+      required:
+      - data
     AgentSessionLogData:
       type: object
       properties:
@@ -1463,6 +1580,62 @@ components:
           maximum: 60
           minimum: 1
           default: 15
+    DeviceObservation:
+      type: object
+      properties:
+        observation_key:
+          type: string
+          maxLength: 255
+        interface_name:
+          type: string
+          maxLength: 255
+        state:
+          $ref: '#/components/schemas/StateEnum'
+        name:
+          type: string
+          default: ''
+          maxLength: 255
+        serial_number:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - interface_name
+      - observation_key
+      - state
+      additionalProperties: false
+    DeviceObservationReport:
+      type: object
+      properties:
+        generation_key:
+          type: string
+          format: uuid
+        collector_key:
+          type: string
+          maxLength: 32
+          pattern: ^[a-z][a-z0-9_-]{0,31}$
+        sequence:
+          type: integer
+          maximum: 9007199254740991
+          minimum: 1
+          format: int64
+        collected_at:
+          type: string
+          format: date-time
+        is_complete:
+          type: boolean
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceObservation'
+      required:
+      - collected_at
+      - collector_key
+      - devices
+      - generation_key
+      - is_complete
+      - sequence
+      additionalProperties: false
     EnrollAgentRequest:
       type: object
       properties:
@@ -1627,6 +1800,48 @@ components:
       required:
       - id
       - name
+    MonitoringPolicy:
+      type: object
+      properties:
+        generation_key:
+          type: string
+          format: uuid
+        max_devices:
+          type: integer
+        max_body_bytes:
+          type: integer
+        freshness_seconds:
+          type: integer
+        interface_names:
+          type: array
+          items:
+            type: string
+      required:
+      - freshness_seconds
+      - generation_key
+      - interface_names
+      - max_body_bytes
+      - max_devices
+    ObservationAcknowledgment:
+      type: object
+      properties:
+        batch_key:
+          type: string
+          format: uuid
+        sequence:
+          type: integer
+        disposition:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+      required:
+      - batch_key
+      - disposition
+      - received_at
+      - sequence
     PaginationMeta:
       type: object
       properties:
@@ -1672,6 +1887,41 @@ components:
         booking_code:
           type: string
           maxLength: 255
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    StateEnum:
+      enum:
+      - connected
+      - disconnected
+      type: string
+      description: '* `connected` - Connected
+
+        * `disconnected` - Disconnected'
     UserReference:
       type: object
       description: 'REL-3 user relation ``{id, username, display_name}``.
@@ -1716,6 +1966,15 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    observationSignatureAuth:
+      type: apiKey
+      in: header
+      name: X-Agent-Signature
+      description: 'Ed25519 signature (base64url, unpadded) by the enrolled agent
+        key over NUL-joined: ''labmango-agent-request-v1'', backend_id, agent_uid,
+        HTTP method, path, timestamp, nonce, hex SHA-256 of the raw body. Also required:
+        X-Agent-Id (agent_uid), X-Agent-Timestamp (unix seconds, within AGENT_REQUEST_MAX_SKEW_S)
+        and X-Agent-Nonce (base64url, at least 16 random bytes, single use).'
 servers:
 - url: ''
   description: Local Development Server

@@ -29,6 +29,10 @@ def _imports(path: Path) -> set[str]:
 
 def test_public_surface_exports_commands_queries_and_exceptions():
     assert _exports(FEATURE_ROOT / "public.py") == {
+        "observe_devices",
+        "InvalidateDeviceConnectionsInput",
+        "invalidate_device_connections",
+        "list_device_connections",
         "ComputerNotFound",
         "CreateMonitoringEventInput",
         "MonitoringEventConflict",

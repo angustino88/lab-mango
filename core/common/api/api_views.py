@@ -233,11 +233,7 @@ class AppAPIView(APIView):
             problem_name = "bad_request"
             if operation is not None:
                 problem_name = next(
-                    (
-                        name
-                        for name, contract in operation.responses.problems.items()
-                        if contract.status_code == 422
-                    ),
+                    (name for name, contract in operation.responses.problems.items() if contract.status_code == 422),
                     "bad_request",
                 )
             return None, self.respond_problem(problem_name, code="validation_failed", errors=field_errors)
@@ -257,11 +253,7 @@ class AppAPIView(APIView):
         response_name = "bad_request"
         if operation is not None:
             response_name = next(
-                (
-                    name
-                    for name, contract in operation.responses.problems.items()
-                    if contract.status_code == 422
-                ),
+                (name for name, contract in operation.responses.problems.items() if contract.status_code == 422),
                 "bad_request",
             )
         return None, self.respond_problem(
@@ -342,9 +334,13 @@ class AppAPIView(APIView):
 
 def _strict_input_errors(serializer: Any, data: Any) -> dict[str, Any]:
     """Reject undeclared/read-only keys and values with coercible JSON types."""
-    if isinstance(serializer, serializers.Field) and not isinstance(serializer, serializers.BaseSerializer) and not isinstance(
-        serializer,
-        (serializers.ListField, serializers.DictField),
+    if (
+        isinstance(serializer, serializers.Field)
+        and not isinstance(serializer, serializers.BaseSerializer)
+        and not isinstance(
+            serializer,
+            (serializers.ListField, serializers.DictField),
+        )
     ):
         expected = _expected_json_type(serializer)
         if expected is None or data is None:
@@ -457,6 +453,7 @@ class AppDetailAPIView(AppAPIView):
         serializer, error = self.validate_request(instance=instance, data=data, partial=partial)
         if error is not None:
             return None, error
+        assert serializer is not None
         return await sync_to_async(serializer.save)(), None
 
 
@@ -478,7 +475,9 @@ class AppListAPIView(AppAPIView):
                 return self.respond_problem(
                     "bad_request",
                     code="invalid_query",
-                    errors={key: [ErrorDetail("Unknown query parameter.", code="invalid_query")] for key in sorted(unknown)},
+                    errors={
+                        key: [ErrorDetail("Unknown query parameter.", code="invalid_query")] for key in sorted(unknown)
+                    },
                 )
             for key in allowed & set(self.request.query_params.keys()):
                 values = self.request.query_params.getlist(key)
@@ -504,7 +503,11 @@ class AppListAPIView(AppAPIView):
                     return self.respond_problem(
                         "bad_request",
                         code="invalid_query",
-                        errors={key: [ErrorDetail(f"Ensure this value is less than or equal to {maximum}.", code="max_value")]},
+                        errors={
+                            key: [
+                                ErrorDetail(f"Ensure this value is less than or equal to {maximum}.", code="max_value")
+                            ]
+                        },
                     )
 
         paginator = self.pagination_class()
@@ -528,5 +531,3 @@ class AppListAPIView(AppAPIView):
             return await sync_to_async(self.respond)(queryset)
 
         return await sync_to_async(self.list_response_sync)(queryset)
-
-

@@ -35,7 +35,11 @@ def _absolute_imports(path: Path) -> set[str]:
 
 def test_contracts_are_a_neutral_type_only_boundary():
     contracts = FEATURE_ROOT / "contracts.py"
-    assert set(_exports(contracts)) == {"InactiveEquipmentSnapshot", "ActiveEquipmentBenchAssignment"}
+    assert set(_exports(contracts)) == {
+        "InactiveEquipmentSnapshot",
+        "ActiveEquipmentBenchAssignment",
+        "DeviceEquipmentMatch",
+    }
     assert "ActiveEquipmentBenchAssignment" in _exports(contracts)
     assert not any("django" in name or "rest_framework" in name for name in _absolute_imports(contracts))
 
@@ -61,6 +65,9 @@ def test_business_errors_are_separate_from_neutral_contracts():
 def test_public_module_exports_supported_queries_and_commands():
     public = FEATURE_ROOT / "public.py"
     assert set(_exports(public)) == {
+        "lock_monitoring_computer",
+        "match_observed_devices",
+        "monitoring_interfaces",
         "ActiveEquipmentBenchAssignment",
         "AssignEquipmentInput",
         "bench_assignment_subquery",
@@ -253,5 +260,7 @@ def test_legacy_implementation_packages_are_removed():
             assert not list(path.rglob("*.py"))
         else:
             assert not path.exists()
-    packages = {path.name for path in (FEATURE_ROOT / "categories").iterdir() if path.is_dir() and path.name != "__pycache__"}
+    packages = {
+        path.name for path in (FEATURE_ROOT / "categories").iterdir() if path.is_dir() and path.name != "__pycache__"
+    }
     assert packages == CATEGORIES_WITH_CODE

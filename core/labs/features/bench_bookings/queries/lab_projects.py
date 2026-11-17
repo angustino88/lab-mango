@@ -28,12 +28,11 @@ def list_lab_project_options(
     """Return lab project selector options (ADR 002)."""
     cond = Q(active=True)
     if active_on:
-        cond &= (
-            (Q(starts_on__isnull=True) | Q(starts_on__lte=active_on))
-            & (Q(ends_on__isnull=True) | Q(ends_on__gte=active_on))
+        cond &= (Q(starts_on__isnull=True) | Q(starts_on__lte=active_on)) & (
+            Q(ends_on__isnull=True) | Q(ends_on__gte=active_on)
         )
     if q:
-        cond &= (Q(project_name__icontains=q) | Q(code__icontains=q))
+        cond &= Q(project_name__icontains=q) | Q(code__icontains=q)
 
     if include_ids:
         query_filter = cond | Q(pk__in=include_ids)
@@ -42,8 +41,7 @@ def list_lab_project_options(
 
     return (
         LabProject.objects.filter(query_filter)
-        .annotate(sku=F("code"), name=F("project_name"))
-        .values("id", "sku", "name")
+        .values("id", sku=F("code"), name=F("project_name"))
         .order_by("name", "id")
     )
 

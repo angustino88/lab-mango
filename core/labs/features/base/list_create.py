@@ -56,6 +56,7 @@ class ListCreateAPIView(AppListAPIView, FeatureAPIView):
             markcoroutinefunction(getattr(cls, method))
 
     def get_queryset(self, request: Request):
+        assert self.queryset_provider is not None
         return self.queryset_provider()
 
     def get_save_kwargs(self, request: Request) -> dict:

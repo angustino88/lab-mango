@@ -1,4 +1,5 @@
-﻿"""HTTP views for the monitoring event feature."""
+"""HTTP views for the monitoring event feature."""
+
 from __future__ import annotations
 
 from drf_api_contracts import OperationContract, ResponseContract
@@ -44,7 +45,9 @@ class MonitoringEventListCreateAPIView(AppListAPIView, CommandAPIView):
         bench_id = int(bench_param) if bench_param and bench_param.isdigit() else None
         return self._execute(
             lambda: public.list_monitoring_events(
-                computer_id=int(request.query_params["computer_id"]) if "computer_id" in request.query_params and request.query_params["computer_id"].isdigit() else None,
+                computer_id=int(request.query_params["computer_id"])
+                if "computer_id" in request.query_params and request.query_params["computer_id"].isdigit()
+                else None,
                 computer_sku=request.query_params.get("computer_sku"),
                 action=request.query_params.get("action") or request.query_params.get("event_type"),
                 subject_type=request.query_params.get("subject_type") or request.query_params.get("category"),
@@ -58,6 +61,7 @@ class MonitoringEventListCreateAPIView(AppListAPIView, CommandAPIView):
         serializer, error = self.validate_request(serializer_class=MonitoringEventCreateSerializer)
         if error is not None:
             return error
+        assert serializer is not None
         command = CreateMonitoringEventInput(**serializer.validated_data)
         return self._execute(
             lambda: public.create_monitoring_event(command, actor=self.acting_user),
@@ -93,7 +97,9 @@ class MonitoringEventExportAPIView(MonitoringBaseAPIView):
         bench_param = request.query_params.get("bench_id") or request.query_params.get("lab")
         bench_id = int(bench_param) if bench_param and bench_param.isdigit() else None
         qs = public.list_monitoring_events(
-            computer_id=int(request.query_params["computer_id"]) if "computer_id" in request.query_params and request.query_params["computer_id"].isdigit() else None,
+            computer_id=int(request.query_params["computer_id"])
+            if "computer_id" in request.query_params and request.query_params["computer_id"].isdigit()
+            else None,
             computer_sku=request.query_params.get("computer_sku"),
             action=request.query_params.get("action") or request.query_params.get("event_type"),
             subject_type=request.query_params.get("subject_type") or request.query_params.get("category"),

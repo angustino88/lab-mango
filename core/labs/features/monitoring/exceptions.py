@@ -1,7 +1,8 @@
 """Domain exceptions for the monitoring event feature."""
+
 from django.core.exceptions import ObjectDoesNotExist
 
-from core.common.domain.errors import Conflict, NotFound
+from core.common.domain.errors import Conflict, NotFound, ValidationFailed
 
 
 class ComputerNotFound(NotFound, ObjectDoesNotExist):
@@ -20,3 +21,15 @@ class MonitoringEventConflict(Conflict):
     """Raised when duplicate agent report is submitted."""
 
     code = "monitoring_event_conflict"
+
+
+class ObservationConflict(Conflict):
+    code = "observation_conflict"
+
+
+class ObservationKeyReuse(ValidationFailed):
+    code = "idempotency_key_reuse"
+
+
+class ObservationInProgress(Conflict):
+    code = "request_in_progress"

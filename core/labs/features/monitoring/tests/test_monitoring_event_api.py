@@ -1,4 +1,5 @@
 """Tests for MonitoringEvent HTTP API and query selectors."""
+
 from __future__ import annotations
 
 import uuid

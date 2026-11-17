@@ -12,6 +12,7 @@ from django.db.models import QuerySet
 from django.utils import timezone
 
 from core.agents.models import AgentIdentity, EnrollmentGrant
+from core.labs.features.equipment.public import monitoring_interfaces
 
 
 class AgentHealth(models.TextChoices):
@@ -82,3 +83,13 @@ def agent_list(
 def agent_grants(agent_id: int) -> QuerySet[EnrollmentGrant]:
     """Grant history of one agent, newest first; the clear grant is never stored."""
     return EnrollmentGrant.objects.filter(agent_id=agent_id).select_related("creator").order_by("-created", "-pk")
+
+
+def monitoring_policy(identity: AgentIdentity) -> dict[str, object]:
+    return {
+        "generation_key": identity.monitoring_generation_key,
+        "max_devices": 200,
+        "max_body_bytes": 262144,
+        "freshness_seconds": 120,
+        "interface_names": monitoring_interfaces(),
+    }

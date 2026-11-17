@@ -45,6 +45,7 @@ class ResultsSetPagination(PageNumberPagination):
         return super().get_page_size(request)
 
     def get_paginated_response(self, data):
+        assert self.page is not None
         return Response(
             {
                 "data": data,

@@ -1,5 +1,7 @@
 """Stable business exceptions for agent identity workflows."""
 
+from core.common.domain.errors import AuthenticationRequired
+
 
 class AgentEnrollmentConflict(Exception):
     """Raised when an equipment item already has an active or pending agent."""
@@ -17,7 +19,9 @@ class AgentProofInvalid(Exception):
     """Raised when the presented device key cannot prove possession."""
 
 
-class AgentRequestUnauthenticated(Exception):
+class AgentRequestUnauthenticated(AuthenticationRequired):
+    code = "unauthenticated"
+
     """Raised when a signed agent request cannot be attributed to an active identity.
 
     Callers must not reveal which check failed (unknown agent, revoked, bad signature, stale

@@ -58,7 +58,9 @@ class TicketActivity(models.Model):
         super().save(*args, **kwargs)
         if self.event_type not in self.PASSIVE_EVENTS:
             # Cheap UPDATE: no version bump, so it never causes optimistic-lock conflicts.
-            self._meta.get_field("ticket").related_model.objects.filter(pk=self.ticket_id).update(last_activity_at=self.occurred_at)
+            ticket_model = self._meta.get_field("ticket").related_model
+            assert isinstance(ticket_model, type) and issubclass(ticket_model, models.Model)
+            ticket_model._default_manager.filter(pk=self.ticket_id).update(last_activity_at=self.occurred_at)
 
     def delete(self, *args, **kwargs):
         raise ImmutableActivityError("Ticket activity logs cannot be deleted.")

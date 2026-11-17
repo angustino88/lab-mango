@@ -58,7 +58,8 @@ class SyncInfoResponseDataSerializer(serializers.Serializer):
 
 
 class SyncInfoResponseSerializer(serializers.Serializer):
-    data = SyncInfoResponseDataSerializer()
+    def get_fields(self):
+        return {"data": SyncInfoResponseDataSerializer(), **super().get_fields()}
 
 
 class SnapshotQuerySerializer(serializers.Serializer):
@@ -71,7 +72,9 @@ class SnapshotItemSerializer(serializers.Serializer):
     key = serializers.CharField(max_length=128)
     version = serializers.IntegerField(min_value=1)
     state = serializers.CharField()
-    data = serializers.DictField()
+
+    def get_fields(self):
+        return {**super().get_fields(), "data": serializers.DictField()}
 
 
 @protocol_payload(ROUTING_SYNC_SPEC)
@@ -85,7 +88,8 @@ class SnapshotResponseDataSerializer(serializers.Serializer):
 
 
 class SnapshotResponseSerializer(serializers.Serializer):
-    data = SnapshotResponseDataSerializer()
+    def get_fields(self):
+        return {"data": SnapshotResponseDataSerializer(), **super().get_fields()}
 
 
 class ChangesQuerySerializer(serializers.Serializer):
@@ -101,7 +105,9 @@ class ChangeItemSerializer(serializers.Serializer):
     op = serializers.ChoiceField(choices=["upsert", "delete"])
     key = serializers.CharField(max_length=128)
     state = serializers.CharField(required=False)
-    data = serializers.DictField(required=False)
+
+    def get_fields(self):
+        return {**super().get_fields(), "data": serializers.DictField(required=False)}
 
 
 @protocol_payload(ROUTING_SYNC_SPEC)
@@ -119,7 +125,8 @@ class ChangesResponseDataSerializer(serializers.Serializer):
 
 
 class ChangesResponseSerializer(serializers.Serializer):
-    data = ChangesResponseDataSerializer()
+    def get_fields(self):
+        return {"data": ChangesResponseDataSerializer(), **super().get_fields()}
 
 
 @protocol_payload(ROUTING_SYNC_SPEC)
@@ -132,4 +139,5 @@ class DigestResponseDataSerializer(serializers.Serializer):
 
 
 class DigestResponseSerializer(serializers.Serializer):
-    data = DigestResponseDataSerializer()
+    def get_fields(self):
+        return {"data": DigestResponseDataSerializer(), **super().get_fields()}

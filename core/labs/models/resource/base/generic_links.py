@@ -12,9 +12,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 
-def _model_of(resource) -> type[models.Model]:
+def _model_of(resource: models.Model | type[models.Model]) -> type[models.Model]:
     model = resource if isinstance(resource, type) else type(resource)
-    return model._meta.concrete_model
+    concrete_model = model._meta.concrete_model
+    assert concrete_model is not None
+    return concrete_model
 
 
 def resource_root_model(resource) -> type[models.Model]:

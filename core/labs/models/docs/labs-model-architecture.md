@@ -1,5 +1,21 @@
 # Labs model architecture
 
+## Device connection monitoring
+
+`DeviceObservationCursor` is unique per computer/collector and tracks enrollment
+generation, positive sequence and lifecycle validity. `DeviceObservationBatch`
+retains canonical content hash, receipt time and original outcome, with unique
+computer/generation/batch and computer/generation/collector/sequence constraints.
+`DeviceConnection` is unique per computer/collector/observation key and stores
+observed state, nullable inventory/interface matches and timestamps. Check
+constraints enforce state/match enums and positive sequences. These concrete models
+have no inheritance; their computer/equipment/interface relationships use PROTECT.
+Their feature owner is Monitoring; see its
+[connection contract](../../features/monitoring/docs/device-connections.md) for
+transactions, freshness, additive migrations and rollback. Existing `MonitoringEvent`
+retains the immutable snapshot evidence. The added Equipment serial index supports
+batch identity lookup without imposing serial uniqueness.
+
 > Status: Existing inventory coverage check is dated 2026-10-15; routing section additions were checked against source on 2026-11-07 · Authoritative owner: `core.labs` model packages
 
 ## Responsibility

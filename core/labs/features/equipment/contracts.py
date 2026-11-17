@@ -21,4 +21,11 @@ class ActiveEquipmentBenchAssignment:
     bench_id: int
 
 
-__all__ = ("ActiveEquipmentBenchAssignment", "InactiveEquipmentSnapshot")
+@dataclass(frozen=True, slots=True)
+class DeviceEquipmentMatch:
+    equipment_id: int | None
+    interface_id: int | None
+    status: str
+
+
+__all__ = ("ActiveEquipmentBenchAssignment", "InactiveEquipmentSnapshot", "DeviceEquipmentMatch")

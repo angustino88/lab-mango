@@ -1,9 +1,10 @@
+from typing import Self
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import QuerySet
 from model_utils.models import TimeStampedModel
 
 from core.common.models import UserStampedModel
@@ -11,7 +12,7 @@ from core.labs.models.resource.base.generic_links import resource_content_types
 
 
 class ResourceAuditQuerySet(models.QuerySet):
-    def for_resource(self, resource: models.Model) -> QuerySet["ResourceAudit"]:
+    def for_resource(self, resource: models.Model) -> Self:
         if resource.pk is None:
             return self.none()
         # New rows use the root content type (e.g. Equipment); rows written
@@ -93,8 +94,4 @@ class ResourceAudit(TimeStampedModel, UserStampedModel):
             raise ValidationError({"resource_object_id": "Resource must exist."})
 
     def __str__(self) -> str:
-        return (
-            f"{self.resource} - "
-            f"{self.get_result_display()} - "
-            f"{self.audited_at:%Y-%m-%d}"
-        )
+        return f"{self.resource} - {self.get_result_display()} - {self.audited_at:%Y-%m-%d}"

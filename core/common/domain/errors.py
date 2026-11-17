@@ -35,7 +35,7 @@ class DomainError(Exception):
     stable across a class rename.
     """
 
-    code: ClassVar[str] = "domain_error"
+    code: str = "domain_error"
     default_message: ClassVar[str] = "The request could not be completed."
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -124,3 +124,8 @@ __all__ = [
     "ValidationFailed",
     "VersionConflict",
 ]
+
+
+class AuthenticationRequired(DomainError):
+    code = "unauthenticated"
+    default_message = "Authentication is required."

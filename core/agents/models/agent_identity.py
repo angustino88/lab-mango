@@ -70,6 +70,12 @@ class AgentIdentity(TimeStampedModel, UserStampedModel):
             models.Index(fields=("state", "last_seen_at"), name="agent_state_seen_idx"),
         ]
 
+    @property
+    def monitoring_generation_key(self) -> uuid.UUID:
+        """Credential fence changes on every enrollment, including same-key recovery."""
+        enrolled = self.enrolled_at.isoformat() if self.enrolled_at else ""
+        return uuid.uuid5(self.agent_uid, f"{self.public_key_sha256}:{enrolled}")
+
     def activate(self, *, public_key: str, public_key_sha256: str, key_storage: str, agent_version: str) -> None:
         self.public_key = public_key
         self.public_key_sha256 = public_key_sha256

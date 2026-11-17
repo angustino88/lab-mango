@@ -364,6 +364,114 @@
         }
       }
     },
+    "/agent/device-observations/actions/report": {
+      "post": {
+        "operationId": "agent_device_observations_actions_report_create",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Durable UUID batch key; reuse on retry with the same content.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Agents"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceObservationReport"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "observationSignatureAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDeviceObservationsObservationSerializersObservationAcknowledgmentDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Report Agent Device Observations"
+      }
+    },
     "/agent/enrollments": {
       "post": {
         "operationId": "enroll_agent",
@@ -656,6 +764,66 @@
             "description": "Anonymous or user request rate exceeded"
           }
         }
+      }
+    },
+    "/agent/monitoring-policy": {
+      "get": {
+        "operationId": "agent_monitoring_policy_retrieve",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "tags": [
+          "Agents"
+        ],
+        "security": [
+          {
+            "observationSignatureAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentMonitoringPolicyObservationSerializersMonitoringPolicyDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "304": {
+            "description": "Policy unchanged"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Agent Monitoring Policy"
       }
     },
     "/agent/session-logs": {
@@ -9052,6 +9220,84 @@
         },
         "x-owner": "equipment",
         "summary": "Get Departments Options"
+      }
+    },
+    "/api/labs/device-connections": {
+      "get": {
+        "operationId": "labs_device_connections_retrieve",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "computer_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Monitoring"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceConnectionListConnectionsDeviceConnectionPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
+          }
+        },
+        "summary": "Get Device Connections"
       }
     },
     "/api/labs/downtimes": {
@@ -38866,6 +39112,18 @@
           "data"
         ]
       },
+      "AgentDeviceObservationsObservationSerializersObservationAcknowledgmentDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ObservationAcknowledgment"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "AgentHeartbeatRequest": {
         "type": "object",
         "properties": {
@@ -39075,6 +39333,18 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "AgentMonitoringPolicyObservationSerializersMonitoringPolicyDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MonitoringPolicy"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "AgentSessionLogData": {
@@ -44106,6 +44376,232 @@
         "required": [
           "pagination"
         ]
+      },
+      "DeviceConnection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "computer": {
+            "$ref": "#/components/schemas/LabsUIDNamedReference"
+          },
+          "equipment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "nullable": true
+          },
+          "interface": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true
+          },
+          "interface_name": {
+            "type": "string"
+          },
+          "collector_key": {
+            "type": "string"
+          },
+          "observation_key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serial_number": {
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "match_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "freshness": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "collector_key",
+          "computer",
+          "equipment",
+          "freshness",
+          "id",
+          "interface",
+          "interface_name",
+          "match_status",
+          "name",
+          "observation_key",
+          "observed_at",
+          "received_at",
+          "serial_number",
+          "state"
+        ]
+      },
+      "DeviceConnectionListConnectionsDeviceConnectionPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/DeviceConnectionListConnectionsDeviceConnectionPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceConnection"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "DeviceConnectionListConnectionsDeviceConnectionPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "DeviceConnectionListConnectionsDeviceConnectionPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/DeviceConnectionListConnectionsDeviceConnectionPagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "DeviceObservation": {
+        "type": "object",
+        "properties": {
+          "observation_key": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "interface_name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "state": {
+            "$ref": "#/components/schemas/StateEnum"
+          },
+          "name": {
+            "type": "string",
+            "default": "",
+            "maxLength": 255
+          },
+          "serial_number": {
+            "type": "string",
+            "default": "",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "interface_name",
+          "observation_key",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "DeviceObservationReport": {
+        "type": "object",
+        "properties": {
+          "generation_key": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "collector_key": {
+            "type": "string",
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9_-]{0,31}$"
+          },
+          "sequence": {
+            "type": "integer",
+            "maximum": 9007199254740991,
+            "minimum": 1,
+            "format": "int64"
+          },
+          "collected_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "is_complete": {
+            "type": "boolean"
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceObservation"
+            }
+          }
+        },
+        "required": [
+          "collected_at",
+          "collector_key",
+          "devices",
+          "generation_key",
+          "is_complete",
+          "sequence"
+        ],
+        "additionalProperties": false
       },
       "DigestResponse": {
         "type": "object",
@@ -54819,9 +55315,6 @@
             "type": "string",
             "format": "uuid"
           },
-          "source": {
-            "type": "string"
-          },
           "event_type": {
             "type": "string"
           },
@@ -54834,7 +55327,10 @@
           "object_id": {
             "type": "string"
           },
-          "details": {}
+          "details": {},
+          "source": {
+            "type": "string"
+          }
         }
       },
       "MonitoringEventDetailSerializersMonitoringEventDetailResponse": {
@@ -54936,6 +55432,37 @@
         },
         "required": [
           "data"
+        ]
+      },
+      "MonitoringPolicy": {
+        "type": "object",
+        "properties": {
+          "generation_key": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "max_devices": {
+            "type": "integer"
+          },
+          "max_body_bytes": {
+            "type": "integer"
+          },
+          "freshness_seconds": {
+            "type": "integer"
+          },
+          "interface_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "freshness_seconds",
+          "generation_key",
+          "interface_names",
+          "max_body_bytes",
+          "max_devices"
         ]
       },
       "MonitoringSubject": {
@@ -55240,6 +55767,36 @@
       "NullEnum": {
         "enum": [
           null
+        ]
+      },
+      "ObservationAcknowledgment": {
+        "type": "object",
+        "properties": {
+          "batch_key": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "disposition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "batch_key",
+          "disposition",
+          "received_at",
+          "sequence"
         ]
       },
       "OpEnum": {
@@ -60889,6 +61446,14 @@
           "pagination"
         ]
       },
+      "StateEnum": {
+        "enum": [
+          "connected",
+          "disconnected"
+        ],
+        "type": "string",
+        "description": "* `connected` - Connected\n* `disconnected` - Disconnected"
+      },
       "Station": {
         "type": "object",
         "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
@@ -65259,6 +65824,12 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      },
+      "observationSignatureAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Agent-Signature",
+        "description": "Ed25519 signature (base64url, unpadded) by the enrolled agent key over NUL-joined: 'labmango-agent-request-v1', backend_id, agent_uid, HTTP method, path, timestamp, nonce, hex SHA-256 of the raw body. Also required: X-Agent-Id (agent_uid), X-Agent-Timestamp (unix seconds, within AGENT_REQUEST_MAX_SKEW_S) and X-Agent-Nonce (base64url, at least 16 random bytes, single use)."
       },
       "routingSyncBearerAuth": {
         "type": "http",

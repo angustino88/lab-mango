@@ -1,4 +1,5 @@
 """Write commands for the monitoring event feature."""
+
 from __future__ import annotations
 
 import uuid
@@ -43,19 +44,14 @@ def create_monitoring_event(
         computer = computers.filter(pk=command.computer_id).first()
     elif command.computer_sku:
         computer = (
-            computers.filter(sku=command.computer_sku).first()
-            or computers.filter(name=command.computer_sku).first()
+            computers.filter(sku=command.computer_sku).first() or computers.filter(name=command.computer_sku).first()
         )
 
     if not computer:
         raise ComputerNotFound("The specified computing equipment does not exist.")
 
     occurred_at = command.occurred_at or timezone.now()
-    action = (
-        command.action
-        if command.action in MonitoringEventAction.values
-        else MonitoringEventAction.CUSTOM
-    )
+    action = command.action if command.action in MonitoringEventAction.values else MonitoringEventAction.CUSTOM
     action_name = command.action_name or (command.action if action == MonitoringEventAction.CUSTOM else "")
     event_id = command.event_id or uuid.uuid4()
 

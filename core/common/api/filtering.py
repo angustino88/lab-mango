@@ -164,7 +164,7 @@ class FilterSpec:
             fields[item.name] = (
                 CSVField(child, required=False, help_text="Comma-separated values; OR within this filter.")
                 if item.multiple
-                else child.__class__(**{**child._kwargs, "required": False, "default": serializers.empty})
+                else child.__class__(**{**getattr(child, "_kwargs"), "required": False, "default": serializers.empty})
             )
         if self.search_fields:
             fields["q"] = serializers.CharField(required=False, min_length=1, max_length=200)

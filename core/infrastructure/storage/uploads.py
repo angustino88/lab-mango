@@ -45,6 +45,10 @@ def _normalize_relative_folder(folder: str) -> str:
 class ResourceImageUploadPath:
     """Create unique and storage-safe image paths for resource models."""
 
+    def __init__(self, legacy_folder: str | None = None) -> None:
+        # Retained in Django deconstruction; path selection remains resource-owned.
+        pass
+
     def __call__(self, resource: _ResourceLike, original_filename: str) -> str:
         return posixpath.join(
             self._resource_folder(resource),
@@ -66,9 +70,7 @@ class ResourceImageUploadPath:
     def _build_filename(self, resource: _ResourceLike, original_filename: str) -> str:
         username = self._username(resource)
         identifier = _safe_component(
-            getattr(resource, "sku", None)
-            or getattr(resource, "pk", None)
-            or getattr(resource, "id", None),
+            getattr(resource, "sku", None) or getattr(resource, "pk", None) or getattr(resource, "id", None),
             DEFAULT_IDENTIFIER,
         )
         timestamp = timezone.now().strftime("%Y%m%d%H%M%S%f")
@@ -78,9 +80,7 @@ class ResourceImageUploadPath:
 
     @staticmethod
     def _username(resource: _ResourceLike) -> str:
-        user = getattr(resource, "last_modified_by", None) or getattr(
-            resource, "creator", None
-        )
+        user = getattr(resource, "last_modified_by", None) or getattr(resource, "creator", None)
         return _safe_component(getattr(user, "username", None), DEFAULT_USERNAME)
 
     @staticmethod
@@ -110,4 +110,3 @@ class FolderUploadPath:
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.folder!r})"
-
