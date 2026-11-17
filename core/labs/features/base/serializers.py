@@ -95,9 +95,7 @@ class ChoiceReferenceSerializer(serializers.Serializer):
     """Standard `{value, label}` representation for enum and lifecycle choices."""
 
     value = serializers.CharField(read_only=True)
-
-    def get_fields(self):
-        return {**super().get_fields(), "label": serializers.CharField(read_only=True)}
+    label = serializers.CharField(read_only=True)
 
     class Meta:
         ref_name = "LabsChoiceReference"
@@ -178,7 +176,7 @@ def _normalized(value):
     return value.strip() if isinstance(value, str) else value
 
 
-class ResourceWriteSerializerMixin(serializers.Serializer):
+class ResourceWriteSerializerMixin:
     """Reject unsupported keys and return a stable error when SKU is supplied on update."""
 
     immutable_update_fields = ("sku",)

@@ -27,7 +27,6 @@ class EquipmentLifecycleState(models.TextChoices):
 # Whether an in-service unit works: computed from ResourceDowntime windows, never stored (RS2).
 EquipmentCondition = ResourceCondition
 
-
 class EquipmentDisplayStatus(models.TextChoices):
     """One read-only label computed from the stored facts; never written (redesign, display status)."""
 
@@ -171,7 +170,6 @@ class Equipment(ResourceModel):
         if not self.product_model_id:
             return
         model = self.product_model
-        assert model is not None
         if self.manufacturer_id is None:
             self.manufacturer_id = model.manufacturer_id
         if self.type_id is None:
@@ -184,12 +182,10 @@ class Equipment(ResourceModel):
     def clean(self) -> None:
         super().clean()
         errors = {}
-        equipment_type = self.type
-        if self.type_id and self.kind_id and equipment_type is not None and equipment_type.kind_id != self.kind_id:
+        if self.type_id and self.kind_id and self.type.kind_id != self.kind_id:
             errors["type"] = "The equipment type must belong to the selected kind."
         if self.product_model_id:
             model = self.product_model
-            assert model is not None
             if self.manufacturer_id and model.manufacturer_id != self.manufacturer_id:
                 errors["product_model"] = "The product model belongs to a different manufacturer."
             elif self.type_id and model.equipment_type_id != self.type_id:
@@ -249,8 +245,7 @@ class Equipment(ResourceModel):
         verbose_name_plural = "equipment"
         constraints = [
             models.UniqueConstraint(
-                fields=("sku",),
-                condition=models.Q(deleted_at__isnull=True),
+                fields=("sku",), condition=models.Q(deleted_at__isnull=True),
                 name="equipment_active_sku_unique",
             ),
             models.CheckConstraint(
@@ -294,9 +289,7 @@ class EquipmentEvent(models.Model):
         app_label = "labs"
         ordering = ("occurred_at", "id")
         constraints = [
-            models.CheckConstraint(
-                condition=~models.Q(from_value=models.F("to_value")), name="equipment_event_changes"
-            ),
+            models.CheckConstraint(condition=~models.Q(from_value=models.F("to_value")), name="equipment_event_changes"),
             models.CheckConstraint(
                 condition=models.Q(axis="lifecycle", to_value__in=EquipmentLifecycleState.values),
                 name="equipment_event_value_valid",

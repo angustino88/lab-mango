@@ -8,9 +8,7 @@ from rest_framework import serializers
 
 class SummaryStatusSerializer(serializers.Serializer):
     value = serializers.CharField()
-
-    def get_fields(self):
-        return {**super().get_fields(), "label": serializers.CharField()}
+    label = serializers.CharField()
 
 
 class SummaryStatusCountSerializer(serializers.Serializer):
@@ -113,9 +111,7 @@ class ChoiceSerializer(serializers.Serializer):
     """ENU-1 ``{value, label}``."""
 
     value = serializers.CharField(read_only=True)
-
-    def get_fields(self):
-        return {**super().get_fields(), "label": serializers.CharField(read_only=True)}
+    label = serializers.CharField(read_only=True)
 
     class Meta:
         ref_name = "Choice"

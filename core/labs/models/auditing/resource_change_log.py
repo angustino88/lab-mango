@@ -1,8 +1,7 @@
-from typing import Self
-
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import QuerySet
 from model_utils.models import TimeStampedModel
 
 from core.common.models import UserStampedModel
@@ -10,7 +9,7 @@ from core.labs.models.resource.base.generic_links import resource_content_types
 
 
 class ResourceChangeLogQuerySet(models.QuerySet):
-    def for_resource(self, resource: models.Model) -> Self:
+    def for_resource(self, resource: models.Model) -> QuerySet["ResourceChangeLog"]:
         if resource.pk is None:
             return self.none()
         # New rows use the root content type (e.g. Equipment); rows written
@@ -68,7 +67,8 @@ class ResourceChangeLog(TimeStampedModel, UserStampedModel):
 
     def __str__(self) -> str:
         target = self.resource or (
-            f"{self.resource_content_type.app_label}.{self.resource_content_type.model}:{self.resource_object_id}"
+            f"{self.resource_content_type.app_label}."
+            f"{self.resource_content_type.model}:{self.resource_object_id}"
         )
         field = f".{self.field_name}" if self.field_name else ""
         return f"{target}{field} - {self.get_action_display()}"

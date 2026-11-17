@@ -49,8 +49,7 @@ class CatalogOptionSerializer(serializers.Serializer):
 class CatalogOptionListSerializer(serializers.Serializer):
     """Enveloped list of selector options."""
 
-    def get_fields(self):
-        return {"data": CatalogOptionSerializer(many=True, read_only=True), **super().get_fields()}
+    data = CatalogOptionSerializer(many=True, read_only=True)
 
 
 class IncludeIDsField(CSVField):
@@ -141,7 +140,7 @@ class OptionsAPIView(FeatureAPIView):
         if cls.owner:
             schema_kwargs["extensions"] = {"x-owner": cls.owner}
         if getattr(cls, "schema_tags", None):
-            schema_kwargs["tags"] = list(cls.schema_tags or ())
+            schema_kwargs["tags"] = list(cls.schema_tags)
 
         extend_schema(**schema_kwargs)(cls)
 

@@ -103,12 +103,14 @@ class ResourceModel(TimeStampedModel, UserStampedModel, TimestampedSoftDeleteMix
         if not self.sku:
             raise ValidationError({"sku": "SKU cannot be blank."})
         if self.group_id:
-            group = self.group
-            assert group is not None
-            group_department_id = group.department_id
+            group_department_id = self.group.department_id
             if self.department_id is None and group_department_id:
                 self.department_id = group_department_id
-            elif group_department_id and self.department_id and group_department_id != self.department_id:
+            elif (
+                group_department_id
+                and self.department_id
+                and group_department_id != self.department_id
+            ):
                 raise ValidationError({"group": "The group belongs to a different department."})
 
     def save(self, *args, **kwargs):
@@ -117,7 +119,9 @@ class ResourceModel(TimeStampedModel, UserStampedModel, TimestampedSoftDeleteMix
         self.remark = self.remark.strip()
         # The database enforces relational and constraint integrity. Avoid
         # issuing one lookup per FK plus duplicate/constraint queries on saves.
-        excluded_relations = [field.name for field in self._meta.concrete_fields if field.is_relation]
+        excluded_relations = [
+            field.name for field in self._meta.concrete_fields if field.is_relation
+        ]
         self.full_clean(
             exclude=excluded_relations,
             validate_unique=False,

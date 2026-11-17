@@ -27,13 +27,8 @@ def update_equipment(command: UpdateEquipmentInput, *, actor):
     category creates its profile; moving a unit with a profile out of one is refused, so agents,
     activity and session logs never point at a unit that is no longer computing equipment.
     """
-    instance = (
-        Equipment.objects.select_for_update(of=("self",))
-        .select_related("kind__category")
-        .get(
-            pk=command.equipment_id,
-            deleted_at__isnull=True,
-        )
+    instance = Equipment.objects.select_for_update(of=("self",)).select_related("kind__category").get(
+        pk=command.equipment_id, deleted_at__isnull=True,
     )
     values = dict(command.fields)
     computing = values.pop("computing", None)
@@ -73,7 +68,7 @@ def _validate_fields(values: dict[str, Any]) -> None:
             field = Equipment._meta.get_field(name)
         except FieldDoesNotExist as error:
             raise ValidationError({name: "Unknown equipment field."}) from error
-        if field.auto_created or field.one_to_many or getattr(field, "primary_key", False):
+        if field.primary_key or field.auto_created or field.one_to_many:
             raise ValidationError({name: "This equipment field cannot be written directly."})
         if name in {"creator", "last_modified_by", "deleted_at", "uid", "lifecycle_state", "condition"}:
             raise ValidationError({name: "This equipment field is managed by the application."})

@@ -75,7 +75,6 @@ class RetrieveUpdateDeleteAPIView(AppDetailAPIView, FeatureAPIView):
             markcoroutinefunction(getattr(cls, method))
 
     def get_queryset(self):
-        assert self.queryset_provider is not None
         return self.queryset_provider()
 
     def get_object_queryset(self):
@@ -130,7 +129,7 @@ class RetrieveUpdateDeleteAPIView(AppDetailAPIView, FeatureAPIView):
                 serializer, error = self.validate_request(
                     instance=instance,
                     data=request.data,
-                    partial=(request.method or "").upper() == "PATCH",
+                    partial=request.method.upper() == "PATCH",
                 )
                 if error is not None:
                     return error

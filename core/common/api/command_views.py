@@ -81,7 +81,7 @@ class CommandAPIView(FeatureAPIView):
                 return Response(status=204)
             if project is True:
                 result = self.project_result(result)
-            elif callable(project):
+            elif project is not None:
                 result = project(result)
             if isinstance(result, Response):
                 # The projection already produced the HTTP response (status, headers);
@@ -107,7 +107,6 @@ class CommandAPIView(FeatureAPIView):
         serializer, error = self.validate_request(partial=partial)
         if error is not None:
             return error
-        assert serializer is not None
         return self._execute(
             lambda: function(actor=self.request.user, **(lookup or {}), **serializer.validated_data),
             project=project,

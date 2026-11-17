@@ -1,11 +1,9 @@
-from typing import Self
-
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import F, Q, QuerySet
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 
@@ -18,7 +16,7 @@ from core.labs.models.resource.base.generic_links import (
 
 
 class ResourceServiceRecordQuerySet(models.QuerySet):
-    def for_resource(self, resource: models.Model) -> Self:
+    def for_resource(self, resource: models.Model) -> QuerySet["ResourceServiceRecord"]:
         if resource.pk is None:
             return self.none()
         return self.filter(
@@ -26,7 +24,7 @@ class ResourceServiceRecordQuerySet(models.QuerySet):
             resource_object_id=str(resource.pk),
         )
 
-    def due_before(self, moment) -> Self:
+    def due_before(self, moment) -> QuerySet["ResourceServiceRecord"]:
         return self.filter(next_due_at__isnull=False, next_due_at__lt=moment)
 
 

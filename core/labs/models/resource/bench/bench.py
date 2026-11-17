@@ -73,33 +73,31 @@ class Bench(ResourceModel):
         if self.station_slot_id is None:
             return
         if self.setup_location_id is None:
-            raise ValidationError(
-                {"station_slot": "A bench must have a setup location before assigning a station slot."}
-            )
-        slot = self.station_slot
-        assert slot is not None
-        if slot.station_id != self.setup_location_id:
-            raise ValidationError({"station_slot": "The assigned slot must belong to the bench setup location."})
-        if slot.status != StationSlotStatus.IN_SERVICE:
+            raise ValidationError({
+                "station_slot": "A bench must have a setup location before assigning a station slot."
+            })
+        if self.station_slot.station_id != self.setup_location_id:
+            raise ValidationError({
+                "station_slot": "The assigned slot must belong to the bench setup location."
+            })
+        if self.station_slot.status != StationSlotStatus.IN_SERVICE:
             raise ValidationError({"station_slot": "The assigned station slot is not available for bench placement."})
         if (
             self.type_id
-            and slot.compatible_bench_types.exists()
-            and not slot.compatible_bench_types.filter(pk=self.type_id).exists()
+            and self.station_slot.compatible_bench_types.exists()
+            and not self.station_slot.compatible_bench_types.filter(pk=self.type_id).exists()
         ):
-            raise ValidationError(
-                {"station_slot": "The assigned station slot is not compatible with this bench type."}
-            )
+            raise ValidationError({"station_slot": "The assigned station slot is not compatible with this bench type."})
         if (
             self.requested_power_w is not None
-            and slot.power_capacity_w is not None
-            and self.requested_power_w > slot.power_capacity_w
+            and self.station_slot.power_capacity_w is not None
+            and self.requested_power_w > self.station_slot.power_capacity_w
         ):
             raise ValidationError({"requested_power_w": "Requested power exceeds station slot capacity."})
         if (
             self.requested_load_kg is not None
-            and slot.max_load_kg is not None
-            and self.requested_load_kg > slot.max_load_kg
+            and self.station_slot.max_load_kg is not None
+            and self.requested_load_kg > self.station_slot.max_load_kg
         ):
             raise ValidationError({"requested_load_kg": "Requested load exceeds station slot capacity."})
 

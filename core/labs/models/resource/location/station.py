@@ -102,15 +102,18 @@ class Station(ResourceModel, PhysicalLocationNode):
         """Validate placement before writes and during explicit model validation."""
         super().clean()
         self.safety_classification = self.safety_classification.strip()
-        if self.power_capacity_w is not None and self.power_reserved_w > self.power_capacity_w:
-            raise ValidationError({"power_reserved_w": "Reserved power must not exceed station power capacity."})
+        if (
+            self.power_capacity_w is not None
+            and self.power_reserved_w > self.power_capacity_w
+        ):
+            raise ValidationError({
+                "power_reserved_w": "Reserved power must not exceed station power capacity."
+            })
         if self.slot_id is None:
             return
         if self.room_id is None:
             raise ValidationError({"slot": "A station must have a room before assigning a slot."})
-        slot = self.slot
-        assert slot is not None
-        if slot.room_id != self.room_id:
+        if self.slot.room_id != self.room_id:
             raise ValidationError({"slot": "The assigned slot must belong to the station's room."})
 
     @property
@@ -129,8 +132,7 @@ class Station(ResourceModel, PhysicalLocationNode):
 
     class Meta:
         app_label = "labs"
-        constraints = [
-            *ResourceModel.Meta.constraints,
+        constraints = [*ResourceModel.Meta.constraints,
             models.CheckConstraint(
                 condition=models.Q(lifecycle_status__in=ResourceLifecycleStatus.values),
                 name="station_lifecycle_valid",

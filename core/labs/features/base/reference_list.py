@@ -26,7 +26,6 @@ class ReferenceDataListAPIView(AppListAPIView, FeatureAPIView):
         )
 
     def get_queryset(self):
-        assert self.model is not None
         queryset = self.model.objects.all()
         field_names = {field.name for field in self.model._meta.get_fields()}
         if "deleted_at" in field_names:

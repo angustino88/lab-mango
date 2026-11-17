@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import ClassVar
+from typing import ClassVar, Self
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -38,9 +38,11 @@ class PhysicalLocationNode(models.Model):
     class Meta:
         abstract = True
 
-    def get_location_parent(self) -> PhysicalLocationNode | None:
+    def get_location_parent(self) -> Self | None:
         """Return the parent location, or None for a root location."""
-        raise NotImplementedError(f"{type(self).__name__} must implement get_location_parent().")
+        raise NotImplementedError(
+            f"{type(self).__name__} must implement get_location_parent()."
+        )
 
     def get_location_segment(self) -> str | None:
         """Return this node's own piece of the path, or None if it has none."""
@@ -95,6 +97,4 @@ class PhysicalLocationNode(models.Model):
         """Identity key that survives re-fetching the same row as a new instance."""
         if self.pk is None:
             return (self._meta.label, id(self))
-        concrete_model = self._meta.concrete_model
-        assert concrete_model is not None
-        return (concrete_model._meta.label, self.pk)
+        return (self._meta.concrete_model._meta.label, self.pk)

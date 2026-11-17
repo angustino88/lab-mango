@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import NoReturn
-
 from django.db import IntegrityError, transaction
 
 from core.routing.public import publish_user_identity
@@ -169,7 +167,7 @@ def _routing_key(identity: EntraIdentity) -> str:
     return f"entra:{str(identity.tenant_id).lower()}:{str(identity.object_id).lower()}"
 
 
-def _raise_identity_conflict(error: IntegrityError) -> NoReturn:
+def _raise_identity_conflict(error: IntegrityError) -> None:
     cause = error.__cause__ or error
     constraint_name = getattr(getattr(cause, "diag", None), "constraint_name", None)
     if constraint_name in {"users_entra_unique_subject", "users_entraidentity_user_id_key"}:

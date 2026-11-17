@@ -260,7 +260,5 @@ def test_legacy_implementation_packages_are_removed():
             assert not list(path.rglob("*.py"))
         else:
             assert not path.exists()
-    packages = {
-        path.name for path in (FEATURE_ROOT / "categories").iterdir() if path.is_dir() and path.name != "__pycache__"
-    }
+    packages = {path.name for path in (FEATURE_ROOT / "categories").iterdir() if path.is_dir() and path.name != "__pycache__"}
     assert packages == CATEGORIES_WITH_CODE

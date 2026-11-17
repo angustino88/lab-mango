@@ -1,6 +1,5 @@
 """Read-only selectors for equipment resources."""
 
-from collections.abc import Mapping
 from typing import Any
 
 from django.contrib.auth import get_user_model
@@ -161,7 +160,7 @@ def with_upcoming_reservations(queryset: QuerySet) -> QuerySet:
 
 def list_equipment(
     *,
-    category: str | int | None = None,
+    category: str | None = None,
     kind: str | int | None = None,
     equipment_type: int | None = None,
     manufacturer: int | None = None,
@@ -169,7 +168,7 @@ def list_equipment(
     assigned: bool | None = None,
     search: str | None = None,
 ) -> QuerySet[Equipment]:
-    queryset: QuerySet[Equipment] = (
+    queryset = (
         Equipment.objects.filter(deleted_at__isnull=True)
         .select_related(
             "kind",
@@ -186,7 +185,7 @@ def list_equipment(
     queryset = with_upcoming_reservations(with_active_loan(with_active_placement(with_equipment_info(queryset))))
 
     if category:
-        queryset = queryset.filter(kind__category_id=int(category))
+        queryset = queryset.filter(kind__category_id=category)
     if kind:
         kind_filter = Q(kind_id=kind) if isinstance(kind, int) or str(kind).isdigit() else Q(kind__key=kind)
         queryset = queryset.filter(kind_filter)
@@ -195,7 +194,7 @@ def list_equipment(
     if manufacturer:
         queryset = queryset.filter(manufacturer_id=manufacturer)
     if status:
-        queryset = queryset.filter(Q(display_status=status))
+        queryset = queryset.filter(display_status=status)
     if assigned is not None:
         active_assignment = EquipmentAssignment.objects.filter(
             equipment_id=OuterRef("pk"),
@@ -223,7 +222,7 @@ def get_equipment(equipment_id: int) -> Equipment:
     return equipment_queryset().get(id=equipment_id)
 
 
-def get_equipment_for_mapping(*, equipment_id: int) -> Mapping[str, object] | None:
+def get_equipment_for_mapping(*, equipment_id: int) -> Equipment | None:
     """Return only an active equipment row for the cross-resource mapping read boundary."""
     return (
         Equipment.objects.filter(pk=equipment_id, deleted_at__isnull=True)
@@ -349,9 +348,7 @@ def bench_computers(*, bench_ids) -> dict[int, list[dict[str, Any]]]:
             equipment__kind__category__monitored=True,
         )
         .order_by("bench_id", "position", "equipment__name", "equipment_id")
-        .values(
-            "bench_id", "equipment_id", "equipment__sku", "equipment__name", "equipment__computing_profile__hostname"
-        )
+        .values("bench_id", "equipment_id", "equipment__sku", "equipment__name", "equipment__computing_profile__hostname")
     )
     computers: dict[int, list[dict[str, Any]]] = {}
     for row in rows:
@@ -367,15 +364,7 @@ def bench_computers(*, bench_ids) -> dict[int, list[dict[str, Any]]]:
 
 
 # Typed foreign keys and the computing profile read by the equipment collection (step 6).
-TYPED_JOINS = (
-    "material",
-    "size",
-    "resolution",
-    "protocol",
-    "customer",
-    "computing_profile__technical_user",
-    "activity",
-)
+TYPED_JOINS = ("material", "size", "resolution", "protocol", "customer", "computing_profile__technical_user", "activity")
 TYPED_PREFETCHES = ("interfaces", "characteristics")
 
 
@@ -495,9 +484,9 @@ def list_equipment_options(
     # Has / has-not filter using Exists(...)
     if assigned is not None:
         if assigned:
-            cond &= Q(Exists(active_assignment))
+            cond &= Exists(active_assignment)
         else:
-            cond &= Q(~Exists(active_assignment))
+            cond &= ~Exists(active_assignment)
 
     # Assignable: available right now (in service, operational, not on a bench, calibrated).
     if assignable is not None or status:

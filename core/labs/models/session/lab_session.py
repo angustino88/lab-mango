@@ -102,7 +102,7 @@ class LabSessionLog(AgentReportedModel, TimeStampedModel, UserStampedModel):
                 )
             elif (
                 self.active_duration_seconds is not None
-                and self.active_duration_seconds > (self.logout_time - self.login_time).total_seconds()
+                and self.active_duration_seconds > (self.duration.total_seconds())
             ):
                 errors["active_duration_seconds"] = ValidationError(
                     _("Active duration cannot exceed the session duration."),
@@ -156,7 +156,8 @@ class LabSessionLog(AgentReportedModel, TimeStampedModel, UserStampedModel):
                 name="labsess_valid_period",
             ),
             models.CheckConstraint(
-                condition=models.Q(active_duration_seconds__isnull=True) | models.Q(active_duration_seconds__gte=0),
+                condition=models.Q(active_duration_seconds__isnull=True)
+                | models.Q(active_duration_seconds__gte=0),
                 name="labsess_active_duration_nonnegative",
             ),
             models.CheckConstraint(

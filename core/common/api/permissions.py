@@ -19,7 +19,6 @@ from dataclasses import dataclass, field
 from typing import Any, ClassVar
 
 from django.conf import settings
-from django.http import HttpRequest
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -99,10 +98,10 @@ class HasAPIKeyAccess(HasAPIKey):
     API-key path on or off.
     """
 
-    def has_permission(self, request: Request | HttpRequest, view: APIView) -> bool:
+    def has_permission(self, request: Request, view: APIView) -> bool:
         return api_key_access_enabled() and super().has_permission(request, view)
 
-    def has_object_permission(self, request: Request | HttpRequest, view: APIView, obj: Any) -> bool:
+    def has_object_permission(self, request: Request, view: APIView, obj: Any) -> bool:
         return api_key_access_enabled() and super().has_object_permission(request, view, obj)
 
 

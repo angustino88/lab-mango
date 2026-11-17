@@ -287,7 +287,7 @@ URS_SYNC_BRAKE_MIN_MEMBERS = env.int("URS_SYNC_BRAKE_MIN_MEMBERS", default=10)
 # ADMIN
 # ------------------------------------------------------------------------------
 ADMIN_URL = "admin/"
-ADMINS: list[tuple[str, str]] = []
+ADMINS = []
 MANAGERS = ADMINS
 DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=False)
 

@@ -100,9 +100,7 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
-def _error_response(
-    status_code: int, code: str, message: str, request: Request, details: list | None = None
-) -> Response:
+def _error_response(status_code: int, code: str, message: str, request: Request, details: list | None = None) -> Response:
     req_id = get_request_id(request)
     return Response(
         {
@@ -198,18 +196,12 @@ class AgentListCreateAPIView(APIView):
         summary="Issue a one-time enrollment grant for computing equipment",
         request=CreateAgentGrantRequestSerializer,
         responses={
-            201: OpenApiResponse(
-                response=EnrollmentGrantIssuedResponseSerializer, description="Enrollment grant issued"
-            ),
+            201: OpenApiResponse(response=EnrollmentGrantIssuedResponseSerializer, description="Enrollment grant issued"),
             400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Invalid request"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
-            403: OpenApiResponse(
-                response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"
-            ),
+            403: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"),
             404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Computing equipment not found"),
-            409: OpenApiResponse(
-                response=ErrorEnvelopeSerializer, description="Equipment already has pending or active agent"
-            ),
+            409: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Equipment already has pending or active agent"),
         },
         tags=["Agents (Operator)"],
     )
@@ -317,9 +309,7 @@ class AgentGrantCreateAPIView(APIView):
             201: OpenApiResponse(response=EnrollmentGrantIssuedResponseSerializer, description="Grant issued"),
             400: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Invalid request"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
-            403: OpenApiResponse(
-                response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"
-            ),
+            403: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"),
             404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Agent not found"),
             409: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Enrollment conflict"),
         },
@@ -401,9 +391,7 @@ class AgentRevokeActionAPIView(APIView):
         responses={
             200: OpenApiResponse(response=AgentDetailResponseSerializer, description="Agent revoked"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
-            403: OpenApiResponse(
-                response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"
-            ),
+            403: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"),
             404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Agent not found"),
             409: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Conflict"),
         },
@@ -431,9 +419,7 @@ class AgentDecommissionActionAPIView(APIView):
         responses={
             200: OpenApiResponse(response=AgentDetailResponseSerializer, description="Agent decommissioned"),
             401: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Unauthorized"),
-            403: OpenApiResponse(
-                response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"
-            ),
+            403: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Caller is not a lab coordinator or admin"),
             404: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Agent not found"),
             409: OpenApiResponse(response=ErrorEnvelopeSerializer, description="Conflict"),
         },
@@ -528,9 +514,7 @@ class AgentHeartbeatAPIView(APIView):
     def post(self, request: Request) -> Response:
         req_serializer = AgentHeartbeatRequestSerializer(data=request.data)
         if not req_serializer.is_valid():
-            return _error_response(
-                status.HTTP_400_BAD_REQUEST, "invalid_request", "Invalid heartbeat payload.", request
-            )
+            return _error_response(status.HTTP_400_BAD_REQUEST, "invalid_request", "Invalid heartbeat payload.", request)
 
         principal = request.user
         if not isinstance(principal, AgentPrincipal):  # guaranteed by IsAuthenticatedAgent

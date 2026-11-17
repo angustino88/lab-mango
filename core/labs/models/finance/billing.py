@@ -20,7 +20,7 @@ class PaymentTransactionType(models.TextChoices):
     REFUND = "refund", _("Refund")
 
 
-PERIODS_PER_YEAR: dict[str, int] = {
+PERIODS_PER_YEAR = {
     BillingPeriod.MONTHLY: 12,
     BillingPeriod.QUARTERLY: 4,
     BillingPeriod.ANNUAL: 1,

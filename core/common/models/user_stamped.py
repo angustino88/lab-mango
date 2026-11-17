@@ -4,20 +4,20 @@ from __future__ import annotations
 
 import logging
 import warnings
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractBaseUser
     from django.http import HttpRequest
 
 logger = logging.getLogger(__name__)
-Actor = TypeVar("Actor")
 
 
-def authenticated_actor(user: Actor) -> Actor | None:
+def authenticated_actor(user: Any) -> AbstractBaseUser | None:
     """Return `user` only if it is an authenticated user instance, else None."""
     if user is not None and getattr(user, "is_authenticated", False):
         return user
@@ -69,7 +69,7 @@ class UserStampedModel(models.Model):
         abstract = True
 
     @staticmethod
-    def _resolve_actor(actor: Any, request: HttpRequest | None) -> Any:
+    def _resolve_actor(actor: Any, request: HttpRequest | None) -> AbstractBaseUser | None:
         if actor is None and request is not None:
             warnings.warn(
                 "save(request=...) is deprecated; use save(actor=request.user).",

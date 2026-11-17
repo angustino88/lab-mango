@@ -56,8 +56,7 @@ class AgentIdentitySerializer(serializers.ModelSerializer):
 
 
 class AgentDetailResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": AgentIdentitySerializer(), **super().get_fields()}
+    data = AgentIdentitySerializer()
 
 
 class PaginationMetaSerializer(serializers.Serializer):
@@ -73,9 +72,7 @@ class AgentListMetaSerializer(serializers.Serializer):
 
 
 class AgentListResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": serializers.ListField(child=AgentIdentitySerializer()), **super().get_fields()}
-
+    data = serializers.ListField(child=AgentIdentitySerializer())
     meta = AgentListMetaSerializer()
 
 
@@ -139,8 +136,7 @@ class EnrollmentGrantIssuedSerializer(serializers.Serializer):
 
 
 class EnrollmentGrantIssuedResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": EnrollmentGrantIssuedSerializer(), **super().get_fields()}
+    data = EnrollmentGrantIssuedSerializer()
 
 
 class CreateGrantForAgentRequestSerializer(serializers.Serializer):
@@ -167,8 +163,7 @@ class AgentHeartbeatResponseDataSerializer(serializers.Serializer):
 
 
 class AgentHeartbeatResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": AgentHeartbeatResponseDataSerializer(), **super().get_fields()}
+    data = AgentHeartbeatResponseDataSerializer()
 
 
 class AgentActivityReportSerializer(serializers.Serializer):
@@ -195,8 +190,7 @@ class AgentActivityDataSerializer(serializers.Serializer):
 
 
 class AgentActivityResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": AgentActivityDataSerializer(), **super().get_fields()}
+    data = AgentActivityDataSerializer()  # type: ignore[assignment]
 
 
 class AgentInfoResponseDataSerializer(serializers.Serializer):
@@ -210,8 +204,7 @@ class AgentInfoResponseDataSerializer(serializers.Serializer):
 
 
 class AgentInfoResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": AgentInfoResponseDataSerializer(), **super().get_fields()}
+    data = AgentInfoResponseDataSerializer()
 
 
 class AgentSessionLogReportSerializer(serializers.Serializer):
@@ -253,8 +246,7 @@ class AgentSessionLogDataSerializer(serializers.Serializer):
 
 
 class AgentSessionLogResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": AgentSessionLogDataSerializer(), **super().get_fields()}
+    data = AgentSessionLogDataSerializer()
 
 
 class AgentBookingValidationRequestSerializer(serializers.Serializer):
@@ -274,8 +266,7 @@ class AgentBookingValidationDataSerializer(serializers.Serializer):
 
 
 class AgentBookingValidationResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": AgentBookingValidationDataSerializer(), **super().get_fields()}
+    data = AgentBookingValidationDataSerializer()
 
 
 class AgentBookingCheckInDataSerializer(serializers.Serializer):
@@ -291,8 +282,7 @@ class AgentBookingCheckInDataSerializer(serializers.Serializer):
 
 
 class AgentBookingCheckInResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": AgentBookingCheckInDataSerializer(), **super().get_fields()}
+    data = AgentBookingCheckInDataSerializer()
 
 
 class AgentBookingCompleteDataSerializer(serializers.Serializer):
@@ -305,8 +295,7 @@ class AgentBookingCompleteDataSerializer(serializers.Serializer):
 
 
 class AgentBookingCompleteResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": AgentBookingCompleteDataSerializer(), **super().get_fields()}
+    data = AgentBookingCompleteDataSerializer()
 
 
 class AgentBookingExtendRequestSerializer(serializers.Serializer):
@@ -322,8 +311,9 @@ class AgentBookingExtendDataSerializer(serializers.Serializer):
 
 
 class AgentBookingExtendResponseSerializer(serializers.Serializer):
-    def get_fields(self):
-        return {"data": AgentBookingExtendDataSerializer(), **super().get_fields()}
+    data = AgentBookingExtendDataSerializer()
+
+
 
 
 EXTENSION_REFUSAL_CODES = (

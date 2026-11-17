@@ -1,5 +1,4 @@
 """Serializers for the monitoring event HTTP API."""
-
 from __future__ import annotations
 
 import uuid
@@ -70,16 +69,12 @@ class MonitoringEventCreateSerializer(serializers.Serializer):
     event_id = serializers.UUIDField(required=False, default=uuid.uuid4)
 
     # Compatibility write fields
+    source = serializers.CharField(required=False, allow_blank=True)
     event_type = serializers.CharField(required=False, allow_blank=True)
     category = serializers.CharField(required=False, allow_blank=True)
     object_name = serializers.CharField(required=False, allow_blank=True)
     object_id = serializers.CharField(required=False, allow_blank=True)
     details = serializers.JSONField(required=False)
-
-    def get_fields(self) -> dict:
-        fields = super().get_fields()
-        fields["source"] = serializers.CharField(required=False, allow_blank=True)
-        return fields
 
     def validate(self, attrs: dict) -> dict:
         if not attrs.get("computer_sku") and not attrs.get("computer_id"):

@@ -192,17 +192,13 @@ class Room(ResourceModel, PhysicalLocationNode):
 
     def _sync_location_hierarchy(self) -> None:
         """Keep country > city > building consistent (derive upwards from the building)."""
-        building = self.building
-        if self.building_id and building is not None and building.city_id:
-            city = building.city
-            assert city is not None
+        if self.building_id and self.building.city_id:
+            city = self.building.city
             if self.city_id and self.city_id != city.pk:
                 raise ValidationError({"building": "The building is not in the selected city."})
             self.city = city
-        current_city = self.city
-        if self.city_id and current_city is not None and current_city.country_id:
-            country = current_city.country
-            assert country is not None
+        if self.city_id and self.city.country_id:
+            country = self.city.country
             if self.country_id and self.country_id != country.pk:
                 raise ValidationError({"city": "The city is not in the selected country."})
             self.country = country

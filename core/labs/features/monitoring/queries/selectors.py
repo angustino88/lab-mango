@@ -1,5 +1,4 @@
 """Read-only selectors for the monitoring event feature."""
-
 from __future__ import annotations
 
 from datetime import datetime
