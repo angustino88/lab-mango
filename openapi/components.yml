@@ -12396,6 +12396,8 @@ components:
         event_id:
           type: string
           format: uuid
+        source:
+          type: string
         event_type:
           type: string
         category:
@@ -12405,8 +12407,6 @@ components:
         object_id:
           type: string
         details: {}
-        source:
-          type: string
     MonitoringEventDetailSerializersMonitoringEventDetailResponse:
       type: object
       description: Base serializer for successful API responses.

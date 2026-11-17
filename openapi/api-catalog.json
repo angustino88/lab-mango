@@ -81696,6 +81696,9 @@
               "type": "string",
               "format": "uuid"
             },
+            "source": {
+              "type": "string"
+            },
             "event_type": {
               "type": "string"
             },
@@ -81708,10 +81711,7 @@
             "object_id": {
               "type": "string"
             },
-            "details": {},
-            "source": {
-              "type": "string"
-            }
+            "details": {}
           }
         },
         "example_payload": {
@@ -81727,12 +81727,12 @@
           "agent_id": "agent",
           "agent_version": "",
           "event_id": "123e4567-e89b-12d3-a456-426614174000",
+          "source": "string",
           "event_type": "string",
           "category": "string",
           "object_name": "string",
           "object_id": "string",
-          "details": null,
-          "source": "string"
+          "details": null
         }
       },
       "responses": {

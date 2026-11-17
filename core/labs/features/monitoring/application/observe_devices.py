@@ -3,13 +3,18 @@
 Race guard: equipment parent lock, cursor lock, plus DB batch/sequence/connection
 uniqueness. Lock order: equipment -> authenticated identity -> cursor -> projections.
 No network side effects. Replay is content-addressed and never refreshes freshness.
+
+Ordering: within one generation a collector's applied sequences are contiguous for
+incremental batches. A complete snapshot may skip ahead (it is self-contained); an
+incremental batch that skips ahead is refused with ``snapshot_required`` so a lost or
+delayed delta can never be silently dropped. Older sequences are acknowledged as stale.
 """
 
 import hashlib
 import json
 from dataclasses import asdict, dataclass, replace
 from datetime import timedelta
-from uuid import uuid5
+from uuid import UUID, uuid5
 
 from django.db import transaction
 from django.utils import timezone
@@ -19,30 +24,64 @@ from core.common.db.idempotency import try_claim_operation
 from core.common.domain.errors import Forbidden, ValidationFailed
 from core.labs.features.equipment.public import lock_monitoring_computer, match_observed_devices
 from core.labs.features.monitoring.contracts import DeviceObservationInput, ObservationAcknowledgment
-from core.labs.features.monitoring.exceptions import ObservationConflict, ObservationInProgress, ObservationKeyReuse
+from core.labs.features.monitoring.exceptions import (
+    ObservationConflict,
+    ObservationInProgress,
+    ObservationKeyReuse,
+    ObservationSnapshotRequired,
+)
 from core.labs.models.monitoring import (
     DeviceConnection,
+    DeviceConnectionState,
     DeviceObservationBatch,
     DeviceObservationCursor,
     MonitoringEvent,
+    MonitoringEventAction,
+)
+
+MAX_DEVICES_PER_COLLECTOR = 200
+MAX_SEQUENCE = 9007199254740991  # 2**53 - 1: exact in JSON numbers on every client.
+MAX_CLOCK_SKEW = timedelta(minutes=5)
+_PROJECTION_FIELDS = (
+    "equipment",
+    "interface",
+    "match_status",
+    "generation_key",
+    "sequence",
+    "name",
+    "serial_number",
+    "interface_name",
+    "state",
+    "observed_at",
+    "received_at",
 )
 
 
+def observation_operation_scope(*, computer_id: int, generation_key: UUID, batch_key: UUID) -> bytes:
+    """Advisory-claim scope shared by every caller that reports one batch.
+
+    PostgreSQL advisory locks are reentrant per session, so an adapter may claim the
+    same scope before taking its own locks and then call :func:`observe_devices`.
+    """
+    return f"POST:/agent/device-observations/actions/report:{computer_id}:{generation_key}:{batch_key}".encode()
+
+
 def _validate(command: DeviceObservationInput) -> None:
-    if not 1 <= command.sequence <= 9007199254740991 or len(command.devices) > 200:
+    if not 1 <= command.sequence <= MAX_SEQUENCE or len(command.devices) > MAX_DEVICES_PER_COLLECTOR:
         raise ValidationFailed("Sequence or device count exceeds the observation limits.")
-    if not timezone.is_aware(command.collected_at) or command.collected_at > timezone.now() + timedelta(minutes=5):
+    if not timezone.is_aware(command.collected_at) or command.collected_at > timezone.now() + MAX_CLOCK_SKEW:
         raise ValidationFailed("Collection time must be timezone-aware and not more than five minutes in the future.")
     keys = [device.observation_key for device in command.devices]
     if len(keys) != len(set(keys)):
         raise ValidationFailed("Observation keys must be unique within a snapshot.")
     for device in command.devices:
-        if (
-            device.state not in ("connected", "disconnected")
-            or not device.observation_key
-            or not device.interface_name
-        ):
+        if device.state not in DeviceConnectionState.values or not device.observation_key or not device.interface_name:
             raise ValidationFailed("Each device needs a key, interface name and valid observed state.")
+
+
+def _content_hash(command: DeviceObservationInput) -> str:
+    canonical = json.dumps(asdict(command), default=str, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()
 
 
 def _ack(batch: DeviceObservationBatch, *, replayed: bool = False) -> ObservationAcknowledgment:
@@ -51,16 +90,34 @@ def _ack(batch: DeviceObservationBatch, *, replayed: bool = False) -> Observatio
     )
 
 
+def _disposition(command: DeviceObservationInput, cursor: DeviceObservationCursor | None) -> bool:
+    """Return whether the batch applies; raise when the collector needs a full snapshot."""
+    needs_snapshot = cursor is None or cursor.generation_key != command.generation_key or not cursor.is_current
+    if needs_snapshot:
+        if not command.is_complete:
+            raise ObservationSnapshotRequired(
+                "A complete snapshot is required for this collector and enrollment generation."
+            )
+        return True
+    assert cursor is not None
+    if command.sequence <= cursor.sequence:
+        return False
+    if not command.is_complete and command.sequence != cursor.sequence + 1:
+        raise ObservationSnapshotRequired(
+            f"Incremental batches must continue from sequence {cursor.sequence}; send a complete snapshot."
+        )
+    return True
+
+
 def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> ObservationAcknowledgment:
     if command.computer_id not in actor.equipment_ids or "monitoring:report" not in actor.capabilities:
         raise Forbidden("The principal cannot report for this computer.")
     _validate(command)
-    content = asdict(command)
-    content_hash = hashlib.sha256(
-        json.dumps(content, default=str, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
+    content_hash = _content_hash(command)
     with transaction.atomic():
-        scope = f"POST:/agent/device-observations/actions/report:{command.computer_id}:{command.generation_key}:{command.batch_key}".encode()
+        scope = observation_operation_scope(
+            computer_id=command.computer_id, generation_key=command.generation_key, batch_key=command.batch_key
+        )
         if not try_claim_operation(scope):
             raise ObservationInProgress("This request is still running.")
         # Reentrant when called by the authenticated agent workflow. Also protects
@@ -85,10 +142,7 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
             .filter(computer_id=command.computer_id, collector_key=command.collector_key)
             .first()
         )
-        needs_snapshot = cursor is None or cursor.generation_key != command.generation_key or not cursor.is_current
-        if needs_snapshot and not command.is_complete:
-            raise ObservationConflict("A complete snapshot is required for this collector and enrollment generation.")
-        is_applied = needs_snapshot or (cursor is not None and command.sequence > cursor.sequence)
+        is_applied = _disposition(command, cursor)
         received_at = timezone.now()
         batch = DeviceObservationBatch.objects.create(
             computer_id=command.computer_id,
@@ -102,94 +156,23 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
         )
         if not is_applied:
             return _ack(batch)
-        connections = DeviceConnection.objects.filter(
-            computer_id=command.computer_id, collector_key=command.collector_key
-        )
-        input_keys = [device.observation_key for device in command.devices]
-        retained_connected = (
-            0
-            if command.is_complete
-            else connections.filter(state="connected").exclude(observation_key__in=input_keys).count()
-        )
-        if retained_connected + sum(device.state == "connected" for device in command.devices) > 200:
-            raise ValidationFailed(
-                "At most 200 connected devices per collector are supported; send a complete snapshot."
-            )
-        present = {
-            row.observation_key: row
-            for row in connections.filter(observation_key__in=[device.observation_key for device in command.devices])
-        }
-        # Detach notifications can arrive after OS identity metadata disappears.
-        # Keep prior evidence for that stable instance; reconnects never inherit it.
-        effective_devices = tuple(
-            replace(
-                device,
-                serial_number=present[device.observation_key].serial_number,
-                name=device.name or present[device.observation_key].name,
-            )
-            if device.state == "disconnected" and not device.serial_number and device.observation_key in present
-            else device
-            for device in command.devices
-        )
-        matches = match_observed_devices(
-            tuple((device.serial_number, device.interface_name) for device in effective_devices)
-        )
-        create, update = [], []
-        for device in effective_devices:
-            match = matches[(device.serial_number, device.interface_name)]
-            row = present.get(device.observation_key)
-            if row is None:
-                row = DeviceConnection(
-                    computer_id=command.computer_id,
-                    collector_key=command.collector_key,
-                    observation_key=device.observation_key,
-                    first_seen_at=received_at,
-                )
-                create.append(row)
-            else:
-                update.append(row)
-            row.equipment_id, row.interface_id, row.match_status = match.equipment_id, match.interface_id, match.status
-            row.generation_key, row.sequence = command.generation_key, command.sequence
-            row.name, row.serial_number, row.interface_name = device.name, device.serial_number, device.interface_name
-            row.state, row.observed_at, row.received_at = device.state, command.collected_at, received_at
-        DeviceConnection.objects.bulk_create(create, batch_size=200)
-        DeviceConnection.objects.bulk_update(
-            update,
-            (
-                "equipment",
-                "interface",
-                "match_status",
-                "generation_key",
-                "sequence",
-                "name",
-                "serial_number",
-                "interface_name",
-                "state",
-                "observed_at",
-                "received_at",
-            ),
-            batch_size=200,
-        )
-        if command.is_complete:
-            # SQL-bounded reconciliation; omitted records are confirmed absent by
-            # this scoped full snapshot. Their identities remain historical.
-            connections.filter(state="connected").exclude(observation_key__in=input_keys).update(
-                state="disconnected",
-                generation_key=command.generation_key,
-                sequence=command.sequence,
-                observed_at=command.collected_at,
-                received_at=received_at,
-            )
+        _apply_projection(command, received_at=received_at)
         DeviceObservationCursor.objects.update_or_create(
             computer_id=command.computer_id,
             collector_key=command.collector_key,
-            defaults={"generation_key": command.generation_key, "sequence": command.sequence, "is_current": True},
+            defaults={
+                "generation_key": command.generation_key,
+                "sequence": command.sequence,
+                "is_current": True,
+                "last_collected_at": command.collected_at,
+                "last_received_at": received_at,
+            },
         )
         MonitoringEvent.objects.create(
             computer_id=command.computer_id,
             agent_id=command.agent_key,
             event_id=uuid5(command.generation_key, str(command.batch_key)),
-            action="inventory_snapshot",
+            action=MonitoringEventAction.INVENTORY_SNAPSHOT,
             subject_type="device_connections",
             subject_id=command.collector_key,
             occurred_at=command.collected_at,
@@ -202,6 +185,64 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
             },
         )
         return _ack(batch)
+
+
+def _apply_projection(command: DeviceObservationInput, *, received_at) -> None:
+    connections = DeviceConnection.objects.filter(computer_id=command.computer_id, collector_key=command.collector_key)
+    input_keys = [device.observation_key for device in command.devices]
+    retained_connected = (
+        0
+        if command.is_complete
+        else connections.filter(state=DeviceConnectionState.CONNECTED).exclude(observation_key__in=input_keys).count()
+    )
+    if retained_connected + sum(device.state == "connected" for device in command.devices) > MAX_DEVICES_PER_COLLECTOR:
+        raise ValidationFailed("At most 200 connected devices per collector are supported; send a complete snapshot.")
+    present = {row.observation_key: row for row in connections.filter(observation_key__in=input_keys)}
+    # Detach notifications can arrive after OS identity metadata disappears.
+    # Keep prior evidence for that stable instance; reconnects never inherit it.
+    effective_devices = tuple(
+        replace(
+            device,
+            serial_number=present[device.observation_key].serial_number,
+            name=device.name or present[device.observation_key].name,
+        )
+        if device.state == "disconnected" and not device.serial_number and device.observation_key in present
+        else device
+        for device in command.devices
+    )
+    matches = match_observed_devices(
+        tuple((device.serial_number, device.interface_name) for device in effective_devices)
+    )
+    create, update = [], []
+    for device in effective_devices:
+        match = matches[(device.serial_number, device.interface_name)]
+        row = present.get(device.observation_key)
+        if row is None:
+            row = DeviceConnection(
+                computer_id=command.computer_id,
+                collector_key=command.collector_key,
+                observation_key=device.observation_key,
+                first_seen_at=received_at,
+            )
+            create.append(row)
+        else:
+            update.append(row)
+        row.equipment_id, row.interface_id, row.match_status = match.equipment_id, match.interface_id, match.status
+        row.generation_key, row.sequence = command.generation_key, command.sequence
+        row.name, row.serial_number, row.interface_name = device.name, device.serial_number, device.interface_name
+        row.state, row.observed_at, row.received_at = device.state, command.collected_at, received_at
+    DeviceConnection.objects.bulk_create(create, batch_size=MAX_DEVICES_PER_COLLECTOR)
+    DeviceConnection.objects.bulk_update(update, _PROJECTION_FIELDS, batch_size=MAX_DEVICES_PER_COLLECTOR)
+    if command.is_complete:
+        # SQL-bounded reconciliation; omitted records are confirmed absent by
+        # this scoped full snapshot. Their identities remain historical.
+        connections.filter(state=DeviceConnectionState.CONNECTED).exclude(observation_key__in=input_keys).update(
+            state=DeviceConnectionState.DISCONNECTED,
+            generation_key=command.generation_key,
+            sequence=command.sequence,
+            observed_at=command.collected_at,
+            received_at=received_at,
+        )
 
 
 @dataclass(frozen=True, slots=True)

@@ -17,6 +17,12 @@ class DeviceMatchStatus(models.TextChoices):
 
 
 class DeviceObservationCursor(models.Model):
+    """Last applied batch of one collector on one computer.
+
+    Sequences are contiguous within a generation, so the cursor's timestamps confirm the
+    whole collector state, including devices the latest incremental batch did not mention.
+    """
+
     computer = models.ForeignKey(
         "labs.Equipment",
         related_name="deviceobservationcursor_set",
@@ -27,6 +33,8 @@ class DeviceObservationCursor(models.Model):
     generation_key = models.UUIDField()
     sequence = models.PositiveBigIntegerField()
     is_current = models.BooleanField(default=False)
+    last_collected_at = models.DateTimeField()
+    last_received_at = models.DateTimeField()
 
     class Meta:
         constraints = [
@@ -36,6 +44,8 @@ class DeviceObservationCursor(models.Model):
 
 
 class DeviceObservationBatch(models.Model):
+    """Idempotency receipt for one reported batch; purged after the retention window."""
+
     computer = models.ForeignKey(
         "labs.Equipment",
         related_name="deviceobservationbatch_set",
@@ -60,12 +70,19 @@ class DeviceObservationBatch(models.Model):
             ),
             models.CheckConstraint(condition=Q(sequence__gte=1), name="device_batch_sequence_positive"),
         ]
+        indexes = [models.Index(fields=("received_at",), name="device_batch_received_idx")]
 
 
 class DeviceConnection(models.Model):
+    """Current projection of one observed device instance on one computer collector.
+
+    ``equipment`` and ``interface`` are derived inventory matches. They are cleared, not
+    protected, when the referenced inventory row is removed.
+    """
+
     computer = models.ForeignKey("labs.Equipment", related_name="device_connections", on_delete=models.PROTECT)
     equipment = models.ForeignKey(
-        "labs.Equipment", null=True, blank=True, related_name="observed_connections", on_delete=models.PROTECT
+        "labs.Equipment", null=True, blank=True, related_name="observed_connections", on_delete=models.SET_NULL
     )
     interface = models.ForeignKey(
         "labs.EquipmentInterface",
@@ -73,7 +90,7 @@ class DeviceConnection(models.Model):
         blank=True,
         related_name="deviceconnection_set",
         related_query_name="deviceconnection",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
     )
     collector_key = models.CharField(max_length=32)
     observation_key = models.CharField(max_length=255)
@@ -100,5 +117,12 @@ class DeviceConnection(models.Model):
             ),
             models.CheckConstraint(
                 condition=Q(match_status__in=DeviceMatchStatus.values), name="device_connection_valid_match"
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("received_at",),
+                condition=Q(state="disconnected"),
+                name="device_connection_detached_idx",
             ),
         ]

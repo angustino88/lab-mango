@@ -29,7 +29,13 @@ def _imports(path: Path) -> set[str]:
 
 def test_public_surface_exports_commands_queries_and_exceptions():
     assert _exports(FEATURE_ROOT / "public.py") == {
+        "DEVICE_FRESHNESS_SECONDS",
+        "MAX_DEVICES_PER_COLLECTOR",
         "observe_devices",
+        "observation_operation_scope",
+        "DeviceObservationPurgeResult",
+        "purge_device_observation_history",
+        "ObservationSnapshotRequired",
         "InvalidateDeviceConnectionsInput",
         "invalidate_device_connections",
         "list_device_connections",

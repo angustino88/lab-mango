@@ -2,20 +2,36 @@
 
 from .application import CreateMonitoringEventInput, create_monitoring_event
 from .application.observe_devices import (
+    MAX_DEVICES_PER_COLLECTOR,
     InvalidateDeviceConnectionsInput,
     invalidate_device_connections,
+    observation_operation_scope,
     observe_devices,
 )
-from .exceptions import ComputerNotFound, MonitoringEventConflict, MonitoringEventNotFound
+from .application.retention import DeviceObservationPurgeResult, purge_device_observation_history
+from .exceptions import (
+    ComputerNotFound,
+    MonitoringEventConflict,
+    MonitoringEventNotFound,
+    ObservationSnapshotRequired,
+)
 from .queries import get_monitoring_event, list_monitoring_events
-from .queries.connections import list_device_connections
+from .queries.connections import FRESHNESS_WINDOW, list_device_connections
+
+DEVICE_FRESHNESS_SECONDS = int(FRESHNESS_WINDOW.total_seconds())
 
 __all__ = [
+    "DEVICE_FRESHNESS_SECONDS",
+    "MAX_DEVICES_PER_COLLECTOR",
     "InvalidateDeviceConnectionsInput",
     "observe_devices",
+    "observation_operation_scope",
+    "DeviceObservationPurgeResult",
+    "purge_device_observation_history",
     "invalidate_device_connections",
     "list_device_connections",
     "ComputerNotFound",
+    "ObservationSnapshotRequired",
     "CreateMonitoringEventInput",
     "MonitoringEventConflict",
     "MonitoringEventNotFound",

@@ -13,6 +13,9 @@ from django.utils import timezone
 
 from core.agents.models import AgentIdentity, EnrollmentGrant
 from core.labs.features.equipment.public import monitoring_interfaces
+from core.labs.features.monitoring.public import DEVICE_FRESHNESS_SECONDS, MAX_DEVICES_PER_COLLECTOR
+
+MAX_OBSERVATION_BODY_BYTES = 262144
 
 
 class AgentHealth(models.TextChoices):
@@ -86,10 +89,15 @@ def agent_grants(agent_id: int) -> QuerySet[EnrollmentGrant]:
 
 
 def monitoring_policy(identity: AgentIdentity) -> dict[str, object]:
+    """Reporting contract for one enrolled agent.
+
+    Agents must apply at least one batch per collector within ``freshness_seconds``; an
+    incremental batch with no devices is a valid keep-alive.
+    """
     return {
         "generation_key": identity.monitoring_generation_key,
-        "max_devices": 200,
-        "max_body_bytes": 262144,
-        "freshness_seconds": 120,
+        "max_devices": MAX_DEVICES_PER_COLLECTOR,
+        "max_body_bytes": MAX_OBSERVATION_BODY_BYTES,
+        "freshness_seconds": DEVICE_FRESHNESS_SECONDS,
         "interface_names": monitoring_interfaces(),
     }

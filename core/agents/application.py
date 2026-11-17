@@ -35,6 +35,7 @@ from core.labs.features.monitoring.contracts import DeviceObservationInput, Obse
 from core.labs.features.monitoring.public import (
     InvalidateDeviceConnectionsInput,
     invalidate_device_connections,
+    observation_operation_scope,
     observe_devices,
 )
 from core.labs.models import Equipment
@@ -447,7 +448,11 @@ def report_device_observations(command: ReportDeviceObservationsInput, *, actor:
     """
     identity = command.identity
     observation = command.observation
-    scope = f"POST:/agent/device-observations/actions/report:{identity.equipment_id}:{observation.generation_key}:{observation.batch_key}".encode()
+    scope = observation_operation_scope(
+        computer_id=identity.equipment_id,
+        generation_key=observation.generation_key,
+        batch_key=observation.batch_key,
+    )
     if not try_claim_operation(scope):
         raise Conflict("This request is still running.", code="request_in_progress")
     lock_monitoring_computer(identity.equipment_id)

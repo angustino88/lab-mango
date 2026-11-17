@@ -13,7 +13,7 @@ from freezegun import freeze_time
 from rest_framework.test import APIClient
 
 from core.common.contracts import ActorContext
-from core.common.domain.errors import ValidationFailed
+from core.common.domain.errors import Conflict, ValidationFailed
 from core.labs.features.monitoring.api.connections import DeviceConnectionSerializer
 from core.labs.features.monitoring.application.observe_devices import (
     InvalidateDeviceConnectionsInput,
@@ -22,9 +22,19 @@ from core.labs.features.monitoring.application.observe_devices import (
 from core.labs.features.monitoring.application.observe_devices import (
     observe_devices as execute_observations,
 )
+from core.labs.features.monitoring.application.retention import (
+    DeviceObservationPurgeResult,
+    purge_device_observation_history,
+)
 from core.labs.features.monitoring.contracts import DeviceObservation, DeviceObservationInput
-from core.labs.features.monitoring.exceptions import ObservationConflict, ObservationInProgress, ObservationKeyReuse
+from core.labs.features.monitoring.exceptions import (
+    ObservationConflict,
+    ObservationInProgress,
+    ObservationKeyReuse,
+    ObservationSnapshotRequired,
+)
 from core.labs.features.monitoring.queries.connections import list_device_connections
+from core.labs.features.monitoring.tasks import purge_device_observation_history_task
 from core.labs.models import Equipment
 from core.labs.models.monitoring import (
     DeviceConnection,
@@ -439,3 +449,130 @@ def test_invalidation_requires_scoped_capability(command):
     with pytest.raises(Forbidden):
         invalidate_device_connections(InvalidateDeviceConnectionsInput(command.computer_id), actor=actor)
     assert DeviceObservationCursor.objects.get().is_current
+
+
+def test_incremental_batch_that_skips_a_sequence_requires_a_complete_snapshot(command):
+    observe_devices(command)
+    gap = replace(command, sequence=3, batch_key=uuid4(), is_complete=False, devices=())
+    with pytest.raises(ObservationSnapshotRequired) as error:
+        observe_devices(gap)
+    assert error.value.code == "snapshot_required"
+    assert DeviceObservationBatch.objects.count() == 1
+    assert DeviceObservationCursor.objects.get().sequence == 1
+    recovered = observe_devices(replace(gap, batch_key=uuid4(), is_complete=True, devices=command.devices))
+    assert recovered.disposition == "applied"
+    assert DeviceObservationCursor.objects.get().sequence == 3
+
+
+def test_delayed_incremental_batch_after_a_newer_snapshot_is_stale_and_changes_nothing(command):
+    observe_devices(command)
+    delayed = next_report(command, is_complete=False, devices=(replace(command.devices[0], state="disconnected"),))
+    observe_devices(replace(command, sequence=3, batch_key=uuid4()))
+    assert observe_devices(delayed).disposition == "stale"
+    assert DeviceConnection.objects.get().state == "connected"
+
+
+def test_contiguous_incremental_keep_alive_confirms_devices_it_does_not_mention(command):
+    start = timezone.now()
+    with freeze_time(start):
+        observe_devices(replace(command, collected_at=start))
+    later = start + timedelta(seconds=110)
+    with freeze_time(later):
+        observe_devices(next_report(command, is_complete=False, devices=(), collected_at=later))
+    with freeze_time(start + timedelta(seconds=200)):
+        connection = list_device_connections(computer_id=command.computer_id).get()
+        assert connection.freshness == "fresh" and connection.state == "connected"
+    with freeze_time(later + timedelta(seconds=121)):
+        assert list_device_connections(computer_id=command.computer_id).get().freshness == "stale"
+
+
+def test_soft_deleted_inventory_is_never_a_match_candidate(command, computer):
+    interface = EquipmentInterface.objects.create(name="USB")
+    active = Equipment.objects.create(sku="ACTIVE-1", name="Active", serial_number="SERIAL-1", kind=computer.kind)
+    retired = Equipment.objects.create(sku="RETIRED-1", name="Retired", serial_number="SERIAL-1", kind=computer.kind)
+    active.interfaces.add(interface)
+    retired.interfaces.add(interface)
+    Equipment.all_objects.filter(pk=retired.pk).update(deleted_at=timezone.now())
+    observe_devices(command)
+    connection = DeviceConnection.objects.get()
+    assert connection.match_status == "matched" and connection.equipment_id == active.pk
+
+
+def test_soft_deleted_computer_cannot_report(command, computer):
+    Equipment.all_objects.filter(pk=computer.pk).update(deleted_at=timezone.now())
+    with pytest.raises(Conflict) as error:
+        observe_devices(command)
+    assert error.value.code == "equipment_unavailable"
+    assert not DeviceObservationBatch.objects.exists()
+
+
+def test_removing_matched_inventory_clears_the_derived_match(command, computer):
+    interface = EquipmentInterface.objects.create(name="USB")
+    peripheral = Equipment.objects.create(sku="GONE-1", name="Scope", serial_number="SERIAL-1", kind=computer.kind)
+    peripheral.interfaces.add(interface)
+    observe_devices(command)
+    peripheral.interfaces.clear()
+    interface.delete()
+    connection = DeviceConnection.objects.get()
+    assert connection.interface_id is None and connection.equipment_id == peripheral.pk
+
+
+def test_listing_puts_connected_devices_first_then_most_recently_observed(command):
+    start = timezone.now() - timedelta(minutes=1)
+    devices = tuple(DeviceObservation(f"port-{key}", "USB", "connected") for key in ("a", "b", "c"))
+    with freeze_time(start):
+        observe_devices(replace(command, devices=devices, collected_at=start))
+    later = start + timedelta(seconds=30)
+    with freeze_time(later):
+        observe_devices(
+            next_report(
+                command,
+                is_complete=False,
+                collected_at=later,
+                devices=(
+                    DeviceObservation("port-a", "USB", "disconnected"),
+                    DeviceObservation("port-c", "USB", "connected", "Replugged"),
+                ),
+            )
+        )
+    keys = [row.observation_key for row in list_device_connections(computer_id=command.computer_id)]
+    assert keys == ["port-c", "port-b", "port-a"]
+
+
+def test_purge_removes_expired_receipts_and_long_detached_rows_only(command, settings):
+    settings.DEVICE_OBSERVATION_RECEIPT_RETENTION_DAYS = 14
+    settings.DEVICE_CONNECTION_DETACHED_RETENTION_DAYS = 90
+    devices = (*command.devices, DeviceObservation("usb-port-2", "USB", "connected"))
+    old = timezone.now() - timedelta(days=120)
+    with freeze_time(old):
+        observe_devices(replace(command, devices=devices, collected_at=old))
+        observe_devices(
+            next_report(
+                command, is_complete=False, collected_at=old, devices=(replace(devices[1], state="disconnected"),)
+            )
+        )
+    observe_devices(replace(command, sequence=3, batch_key=uuid4(), devices=devices[:1]))
+
+    result = purge_device_observation_history()
+
+    assert result == DeviceObservationPurgeResult(batches_deleted=2, connections_deleted=1)
+    assert list(DeviceObservationBatch.objects.values_list("sequence", flat=True)) == [3]
+    assert list(DeviceConnection.objects.values_list("observation_key", "state")) == [("usb-port-1", "connected")]
+    assert purge_device_observation_history() == DeviceObservationPurgeResult(0, 0)
+
+
+def test_purge_is_bounded_per_run(command, settings):
+    settings.DEVICE_OBSERVATION_RECEIPT_RETENTION_DAYS = 1
+    old = timezone.now() - timedelta(days=3)
+    with freeze_time(old):
+        observe_devices(replace(command, collected_at=old))
+        for sequence in range(2, 6):
+            observe_devices(
+                replace(command, sequence=sequence, batch_key=uuid4(), is_complete=False, devices=(), collected_at=old)
+            )
+    assert purge_device_observation_history(max_rows=3).batches_deleted == 3
+    assert DeviceObservationBatch.objects.count() == 2
+
+
+def test_purge_task_reports_counts(command):
+    assert purge_device_observation_history_task() == {"batches_deleted": 0, "connections_deleted": 0}

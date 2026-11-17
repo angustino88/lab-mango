@@ -20,10 +20,10 @@ class AgentProofInvalid(Exception):
 
 
 class AgentRequestUnauthenticated(AuthenticationRequired):
-    code = "unauthenticated"
-
     """Raised when a signed agent request cannot be attributed to an active identity.
 
     Callers must not reveal which check failed (unknown agent, revoked, bad signature, stale
     timestamp or replayed nonce) to the client.
     """
+
+    code = "unauthenticated"

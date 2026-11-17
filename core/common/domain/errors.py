@@ -35,7 +35,7 @@ class DomainError(Exception):
     stable across a class rename.
     """
 
-    code: str = "domain_error"
+    code: ClassVar[str] = "domain_error"
     default_message: ClassVar[str] = "The request could not be completed."
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -113,7 +113,15 @@ class ValidationFailed(DomainError):
     default_message = "One or more fields are invalid."
 
 
+class AuthenticationRequired(DomainError):
+    """The caller is not authenticated; the API layer answers 401 with a challenge."""
+
+    code = "unauthenticated"
+    default_message = "Authentication is required."
+
+
 __all__ = [
+    "AuthenticationRequired",
     "BadRequest",
     "Conflict",
     "DetailMessage",
@@ -124,8 +132,3 @@ __all__ = [
     "ValidationFailed",
     "VersionConflict",
 ]
-
-
-class AuthenticationRequired(DomainError):
-    code = "unauthenticated"
-    default_message = "Authentication is required."

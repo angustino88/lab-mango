@@ -55315,6 +55315,9 @@
             "type": "string",
             "format": "uuid"
           },
+          "source": {
+            "type": "string"
+          },
           "event_type": {
             "type": "string"
           },
@@ -55327,10 +55330,7 @@
           "object_id": {
             "type": "string"
           },
-          "details": {},
-          "source": {
-            "type": "string"
-          }
+          "details": {}
         }
       },
       "MonitoringEventDetailSerializersMonitoringEventDetailResponse": {

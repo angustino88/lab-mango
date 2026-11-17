@@ -9,8 +9,9 @@ from core.labs.models import Equipment, EquipmentInterface
 def match_observed_devices(evidence: tuple[tuple[str, str], ...]) -> dict[tuple[str, str], DeviceEquipmentMatch]:
     """At most 200 evidence pairs; return ambiguity rather than choose an arbitrary serial match.
 
-    One joined query fetches at most 4001 rows; a saturated batch is conservatively
-    ambiguous, keeping pathological inventories bounded.
+    Only active (not soft-deleted) inventory is a candidate. One joined query fetches at
+    most 4001 rows; a saturated batch is conservatively ambiguous, keeping pathological
+    inventories bounded.
     """
     if len(evidence) > 200:
         raise ValueError("At most 200 device records are supported.")
@@ -18,7 +19,7 @@ def match_observed_devices(evidence: tuple[tuple[str, str], ...]) -> dict[tuple[
     # A bounded candidate query per batch, not per observation. Cap the global result
     # and fail closed if saturated; no unbounded inventory materialization.
     rows = list(
-        Equipment.objects.filter(serial_number__in=serials)
+        Equipment.objects.filter(serial_number__in=serials, deleted_at__isnull=True)
         .values("pk", "serial_number", "interfaces__id", "interfaces__name")
         .order_by("pk", "interfaces__id")[:4001]
     )

@@ -1,4 +1,4 @@
-"""Migration operations retained for the device-monitoring replacement history."""
+"""Migration operations shared by the device-monitoring migrations."""
 
 from contextlib import contextmanager
 from typing import Iterator
