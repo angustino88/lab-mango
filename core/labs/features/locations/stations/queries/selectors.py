@@ -74,8 +74,8 @@ def station_mapping_rows(*, station_ids=(), room_ids=()):
     elif room_ids:
         queryset = queryset.filter(room_id__in=room_ids)
     else:
-        return queryset.none().values("id", "uid", "sku", "name", "room_id", "slot_id", "image")
-    return queryset.order_by("pk").values("id", "uid", "sku", "name", "room_id", "slot_id", "image")
+        return queryset.none().values("id", "uid", "sku", "name", "room_id", "slot_id")
+    return queryset.order_by("pk").values("id", "uid", "sku", "name", "room_id", "slot_id")
 
 
 def station_slot_mapping_rows(*, station_ids=(), room_ids=()):

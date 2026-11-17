@@ -141,22 +141,3 @@ def test_needs_staff_access(benches):
     member.force_authenticate(user=grant_labs_role(user, "user"))
 
     assert member.get(URL).status_code == 403
-
-
-def test_rows_carry_image_url_or_null(client, benches):
-    """Rooms, stations, benches and units: the stored image as the same URL the resource reads return; null if none."""
-    Room.objects.filter(sku="MAP-R-1").update(image="resource-images/room.png")
-    Bench.objects.filter(sku="MAP-B-1").update(image="resource-images/bench.png")
-    body = _data(client.get(URL))
-
-    room = body["data"]["rooms"][0]
-    bench = next(item for item in body["data"]["benches"] if item["sku"] == "MAP-B-1")
-    empty_bench = next(item for item in body["data"]["benches"] if item["sku"] == "MAP-B-2")
-    station = body["data"]["stations"][0]
-    unit = body["data"]["equipment"][0]
-    assert room["image_url"] and "room.png" in room["image_url"]
-    assert bench["image_url"] and "bench.png" in bench["image_url"]
-    assert empty_bench["image_url"] is None
-    assert station["image_url"] is None
-    assert unit["image_url"] is None
-    assert "image" not in bench

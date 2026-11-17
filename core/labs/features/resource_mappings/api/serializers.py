@@ -3,33 +3,9 @@
 References between collections use the id form (REL-16): the client joins them inside this response.
 """
 
-from django.core.files.storage import default_storage
 from rest_framework import serializers
 
 from core.common.api.summary_serializers import embedded_resource
-from core.labs.features.base.resource_images import ResourceImageURLField
-
-
-class _StoredImage:
-    """The stored image name as a file: the mapping rows carry names from ``values()``, not file fields."""
-
-    storage = default_storage
-
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    @property
-    def url(self) -> str:
-        return self.storage.url(self.name)
-
-
-class MappingImageURLField(ResourceImageURLField):
-    """``image_url`` of a mapping row: the same URL rule as every resource read, from the stored name."""
-
-    def to_representation(self, value):
-        if not value:
-            return None
-        return super().to_representation(_StoredImage(value))
 
 
 class ResourceMappingQuerySerializer(serializers.Serializer):
@@ -50,7 +26,6 @@ class MappingRoomSerializer(serializers.Serializer):
     uid = serializers.UUIDField(label="UID")
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
-    image_url = MappingImageURLField()
     layout_rows = serializers.IntegerField(allow_null=True)
     layout_columns = serializers.IntegerField(allow_null=True)
 
@@ -75,7 +50,6 @@ class MappingStationSerializer(serializers.Serializer):
     uid = serializers.UUIDField(label="UID")
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
-    image_url = MappingImageURLField()
     room_id = serializers.IntegerField(allow_null=True)
     slot_id = serializers.IntegerField(allow_null=True)
 
@@ -98,7 +72,6 @@ class MappingBenchSerializer(serializers.Serializer):
     uid = serializers.UUIDField(label="UID")
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
-    image_url = MappingImageURLField()
     setup_location_id = serializers.IntegerField(allow_null=True)
     station_slot_id = serializers.IntegerField(allow_null=True)
 
@@ -128,7 +101,6 @@ class MappingEquipmentSerializer(serializers.Serializer):
     uid = serializers.UUIDField(label="UID")
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
-    image_url = MappingImageURLField()
     category = MappingEquipmentCategorySerializer(allow_null=True)
     bench_id = serializers.IntegerField(allow_null=True)
     bench_assignment = MappingEquipmentAssignmentSerializer(allow_null=True)

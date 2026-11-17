@@ -53841,12 +53841,6 @@
           "name": {
             "type": "string"
           },
-          "image_url": {
-            "type": "string",
-            "format": "uri",
-            "readOnly": true,
-            "nullable": true
-          },
           "setup_location_id": {
             "type": "integer",
             "nullable": true
@@ -53858,7 +53852,6 @@
         },
         "required": [
           "id",
-          "image_url",
           "name",
           "setup_location_id",
           "sku",
@@ -53882,12 +53875,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "image_url": {
-            "type": "string",
-            "format": "uri",
-            "readOnly": true,
-            "nullable": true
           },
           "category": {
             "allOf": [
@@ -53915,7 +53902,6 @@
           "bench_id",
           "category",
           "id",
-          "image_url",
           "name",
           "sku",
           "uid"
@@ -54084,12 +54070,6 @@
           "name": {
             "type": "string"
           },
-          "image_url": {
-            "type": "string",
-            "format": "uri",
-            "readOnly": true,
-            "nullable": true
-          },
           "layout_rows": {
             "type": "integer",
             "nullable": true
@@ -54101,7 +54081,6 @@
         },
         "required": [
           "id",
-          "image_url",
           "layout_columns",
           "layout_rows",
           "name",
@@ -54178,12 +54157,6 @@
           "name": {
             "type": "string"
           },
-          "image_url": {
-            "type": "string",
-            "format": "uri",
-            "readOnly": true,
-            "nullable": true
-          },
           "room_id": {
             "type": "integer",
             "nullable": true
@@ -54195,7 +54168,6 @@
         },
         "required": [
           "id",
-          "image_url",
           "name",
           "room_id",
           "sku",

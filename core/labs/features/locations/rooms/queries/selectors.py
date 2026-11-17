@@ -28,7 +28,7 @@ def get_room_for_mapping(*, room_id):
 
 def room_mapping_rows(*, room_ids):
     return Room.objects.filter(pk__in=room_ids, deleted_at__isnull=True).order_by("pk").values(
-        "id", "uid", "sku", "name", "layout_rows", "layout_columns", "image"
+        "id", "uid", "sku", "name", "layout_rows", "layout_columns"
     )
 
 

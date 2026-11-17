@@ -134,8 +134,8 @@ def bench_mapping_rows(*, bench_ids=(), station_ids=(), room_ids=()):
     elif room_ids:
         queryset = queryset.filter(setup_location__room_id__in=room_ids, setup_location__deleted_at__isnull=True)
     else:
-        return queryset.none().values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id", "image")
-    return queryset.order_by("pk").values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id", "image")
+        return queryset.none().values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id")
+    return queryset.order_by("pk").values("id", "uid", "sku", "name", "setup_location_id", "station_slot_id")
 
 
 MAPPING_FULLY_MAPPED = "fully_mapped"
