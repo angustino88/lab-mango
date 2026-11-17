@@ -6,6 +6,11 @@ AI-agent rules: [AGENTS.md](../AGENTS.md). Where a new document goes: [documenta
 Documentation describes the **target**; existing code is transitional. Generated [OpenAPI](../openapi/openapi.yml)
 and mounted URLconfs determine the live API; proposed paths in prose are not callable endpoints.
 
+**Published.** The Lab Mango docs site (frontend repository, `docs-site/`, served at `/docs/`) copies this
+folder, feature docs in `core/**/docs/`, `README.md`, `AGENTS.md` and `.github/instructions/` under
+*Developer › Backend* on every build. A merge to `main` that changes them triggers a rebuild
+(`.github/workflows/docs-sync.yml`). Keep editing here; use relative links, and the site resolves them.
+
 ## Layout
 
 | Folder | Holds |

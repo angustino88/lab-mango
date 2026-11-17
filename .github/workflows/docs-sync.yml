@@ -1,0 +1,39 @@
+name: docs-sync
+
+# The documentation site lives in the frontend repository (docs-site/). It copies this repository's docs on
+# every build. This workflow asks it to rebuild when a synced document changes on main.
+# Needs secret DOCS_DISPATCH_TOKEN: fine-grained token, Contents read/write on the frontend repository only.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "AGENTS.md"
+      - "docs/**"
+      - "core/**/docs/**"
+      - "packages/*/README.md"
+      - ".github/instructions/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify-docs-site:
+    name: Ask the docs site to rebuild
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send repository_dispatch to the frontend repository
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_DISPATCH_TOKEN }}
+          DOCS_REPO: ${{ vars.DOCS_REPO || 'angustino88/beauty' }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::DOCS_DISPATCH_TOKEN is not set; the docs site will pick this change up on its nightly build."
+            exit 0
+          fi
+          gh api "repos/${DOCS_REPO}/dispatches" \
+            -f event_type=backend-docs-updated \
+            -f "client_payload[sha]=${GITHUB_SHA}" \
+            -f "client_payload[ref]=${GITHUB_REF}"

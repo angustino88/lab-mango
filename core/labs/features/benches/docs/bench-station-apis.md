@@ -325,7 +325,7 @@ do not establish a deployable schema or PostgreSQL certification.
   PostgreSQL test schema. No PostgreSQL execution is claimed by this update;
    simultaneous-transaction/deadlock tests remain a rollout requirement.
 
-Target test ownership follows the [template's test scope](../../../../../docs/architecture/feature-template.md#45-tests):
+Target test ownership follows the [template's test scope](../../../../../docs/architecture/feature-template.md#6-tests):
 private feature API/application/query tests stay with the owning feature; model
 integrity and app registration tests live under `core/labs/tests/`. Existing
 top-level feature-only suites are transitional, not the location for new tests;
