@@ -83395,6 +83395,83 @@
       ],
       "parameters": [
         {
+          "name": "action",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "bench_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        },
+        {
+          "name": "computer_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        },
+        {
+          "name": "computer_sku",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "computing_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "from_date",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "from_date_time",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "lab",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        },
+        {
           "name": "page",
           "in": "query",
           "required": false,
@@ -83413,6 +83490,36 @@
             "type": "integer",
             "maximum": 100,
             "minimum": 1
+          }
+        },
+        {
+          "name": "subject_type",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "to_date",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "to_date_time",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       ],
@@ -84226,6 +84333,16 @@
           "schema": {
             "type": "string",
             "minLength": 1
+          }
+        },
+        {
+          "name": "computing_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
           }
         },
         {

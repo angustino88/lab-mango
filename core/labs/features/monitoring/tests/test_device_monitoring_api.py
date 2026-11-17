@@ -289,3 +289,27 @@ def test_new_endpoints_follow_the_labs_staff_policy(method, path):
     client.force_authenticate(User.objects.create_user(username="plain-user"))
     response = getattr(client, method)(path, {}, format="json") if method != "get" else client.get(path)
     assert response.status_code == 403
+
+
+def test_event_list_accepts_its_filters_including_computing(staff, scope):
+    computing, _ = scope
+    other = ComputingEquipmentFactory(name="Lab PC 03")
+    bench = BenchFactory()
+    place(computing, bench)
+    report(snapshot(computing, device("a", "SER-1")))
+    report(snapshot(other, device("b")))
+
+    def ids(params):
+        response = staff.get("/api/labs/monitoring-events", params)
+        assert response.status_code == 200, response.data
+        return {row["computer"]["id"] for row in response.data["data"]}
+
+    assert ids({}) == {computing.pk, other.pk}
+    assert ids({"computing_id": computing.pk}) == {computing.pk}
+    assert ids({"computer_id": other.pk}) == {other.pk}
+    assert ids({"lab": bench.pk}) == {computing.pk}
+    assert ids({"from_date_time": (timezone.now() - timedelta(hours=1)).isoformat(), "page": 1, "page_size": 10}) == {
+        computing.pk,
+        other.pk,
+    }
+    assert staff.get("/api/labs/monitoring-events", {"unknown": "x"}).status_code == 400

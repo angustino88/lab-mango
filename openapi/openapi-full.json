@@ -24620,6 +24620,67 @@
         "parameters": [
           {
             "in": "query",
+            "name": "action",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "bench_id",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "computer_id",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "computer_sku",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "computing_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "from_date",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from_date_time",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lab",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
             "name": "page",
             "schema": {
               "type": "integer",
@@ -24633,6 +24694,30 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "subject_type",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "to_date",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to_date_time",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         ],
@@ -24852,6 +24937,14 @@
             "schema": {
               "type": "string",
               "minLength": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "computing_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
             }
           },
           {
