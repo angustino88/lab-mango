@@ -6,6 +6,7 @@ import uuid
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from core.common.api.pagination import PageNumberQuerySerializer
 from core.common.api.summary_serializers import choice_field
 from core.common.api.wire_names import relation_object
 from core.labs.features.base.serializers import NamedReferenceSerializer
@@ -100,6 +101,7 @@ class MonitoringEventCreateSerializer(serializers.Serializer):
 
 
 class MonitoringEventQuerySerializer(serializers.Serializer):
+    computing_id = serializers.IntegerField(required=False, min_value=1)
     computer_id = serializers.IntegerField(required=False)
     computer_sku = serializers.CharField(required=False)
     action = serializers.CharField(required=False)
@@ -112,7 +114,12 @@ class MonitoringEventQuerySerializer(serializers.Serializer):
     to_date_time = serializers.DateTimeField(required=False)
 
 
+class MonitoringEventListQuerySerializer(PageNumberQuerySerializer, MonitoringEventQuerySerializer):
+    """Paging plus the event filters the list handler reads (``computer_id`` is the legacy alias)."""
+
+
 __all__ = [
+    "MonitoringEventListQuerySerializer",
     "MonitoringEventCreateSerializer",
     "MonitoringEventQuerySerializer",
     "MonitoringEventSerializer",

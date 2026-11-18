@@ -113,7 +113,15 @@ class ValidationFailed(DomainError):
     default_message = "One or more fields are invalid."
 
 
+class AuthenticationRequired(DomainError):
+    """The caller is not authenticated; the API layer answers 401 with a challenge."""
+
+    code = "unauthenticated"
+    default_message = "Authentication is required."
+
+
 __all__ = [
+    "AuthenticationRequired",
     "BadRequest",
     "Conflict",
     "DetailMessage",

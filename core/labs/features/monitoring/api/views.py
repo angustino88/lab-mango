@@ -6,15 +6,21 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
-from core.common.api.pagination import PageNumberQuerySerializer
 from core.labs.features.base import CommandAPIView
 from core.labs.features.monitoring import public
 from core.labs.features.monitoring.api.serializers import (
     MonitoringEventCreateSerializer,
+    MonitoringEventListQuerySerializer,
     MonitoringEventQuerySerializer,
     MonitoringEventSerializer,
 )
 from core.labs.features.monitoring.public import CreateMonitoringEventInput
+
+
+def _computing_param(request: Request) -> int | None:
+    """``computing_id`` filter, accepting the legacy ``computer_id`` name."""
+    value = request.query_params.get("computing_id") or request.query_params.get("computer_id")
+    return int(value) if value and value.isdigit() else None
 
 
 class MonitoringBaseAPIView(CommandAPIView):
@@ -27,7 +33,7 @@ class MonitoringEventListCreateAPIView(AppListAPIView, CommandAPIView):
     schema_tags = ("Monitoring",)
 
     get_contract = OperationContract(
-        query=PageNumberQuerySerializer,
+        query=MonitoringEventListQuerySerializer,
         success=ResponseContract.paginated("MonitoringEventList", MonitoringEventSerializer),
         bad_request=ResponseContract.bad_request(),
     )
@@ -44,7 +50,7 @@ class MonitoringEventListCreateAPIView(AppListAPIView, CommandAPIView):
         bench_id = int(bench_param) if bench_param and bench_param.isdigit() else None
         return self._execute(
             lambda: public.list_monitoring_events(
-                computer_id=int(request.query_params["computer_id"]) if "computer_id" in request.query_params and request.query_params["computer_id"].isdigit() else None,
+                computer_id=_computing_param(request),
                 computer_sku=request.query_params.get("computer_sku"),
                 action=request.query_params.get("action") or request.query_params.get("event_type"),
                 subject_type=request.query_params.get("subject_type") or request.query_params.get("category"),
@@ -93,7 +99,7 @@ class MonitoringEventExportAPIView(MonitoringBaseAPIView):
         bench_param = request.query_params.get("bench_id") or request.query_params.get("lab")
         bench_id = int(bench_param) if bench_param and bench_param.isdigit() else None
         qs = public.list_monitoring_events(
-            computer_id=int(request.query_params["computer_id"]) if "computer_id" in request.query_params and request.query_params["computer_id"].isdigit() else None,
+            computer_id=_computing_param(request),
             computer_sku=request.query_params.get("computer_sku"),
             action=request.query_params.get("action") or request.query_params.get("event_type"),
             subject_type=request.query_params.get("subject_type") or request.query_params.get("category"),

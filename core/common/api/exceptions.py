@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
 
 from core.common.domain.errors import (
+    AuthenticationRequired,
     BadRequest,
     Conflict,
     DomainError,
@@ -31,6 +32,8 @@ _ERRORS: dict[int, tuple[str, str]] = {
 
 
 def _domain_status(exc: DomainError) -> int:
+    if isinstance(exc, AuthenticationRequired):
+        return status.HTTP_401_UNAUTHORIZED
     explicit_status = getattr(exc, "status_code", None)
     if isinstance(explicit_status, int):
         return explicit_status
@@ -91,6 +94,10 @@ def api_exception_handler(exc: Exception, context: dict[str, Any]) -> Response |
     """Convert recognized DRF and business exceptions into the standard error response."""
     mapped = _map_business_exception(exc, context.get("request"))
     if mapped is not None:
+        if mapped.status_code == 401:
+            view = context.get("view")
+            challenge = view.get_authenticate_header(context.get("request")) if view else None
+            mapped["WWW-Authenticate"] = challenge or 'Bearer realm="api"'
         return mapped
     response = drf_exception_handler(exc, context)
     if response is None:

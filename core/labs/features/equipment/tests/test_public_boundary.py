@@ -35,7 +35,11 @@ def _absolute_imports(path: Path) -> set[str]:
 
 def test_contracts_are_a_neutral_type_only_boundary():
     contracts = FEATURE_ROOT / "contracts.py"
-    assert set(_exports(contracts)) == {"InactiveEquipmentSnapshot", "ActiveEquipmentBenchAssignment"}
+    assert set(_exports(contracts)) == {
+        "InactiveEquipmentSnapshot",
+        "ActiveEquipmentBenchAssignment",
+        "DeviceEquipmentMatch",
+    }
     assert "ActiveEquipmentBenchAssignment" in _exports(contracts)
     assert not any("django" in name or "rest_framework" in name for name in _absolute_imports(contracts))
 
@@ -61,6 +65,12 @@ def test_business_errors_are_separate_from_neutral_contracts():
 def test_public_module_exports_supported_queries_and_commands():
     public = FEATURE_ROOT / "public.py"
     assert set(_exports(public)) == {
+        "lock_monitoring_computing",
+        "claim_equipment_serial",
+        "active_bench_assignments",
+        "equipment_ids_on_bench",
+        "match_observed_devices",
+        "monitoring_interfaces",
         "ActiveEquipmentBenchAssignment",
         "AssignEquipmentInput",
         "bench_assignment_subquery",
