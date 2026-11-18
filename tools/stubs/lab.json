@@ -1,0 +1,16 @@
+{
+  "_comment": "Stub lab topology (no secrets). Natural keys: bench and computer SKUs STUB-<KEY>, project code STUB-<KEY>. A computer with a bench is placed on it through core.labs place_equipment.",
+  "benches": [
+    {"key": "bench-1", "name": "STUB Bench 1"},
+    {"key": "bench-2", "name": "STUB Bench 2"},
+    {"key": "bench-nopc", "name": "STUB Bench without computer"}
+  ],
+  "computing": [
+    {"key": "pc-1", "name": "STUB PC 1", "bench": "bench-1"},
+    {"key": "pc-2", "name": "STUB PC 2", "bench": "bench-2"},
+    {"key": "pc-loose", "name": "STUB PC not on a bench"}
+  ],
+  "projects": [
+    {"key": "proj-1", "name": "STUB Project 1"}
+  ]
+}

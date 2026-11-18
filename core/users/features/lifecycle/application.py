@@ -188,6 +188,16 @@ def _require_actor(caller: str, required_capability: str) -> None:
             }
         ),
         "urs-sync": frozenset({"users.lifecycle.activity.write"}),
+        # Local stub identities (core/users/features/lifecycle/stub.py), which also checks the stub guards.
+        "stub-identities-command": frozenset(
+            {
+                "users.lifecycle.activity.write",
+                "users.lifecycle.identity.bind",
+                "users.lifecycle.identity.replace",
+                "users.lifecycle.identity.unlink",
+                "users.lifecycle.user.delete",
+            }
+        ),
     }
     capabilities = capabilities_by_caller.get(caller)
     if capabilities is None or required_capability not in capabilities:

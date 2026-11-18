@@ -8,6 +8,7 @@ from .base import env
 
 # No LDAP, local password, allauth signup or password-reset authentication in production.
 ENTRA_SSO_ONLY = True
+ENTRA_STUB_ISSUER_ENABLED = False  # The local stub issuer is never trusted in production.
 AUTHENTICATION_BACKENDS = ["core.users.backends.EntraSessionBackend"]
 ACCOUNT_ALLOW_REGISTRATION = False
 DJANGO_ADMIN_FORCE_ALLAUTH = False
