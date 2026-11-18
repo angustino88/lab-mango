@@ -377,7 +377,19 @@ CELERY_BEAT_SCHEDULE = {
         "task": "labs.analytics.snapshot_daily_active_benches",
         "schedule": crontab(minute=15, hour=0),
     },
+    # Purge expired device-observation receipts and long-detached device rows. Idempotent and
+    # chunked; see core/labs/features/monitoring/application/retention.py.
+    "monitoring-purge-device-observation-history": {
+        "task": "labs.monitoring.purge_device_observation_history",
+        "schedule": crontab(minute=40, hour=2),
+    },
 }
+
+# DEVICE MONITORING
+# ------------------------------------------------------------------------------
+# Idempotency receipts only need to outlive agent retry windows; detached rows are history.
+DEVICE_OBSERVATION_RECEIPT_RETENTION_DAYS = env.int("DEVICE_OBSERVATION_RECEIPT_RETENTION_DAYS", default=14)
+DEVICE_CONNECTION_DETACHED_RETENTION_DAYS = env.int("DEVICE_CONNECTION_DETACHED_RETENTION_DAYS", default=90)
 
 # DJANGO-ALLAUTH
 # ------------------------------------------------------------------------------

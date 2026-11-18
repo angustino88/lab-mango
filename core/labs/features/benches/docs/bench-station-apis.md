@@ -139,7 +139,9 @@ The [explicit serializers](../api/serializers.py) accept:
 
 Ordinary bench resource read responses include the standard bench fields plus `id`,
 `uid`, `created_at`, `updated_at`, `setup_location_path`, `is_favorite`,
-`equipment_count`, and `equipment_url`. They do not inline assignment collections.
+`equipment_count`, and `equipment_url`. `room` is the `{id, uid, sku, name}` of the
+room the bench's station is in, or `null` when the bench is unplaced or the station
+has no room. They do not inline assignment collections.
 The dashboard clicked-bench endpoint returns category-grouped equipment, active
 license summaries, activity freshness, and booking schedule data. Resource mapping
 endpoints return graphic-only placement relationships and license summaries. All

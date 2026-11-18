@@ -703,6 +703,14 @@ components:
           $ref: '#/components/schemas/AgentIdentity'
       required:
       - data
+    AgentDeviceObservationsObservationSerializersObservationAcknowledgmentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ObservationAcknowledgment'
+      required:
+      - data
     AgentHeartbeatRequest:
       type: object
       properties:
@@ -850,6 +858,14 @@ components:
       required:
       - data
       - meta
+    AgentMonitoringPolicyObservationSerializersMonitoringPolicyDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/MonitoringPolicy'
+      required:
+      - data
     AgentSessionLogData:
       type: object
       properties:
@@ -1264,6 +1280,13 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsBenchRoomReference'
+          nullable: true
+          readOnly: true
+          description: Room of the station the bench is set up on; null when the bench
+            is unplaced or the station has no room.
         status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -1366,6 +1389,7 @@ components:
       - requested_load_kg
       - requested_power_w
       - required_utilities
+      - room
       - setup_location
       - setup_location_path
       - sku
@@ -2315,6 +2339,13 @@ components:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
           nullable: true
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsBenchRoomReference'
+          nullable: true
+          readOnly: true
+          description: Room of the station the bench is set up on; null when the bench
+            is unplaced or the station has no room.
         status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -2417,6 +2448,7 @@ components:
       - requested_load_kg
       - requested_power_w
       - required_utilities
+      - room
       - setup_location
       - setup_location_path
       - sku
@@ -3707,6 +3739,21 @@ components:
           default: 15
       required:
       - equipment_uid
+    CreateExpectedDeviceRequest:
+      type: object
+      properties:
+        computing_id:
+          type: integer
+          minimum: 1
+        equipment_id:
+          type: integer
+          minimum: 1
+        is_disconnect_alert_enabled:
+          type: boolean
+          default: false
+      required:
+      - computing_id
+      - equipment_id
     CreateGrantForAgentRequest:
       type: object
       properties:
@@ -4471,6 +4518,325 @@ components:
           $ref: '#/components/schemas/DepartmentReferenceListSerializersDepartmentCatalogRecordPagination'
       required:
       - pagination
+    DeviceConnection:
+      type: object
+      properties:
+        id:
+          type: integer
+        computing:
+          $ref: '#/components/schemas/LabsUIDNamedReference'
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
+          readOnly: true
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          nullable: true
+        interface:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
+        interface_name:
+          type: string
+        collector_key:
+          type: string
+        observation_key:
+          type: string
+        name:
+          type: string
+        serial_number:
+          type: string
+        state:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        match_status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        freshness:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        is_attention_required:
+          type: boolean
+        expected_device_id:
+          type: integer
+          nullable: true
+        observed_at:
+          type: string
+          format: date-time
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - bench
+      - collector_key
+      - computing
+      - equipment
+      - expected_device_id
+      - freshness
+      - id
+      - interface
+      - interface_name
+      - is_attention_required
+      - match_status
+      - name
+      - observation_key
+      - observed_at
+      - received_at
+      - serial_number
+      - state
+    DeviceConnectionChange:
+      type: object
+      properties:
+        state:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        observed_at:
+          type: string
+          format: date-time
+          readOnly: true
+        sequence:
+          type: integer
+        is_complete:
+          type: boolean
+      required:
+      - is_complete
+      - observed_at
+      - sequence
+      - state
+    DeviceConnectionDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        computing:
+          $ref: '#/components/schemas/LabsUIDNamedReference'
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
+          readOnly: true
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          nullable: true
+        interface:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
+        interface_name:
+          type: string
+        collector_key:
+          type: string
+        observation_key:
+          type: string
+        name:
+          type: string
+        serial_number:
+          type: string
+        state:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        match_status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        freshness:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        is_attention_required:
+          type: boolean
+        expected_device_id:
+          type: integer
+          nullable: true
+        observed_at:
+          type: string
+          format: date-time
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+          readOnly: true
+        first_seen_at:
+          type: string
+          format: date-time
+          readOnly: true
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceConnectionChange'
+      required:
+      - bench
+      - collector_key
+      - computing
+      - equipment
+      - expected_device_id
+      - first_seen_at
+      - freshness
+      - history
+      - id
+      - interface
+      - interface_name
+      - is_attention_required
+      - match_status
+      - name
+      - observation_key
+      - observed_at
+      - received_at
+      - serial_number
+      - state
+    DeviceConnectionDetailConnectionsDeviceConnectionDetailDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/DeviceConnectionDetail'
+      required:
+      - data
+    DeviceConnectionLinkActionConnectionsDeviceConnectionDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/DeviceConnection'
+      required:
+      - data
+    DeviceConnectionListConnectionsDeviceConnectionPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/DeviceConnectionListConnectionsDeviceConnectionPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceConnection'
+      required:
+      - data
+      - meta
+    DeviceConnectionListConnectionsDeviceConnectionPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    DeviceConnectionListConnectionsDeviceConnectionPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/DeviceConnectionListConnectionsDeviceConnectionPagination'
+      required:
+      - pagination
+    DeviceConnectionSummary:
+      type: object
+      properties:
+        connected:
+          type: integer
+        needs_matching:
+          type: integer
+        unconfirmed:
+          type: integer
+        missing:
+          type: integer
+        computing_units:
+          type: integer
+      required:
+      - computing_units
+      - connected
+      - missing
+      - needs_matching
+      - unconfirmed
+    DeviceConnectionSummaryConnectionsDeviceConnectionSummaryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/DeviceConnectionSummary'
+      required:
+      - data
+    DeviceObservation:
+      type: object
+      properties:
+        observation_key:
+          type: string
+          maxLength: 255
+        interface_name:
+          type: string
+          maxLength: 255
+        state:
+          $ref: '#/components/schemas/StateEnum'
+        name:
+          type: string
+          default: ''
+          maxLength: 255
+        serial_number:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - interface_name
+      - observation_key
+      - state
+      additionalProperties: false
+    DeviceObservationReport:
+      type: object
+      properties:
+        generation_key:
+          type: string
+          format: uuid
+        collector_key:
+          type: string
+          maxLength: 32
+          pattern: ^[a-z][a-z0-9_-]{0,31}$
+        sequence:
+          type: integer
+          maximum: 9007199254740991
+          minimum: 1
+          format: int64
+        collected_at:
+          type: string
+          format: date-time
+        is_complete:
+          type: boolean
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceObservation'
+      required:
+      - collected_at
+      - collector_key
+      - devices
+      - generation_key
+      - is_complete
+      - sequence
+      additionalProperties: false
     DigestResponse:
       type: object
       properties:
@@ -8364,6 +8730,104 @@ components:
           $ref: '#/components/schemas/ErrorBody'
       required:
       - error
+    ExpectedDevice:
+      type: object
+      properties:
+        id:
+          type: integer
+        computing:
+          $ref: '#/components/schemas/LabsUIDNamedReference'
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
+          readOnly: true
+        equipment:
+          $ref: '#/components/schemas/LabsUIDNamedReference'
+        presence:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        last_seen_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        is_disconnect_alert_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - bench
+      - computing
+      - created_at
+      - equipment
+      - id
+      - is_disconnect_alert_enabled
+      - last_seen_at
+      - presence
+    ExpectedDeviceCreateConnectionsExpectedDeviceDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ExpectedDevice'
+      required:
+      - data
+    ExpectedDeviceListConnectionsExpectedDevicePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/ExpectedDeviceListConnectionsExpectedDevicePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpectedDevice'
+      required:
+      - data
+      - meta
+    ExpectedDeviceListConnectionsExpectedDevicePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    ExpectedDeviceListConnectionsExpectedDevicePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/ExpectedDeviceListConnectionsExpectedDevicePagination'
+      required:
+      - pagination
+    ExpectedDeviceUpdateConnectionsExpectedDeviceDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ExpectedDevice'
+      required:
+      - data
     Expense:
       type: object
       description: Read shape for expenses.
@@ -9861,6 +10325,29 @@ components:
         * `station` - station
 
         * `room` - room'
+    LabsBenchRoomReference:
+      type: object
+      description: The room of the station a bench is set up on.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - sku
+      - uid
+      x-embedded-resource: true
     LabsChoiceReference:
       type: object
       description: Standard `{value, label}` representation for enum and lifecycle
@@ -11576,6 +12063,14 @@ components:
         * `in_service` - In service
 
         * `retired` - Retired'
+    LinkDeviceConnectionRequest:
+      type: object
+      properties:
+        equipment_id:
+          type: integer
+          minimum: 1
+      required:
+      - equipment_id
     LinkResourceRequest:
       type: object
       properties:
@@ -12303,6 +12798,28 @@ components:
           $ref: '#/components/schemas/MonitoringEvent'
       required:
       - data
+    MonitoringPolicy:
+      type: object
+      properties:
+        generation_key:
+          type: string
+          format: uuid
+        max_devices:
+          type: integer
+        max_body_bytes:
+          type: integer
+        freshness_seconds:
+          type: integer
+        interface_names:
+          type: array
+          items:
+            type: string
+      required:
+      - freshness_seconds
+      - generation_key
+      - interface_names
+      - max_body_bytes
+      - max_devices
     MonitoringSubject:
       type: object
       description: 'What the agent reported on (STR-1): agent-side identifiers, not
@@ -12519,6 +13036,26 @@ components:
     NullEnum:
       enum:
       - null
+    ObservationAcknowledgment:
+      type: object
+      properties:
+        batch_key:
+          type: string
+          format: uuid
+        sequence:
+          type: integer
+        disposition:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+      required:
+      - batch_key
+      - disposition
+      - received_at
+      - sequence
     OpEnum:
       enum:
       - upsert
@@ -13494,6 +14031,11 @@ components:
           type: string
           nullable: true
           maxLength: 32
+    PatchedUpdateExpectedDeviceRequest:
+      type: object
+      properties:
+        is_disconnect_alert_enabled:
+          type: boolean
     PatchedUpdateResourceAuditRequest:
       type: object
       description: Payload to update an existing audit record.
@@ -16682,6 +17224,14 @@ components:
           $ref: '#/components/schemas/SpecificationDefinitionReferenceListSerializersSpecificationDefinitionCatalogRecordPagination'
       required:
       - pagination
+    StateEnum:
+      enum:
+      - connected
+      - disconnected
+      type: string
+      description: '* `connected` - Connected
+
+        * `disconnected` - Disconnected'
     Station:
       type: object
       description: 'Separate state fields of a room or station (design: resource-status-and-downtime.md).
@@ -19900,6 +20450,15 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    observationSignatureAuth:
+      type: apiKey
+      in: header
+      name: X-Agent-Signature
+      description: 'Ed25519 signature (base64url, unpadded) by the enrolled agent
+        key over NUL-joined: ''labmango-agent-request-v1'', backend_id, agent_uid,
+        HTTP method, path, timestamp, nonce, hex SHA-256 of the raw body. Also required:
+        X-Agent-Id (agent_uid), X-Agent-Timestamp (unix seconds, within AGENT_REQUEST_MAX_SKEW_S)
+        and X-Agent-Nonce (base64url, at least 16 random bytes, single use).'
     routingSyncBearerAuth:
       type: http
       scheme: bearer

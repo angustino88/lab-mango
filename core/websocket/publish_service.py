@@ -128,6 +128,29 @@ def publish_notification(
         _publish(f"ws:notifications:user:{target_user_id}", payload)
 
 
+def publish_user_notification(
+    target_user_id: int,
+    message: str,
+    message_type: str = "info",
+    details: str = "",
+    notification_id: int | None = None,
+) -> None:
+    """Publish a notification to one user's channel only (never broadcast)."""
+    from django.utils import timezone
+
+    _publish(
+        f"ws:notifications:user:{target_user_id}",
+        {
+            "type": "notification",
+            "id": notification_id,
+            "message": message,
+            "details": details,
+            "message_type": message_type,
+            "created": timezone.now().isoformat(),
+        },
+    )
+
+
 def publish_task_progress(
     task_id: str,
     progress: int,

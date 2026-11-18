@@ -6,6 +6,9 @@
 
 ## 1. Purpose and scope
 
+The [device connection contract](device-connections.md) adds ordered snapshots,
+durable replay receipts and current connection projections to this feature.
+
 **Verified.** The monitoring feature owns the ingestion, recording, querying, and reporting of immutable agent-reported monitoring telemetry events (`MonitoringEvent`).
 
 - **In Scope:**

@@ -12,6 +12,8 @@ paths:
     $ref: ./agents.yml#/paths/~1agent~1bookings~1actions~1extend
   /agent/bookings/actions/validate:
     $ref: ./agents.yml#/paths/~1agent~1bookings~1actions~1validate
+  /agent/device-observations/actions/report:
+    $ref: ./agents.yml#/paths/~1agent~1device-observations~1actions~1report
   /agent/enrollments:
     $ref: ./agents.yml#/paths/~1agent~1enrollments
   /agent/equipment/activity:
@@ -20,6 +22,8 @@ paths:
     $ref: ./agents.yml#/paths/~1agent~1heartbeat
   /agent/info:
     $ref: ./agents.yml#/paths/~1agent~1info
+  /agent/monitoring-policy:
+    $ref: ./agents.yml#/paths/~1agent~1monitoring-policy
   /agent/session-logs:
     $ref: ./agents.yml#/paths/~1agent~1session-logs
   /api/agents:
@@ -446,6 +450,24 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1groups~1{group_id}
   /api/labs/groups/options:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1groups~1options
+  /api/labs/device-connections:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1device-connections
+  /api/labs/device-connections/{connection_id}:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1device-connections~1{connection_id}
+  /api/labs/device-connections/{connection_id}/actions/link:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1device-connections~1{connection_id}~1actions~1link
+  /api/labs/device-connections/summary:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1device-connections~1summary
+  /api/labs/expected-devices:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices
+  /api/labs/expected-devices/{expected_device_id}:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices~1{expected_device_id}
+  /api/labs/monitoring-events:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events
+  /api/labs/monitoring-events/{id}:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events~1{id}
+  /api/labs/monitoring-events/export:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events~1export
   /api/labs/downtimes:
     $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes
   /api/labs/downtimes/{downtime_id}:
@@ -532,12 +554,6 @@ paths:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1vendors~1{reference_id}
   /api/labs/licenses/status-summary:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1status-summary
-  /api/labs/monitoring-events:
-    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events
-  /api/labs/monitoring-events/{id}:
-    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events~1{id}
-  /api/labs/monitoring-events/export:
-    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events~1export
   /api/labs/purchase-items/{purchase_item_id}/resources:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchase-items~1{purchase_item_id}~1resources
   /api/labs/purchase-priorities:

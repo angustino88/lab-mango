@@ -122,6 +122,8 @@ def test_info_publishes_session_and_validation_paths(db):
 
     assert {"session_logs", "booking_validation", "booking_check_in"} <= set(data["capabilities"])
     assert data["endpoints"] == {
+        "monitoring_policy": "/agent/monitoring-policy",
+        "device_observations": "/agent/device-observations/actions/report",
         "session_logs": "/agent/session-logs",
         "booking_validation": "/agent/bookings/actions/validate",
         "booking_check_in": "/agent/bookings/actions/check-in",

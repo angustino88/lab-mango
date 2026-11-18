@@ -77,7 +77,7 @@ def enrolled(db):
 
 
 def post_heartbeat(body: bytes, headers: dict[str, str]):
-    return APIClient().post(HEARTBEAT, data=body, content_type="application/json", **headers)
+    return APIClient().post(HEARTBEAT, data=body, content_type="application/json", follow=False, **headers)
 
 
 def assert_unauthenticated(response):
@@ -136,7 +136,13 @@ def test_signature_binds_body_path_and_method(enrolled, mutation):
         kwargs["path"] = "/agent/enrollments"
     else:
         kwargs["method"] = "PUT"
-    headers = signed_headers(key, identity.agent_uid, signed_body, **kwargs)
+    headers = signed_headers(
+        key,
+        identity.agent_uid,
+        signed_body,
+        method=kwargs.get("method", "POST"),
+        path=kwargs.get("path", HEARTBEAT),
+    )
     assert_unauthenticated(post_heartbeat(body, headers))
 
 

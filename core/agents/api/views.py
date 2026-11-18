@@ -1052,6 +1052,7 @@ class AgentInfoAPIView(APIView):
                         "heartbeat",
                         "reporting",
                         "activity",
+                        "device_observations",
                         "request_signature_v1",
                         "session_logs",
                         "booking_validation",
@@ -1060,6 +1061,8 @@ class AgentInfoAPIView(APIView):
                         "booking_extend",
                     ],
                     "endpoints": {
+                        "monitoring_policy": reverse("agent-monitoring-policy"),
+                        "device_observations": reverse("agent-device-observations"),
                         "session_logs": reverse("agent-session-logs"),
                         "booking_validation": reverse("agent-booking-validation"),
                         "booking_check_in": reverse("agent-booking-check-in"),

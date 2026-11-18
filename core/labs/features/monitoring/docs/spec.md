@@ -18,7 +18,12 @@ The Monitoring feature ingests real-time hardware telemetry, peripheral attach/d
   - `payload` (JSONField, default=dict).
 - **Invariants:**
   - `clean()` enforces: `custom` actions require a non-blank `action_name`; `payload` must be a JSON object.
-  - Ingestion requires a valid agent API key (`HasAPIKey`).
+  - Legacy event ingestion uses the shared Labs staff/API-key policy. Signed device
+    snapshots use the separate credential-scoped endpoint.
+
+Current device connections and reconciliation follow the
+[device connection contract](device-connections.md). Generic event insertion alone
+does not update that projection.
 
 ---
 
