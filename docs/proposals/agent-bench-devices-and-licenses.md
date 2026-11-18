@@ -190,11 +190,21 @@ Vector `VectorLicenseId`); the backend routes each one to the `License` record a
    - several (duplicate identifiers) → `ambiguous`, no effect.
    Fallback only when the tool reports no serial: the check's linked licenses with the same product,
    else the carrier's active `LicenseAssignment`s with the same `vendor_product_code`.
-2. **Compare the carrier** (where the license sits) with Lab Mango: carrier equipment is the agent's
-   computer (`computer`), the unit on the check (`equipment`), or the unit **linked** to the reported
-   hardware ID (`device` / `dongle`, section 3.2). If the matched license has an active assignment and
-   it is to a different unit → `carrier_mismatch` (moved or misregistered: shown, never reassigned
-   automatically). An unlinked carrier device → `carrier_unlinked` (shown with a link suggestion).
+2. **Check that the report belongs to this computer** before anything changes. The reporting
+   computer `C` is the computing equipment bound to the signing agent identity (server-derived;
+   never taken from the body). The check must target `C`, otherwise the run is refused (`404`).
+   For each matched license `L`:
+
+   | Step | Rule | Failure → status (no update) |
+   |---|---|---|
+   | Carrier unit `U` | `computer` → `C`; `equipment` → the unit on the check; `device` / `dongle` → the unit **linked** to the reported hardware ID (section 3.2) | `carrier_unlinked` |
+   | `U` is at `C` | `U = C`; or `U` is reported **connected** by `C`'s own fresh device observations; or `U` is placed on `C`'s bench | `carrier_not_at_computer` |
+   | `L` belongs there | `L` has an active `LicenseAssignment` to `U` or to `C` | `carrier_mismatch` (assigned elsewhere) or `unassigned` (no assignment) |
+
+   Only when all three pass is the license updated. Failures are stored on the observation and listed
+   under "Found on lab hardware" with the suggested fix (link the device, assign the license, move the
+   assignment); nothing is reassigned automatically (decision D8).
+
 3. **Compare and update** a `matched` license (decision D1), in one transaction, with a
    change-log entry naming the agent as actor:
 
@@ -227,7 +237,7 @@ Configured checks make agents run programs, so the design limits what a configur
 | Licenses → **License checks** (new tab) | List (name, vendor, probe, targets, last runs: ok / failed / not installed per computer); create from a preset or from scratch; edit probe, mapping, carrier, targets, interval; enable/disable |
 | Check editor | Form per probe type; mapping editor with field sources; "Preview" that validates the configuration; revision history |
 | License detail | "Observed" panel: carrier, observed expiry and version, last seen, check, match status; difference to the registered values |
-| Licenses → **Found on lab hardware** | `unregistered`, `ambiguous`, `carrier_unlinked` and `carrier_mismatch` observations, with actions: register, assign, link the carrier device |
+| Licenses → **Found on lab hardware** | `unregistered`, `ambiguous`, `carrier_unlinked`, `carrier_not_at_computer`, `unassigned` and `carrier_mismatch` observations, each with its fix: register the license, link the carrier device, assign the license, or move the assignment |
 | Computing equipment → Agent dialog | Per check: last run status, error, license count, next expiry |
 
 ## 6. Invariants and guards
@@ -239,6 +249,7 @@ Configured checks make agents run programs, so the design limits what a configur
 | Agents cannot create or change links | Links written only by authenticated coordinator commands |
 | Exact retries repeat no effects; stale snapshots never overwrite newer | Batch receipts with content hash; apply only `sequence > cursor` |
 | License writes never touch `identifier` or seats | Effects limited to `expiry_date`, `max_version`, status command |
+| An agent can only update licenses that are at its own computer | Reporting computer derived from the signing identity; check must target it; carrier linked, at the computer (same unit, connected by its own observations, or on its bench) and the license assigned to the carrier or the computer (section 5.4) |
 
 ## 7. Decisions needed
 
@@ -251,6 +262,7 @@ Configured checks make agents run programs, so the design limits what a configur
 | D5 | Keep serial-number matching as a suggestion source during migration | Yes, suggestions only; remove once links cover the fleet |
 | D6 | Allow automatic linking when exactly one bench candidate exists | No: one-click confirm keeps a human decision on inventory identity |
 | D7 | Who may create or change license checks | Admins only; coordinators may enable/disable and change targets |
+| D8 | Update a license only when its carrier is at the reporting computer and it is assigned to that carrier or computer | Yes; otherwise record and show, never update or reassign automatically |
 
 ## 8. Delivery
 
