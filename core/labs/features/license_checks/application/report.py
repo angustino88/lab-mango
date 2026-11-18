@@ -305,4 +305,3 @@ def report_license_check_run(command: LicenseCheckRunInput) -> LicenseCheckRunAc
     if is_current and command.status == LicenseCheckRunStatus.OK:
         _apply_run(run, check, command)
     return _ack(run, _result_of(run, check))
-
