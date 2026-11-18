@@ -116,7 +116,7 @@ to its computer, runs them read-only and reports one result per run.
 | Part | Content | Example (Vector preset) |
 |---|---|---|
 | Probe | One of a **closed catalog** the agent implements: `command` (installed tool, fixed arguments, stdout), `file` (license or status file), `registry` (values under one HKLM key) | `command`: `C:\Program Files\Vector License Client\Vector.LicenseClient.exe -listlicenses` |
-| Extraction | Declarative mapping, no code: format `xml` / `json` / `text` (regex with named groups) / `values` (registry), a records selector and field sources for `product_name`, `product_code`, `max_version`, `expires_at`, `final_expires_at`, `carrier_id`, `vendor_license_id`, `is_reactivatable`, `carrier_type`; date formats and "never" values | `.//VectorLicense`; `ExpirationDateString` → `expires_at`; `9999-12-31` = never |
+| Extraction | Declarative mapping, no code: format `xml` / `json` / `text` (regex with named groups) / `values` (registry), a records selector and field sources for `product_name`, `product_code`, `max_version`, `expires_at`, `final_expires_at`, `carrier_id`, `license_serial`, `is_reactivatable`, `carrier_type`; date formats and "never" values | `.//VectorLicense`; `ExpirationDateString` → `expires_at`; `9999-12-31` = never |
 | Carrier | What holds the licenses: `computer`, `device` / `dongle` (identified by a hardware ID kind read from `carrier_id`), `server` (floating), `equipment` (a unit picked in the web app when the tool names no hardware), or `mapped` per license from a tool field | `mapped`: `BindingType` DEVICE → device, DONGLE → dongle, PC → computer; hardware ID kind `vector_device` |
 | Targets | Which computers run it: rooms, stations, benches, equipment categories or individual computers | all benches with Vector hardware |
 | Interval | Minutes between runs (≥ 15) | 360 |
@@ -155,11 +155,11 @@ parser and presets: `agent/src/core/licensing/` (tested with a real Vector Licen
   "started_at": "2026-11-18T15:35:11+07:00", "reported_at": "2026-11-18T08:35:12Z", "duration_ms": 412,
   "is_complete": true,
   "licenses": [{
-    "observation_key": "vector-license-client:device:007113-585343:55100",
+    "observation_key": "vector-license-client:serial:3f9c0d6e1a2b4c5d6e7f8a9b",
     "vendor": "Vector", "product_code": "55100", "product_name": "CANalyzer PRO",
     "carrier": {"type": "device", "hardware_id": {"kind": "vector_device", "value": "007113-585343"}},
     "expires_at": "2027-04-09T23:59:59+07:00", "final_expires_at": null,
-    "max_version": "15.0", "is_reactivatable": true, "vendor_license_id": "55100045010"
+    "max_version": "15.0", "is_reactivatable": true, "license_serial": "55100045010"
   }]
 }
 ```
@@ -170,26 +170,43 @@ parser and presets: `agent/src/core/licensing/` (tested with a real Vector Licen
 | `is_complete` | Only `ok` runs replace the license set; other statuses only record the run |
 | `revision` | Runs of an older revision are recorded but do not change observations |
 | `sequence` | Increasing per agent and check; older runs are stale |
-| `vendor_license_id` | Secret like `License.identifier`: never logged, compared by digest |
+| `license_serial` | The license's serial / ID from the tool; the match key for `License.identifier`. Secret: never logged, compared by digest. The observation key uses a digest too, so it follows the license when it moves |
 | Never sent | raw tool output, contract or activation IDs, user names |
 
 Source of the Vector fields: `Vector.LicenseClient -listlicenses` (Vector KB0021758). Its
 `ExpirationDateString` is when the activation ends (reactivatable licenses), `FinalExpirationDateString`
 `9999-12-31` means perpetual; `expires_at` follows the first because that is when the tool stops.
 
-### 5.4 Matching and effects
+### 5.4 Matching by license serial, and effects
 
-1. Carrier equipment: `computer` → the agent's computing equipment; `equipment` → the unit on the
-   check; `device` / `dongle` → the unit **linked** to the carrier hardware ID (section 3.2);
-   `server` → none (floating). Unlinked carrier → `carrier_unlinked`.
-2. License: `License.identifier` equal to `vendor_license_id` (digest compare); else the check's
-   linked licenses with the same product; else, among the carrier's active `LicenseAssignment`s, the
-   one whose product has the same `vendor_product_code`. One → `matched`; none → `unassigned`;
-   several → `ambiguous`; found by ID but assigned to another unit → `carrier_mismatch`.
-3. Effects on `matched` (decision D1), same transaction, change-log entry with the agent as actor:
-   `expiry_date` := `expires_at` when different; `max_version` := reported value when non-blank;
-   expired → license status command records `expired` (never revives `revoked`/`suspended`).
-4. Expected licenses of a check not seen by an `ok` run on any target computer → "missing" in the UI.
+The agent pushes every license it finds with its **license serial** (the tool's own license ID,
+Vector `VectorLicenseId`); the backend routes each one to the `License` record and compares.
+
+1. **Find the license** by serial: `License.identifier` (help text "License key or serial") equal to
+   `license_serial`. The identifier is a secret, so the lookup uses a new indexed
+   `identifier_sha256` column (digest of the normalised identifier) instead of the plain value.
+   - one license → `matched`;
+   - none → `unregistered` (listed under "Found on lab hardware" for a coordinator to register);
+   - several (duplicate identifiers) → `ambiguous`, no effect.
+   Fallback only when the tool reports no serial: the check's linked licenses with the same product,
+   else the carrier's active `LicenseAssignment`s with the same `vendor_product_code`.
+2. **Compare the carrier** (where the license sits) with Lab Mango: carrier equipment is the agent's
+   computer (`computer`), the unit on the check (`equipment`), or the unit **linked** to the reported
+   hardware ID (`device` / `dongle`, section 3.2). If the matched license has an active assignment and
+   it is to a different unit → `carrier_mismatch` (moved or misregistered: shown, never reassigned
+   automatically). An unlinked carrier device → `carrier_unlinked` (shown with a link suggestion).
+3. **Compare and update** a `matched` license (decision D1), in one transaction, with a
+   change-log entry naming the agent as actor:
+
+   | Reported | Compared with | Action when different |
+   |---|---|---|
+   | `expires_at` | `License.expiry_date` | update |
+   | `max_version` | `License.max_version` | update (when reported) |
+   | expired (`expires_at` in the past) | license status | record `expired` via the status command (never revives `revoked` / `suspended`) |
+   | `final_expires_at`, `is_reactivatable` | — | stored on the observation, shown in the UI |
+
+   Identical values change nothing (no change-log noise); every run updates `last_seen_at`.
+4. Expected licenses of a check that no `ok` run reports on any target computer → "missing".
 
 ### 5.5 Security model
 
@@ -210,7 +227,7 @@ Configured checks make agents run programs, so the design limits what a configur
 | Licenses → **License checks** (new tab) | List (name, vendor, probe, targets, last runs: ok / failed / not installed per computer); create from a preset or from scratch; edit probe, mapping, carrier, targets, interval; enable/disable |
 | Check editor | Form per probe type; mapping editor with field sources; "Preview" that validates the configuration; revision history |
 | License detail | "Observed" panel: carrier, observed expiry and version, last seen, check, match status; difference to the registered values |
-| Licenses → **Found on lab hardware** | `unassigned`, `ambiguous`, `carrier_unlinked` and `carrier_mismatch` observations, with actions: register, assign, link the carrier device |
+| Licenses → **Found on lab hardware** | `unregistered`, `ambiguous`, `carrier_unlinked` and `carrier_mismatch` observations, with actions: register, assign, link the carrier device |
 | Computing equipment → Agent dialog | Per check: last run status, error, license count, next expiry |
 
 ## 6. Invariants and guards
@@ -228,7 +245,7 @@ Configured checks make agents run programs, so the design limits what a configur
 | # | Decision | Recommendation |
 |---|---|---|
 | D1 | Apply observed expiry/version to `License` automatically, or review first | Automatic for `matched`, with change-log entry |
-| D2 | Match by `vendor_license_id` against `License.identifier`, then a check's linked licenses, then `LicenseProduct.vendor_product_code` | Yes |
+| D2 | Match by license serial (`License.identifier`, new `identifier_sha256` index); fall back to a check's linked licenses, then `LicenseProduct.vendor_product_code`, only for tools without serials | Yes |
 | D3 | `EquipmentProductModel.usb_ids` | Yes |
 | D4 | Warning window | 30 days |
 | D5 | Keep serial-number matching as a suggestion source during migration | Yes, suggestions only; remove once links cover the fleet |
