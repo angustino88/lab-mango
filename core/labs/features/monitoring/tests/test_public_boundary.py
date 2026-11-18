@@ -39,6 +39,7 @@ def test_public_surface_exports_commands_queries_and_exceptions():
         "InvalidateDeviceConnectionsInput",
         "invalidate_device_connections",
         "list_device_connections",
+        "expected_device_watch_list",
         "ComputerNotFound",
         "CreateMonitoringEventInput",
         "MonitoringEventConflict",

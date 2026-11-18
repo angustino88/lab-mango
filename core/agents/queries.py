@@ -13,7 +13,11 @@ from django.utils import timezone
 
 from core.agents.models import AgentIdentity, EnrollmentGrant
 from core.labs.features.equipment.public import monitoring_interfaces
-from core.labs.features.monitoring.public import DEVICE_FRESHNESS_SECONDS, MAX_DEVICES_PER_COLLECTOR
+from core.labs.features.monitoring.public import (
+    DEVICE_FRESHNESS_SECONDS,
+    MAX_DEVICES_PER_COLLECTOR,
+    expected_device_watch_list,
+)
 
 MAX_OBSERVATION_BODY_BYTES = 262144
 
@@ -92,7 +96,7 @@ def monitoring_policy(identity: AgentIdentity) -> dict[str, object]:
     """Reporting contract for one enrolled agent.
 
     Agents must apply at least one batch per collector within ``freshness_seconds``; an
-    incremental batch with no devices is a valid keep-alive.
+    incremental batch with no devices is a valid keep-alive. ``expected_devices`` is the watch list.
     """
     return {
         "generation_key": identity.monitoring_generation_key,
@@ -100,4 +104,6 @@ def monitoring_policy(identity: AgentIdentity) -> dict[str, object]:
         "max_body_bytes": MAX_OBSERVATION_BODY_BYTES,
         "freshness_seconds": DEVICE_FRESHNESS_SECONDS,
         "interface_names": monitoring_interfaces(),
+        # The agent reports only devices whose hardware ID is listed here (plus discovery snapshots).
+        "expected_devices": expected_device_watch_list(computing_id=identity.equipment_id),
     }

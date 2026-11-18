@@ -1,6 +1,6 @@
 # Agent: monitored devices by registered PnP ID, and configurable license checks
 
-**Status:** Proposed, needs owner approval (revised 2026-11-18)
+**Status:** Approved by the owner (2026-11-18, D1–D9); phase 1 implemented
 **Risk tier:** T2 (public agent API, migrations, matching semantics, license data written from an integration)
 **Companions:** [device design](../agent-platform/device-design.md), [backend agent API](../agent-platform/backend-api.md),
 [device connections](../../core/labs/features/monitoring/docs/device-connections.md),
@@ -172,8 +172,8 @@ Source of the Vector fields: `Vector.LicenseClient -listlicenses` (Vector KB0021
 The agent pushes every license it finds with its **license serial** (the tool's own license ID,
 Vector `VectorLicenseId`); the backend routes each one to the `License` record and compares.
 
-1. **Find the license** by serial: `License.serial_number` (added in this change set, migration
-   `labs.0002`; unique per vendor among live licenses, case-insensitive, indexed) equal to
+1. **Find the license** by serial: `License.serial_number` (added in this change set, folded into `labs.0001_initial` per ADR 005;
+   unique per vendor among live licenses, case-insensitive, indexed) equal to
    `license_serial`. When several vendors use the same serial, the one whose vendor name matches the
    reported `vendor` wins.
    - one license → `matched`;
@@ -262,7 +262,7 @@ Configured checks make agents run programs, so the design limits what a configur
 
 | Phase | Backend | Agent |
 |---|---|---|
-| 1 | `EquipmentHardwareId`, Link stores PnP IDs, hardware-ID matching, `expected_devices` in the policy, legacy `monitored_devices` as suggestions | Watch list from the policy; report only mapped PnP IDs with `hardware_ids`; Push = discovery snapshot from the Device Scan dialog |
+| 1 | **Done:** `EquipmentHardwareId` (+ API), Link stores PnP IDs, hardware-ID matching (serial matching removed), `expected_devices` in the policy. Open: legacy `monitored_devices` as suggestions | Watch list from the policy; report only mapped PnP IDs with `hardware_ids`; Push = discovery snapshot from the Device Scan dialog |
 | 2 | License checks (model, admin UI, agent routes), runs, observations, matching (no effects) | Generic check runner with presets (**done**: `agent/src/core/licensing/`, Vector preset); uses the routes once `license_checks` is advertised |
 | 3 | Effects (D1), expiry notifications | Tray warnings, licenses in the device dialog |
 

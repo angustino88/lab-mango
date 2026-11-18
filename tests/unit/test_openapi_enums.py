@@ -21,7 +21,9 @@ def test_enum_registry_preserves_existing_names_and_choice_hashes() -> None:
         "e220e692b2cc64ba": "DowntimeStateEnum",
         "7a6b331729276340": "EquipmentConditionEnum",
         "b7d056b64c1fe0f4": "EquipmentDisplayStatusEnum",
+        "df98579bcd6ad520": "EquipmentHardwareIdKindEnum",  # pnp_id, vector_device
         "21abcf9aa8c290a6": "EquipmentLifecycleStateEnum",
+        "9bee396392663d06": "KindEnum",  # downtime: planned, unplanned (kept as before)
         "c23a21501f38221e": "LicenseStatusEnum",
         "ff5970c909e77bf2": "ModeEnum",  # routing sync: delta, reset
         "c6340131decdfe99": "PurchaseStatusEnum",

@@ -43,7 +43,19 @@ from core.labs.models.monitoring import (
     MonitoringEvent,
 )
 from core.labs.models.resource.equipment import EquipmentInterface
+from core.labs.models.resource.equipment.hardware_id import EquipmentHardwareId
 from tests.factories import ComputingEquipmentFactory
+
+PNP_1 = r"USB\VID_0403&PID_6001\SERIAL1"
+
+
+def pnp(value: str = PNP_1) -> tuple[tuple[str, str], ...]:
+    return (("pnp_id", value),)
+
+
+def register(equipment, value: str = PNP_1) -> EquipmentHardwareId:
+    """What a coordinator does once: register the device's PnP ID on the inventory unit."""
+    return EquipmentHardwareId.objects.create(equipment=equipment, kind="pnp_id", value=value)
 
 
 def observe_devices(command):
@@ -72,7 +84,7 @@ def command(computing):
         sequence=1,
         collected_at=timezone.now(),
         is_complete=True,
-        devices=(DeviceObservation("usb-port-1", "USB", "connected", "Instrument", "SERIAL-1"),),
+        devices=(DeviceObservation("usb-port-1", "USB", "connected", "Instrument", hardware_ids=pnp()),),
     )
 
 
@@ -80,10 +92,11 @@ def next_report(command, **changes):
     return replace(command, sequence=command.sequence + 1, batch_key=uuid4(), **changes)
 
 
-def test_complete_snapshot_matches_serial_and_declared_interface_without_changing_inventory(command, computing):
+def test_complete_snapshot_matches_registered_hardware_id_without_changing_inventory(command, computing):
     interface = EquipmentInterface.objects.create(name="USB")
-    peripheral = Equipment.objects.create(sku="DEVICE-1", name="Scope", serial_number="SERIAL-1", kind=computing.kind)
+    peripheral = Equipment.objects.create(sku="DEVICE-1", name="Scope", serial_number="Label 7", kind=computing.kind)
     peripheral.interfaces.add(interface)
+    register(peripheral)
 
     ack = observe_devices(command)
 
@@ -96,61 +109,67 @@ def test_complete_snapshot_matches_serial_and_declared_interface_without_changin
     )
     assert connection.match_status == "matched" and connection.state == "connected"
     assert connection.received_at == ack.received_at
+    assert connection.hardware_ids == [{"kind": "pnp_id", "value": PNP_1}]
     peripheral.refresh_from_db()
-    assert peripheral.serial_number == "SERIAL-1"
+    assert peripheral.serial_number == "Label 7"  # the human label is never touched
     event = MonitoringEvent.objects.get()
     assert event.computer_id == computing.pk and event.payload["devices"][0]["observation_key"] == "usb-port-1"
 
 
-def test_detach_without_serial_preserves_identity_but_reconnect_without_serial_does_not(command, computing):
+def test_detach_without_ids_preserves_identity_but_reconnect_without_ids_does_not(command, computing):
     interface = EquipmentInterface.objects.create(name="USB")
-    peripheral = Equipment.objects.create(sku="DETACH-1", name="Probe", serial_number="SERIAL-1", kind=computing.kind)
+    peripheral = Equipment.objects.create(sku="DETACH-1", name="Probe", kind=computing.kind)
     peripheral.interfaces.add(interface)
+    register(peripheral)
     observe_devices(command)
-    detached = replace(command.devices[0], state="disconnected", serial_number="", name="")
+    detached = replace(command.devices[0], state="disconnected", hardware_ids=(), name="")
     observe_devices(next_report(command, devices=(detached,), is_complete=False))
     connection = DeviceConnection.objects.get()
     assert connection.state == "disconnected" and connection.equipment_id == peripheral.pk
-    assert connection.serial_number == "SERIAL-1" and connection.name == "Instrument"
+    assert connection.hardware_ids == [{"kind": "pnp_id", "value": PNP_1}] and connection.name == "Instrument"
     observe_devices(replace(command, batch_key=uuid4(), sequence=3, devices=(replace(detached, state="connected"),)))
     connection.refresh_from_db()
     assert connection.state == "connected" and connection.match_status == "unmatched"
-    assert connection.equipment_id is None and connection.serial_number == ""
+    assert connection.equipment_id is None and connection.hardware_ids == []
 
 
-def test_casefold_colliding_interface_references_are_ambiguous(command, computing):
-    peripheral = Equipment.objects.create(sku="CASE-1", name="Probe", serial_number="SERIAL-1", kind=computing.kind)
-    peripheral.interfaces.add(
-        EquipmentInterface.objects.create(name="USB"), EquipmentInterface.objects.create(name="usb")
-    )
+def test_identity_comes_from_the_hardware_id_not_the_interface(command, computing):
+    peripheral = Equipment.objects.create(sku="CASE-1", name="Probe", kind=computing.kind)
+    peripheral.interfaces.add(EquipmentInterface.objects.create(name="Ethernet"))
+    register(peripheral)
     observe_devices(command)
-    assert DeviceConnection.objects.get().match_status == "ambiguous"
+    connection = DeviceConnection.objects.get()
+    assert connection.match_status == "matched" and connection.equipment_id == peripheral.pk
+    assert connection.interface_id is None  # the unit declares no USB interface
 
 
 @pytest.mark.parametrize(
     "scenario,expected",
-    [
-        ("unknown", "unmatched"),
-        ("blank_serial", "unmatched"),
-        ("wrong_interface", "interface_mismatch"),
-        ("duplicate_serial", "ambiguous"),
-    ],
+    [("unknown", "unmatched"), ("no_ids", "unmatched"), ("ids_of_two_units", "ambiguous")],
 )
-def test_matching_keeps_unknown_incompatible_and_ambiguous_devices_unresolved(command, computing, scenario, expected):
-    if scenario != "unknown" and scenario != "blank_serial":
-        interface = EquipmentInterface.objects.create(name="USB" if scenario == "duplicate_serial" else "Ethernet")
-        count = 2 if scenario == "duplicate_serial" else 1
-        for index in range(count):
-            equipment = Equipment.objects.create(
-                sku=f"DUP-{index}", name="Same serial", serial_number="SERIAL-1", kind=computing.kind
-            )
-            equipment.interfaces.add(interface)
-    if scenario == "blank_serial":
-        command = replace(command, devices=(replace(command.devices[0], serial_number=""),))
+def test_matching_keeps_unknown_and_ambiguous_devices_unresolved(command, computing, scenario, expected):
+    if scenario == "ids_of_two_units":
+        first = Equipment.objects.create(sku="DUP-0", name="First", kind=computing.kind)
+        second = Equipment.objects.create(sku="DUP-1", name="Second", kind=computing.kind)
+        register(first)
+        EquipmentHardwareId.objects.create(equipment=second, kind="vector_device", value="007113-585343")
+        ids = (*pnp(), ("vector_device", "007113-585343"))
+        command = replace(command, devices=(replace(command.devices[0], hardware_ids=ids),))
+    if scenario == "no_ids":
+        command = replace(command, devices=(replace(command.devices[0], hardware_ids=()),))
     observe_devices(command)
     connection = DeviceConnection.objects.get()
     assert connection.match_status == expected
     assert connection.equipment_id is None and connection.interface_id is None
+
+
+def test_port_bound_id_matches_only_on_its_computer(command, computing):
+    port_id = r"USB\VID_046D&PID_C52B\5&2A3C0F1&0&2"
+    peripheral = Equipment.objects.create(sku="PORT-1", name="Receiver", kind=computing.kind)
+    other_computer = ComputingEquipmentFactory()
+    EquipmentHardwareId.objects.create(equipment=peripheral, kind="pnp_id", value=port_id, computing=other_computer)
+    observe_devices(replace(command, devices=(replace(command.devices[0], hardware_ids=pnp(port_id)),)))
+    assert DeviceConnection.objects.get().match_status == "unmatched"
 
 
 def test_exact_replay_preserves_ack_event_count_and_freshness_and_changed_content_is_rejected(command):
@@ -183,7 +202,9 @@ def test_out_of_order_batch_is_acknowledged_without_overwriting_projection_and_s
 
 
 def test_partial_snapshot_never_disconnects_omissions_and_full_reconciliation_stays_in_collector_scope(command):
-    second_device = DeviceObservation("usb-port-2", "USB", "connected", "Second", "SERIAL-2")
+    second_device = DeviceObservation(
+        "usb-port-2", "USB", "connected", "Second", hardware_ids=pnp(r"USB\VID_0403&PID_6001\SERIAL2")
+    )
     observe_devices(replace(command, devices=(*command.devices, second_device)))
     observe_devices(replace(command, batch_key=uuid4(), collector_key="network"))
     observe_devices(next_report(command, is_complete=False, devices=()))
@@ -321,11 +342,13 @@ def test_projection_serializes_multiple_related_devices_in_one_query(command, co
     interface = EquipmentInterface.objects.create(name="USB")
     devices = []
     for index in range(3):
-        equipment = Equipment.objects.create(
-            sku=f"BUDGET-{index}", name=f"Device {index}", serial_number=f"SERIAL-{index}", kind=computing.kind
-        )
+        equipment = Equipment.objects.create(sku=f"BUDGET-{index}", name=f"Device {index}", kind=computing.kind)
         equipment.interfaces.add(interface)
-        devices.append(DeviceObservation(f"port-{index}", "USB", "connected", f"Device {index}", f"SERIAL-{index}"))
+        value = rf"USB\VID_0403&PID_6001\BUDGET{index}"
+        register(equipment, value)
+        devices.append(
+            DeviceObservation(f"port-{index}", "USB", "connected", f"Device {index}", hardware_ids=pnp(value))
+        )
     observe_devices(replace(command, devices=tuple(devices)))
     with django_assert_num_queries(1):
         data = DeviceConnectionSerializer(list_device_connections(computing_id=computing.pk), many=True).data
@@ -487,14 +510,13 @@ def test_contiguous_incremental_keep_alive_confirms_devices_it_does_not_mention(
 
 def test_soft_deleted_inventory_is_never_a_match_candidate(command, computing):
     interface = EquipmentInterface.objects.create(name="USB")
-    active = Equipment.objects.create(sku="ACTIVE-1", name="Active", serial_number="SERIAL-1", kind=computing.kind)
-    retired = Equipment.objects.create(sku="RETIRED-1", name="Retired", serial_number="SERIAL-1", kind=computing.kind)
-    active.interfaces.add(interface)
+    retired = Equipment.objects.create(sku="RETIRED-1", name="Retired", kind=computing.kind)
     retired.interfaces.add(interface)
+    register(retired)
     Equipment.all_objects.filter(pk=retired.pk).update(deleted_at=timezone.now())
     observe_devices(command)
     connection = DeviceConnection.objects.get()
-    assert connection.match_status == "matched" and connection.equipment_id == active.pk
+    assert connection.match_status == "unmatched" and connection.equipment_id is None
 
 
 def test_soft_deleted_computing_cannot_report(command, computing):
@@ -507,8 +529,9 @@ def test_soft_deleted_computing_cannot_report(command, computing):
 
 def test_removing_matched_inventory_clears_the_derived_match(command, computing):
     interface = EquipmentInterface.objects.create(name="USB")
-    peripheral = Equipment.objects.create(sku="GONE-1", name="Scope", serial_number="SERIAL-1", kind=computing.kind)
+    peripheral = Equipment.objects.create(sku="GONE-1", name="Scope", kind=computing.kind)
     peripheral.interfaces.add(interface)
+    register(peripheral)
     observe_devices(command)
     peripheral.interfaces.clear()
     interface.delete()

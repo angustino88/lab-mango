@@ -1598,7 +1598,15 @@ components:
         serial_number:
           type: string
           default: ''
+          description: Evidence only; not used for matching.
           maxLength: 255
+        hardware_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareId'
+          description: IDs read from the device (Windows PnP instance ID); matched
+            to registered equipment IDs.
+          maxItems: 4
       required:
       - interface_name
       - observation_key
@@ -1742,6 +1750,14 @@ components:
           $ref: '#/components/schemas/EnrollmentGrant'
       required:
       - data
+    EquipmentHardwareIdKindEnum:
+      enum:
+      - pnp_id
+      - vector_device
+      type: string
+      description: '* `pnp_id` - PnP device ID
+
+        * `vector_device` - Vector device name'
     ErrorBody:
       type: object
       properties:
@@ -1776,6 +1792,34 @@ components:
           $ref: '#/components/schemas/ErrorBody'
       required:
       - error
+    ExpectedDeviceWatch:
+      type: object
+      properties:
+        equipment_uid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        hardware_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyHardwareId'
+      required:
+      - equipment_uid
+      - hardware_ids
+      - name
+    HardwareId:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/EquipmentHardwareIdKindEnum'
+        value:
+          type: string
+          maxLength: 512
+      required:
+      - kind
+      - value
+      additionalProperties: false
     KeyStorageEnum:
       enum:
       - tpm
@@ -1816,7 +1860,14 @@ components:
           type: array
           items:
             type: string
+        expected_devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpectedDeviceWatch'
+          description: 'Equipment expected on this computer with their registered
+            hardware IDs: the agent reports only devices whose ID is listed here.'
       required:
+      - expected_devices
       - freshness_seconds
       - generation_key
       - interface_names
@@ -1887,6 +1938,16 @@ components:
         booking_code:
           type: string
           maxLength: 255
+    PolicyHardwareId:
+      type: object
+      properties:
+        kind:
+          type: string
+        value:
+          type: string
+      required:
+      - kind
+      - value
     ProblemDetail:
       type: object
       properties:

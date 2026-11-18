@@ -22,7 +22,7 @@ from django.utils import timezone
 from core.common.contracts import ActorContext
 from core.common.db.idempotency import try_claim_operation
 from core.common.domain.errors import Forbidden, ValidationFailed
-from core.labs.features.equipment.public import lock_monitoring_computing, match_observed_devices
+from core.labs.features.equipment.public import lock_monitoring_computing, match_hardware_ids
 from core.labs.features.monitoring.application.alerts import notify_expected_disconnects
 from core.labs.features.monitoring.contracts import DeviceObservationInput, ObservationAcknowledgment
 from core.labs.features.monitoring.exceptions import (
@@ -51,6 +51,7 @@ _PROJECTION_FIELDS = (
     "sequence",
     "name",
     "serial_number",
+    "hardware_ids",
     "interface_name",
     "state",
     "observed_at",
@@ -211,20 +212,23 @@ def _apply_projection(command: DeviceObservationInput, *, received_at) -> set[in
     effective_devices = tuple(
         replace(
             device,
-            serial_number=present[device.observation_key].serial_number,
+            hardware_ids=tuple(
+                (item["kind"], item["value"]) for item in present[device.observation_key].hardware_ids or []
+            ),
             name=device.name or present[device.observation_key].name,
         )
-        if device.state == "disconnected" and not device.serial_number and device.observation_key in present
+        if device.state == "disconnected" and not device.hardware_ids and device.observation_key in present
         else device
         for device in command.devices
     )
-    matches = match_observed_devices(
-        tuple((device.serial_number, device.interface_name) for device in effective_devices)
+    matches = match_hardware_ids(
+        computing_id=command.computing_id,
+        evidence=[(device.hardware_ids, device.interface_name) for device in effective_devices],
     )
     create, update = [], []
     detached_equipment: set[int] = set()
     for device in effective_devices:
-        match = matches[(device.serial_number, device.interface_name)]
+        match = matches[(device.hardware_ids, device.interface_name)]
         row = present.get(device.observation_key)
         if row is None:
             row = DeviceConnection(
@@ -244,6 +248,7 @@ def _apply_projection(command: DeviceObservationInput, *, received_at) -> set[in
         row.equipment_id, row.interface_id, row.match_status = match.equipment_id, match.interface_id, match.status
         row.generation_key, row.sequence = command.generation_key, command.sequence
         row.name, row.serial_number, row.interface_name = device.name, device.serial_number, device.interface_name
+        row.hardware_ids = [{"kind": kind, "value": value} for kind, value in device.hardware_ids]
         row.state, row.observed_at, row.received_at = device.state, command.collected_at, received_at
     DeviceConnection.objects.bulk_create(create, batch_size=MAX_DEVICES_PER_COLLECTOR)
     DeviceConnection.objects.bulk_update(update, _PROJECTION_FIELDS, batch_size=MAX_DEVICES_PER_COLLECTOR)

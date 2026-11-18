@@ -20,6 +20,7 @@ from core.labs.features.monitoring.application.observe_devices import (
 )
 from core.labs.models import Equipment, EquipmentInterface
 from core.labs.models.monitoring import DeviceConnection, DeviceObservationBatch, DeviceObservationCursor
+from core.labs.models.resource.equipment.hardware_id import EquipmentHardwareId
 
 POLICY = "/agent/monitoring-policy"
 UTC_MICROSECONDS = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z"
@@ -192,16 +193,18 @@ def test_policy_query_budget_cache_and_conditional_get(enrolled, django_assert_n
     identity, key, _ = enrolled
     for name in ("Review USB", "Review CAN", "Review Ethernet"):
         EquipmentInterface.objects.create(name=name)
-    with django_assert_num_queries(2):
+    # identity, interface catalog, expected devices (hardware IDs only when some are expected)
+    with django_assert_num_queries(3):
         response = policy(identity, key)
     assert response.status_code == 200, response.data
+    assert response.data["data"]["expected_devices"] == []
     assert {"Review USB", "Review CAN", "Review Ethernet"} <= set(response.data["data"]["interface_names"])
     etag = response["ETag"]
     assert etag.startswith('"') and etag.endswith('"') and not etag.startswith("W/")
     assert response["Cache-Control"] == "private, no-cache"
 
     assert {"Accept", "Accept-Language"} <= set(response["Vary"].split(", "))
-    with django_assert_num_queries(2):
+    with django_assert_num_queries(3):
         unchanged = policy(identity, key, HTTP_IF_NONE_MATCH=etag)
     assert unchanged.status_code == 304 and unchanged.content == b""
     assert unchanged["ETag"] == etag and unchanged["Cache-Control"] == "private, no-cache"
@@ -210,12 +213,13 @@ def test_policy_query_budget_cache_and_conditional_get(enrolled, django_assert_n
 def test_connection_read_keeps_uid_references_utc_and_existing_admin_access(enrolled):
     identity, key, operator = enrolled
     interface = EquipmentInterface.objects.create(name="USB")
-    peripheral = Equipment.objects.create(
-        sku="COMPLIANCE-PROBE", name="Probe", serial_number="REVIEW-PROBE", kind=identity.equipment.kind
-    )
+    peripheral = Equipment.objects.create(sku="COMPLIANCE-PROBE", name="Probe", kind=identity.equipment.kind)
     peripheral.interfaces.add(interface)
+    EquipmentHardwareId.objects.create(
+        equipment=peripheral, kind="pnp_id", value="USB\\VID_0403&PID_6001\\REVIEWPROBE"
+    )
     data = payload(identity)
-    data["devices"][0]["serial_number"] = peripheral.serial_number
+    data["devices"][0]["hardware_ids"] = [{"kind": "pnp_id", "value": "usb/vid_0403&pid_6001/reviewprobe"}]
     assert send(identity, key, data).status_code == 200
     operator.is_staff = operator.is_superuser = True
     operator.save(update_fields=("is_staff", "is_superuser"))
@@ -264,3 +268,34 @@ def test_invalidation_cannot_bypass_scope_or_capability(enrolled):
         with pytest.raises(Forbidden):
             invalidate_device_connections(command, actor=actor)
         assert DeviceObservationCursor.objects.get().is_current
+
+
+def test_policy_lists_expected_devices_with_ids_valid_on_this_computer(enrolled):
+    from core.labs.models.monitoring import ExpectedDevice
+    from tests.factories import ComputingEquipmentFactory
+
+    identity, key, _ = enrolled
+    cancase = Equipment.objects.create(sku="WATCH-CAN", name="CANcase 3", kind=identity.equipment.kind)
+    unregistered = Equipment.objects.create(sku="WATCH-NEW", name="New scope", kind=identity.equipment.kind)
+    other_computer = ComputingEquipmentFactory()
+    EquipmentHardwareId.objects.create(equipment=cancase, kind="pnp_id", value="USB\\VID_1248&PID_1073\\007113-585343")
+    EquipmentHardwareId.objects.create(equipment=cancase, kind="vector_device", value="007113-585343")
+    here = "USB\\VID_046D&PID_C52B\\5&2A3C0F1&0&2"
+    EquipmentHardwareId.objects.create(equipment=cancase, kind="pnp_id", value=here, computing=identity.equipment)
+    EquipmentHardwareId.objects.create(
+        equipment=cancase, kind="pnp_id", value="USB\\VID_046D&PID_C52B\\5&9&0&1", computing=other_computer
+    )
+    ExpectedDevice.objects.create(computing=identity.equipment, equipment=cancase)
+    ExpectedDevice.objects.create(computing=identity.equipment, equipment=unregistered)
+    ExpectedDevice.objects.create(computing=other_computer, equipment=unregistered)
+
+    watched = policy(identity, key).data["data"]["expected_devices"]
+
+    assert [row["name"] for row in watched] == ["CANcase 3", "New scope"]
+    assert watched[0]["equipment_uid"] == str(cancase.uid)
+    assert {(item["kind"], item["value"]) for item in watched[0]["hardware_ids"]} == {
+        ("pnp_id", "USB\\VID_1248&PID_1073\\007113-585343"),
+        ("vector_device", "007113-585343"),
+        ("pnp_id", here),
+    }
+    assert watched[1]["hardware_ids"] == []  # expected, but its ID is not registered yet

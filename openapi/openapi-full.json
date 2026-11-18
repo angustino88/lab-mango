@@ -9400,7 +9400,7 @@
     "/api/labs/device-connections/{connection_id}/actions/link": {
       "post": {
         "operationId": "labs_device_connections_actions_link_create_by_connection_id",
-        "description": "Record the observed serial on an inventory unit and re-match its observations.",
+        "description": "Register the observed device's hardware IDs on an inventory unit and re-match its observations.",
         "parameters": [
           {
             "in": "path",
@@ -13199,6 +13199,205 @@
           }
         },
         "summary": "Delete Equipment Assignment by Equipment ID"
+      }
+    },
+    "/api/labs/equipment/{equipment_id}/hardware-ids": {
+      "get": {
+        "operationId": "labs_equipment_hardware_ids_retrieve_by_equipment_id",
+        "description": "List a unit's hardware IDs, or register one (idempotent for the same unit).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentHardwareIdListHardwareIdsEquipmentHardwareIdListDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Hardware Ids by Equipment ID"
+      },
+      "post": {
+        "operationId": "labs_equipment_hardware_ids_create_by_equipment_id",
+        "description": "List a unit's hardware IDs, or register one (idempotent for the same unit).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterHardwareIdRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterHardwareIdRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterHardwareIdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentHardwareIdCreatedHardwareIdsEquipmentHardwareIdDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Equipment Hardware Ids by Equipment ID"
+      }
+    },
+    "/api/labs/equipment/{equipment_id}/hardware-ids/{hardware_id_id}": {
+      "delete": {
+        "operationId": "labs_equipment_hardware_ids_destroy_by_equipment_id_hardware_id_id",
+        "description": "Remove a hardware ID from a unit.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "hardware_id_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Delete Equipment Hardware Ids by Equipment ID Hardware ID ID"
       }
     },
     "/api/labs/equipment/{equipment_id}/image": {
@@ -45298,7 +45497,15 @@
             "type": "string"
           },
           "serial_number": {
-            "type": "string"
+            "type": "string",
+            "description": "Reported evidence only; not used for matching."
+          },
+          "hardware_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportedHardwareId"
+            },
+            "description": "IDs the agent read from the device; Link registers them on the chosen unit."
           },
           "state": {
             "allOf": [
@@ -45349,6 +45556,7 @@
           "equipment",
           "expected_device_id",
           "freshness",
+          "hardware_ids",
           "id",
           "interface",
           "interface_name",
@@ -45439,7 +45647,15 @@
             "type": "string"
           },
           "serial_number": {
-            "type": "string"
+            "type": "string",
+            "description": "Reported evidence only; not used for matching."
+          },
+          "hardware_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportedHardwareId"
+            },
+            "description": "IDs the agent read from the device; Link registers them on the chosen unit."
           },
           "state": {
             "allOf": [
@@ -45502,6 +45718,7 @@
           "expected_device_id",
           "first_seen_at",
           "freshness",
+          "hardware_ids",
           "history",
           "id",
           "interface",
@@ -45663,7 +45880,16 @@
           "serial_number": {
             "type": "string",
             "default": "",
+            "description": "Evidence only; not used for matching.",
             "maxLength": 255
+          },
+          "hardware_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HardwareId"
+            },
+            "description": "IDs read from the device (Windows PnP instance ID); matched to registered equipment IDs.",
+            "maxItems": 4
           }
         },
         "required": [
@@ -48027,6 +48253,99 @@
         },
         "required": [
           "due_at"
+        ]
+      },
+      "EquipmentHardwareId": {
+        "type": "object",
+        "description": "One ID registered on the unit; owned by it.",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "value": {
+            "type": "string"
+          },
+          "computing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "nullable": true,
+            "description": "Set only for IDs valid on one computer."
+          },
+          "is_port_bound": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Read from a USB port, not from the device."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "computing",
+          "created_at",
+          "id",
+          "is_port_bound",
+          "kind",
+          "value"
+        ],
+        "x-embedded-resource": true
+      },
+      "EquipmentHardwareIdCreatedHardwareIdsEquipmentHardwareIdDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentHardwareId"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EquipmentHardwareIdKindEnum": {
+        "enum": [
+          "pnp_id",
+          "vector_device"
+        ],
+        "type": "string",
+        "description": "* `pnp_id` - PnP device ID\n* `vector_device` - Vector device name"
+      },
+      "EquipmentHardwareIdList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentHardwareId"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "EquipmentHardwareIdListHardwareIdsEquipmentHardwareIdListDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentHardwareIdList"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "EquipmentInterfaceCatalogCreate": {
@@ -51199,6 +51518,29 @@
           "data"
         ]
       },
+      "ExpectedDeviceWatch": {
+        "type": "object",
+        "properties": {
+          "equipment_uid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "hardware_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolicyHardwareId"
+            }
+          }
+        },
+        "required": [
+          "equipment_uid",
+          "hardware_ids",
+          "name"
+        ]
+      },
       "Expense": {
         "type": "object",
         "description": "Read shape for expenses.",
@@ -52565,6 +52907,23 @@
         "required": [
           "pagination"
         ]
+      },
+      "HardwareId": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/EquipmentHardwareIdKindEnum"
+          },
+          "value": {
+            "type": "string",
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "additionalProperties": false
       },
       "ImportProblem": {
         "type": "object",
@@ -56760,9 +57119,17 @@
             "items": {
               "type": "string"
             }
+          },
+          "expected_devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpectedDeviceWatch"
+            },
+            "description": "Equipment expected on this computer with their registered hardware IDs: the agent reports only devices whose ID is listed here."
           }
         },
         "required": [
+          "expected_devices",
           "freshness_seconds",
           "generation_key",
           "interface_names",
@@ -58463,6 +58830,21 @@
           }
         }
       },
+      "PolicyHardwareId": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ]
+      },
       "Priority": {
         "type": "object",
         "properties": {
@@ -60154,6 +60536,28 @@
           "data"
         ]
       },
+      "RegisterHardwareIdRequest": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/EquipmentHardwareIdKindEnum"
+          },
+          "value": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "computing_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true,
+            "description": "Required for a port-bound PnP ID."
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ]
+      },
       "Relation": {
         "type": "object",
         "description": "REL-3 relation ``{id, name}`` to any model row; ``name`` follows ``relation_name``.",
@@ -60188,6 +60592,21 @@
         "required": [
           "ends_at",
           "starts_at"
+        ]
+      },
+      "ReportedHardwareId": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "value"
         ]
       },
       "ResolutionCodeEnum": {

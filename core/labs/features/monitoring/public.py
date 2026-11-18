@@ -17,6 +17,7 @@ from .exceptions import (
 )
 from .queries import get_monitoring_event, list_monitoring_events
 from .queries.connections import FRESHNESS_WINDOW, list_device_connections
+from .queries.expected import expected_device_watch_list
 
 DEVICE_FRESHNESS_SECONDS = int(FRESHNESS_WINDOW.total_seconds())
 
@@ -30,6 +31,7 @@ __all__ = [
     "purge_device_observation_history",
     "invalidate_device_connections",
     "list_device_connections",
+    "expected_device_watch_list",
     "ComputerNotFound",
     "ObservationSnapshotRequired",
     "CreateMonitoringEventInput",

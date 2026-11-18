@@ -11,7 +11,8 @@ class DeviceObservation:
     interface_name: str
     state: str
     name: str = ""
-    serial_number: str = ""
+    serial_number: str = ""  # reported evidence only; matching uses ``hardware_ids``
+    hardware_ids: tuple[tuple[str, str], ...] = ()  # (kind, normalised value), e.g. ("pnp_id", "USB\\VID_…")
 
 
 @dataclass(frozen=True, slots=True)

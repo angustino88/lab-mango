@@ -116,8 +116,8 @@ paths:
   /api/labs/device-connections/{connection_id}/actions/link:
     post:
       operationId: labs_device_connections_actions_link_create_by_connection_id
-      description: Record the observed serial on an inventory unit and re-match its
-        observations.
+      description: Register the observed device's hardware IDs on an inventory unit
+        and re-match its observations.
       parameters:
       - in: path
         name: connection_id
@@ -754,6 +754,13 @@ components:
           type: string
         serial_number:
           type: string
+          description: Reported evidence only; not used for matching.
+        hardware_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportedHardwareId'
+          description: IDs the agent read from the device; Link registers them on
+            the chosen unit.
         state:
           allOf:
           - $ref: '#/components/schemas/Choice'
@@ -786,6 +793,7 @@ components:
       - equipment
       - expected_device_id
       - freshness
+      - hardware_ids
       - id
       - interface
       - interface_name
@@ -847,6 +855,13 @@ components:
           type: string
         serial_number:
           type: string
+          description: Reported evidence only; not used for matching.
+        hardware_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportedHardwareId'
+          description: IDs the agent read from the device; Link registers them on
+            the chosen unit.
         state:
           allOf:
           - $ref: '#/components/schemas/Choice'
@@ -888,6 +903,7 @@ components:
       - expected_device_id
       - first_seen_at
       - freshness
+      - hardware_ids
       - history
       - id
       - interface
@@ -1372,6 +1388,16 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    ReportedHardwareId:
+      type: object
+      properties:
+        kind:
+          type: string
+        value:
+          type: string
+      required:
+      - kind
+      - value
   securitySchemes:
     cookieAuth:
       type: apiKey

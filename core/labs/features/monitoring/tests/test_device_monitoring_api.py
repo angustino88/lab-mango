@@ -15,6 +15,7 @@ from core.labs.features.monitoring.contracts import DeviceObservation, DeviceObs
 from core.labs.models import Equipment, EquipmentAssignment
 from core.labs.models.monitoring import DeviceConnection, ExpectedDevice
 from core.labs.models.resource.equipment import EquipmentInterface
+from core.labs.models.resource.equipment.hardware_id import EquipmentHardwareId
 from core.users.models import User
 from core.websocket.models import Notification
 from tests.factories import (
@@ -52,8 +53,18 @@ def snapshot(computing, *devices, sequence=1, generation=None, complete=True, at
     )
 
 
-def device(key, serial="", state="connected", name="Device"):
-    return DeviceObservation(key, "USB", state, name, serial)
+def pnp_id(instance: str) -> str:
+    return rf"USB\VID_0403&PID_6001\{instance}".upper()
+
+
+def device(key, instance="", state="connected", name="Device"):
+    """A USB device the agent read; ``instance`` is the last segment of its PnP ID ("" = no ID)."""
+    ids = (("pnp_id", pnp_id(instance)),) if instance else ()
+    return DeviceObservation(key, "USB", state, name, hardware_ids=ids)
+
+
+def register(equipment, instance):
+    return EquipmentHardwareId.objects.create(equipment=equipment, kind="pnp_id", value=pnp_id(instance))
 
 
 @pytest.fixture
@@ -79,8 +90,9 @@ def instrument_kind():
 @pytest.fixture
 def scope(usb, instrument_kind):
     computing = ComputingEquipmentFactory(name="Lab PC 07")
-    peripheral = Equipment.objects.create(sku="SCOPE-1", name="Scope", serial_number="SER-1", kind=instrument_kind)
+    peripheral = Equipment.objects.create(sku="SCOPE-1", name="Scope", serial_number="Label 1", kind=instrument_kind)
     peripheral.interfaces.add(usb)
+    register(peripheral, "SER-1")
     return computing, peripheral
 
 
@@ -157,10 +169,12 @@ def test_detail_returns_history_of_state_changes(staff, scope):
     assert staff.get(f"{DEVICES}/999999").status_code == 404
 
 
-def test_link_records_serial_on_equipment_and_rematches_every_observation(staff, scope, usb, instrument_kind):
+def test_link_registers_the_pnp_id_and_rematches_every_observation(staff, scope, usb, instrument_kind):
     computing, _ = scope
     other = ComputingEquipmentFactory()
-    adapter = Equipment.objects.create(sku="UART-1", name="USB-UART adapter", kind=instrument_kind)
+    adapter = Equipment.objects.create(
+        sku="UART-1", name="USB-UART adapter", serial_number="Label 9", kind=instrument_kind
+    )
     adapter.interfaces.add(usb)
     report(snapshot(computing, device("a", "FT-1")))
     report(snapshot(other, device("z", "FT-1")))
@@ -172,36 +186,49 @@ def test_link_records_serial_on_equipment_and_rematches_every_observation(staff,
     assert response.status_code == 200, response.data
     assert response.data["data"]["match_status"]["value"] == "matched"
     assert response.data["data"]["equipment"]["id"] == adapter.pk
+    assert response.data["data"]["hardware_ids"] == [{"kind": "pnp_id", "value": pnp_id("FT-1")}]
+    registered = EquipmentHardwareId.objects.get(equipment=adapter)
+    assert (registered.value, registered.computing_id, registered.creator) == (pnp_id("FT-1"), None, staff.user)
     adapter.refresh_from_db()
-    assert adapter.serial_number == "FT-1" and adapter.last_modified_by == staff.user
+    assert adapter.serial_number == "Label 9"  # the human label is never written
     assert DeviceConnection.objects.get(computing=other).equipment_id == adapter.pk
     again = staff.post(f"{DEVICES}/{connection.pk}/actions/link", {"equipment_id": adapter.pk}, format="json")
     assert again.status_code == 200
 
 
+def test_link_of_a_port_bound_id_is_scoped_to_the_reporting_computer(staff, scope, instrument_kind):
+    computing, _ = scope
+    receiver = Equipment.objects.create(sku="RX-1", name="Receiver", kind=instrument_kind)
+    port_id = r"USB\VID_046D&PID_C52B\5&2A3C0F1&0&2"
+    report(
+        snapshot(
+            computing, DeviceObservation("a", "USB", "connected", "Receiver", hardware_ids=(("pnp_id", port_id),))
+        )
+    )
+    connection = DeviceConnection.objects.get()
+
+    response = staff.post(f"{DEVICES}/{connection.pk}/actions/link", {"equipment_id": receiver.pk}, format="json")
+
+    assert response.status_code == 200, response.data
+    assert EquipmentHardwareId.objects.get(equipment=receiver).computing_id == computing.pk
+
+
 @pytest.mark.parametrize(
     "case,code",
-    [
-        ("different_serial", "equipment_serial_conflict"),
-        ("serial_in_use", "equipment_serial_in_use"),
-        ("no_serial", "serial_unavailable"),
-    ],
+    [("id_registered_elsewhere", "hardware_id_in_use"), ("no_ids", "hardware_id_unavailable")],
 )
-def test_link_never_overwrites_inventory(staff, scope, case, code, instrument_kind):
+def test_link_never_moves_or_invents_an_identity(staff, scope, case, code, instrument_kind):
     computing, peripheral = scope
-    target = Equipment.objects.create(
-        sku="T-1", name="Target", serial_number="OTHER" if case == "different_serial" else "", kind=instrument_kind
-    )
-    serial = {"serial_in_use": "SER-1", "no_serial": ""}.get(case, "NEW-1")
-    report(snapshot(computing, device("a", serial)))
+    target = Equipment.objects.create(sku="T-1", name="Target", kind=instrument_kind)
+    report(snapshot(computing, device("a", "SER-1" if case == "id_registered_elsewhere" else "")))
     connection = DeviceConnection.objects.get()
 
     response = staff.post(f"{DEVICES}/{connection.pk}/actions/link", {"equipment_id": target.pk}, format="json")
 
     assert response.status_code == 409, response.data
     assert response.json()["error"]["code"] == code
-    target.refresh_from_db()
-    assert target.serial_number == ("OTHER" if case == "different_serial" else "")
+    assert not EquipmentHardwareId.objects.filter(equipment=target).exists()
+    assert EquipmentHardwareId.objects.get(value=pnp_id("SER-1")).equipment_id == peripheral.pk
 
 
 def test_expected_devices_report_presence_and_can_be_managed(staff, scope):

@@ -55,6 +55,11 @@ class BenchReferenceField(serializers.Field):
         return None if bench_id is None else {"id": bench_id, "name": getattr(value, "bench_name", "") or ""}
 
 
+class ReportedHardwareIdSerializer(serializers.Serializer):
+    kind = serializers.CharField()
+    value = serializers.CharField()
+
+
 class DeviceConnectionSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     computing = UIDNamedReferenceSerializer()
@@ -65,7 +70,10 @@ class DeviceConnectionSerializer(serializers.Serializer):
     collector_key = serializers.CharField()
     observation_key = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
-    serial_number = serializers.CharField(allow_blank=True)
+    serial_number = serializers.CharField(allow_blank=True, help_text="Reported evidence only; not used for matching.")
+    hardware_ids = ReportedHardwareIdSerializer(
+        many=True, help_text="IDs the agent read from the device; Link registers them on the chosen unit."
+    )
     state = choice_field(DeviceConnectionState.choices)
     match_status = choice_field(DeviceMatchStatus.choices)
     freshness = choice_field(FRESHNESS_CHOICES)
@@ -217,7 +225,7 @@ class DeviceConnectionDetailAPIView(_MonitoringAPIView):
 
 
 class DeviceConnectionLinkActionAPIView(_MonitoringAPIView):
-    """Record the observed serial on an inventory unit and re-match its observations."""
+    """Register the observed device's hardware IDs on an inventory unit and re-match its observations."""
 
     schema_tags = ("Monitoring",)
     post_contract = operation(

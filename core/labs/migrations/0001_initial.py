@@ -9100,5 +9100,180 @@ class Migration(migrations.Migration):
                 ],
             },
         ),
+        migrations.AddField(
+            model_name="license",
+            name="serial_number",
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="Vendor's license serial or ID (for example the Vector license ID). Not secret; agents match the licenses they find to this value.",
+                max_length=255,
+            ),
+        ),
+        migrations.AlterField(
+            model_name="license",
+            name="identifier",
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="License key (activation key). Secret: never log or export it.",
+                max_length=255,
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="license",
+            index=models.Index(
+                django.db.models.functions.text.Lower("serial_number"),
+                name="license_serial_lower_idx",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="license",
+            constraint=models.UniqueConstraint(
+                models.F("vendor"),
+                django.db.models.functions.text.Lower("serial_number"),
+                condition=models.Q(
+                    ("deleted_at__isnull", True),
+                    models.Q(("serial_number", ""), _negated=True),
+                ),
+                name="license_vendor_serial_uniq",
+            ),
+        ),
+        migrations.AddField(
+            model_name="deviceconnection",
+            name="hardware_ids",
+            field=models.JSONField(
+                blank=True,
+                default=list,
+                help_text="Reported hardware IDs, [{kind, value}]; matched to EquipmentHardwareId.",
+            ),
+        ),
+        migrations.CreateModel(
+            name="EquipmentHardwareId",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "kind",
+                    models.CharField(
+                        choices=[
+                            ("pnp_id", "PnP device ID"),
+                            ("vector_device", "Vector device name"),
+                        ],
+                        max_length=24,
+                    ),
+                ),
+                (
+                    "value",
+                    models.CharField(
+                        help_text="Normalised: upper case, backslash separators.",
+                        max_length=512,
+                    ),
+                ),
+                (
+                    "computing",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Only for IDs valid on one computer (port-bound PnP IDs): that computing unit.",
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="scoped_hardware_ids",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "creator",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_creator",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Created by",
+                    ),
+                ),
+                (
+                    "equipment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="hardware_ids",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "last_modified_by",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_last_modified_by",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Last modified by",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("equipment_id", "kind", "value"),
+                "indexes": [models.Index(fields=["kind", "value"], name="equipment_hardware_id_lookup")],
+                "constraints": [
+                    models.UniqueConstraint(
+                        condition=models.Q(("computing__isnull", True)),
+                        fields=("kind", "value"),
+                        name="equipment_hardware_id_global_uniq",
+                    ),
+                    models.UniqueConstraint(
+                        condition=models.Q(("computing__isnull", False)),
+                        fields=("kind", "value", "computing"),
+                        name="equipment_hardware_id_scoped_uniq",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(("value", ""), _negated=True),
+                        name="equipment_hardware_id_value_not_empty",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(("kind__in", ["pnp_id", "vector_device"])),
+                        name="equipment_hardware_id_valid_kind",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(
+                            ("kind", "pnp_id"),
+                            ("value__regex", "\\\\[^\\\\]*&[^\\\\]*$"),
+                            ("computing__isnull", True),
+                            _negated=True,
+                        ),
+                        name="equipment_hardware_id_port_bound_scoped",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(("computing", models.F("equipment")), _negated=True),
+                        name="equipment_hardware_id_not_self",
+                    ),
+                ],
+            },
+        ),
         migrations.RunPython(seed_purchase_priorities, unseed_purchase_priorities),
     ]

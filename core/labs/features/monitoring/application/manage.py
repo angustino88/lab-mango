@@ -3,12 +3,14 @@
 from dataclasses import dataclass
 
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 
 from core.common.domain.errors import Conflict, NotFound, ValidationFailed
 from core.labs.features.equipment.public import (
-    claim_equipment_serial,
+    RegisterHardwareIdInput,
     lock_monitoring_computing,
-    match_observed_devices,
+    match_hardware_ids,
+    register_hardware_id,
 )
 from core.labs.models import Equipment
 from core.labs.models.monitoring import DeviceConnection, ExpectedDevice
@@ -24,12 +26,12 @@ class LinkDeviceConnectionInput:
 
 @transaction.atomic
 def link_device_connection(command: LinkDeviceConnectionInput, *, actor) -> int:
-    """Record the observed serial on an inventory unit, then re-match every observation of it.
+    """Register the observed device's hardware IDs on an inventory unit, then re-match its observations.
 
-    Race guard: the reporting computing unit's lock (the same parent lock ingestion takes),
-    then the equipment row lock inside ``claim_equipment_serial``, then the projection rows.
-    Safe to run twice: claiming a serial the unit already holds is a no-op and re-matching is
-    idempotent. Returns the connection id.
+    ``Equipment.serial_number`` is never written: it is a human label. Race guard: the reporting
+    computing unit's lock (the same parent lock ingestion takes), then the equipment row lock inside
+    ``register_hardware_id``, then the projection rows. Safe to run twice: registering an ID the unit
+    already holds is a no-op and re-matching is idempotent. Returns the connection id.
     """
     computing_id = (
         DeviceConnection.objects.filter(pk=command.connection_id).values_list("computing_id", flat=True).first()
@@ -38,16 +40,30 @@ def link_device_connection(command: LinkDeviceConnectionInput, *, actor) -> int:
         raise NotFound("The device connection does not exist.")
     lock_monitoring_computing(computing_id)
     connection = DeviceConnection.objects.select_for_update().get(pk=command.connection_id)
-    claim_equipment_serial(equipment_id=command.equipment_id, serial_number=connection.serial_number, actor=actor)
-    rows = list(
-        DeviceConnection.objects.select_for_update().filter(serial_number=connection.serial_number).order_by("pk")
-    )
-    matches = match_observed_devices(tuple({(row.serial_number, row.interface_name) for row in rows}))
-    for row in rows:
-        match = matches[(row.serial_number, row.interface_name)]
-        row.equipment_id, row.interface_id, row.match_status = match.equipment_id, match.interface_id, match.status
+    reported = [(item["kind"], item["value"]) for item in connection.hardware_ids or [] if item.get("value")]
+    if not reported:
+        raise Conflict("The observed device reported no hardware ID.", code="hardware_id_unavailable")
+    for kind, value in reported:
+        register_hardware_id(
+            RegisterHardwareIdInput(command.equipment_id, kind, value, computing_id=computing_id), actor=actor
+        )
+    shares_an_id = Q()
+    for kind, value in reported:
+        shares_an_id |= Q(hardware_ids__contains=[{"kind": kind, "value": value}])
+    rows = list(DeviceConnection.objects.select_for_update().filter(shares_an_id).order_by("pk"))
+    for row_computing in {row.computing_id for row in rows}:
+        scoped = [row for row in rows if row.computing_id == row_computing]
+        evidence = {row.pk: (_ids(row), row.interface_name) for row in scoped}
+        matches = match_hardware_ids(computing_id=row_computing, evidence=evidence.values())
+        for row in scoped:
+            match = matches[evidence[row.pk]]
+            row.equipment_id, row.interface_id, row.match_status = match.equipment_id, match.interface_id, match.status
     DeviceConnection.objects.bulk_update(rows, _MATCH_FIELDS)
     return connection.pk
+
+
+def _ids(row: DeviceConnection) -> tuple[tuple[str, str], ...]:
+    return tuple((item["kind"], item["value"]) for item in row.hardware_ids or [])
 
 
 @dataclass(frozen=True, slots=True)

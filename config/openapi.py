@@ -23,8 +23,12 @@ ENUM_NAME_OVERRIDES: dict[str, str | list[str]] = {
     "DowntimeStateEnum": ["scheduled", "current", "ended", "cancelled"],
     "EquipmentConditionEnum": "core.labs.models.EquipmentCondition",
     "EquipmentDisplayStatusEnum": "core.labs.models.EquipmentDisplayStatus",
+    # Hardware ID kinds (equipment and agent observations): pinned so ``kind`` does not rename KindEnum.
+    "EquipmentHardwareIdKindEnum": "core.labs.models.EquipmentHardwareIdKind",
     "EquipmentLifecycleStateEnum": "core.labs.models.EquipmentLifecycleState",
     "LicenseStatusEnum": "core.labs.models.LicenseStatus",
+    # Downtime ``kind`` (planned / unplanned): pinned so other ``kind`` enums do not rename it.
+    "KindEnum": "core.labs.models.resource.base.downtime.DowntimeKind",
     # Routing sync change-feed ``mode`` (core/routing/queries/selectors.py): pinned so the workbook import
     # ``mode`` field does not rename it.
     "ModeEnum": ["delta", "reset"],
