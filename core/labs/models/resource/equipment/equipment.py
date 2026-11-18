@@ -254,6 +254,7 @@ class Equipment(ResourceModel):
             ),
         ]
         indexes = [
+            models.Index(fields=("serial_number",), name="equipment_serial_number_idx"),
             models.Index(fields=("kind", "deleted_at"), name="equipment_kind_deleted_idx"),
             models.Index(fields=("kind", "name"), name="equipment_kind_name_idx"),
         ]

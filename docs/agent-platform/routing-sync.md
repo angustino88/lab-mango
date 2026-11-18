@@ -605,9 +605,13 @@ The R0 migration changes database checks and choices and needs a coordinated, ex
 
 ## 15. Stubs and tooling
 
-- **Stub agent** (`tools/stub_agent.py`): enrolls a stub agent with a grant and sends signed `/agent/...` requests, or prints one-use signed headers for an API client; development and test only.
-- **Stub router** (`tools/stub_router.py`): snapshot scan, replay, long-poll, epoch and digest checks for enabled entities; fault modes: lost response, restart mid-scan, epoch change, concurrent writes during a scan, `401` on rotation.
-- **Stub producer** (`tools/stub_producer.py`): scripted publish sequences (enrollment, activation, revocation, binding replacement) to exercise ordering and no-op suppression.
+All stubs live in `tools/stubs/` behind one entry point, `python -m tools.stubs <tool>` (guide: `tools/stubs/README.md`; design: `docs/proposals/local-identity-stubs.md`). Development and test only.
+
+- **Stub Entra issuer** (`entra`): signing key, loopback JWKS server, ID / delegated access / `Routing.Sync.Read` application tokens, persona login, and fault flags (expired, not-yet-valid, wrong audience or tenant, missing role, `scp` on an app token, unknown `kid`, HS256, guest). The backend validates them with its unchanged validators; the backend refuses the stub configuration outside local DEBUG (`users.E014`) and refuses the stub tenant in production (`users.E015`).
+- **Stub identities** (`identities`): injects persona users with Entra bindings and Labs roles through the user lifecycle commands, so `users` upserts and tombstones are published as in production; `deactivate`, `unlink`, `replace` and `delete` exercise every tombstone path (this replaces the user half of the former stub producer idea).
+- **Stub agent** (`agent`, formerly `tools/stub_agent.py`): enrollment and `provision`, heartbeat, activity, session logs, booking validate / check-in / extend / complete, signing faults, and the operator API; revocation exercises the `agents` tombstone.
+- **Stub router** (`router`, formerly `tools/stub_router.py`): snapshot scan, replay, long-poll, epoch and digest for enabled entities; mints its own stub application token when `--token` is omitted.
+- **Scenarios** (`scenario`): routing, booking, authorization and token-fault flows end to end with PASS/FAIL per step.
 
 ---
 

@@ -1,4 +1,8 @@
-"""Stub router client for testing backend routing sync endpoints."""
+"""Stub router client for testing backend routing sync endpoints.
+
+    python -m tools.stubs router --action snapshot --entity users      # app token minted by the stub issuer
+    python -m tools.stubs router --token <static token> --action poll   # Method B static token
+"""
 
 from __future__ import annotations
 
@@ -99,20 +103,30 @@ class StubRouter:
         return resp.get("data", {})
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Stub Router CLI")
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(prog="python -m tools.stubs router", description="Stub Router CLI")
     parser.add_argument("--base-url", default="http://localhost:8000", help="Base URL of backend")
-    parser.add_argument("--token", required=True, help="Bearer token for sync API")
+    parser.add_argument(
+        "--token", default=None, help="Bearer token for sync API (default: a stub Entra Routing.Sync.Read token)"
+    )
+    parser.add_argument("--audience", default="api://labmango-dept_a", help="audience of the minted stub token")
     parser.add_argument("--entity", choices=["users", "agents"], default="users", help="Entity to sync")
     parser.add_argument("--action", choices=["info", "snapshot", "changes", "digest", "poll"], default="info")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
-    router = StubRouter(args.base_url, args.token)
+    token = args.token
+    if token is None:
+        from tools.stubs.entra import StubIssuer
+
+        token = StubIssuer.load().app_token(audience=args.audience)
+    router = StubRouter(args.base_url, token)
     if args.action == "info":
         print(json.dumps(router.info(), indent=2))
     elif args.action == "snapshot":
         claims = router.snapshot(args.entity)
         print(f"Snapshot received {len(claims)} claims. Cursor: {router.cursors[args.entity]}")
+        for claim in claims:
+            print(f"  {claim.get('key')} state={claim.get('state')}")
     elif args.action == "digest":
         print(json.dumps(router.digest(args.entity), indent=2))
     elif args.action == "changes":

@@ -11,3 +11,6 @@ __pycache__/
 htmlcov/
 core/media/
 .github/hooks/session-events.jsonl
+
+# Local identity stubs state (keys, tokens): tools/stubs/README.md
+.labmango-stub/

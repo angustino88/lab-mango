@@ -27,6 +27,17 @@ from core.agents.exceptions import (
     EnrollmentGrantInvalid,
 )
 from core.agents.models import AgentIdentity, EnrollmentGrant
+from core.common.contracts import ActorContext
+from core.common.db.idempotency import try_claim_operation
+from core.common.domain.errors import Conflict
+from core.labs.features.equipment.public import lock_monitoring_computing
+from core.labs.features.monitoring.contracts import DeviceObservationInput, ObservationAcknowledgment
+from core.labs.features.monitoring.public import (
+    InvalidateDeviceConnectionsInput,
+    invalidate_device_connections,
+    observation_operation_scope,
+    observe_devices,
+)
 from core.labs.models import Equipment
 from core.routing.public import publish_agent_identity
 
@@ -253,6 +264,12 @@ def issue_grant_for_agent(agent_id: int, ttl_minutes: int, *, actor: Any) -> Enr
         # the live claim in the same transaction (lock order: identity -> SyncState -> projection).
         agent.state = AgentIdentity.State.PENDING
         agent.save(actor=actor, update_fields=("state", "modified"))
+        invalidate_device_connections(
+            InvalidateDeviceConnectionsInput(agent.equipment_id),
+            actor=ActorContext(
+                str(agent.agent_uid), "system", frozenset({"monitoring:invalidate"}), frozenset({agent.equipment_id})
+            ),
+        )
         publish_agent_identity(agent)
 
     clear_grant = GRANT_PREFIX + secrets.token_urlsafe(32)
@@ -309,6 +326,12 @@ def transition_agent_state(agent_uid: UUID, state: str, *, actor: Any) -> AgentI
         raise AgentEnrollmentConflict("Only an active agent can be revoked or decommissioned.")
     identity.state = state
     identity.save(actor=actor, update_fields=("state", "modified"))
+    invalidate_device_connections(
+        InvalidateDeviceConnectionsInput(identity.equipment_id),
+        actor=ActorContext(
+            str(identity.agent_uid), "system", frozenset({"monitoring:invalidate"}), frozenset({identity.equipment_id})
+        ),
+    )
     publish_agent_identity(identity)
     now = timezone.now()
     EnrollmentGrant.objects.filter(agent=identity, used_at__isnull=True, revoked_at__isnull=True).update(
@@ -368,6 +391,12 @@ def enroll_agent(command: EnrollAgentInput) -> AgentIdentity:
     if not command.agent_version.strip():
         raise ValueError("Agent version is required.")
 
+    invalidate_device_connections(
+        InvalidateDeviceConnectionsInput(identity.equipment_id),
+        actor=ActorContext(
+            str(identity.agent_uid), "system", frozenset({"monitoring:invalidate"}), frozenset({identity.equipment_id})
+        ),
+    )
     identity.activate(
         public_key=command.public_key,
         public_key_sha256=digest,
@@ -402,3 +431,42 @@ def enroll_agent(command: EnrollAgentInput) -> AgentIdentity:
     grant_record.used_at = timezone.now()
     grant_record.save(update_fields=("used_at", "modified"))
     return identity
+
+
+@dataclass(frozen=True, slots=True)
+class ReportDeviceObservationsInput:
+    identity: AgentIdentity
+    observation: DeviceObservationInput
+
+
+@transaction.atomic
+def report_device_observations(command: ReportDeviceObservationsInput, *, actor: object) -> ObservationAcknowledgment:
+    """Equipment -> identity -> monitoring; locks fence key rotation and revocation.
+
+    Recheck the authenticated key and enrollment, not just ACTIVE state. Lifecycle
+    invalidation takes the same identity lock before monitoring cursor updates.
+    """
+    identity = command.identity
+    observation = command.observation
+    scope = observation_operation_scope(
+        computing_id=identity.equipment_id,
+        generation_key=observation.generation_key,
+        batch_key=observation.batch_key,
+    )
+    if not try_claim_operation(scope):
+        raise Conflict("This request is still running.", code="request_in_progress")
+    lock_monitoring_computing(identity.equipment_id)
+    current = AgentIdentity.objects.select_for_update().get(pk=identity.pk)
+    if (
+        current.state != AgentIdentity.State.ACTIVE
+        or current.public_key_sha256 != identity.public_key_sha256
+        or current.enrolled_at != identity.enrolled_at
+        or current.equipment_id != identity.equipment_id
+    ):
+        raise AgentRequestUnauthenticated("Agent request authentication failed.")
+    if observation.generation_key != current.monitoring_generation_key:
+        raise Conflict("Fetch the current monitoring policy before reporting.", code="observation_generation_mismatch")
+    scoped_actor = ActorContext(
+        str(current.agent_uid), "agent", frozenset({"monitoring:report"}), frozenset({current.equipment_id})
+    )
+    return observe_devices(observation, actor=scoped_actor)

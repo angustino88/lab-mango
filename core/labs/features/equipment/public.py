@@ -25,6 +25,8 @@ from .application.loans import (
     return_equipment,
     return_equipment_batch,
 )
+from .application.monitoring_locks import lock_monitoring_computing
+from .application.observed_serials import claim_equipment_serial
 from .application.place_equipment import (
     PlaceEquipmentInput,
     RemovePlacementInput,
@@ -58,6 +60,12 @@ from .exceptions import (
     ReservationConflict,
     ReservationNotOpen,
 )
+from .queries.device_matching import (
+    active_bench_assignments,
+    equipment_ids_on_bench,
+    match_observed_devices,
+    monitoring_interfaces,
+)
 from .queries.equipment import (
     active_bench_assignment_mapping_rows,
     active_equipment_bench_assignment,
@@ -81,6 +89,12 @@ from .queries.summaries import (
 )
 
 __all__ = (
+    "lock_monitoring_computing",
+    "claim_equipment_serial",
+    "active_bench_assignments",
+    "equipment_ids_on_bench",
+    "match_observed_devices",
+    "monitoring_interfaces",
     "CancelEquipmentBookingsForDowntimeInput",
     "cancel_equipment_bookings_for_downtime",
     "CancelReservationInput",

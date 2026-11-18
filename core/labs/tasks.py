@@ -29,6 +29,9 @@ from core.labs.features.equipment.tasks import (
     expire_uncollected_reservations_task,
 )
 
+# Device-observation retention
+from core.labs.features.monitoring.tasks import purge_device_observation_history_task
+
 __all__ = [
     "collect_overdue_reminders_task",
     "deliver_overdue_reminders_task",
@@ -36,6 +39,7 @@ __all__ = [
     "collect_booking_notifications_task",
     "deliver_booking_notifications_task",
     "mark_stale_computing_activities_offline_task",
+    "purge_device_observation_history_task",
     "reconcile_bench_booking_statuses_task",
     "send_storage_quota_alerts",
     "snapshot_daily_active_benches",

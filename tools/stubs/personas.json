@@ -1,0 +1,13 @@
+{
+  "_comment": "Stub personas (no secrets). Username stub.<key>, UPN stub.<key>@stub.labmango.test, object ID uuid5(namespace, tenant:key:generation). Only personas whose backend equals BACKEND_ID are seeded on a backend.",
+  "namespace": "6b1f4c2e-93d5-4a7e-8c0b-5d2a9e7f4b31",
+  "personas": [
+    {"key": "alice", "name": "Alice Stub",  "backend": "dept_a", "labs_role": "user",  "bound": true,  "active": true},
+    {"key": "carol", "name": "Carol Stub",  "backend": "dept_a", "labs_role": "coord", "bound": true,  "active": true},
+    {"key": "adam",  "name": "Adam Stub",   "backend": "dept_a", "labs_role": "admin", "bound": true,  "active": true},
+    {"key": "dave",  "name": "Dave Stub",   "backend": "dept_a", "labs_role": "user",  "bound": false, "active": true},
+    {"key": "ivy",   "name": "Ivy Stub",    "backend": "dept_a", "labs_role": "user",  "bound": true,  "active": false},
+    {"key": "nora",  "name": "Nora Stub",   "backend": "dept_a", "labs_role": "",      "bound": true,  "active": true},
+    {"key": "bob",   "name": "Bob Stub",    "backend": "dept_b", "labs_role": "user",  "bound": true,  "active": true}
+  ]
+}

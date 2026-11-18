@@ -38,7 +38,16 @@ from .finance import (
     ExpenseType,
     PaymentTransactionType,
 )
-from .monitoring import MonitoringEvent, MonitoringEventAction
+from .monitoring import (
+    DeviceConnection,
+    DeviceConnectionState,
+    DeviceMatchStatus,
+    DeviceObservationBatch,
+    DeviceObservationCursor,
+    ExpectedDevice,
+    MonitoringEvent,
+    MonitoringEventAction,
+)
 from .procurement import (
     Purchase,
     PurchaseAuditEvent,
@@ -173,6 +182,12 @@ __all__ = [
     "LaboratoryAvailabilityObservation",
     "LaboratoryVisitEvent",
     "MonitoringEvent",
+    "DeviceConnection",
+    "DeviceConnectionState",
+    "DeviceMatchStatus",
+    "DeviceObservationBatch",
+    "DeviceObservationCursor",
+    "ExpectedDevice",
     "MonitoringEventAction",
     "PaymentTransactionType",
     "ProductModelSpecification",
