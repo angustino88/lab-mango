@@ -37,6 +37,33 @@ class AddAttachmentInput:
     is_restricted: bool = False
 
 
+_ZIP_SIGNATURES = (b"PK\x03\x04", b"PK\x05\x06")  # a file with entries / an empty archive
+_OLE_SIGNATURE = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"  # legacy Office (.doc, .xls, .ppt)
+
+# Leading-byte signatures for extensions whose format has one. Office Open XML and OpenDocument files
+# are ZIP containers.
+_SIGNATURES: dict[str, tuple[bytes, ...]] = {
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+    ".gif": (b"GIF87a", b"GIF89a"),
+    ".bmp": (b"BM",),
+    ".pdf": (b"%PDF-",),
+    ".zip": _ZIP_SIGNATURES,
+    ".docx": _ZIP_SIGNATURES,
+    ".xlsx": _ZIP_SIGNATURES,
+    ".pptx": _ZIP_SIGNATURES,
+    ".odt": _ZIP_SIGNATURES,
+    ".ods": _ZIP_SIGNATURES,
+    ".odp": _ZIP_SIGNATURES,
+    ".doc": (_OLE_SIGNATURE,),
+    ".xls": (_OLE_SIGNATURE,),
+    ".ppt": (_OLE_SIGNATURE,),
+    ".rtf": (b"{\\rtf",),
+}
+_FORMAT_NAMES = {".jpg": "JPEG", ".jpeg": "JPEG"}
+
+
 def _validate_real_bytes(content_bytes: bytes, filename: str) -> None:
     """Inspect leading bytes to detect executable binaries or mismatches with allowed file extensions."""
     if not content_bytes:
@@ -46,14 +73,12 @@ def _validate_real_bytes(content_bytes: bytes, filename: str) -> None:
         raise AttachmentTypeNotAllowedError("Executable binaries are not permitted as attachments.")
 
     ext = os.path.splitext(filename)[1].lower()
-    if ext == ".png" and not content_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
-        raise AttachmentTypeNotAllowedError("File content does not match PNG format.")
-    if ext in (".jpg", ".jpeg") and not content_bytes.startswith(b"\xff\xd8\xff"):
-        raise AttachmentTypeNotAllowedError("File content does not match JPEG format.")
-    if ext == ".gif" and not (content_bytes.startswith(b"GIF87a") or content_bytes.startswith(b"GIF89a")):
-        raise AttachmentTypeNotAllowedError("File content does not match GIF format.")
-    if ext == ".pdf" and not content_bytes.startswith(b"%PDF-"):
-        raise AttachmentTypeNotAllowedError("File content does not match PDF format.")
+    signatures = _SIGNATURES.get(ext)
+    if signatures and not content_bytes.startswith(signatures):
+        name = _FORMAT_NAMES.get(ext, ext.lstrip(".").upper())
+        raise AttachmentTypeNotAllowedError(f"File content does not match {name} format.")
+    if ext == ".webp" and not (content_bytes.startswith(b"RIFF") and content_bytes[8:12] == b"WEBP"):
+        raise AttachmentTypeNotAllowedError("File content does not match WEBP format.")
 
 
 def add_attachment(command: AddAttachmentInput, *, actor: Any) -> TicketAttachment:

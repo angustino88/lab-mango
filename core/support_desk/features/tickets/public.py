@@ -122,6 +122,7 @@ from core.support_desk.features.tickets.application import (
     update_team,
     update_ticket,
     update_transition,
+    validate_status_flags,
 )
 from core.support_desk.features.tickets.queries import (
     get_category_options,
@@ -262,4 +263,5 @@ __all__ = (
     "update_team",
     "update_ticket",
     "update_transition",
+    "validate_status_flags",
 )

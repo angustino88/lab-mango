@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.db.models.signals import post_migrate
 
 
 class ReferenceDataConfig(AppConfig):
@@ -8,4 +9,10 @@ class ReferenceDataConfig(AppConfig):
     verbose_name = "Reference data provisioning"
 
     def ready(self) -> None:
-        from core.reference_data import signals  # noqa: F401
+        from core.reference_data import signals
+
+        post_migrate.connect(
+            signals.provision_after_migrate,
+            sender=self,
+            dispatch_uid="reference_data.provision_after_migrate",
+        )

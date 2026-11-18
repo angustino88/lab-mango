@@ -226,7 +226,8 @@ class UpdateStatusInput:
     pauses_sla: bool | None = None
 
 
-def _validate_status_flags(system_state: str, *, is_final: bool, is_initial: bool, pauses_sla: bool) -> None:
+def validate_status_flags(system_state: str, *, is_final: bool, is_initial: bool, pauses_sla: bool) -> None:
+    """Reject flag combinations that contradict the status's fixed system state."""
     if is_final and system_state != SystemState.DONE.value:
         raise SupportDeskError("A final (closed) status must belong to the 'done' system state.")
     if is_initial and system_state != SystemState.OPEN.value:
@@ -238,7 +239,7 @@ def _validate_status_flags(system_state: str, *, is_final: bool, is_initial: boo
 def create_status(command: CreateStatusInput, *, actor: Any) -> SupportStatus:
     if not can_manage_configuration(actor):
         raise PermissionDeniedError("Only administrators can manage statuses.")
-    _validate_status_flags(
+    validate_status_flags(
         command.system_state,
         is_final=command.is_final,
         is_initial=command.is_initial,
@@ -285,7 +286,7 @@ def update_status(command: UpdateStatusInput, *, actor: Any) -> SupportStatus:
             if command.is_initial:
                 SupportStatus.objects.exclude(pk=st.pk).filter(is_initial=True).update(is_initial=False)
             st.is_initial = command.is_initial
-        _validate_status_flags(
+        validate_status_flags(
             st.system_state,
             is_final=st.is_final,
             is_initial=st.is_initial,

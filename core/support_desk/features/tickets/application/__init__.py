@@ -69,6 +69,7 @@ from core.support_desk.features.tickets.application.manage_config import (
     update_settings,
     update_status,
     update_transition,
+    validate_status_flags,
 )
 from core.support_desk.features.tickets.application.policies import can_manage_configuration
 from core.support_desk.features.tickets.application.submit_csat import SubmitCsatInput, submit_csat
@@ -167,4 +168,5 @@ __all__ = [
     "update_team",
     "update_ticket",
     "update_transition",
+    "validate_status_flags",
 ]
