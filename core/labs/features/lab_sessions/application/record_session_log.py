@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from functools import partial
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -15,6 +16,7 @@ from core.labs.features.lab_sessions.exceptions import (
     SessionLogInvalid,
 )
 from core.labs.models import Equipment, LabSessionLog
+from core.websocket.publish_service import publish_session_log_reload
 
 from .resolve_session_links import resolve_links
 
@@ -191,6 +193,8 @@ def record_session_log(
             return _replay(LabSessionLog.objects.get(**key), values)
         except ValidationError as error:
             raise SessionLogInvalid(details={k: v[0] for k, v in error.message_dict.items()}) from error
+        # Replays return above and publish nothing; only a newly stored session refreshes open tables.
+        transaction.on_commit(partial(publish_session_log_reload, session_log.bench_id))
     return _record(session_log, values, created=True)
 
 

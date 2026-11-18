@@ -575,3 +575,25 @@ def test_purge_is_bounded_per_run(command, settings):
 
 def test_purge_task_reports_counts(command):
     assert purge_device_observation_history_task() == {"batches_deleted": 0, "connections_deleted": 0}
+
+
+def test_applied_batch_publishes_a_monitoring_reload_for_the_computers_bench(
+    command, computing, monkeypatch, django_capture_on_commit_callbacks
+):
+    from core.labs.features.monitoring.application import observe_devices as module
+    from core.labs.models import Bench
+    from core.labs.models.resource.equipment.assignment import EquipmentAssignment
+
+    bench = Bench.objects.create(sku="OBS-BENCH", name="Observed bench")
+    EquipmentAssignment.objects.create(
+        equipment=computing, bench=bench, assigned_at=timezone.now() - timedelta(days=1)
+    )
+    published: list[int | None] = []
+    monkeypatch.setattr(module, "publish_monitoring_events_reload", published.append)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        observe_devices(command)
+    with django_capture_on_commit_callbacks(execute=True):
+        observe_devices(command)  # replay stores no event, so nothing is published
+
+    assert published == [bench.pk]

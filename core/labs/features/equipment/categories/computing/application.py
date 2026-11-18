@@ -87,6 +87,7 @@ def sync_computing_activity(command: SyncComputingActivityInput, *, actor=None) 
     ensure_computing_activity(computing)
     activity = ComputingActivity.objects.select_for_update().get(computing=computing)
     previous_status = activity.status
+    previous_details = _displayed_details(activity)
 
     for name, value in values.items():
         setattr(activity, name, value)
@@ -101,7 +102,41 @@ def sync_computing_activity(command: SyncComputingActivityInput, *, actor=None) 
     activity.full_clean()
     activity.save()
     _publish_activity_change_on_commit(activity, previous_status)
+    if activity.status == previous_status and _displayed_details(activity) != previous_details:
+        _publish_details_change_on_commit(activity)
     return activity
+
+
+# Shown on the dashboard next to the status; a change must refresh open tables even without a transition.
+_DISPLAYED_DETAIL_FIELDS = ("remote_user", "remote_user_display_name", "remote_computer", "remote_ip", "booking_code")
+
+
+def _displayed_details(activity) -> tuple:
+    return tuple(getattr(activity, name) for name in _DISPLAYED_DETAIL_FIELDS)
+
+
+def _publish_details_change_on_commit(activity):
+    """After commit, tell dashboard and bench tables that a same-status activity changed its details."""
+    from django.db import transaction
+
+    computer_id = activity.computing_id
+    status = activity.status
+
+    def _do_publish():
+        from core.labs.models.resource.equipment.assignment import EquipmentAssignment
+        from core.websocket.publish_service import publish_dashboard_status_update, publish_monitoring_update
+
+        bench_id = (
+            EquipmentAssignment.objects.filter(equipment_id=computer_id, unassigned_at__isnull=True)
+            .values_list("bench_id", flat=True)
+            .first()
+        )
+        payload = {"computer_id": computer_id, "status": status, "bench_id": bench_id}
+        if bench_id is not None:
+            publish_monitoring_update(bench_id=bench_id, event_type="computer_activity_change", data=payload)
+        publish_dashboard_status_update(event_type="computer_activity_change", data=payload)
+
+    transaction.on_commit(_do_publish)
 
 def _publish_activity_change_on_commit(activity, previous_status):
     from django.db import transaction

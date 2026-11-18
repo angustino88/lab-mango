@@ -216,3 +216,18 @@ def test_concurrent_identical_pushes_store_one_row(computer):
     assert sorted(result.created for result in results) == [False, True]
     assert len({result.id for result in results}) == 1
     assert LabSessionLog.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_new_session_publishes_a_reload_after_commit_and_replay_does_not(
+    computer, monkeypatch, django_capture_on_commit_callbacks
+):
+    published: list[int | None] = []
+    monkeypatch.setattr(record_module, "publish_session_log_reload", published.append)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        record_session_log(session(computer), actor=None, now=NOW)
+    with django_capture_on_commit_callbacks(execute=True):
+        record_session_log(session(computer), actor=None, now=NOW)
+
+    assert published == [LabSessionLog.objects.get().bench_id]

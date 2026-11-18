@@ -349,3 +349,33 @@ def test_repeating_offline_status_does_not_emit_another_status_notification(
     assert repeated.offline_at == original_offline_at
     assert callbacks == []
     assert [event[1]["status"] for event in published] == ["active", "offline"]
+
+
+def test_same_status_detail_change_refreshes_dashboard_but_not_the_status_stream(
+    computing, monkeypatch, django_capture_on_commit_callbacks
+):
+    status_events, dashboard_events = [], []
+    monkeypatch.setattr(
+        "core.websocket.publish_service.publish_computing_activity_update",
+        lambda computing_id, data: status_events.append(data),
+    )
+    monkeypatch.setattr("core.websocket.publish_service.publish_monitoring_update", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "core.websocket.publish_service.publish_dashboard_status_update",
+        lambda event_type, data: dashboard_events.append((event_type, data)),
+    )
+    with django_capture_on_commit_callbacks(execute=True):
+        _sync(computing, status="active", remote_user="alice")
+    status_events.clear()
+    dashboard_events.clear()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        _sync(computing, status="active", remote_user="bob")
+    with django_capture_on_commit_callbacks(execute=True) as unchanged:
+        _sync(computing, status="active", remote_user="bob")
+
+    assert status_events == []
+    assert dashboard_events == [
+        ("computer_activity_change", {"computer_id": computing.pk, "status": "active", "bench_id": None})
+    ]
+    assert unchanged == []

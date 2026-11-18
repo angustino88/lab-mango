@@ -105,6 +105,26 @@ def publish_dashboard_status_update(event_type: str, data: dict) -> None:
     )
 
 
+def _publish_reload(reload_type: str, bench_id: int | None) -> None:
+    """Tell open tables to refetch: the all-labs channel always, the bench channel when known."""
+    from django.utils import timezone
+
+    data = {"type": reload_type, "bench_id": bench_id, "timestamp": timezone.now().isoformat()}
+    _publish("ws:monitoring:dashboard", data)
+    if bench_id is not None:
+        _publish(f"ws:monitoring:{bench_id}", data)
+
+
+def publish_session_log_reload(bench_id: int | None) -> None:
+    """A new lab session log was stored; session log tables should refetch."""
+    _publish_reload("SESSION_RELOAD", bench_id)
+
+
+def publish_monitoring_events_reload(bench_id: int | None) -> None:
+    """A new monitoring event was stored; monitoring event tables should refetch."""
+    _publish_reload("MONITORING_RELOAD", bench_id)
+
+
 def publish_notification(
     message: str,
     message_type: str = "info",

@@ -123,3 +123,43 @@ async def test_publish_task_progress():
     await asyncio.wait_for(task, timeout=2.0)
     assert received[0]["progress"] == 50
     assert received[0]["message"] == "Halfway done"
+
+
+async def test_publish_session_log_reload_reaches_dashboard_and_bench_channels():
+    from core.websocket.publish_service import publish_session_log_reload
+
+    received: dict[str, dict] = {}
+
+    async def listener(channel: str):
+        async for msg in pubsub.subscribe(channel):
+            received[channel] = msg
+            break
+
+    tasks = [asyncio.create_task(listener(c)) for c in ("ws:monitoring:dashboard", "ws:monitoring:8")]
+    await asyncio.sleep(0.1)
+
+    publish_session_log_reload(8)
+
+    await asyncio.wait_for(asyncio.gather(*tasks), timeout=2.0)
+    assert {msg["type"] for msg in received.values()} == {"SESSION_RELOAD"}
+    assert received["ws:monitoring:8"]["bench_id"] == 8
+
+
+async def test_publish_monitoring_events_reload_without_bench_reaches_dashboard():
+    from core.websocket.publish_service import publish_monitoring_events_reload
+
+    received: list[dict] = []
+
+    async def listener():
+        async for msg in pubsub.subscribe("ws:monitoring:dashboard"):
+            received.append(msg)
+            break
+
+    task = asyncio.create_task(listener())
+    await asyncio.sleep(0.1)
+
+    publish_monitoring_events_reload(None)
+
+    await asyncio.wait_for(task, timeout=2.0)
+    assert received[0]["type"] == "MONITORING_RELOAD"
+    assert received[0]["bench_id"] is None

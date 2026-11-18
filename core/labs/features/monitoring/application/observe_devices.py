@@ -2,7 +2,7 @@
 
 Race guard: equipment parent lock, cursor lock, plus DB batch/sequence/connection
 uniqueness. Lock order: equipment -> authenticated identity -> cursor -> projections.
-No network side effects. Replay is content-addressed and never refreshes freshness.
+Network side effects run only after commit. Replay is content-addressed and never refreshes freshness.
 
 Ordering: within one generation a collector's applied sequences are contiguous for
 incremental batches. A complete snapshot may skip ahead (it is self-contained); an
@@ -12,8 +12,10 @@ delayed delta can never be silently dropped. Older sequences are acknowledged as
 
 import hashlib
 import json
+import logging
 from dataclasses import asdict, dataclass, replace
 from datetime import timedelta
+from functools import partial
 from uuid import UUID, uuid5
 
 from django.db import transaction
@@ -22,7 +24,7 @@ from django.utils import timezone
 from core.common.contracts import ActorContext
 from core.common.db.idempotency import try_claim_operation
 from core.common.domain.errors import Forbidden, ValidationFailed
-from core.labs.features.equipment.public import lock_monitoring_computing, match_observed_devices
+from core.labs.features.equipment.public import bench_id_at, lock_monitoring_computing, match_observed_devices
 from core.labs.features.monitoring.application.alerts import notify_expected_disconnects
 from core.labs.features.monitoring.contracts import DeviceObservationInput, ObservationAcknowledgment
 from core.labs.features.monitoring.exceptions import (
@@ -39,6 +41,9 @@ from core.labs.models.monitoring import (
     MonitoringEvent,
     MonitoringEventAction,
 )
+from core.websocket.publish_service import publish_monitoring_events_reload
+
+logger = logging.getLogger(__name__)
 
 MAX_DEVICES_PER_COLLECTOR = 200
 MAX_SEQUENCE = 9007199254740991  # 2**53 - 1: exact in JSON numbers on every client.
@@ -189,7 +194,18 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
         notify_expected_disconnects(
             computing_id=command.computing_id, equipment_ids=detached_equipment, observed_at=command.collected_at
         )
+        transaction.on_commit(partial(_publish_monitoring_reload, command.computing_id, received_at))
         return _ack(batch)
+
+
+def _publish_monitoring_reload(computing_id: int, observed_at) -> None:
+    """After commit: tell open monitoring tables a new event exists. Never raises."""
+    try:
+        bench_id = bench_id_at(equipment_id=computing_id, at=observed_at)
+    except Exception:
+        logger.warning("Could not resolve bench for computing %s", computing_id, exc_info=True)
+        bench_id = None
+    publish_monitoring_events_reload(bench_id)
 
 
 def _apply_projection(command: DeviceObservationInput, *, received_at) -> set[int]:
