@@ -366,3 +366,39 @@ def test_discovery_snapshots_are_link_evidence_only(staff, scope, monkeypatch, d
         report(replace(discovery, batch_key=uuid4(), sequence=2, devices=()))  # next discovery omits it
     assert pushed == []
     assert staff.get(EXPECTED, {"computing_id": computing.pk}).data["data"][0]["presence"]["value"] == "present"
+
+
+def test_legacy_device_list_becomes_link_suggestions(staff, scope, instrument_kind):
+    computing, peripheral = scope
+    expected_unit = Equipment.objects.create(sku="SCOPE-3", name="Scope 3", kind=instrument_kind)
+    register(expected_unit, "SER-3")
+    ExpectedDevice.objects.create(computing=computing, equipment=expected_unit)
+    profile = computing.computing_profile
+    profile.monitored_devices = [
+        {"key": pnp_id("SER-1").lower(), "value": "Scope on bench", "status": "connected"},
+        {"key": pnp_id("SER-3"), "value": "Third scope"},
+        {"key": r"usb\vid_046d&pid_c52b\6&2a1b3c4&0&3", "value": "Receiver"},
+        {"key": pnp_id("SER-1"), "value": "duplicate entry is dropped"},
+        {"key": "", "value": "no id"},
+        "not an entry",
+    ]
+    profile.save(update_fields=["monitored_devices"])
+
+    response = staff.get(f"{EXPECTED}/legacy-suggestions", {"computing_id": computing.pk})
+
+    assert response.status_code == 200, response.data
+    items = response.data["data"]["items"]
+    assert [(i["pnp_id"], i["label"], i["status"]["value"]) for i in items] == [
+        (pnp_id("SER-1"), "Scope on bench", "registered"),
+        (pnp_id("SER-3"), "Third scope", "expected"),
+        (r"USB\VID_046D&PID_C52B\6&2A1B3C4&0&3", "Receiver", "unregistered"),
+    ]
+    assert items[0]["equipment"]["id"] == peripheral.pk and items[0]["expected_device_id"] is None
+    assert items[1]["expected_device_id"] is not None
+    assert [i["is_port_bound"] for i in items] == [False, False, True]
+
+
+def test_legacy_suggestions_need_a_computing_unit(staff, scope):
+    _, peripheral = scope
+    assert staff.get(f"{EXPECTED}/legacy-suggestions").status_code == 400
+    assert staff.get(f"{EXPECTED}/legacy-suggestions", {"computing_id": peripheral.pk}).status_code == 404

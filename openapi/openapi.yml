@@ -466,6 +466,8 @@ paths:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices
   /api/labs/expected-devices/{expected_device_id}:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices~1{expected_device_id}
+  /api/labs/expected-devices/legacy-suggestions:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices~1legacy-suggestions
   /api/labs/monitoring-events:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events
   /api/labs/monitoring-events/{id}:

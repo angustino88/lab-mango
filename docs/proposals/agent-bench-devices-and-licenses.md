@@ -51,7 +51,9 @@ Windows-generated last segment containing `&`, which changes with the USB port.
    - `kind = pnp_id`: the instance ID, normalised (upper case, `\` separators). If its last segment
      contains `&` (port-bound) `computing` is required: the ID is only valid on that computer.
    - `kind = vector_device`: the Vector device name a license tool reports (License Client
-     `DeviceName`, e.g. `007113-585343`), so licenses find their carrier (section 5.4).
+     `DeviceName`, e.g. `007113-585343`), so licenses find their carrier (section 5.4). It is
+     registered separately from the unit's PnP ID: the two are independent identifiers (confirmed
+     by the owner, 2026-11-18), so a CANcase usually carries both.
    - Constraint: one row per `(kind, upper(value), computing)`; a unit may have several IDs.
    - Written only by coordinators: on the equipment form (paste the instance path), or with the
      existing **Link** button, which now stores the observation's PnP ID here instead of
@@ -262,7 +264,7 @@ Configured checks make agents run programs, so the design limits what a configur
 
 | Phase | Backend | Agent |
 |---|---|---|
-| 1 | **Done:** `EquipmentHardwareId` (+ API), Link stores PnP IDs, hardware-ID matching (serial matching removed), `expected_devices` in the policy. Open: legacy `monitored_devices` as suggestions | Watch list from the policy; report only mapped PnP IDs with `hardware_ids`; Push = discovery snapshot from the Device Scan dialog |
+| 1 | **Done:** `EquipmentHardwareId` (+ API), Link stores PnP IDs, hardware-ID matching (serial matching removed), `expected_devices` in the policy, legacy `monitored_devices` as suggestions (`GET /api/labs/expected-devices/legacy-suggestions`) | Watch list from the policy; report only mapped PnP IDs with `hardware_ids`; Push = discovery snapshot from the Device Scan dialog |
 | 2 | License checks (model, admin UI, agent routes), runs, observations, matching (no effects) | Generic check runner with presets (**done**: `agent/src/core/licensing/`, Vector preset); uses the routes once `license_checks` is advertised |
 | 3 | Effects (D1), expiry notifications | Tray warnings, licenses in the device dialog |
 

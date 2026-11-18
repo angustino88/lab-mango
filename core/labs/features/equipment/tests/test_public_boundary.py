@@ -70,6 +70,7 @@ def test_public_module_exports_supported_queries_and_commands():
         "register_hardware_id",
         "delete_hardware_id",
         "normalize_hardware_id",
+        "is_port_bound",
         "list_hardware_ids",
         "match_hardware_ids",
         "hardware_ids_by_equipment",
