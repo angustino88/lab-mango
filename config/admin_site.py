@@ -158,7 +158,7 @@ ADMIN_SECTIONS: tuple[AdminSection, ...] = (
     AdminSection(
         "support-desk",
         "Support Desk",
-        ("support_desk.SupportCategory", "support_desk.SupportPriority"),
+        ("support_desk.SupportCategory", "support_desk.SupportPriority", "support_desk.SupportStatus"),
     ),
     AdminSection(
         "scheduled-tasks",
