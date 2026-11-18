@@ -73898,6 +73898,11 @@
                       "type": "string",
                       "readOnly": true
                     },
+                    "serial_number": {
+                      "type": "string",
+                      "readOnly": true,
+                      "description": "Vendor's license serial or ID (for example the Vector license ID). Not secret; agents match the licenses they find to this value."
+                    },
                     "expires_at": {
                       "type": "string",
                       "format": "date-time",
@@ -73952,6 +73957,7 @@
                     "restriction",
                     "seats",
                     "seats_in_use",
+                    "serial_number",
                     "sku",
                     "status",
                     "type",
@@ -73995,6 +74001,7 @@
                   {}
                 ],
                 "max_version": "string",
+                "serial_number": "string",
                 "expires_at": "2026-10-20T12:00:00Z",
                 "status": {},
                 "acquisition_price": {},
@@ -74133,7 +74140,7 @@
         "description": "",
         "schema": {
           "type": "object",
-          "description": "Inventory fields of a license. Uniqueness and relations are enforced by the command and PostgreSQL.\n\n``identifier`` is the license key: accepted here, never returned by any serializer.",
+          "description": "Inventory fields of a license. Uniqueness and relations are enforced by the command and PostgreSQL.\n\n``serial_number`` is the vendor's license serial (visible, unique per vendor among live licenses).\n``identifier`` is the license key: accepted here, never returned by any serializer.",
           "properties": {
             "sku": {
               "type": "string",
@@ -74192,6 +74199,10 @@
               "type": "string",
               "maxLength": 255
             },
+            "serial_number": {
+              "type": "string",
+              "maxLength": 255
+            },
             "identifier": {
               "type": "string",
               "writeOnly": true,
@@ -74225,6 +74236,7 @@
           "restriction_id": 1,
           "seats": 1,
           "max_version": "string",
+          "serial_number": "string",
           "identifier": "string",
           "expires_at": "2026-10-20T12:00:00Z"
         }
@@ -74359,6 +74371,11 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "serial_number": {
+                    "type": "string",
+                    "readOnly": true,
+                    "description": "Vendor's license serial or ID (for example the Vector license ID). Not secret; agents match the licenses they find to this value."
+                  },
                   "expires_at": {
                     "type": "string",
                     "format": "date-time",
@@ -74413,6 +74430,7 @@
                   "restriction",
                   "seats",
                   "seats_in_use",
+                  "serial_number",
                   "sku",
                   "status",
                   "type",
@@ -74447,6 +74465,7 @@
                 {}
               ],
               "max_version": "string",
+              "serial_number": "string",
               "expires_at": "2026-10-20T12:00:00Z",
               "status": {},
               "acquisition_price": {},
@@ -78253,6 +78272,11 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "serial_number": {
+                    "type": "string",
+                    "readOnly": true,
+                    "description": "Vendor's license serial or ID (for example the Vector license ID). Not secret; agents match the licenses they find to this value."
+                  },
                   "expires_at": {
                     "type": "string",
                     "format": "date-time",
@@ -78307,6 +78331,7 @@
                   "restriction",
                   "seats",
                   "seats_in_use",
+                  "serial_number",
                   "sku",
                   "status",
                   "type",
@@ -78341,6 +78366,7 @@
                 {}
               ],
               "max_version": "string",
+              "serial_number": "string",
               "expires_at": "2026-10-20T12:00:00Z",
               "status": {},
               "acquisition_price": {},
@@ -78494,6 +78520,10 @@
               "type": "string",
               "maxLength": 255
             },
+            "serial_number": {
+              "type": "string",
+              "maxLength": 255
+            },
             "identifier": {
               "type": "string",
               "writeOnly": true,
@@ -78520,6 +78550,7 @@
           "restriction_id": 1,
           "seats": 1,
           "max_version": "string",
+          "serial_number": "string",
           "identifier": "string",
           "expires_at": "2026-10-20T12:00:00Z"
         }
@@ -78654,6 +78685,11 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "serial_number": {
+                    "type": "string",
+                    "readOnly": true,
+                    "description": "Vendor's license serial or ID (for example the Vector license ID). Not secret; agents match the licenses they find to this value."
+                  },
                   "expires_at": {
                     "type": "string",
                     "format": "date-time",
@@ -78708,6 +78744,7 @@
                   "restriction",
                   "seats",
                   "seats_in_use",
+                  "serial_number",
                   "sku",
                   "status",
                   "type",
@@ -78742,6 +78779,7 @@
                 {}
               ],
               "max_version": "string",
+              "serial_number": "string",
               "expires_at": "2026-10-20T12:00:00Z",
               "status": {},
               "acquisition_price": {},
@@ -79802,6 +79840,11 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "serial_number": {
+                    "type": "string",
+                    "readOnly": true,
+                    "description": "Vendor's license serial or ID (for example the Vector license ID). Not secret; agents match the licenses they find to this value."
+                  },
                   "expires_at": {
                     "type": "string",
                     "format": "date-time",
@@ -79856,6 +79899,7 @@
                   "restriction",
                   "seats",
                   "seats_in_use",
+                  "serial_number",
                   "sku",
                   "status",
                   "type",
@@ -79890,6 +79934,7 @@
                 {}
               ],
               "max_version": "string",
+              "serial_number": "string",
               "expires_at": "2026-10-20T12:00:00Z",
               "status": {},
               "acquisition_price": {},

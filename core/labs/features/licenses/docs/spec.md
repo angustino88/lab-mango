@@ -14,7 +14,10 @@ The Licenses feature tracks commercial software and firmware entitlements, seat 
   - `category` (FK `LicenseCategory`, PROTECT).
   - `restriction` (FK `LicenseRestriction`, PROTECT, optional).
   - `max_version` (CharField(64)).
-  - `identifier` (CharField(255), license asset key).
+  - `serial_number` (CharField(255), vendor's license serial or ID, e.g. the Vector license ID). Visible and
+    searchable. Unique per vendor among live licenses, case-insensitive (`license_vendor_serial_uniq`);
+    agents match the licenses they find on lab computers to it.
+  - `identifier` (CharField(255), license key / activation key; secret).
   - `expiry_date` (DateTimeField, nullable).
   - `status`: Enum (`available`, `assigned`, `expired`, `revoked`, `suspended`). Default: `available`.
     Stored as append-only `LicenseStatusRecord` rows; a license reads as its latest record.
@@ -78,6 +81,7 @@ admins (`LABS_STAFF_ACCESS`).
 | `name`, `remark`, `max_version` | optional | |
 | `seats` | optional, default `1` | `1` to `32767`. |
 | `expires_at` | optional, nullable | Date-time (stored as `expiry_date`). |
+| `serial_number` | optional | Vendor's license serial or ID; trimmed; returned and searchable (`q`). A duplicate for the same vendor among live licenses → `409` |
 | `identifier` | optional | **The license key. Write-only: never returned by any endpoint and kept out of `repr` and logs.** |
 
 Unknown keys are rejected with `422`. Update is partial: only the keys sent change. Responses are the

@@ -27,7 +27,7 @@
 | `serial_number` is a free text inventory field (`blank=True`) | `core/labs/models/resource/equipment/equipment.py` |
 | Bench placement is `EquipmentAssignment(bench, unassigned_at=None)` | `device_matching.py` `equipment_ids_on_bench` |
 | `ComputingProfile.monitored_devices` is legacy JSON (Windows device IDs and names per computer), not linked to units | `core/labs/models/resource/equipment/computing.py` |
-| `License` has `product`, `vendor`, `max_version`, `identifier` (secret), `expiry_date`; assigned via `LicenseAssignment` | `core/labs/models/resource/license/` |
+| `License` has `product`, `vendor`, `max_version`, `serial_number` (vendor serial, added by this change set), `identifier` (secret key), `expiry_date`; assigned via `LicenseAssignment` | `core/labs/models/resource/license/` |
 | `EquipmentCategory.monitored`; `Equipment.product_model` → `EquipmentProductModel` | `reference_data.py`, `equipment.py` |
 
 ## 3. Hardware identity and device links
@@ -155,7 +155,7 @@ parser and presets: `agent/src/core/licensing/` (tested with a real Vector Licen
   "started_at": "2026-11-18T15:35:11+07:00", "reported_at": "2026-11-18T08:35:12Z", "duration_ms": 412,
   "is_complete": true,
   "licenses": [{
-    "observation_key": "vector-license-client:serial:3f9c0d6e1a2b4c5d6e7f8a9b",
+    "observation_key": "vector-license-client:serial:55100045010",
     "vendor": "Vector", "product_code": "55100", "product_name": "CANalyzer PRO",
     "carrier": {"type": "device", "hardware_id": {"kind": "vector_device", "value": "007113-585343"}},
     "expires_at": "2027-04-09T23:59:59+07:00", "final_expires_at": null,
@@ -170,8 +170,8 @@ parser and presets: `agent/src/core/licensing/` (tested with a real Vector Licen
 | `is_complete` | Only `ok` runs replace the license set; other statuses only record the run |
 | `revision` | Runs of an older revision are recorded but do not change observations |
 | `sequence` | Increasing per agent and check; older runs are stale |
-| `license_serial` | The license's serial / ID from the tool; the match key for `License.identifier`. Secret: never logged, compared by digest. The observation key uses a digest too, so it follows the license when it moves |
-| Never sent | raw tool output, contract or activation IDs, user names |
+| `license_serial` | The license's serial / ID from the tool (Vector `VectorLicenseId`); the match key for `License.serial_number`. Not secret. The observation key is built from it, so it follows the license when it moves |
+| Never sent | raw tool output, license keys, contract or activation IDs, user names |
 
 Source of the Vector fields: `Vector.LicenseClient -listlicenses` (Vector KB0021758). Its
 `ExpirationDateString` is when the activation ends (reactivatable licenses), `FinalExpirationDateString`
@@ -182,12 +182,14 @@ Source of the Vector fields: `Vector.LicenseClient -listlicenses` (Vector KB0021
 The agent pushes every license it finds with its **license serial** (the tool's own license ID,
 Vector `VectorLicenseId`); the backend routes each one to the `License` record and compares.
 
-1. **Find the license** by serial: `License.identifier` (help text "License key or serial") equal to
-   `license_serial`. The identifier is a secret, so the lookup uses a new indexed
-   `identifier_sha256` column (digest of the normalised identifier) instead of the plain value.
+1. **Find the license** by serial: `License.serial_number` (added in this change set, migration
+   `labs.0002`; unique per vendor among live licenses, case-insensitive, indexed) equal to
+   `license_serial`. When several vendors use the same serial, the one whose vendor name matches the
+   reported `vendor` wins.
    - one license → `matched`;
    - none → `unregistered` (listed under "Found on lab hardware" for a coordinator to register);
-   - several (duplicate identifiers) → `ambiguous`, no effect.
+   - several left → `ambiguous`, no effect.
+   `License.identifier` stays the secret license key and is never used for matching.
    Fallback only when the tool reports no serial: the check's linked licenses with the same product,
    else the carrier's active `LicenseAssignment`s with the same `vendor_product_code`.
 2. **Check that the report belongs to this computer** before anything changes. The reporting
@@ -256,7 +258,7 @@ Configured checks make agents run programs, so the design limits what a configur
 | # | Decision | Recommendation |
 |---|---|---|
 | D1 | Apply observed expiry/version to `License` automatically, or review first | Automatic for `matched`, with change-log entry |
-| D2 | Match by license serial (`License.identifier`, new `identifier_sha256` index); fall back to a check's linked licenses, then `LicenseProduct.vendor_product_code`, only for tools without serials | Yes |
+| D2 | Match by license serial (`License.serial_number`, **done**: field, unique per vendor, API, search); fall back to a check's linked licenses, then `LicenseProduct.vendor_product_code`, only for tools without serials | Yes |
 | D3 | `EquipmentProductModel.usb_ids` | Yes |
 | D4 | Warning window | 30 days |
 | D5 | Keep serial-number matching as a suggestion source during migration | Yes, suggestions only; remove once links cover the fleet |

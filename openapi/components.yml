@@ -10707,6 +10707,11 @@ components:
         max_version:
           type: string
           readOnly: true
+        serial_number:
+          type: string
+          readOnly: true
+          description: Vendor's license serial or ID (for example the Vector license
+            ID). Not secret; agents match the licenses they find to this value.
         expires_at:
           type: string
           format: date-time
@@ -10747,6 +10752,7 @@ components:
       - restriction
       - seats
       - seats_in_use
+      - serial_number
       - sku
       - status
       - type
@@ -11135,6 +11141,9 @@ components:
         by the command and PostgreSQL.
 
 
+        ``serial_number`` is the vendor''s license serial (visible, unique per vendor
+        among live licenses).
+
         ``identifier`` is the license key: accepted here, never returned by any serializer.'
       properties:
         sku:
@@ -11179,6 +11188,9 @@ components:
           maximum: 32767
           minimum: 1
         max_version:
+          type: string
+          maxLength: 255
+        serial_number:
           type: string
           maxLength: 255
         identifier:
@@ -13632,6 +13644,9 @@ components:
           maximum: 32767
           minimum: 1
         max_version:
+          type: string
+          maxLength: 255
+        serial_number:
           type: string
           maxLength: 255
         identifier:

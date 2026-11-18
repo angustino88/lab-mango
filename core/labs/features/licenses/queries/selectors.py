@@ -112,6 +112,7 @@ def list_licenses(*, search: str | None = None) -> QuerySet[License]:
         queryset = queryset.filter(
             Q(name__icontains=search)
             | Q(sku__icontains=search)
+            | Q(serial_number__icontains=search)
             | Q(product__name__icontains=search)
             | Q(vendor__name__icontains=search)
         )

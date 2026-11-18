@@ -3,7 +3,8 @@
 Race guard: every change locks the license row (``select_for_update``) inside one transaction.
 Assignment commands lock the same row first, so the seat and assignment counts read here cannot
 change underneath a write. SKU uniqueness among live licenses is a PostgreSQL constraint of
-``ResourceModel``; a collision surfaces as ``LicenseConflict``.
+``ResourceModel``, and a vendor's license serial is unique among live licenses
+(``license_vendor_serial_uniq``); a collision surfaces as ``LicenseConflict``.
 """
 
 from collections.abc import Mapping
@@ -43,6 +44,7 @@ UPDATABLE_FIELDS = frozenset(
         "restriction_id",
         "seats",
         "max_version",
+        "serial_number",
         "identifier",
         "expiry_date",
     }
@@ -75,6 +77,7 @@ class CreateLicenseInput:
     restriction_id: int | None = None
     seats: int = 1
     max_version: str = ""
+    serial_number: str = ""
     # The license key is a secret: kept out of ``repr`` so it never reaches a log line.
     identifier: str = field(default="", repr=False)
     expiry_date: datetime | None = None

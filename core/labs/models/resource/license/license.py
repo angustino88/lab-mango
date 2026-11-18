@@ -103,11 +103,20 @@ class License(ResourceModel):
         blank=True,
     )
     max_version = models.CharField(max_length=255, blank=True, default="")
+    serial_number = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text=(
+            "Vendor's license serial or ID (for example the Vector license ID). Not secret; agents "
+            "match the licenses they find to this value."
+        ),
+    )
     identifier = models.CharField(
         max_length=255,
         blank=True,
         default="",
-        help_text="License key or serial. Secret: never log or export it.",
+        help_text="License key (activation key). Secret: never log or export it.",
     )
     expiry_date = models.DateTimeField(null=True, blank=True)
     seats = models.PositiveSmallIntegerField(
@@ -133,10 +142,20 @@ class License(ResourceModel):
 
     class Meta:
         app_label = "labs"
-        constraints = ResourceModel.Meta.constraints
+        constraints = [
+            *ResourceModel.Meta.constraints,
+            # One live license per vendor serial: agents match by it, so duplicates would be ambiguous.
+            models.UniqueConstraint(
+                "vendor",
+                Lower("serial_number"),
+                condition=models.Q(deleted_at__isnull=True) & ~models.Q(serial_number=""),
+                name="license_vendor_serial_uniq",
+            ),
+        ]
         indexes = [
             models.Index(fields=("product", "deleted_at"), name="license_product_deleted_idx"),
             models.Index(fields=("expiry_date",), name="license_expiry_idx"),
+            models.Index(Lower("serial_number"), name="license_serial_lower_idx"),
         ]
 
 
