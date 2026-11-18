@@ -1,4 +1,4 @@
-# Agent: device links, bench watch list and license observations
+# Agent: device links, bench watch list and configurable license checks
 
 **Status:** Proposed, needs owner approval (revised 2026-11-18)
 **Risk tier:** T2 (public agent API, migrations, matching semantics, license data written from an integration)
@@ -83,8 +83,7 @@ currently seen on its bench.
   ],
   "device_models": [
     {"vendor_id": "1248", "product_id": "1073", "product_model": "VN1630A"}
-  ],
-  "license_collectors": ["vector"]
+  ]
 }
 ```
 
@@ -94,7 +93,6 @@ currently seen on its bench.
 - `device_models`: USB IDs of lab equipment models, from the new `EquipmentProductModel.usb_ids`
   (array of `{vendor_id, product_id}`, upper-case hex). A connected device of such a model that is
   not watched is reported as an *additional* device, which is also how new units get linked.
-- `license_collectors`: license sources the agent should read.
 
 The agent reports watched devices and known-model devices only. This is a reporting scope, not
 authorization: the backend still validates and bounds whatever a signed agent sends.
@@ -105,59 +103,115 @@ authorization: the backend still validates and bounds whatever a signed agent se
 `vendor_id`/`product_id`. `serial_number` remains accepted for compatibility and is shown as
 reported evidence only.
 
-## 5. License observations (new route)
+## 5. License checks (configured in the web app)
 
-`POST /agent/license-observations/actions/report`, signed like device observations, UUID
-`Idempotency-Key`, 256 KiB limit, complete-snapshot semantics per `collector_key`.
+Licenses come from many tools (Vector License Client, FlexNet license servers and files, CodeMeter
+dongles, registry or file based activations) and sit either **on the computer** or **on hardware
+mounted to it** (a CANcase, a dongle). The backend therefore does not hard-code vendors: a
+coordinator configures **license checks** in the web app; each agent fetches the checks that apply
+to its computer, runs them read-only and reports one result per run.
+
+### 5.1 What a check is
+
+| Part | Content | Example (Vector preset) |
+|---|---|---|
+| Probe | One of a **closed catalog** the agent implements: `command` (installed tool, fixed arguments, stdout), `file` (license or status file), `registry` (values under one HKLM key) | `command`: `C:\Program Files\Vector License Client\Vector.LicenseClient.exe -listlicenses` |
+| Extraction | Declarative mapping, no code: format `xml` / `json` / `text` (regex with named groups) / `values` (registry), a records selector and field sources for `product_name`, `product_code`, `max_version`, `expires_at`, `final_expires_at`, `carrier_id`, `vendor_license_id`, `is_reactivatable`, `carrier_type`; date formats and "never" values | `.//VectorLicense`; `ExpirationDateString` → `expires_at`; `9999-12-31` = never |
+| Carrier | What holds the licenses: `computer`, `device` / `dongle` (identified by a hardware ID kind read from `carrier_id`), `server` (floating), `equipment` (a unit picked in the web app when the tool names no hardware), or `mapped` per license from a tool field | `mapped`: `BindingType` DEVICE → device, DONGLE → dongle, PC → computer; hardware ID kind `vector_device` |
+| Targets | Which computers run it: rooms, stations, benches, equipment categories or individual computers | all benches with Vector hardware |
+| Interval | Minutes between runs (≥ 15) | 360 |
+| Linked licenses | Optional: the `License` records this check is expected to confirm (for tools that report no license ID) | — |
+
+The web app offers **presets** (templates): Vector License Client, and later FlexNet `lmutil lmstat`,
+CodeMeter and license-file patterns, each written against captured output from a lab computer.
+A preset is an ordinary check configuration; editing one never changes agent code. The agent's
+parser and presets: `agent/src/core/licensing/` (tested with a real Vector License Client sample).
+
+### 5.2 Model (new, licenses feature)
+
+- `LicenseCheck(key, name, vendor, probe_type, probe JSON, extract JSON, carrier JSON,
+  interval_minutes, enabled, revision, created_by, modified_by)`; `revision` increments on every
+  change. JSON validated per probe type with the same rules the agent applies (section 5.5).
+- `LicenseCheckTarget(check, room | station | bench | category | equipment)`; resolved to
+  computing equipment when an agent asks.
+- `LicenseCheckLicense(check, license)`: optional expected licenses.
+- `LicenseCheckRun(check, agent identity, revision, sequence, status, error_code, error_message,
+  started_at, duration_ms, license_count, received_at)`: latest run per check and agent, plus
+  bounded history (30 days).
+- `LicenseObservation`: one row per (agent, check, observation key) with reported values, matched
+  license, carrier equipment, `first_seen_at`, `last_seen_at`; removed (kept as history) when a
+  complete run no longer lists it.
+
+### 5.3 Agent routes
+
+| Route | Meaning |
+|---|---|
+| `GET /agent/license-checks` | Enabled checks targeting this computer, `{"data": {"checks": [...]}}`; strong ETag, `304` when unchanged. Advertised as capability `license_checks` in `/agent/info` |
+| `POST /agent/license-checks/{key}/actions/report` | One run; UUID `Idempotency-Key`; 256 KiB; body below |
 
 ```json
 {
-  "generation_key": "…", "collector_key": "vector", "sequence": 1794990911406,
-  "collected_at": "2026-11-18T08:35:11Z", "is_complete": true,
+  "revision": 3, "sequence": 1794990911406, "status": "ok",
+  "started_at": "2026-11-18T15:35:11+07:00", "reported_at": "2026-11-18T08:35:12Z", "duration_ms": 412,
+  "is_complete": true,
   "licenses": [{
-    "observation_key": "vector:device:007113-585343:55100",
+    "observation_key": "vector-license-client:device:007113-585343:55100",
     "vendor": "Vector", "product_code": "55100", "product_name": "CANalyzer PRO",
-    "vendor_license_id": "55100045010",
     "carrier": {"type": "device", "hardware_id": {"kind": "vector_device", "value": "007113-585343"}},
-    "expires_at": "2027-04-09T23:59:59", "final_expires_at": null,
-    "max_version": "15.0", "is_reactivatable": true, "state": "valid"
+    "expires_at": "2027-04-09T23:59:59+07:00", "final_expires_at": null,
+    "max_version": "15.0", "is_reactivatable": true, "vendor_license_id": "55100045010"
   }]
 }
 ```
 
-Source: `Vector.LicenseClient -listlicenses` (Vector KB0021758); the agent parser and a real sample
-are in `agent/src/core/vendors/vector/` and `agent/tests/vendors/vector/fixtures/`.
-
 | Field | Rule |
 |---|---|
-| `carrier.type` | `device` (Vector interface), `dongle` (Keyman), `computer` (the signing agent's equipment; no `hardware_id`) |
-| `expires_at` | When the license stops working unless reactivated (`ExpirationDateString`); `null` = never |
-| `final_expires_at` | End of the license (`FinalExpirationDateString`); `null` = perpetual (`9999-12-31`) |
-| `vendor_license_id` | Vector license ID; secret like `License.identifier`: never logged, compared by digest |
-| `state` | `valid`, `expired` |
-| Never sent | contract IDs, ticket/activation IDs, license files, user names |
+| `status` | `ok` (list complete), `not_installed`, `failed`, `rejected` (agent refused the configuration); with `error: {code, message}` otherwise |
+| `is_complete` | Only `ok` runs replace the license set; other statuses only record the run |
+| `revision` | Runs of an older revision are recorded but do not change observations |
+| `sequence` | Increasing per agent and check; older runs are stale |
+| `vendor_license_id` | Secret like `License.identifier`: never logged, compared by digest |
+| Never sent | raw tool output, contract or activation IDs, user names |
 
-### 5.1 Matching and effects
+Source of the Vector fields: `Vector.LicenseClient -listlicenses` (Vector KB0021758). Its
+`ExpirationDateString` is when the activation ends (reactivatable licenses), `FinalExpirationDateString`
+`9999-12-31` means perpetual; `expires_at` follows the first because that is when the tool stops.
 
-1. Carrier equipment: `computer` → the agent's computing equipment; otherwise the unit **linked**
-   to the carrier hardware ID (section 3.2). Unlinked carrier → `carrier_unlinked`, no effect.
-2. License: the license whose `identifier` equals `vendor_license_id` (the ID coordinators already
-   type from the Vector portal), compared by digest; else, among the carrier's active
-   `LicenseAssignment`s, the one whose product has the same `vendor_product_code` (new field on
-   `LicenseProduct`). One → `matched`; none → `unassigned`; several → `ambiguous`. A license found
-   by ID but assigned to another unit is reported as `carrier_mismatch` (moved or misregistered).
-3. Projection `LicenseObservation` (monitoring app): observation key, carrier, matched license,
-   reported values, `observed_at`, `received_at`; cursor and batch receipts as for devices.
-4. Effects on `matched` (decision D1), same transaction, recorded in the resource change log with
-   the agent as actor: `expiry_date` := `expires_at` when different;
-   `max_version` := reported value when non-blank and different; `state = expired` → existing
-   license status command records `expired` (never revives `revoked` or `suspended`).
-5. `unassigned` and `carrier_unlinked` observations are listed for coordinators.
+### 5.4 Matching and effects
 
-### 5.2 Expiry warnings
+1. Carrier equipment: `computer` → the agent's computing equipment; `equipment` → the unit on the
+   check; `device` / `dongle` → the unit **linked** to the carrier hardware ID (section 3.2);
+   `server` → none (floating). Unlinked carrier → `carrier_unlinked`.
+2. License: `License.identifier` equal to `vendor_license_id` (digest compare); else the check's
+   linked licenses with the same product; else, among the carrier's active `LicenseAssignment`s, the
+   one whose product has the same `vendor_product_code`. One → `matched`; none → `unassigned`;
+   several → `ambiguous`; found by ID but assigned to another unit → `carrier_mismatch`.
+3. Effects on `matched` (decision D1), same transaction, change-log entry with the agent as actor:
+   `expiry_date` := `expires_at` when different; `max_version` := reported value when non-blank;
+   expired → license status command records `expired` (never revives `revoked`/`suspended`).
+4. Expected licenses of a check not seen by an `ok` run on any target computer → "missing" in the UI.
 
-Daily task: matched licenses whose observed `expires_at` is within 30 days (D4) notify
-coordinators. The agent shows its own tray warning.
+### 5.5 Security model
+
+Configured checks make agents run programs, so the design limits what a configuration can do:
+
+| Risk | Guard |
+|---|---|
+| Arbitrary code through a check | Closed probe catalog; no shell; fixed argument list (≤ 16 × 256 chars); timeout ≤ 60 s; output ≤ 4 MiB; registry HKLM read only |
+| Running or reading outside tool folders | Agent-side: executables and files must be absolute paths under Program Files, Program Files (x86), ProgramData or roots in the computer's local settings |
+| Tampered configuration in transit | Agent-side: while TLS to the backend is not verified, it ignores configured paths except its trusted defaults (presets and locally configured tool paths) |
+| Misuse by a web account | Creating or changing `command`/`file`/`registry` checks needs an admin role (decision D7); every change is audited; the agent reports `rejected` with the reason |
+| Data leakage | Only mapped fields leave the computer; raw output never does |
+
+### 5.6 Web app (beauty)
+
+| Where | What |
+|---|---|
+| Licenses → **License checks** (new tab) | List (name, vendor, probe, targets, last runs: ok / failed / not installed per computer); create from a preset or from scratch; edit probe, mapping, carrier, targets, interval; enable/disable |
+| Check editor | Form per probe type; mapping editor with field sources; "Preview" that validates the configuration; revision history |
+| License detail | "Observed" panel: carrier, observed expiry and version, last seen, check, match status; difference to the registered values |
+| Licenses → **Found on lab hardware** | `unassigned`, `ambiguous`, `carrier_unlinked` and `carrier_mismatch` observations, with actions: register, assign, link the carrier device |
+| Computing equipment → Agent dialog | Per check: last run status, error, license count, next expiry |
 
 ## 6. Invariants and guards
 
@@ -174,18 +228,19 @@ coordinators. The agent shows its own tray warning.
 | # | Decision | Recommendation |
 |---|---|---|
 | D1 | Apply observed expiry/version to `License` automatically, or review first | Automatic for `matched`, with change-log entry |
-| D2 | Match by `vendor_license_id` against `License.identifier`, with `LicenseProduct.vendor_product_code` as fallback | Yes |
+| D2 | Match by `vendor_license_id` against `License.identifier`, then a check's linked licenses, then `LicenseProduct.vendor_product_code` | Yes |
 | D3 | `EquipmentProductModel.usb_ids` | Yes |
 | D4 | Warning window | 30 days |
 | D5 | Keep serial-number matching as a suggestion source during migration | Yes, suggestions only; remove once links cover the fleet |
 | D6 | Allow automatic linking when exactly one bench candidate exists | No: one-click confirm keeps a human decision on inventory identity |
+| D7 | Who may create or change license checks | Admins only; coordinators may enable/disable and change targets |
 
 ## 8. Delivery
 
 | Phase | Backend | Agent |
 |---|---|---|
 | 1 | `EquipmentHardwareLink`, link commands + UI, suggestions, link-based matching, `usb_ids`, policy watch list | Hardware IDs in observations; report watched + known-model devices; Vector device collector |
-| 2 | License observation route, projection, matching (no effects) | Vector license collector (legacy + New Vector License Model) |
+| 2 | License checks (model, admin UI, agent routes), runs, observations, matching (no effects) | Generic check runner with presets (**done**: `agent/src/core/licensing/`, Vector preset); uses the routes once `license_checks` is advertised |
 | 3 | Effects (D1), expiry notifications | Tray warnings, licenses in the device dialog |
 
 Each phase: OpenAPI regenerated, focused tests, the gates in `docs/ai-team/quality-gates.md`,
