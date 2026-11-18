@@ -18,7 +18,8 @@ uv run python -m tools.stubs <tool> --help
 | `router` | stand-alone | Routing sync consumer: info, snapshot, changes, digest, long-poll |
 | `scenario` | stand-alone + Django | End-to-end scenarios with PASS/FAIL per step |
 
-`tools/stub_agent.py` and `tools/stub_router.py` still work as before; they now forward to this package.
+The former `tools/stub_agent.py` and `tools/stub_router.py` are now `agent` and `router` here: use
+`python -m tools.stubs agent ...` and `python -m tools.stubs router ...` (same subcommands and flags).
 
 ## One-time setup
 

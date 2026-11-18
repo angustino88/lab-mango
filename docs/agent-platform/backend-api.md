@@ -198,7 +198,7 @@ counters are server-managed. It calls the equipment owner command `sync_computin
 `core.labs.features.equipment.public` (activity row lock; a report refreshes `last_agent_report_at`). A
 deleted unit, or one without a computing profile, is `409 equipment_unavailable`. The former shared-API-key
 and coordinator writes (`PATCH /api/labs/equipment/.../activity`) are removed; that route is read-only.
-`/agent/info` advertises `activity`. For manual testing, `tools/stub_agent.py` enrolls a stub agent and
+`/agent/info` advertises `activity`. For manual testing, `python -m tools.stubs agent` (`tools/stubs/agent.py`) enrolls a stub agent and
 signs requests (or prints one-use signed headers to paste into an API client). Operator writes under `/api/agents` require the
 Labs coordinator role (admin implies it); reads require authentication only.
 

@@ -609,8 +609,8 @@ All stubs live in `tools/stubs/` behind one entry point, `python -m tools.stubs 
 
 - **Stub Entra issuer** (`entra`): signing key, loopback JWKS server, ID / delegated access / `Routing.Sync.Read` application tokens, persona login, and fault flags (expired, not-yet-valid, wrong audience or tenant, missing role, `scp` on an app token, unknown `kid`, HS256, guest). The backend validates them with its unchanged validators; the backend refuses the stub configuration outside local DEBUG (`users.E014`) and refuses the stub tenant in production (`users.E015`).
 - **Stub identities** (`identities`): injects persona users with Entra bindings and Labs roles through the user lifecycle commands, so `users` upserts and tombstones are published as in production; `deactivate`, `unlink`, `replace` and `delete` exercise every tombstone path (this replaces the user half of the former stub producer idea).
-- **Stub agent** (`agent`; `tools/stub_agent.py` still works): enrollment and `provision`, heartbeat, activity, session logs, booking validate / check-in / extend / complete, signing faults, and the operator API; revocation exercises the `agents` tombstone.
-- **Stub router** (`router`; `tools/stub_router.py` still works): snapshot scan, replay, long-poll, epoch and digest for enabled entities; mints its own stub application token when `--token` is omitted.
+- **Stub agent** (`agent`, formerly `tools/stub_agent.py`): enrollment and `provision`, heartbeat, activity, session logs, booking validate / check-in / extend / complete, signing faults, and the operator API; revocation exercises the `agents` tombstone.
+- **Stub router** (`router`, formerly `tools/stub_router.py`): snapshot scan, replay, long-poll, epoch and digest for enabled entities; mints its own stub application token when `--token` is omitted.
 - **Scenarios** (`scenario`): routing, booking, authorization and token-fault flows end to end with PASS/FAIL per step.
 
 ---
