@@ -424,7 +424,7 @@ behavior, guards and decisions D1–D5 are unchanged.
 | `manage.py stub_identities` in `core.users` | `tools/stubs/identities.py` (Django script). The guards, the caller label and the lifecycle calls stay in `core/users/features/lifecycle/stub.py`, exported through `core.users.public` | Tooling in `tools/`; enforcement stays next to the code it protects |
 | `manage.py stub_lab` in `core.labs`, `reset` | `tools/stubs/lab.py`; `seed`, `list`, `clear-bookings` (no destructive `reset`) | Labs has no public create command for equipment or projects. The seed creates reference rows as `tests/factories.py` does and places computers with the public `place_equipment` command. Natural keys: `STUB-` SKUs (`equipment_active_sku_unique`, bench SKU) and project `code` (unique) |
 | `tests/stubs/entra.py` fixture | `tools/stubs/testing.py` (`stub_entra_environment`) + `tests/stubs/conftest.py` | Reusable from any test |
-| Stub agent extension | `tools/stubs/agent.py`; `tools/stub_agent.py` and `tools/stub_router.py` are thin shims with the same CLI (rule 1) | |
+| Stub agent extension | `tools/stubs/agent.py` and `tools/stubs/router.py`; the old `tools/stub_agent.py` and `tools/stub_router.py` entry points were removed (2026-11-18, owner request) | Dev tooling only, never deployed; same subcommands and flags under `python -m tools.stubs agent` / `router` |
 | Stub `URSGroup` linked through `ensure_linked_group` | Django group `stub-<role>` linked directly | `tests/architecture/test_users_feature_boundaries.py`: `lifecycle` must not import `urs_sync` |
 
 Found while implementing:

@@ -21,8 +21,8 @@ or approves bookings (ADR 004); book as a user with ``python -m tools.stubs scen
     python -m tools.stubs agent grant create --equipment pc-2
     python -m tools.stubs agent revoke --agent 7
 
-Legacy use is unchanged: ``python tools/stub_agent.py enroll --base-url ... --agent-uid ... --grant ...`` and
-``--key-file`` (default ``~/.labmango-stub-agent.json``). Profiles live in ``$LABMANGO_STUB_HOME/agents``.
+Formerly ``tools/stub_agent.py``; its commands are unchanged here: ``enroll --base-url ... --agent-uid ... --grant ...``
+and ``--key-file`` (default ``~/.labmango-stub-agent.json``). Profiles live in ``$LABMANGO_STUB_HOME/agents``.
 Key files hold private keys: keep them outside the repository and never use them for a real device.
 """
 

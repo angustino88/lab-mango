@@ -193,7 +193,7 @@ joins them inside the response (REL-16).
 | `eligible`, `checked_in`, `completed`, `extended` | `is_eligible`, `is_checked_in`, `is_completed`, `is_extended` |
 | Extension refusal `details[].limit` | `details[].limit_at` |
 
-The stub agent (`tools/stub_agent.py`) reads `backend_key`.
+The stub agent (`tools/stubs/agent.py`) reads `backend_key`.
 
 ### Routing sync
 
