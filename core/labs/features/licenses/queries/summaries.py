@@ -4,15 +4,15 @@ from typing import Any
 
 from django.db.models import Count, F, QuerySet
 
-from core.common.queries.status_summary import status_summary, with_latest_status
-from core.labs.models import License, LicenseStatus, LicenseStatusRecord
+from core.common.queries.status_summary import status_summary
+from core.labs.models import License, LicenseStatus
+
+from .status import license_status_expression
 
 
 def get_license_status_summary() -> dict[str, Any]:
-    inventory = with_latest_status(
-        License.objects.filter(deleted_at__isnull=True),
-        records=LicenseStatusRecord.objects.all(), resource_field="license_id",
-    )
+    # Same rule as the list: latest record, else assigned/available from the seats.
+    inventory = License.objects.filter(deleted_at__isnull=True).annotate(summary_status=license_status_expression())
     return status_summary(inventory, field="summary_status", choices=LicenseStatus.choices)
 
 

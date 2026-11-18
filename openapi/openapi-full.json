@@ -19982,6 +19982,160 @@
         "summary": "Get Lab Projects Options"
       }
     },
+    "/api/labs/lab-sessions": {
+      "get": {
+        "operationId": "labs_lab_sessions_retrieve",
+        "description": "List completed remote sessions (newest login first). Lab coordinators and admins only (O11).",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "access_type",
+            "schema": {
+              "enum": [
+                "booked",
+                "ad_hoc",
+                "unverified_booking"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `booked` - Booked\n* `ad_hoc` - Ad hoc (no booking)\n* `unverified_booking` - Booking not verified"
+          },
+          {
+            "in": "query",
+            "name": "bench_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "computer_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Last login day, inclusive (server time zone).",
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "ordering",
+            "schema": {
+              "enum": [
+                "-active_duration_seconds",
+                "-login_time",
+                "-logout_time",
+                "active_duration_seconds",
+                "login_time",
+                "logout_time"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Default -login_time (newest first). The row id always breaks ties.\n\n* `-active_duration_seconds` - -active_duration_seconds\n* `-login_time` - -login_time\n* `-logout_time` - -logout_time\n* `active_duration_seconds` - active_duration_seconds\n* `login_time` - login_time\n* `logout_time` - logout_time"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "minLength": 1
+            },
+            "description": "Free-text search term."
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "First login day, inclusive (server time zone).",
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Lab Sessions"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionLogListSerializersSessionLogItemPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
+          }
+        },
+        "summary": "Get Lab Sessions"
+      }
+    },
     "/api/labs/leaderboard/export": {
       "get": {
         "operationId": "labs_leaderboard_export_retrieve",
@@ -62305,6 +62459,179 @@
           "data"
         ]
       },
+      "SessionLogItem": {
+        "type": "object",
+        "description": "One completed remote session as pushed by the agent, with the links derived from it.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "login_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "logout_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "duration_minutes": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "readOnly": true,
+            "description": "Logout minus login, in minutes."
+          },
+          "active_minutes": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "readOnly": true,
+            "description": "Time the user was active, in minutes."
+          },
+          "computer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "host_name": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "bench": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "remote_user": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "remote_user_display_name": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "user": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "access_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "booking_code": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "booking_id": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true
+          }
+        },
+        "required": [
+          "access_type",
+          "active_minutes",
+          "bench",
+          "booking_code",
+          "booking_id",
+          "computer",
+          "duration_minutes",
+          "host_name",
+          "id",
+          "login_at",
+          "logout_at",
+          "remote_user",
+          "remote_user_display_name",
+          "user"
+        ]
+      },
+      "SessionLogListSerializersSessionLogItemPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/SessionLogListSerializersSessionLogItemPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionLogItem"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "SessionLogListSerializersSessionLogItemPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "SessionLogListSerializersSessionLogItemPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/SessionLogListSerializersSessionLogItemPagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
       "SheetOutcome": {
         "type": "object",
         "properties": {
@@ -67029,6 +67356,10 @@
     {
       "name": "Expenses",
       "description": "Expenses endpoints"
+    },
+    {
+      "name": "Lab Sessions",
+      "description": "Lab Sessions endpoints"
     },
     {
       "name": "Leaderboard",

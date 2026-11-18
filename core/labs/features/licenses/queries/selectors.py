@@ -6,6 +6,8 @@ from django.db.models.functions import Coalesce
 from core.labs.models import License, LicenseAgreement, LicenseStatusRecord, PurchaseItemResource
 from core.labs.models.resource.license.assignment import LicenseAssignment
 
+from .status import license_status_expression
+
 
 def get_license(*, license_id: int) -> License | None:
     """Return a license through the same projection used by inventory lists."""
@@ -69,9 +71,6 @@ def active_license_assignment_mapping_rows(*, equipment_ids=(), bench_ids=(), st
 
 
 def list_licenses(*, search: str | None = None) -> QuerySet[License]:
-    latest_status = LicenseStatusRecord.objects.filter(
-        license_id=OuterRef("pk"),
-    ).order_by("-created", "-id")
     acquisition = PurchaseItemResource.objects.filter(
         resource_type__app_label=License._meta.app_label,
         resource_type__model=License._meta.model_name,
@@ -103,7 +102,7 @@ def list_licenses(*, search: str | None = None) -> QuerySet[License]:
         .annotate(
             # Read by License.seats_in_use; one correlated subquery instead of a COUNT per row.
             active_seat_count=Coalesce(Subquery(active_seats, output_field=IntegerField()), 0),
-            current_status=Subquery(latest_status.values("status")[:1]),
+            current_status=license_status_expression(),
             acquisition_price=Subquery(acquisition.values("acquisition_price")[:1]),
             acquisition_currency=Subquery(acquisition.values("purchase_item__purchase__currency")[:1]),
         )

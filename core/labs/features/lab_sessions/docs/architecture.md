@@ -303,3 +303,19 @@ and A5 will run; the booking FK has Django's default index.
 | Constraints | `test_access_type_constraints` |
 | Backfill idempotent and batched | `test_backfill_*` |
 | Response includes access type | agent HTTP tests |
+
+## 12. Session list, flat view (A6, partial)
+
+`GET /api/labs/lab-sessions` lists completed sessions for the Lab Analytics session table (proposal §5.4).
+
+- Access: lab coordinators and admins only (`LABS_STAFF_ACCESS`, O11); plain Labs users get 403.
+- Query: `start_date` and `end_date` are required (login day, inclusive, server time zone, at most 366
+  days); optional `bench_id`, `computer_id`, `user_id`, `access_type`, `q` (remote user, host, booking
+  code, computer or bench SKU/name) and `ordering` (`-login_time` by default, also `login_time`,
+  `±logout_time`, `±active_duration_seconds`). Every ordering ends with the row id, so pages are stable.
+- Response: standard paginated list of `SessionLogItem` (`login_at`, `logout_at`, `duration_minutes`,
+  `active_minutes`, `computer`, `host_name`, `bench`, `remote_user`, `remote_user_display_name`, `user`,
+  `access_type`, `booking_code`, `booking_id`). `remote_ip` is not exposed.
+- Reads: `queries/session_logs.py`, one joined query per page plus the count (tested).
+
+Still open from A6: the grouped-by-booking view, exclude/restore, and flag and kind review filters.

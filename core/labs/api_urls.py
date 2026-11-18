@@ -11,6 +11,7 @@ urlpatterns = [
     path("labs/", include("core.labs.features.procurement.urls")),
     path("labs/", include("core.labs.features.expense.urls")),
     path("labs/", include("core.labs.features.resource_audit.urls")),
+    path("labs/", include("core.labs.features.lab_sessions.urls")),
     # path("labs/", include("core.labs.features.lab_management.urls")),
     # path("labs/", include("core.labs.features.booking.urls")),
     path("labs/", include("core.labs.features.monitoring.urls")),

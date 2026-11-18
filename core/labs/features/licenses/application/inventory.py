@@ -17,6 +17,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models.deletion import ProtectedError
 
+from core.labs.features.licenses.application.status import record_initial_status
 from core.labs.features.licenses.exceptions import LicenseConflict
 from core.labs.models import Department, Group, License
 from core.labs.models.resource.license.license import (
@@ -127,6 +128,7 @@ def create_license(command: CreateLicenseInput, *, actor) -> License:
     _check_references(values)
     license_record = License(**values)
     license_record.save(actor=actor)
+    record_initial_status(license_record, actor=actor)
     return license_record
 
 

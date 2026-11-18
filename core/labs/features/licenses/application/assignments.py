@@ -8,6 +8,8 @@ from django.utils import timezone
 from core.labs.features.licenses.exceptions import LicenseAlreadyAssigned, LicenseConflict
 from core.labs.models import Equipment, License, LicenseAssignment
 
+from .status import sync_seat_status
+
 
 @dataclass(frozen=True)
 class AssignLicenseInput:
@@ -46,6 +48,7 @@ def assign_license(command: AssignLicenseInput, *, actor):
                 last_modified_by=actor,
             )
             assignment.save(actor=actor)
+        sync_seat_status(license_record, actor=actor, equipment=equipment)
         return assignment
     except IntegrityError as exc:
         assignment = LicenseAssignment.objects.filter(
@@ -60,6 +63,9 @@ def assign_license(command: AssignLicenseInput, *, actor):
 
 @transaction.atomic
 def unassign_license(command: UnassignLicenseInput, *, actor):
+    # Same lock order as assign (equipment, then license) so the seat count read below is stable.
+    equipment = Equipment.objects.select_for_update().filter(id=command.equipment_id).first()
+    license_record = License.objects.select_for_update().filter(id=command.license_id).first()
     assignment = LicenseAssignment.objects.select_for_update().filter(
         equipment_id=command.equipment_id,
         license_id=command.license_id,
@@ -70,6 +76,8 @@ def unassign_license(command: UnassignLicenseInput, *, actor):
     assignment.unassigned_at = timezone.now()
     assignment.last_modified_by = actor
     assignment.save(actor=actor, update_fields=("unassigned_at", "last_modified_by"))
+    if license_record is not None:
+        sync_seat_status(license_record, actor=actor, equipment=equipment)
     return assignment
 
 

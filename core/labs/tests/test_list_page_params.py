@@ -57,6 +57,7 @@ NESTED = [path for path, nested in PAGINATED_LISTS.items() if nested]
 REQUIRED_QUERY = {
     "/api/labs/equipment/facets": {"dimension": "kind"},
     "/api/labs/device-connections": {"computing_id": 999999},
+    "/api/labs/lab-sessions": {"start_date": "2026-11-01", "end_date": "2026-11-07"},
 }
 
 
