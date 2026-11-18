@@ -129,6 +129,7 @@ def list_device_connections(
         queryset = queryset.filter(
             Q(name__icontains=search)
             | Q(serial_number__icontains=search)
+            | Q(hardware_ids__icontains=search)
             | Q(equipment__name__icontains=search)
             | Q(equipment__sku__icontains=search)
             | Q(computing__name__icontains=search)

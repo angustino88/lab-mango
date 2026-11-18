@@ -119,6 +119,7 @@ def test_lab_wide_list_filters_by_bench_state_attention_and_search(staff, scope)
     calm = staff.get(DEVICES, {"is_attention_required": "false", "bench_id": bench.pk}).data["data"]
     assert [row["observation_key"] for row in calm] == ["a"]
     assert [row["observation_key"] for row in staff.get(DEVICES, {"q": "myst"}).data["data"]] == ["b"]
+    assert [row["observation_key"] for row in staff.get(DEVICES, {"q": "unknown-9"}).data["data"]] == ["b"]
 
 
 def test_summary_counts_connected_matching_unconfirmed_and_missing(staff, scope, usb, instrument_kind):
