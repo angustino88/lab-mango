@@ -2,6 +2,7 @@
 
 from django.urls import path
 
+from .license_checks import AgentLicenseCheckReportAPIView, AgentLicenseChecksAPIView
 from .observations import AgentDeviceObservationsAPIView, AgentMonitoringPolicyAPIView
 from .views import (
     AgentActivityAPIView,
@@ -27,6 +28,12 @@ urlpatterns = [
         "agent/device-observations/actions/report",
         AgentDeviceObservationsAPIView.as_view(),
         name="agent-device-observations",
+    ),
+    path("agent/license-checks", AgentLicenseChecksAPIView.as_view(), name="agent-license-checks"),
+    path(
+        "agent/license-checks/<slug:check_key>/actions/report",
+        AgentLicenseCheckReportAPIView.as_view(),
+        name="agent-license-check-report",
     ),
     path("api/agents", AgentListCreateAPIView.as_view(), name="agent-list-create"),
     path("api/agents/<int:pk>", AgentDetailAPIView.as_view(), name="agent-detail"),

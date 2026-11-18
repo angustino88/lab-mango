@@ -1,8 +1,8 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 483,
-  "generated_at": "2026-11-18",
+  "total_endpoints": 493,
+  "generated_at": "2026-11-19",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -2759,6 +2759,841 @@
                     "items": {
                       "type": "object",
                       "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/agent/license-checks",
+      "method": "GET",
+      "operation_id": "agent_license_checks_retrieve",
+      "summary": "Get Agent License Checks",
+      "description": "The enabled checks that target this computer; strong ETag, 304 when unchanged.",
+      "tags": [
+        "Agents"
+      ],
+      "parameters": [],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "checks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "checks"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "checks": [
+                {}
+              ]
+            }
+          }
+        },
+        "304": {
+          "description": "Checks unchanged",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "401": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "429": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/agent/license-checks/{check_key}/actions/report",
+      "method": "POST",
+      "operation_id": "agent_license_checks_actions_report_create_by_check_key",
+      "summary": "Report Agent License Checks by Check Key",
+      "description": "One run of one check. Exact retries with the same Idempotency-Key are acknowledged again.",
+      "tags": [
+        "Agents"
+      ],
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "description": "Durable UUID run key; reuse on retry with the same content.",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "check_key",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "revision": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sequence": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 0,
+              "format": "int64"
+            },
+            "status": {
+              "enum": [
+                "ok",
+                "not_installed",
+                "failed",
+                "rejected"
+              ],
+              "type": "string",
+              "description": "* `ok` - OK: the license list is complete\n* `not_installed` - Tool, file or key not on this computer\n* `failed` - Ran but failed\n* `rejected` - The agent refused the configuration"
+            },
+            "started_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "reported_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Agent clock; informational."
+            },
+            "duration_ms": {
+              "type": "integer",
+              "maximum": 3600000,
+              "minimum": 0,
+              "default": 0
+            },
+            "is_complete": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                "message": {
+                  "type": "string",
+                  "default": "",
+                  "maxLength": 512
+                }
+              },
+              "required": [
+                "code"
+              ],
+              "additionalProperties": false
+            },
+            "licenses": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "observation_key": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "vendor": {
+                    "type": "string",
+                    "default": "",
+                    "maxLength": 128
+                  },
+                  "product_code": {
+                    "type": "string",
+                    "default": "",
+                    "maxLength": 128
+                  },
+                  "product_name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "license_serial": {
+                    "type": "string",
+                    "default": "",
+                    "description": "The tool's license serial or ID; matched to License.serial_number. Never a license key.",
+                    "maxLength": 128
+                  },
+                  "carrier": {
+                    "type": "object",
+                    "description": "(max nesting depth reached)"
+                  },
+                  "expires_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "final_expires_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "max_version": {
+                    "type": "string",
+                    "default": "",
+                    "maxLength": 64
+                  },
+                  "is_reactivatable": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "required": [
+                  "carrier",
+                  "observation_key",
+                  "product_name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "is_complete",
+            "licenses",
+            "revision",
+            "sequence",
+            "started_at",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        "example_payload": {
+          "revision": 1,
+          "sequence": 1,
+          "status": "ok",
+          "started_at": "2026-10-20T12:00:00Z",
+          "reported_at": "2026-10-20T12:00:00Z",
+          "duration_ms": 0,
+          "is_complete": true,
+          "error": {
+            "code": "string",
+            "message": ""
+          },
+          "licenses": [
+            {
+              "observation_key": "string",
+              "vendor": "",
+              "product_code": "",
+              "product_name": "string",
+              "license_serial": "",
+              "carrier": {},
+              "expires_at": "2026-10-20T12:00:00Z",
+              "final_expires_at": "2026-10-20T12:00:00Z",
+              "max_version": "",
+              "is_reactivatable": false
+            }
+          ]
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "idempotency_key": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "sequence": {
+                    "type": "integer"
+                  },
+                  "result": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "received_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "idempotency_key",
+                  "received_at",
+                  "result",
+                  "sequence"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "idempotency_key": "123e4567-e89b-12d3-a456-426614174000",
+              "sequence": 1,
+              "result": {},
+              "received_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "401": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "429": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "413": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
                     }
                   },
                   "request_id": {
@@ -72063,6 +72898,2341 @@
         },
         "404": {
           "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/license-checks",
+      "method": "GET",
+      "operation_id": "labs_license_checks_retrieve",
+      "summary": "Get License Checks",
+      "description": "List license checks, or create one from scratch or from a preset (admins).",
+      "tags": [
+        "License Checks"
+      ],
+      "parameters": [
+        {
+          "name": "is_enabled",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "maxLength": 128
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "vendor": {
+                      "type": "string"
+                    },
+                    "probe": {
+                      "description": "Closed catalog: {type: command, executable, args, timeout_s, encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}."
+                    },
+                    "extract": {
+                      "description": "{format: xml|json|text|values, records, fields: {product_name, product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial, is_reactivatable, carrier_type}, date_formats, never_values}."
+                    },
+                    "carrier": {
+                      "description": "{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind, equipment_uid, type_map, default_type}."
+                    },
+                    "interval_minutes": {
+                      "type": "integer"
+                    },
+                    "is_enabled": {
+                      "type": "boolean"
+                    },
+                    "is_lab_wide": {
+                      "type": "boolean",
+                      "description": "Runs on every computer with an agent."
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "description": "Increases on every change agents pick up."
+                    },
+                    "preset_key": {
+                      "type": "string"
+                    },
+                    "targets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      "readOnly": true
+                    },
+                    "license_count": {
+                      "type": "integer",
+                      "description": "Licenses currently found by this check."
+                    },
+                    "attention_count": {
+                      "type": "integer",
+                      "description": "Found licenses that are not matched."
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "attention_count",
+                    "carrier",
+                    "created_at",
+                    "extract",
+                    "id",
+                    "interval_minutes",
+                    "is_enabled",
+                    "is_lab_wide",
+                    "key",
+                    "license_count",
+                    "name",
+                    "preset_key",
+                    "probe",
+                    "revision",
+                    "targets",
+                    "updated_at",
+                    "vendor"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "key": "string",
+                "name": "string",
+                "vendor": "string",
+                "probe": null,
+                "extract": null,
+                "carrier": null,
+                "interval_minutes": 1,
+                "is_enabled": true,
+                "is_lab_wide": true,
+                "revision": 1,
+                "preset_key": "string",
+                "targets": [
+                  {}
+                ],
+                "license_count": 1,
+                "attention_count": 1,
+                "created_at": "2026-10-20T12:00:00Z",
+                "updated_at": "2026-10-20T12:00:00Z"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "The requested page does not exist (page beyond the last page).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/license-checks",
+      "method": "POST",
+      "operation_id": "labs_license_checks_create",
+      "summary": "Create License Checks",
+      "description": "List license checks, or create one from scratch or from a preset (admins).",
+      "tags": [
+        "License Checks"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": false,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Create (from scratch or a preset) or change a check. Admin-only: vendor, probe, extract, carrier.",
+          "properties": {
+            "preset_key": {
+              "type": "string",
+              "description": "Create from this preset; probe, extract and carrier are copied.",
+              "maxLength": 32
+            },
+            "key": {
+              "type": "string",
+              "maxLength": 32,
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$"
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "vendor": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "probe": {
+              "description": "Closed catalog: {type: command, executable, args, timeout_s, encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}."
+            },
+            "extract": {
+              "description": "{format: xml|json|text|values, records, fields: {product_name, product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial, is_reactivatable, carrier_type}, date_formats, never_values}."
+            },
+            "carrier": {
+              "description": "{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind, equipment_uid, type_map, default_type}."
+            },
+            "interval_minutes": {
+              "type": "integer",
+              "maximum": 10080,
+              "minimum": 15
+            },
+            "is_enabled": {
+              "type": "boolean"
+            },
+            "is_lab_wide": {
+              "type": "boolean"
+            },
+            "targets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "object",
+                    "description": "(max nesting depth reached)"
+                  },
+                  "target_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Id of the room, station, bench, category or computer."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "target_id"
+                ]
+              }
+            }
+          }
+        },
+        "example_payload": {
+          "preset_key": "string",
+          "key": "string",
+          "name": "string",
+          "vendor": "string",
+          "probe": null,
+          "extract": null,
+          "carrier": null,
+          "interval_minutes": 1,
+          "is_enabled": true,
+          "is_lab_wide": true,
+          "targets": [
+            {
+              "kind": {},
+              "target_id": 1
+            }
+          ]
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "vendor": {
+                    "type": "string"
+                  },
+                  "probe": {
+                    "description": "Closed catalog: {type: command, executable, args, timeout_s, encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}."
+                  },
+                  "extract": {
+                    "description": "{format: xml|json|text|values, records, fields: {product_name, product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial, is_reactivatable, carrier_type}, date_formats, never_values}."
+                  },
+                  "carrier": {
+                    "description": "{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind, equipment_uid, type_map, default_type}."
+                  },
+                  "interval_minutes": {
+                    "type": "integer"
+                  },
+                  "is_enabled": {
+                    "type": "boolean"
+                  },
+                  "is_lab_wide": {
+                    "type": "boolean",
+                    "description": "Runs on every computer with an agent."
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "description": "Increases on every change agents pick up."
+                  },
+                  "preset_key": {
+                    "type": "string"
+                  },
+                  "targets": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "license_count": {
+                    "type": "integer",
+                    "description": "Licenses currently found by this check."
+                  },
+                  "attention_count": {
+                    "type": "integer",
+                    "description": "Found licenses that are not matched."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "attention_count",
+                  "carrier",
+                  "created_at",
+                  "extract",
+                  "id",
+                  "interval_minutes",
+                  "is_enabled",
+                  "is_lab_wide",
+                  "key",
+                  "license_count",
+                  "name",
+                  "preset_key",
+                  "probe",
+                  "revision",
+                  "targets",
+                  "updated_at",
+                  "vendor"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "key": "string",
+              "name": "string",
+              "vendor": "string",
+              "probe": null,
+              "extract": null,
+              "carrier": null,
+              "interval_minutes": 1,
+              "is_enabled": true,
+              "is_lab_wide": true,
+              "revision": 1,
+              "preset_key": "string",
+              "targets": [
+                {}
+              ],
+              "license_count": 1,
+              "attention_count": 1,
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/license-checks/presets",
+      "method": "GET",
+      "operation_id": "labs_license_checks_presets_retrieve",
+      "summary": "Get License Checks Presets",
+      "description": "Templates for new checks (for example the Vector License Client).",
+      "tags": [
+        "License Checks"
+      ],
+      "parameters": [],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "items"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "items": [
+                {}
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/license-checks/{check_id}",
+      "method": "GET",
+      "operation_id": "labs_license_checks_retrieve_by_check_id",
+      "summary": "Get License Checks by Check ID",
+      "description": "Read, change or delete one license check.",
+      "tags": [
+        "License Checks"
+      ],
+      "parameters": [
+        {
+          "name": "check_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "vendor": {
+                    "type": "string"
+                  },
+                  "probe": {
+                    "description": "Closed catalog: {type: command, executable, args, timeout_s, encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}."
+                  },
+                  "extract": {
+                    "description": "{format: xml|json|text|values, records, fields: {product_name, product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial, is_reactivatable, carrier_type}, date_formats, never_values}."
+                  },
+                  "carrier": {
+                    "description": "{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind, equipment_uid, type_map, default_type}."
+                  },
+                  "interval_minutes": {
+                    "type": "integer"
+                  },
+                  "is_enabled": {
+                    "type": "boolean"
+                  },
+                  "is_lab_wide": {
+                    "type": "boolean",
+                    "description": "Runs on every computer with an agent."
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "description": "Increases on every change agents pick up."
+                  },
+                  "preset_key": {
+                    "type": "string"
+                  },
+                  "targets": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "license_count": {
+                    "type": "integer",
+                    "description": "Licenses currently found by this check."
+                  },
+                  "attention_count": {
+                    "type": "integer",
+                    "description": "Found licenses that are not matched."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "attention_count",
+                  "carrier",
+                  "created_at",
+                  "extract",
+                  "id",
+                  "interval_minutes",
+                  "is_enabled",
+                  "is_lab_wide",
+                  "key",
+                  "license_count",
+                  "name",
+                  "preset_key",
+                  "probe",
+                  "revision",
+                  "targets",
+                  "updated_at",
+                  "vendor"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "key": "string",
+              "name": "string",
+              "vendor": "string",
+              "probe": null,
+              "extract": null,
+              "carrier": null,
+              "interval_minutes": 1,
+              "is_enabled": true,
+              "is_lab_wide": true,
+              "revision": 1,
+              "preset_key": "string",
+              "targets": [
+                {}
+              ],
+              "license_count": 1,
+              "attention_count": 1,
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/license-checks/{check_id}",
+      "method": "PATCH",
+      "operation_id": "labs_license_checks_partial_update_by_check_id",
+      "summary": "Update License Checks by Check ID",
+      "description": "Read, change or delete one license check.",
+      "tags": [
+        "License Checks"
+      ],
+      "parameters": [
+        {
+          "name": "check_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": false,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Create (from scratch or a preset) or change a check. Admin-only: vendor, probe, extract, carrier.",
+          "properties": {
+            "preset_key": {
+              "type": "string",
+              "description": "Create from this preset; probe, extract and carrier are copied.",
+              "maxLength": 32
+            },
+            "key": {
+              "type": "string",
+              "maxLength": 32,
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$"
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "vendor": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "probe": {
+              "description": "Closed catalog: {type: command, executable, args, timeout_s, encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}."
+            },
+            "extract": {
+              "description": "{format: xml|json|text|values, records, fields: {product_name, product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial, is_reactivatable, carrier_type}, date_formats, never_values}."
+            },
+            "carrier": {
+              "description": "{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind, equipment_uid, type_map, default_type}."
+            },
+            "interval_minutes": {
+              "type": "integer",
+              "maximum": 10080,
+              "minimum": 15
+            },
+            "is_enabled": {
+              "type": "boolean"
+            },
+            "is_lab_wide": {
+              "type": "boolean"
+            },
+            "targets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "object",
+                    "description": "(max nesting depth reached)"
+                  },
+                  "target_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Id of the room, station, bench, category or computer."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "target_id"
+                ]
+              }
+            }
+          }
+        },
+        "example_payload": {
+          "preset_key": "string",
+          "key": "string",
+          "name": "string",
+          "vendor": "string",
+          "probe": null,
+          "extract": null,
+          "carrier": null,
+          "interval_minutes": 1,
+          "is_enabled": true,
+          "is_lab_wide": true,
+          "targets": [
+            {
+              "kind": {},
+              "target_id": 1
+            }
+          ]
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "vendor": {
+                    "type": "string"
+                  },
+                  "probe": {
+                    "description": "Closed catalog: {type: command, executable, args, timeout_s, encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}."
+                  },
+                  "extract": {
+                    "description": "{format: xml|json|text|values, records, fields: {product_name, product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial, is_reactivatable, carrier_type}, date_formats, never_values}."
+                  },
+                  "carrier": {
+                    "description": "{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind, equipment_uid, type_map, default_type}."
+                  },
+                  "interval_minutes": {
+                    "type": "integer"
+                  },
+                  "is_enabled": {
+                    "type": "boolean"
+                  },
+                  "is_lab_wide": {
+                    "type": "boolean",
+                    "description": "Runs on every computer with an agent."
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "description": "Increases on every change agents pick up."
+                  },
+                  "preset_key": {
+                    "type": "string"
+                  },
+                  "targets": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "license_count": {
+                    "type": "integer",
+                    "description": "Licenses currently found by this check."
+                  },
+                  "attention_count": {
+                    "type": "integer",
+                    "description": "Found licenses that are not matched."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "attention_count",
+                  "carrier",
+                  "created_at",
+                  "extract",
+                  "id",
+                  "interval_minutes",
+                  "is_enabled",
+                  "is_lab_wide",
+                  "key",
+                  "license_count",
+                  "name",
+                  "preset_key",
+                  "probe",
+                  "revision",
+                  "targets",
+                  "updated_at",
+                  "vendor"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "key": "string",
+              "name": "string",
+              "vendor": "string",
+              "probe": null,
+              "extract": null,
+              "carrier": null,
+              "interval_minutes": 1,
+              "is_enabled": true,
+              "is_lab_wide": true,
+              "revision": 1,
+              "preset_key": "string",
+              "targets": [
+                {}
+              ],
+              "license_count": 1,
+              "attention_count": 1,
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/license-checks/{check_id}",
+      "method": "DELETE",
+      "operation_id": "labs_license_checks_destroy_by_check_id",
+      "summary": "Delete License Checks by Check ID",
+      "description": "Read, change or delete one license check.",
+      "tags": [
+        "License Checks"
+      ],
+      "parameters": [
+        {
+          "name": "check_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/license-checks/{check_id}/runs",
+      "method": "GET",
+      "operation_id": "labs_license_checks_runs_retrieve_by_check_id",
+      "summary": "Get License Checks Runs by Check ID",
+      "description": "The newest run of a check on each computer it reached.",
+      "tags": [
+        "License Checks"
+      ],
+      "parameters": [
+        {
+          "name": "check_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "items"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "items": [
+                {}
+              ]
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/license-observations",
+      "method": "GET",
+      "operation_id": "labs_license_observations_retrieve",
+      "summary": "Get License Observations",
+      "description": "Licenses agents found on lab computers and their hardware, with the match to the inventory.",
+      "tags": [
+        "License Checks"
+      ],
+      "parameters": [
+        {
+          "name": "check_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "computing_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "include_removed",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        {
+          "name": "is_attention_required",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        {
+          "name": "license_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "description": "* `matched` - Matched\n* `unregistered` - Not in inventory\n* `ambiguous` - Several licenses match\n* `carrier_unlinked` - Carrier not linked\n* `carrier_not_at_computer` - Carrier not at this computer\n* `carrier_mismatch` - Assigned elsewhere\n* `unassigned` - Not assigned",
+          "schema": {
+            "enum": [
+              "matched",
+              "unregistered",
+              "ambiguous",
+              "carrier_unlinked",
+              "carrier_not_at_computer",
+              "carrier_mismatch",
+              "unassigned"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "A license an agent found, and how it compares with the inventory.",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "check": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "computing": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "observation_key": {
+                      "type": "string"
+                    },
+                    "vendor": {
+                      "type": "string"
+                    },
+                    "product_code": {
+                      "type": "string"
+                    },
+                    "product_name": {
+                      "type": "string"
+                    },
+                    "license_serial": {
+                      "type": "string"
+                    },
+                    "carrier_type": {
+                      "type": "string"
+                    },
+                    "carrier_hardware_kind": {
+                      "type": "string"
+                    },
+                    "carrier_hardware_value": {
+                      "type": "string"
+                    },
+                    "carrier_equipment": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true
+                    },
+                    "license": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true
+                    },
+                    "inventory": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true
+                    },
+                    "status": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "expires_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "final_expires_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true,
+                      "description": "Null: perpetual."
+                    },
+                    "max_version": {
+                      "type": "string"
+                    },
+                    "is_reactivatable": {
+                      "type": "boolean"
+                    },
+                    "first_seen_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "last_seen_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "removed_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "carrier_equipment",
+                    "carrier_hardware_kind",
+                    "carrier_hardware_value",
+                    "carrier_type",
+                    "check",
+                    "computing",
+                    "expires_at",
+                    "final_expires_at",
+                    "first_seen_at",
+                    "id",
+                    "inventory",
+                    "is_reactivatable",
+                    "last_seen_at",
+                    "license",
+                    "license_serial",
+                    "max_version",
+                    "observation_key",
+                    "product_code",
+                    "product_name",
+                    "removed_at",
+                    "status",
+                    "vendor"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "check": {},
+                "computing": {},
+                "observation_key": "string",
+                "vendor": "string",
+                "product_code": "string",
+                "product_name": "string",
+                "license_serial": "string",
+                "carrier_type": "string",
+                "carrier_hardware_kind": "string",
+                "carrier_hardware_value": "string",
+                "carrier_equipment": {},
+                "license": {},
+                "inventory": {},
+                "status": {},
+                "expires_at": "2026-10-20T12:00:00Z",
+                "final_expires_at": "2026-10-20T12:00:00Z",
+                "max_version": "string",
+                "is_reactivatable": true,
+                "first_seen_at": "2026-10-20T12:00:00Z",
+                "last_seen_at": "2026-10-20T12:00:00Z",
+                "removed_at": "2026-10-20T12:00:00Z"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "The requested page does not exist (page beyond the last page).",
           "content_type": "application/json",
           "schema": {
             "type": "object",

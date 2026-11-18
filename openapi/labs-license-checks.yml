@@ -1,0 +1,1000 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/license-checks:
+    get:
+      operationId: labs_license_checks_retrieve
+      description: List license checks, or create one from scratch or from a preset
+        (admins).
+      parameters:
+      - in: query
+        name: is_enabled
+        schema:
+          type: boolean
+          nullable: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 128
+      tags:
+      - License Checks
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCheckListSerializersLicenseCheckPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
+      summary: Get License Checks
+    post:
+      operationId: labs_license_checks_create
+      description: List license checks, or create one from scratch or from a preset
+        (admins).
+      tags:
+      - License Checks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseCheckWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LicenseCheckWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LicenseCheckWrite'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCheckCreateSerializersLicenseCheckDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create License Checks
+  /api/labs/license-checks/{check_id}:
+    get:
+      operationId: labs_license_checks_retrieve_by_check_id
+      description: Read, change or delete one license check.
+      parameters:
+      - in: path
+        name: check_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - License Checks
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCheckDetailSerializersLicenseCheckDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Checks by Check ID
+    patch:
+      operationId: labs_license_checks_partial_update_by_check_id
+      description: Read, change or delete one license check.
+      parameters:
+      - in: path
+        name: check_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - License Checks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLicenseCheckWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLicenseCheckWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLicenseCheckWrite'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCheckUpdateSerializersLicenseCheckDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update License Checks by Check ID
+    delete:
+      operationId: labs_license_checks_destroy_by_check_id
+      description: Read, change or delete one license check.
+      parameters:
+      - in: path
+        name: check_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - License Checks
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete License Checks by Check ID
+  /api/labs/license-checks/{check_id}/runs:
+    get:
+      operationId: labs_license_checks_runs_retrieve_by_check_id
+      description: The newest run of a check on each computer it reached.
+      parameters:
+      - in: path
+        name: check_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - License Checks
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCheckRunListSerializersLicenseCheckRunListDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get License Checks Runs by Check ID
+  /api/labs/license-checks/presets:
+    get:
+      operationId: labs_license_checks_presets_retrieve
+      description: Templates for new checks (for example the Vector License Client).
+      tags:
+      - License Checks
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseCheckPresetListSerializersLicenseCheckPresetListDetailResponse'
+          description: ''
+      summary: Get License Checks Presets
+  /api/labs/license-observations:
+    get:
+      operationId: labs_license_observations_retrieve
+      description: Licenses agents found on lab computers and their hardware, with
+        the match to the inventory.
+      parameters:
+      - in: query
+        name: check_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: computing_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: include_removed
+        schema:
+          type: boolean
+          default: false
+      - in: query
+        name: is_attention_required
+        schema:
+          type: boolean
+          nullable: true
+      - in: query
+        name: license_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 128
+      - in: query
+        name: status
+        schema:
+          enum:
+          - matched
+          - unregistered
+          - ambiguous
+          - carrier_unlinked
+          - carrier_not_at_computer
+          - carrier_mismatch
+          - unassigned
+          type: string
+          minLength: 1
+        description: '* `matched` - Matched
+
+          * `unregistered` - Not in inventory
+
+          * `ambiguous` - Several licenses match
+
+          * `carrier_unlinked` - Carrier not linked
+
+          * `carrier_not_at_computer` - Carrier not at this computer
+
+          * `carrier_mismatch` - Assigned elsewhere
+
+          * `unassigned` - Not assigned'
+      tags:
+      - License Checks
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseObservationListSerializersLicenseObservationPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
+      summary: Get License Observations
+components:
+  schemas:
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+    InventoryValues:
+      type: object
+      description: The matched license's registered values, to compare with what the
+        agent found.
+      properties:
+        serial_number:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        max_version:
+          type: string
+      required:
+      - expires_at
+      - max_version
+      - serial_number
+      x-embedded-resource: true
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+    LabsUIDNamedReference:
+      type: object
+      description: Compact `{id, uid, name}` object representation when target defines
+        a UUID.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - uid
+    LicenseCheck:
+      type: object
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        name:
+          type: string
+        vendor:
+          type: string
+        probe:
+          description: 'Closed catalog: {type: command, executable, args, timeout_s,
+            encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}.'
+        extract:
+          description: '{format: xml|json|text|values, records, fields: {product_name,
+            product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial,
+            is_reactivatable, carrier_type}, date_formats, never_values}.'
+        carrier:
+          description: '{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind,
+            equipment_uid, type_map, default_type}.'
+        interval_minutes:
+          type: integer
+        is_enabled:
+          type: boolean
+        is_lab_wide:
+          type: boolean
+          description: Runs on every computer with an agent.
+        revision:
+          type: integer
+          description: Increases on every change agents pick up.
+        preset_key:
+          type: string
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckTarget'
+          readOnly: true
+        license_count:
+          type: integer
+          description: Licenses currently found by this check.
+        attention_count:
+          type: integer
+          description: Found licenses that are not matched.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - attention_count
+      - carrier
+      - created_at
+      - extract
+      - id
+      - interval_minutes
+      - is_enabled
+      - is_lab_wide
+      - key
+      - license_count
+      - name
+      - preset_key
+      - probe
+      - revision
+      - targets
+      - updated_at
+      - vendor
+    LicenseCheckCreateSerializersLicenseCheckDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheck'
+      required:
+      - data
+    LicenseCheckDetailSerializersLicenseCheckDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheck'
+      required:
+      - data
+    LicenseCheckListSerializersLicenseCheckPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseCheckListSerializersLicenseCheckPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheck'
+      required:
+      - data
+      - meta
+    LicenseCheckListSerializersLicenseCheckPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseCheckListSerializersLicenseCheckPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseCheckListSerializersLicenseCheckPagination'
+      required:
+      - pagination
+    LicenseCheckPreset:
+      type: object
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        vendor:
+          type: string
+        description:
+          type: string
+        interval_minutes:
+          type: integer
+        probe: {}
+        extract: {}
+        carrier: {}
+      required:
+      - carrier
+      - description
+      - extract
+      - interval_minutes
+      - key
+      - name
+      - probe
+      - vendor
+    LicenseCheckPresetList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckPreset'
+      required:
+      - items
+    LicenseCheckPresetListSerializersLicenseCheckPresetListDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheckPresetList'
+      required:
+      - data
+    LicenseCheckRun:
+      type: object
+      description: Newest run of the check on one computer.
+      properties:
+        id:
+          type: integer
+        computing:
+          $ref: '#/components/schemas/LabsUIDNamedReference'
+        revision:
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        error_code:
+          type: string
+        error_message:
+          type: string
+        license_count:
+          type: integer
+        is_applied:
+          type: boolean
+        started_at:
+          type: string
+          format: date-time
+        duration_ms:
+          type: integer
+        received_at:
+          type: string
+          format: date-time
+      required:
+      - computing
+      - duration_ms
+      - error_code
+      - error_message
+      - id
+      - is_applied
+      - license_count
+      - received_at
+      - revision
+      - started_at
+      - status
+      x-embedded-resource: true
+    LicenseCheckRunList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckRun'
+      required:
+      - items
+    LicenseCheckRunListSerializersLicenseCheckRunListDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheckRunList'
+      required:
+      - data
+    LicenseCheckTarget:
+      type: object
+      description: One scope the check runs on; owned by the check.
+      properties:
+        id:
+          type: integer
+          description: Id of the room, station, bench, category or computer.
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        name:
+          type: string
+      required:
+      - id
+      - kind
+      - name
+      x-embedded-resource: true
+    LicenseCheckTargetRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/LicenseCheckTargetRequestKindEnum'
+        target_id:
+          type: integer
+          minimum: 1
+          description: Id of the room, station, bench, category or computer.
+      required:
+      - kind
+      - target_id
+    LicenseCheckTargetRequestKindEnum:
+      enum:
+      - room
+      - station
+      - bench
+      - category
+      - equipment
+      type: string
+      description: '* `room` - Room
+
+        * `station` - Station
+
+        * `bench` - Bench
+
+        * `category` - Equipment category
+
+        * `equipment` - Computer'
+    LicenseCheckUpdateSerializersLicenseCheckDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheck'
+      required:
+      - data
+    LicenseCheckWrite:
+      type: object
+      description: 'Create (from scratch or a preset) or change a check. Admin-only:
+        vendor, probe, extract, carrier.'
+      properties:
+        preset_key:
+          type: string
+          description: Create from this preset; probe, extract and carrier are copied.
+          maxLength: 32
+        key:
+          type: string
+          maxLength: 32
+          pattern: ^[a-z][a-z0-9_-]{0,31}$
+        name:
+          type: string
+          maxLength: 128
+        vendor:
+          type: string
+          maxLength: 128
+        probe:
+          description: 'Closed catalog: {type: command, executable, args, timeout_s,
+            encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}.'
+        extract:
+          description: '{format: xml|json|text|values, records, fields: {product_name,
+            product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial,
+            is_reactivatable, carrier_type}, date_formats, never_values}.'
+        carrier:
+          description: '{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind,
+            equipment_uid, type_map, default_type}.'
+        interval_minutes:
+          type: integer
+          maximum: 10080
+          minimum: 15
+        is_enabled:
+          type: boolean
+        is_lab_wide:
+          type: boolean
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckTargetRequest'
+    LicenseObservation:
+      type: object
+      description: A license an agent found, and how it compares with the inventory.
+      properties:
+        id:
+          type: integer
+        check:
+          $ref: '#/components/schemas/LabsNamedReference'
+        computing:
+          $ref: '#/components/schemas/LabsUIDNamedReference'
+        observation_key:
+          type: string
+        vendor:
+          type: string
+        product_code:
+          type: string
+        product_name:
+          type: string
+        license_serial:
+          type: string
+        carrier_type:
+          type: string
+        carrier_hardware_kind:
+          type: string
+        carrier_hardware_value:
+          type: string
+        carrier_equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          nullable: true
+        license:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          nullable: true
+        inventory:
+          allOf:
+          - $ref: '#/components/schemas/InventoryValues'
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        final_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 'Null: perpetual.'
+        max_version:
+          type: string
+        is_reactivatable:
+          type: boolean
+        first_seen_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        removed_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - carrier_equipment
+      - carrier_hardware_kind
+      - carrier_hardware_value
+      - carrier_type
+      - check
+      - computing
+      - expires_at
+      - final_expires_at
+      - first_seen_at
+      - id
+      - inventory
+      - is_reactivatable
+      - last_seen_at
+      - license
+      - license_serial
+      - max_version
+      - observation_key
+      - product_code
+      - product_name
+      - removed_at
+      - status
+      - vendor
+    LicenseObservationListSerializersLicenseObservationPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseObservationListSerializersLicenseObservationPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseObservation'
+      required:
+      - data
+      - meta
+    LicenseObservationListSerializersLicenseObservationPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseObservationListSerializersLicenseObservationPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseObservationListSerializersLicenseObservationPagination'
+      required:
+      - pagination
+    PatchedLicenseCheckWrite:
+      type: object
+      description: 'Create (from scratch or a preset) or change a check. Admin-only:
+        vendor, probe, extract, carrier.'
+      properties:
+        preset_key:
+          type: string
+          description: Create from this preset; probe, extract and carrier are copied.
+          maxLength: 32
+        key:
+          type: string
+          maxLength: 32
+          pattern: ^[a-z][a-z0-9_-]{0,31}$
+        name:
+          type: string
+          maxLength: 128
+        vendor:
+          type: string
+          maxLength: 128
+        probe:
+          description: 'Closed catalog: {type: command, executable, args, timeout_s,
+            encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}.'
+        extract:
+          description: '{format: xml|json|text|values, records, fields: {product_name,
+            product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial,
+            is_reactivatable, carrier_type}, date_formats, never_values}.'
+        carrier:
+          description: '{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind,
+            equipment_uid, type_map, default_type}.'
+        interval_minutes:
+          type: integer
+          maximum: 10080
+          minimum: 15
+        is_enabled:
+          type: boolean
+        is_lab_wide:
+          type: boolean
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckTargetRequest'
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: License Checks
+  description: License Checks endpoints

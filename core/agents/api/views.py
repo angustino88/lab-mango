@@ -1059,6 +1059,7 @@ class AgentInfoAPIView(APIView):
                         "booking_check_in",
                         "booking_complete",
                         "booking_extend",
+                        "license_checks",
                     ],
                     "endpoints": {
                         "monitoring_policy": reverse("agent-monitoring-policy"),
@@ -1068,6 +1069,7 @@ class AgentInfoAPIView(APIView):
                         "booking_check_in": reverse("agent-booking-check-in"),
                         "booking_complete": reverse("agent-booking-complete"),
                         "booking_extend": reverse("agent-booking-extend"),
+                        "license_checks": reverse("agent-license-checks"),
                     },
                 }
             },

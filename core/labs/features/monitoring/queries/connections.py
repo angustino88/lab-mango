@@ -44,6 +44,8 @@ from core.labs.models.monitoring import (
     MonitoringEventAction,
 )
 
+from ..contracts import DISCOVERY_COLLECTOR_KEY
+
 FRESHNESS_WINDOW = timedelta(seconds=120)
 HISTORY_SCAN_LIMIT = 200
 HISTORY_LIMIT = 20
@@ -231,3 +233,21 @@ def device_connection_history(connection: DeviceConnection) -> list[DeviceConnec
             )
             previous = state
     return list(reversed(changes))[:HISTORY_LIMIT]
+
+
+def connected_equipment_ids(*, computing_id: int) -> set[int]:
+    """Units the computing unit's own agent reports connected right now (fresh, matched, not discovery).
+
+    Used by license checks to confirm a license carrier (for example a CANcase) is at this computer.
+    """
+    cutoff = timezone.now() - FRESHNESS_WINDOW
+    return set(
+        DeviceConnection.objects.filter(
+            computing_id=computing_id,
+            state=DeviceConnectionState.CONNECTED,
+            equipment__isnull=False,
+            received_at__gte=cutoff,
+        )
+        .exclude(collector_key=DISCOVERY_COLLECTOR_KEY)
+        .values_list("equipment_id", flat=True)
+    )
