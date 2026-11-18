@@ -17,6 +17,15 @@ The Licenses feature tracks commercial software and firmware entitlements, seat 
   - `identifier` (CharField(255), license asset key).
   - `expiry_date` (DateTimeField, nullable).
   - `status`: Enum (`available`, `assigned`, `expired`, `revoked`, `suspended`). Default: `available`.
+    Stored as append-only `LicenseStatusRecord` rows; a license reads as its latest record.
+    - Create writes the first record, `available`.
+    - Assigning a seat turns `available` into `assigned`; releasing the last seat turns `assigned` back
+      into `available` (metadata `reason` and the equipment). Both run under the license row lock.
+    - `expired`, `revoked` and `suspended` are set only through `actions/change-status`; seat changes
+      never override them.
+    - A license with no record (created before initial records existed) reads as `assigned` when a seat
+      is held, else `available` — in the list, the detail and `status-summary` alike, so none reads as
+      unknown.
 
 ### 2.2 `core.labs.models.LicenseAssignment`
 - **Fields:** `license` (FK `License`, PROTECT), `equipment` (FK `Equipment`, PROTECT), `assigned_at`, `unassigned_at` (nullable).

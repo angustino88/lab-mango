@@ -39,4 +39,34 @@ def change_license_status(command: ChangeLicenseStatusInput, *, actor):
     return record
 
 
+def record_initial_status(license_record: License, *, actor) -> LicenseStatusRecord:
+    """History starts when the license is created: ``available`` (spec §2.1 default)."""
+    record = LicenseStatusRecord(license=license_record, status=LicenseStatus.AVAILABLE, metadata={})
+    record.save(actor=actor)
+    return record
+
+
+def sync_seat_status(license_record: License, *, actor, equipment=None) -> LicenseStatusRecord | None:
+    """Follow the seats after an assign or release; the caller holds the license row lock.
+
+    ``available`` becomes ``assigned`` when a seat is taken, and ``assigned`` becomes ``available``
+    when the last seat is released. A license with no record yet counts as available. Statuses set
+    by people (expired, revoked, suspended) are left alone: a seat change never overrides them.
+    """
+    latest = license_record.status_records.order_by("-created", "-id").values_list("status", flat=True).first()
+    in_use = license_record.equipment_assignments.filter(unassigned_at__isnull=True).exists()
+    if in_use and latest in (None, LicenseStatus.AVAILABLE):
+        target = LicenseStatus.ASSIGNED
+    elif not in_use and latest == LicenseStatus.ASSIGNED:
+        target = LicenseStatus.AVAILABLE
+    else:
+        return None
+    metadata = {"reason": "seat_assigned" if in_use else "last_seat_released"}
+    if equipment is not None:
+        metadata["equipment"] = {"id": equipment.pk, "sku": equipment.sku}
+    record = LicenseStatusRecord(license=license_record, status=target, metadata=metadata)
+    record.save(actor=actor)
+    return record
+
+
 __all__ = ["ChangeLicenseStatusInput", "change_license_status"]
