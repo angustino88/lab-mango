@@ -1,4 +1,4 @@
-# Agent: device links, bench watch list and configurable license checks
+# Agent: monitored devices by registered PnP ID, and configurable license checks
 
 **Status:** Proposed, needs owner approval (revised 2026-11-18)
 **Risk tier:** T2 (public agent API, migrations, matching semantics, license data written from an integration)
@@ -30,78 +30,68 @@
 | `License` has `product`, `vendor`, `max_version`, `serial_number` (vendor serial, added by this change set), `identifier` (secret key), `expiry_date`; assigned via `LicenseAssignment` | `core/labs/models/resource/license/` |
 | `EquipmentCategory.monitored`; `Equipment.product_model` → `EquipmentProductModel` | `reference_data.py`, `equipment.py` |
 
-## 3. Hardware identity and device links
+## 3. Monitored devices: what exists today (investigation, 2026-11-18)
 
-### 3.1 What the agent can read
+| Where | What exists | Gap |
+|---|---|---|
+| Old agent (agent repo, `main`) | Per computer, a typed list `[{key: PNPDeviceID, value: label, status}]` in `ComputingProfile.monitored_devices`. The agent pulled it, watched those PnP IDs with WMI (3-scan debounce), pushed the status list and insert/remove events | Not linked to inventory units; its routes no longer exist |
+| Matching | `match_observed_devices` (`equipment/queries/device_matching.py`): reported `serial_number` vs `Equipment.serial_number` | `Equipment.serial_number` is typed by people (part number, label, USB product ID), not read from hardware |
+| Link action | `POST /api/labs/device-connections/{id}/actions/link` → `link_device_connection` (`monitoring/application/manage.py`) → `claim_equipment_serial` **writes the observed serial into `Equipment.serial_number`** (refused when the unit already has one) | Uses the human field as hardware identity |
+| Expected devices | `ExpectedDevice(computing, equipment, notify_on_disconnect)`, presence `present` / `missing` / `unconfirmed` (`monitoring/queries/expected.py`); API `/api/labs/expected-devices` | Exactly "equipment mapped to this computer", but never sent to the agent |
+| Frontend | Lab Monitoring devices tab, `MonitoredDevicesPopover`, link button, expected devices | Built on serial matching |
 
-| Kind | Value example | Strength | Scope |
-|---|---|---|---|
-| `usb_serial` | `1248:1073:025123` (vendor ID, product ID, USB serial descriptor) | Unique per physical device | Global |
-| `vector_device` | `007113-585343` (Vector device name, as the License Client and Hardware Config show it) | Unique per physical device | Global |
-| `usb_port` | `USB\VID_046D&PID_C52B\5&2A3C0F1&0&2` (Windows ID of a device without a serial) | Tied to a port of one computer | That computer only |
-| model | `1248:1073` | Not an identity, only the model | — |
+What the agent can read from Windows is the **PnP device instance ID** (`Win32_PnPEntity.PNPDeviceID`,
+Device Manager → Details → *Device instance path*), e.g. `USB\VID_1248&PID_1073\007113-585343`. A
+device with a USB serial keeps the same ID on every port and computer; a device without one gets a
+Windows-generated last segment containing `&`, which changes with the USB port.
 
-Agents report every kind they can read for a device; one device can have several (a Vector
-interface has `usb_serial` and `vector_device`).
+## 3.1 Design: register PnP IDs on equipment, the agent watches the mapped list
 
-### 3.2 Device link (new model)
+1. **Register** (new model `EquipmentHardwareId(equipment, kind, value, computing=None, created_by, created_at)`):
+   - `kind = pnp_id`: the instance ID, normalised (upper case, `\` separators). If its last segment
+     contains `&` (port-bound) `computing` is required: the ID is only valid on that computer.
+   - `kind = vector_device`: the Vector device name a license tool reports (License Client
+     `DeviceName`, e.g. `007113-585343`), so licenses find their carrier (section 5.4).
+   - Constraint: one row per `(kind, upper(value), computing)`; a unit may have several IDs.
+   - Written only by coordinators: on the equipment form (paste the instance path), or with the
+     existing **Link** button, which now stores the observation's PnP ID here instead of
+     claiming a serial. `Equipment.serial_number` is never written by monitoring again.
+2. **Map**: unchanged `ExpectedDevice(computing, equipment, notify_on_disconnect)`; created from the
+   computer's page or the bench (equipment placed on the computer's bench are suggested).
+3. **Watch list** in `GET /agent/monitoring-policy` (additive, ETag as today):
 
-`EquipmentHardwareLink(equipment, kind, value, computing=None, linked_by, linked_at, unlinked_at)`
+   ```json
+   "expected_devices": [
+     {"equipment_uid": "…", "name": "CANcase 3",
+      "hardware_ids": [{"kind": "pnp_id", "value": "USB\\VID_1248&PID_1073\\007113-585343"}]}
+   ]
+   ```
 
-- Created by a coordinator, once per physical unit, from the web app; never by an agent.
-- `computing` is required for `usb_port` (the link is only valid on that computer) and empty otherwise.
-- Constraint: one active link per `(kind, lower(value), computing)`. A unit may have several links.
-- Unlinking keeps history (`unlinked_at`), like placements.
+4. **Agent**: scans WMI every 5 s, reports **only** devices whose PnP ID is on the watch list, as a
+   complete snapshot per change (3-scan debounce) and every half `freshness_seconds`; every other
+   device stays on the computer. Each observation carries `hardware_ids: [{kind: "pnp_id", value}]`.
+5. **Backend**: matches by hardware ID (exact, port-bound IDs only for their computer) →
+   `DeviceConnection.equipment`. `ExpectedDevice` presence and disconnect alerts then work unchanged.
+6. **Discovery** (how a new device gets its PnP ID registered): the agent's Device Scan dialog
+   (admin login) shows live devices with their instance paths; its **Push** button sends a one-off
+   discovery snapshot (collector `discovery`, all connected devices). They appear in Lab Monitoring
+   as unlinked, and **Link** registers the PnP ID on the chosen unit. The agent can also copy the
+   path for pasting on the equipment form.
+7. **Migration**: entries of the legacy `monitored_devices` JSON become link suggestions on that
+   computer (label + PnP ID) in the web app; units are not guessed. Serial-based matching is removed
+   once the link action stores hardware IDs; existing connections are re-matched (initially unlinked).
 
-**Matching** becomes a link lookup: an observed device is `matched` to the unit linked to any of
-its hardware IDs; `conflict` if its IDs are linked to different units; `unlinked` otherwise.
-`Equipment.serial_number` is no longer used for matching; it stays a human label.
+**Additional devices** (equipment from another bench plugged here): optional phase. The policy adds
+`device_models` (USB vendor/product IDs of lab equipment models, from `EquipmentProductModel.usb_ids`);
+the agent also reports devices of those models, and the backend matches their `pnp_id` against all
+registered IDs, so a borrowed CANcase shows as "CANcase 7 (bench B7) connected here".
 
-**Linking help.** For an `unlinked` device the backend computes *suggestions*: units on the
-computer's bench whose product model lists the device's USB model (`usb_ids`, section 4) and that
-have no link of that kind yet. One candidate → "link to CANcase 3?" one-click confirm; several →
-pick from the short list. A coordinator can also link from the unit's page by choosing a device
-currently seen on its bench.
-
-### 3.3 Migration of current behaviour
-
-- Existing `DeviceConnection` rows keep their history; their match status is recomputed from links
-  (all start `unlinked`).
-- The serial-based matcher is removed after links exist (decision D5: keep it as a suggestion
-  source meanwhile, since a typed serial sometimes equals the hardware serial).
-- `monitored_devices` JSON can seed suggestions on that computer (names + Windows IDs), not links.
-
-## 4. Bench watch list in the monitoring policy (additive)
-
-`GET /agent/monitoring-policy` gains:
-
-```json
-{
-  "watched_devices": [
-    {"equipment_uid": "…", "name": "CANcase 3",
-     "hardware_ids": [{"kind": "vector_device", "value": "007113-585343"}]}
-  ],
-  "device_models": [
-    {"vendor_id": "1248", "product_id": "1073", "product_model": "VN1630A"}
-  ]
-}
-```
-
-(Values are illustrative.)
-
-- `watched_devices`: linked units placed on this computer's bench, in a `monitored` category (≤ 200).
-- `device_models`: USB IDs of lab equipment models, from the new `EquipmentProductModel.usb_ids`
-  (array of `{vendor_id, product_id}`, upper-case hex). A connected device of such a model that is
-  not watched is reported as an *additional* device, which is also how new units get linked.
-
-The agent reports watched devices and known-model devices only. This is a reporting scope, not
-authorization: the backend still validates and bounds whatever a signed agent sends.
-
-### 4.1 Observation payload (additive)
-
-`DeviceObservation` gains `hardware_ids: [{kind, value}]` (≤ 4 per device) and
-`vendor_id`/`product_id`. `serial_number` remains accepted for compatibility and is shown as
-reported evidence only.
+| Decision | Recommendation |
+|---|---|
+| D3 | `EquipmentProductModel.usb_ids` for additional devices: later phase |
+| D5 | Remove serial-number matching and `claim_equipment_serial` from the link flow: yes |
+| D6 | Never register an ID automatically: yes, a coordinator links |
+| D9 | Store hardware IDs in `EquipmentHardwareId` (new) rather than reusing `Equipment.metadata`: yes (constraint, history, port scope) |
 
 ## 5. License checks (configured in the web app)
 
@@ -199,7 +189,7 @@ Vector `VectorLicenseId`); the backend routes each one to the `License` record a
 
    | Step | Rule | Failure → status (no update) |
    |---|---|---|
-   | Carrier unit `U` | `computer` → `C`; `equipment` → the unit on the check; `device` / `dongle` → the unit **linked** to the reported hardware ID (section 3.2) | `carrier_unlinked` |
+   | Carrier unit `U` | `computer` → `C`; `equipment` → the unit on the check; `device` / `dongle` → the unit whose registered `EquipmentHardwareId` equals the reported hardware ID (section 3.1) | `carrier_unlinked` |
    | `U` is at `C` | `U = C`; or `U` is reported **connected** by `C`'s own fresh device observations; or `U` is placed on `C`'s bench | `carrier_not_at_computer` |
    | `L` belongs there | `L` has an active `LicenseAssignment` to `U` or to `C` | `carrier_mismatch` (assigned elsewhere) or `unassigned` (no assignment) |
 
@@ -246,9 +236,10 @@ Configured checks make agents run programs, so the design limits what a configur
 
 | Invariant | Guard |
 |---|---|
-| A hardware ID identifies at most one unit at a time | Partial unique index on active links `(kind, lower(value), computing)` |
-| Port-scoped IDs never match on another computer | `computing` required for `usb_port` (check constraint); lookup filters by the reporting computer |
-| Agents cannot create or change links | Links written only by authenticated coordinator commands |
+| A hardware ID identifies at most one unit at a time | Unique `EquipmentHardwareId(kind, upper(value), computing)` |
+| Port-bound PnP IDs never match on another computer | `computing` required when the last segment contains `&` (validated on write); lookup filters by the reporting computer |
+| Agents cannot register hardware IDs | Written only by coordinator commands (equipment form, Link); `Equipment.serial_number` is never written by monitoring |
+| An agent reports only mapped devices | Watch list = `ExpectedDevice` of its computer; discovery snapshots only on an admin's Push in the agent |
 | Exact retries repeat no effects; stale snapshots never overwrite newer | Batch receipts with content hash; apply only `sequence > cursor` |
 | License writes never touch `identifier` or seats | Effects limited to `expiry_date`, `max_version`, status command |
 | An agent can only update licenses that are at its own computer | Reporting computer derived from the signing identity; check must target it; carrier linked, at the computer (same unit, connected by its own observations, or on its bench) and the license assigned to the carrier or the computer (section 5.4) |
@@ -259,18 +250,19 @@ Configured checks make agents run programs, so the design limits what a configur
 |---|---|---|
 | D1 | Apply observed expiry/version to `License` automatically, or review first | Automatic for `matched`, with change-log entry |
 | D2 | Match by license serial (`License.serial_number`, **done**: field, unique per vendor, API, search); fall back to a check's linked licenses, then `LicenseProduct.vendor_product_code`, only for tools without serials | Yes |
-| D3 | `EquipmentProductModel.usb_ids` | Yes |
+| D3 | `EquipmentProductModel.usb_ids` for additional devices | Later phase |
 | D4 | Warning window | 30 days |
-| D5 | Keep serial-number matching as a suggestion source during migration | Yes, suggestions only; remove once links cover the fleet |
-| D6 | Allow automatic linking when exactly one bench candidate exists | No: one-click confirm keeps a human decision on inventory identity |
+| D5 | Replace serial-number matching and `claim_equipment_serial` in the Link flow by registered hardware IDs | Yes |
+| D6 | Register hardware IDs automatically | No: a coordinator links or pastes the ID |
 | D7 | Who may create or change license checks | Admins only; coordinators may enable/disable and change targets |
 | D8 | Update a license only when its carrier is at the reporting computer and it is assigned to that carrier or computer | Yes; otherwise record and show, never update or reassign automatically |
+| D9 | Store hardware IDs in a new `EquipmentHardwareId` model (not `Equipment.metadata` or `serial_number`) | Yes: constraint, port scope, audit |
 
 ## 8. Delivery
 
 | Phase | Backend | Agent |
 |---|---|---|
-| 1 | `EquipmentHardwareLink`, link commands + UI, suggestions, link-based matching, `usb_ids`, policy watch list | Hardware IDs in observations; report watched + known-model devices; Vector device collector |
+| 1 | `EquipmentHardwareId`, Link stores PnP IDs, hardware-ID matching, `expected_devices` in the policy, legacy `monitored_devices` as suggestions | Watch list from the policy; report only mapped PnP IDs with `hardware_ids`; Push = discovery snapshot from the Device Scan dialog |
 | 2 | License checks (model, admin UI, agent routes), runs, observations, matching (no effects) | Generic check runner with presets (**done**: `agent/src/core/licensing/`, Vector preset); uses the routes once `license_checks` is advertised |
 | 3 | Effects (D1), expiry notifications | Tray warnings, licenses in the device dialog |
 
