@@ -23,7 +23,9 @@ registered on another unit â†’ `409 hardware_id_in_use`, a device without IDs â†
 **Watch list.** `GET /agent/monitoring-policy` returns `expected_devices`: the `ExpectedDevice`
 rows of the agent's computer with each unit's registered IDs valid there. The agent reports only
 devices on that list (plus a one-off discovery snapshot when an administrator asks for it in the
-agent), so other peripherals never leave the computer.
+agent), so other peripherals never leave the computer. Discovery snapshots use collector
+`discovery` and are evidence for linking only: they never confirm an expected device's presence,
+never count as the computer reporting, and never raise disconnect alerts.
 
 Equipment owns matching queries and frozen DTOs through `public.py`/`contracts.py`.
 Monitoring owns observations, replay receipts and current connections. Agents owns

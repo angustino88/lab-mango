@@ -5,6 +5,11 @@ from datetime import datetime
 from uuid import UUID
 
 
+# One-off snapshots an administrator pushes from the agent so new devices can be linked. They are
+# evidence for linking only: never presence of an expected device, never "reporting", never alerts.
+DISCOVERY_COLLECTOR_KEY = "discovery"
+
+
 @dataclass(frozen=True, slots=True)
 class DeviceObservation:
     observation_key: str
@@ -37,4 +42,4 @@ class ObservationAcknowledgment:
     is_replayed: bool = False
 
 
-__all__ = ("DeviceObservation", "DeviceObservationInput", "ObservationAcknowledgment")
+__all__ = ("DISCOVERY_COLLECTOR_KEY", "DeviceObservation", "DeviceObservationInput", "ObservationAcknowledgment")

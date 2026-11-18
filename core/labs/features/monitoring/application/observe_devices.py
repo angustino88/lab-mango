@@ -24,7 +24,11 @@ from core.common.db.idempotency import try_claim_operation
 from core.common.domain.errors import Forbidden, ValidationFailed
 from core.labs.features.equipment.public import lock_monitoring_computing, match_hardware_ids
 from core.labs.features.monitoring.application.alerts import notify_expected_disconnects
-from core.labs.features.monitoring.contracts import DeviceObservationInput, ObservationAcknowledgment
+from core.labs.features.monitoring.contracts import (
+    DISCOVERY_COLLECTOR_KEY,
+    DeviceObservationInput,
+    ObservationAcknowledgment,
+)
 from core.labs.features.monitoring.exceptions import (
     ObservationConflict,
     ObservationInProgress,
@@ -187,9 +191,10 @@ def observe_devices(command: DeviceObservationInput, *, actor: ActorContext) -> 
                 "devices": [asdict(device) for device in command.devices],
             },
         )
-        notify_expected_disconnects(
-            computing_id=command.computing_id, equipment_ids=detached_equipment, observed_at=command.collected_at
-        )
+        if command.collector_key != DISCOVERY_COLLECTOR_KEY:  # a discovery snapshot never alerts
+            notify_expected_disconnects(
+                computing_id=command.computing_id, equipment_ids=detached_equipment, observed_at=command.collected_at
+            )
         return _ack(batch)
 
 

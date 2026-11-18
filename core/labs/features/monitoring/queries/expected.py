@@ -28,6 +28,7 @@ from core.labs.models.monitoring import (
     ExpectedDevice,
 )
 
+from ..contracts import DISCOVERY_COLLECTOR_KEY
 from .connections import FRESHNESS_WINDOW
 
 
@@ -40,15 +41,16 @@ class ExpectedAnnotations(TypedDict):
 
 def _annotated(queryset: QuerySet[ExpectedDevice]) -> QuerySet[WithAnnotations[ExpectedDevice, ExpectedAnnotations]]:
     cutoff = timezone.now() - FRESHNESS_WINDOW
+    # Discovery snapshots are one-off evidence for linking; they never confirm presence.
     observed = DeviceConnection.objects.filter(
         computing_id=OuterRef("computing_id"), equipment_id=OuterRef("equipment_id")
-    )
+    ).exclude(collector_key=DISCOVERY_COLLECTOR_KEY)
     reporting = DeviceObservationCursor.objects.filter(
         computing_id=OuterRef("computing_id"),
         is_current=True,
         last_received_at__gte=cutoff,
         last_collected_at__gte=cutoff,
-    )
+    ).exclude(collector_key=DISCOVERY_COLLECTOR_KEY)
     placement = active_bench_assignments(equipment_field="computing_id")
     return (
         queryset.select_related("computing", "equipment", "creator")

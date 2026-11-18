@@ -340,3 +340,28 @@ def test_event_list_accepts_its_filters_including_computing(staff, scope):
         other.pk,
     }
     assert staff.get("/api/labs/monitoring-events", {"unknown": "x"}).status_code == 400
+
+
+def test_discovery_snapshots_are_link_evidence_only(staff, scope, monkeypatch, django_capture_on_commit_callbacks):
+    """A pushed discovery snapshot never confirms presence, never counts as reporting, never alerts."""
+    computing, peripheral = scope
+    pushed = []
+    monkeypatch.setattr(
+        "core.labs.features.monitoring.application.alerts.publish_user_notification",
+        lambda user_id, message, **kwargs: pushed.append(message),
+    )
+    expected = ExpectedDevice(computing=computing, equipment=peripheral, notify_on_disconnect=True)
+    expected.save(actor=staff.user)
+    discovery = replace(snapshot(computing, device("a", "SER-1")), collector_key="discovery")
+    report(discovery)
+    row = DeviceConnection.objects.get(collector_key="discovery")
+    assert row.match_status == "matched"  # still useful to see and to link
+    presence = staff.get(EXPECTED, {"computing_id": computing.pk}).data["data"][0]["presence"]["value"]
+    assert presence == "unconfirmed"  # no regular collector reported yet
+
+    report(snapshot(computing, device("a", "SER-1")))  # the watch-list collector confirms it
+    assert staff.get(EXPECTED, {"computing_id": computing.pk}).data["data"][0]["presence"]["value"] == "present"
+    with django_capture_on_commit_callbacks(execute=True):
+        report(replace(discovery, batch_key=uuid4(), sequence=2, devices=()))  # next discovery omits it
+    assert pushed == []
+    assert staff.get(EXPECTED, {"computing_id": computing.pk}).data["data"][0]["presence"]["value"] == "present"
