@@ -1,6 +1,6 @@
 # Reference data provisioning framework
 
-> Status: Partially implemented. The shared declaration, registry, provisioner, marker model, command, and deletion guard exist; only equipment categories currently have a registered declaration.
+> Status: Partially implemented. The shared declaration, registry, provisioner, marker model, command, post-migrate hook and deletion guard exist. Registered today: equipment categories (declaration) and the Support Desk baseline configuration (provisioner).
 > Owner: shared core framework; each owning app or feature declares its own lists.
 > Scope: any Django model in the application that needs baseline rows.
 
@@ -20,7 +20,7 @@ Foreign-key defaults are out of scope. Creating a baseline row does not make it 
 ## 2. Current equipment behavior (verified)
 
 - `EquipmentCategory` in `core/labs/models/resource/equipment/reference_data.py` uses a string `key` primary key and opts into `ProtectedReferenceMixin`; its admin uses `ProtectedReferenceAdmin` and is view-only (no add, change or delete).
-- Standard categories are declared in `core/labs/features/equipment/defaults.py`. The local and production start scripts call `provision_reference_data` after `migrate`.
+- Standard categories are declared in `core/labs/features/equipment/defaults.py`. They are provisioned automatically at the end of every `migrate` (section 5); `provision_reference_data` remains available for an explicit run.
 - A legacy `provision_equipment_categories` command remains as an alias to the shared command.
 - Categories cannot be created through the import API either: `equipment/reference-data/categories` is list/retrieve only (`POST` returns 405). To add or change a category, edit the declaration and run `provision_reference_data`.
 
@@ -56,7 +56,9 @@ The framework consists of these small parts:
 2. **Registry** in `core/reference_data/registry.py`. Each owning app registers its declaration tuple in `AppConfig.ready()`; the shared framework does not import domain features.
 3. **Provisioner** (`provision_reference_lists(lists, *, using)`) in `core/reference_data/provisioning.py`. It creates missing identities idempotently, validates identity uniqueness, and uses the caller's database alias.
 4. **Run-once marker** (`SeededReferenceList`) in `core/reference_data/models.py`. A database row records successful `SEED_ONCE` completion per list key; provisioning rows and marker are written atomically.
-5. **Command** (`provision_reference_data --database`) in `core/reference_data/management/commands/`. It provisions registered declarations. Start scripts call it after `migrate`; the equipment-specific command remains a compatibility alias.
+5. **Command** (`provision_reference_data --database`) in `core/reference_data/management/commands/`. It provisions registered declarations and provisioners (`provision_registered_reference_data`). The equipment-specific command remains a compatibility alias.
+6. **Provisioners** (`register_reference_provisioner(key, fn)`) in `core/reference_data/registry.py`, for baselines a single-identity `ReferenceList` cannot express, such as linked rows. A provisioner is called as `fn(using=alias)` after the declarations and must be idempotent. The Support Desk registers `core/support_desk/features/tickets/defaults.py`: it creates the default status workflow with its transitions, four priorities with SLA targets and a `General` category, each group only while its table is empty.
+7. **Post-migrate hook** (`provision_after_migrate`) in `core/reference_data/signals.py`, connected for this app only so it runs once per `migrate`.
 
 Deletion protection for `ENSURE_PRESENT` lists is explicit and opt-in:
 
@@ -71,7 +73,7 @@ flowchart LR
   Decl["Feature defaults.py declarations"] --> Reg["AppConfig registration"]
   Reg --> Prov["provision_reference_lists"]
   Cmd["provision_reference_data command"] --> Prov
-  Start["Start script after migrate"] --> Cmd
+  Start["post_migrate hook"] --> Prov
   Prov --> DB[("Database")]
   Model["Model delete guard (ENSURE_PRESENT only)"] --> DB
 ```
@@ -81,9 +83,9 @@ flowchart LR
 - Identify rows by the declared identity field, never by the generated PK.
 - Create missing identities only. Never update, rename, or reactivate an existing row.
 - Concurrency: rely on the unique constraint; tolerate a concurrent insert only when the identity now exists.
-- `AppConfig.ready()` only registers declarations; it performs no ORM work. The start-script command repairs `ENSURE_PRESENT` lists after normal restarts.
+- `AppConfig.ready()` only registers declarations; it performs no ORM work.
 - `SEED_ONCE` lists are created by the same command and then skipped when their marker exists. Marker creation occurs in the same transaction as row creation, so a failed run can be retried.
-- No `post_migrate` receiver is used; normal startup owns the explicit provisioning step.
+- Every `migrate` ends by provisioning registered declarations and provisioners, so a fresh database is usable without a separate command and `ENSURE_PRESENT` lists are repaired on each deploy. The hook is skipped when `REFERENCE_DATA_AUTO_PROVISION` is false (test settings; environment variable elsewhere, default true), when the run unapplied migrations, and while any migration is still unapplied (for example `migrate <app> <target>`), because provisioning needs every owning table.
 
 ## 6. Limits
 

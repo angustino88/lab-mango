@@ -12,6 +12,9 @@ ROUTING_SYNC_STATIC_TOKEN_HASHES = [
     "08395c55c808b4b41ca052637fe71538606fc0dbe0474bbec8a5059bf14c1909",
 ]
 
+# Tests create the reference rows they need; keep `migrate` from adding baseline rows to the test DB.
+REFERENCE_DATA_AUTO_PROVISION = False
+
 # GENERAL
 # ------------------------------------------------------------------------------
 SECRET_KEY = env(

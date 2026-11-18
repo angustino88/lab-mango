@@ -196,6 +196,12 @@ STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
+# REFERENCE DATA
+# ------------------------------------------------------------------------------
+# Provision registered baseline rows (equipment categories, the support desk workflow, ...) at the
+# end of every `migrate`. `provision_reference_data` remains available for an explicit run.
+REFERENCE_DATA_AUTO_PROVISION = env.bool("REFERENCE_DATA_AUTO_PROVISION", default=True)
+
 # MEDIA
 # ------------------------------------------------------------------------------
 MEDIA_ROOT = str(APPS_DIR / "media")

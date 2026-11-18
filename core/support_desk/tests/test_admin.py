@@ -59,3 +59,25 @@ def test_delete_is_not_allowed(client, admin_user):
     cat = SupportCategory.objects.create(name="X", code="x")
     client.force_login(admin_user)
     assert client.get(reverse("admin:support_desk_supportcategory_delete", args=[cat.pk])).status_code == 403
+
+
+@pytest.mark.django_db
+def test_support_admin_manages_statuses_with_flag_validation(client, admin_user):
+    from core.support_desk.models import SupportStatus
+
+    assert SupportStatus in admin.site._registry
+    client.force_login(admin_user)
+    url = reverse("admin:support_desk_supportstatus_add")
+    base = {"name": "Open", "system_state": "open", "color_hex": "", "sort_order": 1, "is_active": "on"}
+    bad = client.post(url, {**base, "is_final": "on"})
+    assert bad.status_code == 200
+    assert not SupportStatus.objects.exists()
+    assert client.post(url, {**base, "is_initial": "on"}).status_code == 302
+    assert client.post(url, {**base, "name": "Triage", "is_initial": "on"}).status_code == 302
+    assert list(SupportStatus.objects.filter(is_initial=True).values_list("name", flat=True)) == ["Triage"]
+
+
+@pytest.mark.django_db
+def test_non_admin_staff_cannot_see_statuses(client):
+    client.force_login(UserFactory(is_staff=True))
+    assert client.get(reverse("admin:support_desk_supportstatus_changelist")).status_code == 403

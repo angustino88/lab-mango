@@ -69,6 +69,12 @@ class CreateTicketInput:
     watcher_ids: tuple[int, ...] = ()
 
 
+_NO_STATUS_MESSAGE = (
+    "No active status is configured for support tickets. An administrator must add one "
+    "(or run `manage.py provision_reference_data` to create the default workflow)."
+)
+
+
 def _resolve_initial_status() -> SupportStatus:
     initial_status = SupportStatus.objects.filter(is_initial=True, is_active=True).first()
     if not initial_status:
@@ -76,7 +82,7 @@ def _resolve_initial_status() -> SupportStatus:
     if not initial_status:
         initial_status = SupportStatus.objects.filter(is_active=True).first()
     if not initial_status:
-        raise TicketCreationDisabledError("No active status is configured for support tickets.")
+        raise TicketCreationDisabledError(_NO_STATUS_MESSAGE)
     return initial_status
 
 
@@ -97,13 +103,15 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
 
     app_settings = SupportSettings.get_solo()
 
-    # FR-26: Block creation if no category or priority is defined
+    # FR-26: Block creation until a category, a priority and a status are defined
     has_active_category = SupportCategory.objects.filter(is_active=True).exists()
     has_active_priority = _has_active_priority()
     if not has_active_category or not has_active_priority:
         raise TicketCreationDisabledError(
             "Ticket creation is disabled until an administrator defines at least one category and one priority."
         )
+    if not SupportStatus.objects.filter(is_active=True).exists():
+        raise TicketCreationDisabledError(_NO_STATUS_MESSAGE)
 
     category = (
         SupportCategory.objects.select_related("default_team")

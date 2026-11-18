@@ -401,6 +401,35 @@ class TicketCommentDetailAPIView(SupportAPIView):
         return self._execute(lambda: delete_comment(cmd, actor=request.user), delete=True)
 
 
+_FORM_TRUE = {"true", "1", "on"}
+_FORM_FALSE = {"false", "0", "off"}
+
+
+def _typed_upload_fields(data: Any) -> dict[str, Any]:
+    """Give the scalar multipart fields of an upload their declared JSON types.
+
+    A multipart body carries every field as text, while request validation rejects a value whose JSON
+    type differs from the declared field. Only well-formed text is converted (``"12"`` -> ``12``,
+    ``"true"`` -> ``True``); anything else is passed through unchanged and still fails validation.
+    """
+    payload = {key: data.get(key) for key in data}
+    comment_id = payload.get("comment_id")
+    if isinstance(comment_id, str):
+        text = comment_id.strip()
+        if text == "":
+            payload["comment_id"] = None
+        elif text.isascii() and text.isdecimal() and len(text) <= 18:
+            payload["comment_id"] = int(text)
+    is_restricted = payload.get("is_restricted")
+    if isinstance(is_restricted, str):
+        lowered = is_restricted.strip().lower()
+        if lowered in _FORM_TRUE:
+            payload["is_restricted"] = True
+        elif lowered in _FORM_FALSE:
+            payload["is_restricted"] = False
+    return payload
+
+
 class TicketAttachmentListCreateAPIView(SupportAPIView):
     """Upload a file attachment to a ticket."""
 
@@ -413,7 +442,7 @@ class TicketAttachmentListCreateAPIView(SupportAPIView):
     )
 
     def handle_post(self, request: Request, key: str, *args: Any, **kwargs: Any) -> Response:
-        serializer, error = self.validate_request()
+        serializer, error = self.validate_request(data=_typed_upload_fields(request.data))
         if error is not None:
             return error
         data = serializer.validated_data

@@ -5,18 +5,36 @@ from django.db import models
 
 from core.support_desk.contracts import TICKET_TYPE_CHOICES, TicketType
 
+# Images, documents and diagnostic files a requester typically attaches to a lab support ticket.
 DEFAULT_ALLOWED_EXTENSIONS = [
+    # images
     ".png",
     ".jpg",
     ".jpeg",
     ".gif",
+    ".webp",
+    ".bmp",
+    # documents
     ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".ppt",
+    ".pptx",
+    ".odt",
+    ".ods",
+    ".odp",
+    ".rtf",
+    ".md",
+    # text, data and logs
     ".txt",
     ".log",
     ".csv",
     ".json",
-    ".zip",
     ".xml",
+    # archives
+    ".zip",
 ]
 
 

@@ -30,6 +30,7 @@ Constraints: a ticket cannot be its own parent; sub-tickets are at most one leve
 - `SupportStatusTransition` (`allowed_roles`, `requires_reason`, `requires_resolution`) - the only way status may change.
 - `SupportTeam` (`code`, `lead`, `members`), `SupportLabel` (case-insensitively unique), `CannedResponse` (optional team scope; placeholders `{{requester_name}}`, `{{ticket_key}}`, `{{agent_name}}`).
 - `SupportSettings` singleton: reopen/auto-close windows, attachment limits, comment edit window, `requesters_can_set_priority`, `sla_enabled`, `sla_at_risk_percent`, `csat_enabled`, `csat_window_days`, `default_ticket_type`.
+- **Baseline configuration** (`defaults.py`): every `migrate` (or `provision_reference_data`) creates, for each group whose table is empty, the workflow Open → In Progress ⇄ Waiting for Customer (pauses SLA) → Resolved → Closed (final) with its transitions, priorities Critical/High/Medium (default)/Low with SLA targets, and a `General` category. Groups that already hold any row are never touched, so admin edits are kept. Statuses are also editable in the Django admin.
 
 ### 2.3 Collaboration entities
 `TicketWatcher` (unique per ticket+user), `TicketLink` (`relates_to`, `duplicates`, `blocks`, `caused_by`; unique, no self-links; `relates_to` is symmetric), `TicketComment`, `TicketAttachment`, `TicketResourceLink`.
@@ -62,7 +63,7 @@ Append-only. Enforced by model `save/delete` guards **and** PostgreSQL triggers 
 Recipients: requester, assignee, **watchers** (never for internal notes), **team members** for new/routed tickets (all agents if no team). Outbox rows are leased (`SELECT … FOR UPDATE SKIP LOCKED` + 5-minute lease) so concurrent workers never double-send; e-mail bodies are HTML-escaped and deep links absolute (`SUPPORT_DESK_BASE_URL`).
 
 ### 3.5 Attachments
-Type/size/count limits (from `SupportSettings`) and magic-byte checks. Scanning is pluggable: set `SUPPORT_DESK_ATTACHMENT_SCANNER` to a dotted callable `(attachment) -> AttachmentScanStatus`. Without it uploads are `clean` immediately and verified by SHA-256 integrity; with it uploads start `pending` and **cannot be downloaded** (409) until scanned clean.
+Type/size/count limits (from `SupportSettings`) and magic-byte checks. The default allow-list covers images (png, jpg, gif, webp, bmp), documents (pdf, doc/docx, xls/xlsx, ppt/pptx, odt/ods/odp, rtf, md), text/data/logs (txt, log, csv, json, xml) and zip; migration `0002` widens installations still on the original list. Scanning is pluggable: set `SUPPORT_DESK_ATTACHMENT_SCANNER` to a dotted callable `(attachment) -> AttachmentScanStatus`. Without it uploads are `clean` immediately and verified by SHA-256 integrity; with it uploads start `pending` and **cannot be downloaded** (409) until scanned clean.
 
 ## 4. API
 Base `/api/support/`. All responses use the [standard envelope](../../../../../docs/api/response-standard.md). `{key}` is the ticket key. "any" means `HasAPIKey | IsAuthenticated`; "visible" applies §3.1. Generated contract: `openapi/support-desk-tickets.yml`.

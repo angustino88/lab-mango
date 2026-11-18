@@ -6,6 +6,14 @@ from django.db.models.functions import Lower
 
 from core.reference_data.declarations import ReferenceList, ReferenceMode
 from core.reference_data.models import ProtectedReferenceMixin, SeededReferenceList
+from core.reference_data.registry import get_registered_reference_lists, get_registered_reference_provisioners
+
+
+def provision_registered_reference_data(*, using: str) -> None:
+    """Provision every declaration and provisioning step registered by installed apps."""
+    provision_reference_lists(get_registered_reference_lists(), using=using)
+    for _key, provisioner in get_registered_reference_provisioners():
+        provisioner(using=using)
 
 
 def provision_reference_lists(
