@@ -29,7 +29,7 @@ from django.utils import timezone
 
 from core.common.db.idempotency import try_claim_operation
 from core.common.domain.errors import Conflict, NotFound
-from core.labs.features.equipment.public import lock_monitoring_computing, match_hardware_ids, normalize_hardware_id
+from core.labs.features.equipment.public import lock_monitoring_computing, match_hardware_ids
 from core.labs.features.licenses.public import (
     ChangeLicenseStatusInput,
     UpdateLicenseInput,
@@ -306,6 +306,3 @@ def report_license_check_run(command: LicenseCheckRunInput) -> LicenseCheckRunAc
         _apply_run(run, check, command)
     return _ack(run, _result_of(run, check))
 
-
-def normalized_carrier_value(kind: str, value: str) -> str:
-    return normalize_hardware_id(kind, value) if kind else value.strip()
