@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-
 # One-off snapshots an administrator pushes from the agent so new devices can be linked. They are
 # evidence for linking only: never presence of an expected device, never "reporting", never alerts.
 DISCOVERY_COLLECTOR_KEY = "discovery"
