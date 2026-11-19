@@ -58,6 +58,31 @@ class TargetsField(serializers.Field):
         return items
 
 
+@embedded_resource
+class ExpectedLicenseSerializer(serializers.Serializer):
+    """A license the check should find, and whether a current run finds it."""
+
+    id = serializers.IntegerField()
+    uid = serializers.UUIDField()
+    name = serializers.CharField()
+    is_found = serializers.BooleanField()
+
+
+@extend_schema_field(ExpectedLicenseSerializer(many=True))
+class ExpectedLicensesField(serializers.Field):
+    def __init__(self, **kwargs):
+        kwargs.setdefault("read_only", True)
+        kwargs.setdefault("source", "*")
+        super().__init__(**kwargs)
+
+    def to_representation(self, check):
+        found = {o.license_id for o in getattr(check, "live_matched_observations", [])}
+        return [
+            {"id": lic.pk, "uid": str(lic.uid), "name": lic.name or lic.sku, "is_found": lic.pk in found}
+            for lic in getattr(check, "live_expected_licenses", [])
+        ]
+
+
 class LicenseCheckSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     key = serializers.CharField()
@@ -74,6 +99,7 @@ class LicenseCheckSerializer(serializers.Serializer):
     targets = TargetsField()
     license_count = serializers.IntegerField(help_text="Licenses currently found by this check.")
     attention_count = serializers.IntegerField(help_text="Found licenses that are not matched.")
+    expected_licenses = ExpectedLicensesField()
     created_at = serializers.DateTimeField(source="created")
     updated_at = serializers.DateTimeField(source="modified")
 
@@ -101,6 +127,12 @@ class LicenseCheckWriteSerializer(serializers.Serializer):
     is_enabled = serializers.BooleanField(required=False)
     is_lab_wide = serializers.BooleanField(required=False)
     targets = LicenseCheckTargetRequestSerializer(many=True, required=False)
+    expected_license_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        max_length=200,
+        help_text="Licenses this check should find; one no run reports is flagged missing.",
+    )
 
 
 class LicenseCheckQuerySerializer(PageNumberQuerySerializer):

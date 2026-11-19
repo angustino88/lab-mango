@@ -389,6 +389,17 @@ CELERY_BEAT_SCHEDULE = {
         "task": "labs.monitoring.purge_device_observation_history",
         "schedule": crontab(minute=40, hour=2),
     },
+    # License warnings: 30, 7 and 0 days before expiry, and expected licenses no check finds.
+    # Each is sent once (LicenseAlert); see core/labs/features/license_checks/docs/spec.md.
+    "licenses-send-alerts": {
+        "task": "labs.licenses.send_alerts",
+        "schedule": crontab(minute=5, hour=7),
+    },
+    # Purge license-check runs older than LICENSE_CHECK_RUN_RETENTION_DAYS (current ones are kept).
+    "license-checks-purge-run-history": {
+        "task": "labs.license_checks.purge_run_history",
+        "schedule": crontab(minute=50, hour=2),
+    },
 }
 
 # DEVICE MONITORING
@@ -396,6 +407,8 @@ CELERY_BEAT_SCHEDULE = {
 # Idempotency receipts only need to outlive agent retry windows; detached rows are history.
 DEVICE_OBSERVATION_RECEIPT_RETENTION_DAYS = env.int("DEVICE_OBSERVATION_RECEIPT_RETENTION_DAYS", default=14)
 DEVICE_CONNECTION_DETACHED_RETENTION_DAYS = env.int("DEVICE_CONNECTION_DETACHED_RETENTION_DAYS", default=90)
+# License-check runs are diagnostics; the newest per check and computer is always kept.
+LICENSE_CHECK_RUN_RETENTION_DAYS = env.int("LICENSE_CHECK_RUN_RETENTION_DAYS", default=30)
 
 # DJANGO-ALLAUTH
 # ------------------------------------------------------------------------------

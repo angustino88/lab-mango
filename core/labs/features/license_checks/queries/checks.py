@@ -10,6 +10,7 @@ from core.common.domain.errors import NotFound
 from core.labs.models import (
     Equipment,
     EquipmentAssignment,
+    License,
     LicenseCheck,
     LicenseCheckRun,
     LicenseCheckTarget,
@@ -96,7 +97,21 @@ def _with_targets(queryset: QuerySet[LicenseCheck]) -> QuerySet[LicenseCheck]:
     open_observations = Q(observations__removed_at__isnull=True)
     return (
         queryset.select_related("creator", "last_modified_by")
-        .prefetch_related(Prefetch("targets", queryset=targets))
+        .prefetch_related(
+            Prefetch("targets", queryset=targets),
+            Prefetch(
+                "expected_licenses",
+                queryset=License.objects.filter(deleted_at__isnull=True).order_by("name", "pk"),
+                to_attr="live_expected_licenses",
+            ),
+            Prefetch(
+                "observations",
+                queryset=LicenseObservation.objects.filter(removed_at__isnull=True, license__isnull=False).only(
+                    "pk", "license_check_id", "license_id"
+                ),
+                to_attr="live_matched_observations",
+            ),
+        )
         .annotate(
             license_count=Count("observations", filter=open_observations, distinct=True),
             attention_count=Count(

@@ -83,3 +83,16 @@ def test_beat_startup_creates_the_analytics_snapshot_tasks():
     tasks = dict(PeriodicTask.objects.filter(name__in=ANALYTICS_SNAPSHOTS).values_list("name", "task"))
     assert tasks == ANALYTICS_SNAPSHOTS
     assert all(PeriodicTask.objects.get(name=name).crontab.hour == "0" for name in ANALYTICS_SNAPSHOTS)
+
+
+@pytest.mark.parametrize(
+    "name,task",
+    [
+        ("licenses-send-alerts", "labs.licenses.send_alerts"),
+        ("license-checks-purge-run-history", "labs.license_checks.purge_run_history"),
+    ],
+)
+def test_license_jobs_run_daily_and_are_registered(name, task):
+    assert settings.CELERY_BEAT_SCHEDULE[name]["task"] == task
+    app.loader.import_default_modules()
+    assert task in app.tasks

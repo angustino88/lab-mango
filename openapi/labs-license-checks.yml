@@ -407,6 +407,26 @@ components:
       required:
       - label
       - value
+    ExpectedLicense:
+      type: object
+      description: A license the check should find, and whether a current run finds
+        it.
+      properties:
+        id:
+          type: integer
+        uid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        is_found:
+          type: boolean
+      required:
+      - id
+      - is_found
+      - name
+      - uid
+      x-embedded-resource: true
     InventoryValues:
       type: object
       description: The matched license's registered values, to compare with what the
@@ -501,6 +521,11 @@ components:
         attention_count:
           type: integer
           description: Found licenses that are not matched.
+        expected_licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpectedLicense'
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -511,6 +536,7 @@ components:
       - attention_count
       - carrier
       - created_at
+      - expected_licenses
       - extract
       - id
       - interval_minutes
@@ -783,6 +809,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LicenseCheckTargetRequest'
+        expected_license_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          description: Licenses this check should find; one no run reports is flagged
+            missing.
+          maxItems: 200
     LicenseObservation:
       type: object
       description: A license an agent found, and how it compares with the inventory.
@@ -956,6 +990,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LicenseCheckTargetRequest'
+        expected_license_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          description: Licenses this check should find; one no run reports is flagged
+            missing.
+          maxItems: 200
     ProblemDetail:
       type: object
       properties:

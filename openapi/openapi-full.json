@@ -52476,6 +52476,32 @@
           "name"
         ]
       },
+      "ExpectedLicense": {
+        "type": "object",
+        "description": "A license the check should find, and whether a current run finds it.",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "uid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "is_found": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "is_found",
+          "name",
+          "uid"
+        ],
+        "x-embedded-resource": true
+      },
       "Expense": {
         "type": "object",
         "description": "Read shape for expenses.",
@@ -55894,6 +55920,13 @@
             "type": "integer",
             "description": "Found licenses that are not matched."
           },
+          "expected_licenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpectedLicense"
+            },
+            "readOnly": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -55907,6 +55940,7 @@
           "attention_count",
           "carrier",
           "created_at",
+          "expected_licenses",
           "extract",
           "id",
           "interval_minutes",
@@ -56396,6 +56430,15 @@
             "items": {
               "$ref": "#/components/schemas/LicenseCheckTargetRequest"
             }
+          },
+          "expected_license_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Licenses this check should find; one no run reports is flagged missing.",
+            "maxItems": 200
           }
         }
       },
@@ -60041,6 +60084,15 @@
             "items": {
               "$ref": "#/components/schemas/LicenseCheckTargetRequest"
             }
+          },
+          "expected_license_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Licenses this check should find; one no run reports is flagged missing.",
+            "maxItems": 200
           }
         }
       },

@@ -35,6 +35,12 @@ class LicenseCheck(TimeStampedModel, UserStampedModel):
     is_lab_wide = models.BooleanField(default=False, help_text="Runs on every computer with an agent.")
     revision = models.PositiveIntegerField(default=1)
     preset_key = models.CharField(max_length=32, blank=True, default="", help_text="Preset it was created from.")
+    expected_licenses = models.ManyToManyField(
+        "labs.License",
+        blank=True,
+        related_name="expecting_checks",
+        help_text="Licenses this check should find; one no run reports is flagged missing.",
+    )
 
     class Meta:
         app_label = "labs"
@@ -211,3 +217,25 @@ class LicenseObservation(models.Model):
             models.Index(fields=("status",), condition=Q(removed_at__isnull=True), name="license_obs_status_idx"),
             models.Index(fields=("license",), name="license_obs_license_idx"),
         ]
+
+
+class LicenseAlertKind(models.TextChoices):
+    EXPIRY = "expiry", "Expiry"
+    MISSING = "missing", "Missing"
+
+
+class LicenseAlert(models.Model):
+    """One alert already sent, so a daily job never sends it twice.
+
+    ``key`` names the occasion: ``"30d:2027-04-09"`` (threshold and expiry date) for expiry alerts,
+    ``"check:12"`` for a license a check no longer finds (deleted when it is found again).
+    """
+
+    license = models.ForeignKey("labs.License", related_name="alerts", on_delete=models.CASCADE)
+    kind = models.CharField(max_length=16, choices=LicenseAlertKind.choices)
+    key = models.CharField(max_length=64)
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = "labs"
+        constraints = [models.UniqueConstraint(fields=("license", "kind", "key"), name="license_alert_once_uniq")]

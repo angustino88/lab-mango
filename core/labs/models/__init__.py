@@ -98,6 +98,8 @@ from .resource.equipment.computing import ComputingProfile, TechnicalUser
 from .resource.license.agreement import LicenseAgreement
 from .resource.license.assignment import LicenseAssignment
 from .resource.license.check import (
+    LicenseAlert,
+    LicenseAlertKind,
     LicenseCheck,
     LicenseCheckRun,
     LicenseCheckRunStatus,
@@ -187,6 +189,8 @@ __all__ = [
     "Material",
     "License",
     "LicenseAssignment",
+    "LicenseAlert",
+    "LicenseAlertKind",
     "LicenseCheck",
     "LicenseCheckRun",
     "LicenseCheckRunStatus",

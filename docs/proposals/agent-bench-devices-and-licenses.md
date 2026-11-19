@@ -266,7 +266,7 @@ Configured checks make agents run programs, so the design limits what a configur
 |---|---|---|
 | 1 | **Done:** `EquipmentHardwareId` (+ API), Link stores PnP IDs, hardware-ID matching (serial matching removed), `expected_devices` in the policy, legacy `monitored_devices` as suggestions (`GET /api/labs/expected-devices/legacy-suggestions`) | Watch list from the policy; report only mapped PnP IDs with `hardware_ids`; Push = discovery snapshot from the Device Scan dialog |
 | 2 | **Done:** license checks (model, staff API, agent routes), runs, observations, matching | Generic check runner with presets (**done**: `agent/src/core/licensing/`, Vector preset); uses the routes once `license_checks` is advertised |
-| 3 | **Done:** effects (D1). Open: backend expiry notifications, expected licenses per check, run retention | Tray warnings, licenses in the device dialog |
+| 3 | **Done:** effects (D1), attention alerts, expiry notifications (30/7/0 days), expected licenses per check, run retention | Tray warnings, licenses in the device dialog |
 
 Each phase: OpenAPI regenerated, focused tests, the gates in `docs/ai-team/quality-gates.md`,
 security and QA review, owner approval before merge.

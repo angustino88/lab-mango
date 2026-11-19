@@ -29,6 +29,9 @@ from core.labs.features.equipment.tasks import (
     expire_uncollected_reservations_task,
 )
 
+# License alerts and license-check run retention
+from core.labs.features.license_checks.tasks import purge_license_check_runs_task, send_license_alerts_task
+
 # Device-observation retention
 from core.labs.features.monitoring.tasks import purge_device_observation_history_task
 
@@ -40,6 +43,8 @@ __all__ = [
     "deliver_booking_notifications_task",
     "mark_stale_computing_activities_offline_task",
     "purge_device_observation_history_task",
+    "purge_license_check_runs_task",
+    "send_license_alerts_task",
     "reconcile_bench_booking_statuses_task",
     "send_storage_quota_alerts",
     "snapshot_daily_active_benches",

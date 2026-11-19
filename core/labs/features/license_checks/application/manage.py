@@ -14,7 +14,16 @@ from typing import Any
 from django.db import IntegrityError, transaction
 
 from core.common.domain.errors import Conflict, Forbidden, NotFound, ValidationFailed
-from core.labs.models import Bench, Equipment, EquipmentCategory, LicenseCheck, LicenseCheckTarget, Room, Station
+from core.labs.models import (
+    Bench,
+    Equipment,
+    EquipmentCategory,
+    License,
+    LicenseCheck,
+    LicenseCheckTarget,
+    Room,
+    Station,
+)
 from core.users.public import LabsRole, has_labs_role
 
 from ..config import validate_configuration
@@ -29,7 +38,10 @@ TARGET_MODELS = {
 }
 MAX_TARGETS = 200
 ADMIN_FIELDS = frozenset({"vendor", "probe", "extract", "carrier"})
-COORDINATOR_FIELDS = frozenset({"name", "interval_minutes", "is_enabled", "is_lab_wide", "targets"})
+COORDINATOR_FIELDS = frozenset(
+    {"name", "interval_minutes", "is_enabled", "is_lab_wide", "targets", "expected_license_ids"}
+)
+MAX_EXPECTED_LICENSES = 200
 # Fields the agent receives: a change must reach it as a new revision.
 AGENT_FIELDS = frozenset({"name", "vendor", "interval_minutes", "probe", "extract", "carrier"})
 
@@ -53,6 +65,7 @@ class CreateLicenseCheckInput:
     is_lab_wide: bool = False
     targets: Sequence[CheckTarget] = ()
     preset_key: str = ""
+    expected_license_ids: Sequence[int] = ()
 
 
 @dataclass(frozen=True)
@@ -63,6 +76,7 @@ class CreateLicenseCheckFromPresetInput:
     is_enabled: bool = True
     is_lab_wide: bool = False
     targets: Sequence[CheckTarget] = ()
+    expected_license_ids: Sequence[int] = ()
 
 
 @dataclass(frozen=True)
@@ -102,6 +116,19 @@ def _clean_targets(targets: Sequence[CheckTarget]) -> list[CheckTarget]:
     return unique
 
 
+def _set_expected_licenses(check: LicenseCheck, license_ids: Sequence[int]) -> None:
+    """Licenses the check should find (not sent to agents, so no new revision)."""
+    ids = list(dict.fromkeys(license_ids))
+    if len(ids) > MAX_EXPECTED_LICENSES:
+        message = f"At most {MAX_EXPECTED_LICENSES} expected licenses."
+        raise ValidationFailed(message, details={"expected_license_ids": message})
+    found = set(License.objects.filter(pk__in=ids, deleted_at__isnull=True).values_list("pk", flat=True))
+    if missing := [i for i in ids if i not in found]:
+        message = f"Licenses not found: {', '.join(map(str, missing))}."
+        raise ValidationFailed(message, details={"expected_license_ids": message})
+    check.expected_licenses.set(ids)
+
+
 def _replace_targets(check: LicenseCheck, targets: list[CheckTarget]) -> None:
     check.targets.all().delete()
     LicenseCheckTarget.objects.bulk_create(
@@ -134,6 +161,7 @@ def create_license_check(command: CreateLicenseCheckInput, *, actor) -> LicenseC
     except IntegrityError:
         raise Conflict("A license check with this key exists.", code="license_check_key_exists") from None
     _replace_targets(check, targets)
+    _set_expected_licenses(check, command.expected_license_ids)
     return check
 
 
@@ -154,6 +182,7 @@ def create_license_check_from_preset(command: CreateLicenseCheckFromPresetInput,
             is_lab_wide=command.is_lab_wide,
             targets=command.targets,
             preset_key=preset["key"],
+            expected_license_ids=command.expected_license_ids,
         ),
         actor=actor,
     )
@@ -177,6 +206,9 @@ def update_license_check(command: UpdateLicenseCheckInput, *, actor) -> LicenseC
         )
         _check_equipment_carrier(carrier)
         changes.update(probe=probe, extract=extract, carrier=carrier)
+    expected_license_ids = changes.pop("expected_license_ids", None)
+    if expected_license_ids is not None:
+        _set_expected_licenses(check, expected_license_ids)
     targets = changes.pop("targets", None)
     if targets is not None:
         _replace_targets(check, _clean_targets(targets))

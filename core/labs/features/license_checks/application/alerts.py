@@ -48,3 +48,50 @@ def notify_license_attention(check: LicenseCheck, observation: LicenseObservatio
     )
     transaction.on_commit(partial(_push, notification))
     return True
+
+
+def send_missing_license_alerts(*, now=None) -> int:
+    """Warn a check's owner once when a license the check expects is not found by any current run.
+
+    A check is judged only once it has an applied ``ok`` run. When the license is found again, its
+    alert record is removed, so a later disappearance warns again. Returns the warnings sent.
+    """
+    from django.db import IntegrityError
+
+    from core.labs.models import LicenseAlert, LicenseAlertKind, LicenseCheckRun
+
+    now = now or timezone.now()
+    sent = 0
+    checks = LicenseCheck.objects.filter(is_enabled=True, expected_licenses__isnull=False).distinct()
+    for check in checks.prefetch_related("expected_licenses"):
+        key = f"check:{check.pk}"
+        if not LicenseCheckRun.objects.filter(license_check=check, status="ok", is_applied=True).exists():
+            continue
+        found = set(
+            LicenseObservation.objects.filter(
+                license_check=check, removed_at__isnull=True, license__isnull=False
+            ).values_list("license_id", flat=True)
+        )
+        expected = [lic for lic in check.expected_licenses.all() if lic.deleted_at is None]
+        LicenseAlert.objects.filter(
+            kind=LicenseAlertKind.MISSING, key=key, license_id__in=[lic.pk for lic in expected if lic.pk in found]
+        ).delete()
+        recipient_id = check.creator_id or check.last_modified_by_id
+        for license_record in expected:
+            if license_record.pk in found or recipient_id is None:
+                continue
+            try:
+                with transaction.atomic():
+                    LicenseAlert.objects.create(license=license_record, kind=LicenseAlertKind.MISSING, key=key)
+                    notification = Notification.objects.create(
+                        message=f"License not found: {license_record.name or license_record.sku}"[:255],
+                        details=f"The check '{check.name}' does not find it on any computer it runs on."[:255],
+                        message_type=Notification.WARNING,
+                        expiry_date=now + ALERT_LIFETIME,
+                        target_user_id=recipient_id,
+                    )
+                    transaction.on_commit(partial(_push, notification))
+            except IntegrityError:
+                continue
+            sent += 1
+    return sent

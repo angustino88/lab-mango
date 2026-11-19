@@ -11,7 +11,7 @@ DeviceObservationBatch, ExpectedDevice) and the equipment serial-number index
 (core/labs/features/monitoring/docs/device-connections.md).
 
 Folded 2026-11-18: license serial numbers, equipment hardware IDs (EquipmentHardwareId) and license
-checks (LicenseCheck, LicenseCheckTarget, LicenseCheckRun, LicenseObservation;
+checks (LicenseCheck, LicenseCheckTarget, LicenseCheckRun, LicenseObservation, LicenseAlert;
 core/labs/features/license_checks/docs/spec.md).
 """
 
@@ -9733,6 +9733,55 @@ class Migration(migrations.Migration):
                 fields=("license_check", "computing", "observation_key"),
                 name="license_observation_key_uniq",
             ),
+        ),
+        migrations.AddField(
+            model_name="licensecheck",
+            name="expected_licenses",
+            field=models.ManyToManyField(
+                blank=True,
+                help_text="Licenses this check should find; one no run reports is flagged missing.",
+                related_name="expecting_checks",
+                to="labs.license",
+            ),
+        ),
+        migrations.CreateModel(
+            name="LicenseAlert",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "kind",
+                    models.CharField(
+                        choices=[("expiry", "Expiry"), ("missing", "Missing")],
+                        max_length=16,
+                    ),
+                ),
+                ("key", models.CharField(max_length=64)),
+                ("sent_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "license",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="alerts",
+                        to="labs.license",
+                    ),
+                ),
+            ],
+            options={
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("license", "kind", "key"),
+                        name="license_alert_once_uniq",
+                    )
+                ],
+            },
         ),
         migrations.RunPython(seed_purchase_priorities, unseed_purchase_priorities),
     ]

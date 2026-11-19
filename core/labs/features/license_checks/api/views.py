@@ -75,6 +75,7 @@ class LicenseCheckListCreateAPIView(AppListAPIView, _LicenseCheckAPIView):
                 is_enabled=data.get("is_enabled", True),
                 is_lab_wide=data.get("is_lab_wide", False),
                 targets=targets,
+                expected_license_ids=data.get("expected_license_ids", ()),
             )
             return self._execute(lambda: create_license_check_from_preset(command, actor=request.user), project=True)
         missing = [name for name in ("key", "name", "probe", "extract", "carrier") if name not in data]
@@ -96,6 +97,7 @@ class LicenseCheckListCreateAPIView(AppListAPIView, _LicenseCheckAPIView):
             is_lab_wide=data.get("is_lab_wide", False),
             targets=targets,
             preset_key=data.get("preset_key", ""),
+            expected_license_ids=data.get("expected_license_ids", ()),
         )
         return self._execute(lambda: create_license_check(command, actor=request.user), project=True)
 

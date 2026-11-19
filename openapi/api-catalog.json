@@ -73090,6 +73090,14 @@
                       "type": "integer",
                       "description": "Found licenses that are not matched."
                     },
+                    "expected_licenses": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      },
+                      "readOnly": true
+                    },
                     "created_at": {
                       "type": "string",
                       "format": "date-time"
@@ -73103,6 +73111,7 @@
                     "attention_count",
                     "carrier",
                     "created_at",
+                    "expected_licenses",
                     "extract",
                     "id",
                     "interval_minutes",
@@ -73152,6 +73161,9 @@
                 ],
                 "license_count": 1,
                 "attention_count": 1,
+                "expected_licenses": [
+                  {}
+                ],
                 "created_at": "2026-10-20T12:00:00Z",
                 "updated_at": "2026-10-20T12:00:00Z"
               }
@@ -73347,6 +73359,15 @@
                   "target_id"
                 ]
               }
+            },
+            "expected_license_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "description": "Licenses this check should find; one no run reports is flagged missing.",
+              "maxItems": 200
             }
           }
         },
@@ -73366,6 +73387,9 @@
               "kind": {},
               "target_id": 1
             }
+          ],
+          "expected_license_ids": [
+            1
           ]
         }
       },
@@ -73434,6 +73458,14 @@
                     "type": "integer",
                     "description": "Found licenses that are not matched."
                   },
+                  "expected_licenses": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "created_at": {
                     "type": "string",
                     "format": "date-time"
@@ -73447,6 +73479,7 @@
                   "attention_count",
                   "carrier",
                   "created_at",
+                  "expected_licenses",
                   "extract",
                   "id",
                   "interval_minutes",
@@ -73487,6 +73520,9 @@
               ],
               "license_count": 1,
               "attention_count": 1,
+              "expected_licenses": [
+                {}
+              ],
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
             }
@@ -73894,6 +73930,14 @@
                     "type": "integer",
                     "description": "Found licenses that are not matched."
                   },
+                  "expected_licenses": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "created_at": {
                     "type": "string",
                     "format": "date-time"
@@ -73907,6 +73951,7 @@
                   "attention_count",
                   "carrier",
                   "created_at",
+                  "expected_licenses",
                   "extract",
                   "id",
                   "interval_minutes",
@@ -73947,6 +73992,9 @@
               ],
               "license_count": 1,
               "attention_count": 1,
+              "expected_licenses": [
+                {}
+              ],
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
             }
@@ -74151,6 +74199,15 @@
                   "target_id"
                 ]
               }
+            },
+            "expected_license_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "description": "Licenses this check should find; one no run reports is flagged missing.",
+              "maxItems": 200
             }
           }
         },
@@ -74170,6 +74227,9 @@
               "kind": {},
               "target_id": 1
             }
+          ],
+          "expected_license_ids": [
+            1
           ]
         }
       },
@@ -74238,6 +74298,14 @@
                     "type": "integer",
                     "description": "Found licenses that are not matched."
                   },
+                  "expected_licenses": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "created_at": {
                     "type": "string",
                     "format": "date-time"
@@ -74251,6 +74319,7 @@
                   "attention_count",
                   "carrier",
                   "created_at",
+                  "expected_licenses",
                   "extract",
                   "id",
                   "interval_minutes",
@@ -74291,6 +74360,9 @@
               ],
               "license_count": 1,
               "attention_count": 1,
+              "expected_licenses": [
+                {}
+              ],
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
             }

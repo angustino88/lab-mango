@@ -90,8 +90,17 @@ the check's owner (creator, else last editor) gets one in-app warning notificati
 pushed after commit). Matched licenses and repeated runs with the same outcome never notify. The
 web app shows the open count on Licenses → Found on lab hardware.
 
-## Not done
+## Expected licenses
 
-- Expected licenses per check (`LicenseCheckLicense`, "missing" when no run reports them).
-- Retention of `LicenseCheckRun` history (30 days) as a scheduled task.
-- Backend expiry notifications (the agent shows tray warnings 30 days ahead, D4).
+A check may list the licenses it should find (`expected_license_ids` on write, coordinators may
+change it; not sent to agents, so no new revision). The check shows each with `is_found`: a current
+observation of this check is matched to it on some computer. Once the check has an applied `ok`
+run, an expected license nobody finds warns the check owner once (daily job below); when it is
+found again the warning is re-armed.
+
+## Scheduled jobs (`tasks.py`, `CELERY_BEAT_SCHEDULE`)
+
+| Job | When | What |
+|---|---|---|
+| `labs.licenses.send_alerts` | daily 07:05 | Expiry warnings (licenses feature, `send_license_expiry_alerts`): to the license owner, else its creator, 30 and 7 days ahead and on expiry, each once per expiry date (`LicenseAlert`); a renewal starts again; revoked/suspended and licenses expired > 7 days are skipped. Then missing expected licenses (above) |
+| `labs.license_checks.purge_run_history` | daily 02:50 | Deletes runs older than `LICENSE_CHECK_RUN_RETENTION_DAYS` (30), keeping the newest run per check and computer and every run an observation points to |
