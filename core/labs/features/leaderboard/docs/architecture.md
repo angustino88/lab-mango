@@ -107,12 +107,28 @@ KPIs above over the bench's bookings. `downtime_minutes` is not computed yet (al
 ### Points
 
 ```text
-persona = active_hours×10 + usage_efficiency×100 + booking_compliance×50
+persona = sessions×10 + active_hours×10 + usage_efficiency×100 + booking_compliance×50
         + booking_utilization×50 + slot_adherence×20 − late_rate×30        (null KPIs add 0)
-bench   = active_hours×10 + active_users×15 + utilization_rate×100 + booking_compliance×50
+bench   = sessions×20 + active_hours×10 + active_users×15 + utilization_rate×100 + booking_compliance×50
 ```
-Session counts do not score on their own, so many short logins cannot outrank real lab time.
-The assessment (rating, strengths, improvements) is derived from these KPIs in the web app.
+Login count reflects how much the lab is used; active hours and the booking KPIs reflect how well.
+
+### KPI assessment (`queries/assessment.py`)
+
+`GET /leaderboard/users/<id>/assessment` and `GET /benches/<id>/assessment`, **lab coordinators and
+administrators only** (`LABS_STAFF_ACCESS`); the rankings stay readable by every lab member.
+
+- Scorecard: each KPI with its value, previous-period value, target and status (on / near / below
+  target, or not applicable). Targets (persona): attendance ≥ 90 %, booked time used ≥ 75 %, active
+  rate ≥ 80 %, slot adherence ≥ 95 %, sessions without booking ≤ 20 %, after-hours ≤ 10 %, lab
+  presence ≥ 50 % (4 h/weekday). Bench: utilisation ≥ 60 %, attendance ≥ 90 %, booked time used
+  ≥ 75 %, booking fill ≥ 50 %.
+- Score: weighted mean of each KPI's attainment towards its target (0–100). Rating: ≥ 85 exceeds,
+  ≥ 70 meets, ≥ 50 partially meets, else below expectations; fewer than 3 sessions plus bookings is
+  "insufficient data".
+- Strengths (KPIs on target) and development areas (near or below target, each with a recommended
+  action), with the figures behind them, and a one-paragraph summary including the trend against the
+  equal-length previous period.
 
 ---
 

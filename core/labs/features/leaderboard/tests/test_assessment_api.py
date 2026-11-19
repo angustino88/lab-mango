@@ -1,0 +1,126 @@
+"""KPI assessment endpoints: coordinator/admin only; scorecard, rating, strengths, development areas, trend."""
+
+from datetime import datetime
+from datetime import timezone as dt_timezone
+
+import pytest
+from rest_framework.test import APIClient
+
+from core.labs.models import BookingStatus, SessionAccessType
+from tests.factories import BenchBookingFactory, BenchFactory, LabSessionLogFactory, UserFactory, grant_labs_role
+
+RANGE = {"start_date": "2026-04-06", "end_date": "2026-04-10"}  # Mon-Fri; previous period is the week before
+
+
+def at(day: int, hour: int, minute: int = 0) -> datetime:
+    return datetime(2026, 4, day, hour, minute, tzinfo=dt_timezone.utc)
+
+
+def client_for(role: str) -> APIClient:
+    api = APIClient()
+    api.force_authenticate(user=grant_labs_role(UserFactory(), role))
+    return api
+
+
+def booked_day(user, bench, day, *, attend=True, active_hours=4):
+    slot = BenchBookingFactory(
+        bench=bench,
+        requester=user,
+        starts_at=at(day, 8),
+        ends_at=at(day, 12),
+        status=BookingStatus.COMPLETED if attend else BookingStatus.EXPIRED,
+    )
+    if attend:
+        LabSessionLogFactory(
+            user=user,
+            remote_user=user.username,
+            bench=bench,
+            booking=slot,
+            booking_code=slot.booking_code,
+            access_type=SessionAccessType.BOOKED,
+            login_time=at(day, 8),
+            logout_time=at(day, 12),
+            active_duration_seconds=active_hours * 3600,
+        )
+    return slot
+
+
+@pytest.mark.django_db
+def test_assessments_are_for_coordinators_and_admins_only():
+    user, bench = UserFactory(), BenchFactory()
+    member = client_for("user")
+    assert member.get(f"/api/labs/leaderboard/users/{user.pk}/assessment", RANGE).status_code == 403
+    assert member.get(f"/api/labs/benches/{bench.pk}/assessment", RANGE).status_code == 403
+    # The rankings themselves stay visible to every lab member.
+    assert member.get("/api/labs/leaderboard/persona", RANGE).status_code == 200
+
+    coordinator = client_for("coord")
+    assert coordinator.get(f"/api/labs/leaderboard/users/{user.pk}/assessment", RANGE).status_code == 200
+    assert coordinator.get(f"/api/labs/benches/{bench.pk}/assessment", RANGE).status_code == 200
+    assert coordinator.get("/api/labs/leaderboard/users/999999/assessment", RANGE).status_code == 404
+
+
+@pytest.mark.django_db
+def test_user_assessment_reports_strengths_development_areas_and_trend():
+    user, bench = UserFactory(username="assess-alice"), BenchFactory()
+    for day in (6, 7, 8, 9):  # four booked, fully used, focused days
+        booked_day(user, bench, day)
+    booked_day(user, bench, 10, attend=False)  # one no-show
+    for day in (1, 2):  # previous week: two no-shows, one idle day
+        booked_day(user, bench, day, attend=False)
+    booked_day(user, bench, 3, active_hours=1)
+
+    data = client_for("coord").get(f"/api/labs/leaderboard/users/{user.pk}/assessment", RANGE).json()["data"]
+
+    kpis = {kpi["kpi"]["value"]: kpi for kpi in data["kpis"]}
+    assert kpis["booking_attendance"]["value"] == 0.8
+    assert kpis["booking_attendance"]["target"] == 0.9
+    assert kpis["booking_attendance"]["status"]["value"] == "near"
+    assert kpis["booked_time_used"]["status"]["value"] == "met"
+    assert kpis["active_rate"]["value"] == 1.0
+    assert kpis["after_hours"]["is_higher_better"] is False
+
+    strengths = [s["kpi"]["value"] for s in data["strengths"]]
+    assert strengths[:2] == ["booked_time_used", "active_rate"]
+    assert data["strengths"][0]["text"] == "Efficient use of reserved time: 80% of booked hours were used."
+
+    area = data["development_areas"][0]
+    assert area["kpi"]["value"] == "booking_attendance"
+    assert area["text"] == "Booking attendance is 80%: 1 of 5 bookings had no session."
+    assert area["recommendation"].startswith("Cancel or shorten bookings")
+
+    assert data["rating"]["value"] in {"exceeds", "meets"}
+    assert data["previous_score"] is not None and data["score"] > data["previous_score"]
+    assert data["summary"] == (
+        f"Up {data['score'] - data['previous_score']} points on the previous period ({data['previous_score']}/100). "
+        "Key strength: booked time used. Main focus: booking attendance."
+    )
+    assert data["period"]["starts_at"].startswith("2026-04-06")
+
+
+@pytest.mark.django_db
+def test_too_little_activity_is_not_rated():
+    user = UserFactory(username="assess-new")
+    LabSessionLogFactory(user=user, remote_user=user.username, login_time=at(7, 9), logout_time=at(7, 10))
+
+    data = client_for("coord").get(f"/api/labs/leaderboard/users/{user.pk}/assessment", RANGE).json()["data"]
+
+    assert data["rating"]["value"] == "insufficient_data"
+    assert data["score"] is None
+    assert data["summary"] == "Not enough activity for a rating (1 sessions and 0 bookings in the period)."
+
+
+@pytest.mark.django_db
+def test_bench_assessment_flags_low_utilisation_with_a_recommendation():
+    owner, bench = UserFactory(), BenchFactory()
+    booked_day(owner, bench, 6, active_hours=1)
+    for day in (7, 8):
+        booked_day(owner, bench, day, attend=False)
+
+    data = client_for("coord").get(f"/api/labs/benches/{bench.pk}/assessment", RANGE).json()["data"]
+
+    areas = {area["kpi"]["value"]: area for area in data["development_areas"]}
+    assert areas["utilization"]["severity"]["value"] == "below"
+    assert areas["utilization"]["text"] == "Low utilisation: active 3% of working hours."
+    assert "booking_attendance" in areas
+    assert data["rating"]["value"] == "below"

@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 493,
+  "total_endpoints": 495,
   "generated_at": "2026-11-19",
   "endpoints": [
     {
@@ -28131,6 +28131,286 @@
           "example_payload": null
         },
         "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/benches/{id}/assessment",
+      "method": "GET",
+      "operation_id": "labs_benches_assessment_retrieve_by_id",
+      "summary": "Get Benches Assessment by ID",
+      "description": "KPI assessment of one bench. Lab coordinators and administrators only.",
+      "tags": [
+        "Leaderboard"
+      ],
+      "parameters": [
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "KPI assessment of a user or bench. Lab coordinators and administrators only.",
+                "properties": {
+                  "period": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "previous_period": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "rating": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "score": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Weighted KPI score 0-100; null with too little data."
+                  },
+                  "previous_score": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Score of the previous period."
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "total_sessions": {
+                    "type": "integer"
+                  },
+                  "total_bookings": {
+                    "type": "integer"
+                  },
+                  "kpis": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "strengths": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "development_areas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "development_areas",
+                  "kpis",
+                  "period",
+                  "previous_period",
+                  "previous_score",
+                  "rating",
+                  "score",
+                  "strengths",
+                  "summary",
+                  "total_bookings",
+                  "total_sessions"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "period": {
+                "type": null,
+                "description": null
+              },
+              "previous_period": {
+                "type": null,
+                "description": null
+              },
+              "rating": {},
+              "score": 1,
+              "previous_score": 1,
+              "summary": "string",
+              "total_sessions": 1,
+              "total_bookings": 1,
+              "kpis": [
+                {}
+              ],
+              "strengths": [
+                {}
+              ],
+              "development_areas": [
+                {}
+              ]
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -72092,6 +72372,286 @@
                 ]
               }
             ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/leaderboard/users/{id}/assessment",
+      "method": "GET",
+      "operation_id": "labs_leaderboard_users_assessment_retrieve_by_id",
+      "summary": "Get Leaderboard Users Assessment by ID",
+      "description": "KPI assessment of one user: scorecard, rating, strengths, development areas and trend.\n\nLab coordinators and administrators only: the rankings are visible to every lab member, the\nassessment of a person is not.",
+      "tags": [
+        "Leaderboard"
+      ],
+      "parameters": [
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "KPI assessment of a user or bench. Lab coordinators and administrators only.",
+                "properties": {
+                  "period": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "previous_period": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "rating": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "score": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Weighted KPI score 0-100; null with too little data."
+                  },
+                  "previous_score": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Score of the previous period."
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "total_sessions": {
+                    "type": "integer"
+                  },
+                  "total_bookings": {
+                    "type": "integer"
+                  },
+                  "kpis": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "strengths": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "development_areas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "development_areas",
+                  "kpis",
+                  "period",
+                  "previous_period",
+                  "previous_score",
+                  "rating",
+                  "score",
+                  "strengths",
+                  "summary",
+                  "total_bookings",
+                  "total_sessions"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "period": {
+                "type": null,
+                "description": null
+              },
+              "previous_period": {
+                "type": null,
+                "description": null
+              },
+              "rating": {},
+              "score": 1,
+              "previous_score": 1,
+              "summary": "string",
+              "total_sessions": 1,
+              "total_bookings": 1,
+              "kpis": [
+                {}
+              ],
+              "strengths": [
+                {}
+              ],
+              "development_areas": [
+                {}
+              ]
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
           }
         },
         "400": {

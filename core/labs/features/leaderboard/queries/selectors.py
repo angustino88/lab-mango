@@ -106,19 +106,32 @@ def _top_projects(bookings: list[dict[str, Any]]) -> list[str]:
 def compute_leaderboard_persona(
     start_date: datetime,
     end_date: datetime,
+    *,
+    user_id: int | None = None,
 ) -> list[dict[str, Any]]:
     """KPIs and points per user for the date window (KPI definitions: docs/architecture.md section 5).
 
     Sessions count for the app user the session log resolved; rows stored before that link existed
     fall back to the login name. Bookings count for the person they are for (requester, else creator).
+    ``user_id`` narrows the read to one person (the assessment); the figures are the same as in the
+    full ranking.
     """
+    session_qs = LabSessionLog.objects.filter(
+        login_time__gte=start_date,
+        login_time__lte=end_date,
+        login_time__isnull=False,
+        logout_time__isnull=False,
+    )
+    booking_qs = _attendable_bookings(start_date, end_date)
+    User = get_user_model()
+    if user_id is not None:
+        username = User.objects.filter(pk=user_id).values_list("username", flat=True).first() or ""
+        # Unlinked rows are narrowed by name here and matched exactly below.
+        unlinked = Q(user_id__isnull=True, remote_user__icontains=username) if username else Q(pk__in=[])
+        session_qs = session_qs.filter(Q(user_id=user_id) | unlinked)
+        booking_qs = booking_qs.filter(Q(requester_id=user_id) | Q(requester_id__isnull=True, creator_id=user_id))
     sessions = list(
-        LabSessionLog.objects.filter(
-            login_time__gte=start_date,
-            login_time__lte=end_date,
-            login_time__isnull=False,
-            logout_time__isnull=False,
-        ).values(
+        session_qs.values(
             "user_id",
             "remote_user",
             "login_time",
@@ -129,12 +142,9 @@ def compute_leaderboard_persona(
         )
     )
     bookings = list(
-        _attendable_bookings(start_date, end_date).values(
-            "id", "requester_id", "creator_id", "starts_at", "ends_at", "project__project_name"
-        )
+        booking_qs.values("id", "requester_id", "creator_id", "starts_at", "ends_at", "project__project_name")
     )
 
-    User = get_user_model()
     user_ids = {row["user_id"] for row in sessions if row["user_id"]}
     user_ids |= {b["requester_id"] or b["creator_id"] for b in bookings if b["requester_id"] or b["creator_id"]}
     login_names = {_login_key(row["remote_user"]) for row in sessions if not row["user_id"]} - {""}
@@ -143,6 +153,7 @@ def compute_leaderboard_persona(
         for user in User.objects.annotate(login_key=Lower("username"))
         .filter(is_active=True)
         .filter(Q(pk__in=user_ids) | Q(login_key__in=login_names))
+        .filter(**({"pk": user_id} if user_id is not None else {}))
         .only("id", "username", "display_name", "first_name", "last_name", "avatar")
     }
     by_login: dict[str, list[int]] = defaultdict(list)
@@ -185,10 +196,10 @@ def compute_leaderboard_persona(
         usage_efficiency = round(clamp(active_min / (num_weekdays * 480)), 2)
         booking = _booking_kpis(user_bookings, usage)
 
-        # Points reward productive, booked, on-slot lab time; session counts no longer score on their own,
-        # so many short logins cannot outrank real work.
+        # Points reflect how much the lab is used (logins and active hours) and how well bookings are kept.
         points = int(
-            (active_min / 60) * 10
+            total_sessions * 10
+            + (active_min / 60) * 10
             + usage_efficiency * 100
             + (booking["booking_compliance"] or 0) * 50
             + (booking["booking_utilization"] or 0) * 50
@@ -231,13 +242,17 @@ def compute_leaderboard_persona(
 def compute_leaderboard_lab(
     start_date: datetime,
     end_date: datetime,
+    *,
+    bench_id: int | None = None,
 ) -> list[dict[str, Any]]:
     """KPIs and points per bench for the date window.
 
     Sessions count for the bench the computer stood on at login (``LabSessionLog.bench``), so moving a
     computer later does not move its history. Four queries in total, whatever the number of benches.
     """
-    benches = list(Bench.objects.filter(deleted_at__isnull=True).values("id", "name"))
+    scope = {"bench_id": bench_id} if bench_id is not None else {}
+    only_bench = {"pk": bench_id} if bench_id is not None else {}
+    benches = list(Bench.objects.filter(deleted_at__isnull=True, **only_bench).values("id", "name"))
     sessions_by_bench: dict[int, list[dict[str, Any]]] = defaultdict(list)
     for row in LabSessionLog.objects.filter(
         bench_id__isnull=False,
@@ -245,11 +260,12 @@ def compute_leaderboard_lab(
         login_time__lte=end_date,
         login_time__isnull=False,
         logout_time__isnull=False,
+        **scope,
     ).values("bench_id", "user_id", "remote_user", "login_time", "logout_time", "active_duration_seconds"):
         sessions_by_bench[row["bench_id"]].append(row)
 
     bookings = list(
-        _attendable_bookings(start_date, end_date).values(
+        _attendable_bookings(start_date, end_date).filter(**scope).values(
             "id", "bench_id", "starts_at", "ends_at", "project__project_name"
         )
     )
@@ -268,7 +284,8 @@ def compute_leaderboard_lab(
         booking = _booking_kpis(bench_bookings, usage)
         utilization_rate = round(clamp(active_min / capacity_min), 2)
         points = int(
-            (active_min / 60) * 10
+            len(rows) * 20
+            + (active_min / 60) * 10
             + len(users) * 15
             + utilization_rate * 100
             + (booking["booking_compliance"] or 0) * 50

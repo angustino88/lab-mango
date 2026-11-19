@@ -10,20 +10,23 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.common.domain.errors import InvalidQuery
-from core.labs.features.base import LABS_MEMBER_READ_ACCESS, FeatureAPIView
+from core.labs.features.base import LABS_MEMBER_READ_ACCESS, LABS_STAFF_ACCESS, FeatureAPIView
 
 from ..helpers import parse_date_range
 from ..public import (
     compute_leaderboard_lab,
     compute_leaderboard_persona,
+    get_bench_assessment,
     get_dashboard_labs,
     get_dashboard_summary,
     get_lab_profile,
     get_lab_weekly_usage,
+    get_user_assessment,
     get_user_profile,
     get_user_weekly_usage,
 )
 from .serializers import (
+    AssessmentSerializer,
     DashboardPaginatedResponseSerializer,
     DashboardSummaryDataSerializer,
     DashboardUnpaginatedResponseSerializer,
@@ -164,6 +167,44 @@ class UserWeeklyUsageHeatmapAPIView(FeatureAPIView):
 
     def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
         return self.respond_data(get_user_weekly_usage(pk))
+
+
+class UserAssessmentAPIView(FeatureAPIView):
+    """KPI assessment of one user: scorecard, rating, strengths, development areas and trend.
+
+    Lab coordinators and administrators only: the rankings are visible to every lab member, the
+    assessment of a person is not.
+    """
+
+    permission_classes = LABS_STAFF_ACCESS
+    schema_tags = ("Leaderboard",)
+    get_contract = OperationContract(
+        query=LeaderboardDateRangeQuerySerializer,
+        success=ResponseContract.success("UserAssessment", AssessmentSerializer),
+        not_found=ResponseContract.not_found(),
+        bad_request=ResponseContract.bad_request(),
+    )
+
+    def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        start_date, end_date = _date_range(request)
+        return self.respond_data(get_user_assessment(pk, start_date, end_date))
+
+
+class BenchAssessmentAPIView(FeatureAPIView):
+    """KPI assessment of one bench. Lab coordinators and administrators only."""
+
+    permission_classes = LABS_STAFF_ACCESS
+    schema_tags = ("Leaderboard",)
+    get_contract = OperationContract(
+        query=LeaderboardDateRangeQuerySerializer,
+        success=ResponseContract.success("BenchAssessment", AssessmentSerializer),
+        not_found=ResponseContract.not_found(),
+        bad_request=ResponseContract.bad_request(),
+    )
+
+    def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        start_date, end_date = _date_range(request)
+        return self.respond_data(get_bench_assessment(pk, start_date, end_date))
 
 
 class DashboardSummaryAPIView(FeatureAPIView):

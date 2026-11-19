@@ -113,18 +113,28 @@ def test_rfo_rfh_detection_is_unchanged():
 
 
 @pytest.mark.django_db
-def test_many_short_logins_do_not_outscore_a_full_booked_day():
-    worker, clicker = UserFactory(username="kpi-worker"), UserFactory(username="kpi-clicker")
-    slot = booking(worker, BenchFactory(), 7, 8, 16)
-    booked_session(worker, slot, at(7, 8), at(7, 16))
-    for minute in range(0, 40, 2):
-        LabSessionLogFactory(
-            user=clicker, remote_user=clicker.username, login_time=at(8, 9, minute), logout_time=at(8, 9, minute + 1)
-        )
+def test_points_reflect_login_count_as_well_as_lab_time():
+    one, three = UserFactory(username="kpi-one-login"), UserFactory(username="kpi-three-logins")
+    LabSessionLogFactory(user=one, remote_user=one.username, login_time=at(7, 9), logout_time=at(7, 10))
+    for day in (7, 8, 9):
+        LabSessionLogFactory(user=three, remote_user=three.username, login_time=at(day, 9), logout_time=at(day, 10))
 
     rows = compute_leaderboard_persona(START, END)
 
-    assert row_for(rows, worker.pk)["points"] > row_for(rows, clicker.pk)["points"]
+    # Same per-session pattern; each extra login adds its 10 points plus its active hour.
+    assert row_for(rows, three.pk)["points"] - row_for(rows, one.pk)["points"] >= 2 * 10
+
+
+@pytest.mark.django_db
+def test_scoped_computation_matches_the_full_ranking():
+    user = UserFactory(username="kpi-scope")
+    LabSessionLogFactory(user=None, remote_user="CORP\\kpi-scope", login_time=at(7, 9), logout_time=at(7, 11))
+    LabSessionLogFactory(user=UserFactory(), remote_user="someone-else", login_time=at(7, 9), logout_time=at(7, 10))
+
+    full = row_for(compute_leaderboard_persona(START, END), user.pk)
+    scoped = compute_leaderboard_persona(START, END, user_id=user.pk)
+
+    assert scoped == [full]
 
 
 @pytest.mark.django_db
