@@ -7,8 +7,10 @@ paths:
   /api/labs/benches/{id}/assessment:
     get:
       operationId: labs_benches_assessment_retrieve_by_id
-      description: KPI assessment of one bench. Lab coordinators and administrators
-        only.
+      description: 'KPI assessment of one bench. Lab coordinators and administrators
+        only (checked per request; the
+
+        route follows the leaderboard policy).'
       parameters:
       - in: query
         name: end_date
@@ -38,6 +40,12 @@ paths:
                 $ref: '#/components/schemas/BenchAssessmentSerializersAssessmentDetailResponse'
           description: ''
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
           content:
             application/json:
               schema:
@@ -276,9 +284,10 @@ paths:
 
 
         Lab coordinators and administrators read anyone''s; a lab member reads only
-        their own. The rankings
+        their own. The route
 
-        are visible to every lab member, the assessment of another person is not.'
+        follows the leaderboard policy (lab members read); the subject is checked
+        per request.'
       parameters:
       - in: query
         name: end_date
@@ -308,6 +317,12 @@ paths:
                 $ref: '#/components/schemas/UserAssessmentSerializersAssessmentDetailResponse'
           description: ''
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
           content:
             application/json:
               schema:
@@ -696,6 +711,19 @@ components:
           type: integer
           default: 0
           description: Bookings with no session.
+        early_release_rate:
+          type: number
+          format: double
+          nullable: true
+          description: Unused booked time after the last session that was released
+            by completing the booking early, against all such unused time, 0-1; null
+            when no booking had unused time left.
+        idle_reserved_minutes:
+          type: number
+          format: double
+          default: 0.0
+          description: Booked minutes left after the last session that stayed reserved
+            (not released).
         booking_compliance:
           type: number
           format: double
@@ -797,6 +825,19 @@ components:
           type: integer
           default: 0
           description: Bookings with no session.
+        early_release_rate:
+          type: number
+          format: double
+          nullable: true
+          description: Unused booked time after the last session that was released
+            by completing the booking early, against all such unused time, 0-1; null
+            when no booking had unused time left.
+        idle_reserved_minutes:
+          type: number
+          format: double
+          default: 0.0
+          description: Booked minutes left after the last session that stayed reserved
+            (not released).
         last_remote_at:
           type: string
           format: date-time

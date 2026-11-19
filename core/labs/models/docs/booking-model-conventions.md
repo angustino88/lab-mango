@@ -53,6 +53,10 @@ reference data and should not be moved into the equipment package.
 9. Schedule indexes must start with the resource foreign key, followed by time.
 10. Status and approval values use `TextChoices`; do not add free-form strings.
 11. Model `clean()` validates invariants, but it does not perform overlap queries.
+12. `completed_at` is set exactly when the status is `completed` (database-enforced): the time the user or
+    an equipment return completed the booking, or `ends_at` when the scheduled job completed it. `ends_at`
+    keeps the booked end, so early completion is visible as `completed_at < ends_at`. Every write path that
+    completes a booking must set it.
 
 ## Database Enforcement
 

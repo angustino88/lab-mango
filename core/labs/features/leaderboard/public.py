@@ -1,6 +1,7 @@
 """Public facade for the leaderboard feature domain."""
 
 from .exceptions import (
+    AssessmentAccessDenied,
     LeaderboardError,
     LeaderboardValidationError,
     ResourceNotFoundError,
@@ -19,6 +20,7 @@ from .queries import (
 )
 
 __all__ = [
+    "AssessmentAccessDenied",
     "LeaderboardError",
     "LeaderboardValidationError",
     "ResourceNotFoundError",

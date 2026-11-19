@@ -1,7 +1,7 @@
 """Business exceptions for the leaderboard feature."""
 from __future__ import annotations
 
-from core.common.domain.errors import DomainError, InvalidQuery, NotFound
+from core.common.domain.errors import DomainError, Forbidden, InvalidQuery, NotFound
 
 
 class LeaderboardError(DomainError):
@@ -20,7 +20,15 @@ class ResourceNotFoundError(NotFound, LeaderboardError):
     code = "not_found"
 
 
+class AssessmentAccessDenied(Forbidden, LeaderboardError):
+    """The viewer may not read this assessment: only their own, unless they are lab staff."""
+
+    code = "permission_denied"
+    default_message = "Only lab coordinators and administrators can see this assessment."
+
+
 __all__ = [
+    "AssessmentAccessDenied",
     "LeaderboardError",
     "LeaderboardValidationError",
     "ResourceNotFoundError",

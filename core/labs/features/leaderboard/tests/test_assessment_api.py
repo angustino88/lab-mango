@@ -90,27 +90,27 @@ def test_user_assessment_reports_strengths_development_areas_and_trend():
     data = client_for("coord").get(f"/api/labs/leaderboard/users/{user.pk}/assessment", RANGE).json()["data"]
 
     kpis = {kpi["kpi"]["value"]: kpi for kpi in data["kpis"]}
-    assert kpis["booking_attendance"]["value"] == 0.8
-    assert kpis["booking_attendance"]["target"] == 0.9
-    assert kpis["booking_attendance"]["status"]["value"] == "near"
-    assert kpis["booked_time_used"]["status"]["value"] == "met"
-    assert kpis["active_rate"]["value"] == 1.0
-    assert kpis["after_hours"]["is_higher_better"] is False
+    assert kpis["show_up_rate"]["value"] == 0.8
+    assert kpis["show_up_rate"]["target"] == 0.9
+    assert kpis["show_up_rate"]["status"]["value"] == "near"
+    assert kpis["booking_utilization_rate"]["status"]["value"] == "met"
+    assert kpis["active_time_ratio"]["value"] == 1.0
+    assert kpis["off_hours_usage_rate"]["is_higher_better"] is False
 
     strengths = [s["kpi"]["value"] for s in data["strengths"]]
-    assert strengths[:2] == ["booked_time_used", "active_rate"]
-    assert data["strengths"][0]["text"] == "Efficient use of reserved time: 80% of booked hours were used."
+    assert strengths[:2] == ["booking_utilization_rate", "active_time_ratio"]
+    assert data["strengths"][0]["text"] == "Efficient use of reserved time: sessions covered 80% of booked time."
 
     area = data["development_areas"][0]
-    assert area["kpi"]["value"] == "booking_attendance"
-    assert area["text"] == "Booking attendance is 80%: 1 of 5 bookings had no session."
+    assert area["kpi"]["value"] == "show_up_rate"
+    assert area["text"] == "Show-up Rate is 80%: 1 of 5 bookings had no session (no-shows)."
     assert area["recommendation"].startswith("Cancel or shorten bookings")
 
     assert data["rating"]["value"] in {"exceeds", "meets"}
     assert data["previous_score"] is not None and data["score"] > data["previous_score"]
     assert data["summary"] == (
         f"Up {data['score'] - data['previous_score']} points on the previous period ({data['previous_score']}/100). "
-        "Key strength: booked time used. Main focus: booking attendance."
+        "Key strength: booking utilization rate. Main focus: show-up rate."
     )
     assert data["period"]["starts_at"].startswith("2026-04-06")
 
@@ -137,7 +137,50 @@ def test_bench_assessment_flags_low_utilisation_with_a_recommendation():
     data = client_for("coord").get(f"/api/labs/benches/{bench.pk}/assessment", RANGE).json()["data"]
 
     areas = {area["kpi"]["value"]: area for area in data["development_areas"]}
-    assert areas["utilization"]["severity"]["value"] == "below"
-    assert areas["utilization"]["text"] == "Low utilisation: active 3% of working hours."
-    assert "booking_attendance" in areas
+    assert areas["bench_utilization_rate"]["severity"]["value"] == "below"
+    assert areas["bench_utilization_rate"]["text"] == "Low utilisation: active 3% of working hours."
+    assert "show_up_rate" in areas
     assert data["rating"]["value"] == "below"
+
+
+@pytest.mark.django_db
+def test_early_release_rate_credits_completing_the_booking_when_done():
+    """4 h booked, used for 1 h, then either completed straight away or left reserved."""
+    bench = BenchFactory()
+    releaser, holder = UserFactory(username="assess-releaser"), UserFactory(username="assess-holder")
+    for user, completed_at in ((releaser, at(6, 9)), (holder, at(6, 12))):
+        slot = BenchBookingFactory(
+            bench=bench if user is releaser else BenchFactory(),
+            requester=user,
+            starts_at=at(6, 8),
+            ends_at=at(6, 12),
+            status=BookingStatus.COMPLETED,
+            completed_at=completed_at,
+        )
+        LabSessionLogFactory(
+            user=user,
+            remote_user=user.username,
+            bench=slot.bench,
+            booking=slot,
+            booking_code=slot.booking_code,
+            access_type=SessionAccessType.BOOKED,
+            login_time=at(6, 8),
+            logout_time=at(6, 9),
+        )
+
+    coordinator = client_for("coord")
+    released = coordinator.get(f"/api/labs/leaderboard/users/{releaser.pk}/assessment", RANGE).json()["data"]
+    held = coordinator.get(f"/api/labs/leaderboard/users/{holder.pk}/assessment", RANGE).json()["data"]
+
+    def kpi(data, key):
+        return next(k for k in data["kpis"] if k["kpi"]["value"] == key)
+
+    # Booking utilisation is 25 % either way: over-booking is still visible.
+    assert kpi(released, "booking_utilization_rate")["value"] == 0.25
+    assert kpi(held, "booking_utilization_rate")["value"] == 0.25
+    assert kpi(released, "early_release_rate")["value"] == 1.0
+    assert kpi(held, "early_release_rate")["value"] == 0.0
+    area = next(a for a in held["development_areas"] if a["kpi"]["value"] == "early_release_rate")
+    assert (
+        area["text"] == "Only 0% of unused booked time was released: 3 h stayed reserved after the last session ended."
+    )

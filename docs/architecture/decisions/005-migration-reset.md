@@ -53,3 +53,26 @@ Hand-written operations, in addition to the table above:
 
 Verified on a blank database: 7 migrations apply; the four triggers, the sequence, both extensions and the
 four priorities exist. Every existing database must be dropped and recreated again.
+
+
+## Addendum (2026-11-19): regenerated again, one migration per app
+
+On the owner's request ("use only one migration 0001 ... the database is blank; apply for all migrations in
+repo"), every app's migrations were deleted and regenerated app by app in dependency order (users,
+reference_data, routing, labs, agents, support_desk, websocket). Each app again has exactly one
+`0001_initial`.
+
+Folded or dropped:
+
+| Removed file | Handling |
+|---|---|
+| `labs.0002_booking_completed_at` | Schema folded into `labs.0001_initial` (`completed_at` on both booking models and the `completed_at_iff_completed` constraints). Its backfill only transformed existing rows: dropped. |
+| `support_desk.0002_widen_default_attachment_extensions` | Only rewrote existing `SupportSettings` rows; the model default (`DEFAULT_ALLOWED_EXTENSIONS`) already is the widened list: dropped. |
+
+The hand-written operations of the 2026-11-12 table are carried over unchanged (extensions first; seed,
+sequence and triggers last).
+
+Verified: a blank database migrated with the old set (9 files) and one migrated with the new set (7 files)
+have identical `pg_dump --schema-only` output; on the new database both extensions, the four triggers,
+`support_ticket_number_seq` and the four purchase priorities exist. Every existing database must be
+dropped and recreated, then `python manage.py migrate`.

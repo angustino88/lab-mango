@@ -6,7 +6,6 @@ from datetime import timedelta
 from django.utils import timezone
 from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -15,6 +14,7 @@ from core.labs.features.base import LABS_MEMBER_READ_ACCESS, LABS_STAFF_ACCESS, 
 
 from ..helpers import parse_date_range
 from ..public import (
+    AssessmentAccessDenied,
     compute_leaderboard_lab,
     compute_leaderboard_persona,
     get_bench_assessment,
@@ -170,50 +170,52 @@ class UserWeeklyUsageHeatmapAPIView(FeatureAPIView):
         return self.respond_data(get_user_weekly_usage(pk))
 
 
-class IsOwnAssessmentOrLabStaff(BasePermission):
-    """Coordinators, admins and API keys read any user's assessment; a lab member reads only their own."""
-
-    def has_permission(self, request: Request, view) -> bool:
-        if LABS_STAFF_ACCESS[0]().has_permission(request, view):
-            return True
-        own = str(view.kwargs.get("pk")) == str(getattr(request.user, "pk", None))
-        return own and request.method in SAFE_METHODS and LABS_MEMBER_READ_ACCESS[0]().has_permission(request, view)
+def _is_lab_staff(request: Request, view) -> bool:
+    """Lab coordinators, administrators and API keys (the LABS_STAFF_ACCESS policy)."""
+    return all(permission().has_permission(request, view) for permission in LABS_STAFF_ACCESS)
 
 
 class UserAssessmentAPIView(FeatureAPIView):
     """KPI assessment of one user: scorecard, rating, strengths, development areas and trend.
 
-    Lab coordinators and administrators read anyone's; a lab member reads only their own. The rankings
-    are visible to every lab member, the assessment of another person is not.
+    Lab coordinators and administrators read anyone's; a lab member reads only their own. The route
+    follows the leaderboard policy (lab members read); the subject is checked per request.
     """
 
-    permission_classes = [IsOwnAssessmentOrLabStaff]
+    permission_classes = LABS_MEMBER_READ_ACCESS
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
         query=LeaderboardDateRangeQuerySerializer,
         success=ResponseContract.success("UserAssessment", AssessmentSerializer),
         not_found=ResponseContract.not_found(),
+        forbidden=ResponseContract.forbidden(),
         bad_request=ResponseContract.bad_request(),
     )
 
     def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        if not _is_lab_staff(request, self) and pk != getattr(request.user, "pk", None):
+            raise AssessmentAccessDenied("You can see your own assessment only.")
         start_date, end_date = _date_range(request)
         return self.respond_data(get_user_assessment(pk, start_date, end_date))
 
 
 class BenchAssessmentAPIView(FeatureAPIView):
-    """KPI assessment of one bench. Lab coordinators and administrators only."""
+    """KPI assessment of one bench. Lab coordinators and administrators only (checked per request; the
+    route follows the leaderboard policy)."""
 
-    permission_classes = LABS_STAFF_ACCESS
+    permission_classes = LABS_MEMBER_READ_ACCESS
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
         query=LeaderboardDateRangeQuerySerializer,
         success=ResponseContract.success("BenchAssessment", AssessmentSerializer),
         not_found=ResponseContract.not_found(),
+        forbidden=ResponseContract.forbidden(),
         bad_request=ResponseContract.bad_request(),
     )
 
     def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        if not _is_lab_staff(request, self):
+            raise AssessmentAccessDenied()
         start_date, end_date = _date_range(request)
         return self.respond_data(get_bench_assessment(pk, start_date, end_date))
 

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from django.db import transaction
+from django.utils import timezone
 
 from core.labs.features.bench_bookings.contracts import AgentBookingEnded
 from core.labs.models import BookingApprovalStatus, BookingStatus
@@ -43,7 +44,8 @@ def complete_agent_booking(command: CompleteAgentBookingInput, *, actor: object)
     if booking.status == BookingStatus.IN_PROGRESS:
         ensure_booking_status_transition(current_status=booking.status, target_status=BookingStatus.COMPLETED)
         booking.status = BookingStatus.COMPLETED
-        booking.save(update_fields=("status", "modified"))
+        booking.completed_at = timezone.now()  # the release time; ends_at keeps the booked end
+        booking.save(update_fields=("status", "completed_at", "modified"))
         record_notification(booking=booking, kind="updated")
     elif booking.status != BookingStatus.COMPLETED:
         return None

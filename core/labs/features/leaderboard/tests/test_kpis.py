@@ -160,3 +160,35 @@ def test_lab_kpis_use_the_bench_at_login_and_stay_at_four_queries():
     assert row["booking_fill"] == round(480 / (5 * 480), 2)
     assert (row["total_bookings"], row["no_show_bookings"], row["booking_compliance"]) == (2, 1, 0.5)
     assert row["booking_utilization"] == 0.5  # 4 h used of 8 h booked
+
+
+@pytest.mark.django_db
+def test_a_booking_counts_all_its_sessions_once_merged():
+    """4 h booking used by three sessions, two of them overlapping: 08-09, 08:30-09:30, 10-11."""
+    user = UserFactory(username="kpi-multi")
+    slot = booking(user, BenchFactory(), 7, 8, 12)
+    booked_session(user, slot, at(7, 8), at(7, 9))
+    booked_session(user, slot, at(7, 8, 30), at(7, 9, 30))  # concurrent with the first: counted once
+    booked_session(user, slot, at(7, 10), at(7, 11))
+
+    row = row_for(compute_leaderboard_persona(START, END), user.pk)
+
+    assert row["total_bookings"] == 1
+    assert row["booking_compliance"] == 1.0
+    assert row["booking_utilization"] == round(2.5 / 4, 2)  # 08:00-09:30 and 10:00-11:00 of 4 h
+    assert row["slot_adherence"] == 1.0
+    # Completed by the job at its end: the hour after the last session stayed reserved.
+    assert row["early_release_rate"] == 0.0
+    assert row["idle_reserved_minutes"] == 60.0
+
+
+@pytest.mark.django_db
+def test_finishing_close_to_the_end_is_not_idle_reserved_time():
+    user = UserFactory(username="kpi-close")
+    slot = booking(user, BenchFactory(), 7, 8, 12)
+    booked_session(user, slot, at(7, 8), at(7, 11, 50))  # 10 minutes before the end
+
+    row = row_for(compute_leaderboard_persona(START, END), user.pk)
+
+    assert row["early_release_rate"] is None
+    assert row["idle_reserved_minutes"] == 0.0

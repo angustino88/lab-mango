@@ -58,39 +58,86 @@ def _ratio(part: float, whole: float) -> float | None:
     return round(clamp(part / whole), 2) if whole > 0 else None
 
 
+Interval = tuple[datetime, datetime]
+
+# Unused booked time after the last session shorter than this is not counted for early release:
+# finishing a few minutes before the slot ends is not idle reserved time.
+EARLY_RELEASE_MIN_SECONDS = 15 * 60
+
+
+def _merge(intervals: list[Interval]) -> list[Interval]:
+    """Union of intervals: concurrent or overlapping sessions on one booking count once."""
+    merged: list[Interval] = []
+    for start, end in sorted(intervals):
+        if end <= start:
+            continue
+        if merged and start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    return merged
+
+
+def _length(intervals: list[Interval]) -> float:
+    return sum(_seconds(start, end) for start, end in intervals)
+
+
+def _clip(intervals: list[Interval], start: datetime, end: datetime) -> list[Interval]:
+    return [(max(s, start), min(e, end)) for s, e in intervals if min(e, end) > max(s, start)]
+
+
 def _booking_usage(bookings: list[dict[str, Any]]) -> dict[int, dict[str, float]]:
-    """Per booking: session seconds inside the slot, session seconds in total, whether anyone attended."""
-    usage: dict[int, dict[str, float]] = {
-        b["id"]: {"in_slot": 0.0, "total": 0.0, "attended": 0.0} for b in bookings
-    }
-    slots = {b["id"]: (b["starts_at"], b["ends_at"]) for b in bookings}
+    """Per booking, over all its linked sessions merged into one timeline (seconds).
+
+    ``in_slot``: session time inside the booked slot. ``total``: all session time. ``attended``: 1 when
+    any session is linked. ``unused_tail``: booked time after the last session ended (counted only
+    from ``EARLY_RELEASE_MIN_SECONDS``). ``released``: the part of that tail freed by completing the
+    booking before its end.
+    """
+    sessions: dict[int, list[Interval]] = defaultdict(list)
     linked = LabSessionLog.objects.filter(
-        booking_id__in=list(slots), login_time__isnull=False, logout_time__isnull=False
+        booking_id__in=[b["id"] for b in bookings], login_time__isnull=False, logout_time__isnull=False
     ).values("booking_id", "login_time", "logout_time")
     for row in linked:
-        slot_start, slot_end = slots[row["booking_id"]]
-        entry = usage[row["booking_id"]]
-        entry["attended"] = 1.0
-        entry["total"] += _seconds(row["login_time"], row["logout_time"])
-        entry["in_slot"] += _seconds(max(row["login_time"], slot_start), min(row["logout_time"], slot_end))
+        sessions[row["booking_id"]].append((row["login_time"], row["logout_time"]))
+
+    usage: dict[int, dict[str, float]] = {}
+    for b in bookings:
+        start, end = b["starts_at"], b["ends_at"]
+        merged = _merge(sessions.get(b["id"], []))
+        entry = {"in_slot": 0.0, "total": 0.0, "attended": 0.0, "unused_tail": 0.0, "released": 0.0}
+        if merged:
+            entry["attended"] = 1.0
+            entry["in_slot"] = _length(_clip(merged, start, end))
+            entry["total"] = _length(merged)
+            last_use = min(max(merged[-1][1], start), end)
+            tail = _seconds(last_use, end)
+            if tail >= EARLY_RELEASE_MIN_SECONDS:
+                entry["unused_tail"] = tail
+                completed_at = b.get("completed_at")
+                if completed_at is not None and completed_at < end:
+                    entry["released"] = min(tail, _seconds(max(completed_at, last_use), end))
+        usage[b["id"]] = entry
     return usage
 
 
 def _booking_kpis(bookings: list[dict[str, Any]], usage: dict[int, dict[str, float]]) -> dict[str, Any]:
-    """Attendance, use of booked time and slot adherence over a set of bookings."""
+    """Show-up, booking utilisation, slot adherence and early release over a set of bookings."""
     total = len(bookings)
     attended = sum(1 for b in bookings if usage[b["id"]]["attended"])
     booked = sum(_seconds(b["starts_at"], b["ends_at"]) for b in bookings)
-    # Time used of each booking, capped at its own length so one long session cannot hide a no-show.
-    used = sum(min(usage[b["id"]]["in_slot"], _seconds(b["starts_at"], b["ends_at"])) for b in bookings)
     in_slot = sum(usage[b["id"]]["in_slot"] for b in bookings)
     session_time = sum(usage[b["id"]]["total"] for b in bookings)
+    unused_tail = sum(usage[b["id"]]["unused_tail"] for b in bookings)
+    released = sum(usage[b["id"]]["released"] for b in bookings)
     return {
         "total_bookings": total,
         "no_show_bookings": total - attended,
         "booking_compliance": _ratio(attended, total),
-        "booking_utilization": _ratio(used, booked),
+        "booking_utilization": _ratio(in_slot, booked),
         "slot_adherence": _ratio(in_slot, session_time),
+        "early_release_rate": _ratio(released, unused_tail),
+        "idle_reserved_minutes": round((unused_tail - released) / 60, 2),
         "booked_minutes": booked / 60,
     }
 
@@ -142,7 +189,9 @@ def compute_leaderboard_persona(
         )
     )
     bookings = list(
-        booking_qs.values("id", "requester_id", "creator_id", "starts_at", "ends_at", "project__project_name")
+        booking_qs.values(
+            "id", "requester_id", "creator_id", "starts_at", "ends_at", "completed_at", "project__project_name"
+        )
     )
 
     user_ids = {row["user_id"] for row in sessions if row["user_id"]}
@@ -204,6 +253,7 @@ def compute_leaderboard_persona(
             + (booking["booking_compliance"] or 0) * 50
             + (booking["booking_utilization"] or 0) * 50
             + (booking["slot_adherence"] or 0) * 20
+            + (booking["early_release_rate"] or 0) * 20
             - late_rate * 30
         )
 
@@ -223,6 +273,8 @@ def compute_leaderboard_persona(
             "booking_compliance": booking["booking_compliance"],
             "booking_utilization": booking["booking_utilization"],
             "slot_adherence": booking["slot_adherence"],
+            "early_release_rate": booking["early_release_rate"],
+            "idle_reserved_minutes": booking["idle_reserved_minutes"],
             "no_show_bookings": booking["no_show_bookings"],
             "last_remote": max((r["login_time"] for r in rows), default=None),
             "labs_accessed": len({r["computing_equipment_id"] for r in rows if r["computing_equipment_id"]}),
@@ -266,7 +318,7 @@ def compute_leaderboard_lab(
 
     bookings = list(
         _attendable_bookings(start_date, end_date).filter(**scope).values(
-            "id", "bench_id", "starts_at", "ends_at", "project__project_name"
+            "id", "bench_id", "starts_at", "ends_at", "completed_at", "project__project_name"
         )
     )
     bookings_by_bench: dict[int, list[dict[str, Any]]] = defaultdict(list)
@@ -305,6 +357,8 @@ def compute_leaderboard_lab(
             "no_show_bookings": booking["no_show_bookings"],
             "booking_compliance": booking["booking_compliance"],
             "booking_utilization": booking["booking_utilization"],
+            "early_release_rate": booking["early_release_rate"],
+            "idle_reserved_minutes": booking["idle_reserved_minutes"],
             "downtime_minutes": 0.0,
             "top_projects": _top_projects(bench_bookings),
         })

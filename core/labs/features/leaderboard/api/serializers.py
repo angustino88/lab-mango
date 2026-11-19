@@ -71,6 +71,17 @@ class LeaderboardPersonaSerializer(serializers.Serializer):
         help_text="Session time inside the booked slot against all time of booked sessions, 0-1; null when no booking was attended.",
     )
     no_show_bookings = serializers.IntegerField(required=False, default=0, help_text="Bookings with no session.")
+    early_release_rate = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text="Unused booked time after the last session that was released by completing the booking early, "
+        "against all such unused time, 0-1; null when no booking had unused time left.",
+    )
+    idle_reserved_minutes = serializers.FloatField(
+        required=False,
+        default=0.0,
+        help_text="Booked minutes left after the last session that stayed reserved (not released).",
+    )
     last_remote_at = serializers.DateTimeField(source="last_remote", allow_null=True, required=False)
     labs_accessed = serializers.IntegerField(required=False, default=0)
     total_bookings = serializers.IntegerField(required=False, default=0)
@@ -100,6 +111,17 @@ class LeaderboardLabSerializer(serializers.Serializer):
     )
     total_bookings = serializers.IntegerField(required=False, default=0)
     no_show_bookings = serializers.IntegerField(required=False, default=0, help_text="Bookings with no session.")
+    early_release_rate = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text="Unused booked time after the last session that was released by completing the booking early, "
+        "against all such unused time, 0-1; null when no booking had unused time left.",
+    )
+    idle_reserved_minutes = serializers.FloatField(
+        required=False,
+        default=0.0,
+        help_text="Booked minutes left after the last session that stayed reserved (not released).",
+    )
     booking_compliance = serializers.FloatField(
         allow_null=True,
         required=False,
