@@ -199,6 +199,8 @@ class BenchBookingFactory(factory.django.DjangoModelFactory):
     rejection_reason = factory.LazyAttribute(
         lambda o: "Rejected in test setup" if o.approval_status == BookingApprovalStatus.REJECTED else ""
     )
+    # The database requires a completion time exactly for completed bookings.
+    completed_at = factory.LazyAttribute(lambda o: o.ends_at if o.status == BookingStatus.COMPLETED else None)
 
 
 class LabSessionLogFactory(factory.django.DjangoModelFactory):

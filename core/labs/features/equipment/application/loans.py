@@ -356,7 +356,8 @@ def _return_one(equipment: Equipment, command: ReturnEquipmentInput, *, actor) -
         if booking.status == BookingStatus.IN_PROGRESS:
             ensure_booking_status_transition(current_status=booking.status, target_status=BookingStatus.COMPLETED)
             booking.status = BookingStatus.COMPLETED
-            booking.save(update_fields=("status", "modified"))
+            booking.completed_at = timezone.now()  # returned: the release time
+            booking.save(update_fields=("status", "completed_at", "modified"))
     if command.condition is not None:
         change_condition(
             ChangeConditionInput(equipment_id=equipment.pk, condition=command.condition, reason="Recorded at return."),

@@ -38,15 +38,18 @@ class KpiStatus(models.TextChoices):
 
 
 class AssessmentKpi(models.TextChoices):
-    BOOKING_ATTENDANCE = "booking_attendance", "Booking attendance"
-    BOOKED_TIME_USED = "booked_time_used", "Booked time used"
-    SLOT_ADHERENCE = "slot_adherence", "Slot adherence"
-    ACTIVE_RATE = "active_rate", "Active time in sessions"
-    ADVANCE_BOOKING = "advance_booking", "Sessions without a booking"
-    AFTER_HOURS = "after_hours", "After-hours share"
-    LAB_PRESENCE = "lab_presence", "Lab presence"
-    UTILIZATION = "utilization", "Bench utilization"
-    BOOKING_FILL = "booking_fill", "Booking fill"
+    """KPI catalogue: definitions and formulas in docs/kpis.md."""
+
+    SHOW_UP_RATE = "show_up_rate", "Show-up Rate"
+    BOOKING_UTILIZATION_RATE = "booking_utilization_rate", "Booking Utilization Rate"
+    ACTIVE_TIME_RATIO = "active_time_ratio", "Active Time Ratio"
+    SLOT_ADHERENCE_RATE = "slot_adherence_rate", "Slot Adherence Rate"
+    EARLY_RELEASE_RATE = "early_release_rate", "Early Release Rate"
+    AD_HOC_SESSION_RATE = "ad_hoc_session_rate", "Ad-hoc Session Rate"
+    OFF_HOURS_USAGE_RATE = "off_hours_usage_rate", "Off-hours Usage Rate"
+    WORKDAY_UTILIZATION_RATE = "workday_utilization_rate", "Workday Utilization Rate"
+    BENCH_UTILIZATION_RATE = "bench_utilization_rate", "Bench Utilization Rate"
+    BOOKING_OCCUPANCY_RATE = "booking_occupancy_rate", "Booking Occupancy Rate"
 
 
 @dataclass(frozen=True)
@@ -76,19 +79,21 @@ class KpiDefinition:
 
 K = AssessmentKpi
 PERSONA_KPIS = (
-    KpiDefinition(K.BOOKING_ATTENDANCE, "booking_compliance", target=0.90, near=0.75, weight=3),
-    KpiDefinition(K.BOOKED_TIME_USED, "booking_utilization", target=0.75, near=0.50, weight=2),
-    KpiDefinition(K.ACTIVE_RATE, "active_rate", target=0.80, near=0.60, weight=2),
-    KpiDefinition(K.SLOT_ADHERENCE, "slot_adherence", target=0.95, near=0.80, weight=1),
-    KpiDefinition(K.ADVANCE_BOOKING, "ad_hoc_rate", target=0.20, near=0.40, weight=1, is_higher_better=False),
-    KpiDefinition(K.AFTER_HOURS, "late_rate", target=0.10, near=0.25, weight=1, is_higher_better=False),
-    KpiDefinition(K.LAB_PRESENCE, "usage_efficiency", target=0.50, near=0.25, weight=1),
+    KpiDefinition(K.SHOW_UP_RATE, "booking_compliance", target=0.90, near=0.75, weight=3),
+    KpiDefinition(K.BOOKING_UTILIZATION_RATE, "booking_utilization", target=0.75, near=0.50, weight=2),
+    KpiDefinition(K.ACTIVE_TIME_RATIO, "active_rate", target=0.80, near=0.60, weight=2),
+    KpiDefinition(K.SLOT_ADHERENCE_RATE, "slot_adherence", target=0.95, near=0.80, weight=1),
+    KpiDefinition(K.EARLY_RELEASE_RATE, "early_release_rate", target=0.80, near=0.50, weight=1),
+    KpiDefinition(K.AD_HOC_SESSION_RATE, "ad_hoc_rate", target=0.20, near=0.40, weight=1, is_higher_better=False),
+    KpiDefinition(K.OFF_HOURS_USAGE_RATE, "late_rate", target=0.10, near=0.25, weight=1, is_higher_better=False),
+    KpiDefinition(K.WORKDAY_UTILIZATION_RATE, "usage_efficiency", target=0.50, near=0.25, weight=1),
 )
 BENCH_KPIS = (
-    KpiDefinition(K.UTILIZATION, "utilization_rate", target=0.60, near=0.30, weight=3),
-    KpiDefinition(K.BOOKING_ATTENDANCE, "booking_compliance", target=0.90, near=0.75, weight=2),
-    KpiDefinition(K.BOOKED_TIME_USED, "booking_utilization", target=0.75, near=0.50, weight=2),
-    KpiDefinition(K.BOOKING_FILL, "booking_fill", target=0.50, near=0.25, weight=1),
+    KpiDefinition(K.BENCH_UTILIZATION_RATE, "utilization_rate", target=0.60, near=0.30, weight=3),
+    KpiDefinition(K.SHOW_UP_RATE, "booking_compliance", target=0.90, near=0.75, weight=2),
+    KpiDefinition(K.BOOKING_UTILIZATION_RATE, "booking_utilization", target=0.75, near=0.50, weight=2),
+    KpiDefinition(K.EARLY_RELEASE_RATE, "early_release_rate", target=0.80, near=0.50, weight=1),
+    KpiDefinition(K.BOOKING_OCCUPANCY_RATE, "booking_fill", target=0.50, near=0.25, weight=1),
 )
 
 
@@ -101,57 +106,67 @@ def _hours_per_weekday(efficiency: float) -> str:
 
 
 # What a met KPI says about the subject, and what a missed one says plus the recommended action.
+def _idle_hours(row: dict[str, Any]) -> str:
+    return f"{round((row.get('idle_reserved_minutes') or 0) / 60, 1):g} h"
+
+
 def _strength(kpi: str, v: float, row: dict[str, Any]) -> str:
     attended = row.get("total_bookings", 0) - row.get("no_show_bookings", 0)
     return {
-        K.BOOKING_ATTENDANCE: f"Reliable attendance: {attended} of {row.get('total_bookings', 0)} bookings used ({_pct(v)}).",
-        K.BOOKED_TIME_USED: f"Efficient use of reserved time: {_pct(v)} of booked hours were used.",
-        K.SLOT_ADHERENCE: f"Keeps to the reserved slot: {_pct(v)} of booked-session time was inside the slot.",
-        K.ACTIVE_RATE: f"Focused sessions: {_pct(v)} of session time was active.",
-        K.ADVANCE_BOOKING: f"Plans ahead: {_pct(1 - v)} of sessions ran under a booking.",
-        K.AFTER_HOURS: f"Works within regular hours: {_pct(v)} of lab time after 20:00.",
-        K.LAB_PRESENCE: f"Consistent lab presence: {_hours_per_weekday(v)} of active work per weekday.",
-        K.UTILIZATION: f"Well utilised: active {_pct(v)} of working hours.",
-        K.BOOKING_FILL: f"In demand: {_pct(v)} of working hours are booked.",
+        K.SHOW_UP_RATE: f"Reliable show-up: {attended} of {row.get('total_bookings', 0)} bookings used ({_pct(v)}).",
+        K.BOOKING_UTILIZATION_RATE: f"Efficient use of reserved time: sessions covered {_pct(v)} of booked time.",
+        K.SLOT_ADHERENCE_RATE: f"Keeps to the reserved slot: {_pct(v)} of session time on bookings was inside the slot.",
+        K.ACTIVE_TIME_RATIO: f"Focused sessions: {_pct(v)} of session time was active.",
+        K.EARLY_RELEASE_RATE: f"Releases the bench when done: {_pct(v)} of unused booked time was released early.",
+        K.AD_HOC_SESSION_RATE: f"Plans ahead: {_pct(1 - v)} of sessions ran under a booking.",
+        K.OFF_HOURS_USAGE_RATE: f"Works within regular hours: {_pct(v)} of lab time between 20:00 and 06:00.",
+        K.WORKDAY_UTILIZATION_RATE: f"Consistent lab presence: {_hours_per_weekday(v)} of active work per weekday.",
+        K.BENCH_UTILIZATION_RATE: f"Well utilised: active {_pct(v)} of working hours.",
+        K.BOOKING_OCCUPANCY_RATE: f"In demand: {_pct(v)} of working hours are booked.",
     }[kpi]
 
 
 def _development(kpi: str, v: float, row: dict[str, Any]) -> tuple[str, str]:
     return {
-        K.BOOKING_ATTENDANCE: (
-            f"Booking attendance is {_pct(v)}: {row.get('no_show_bookings', 0)} of "
-            f"{row.get('total_bookings', 0)} bookings had no session.",
+        K.SHOW_UP_RATE: (
+            f"Show-up Rate is {_pct(v)}: {row.get('no_show_bookings', 0)} of "
+            f"{row.get('total_bookings', 0)} bookings had no session (no-shows).",
             "Cancel or shorten bookings that will not be used, so the bench is released for others.",
         ),
-        K.BOOKED_TIME_USED: (
-            f"Only {_pct(v)} of booked time was used.",
+        K.BOOKING_UTILIZATION_RATE: (
+            f"Sessions covered only {_pct(v)} of booked time.",
             "Book slots that match the planned test duration.",
         ),
-        K.SLOT_ADHERENCE: (
-            f"{_pct(1 - v)} of booked-session time fell outside the reserved slot.",
+        K.SLOT_ADHERENCE_RATE: (
+            f"{_pct(1 - v)} of session time on bookings fell outside the reserved slot.",
             "Start and finish within the reserved slot, or extend the booking in advance.",
         ),
-        K.ACTIVE_RATE: (
+        K.ACTIVE_TIME_RATIO: (
             f"Sessions were active {_pct(v)} of the time.",
             "Log off when not working, so the computer is free for others.",
         ),
-        K.ADVANCE_BOOKING: (
+        K.EARLY_RELEASE_RATE: (
+            f"Only {_pct(v)} of unused booked time was released: {_idle_hours(row)} stayed reserved after the "
+            "last session ended.",
+            "Complete the booking as soon as the work is finished, so the bench is released for others.",
+        ),
+        K.AD_HOC_SESSION_RATE: (
             f"{_pct(v)} of sessions ran without a booking.",
             "Reserve the bench before use, so availability stays predictable for the team.",
         ),
-        K.AFTER_HOURS: (
-            f"{_pct(v)} of lab time was after hours (20:00-06:00).",
-            "Plan long runs within working hours where possible, or agree after-hours work with the lab coordinator.",
+        K.OFF_HOURS_USAGE_RATE: (
+            f"{_pct(v)} of lab time was off-hours (20:00-06:00).",
+            "Plan long runs within working hours where possible, or agree off-hours work with the lab coordinator.",
         ),
-        K.LAB_PRESENCE: (
+        K.WORKDAY_UTILIZATION_RATE: (
             f"Low lab presence: {_hours_per_weekday(v)} of active work per weekday.",
             "Review whether the current bench reservations are still needed.",
         ),
-        K.UTILIZATION: (
+        K.BENCH_UTILIZATION_RATE: (
             f"Low utilisation: active {_pct(v)} of working hours.",
             "Promote the bench to teams waiting for capacity, or review whether it is still needed in this setup.",
         ),
-        K.BOOKING_FILL: (
+        K.BOOKING_OCCUPANCY_RATE: (
             f"Only {_pct(v)} of working hours are booked.",
             "Make the bench visible to more teams, or consolidate its workload with a similar bench.",
         ),

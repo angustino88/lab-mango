@@ -113,6 +113,8 @@ def update_bench_booking(*, actor, data: UpdateBenchBookingInput) -> BenchBookin
             setattr(booking, name, value)
         if status_changed and booking.status == BookingStatus.CANCELLED:
             booking.cancellation_reason = booking.cancellation_reason.strip() or DEFAULT_CANCELLATION_REASON
+        if status_changed and booking.status == BookingStatus.COMPLETED:
+            booking.completed_at = timezone.now()  # the release time; ends_at keeps the booked end
 
         policies.ensure_valid_period(booking.starts_at, booking.ends_at)
         policies.ensure_minimum_duration(booking.starts_at, booking.ends_at)

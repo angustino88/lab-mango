@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from core.labs.models import (
@@ -107,8 +107,10 @@ def _transition_in_batches(condition: Q, *, source: BookingStatus, target: Booki
             )
             if not ids:
                 return total
+            # A booking the job completes ran to its booked end: that end is its completion time.
+            completion = {"completed_at": F("ends_at")} if target == BookingStatus.COMPLETED else {}
             total += BenchBooking.objects.filter(pk__in=ids, status=source).update(
-                status=target, modified=timezone.now()
+                status=target, modified=timezone.now(), **completion
             )
         if len(ids) < batch_size:
             return total
@@ -117,4 +119,8 @@ def _transition_in_batches(condition: Q, *, source: BookingStatus, target: Booki
 def _transition(booking: BenchBooking, target_status: BookingStatus) -> None:
     ensure_booking_status_transition(current_status=booking.status, target_status=target_status)
     booking.status = target_status
-    booking.save(update_fields=("status", "modified"))
+    fields = ["status", "modified"]
+    if target_status == BookingStatus.COMPLETED:
+        booking.completed_at = timezone.now()
+        fields.append("completed_at")
+    booking.save(update_fields=fields)

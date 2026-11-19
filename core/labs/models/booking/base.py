@@ -118,6 +118,14 @@ class Booking(TimeStampedModel, UserStampedModel):
         blank=True,
     )
     approved_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=(
+            "When the booking was completed: when the user ended it, or its end time when the scheduled job "
+            "completed it. Set exactly when the status is completed. ends_at keeps the booked end."
+        ),
+    )
     rejection_reason = models.TextField(blank=True, default="")
     reason = models.TextField(blank=True, default="")
     cancellation_reason = models.TextField(blank=True, default="")
@@ -158,6 +166,14 @@ class Booking(TimeStampedModel, UserStampedModel):
             models.CheckConstraint(
                 condition=models.Q(ends_at__gt=models.F("starts_at")),
                 name="%(app_label)s_%(class)s_valid_booking_period",
+            ),
+            # A completed booking records when it was completed; no other status has a completion time.
+            models.CheckConstraint(
+                condition=(
+                    models.Q(status=BookingStatus.COMPLETED, completed_at__isnull=False)
+                    | (~models.Q(status=BookingStatus.COMPLETED) & models.Q(completed_at__isnull=True))
+                ),
+                name="%(app_label)s_%(class)s_completed_at_iff_completed",
             ),
             # Database guards for the approval/cancellation invariants in clean(); every
             # application write path already satisfies them. Added NOT VALID (see migration),

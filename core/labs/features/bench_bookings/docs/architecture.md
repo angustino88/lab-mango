@@ -114,7 +114,7 @@ end-time command. Every failure returns `None`, and no notification is recorded 
 `POST /agent/bookings/actions/complete`, called only when the user chooses to end the booking (owner
 decision O25). An approved `in_progress` booking on the agent's bench moves to `completed` and records an
 `updated` notification; a `completed` booking is returned unchanged; anything else returns `None`.
-`ends_at` is kept. Check-in and end share `application/agent_booking_locks.py::lock_agent_booking`
+`ends_at` is kept (it records the booked end) and `completed_at` records the release time. Check-in and end share `application/agent_booking_locks.py::lock_agent_booking`
 (identity → equipment → bench → booking). Completion at the end time stays with
 `reconcile_bench_booking_statuses`, scheduled as `labs.bench_bookings.reconcile_statuses` (O26).
 
@@ -130,7 +130,7 @@ caller and can be removed in a separate change.
 
 - `activate_bench_booking_for_computing_activity(computing_id, now)`: resolves the activity-to-bench relationship and activates the matching booking.
 - `activate_bench_bookings(bench_id, booking_code, now)`: smaller verified-facts command that performs the `reserved -> in_progress` transition. Only approved bookings are activated; pending and rejected bookings stay `reserved` (owner decision O21, 2026-11-11). Neither activation command has a production caller yet; agent check-in uses `check_in_agent_booking`.
-- `reconcile_bench_booking_statuses(now)`: expires overdue reserved bookings and completes elapsed in-progress bookings.
+- `reconcile_bench_booking_statuses(now)`: expires overdue reserved bookings and completes elapsed in-progress bookings (their `completed_at` is their `ends_at`).
 
 Each command uses an atomic database transaction and locks the booking rows before updating their status.
 
