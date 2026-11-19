@@ -53,6 +53,7 @@ from core.labs.models import (
 
 from ..contracts import LicenseCheckRunAcknowledgment, LicenseCheckRunInput, ReportedLicense
 from ..queries.checks import checks_for_computer
+from .alerts import needs_alert, notify_license_attention
 
 SOURCE = "license_check"
 _KEEP_STATUSES = frozenset({LicenseStatus.REVOKED, LicenseStatus.SUSPENDED})
@@ -85,6 +86,11 @@ class _Placement:
     def __init__(self, computing_id: int):
         self.computing_id = computing_id
         self._units: set[int] | None = None
+
+    @property
+    def computing_name(self) -> str:
+        unit = Equipment.objects.filter(pk=self.computing_id).values("name", "sku").first() or {}
+        return unit.get("name") or unit.get("sku") or f"computer {self.computing_id}"
 
     @property
     def units(self) -> set[int]:
@@ -235,8 +241,10 @@ def _apply_run(run: LicenseCheckRun, check: LicenseCheck, command: LicenseCheckR
             "removed_at": None,
         }
         observation = existing.get(reported.observation_key)
+        # A license that was gone and is back counts as new for alerts.
+        previous_status = observation.status if observation is not None and observation.removed_at is None else None
         if observation is None:
-            LicenseObservation.objects.create(
+            observation = LicenseObservation.objects.create(
                 license_check=check,
                 computing_id=command.computing_id,
                 observation_key=reported.observation_key,
@@ -247,6 +255,8 @@ def _apply_run(run: LicenseCheckRun, check: LicenseCheck, command: LicenseCheckR
             for name, value in values.items():
                 setattr(observation, name, value)
             observation.save()
+        if needs_alert(observation, previous_status):
+            notify_license_attention(check, observation, placement.computing_name)
         if status == LicenseObservationStatus.MATCHED and license_record is not None:
             metadata = {
                 "check_key": check.key,

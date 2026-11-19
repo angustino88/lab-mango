@@ -277,3 +277,28 @@ def test_untargeted_check_is_not_found_and_body_rules_apply(enrolled, bench_setu
     assert send(identity, key, body).status_code == 422
     body = run(check, vector_license(), status="failed")
     assert send(identity, key, body).status_code == 422
+
+
+def test_check_owner_is_notified_once_per_new_attention_reason(enrolled, bench_setup):
+    from django.contrib.auth import get_user_model
+
+    from core.websocket.models import Notification
+
+    identity, key, _ = enrolled
+    check, cancase, *_ = bench_setup
+    owner = get_user_model().objects.create_user(username="license-check-owner")
+    LicenseCheck.objects.filter(pk=check.pk).update(creator=owner)
+
+    send(identity, key, run(check, vector_license()))  # matched: no alert
+    assert not Notification.objects.filter(target_user=owner).exists()
+
+    unknown = vector_license(license_serial="UNKNOWN-1", observation_key="vector:serial:UNKNOWN-1")
+    send(identity, key, run(check, vector_license(), unknown, sequence=2))
+    send(identity, key, run(check, vector_license(), unknown, sequence=3))  # same reason: no repeat
+    alerts = Notification.objects.filter(target_user=owner)
+    assert alerts.count() == 1
+    assert "UNKNOWN-1" in alerts.get().message and "Bench" not in alerts.get().message
+
+    EquipmentAssignment.objects.filter(equipment=cancase).update(unassigned_at=timezone.now())
+    send(identity, key, run(check, vector_license(), unknown, sequence=4))  # matched → carrier away: new reason
+    assert Notification.objects.filter(target_user=owner).count() == 2

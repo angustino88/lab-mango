@@ -83,6 +83,13 @@ Only `ok` runs with the current revision and a newer sequence change observation
 run no longer lists get `removed_at`. Raw tool output, license keys, contract and activation IDs are
 never sent or stored.
 
+## Alerts (`application/alerts.py`)
+
+When a found license first needs attention, comes back after being gone, or its reason changes,
+the check's owner (creator, else last editor) gets one in-app warning notification (kept 14 days,
+pushed after commit). Matched licenses and repeated runs with the same outcome never notify. The
+web app shows the open count on Licenses → Found on lab hardware.
+
 ## Not done
 
 - Expected licenses per check (`LicenseCheckLicense`, "missing" when no run reports them).
