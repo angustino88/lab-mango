@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from django.template.loader import render_to_string
 from django.test import override_settings
+from freezegun import freeze_time
 
 from config.settings.booking_notifications import notification_settings
 from core.infrastructure.teams.service import TeamsPostCode, TeamsPostResult, TeamsProxyPolicy
@@ -306,6 +307,9 @@ def test_email_uses_existing_html_sender_and_allowlisted_context():
     assert args["context"]["event_id"] == str(row.event_id)
 
 
+# The template prints today's date ({% now %}); pin it so a "7" or "19" in the date cannot
+# look like a leaked internal ID on the 7th or 19th of a month.
+@freeze_time(NOW)
 def test_booking_email_template_renders_html_snapshot_without_free_text():
     snapshot = BookingNotificationSnapshot(**notice().snapshot)
     rendered = render_to_string(
