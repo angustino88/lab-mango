@@ -181,9 +181,7 @@ reflect how well bookings and time are used.
 
 ## 6. Data and change notes
 
-- `completed_at` was added to bookings in migration `labs.0002_booking_completed_at`. Bookings completed
-  before it were backfilled with `LEAST(modified, ends_at)`: the last save of a completed booking is its
-  completion, capped at the booked end. Early Release Rate for those older bookings is therefore an
-  approximation; new completions are exact.
+- `completed_at` is part of `labs.0001_initial` (migrations reset on a blank database, ADR 005 addendum
+  2026-11-19), so every booking records its completion from the start; no historical backfill applies.
 - Every write path that completes a booking sets `completed_at`: the agent "complete" action, the web app
   "complete" action (`update_bench_booking`), the scheduled status job (to `ends_at`), and equipment returns.
