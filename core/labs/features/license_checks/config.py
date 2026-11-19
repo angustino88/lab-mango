@@ -17,7 +17,9 @@ PROBE_TYPES = ("command", "file", "registry")
 EXTRACT_FORMATS = ("xml", "json", "text", "values")
 CARRIER_TYPES = ("computer", "device", "dongle", "server", "equipment")
 MAPPED_CARRIER = "mapped"
-HARDWARE_ID_KINDS = ("pnp_id", "vector_device")
+# IDs a license tool reports for the hardware holding its licenses. ``pnp_id`` is for device monitoring
+# only: no license tool reports a Windows PnP instance path. Add a kind when a new tool names its carrier.
+CARRIER_ID_KINDS = ("vector_device",)
 TARGET_FIELDS = (
     "product_name",
     "product_code",
@@ -165,9 +167,9 @@ def validate_carrier(data: Any, extract: dict) -> dict:
         possible = set(carrier["type_map"].values()) | {default_type}
     if possible & {"device", "dongle"}:
         hardware_id_kind = _string(data, "hardware_id_kind", "carrier.hardware_id_kind", limit=32)
-        if hardware_id_kind not in HARDWARE_ID_KINDS:
+        if hardware_id_kind not in CARRIER_ID_KINDS:
             _fail(
-                "carrier.hardware_id_kind", f"Device and dongle carriers need one of: {', '.join(HARDWARE_ID_KINDS)}."
+                "carrier.hardware_id_kind", f"Device and dongle carriers need one of: {', '.join(CARRIER_ID_KINDS)}."
             )
         if "carrier_id" not in extract["fields"]:
             _fail("extract.fields", "Device and dongle carriers need a 'carrier_id' field.")

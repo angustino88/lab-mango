@@ -7,7 +7,6 @@ from core.labs.features.equipment.public import normalize_hardware_id
 
 from .observation_serializers import (
     HARDWARE_ID_KINDS,
-    HardwareIdSerializer,
     ObservationTextField,
     ObservationUUIDField,
     StrictObservationSerializer,
@@ -20,6 +19,7 @@ RUN_STATUSES = (
     ("failed", "Ran but failed"),
     ("rejected", "The agent refused the configuration"),
 )
+CARRIER_ID_KINDS = (("vector_device", "Vector device name"),)
 CARRIER_TYPES = (
     ("computer", "This computer"),
     ("device", "Hardware mounted to the computer"),
@@ -29,9 +29,16 @@ CARRIER_TYPES = (
 )
 
 
+class CarrierIdSerializer(StrictObservationSerializer):
+    """The carrier as the license tool names it (Vector device name); never a PnP ID."""
+
+    kind = serializers.ChoiceField(choices=CARRIER_ID_KINDS)
+    value = ObservationTextField(max_length=512)
+
+
 class ReportedCarrierSerializer(StrictObservationSerializer):
     type = serializers.ChoiceField(choices=CARRIER_TYPES)
-    hardware_id = HardwareIdSerializer(required=False)
+    hardware_id = CarrierIdSerializer(required=False)
     equipment_uid = ObservationUUIDField(required=False)
 
 

@@ -31,7 +31,7 @@ The backend applies the agent's rules on write, so a coordinator sees the proble
 |---|---|
 | `probe` | `command` (absolute Windows `.exe` path, ≤ 16 args × 256 chars), `file` (absolute Windows path) or `registry` (HKLM, one key, named values); no `..`; `timeout_s` 1–60; `encoding` from a fixed list |
 | `extract` | `format` `xml` / `json` / `text` / `values` (`values` with, and only with, registry); `fields` from the fixed target list, `product_name` required; a `text` regex must name every source group |
-| `carrier` | `computer`, `device`, `dongle`, `server`, `equipment` or `mapped` (`type_map` + `default_type`, needs a `carrier_type` field); device/dongle need `hardware_id_kind` (`pnp_id`, `vector_device`) and a `carrier_id` field; equipment needs `equipment_uid` of an active unit |
+| `carrier` | `computer`, `device`, `dongle`, `server`, `equipment` or `mapped` (`type_map` + `default_type`, needs a `carrier_type` field); device/dongle need `hardware_id_kind` from the license-carrier kinds (today only `vector_device`; a PnP ID is for device monitoring, never a carrier) and a `carrier_id` field; equipment needs `equipment_uid` of an active unit |
 
 Agent-only rules: allowed folders on the computer (Program Files, ProgramData, local roots) and, while
 TLS to the backend is not verified, only trusted executables (presets, local settings).

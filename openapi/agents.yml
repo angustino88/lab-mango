@@ -1668,6 +1668,25 @@ components:
           $ref: '#/components/schemas/AgentSessionLogData'
       required:
       - data
+    CarrierId:
+      type: object
+      description: The carrier as the license tool names it (Vector device name);
+        never a PnP ID.
+      properties:
+        kind:
+          $ref: '#/components/schemas/CarrierIdKindEnum'
+        value:
+          type: string
+          maxLength: 512
+      required:
+      - kind
+      - value
+      additionalProperties: false
+    CarrierIdKindEnum:
+      enum:
+      - vector_device
+      type: string
+      description: '* `vector_device` - Vector device name'
     Choice:
       type: object
       description: ENU-1 ``{value, label}``.
@@ -2221,7 +2240,7 @@ components:
         type:
           $ref: '#/components/schemas/ReportedCarrierTypeEnum'
         hardware_id:
-          $ref: '#/components/schemas/HardwareId'
+          $ref: '#/components/schemas/CarrierId'
         equipment_uid:
           type: string
           format: uuid

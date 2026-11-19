@@ -55,6 +55,7 @@ def test_vector_preset_is_a_valid_configuration():
         (("probe", "timeout_s"), 600, "probe.timeout_s"),
         (("extract", "format"), "values", "extract.format"),
         (("carrier", "hardware_id_kind"), "", "carrier.hardware_id_kind"),
+        (("carrier", "hardware_id_kind"), "pnp_id", "carrier.hardware_id_kind"),
     ],
 )
 def test_configurations_the_agent_would_reject_fail_on_write(path, value, field):

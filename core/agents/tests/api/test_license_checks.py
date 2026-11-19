@@ -258,6 +258,13 @@ def test_past_expiry_records_expired_and_renewal_ends_it(enrolled, bench_setup):
     assert latest.status == "assigned"
 
 
+def test_a_pnp_id_is_not_a_license_carrier(enrolled, bench_setup):
+    identity, key, _ = enrolled
+    check, *_ = bench_setup
+    carrier = {"type": "device", "hardware_id": {"kind": "pnp_id", "value": "USB\\VID_1248&PID_1073\\007113"}}
+    assert send(identity, key, run(check, vector_license(carrier=carrier))).status_code == 422
+
+
 def test_untargeted_check_is_not_found_and_body_rules_apply(enrolled, bench_setup):
     identity, key, _ = enrolled
     check, *_ = bench_setup
