@@ -20,7 +20,6 @@ def backfill_completed_at(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("labs", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

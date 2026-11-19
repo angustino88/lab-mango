@@ -1164,7 +1164,11 @@ class TestUpdateLifecycleIntegrity:
     )
     def test_terminal_booking_schedule_is_immutable(self, actor, make_booking, now, terminal_status):
         booking = make_booking(starts_at=now + timedelta(hours=2), ends_at=now + timedelta(hours=3))
-        BenchBooking.objects.filter(pk=booking.pk).update(status=terminal_status, cancellation_reason="x")
+        BenchBooking.objects.filter(pk=booking.pk).update(
+            status=terminal_status,
+            cancellation_reason="x",
+            completed_at=booking.ends_at if terminal_status == BookingStatus.COMPLETED else None,
+        )
 
         with pytest.raises(BenchBookingConflict):
             update_bench_booking(

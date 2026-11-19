@@ -158,8 +158,14 @@ def test_early_release_rate_credits_completing_the_booking_when_done():
             completed_at=completed_at,
         )
         LabSessionLogFactory(
-            user=user, remote_user=user.username, bench=slot.bench, booking=slot, booking_code=slot.booking_code,
-            access_type=SessionAccessType.BOOKED, login_time=at(6, 8), logout_time=at(6, 9),
+            user=user,
+            remote_user=user.username,
+            bench=slot.bench,
+            booking=slot,
+            booking_code=slot.booking_code,
+            access_type=SessionAccessType.BOOKED,
+            login_time=at(6, 8),
+            logout_time=at(6, 9),
         )
 
     coordinator = client_for("coord")
@@ -175,4 +181,6 @@ def test_early_release_rate_credits_completing_the_booking_when_done():
     assert kpi(released, "early_release_rate")["value"] == 1.0
     assert kpi(held, "early_release_rate")["value"] == 0.0
     area = next(a for a in held["development_areas"] if a["kpi"]["value"] == "early_release_rate")
-    assert area["text"] == "Only 0% of unused booked time was released: 3 h stayed reserved after the last session ended."
+    assert (
+        area["text"] == "Only 0% of unused booked time was released: 3 h stayed reserved after the last session ended."
+    )

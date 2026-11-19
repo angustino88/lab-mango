@@ -28190,7 +28190,7 @@
       "method": "GET",
       "operation_id": "labs_benches_assessment_retrieve_by_id",
       "summary": "Get Benches Assessment by ID",
-      "description": "KPI assessment of one bench. Lab coordinators and administrators only.",
+      "description": "KPI assessment of one bench. Lab coordinators and administrators only (checked per request; the\nroute follows the leaderboard policy).",
       "tags": [
         "Leaderboard"
       ],
@@ -28358,6 +28358,59 @@
           }
         },
         "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -71807,6 +71860,18 @@
                       "default": 0,
                       "description": "Bookings with no session."
                     },
+                    "early_release_rate": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Unused booked time after the last session that was released by completing the booking early, against all such unused time, 0-1; null when no booking had unused time left."
+                    },
+                    "idle_reserved_minutes": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0.0,
+                      "description": "Booked minutes left after the last session that stayed reserved (not released)."
+                    },
                     "last_remote_at": {
                       "type": "string",
                       "format": "date-time",
@@ -71883,6 +71948,8 @@
                 "booking_utilization": 0.0,
                 "slot_adherence": 0.0,
                 "no_show_bookings": 0,
+                "early_release_rate": 0.0,
+                "idle_reserved_minutes": 0.0,
                 "last_remote_at": "2026-10-20T12:00:00Z",
                 "labs_accessed": 0,
                 "total_bookings": 0,
@@ -72047,6 +72114,18 @@
                       "default": 0,
                       "description": "Bookings with no session."
                     },
+                    "early_release_rate": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Unused booked time after the last session that was released by completing the booking early, against all such unused time, 0-1; null when no booking had unused time left."
+                    },
+                    "idle_reserved_minutes": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0.0,
+                      "description": "Booked minutes left after the last session that stayed reserved (not released)."
+                    },
                     "booking_compliance": {
                       "type": "number",
                       "format": "double",
@@ -72099,6 +72178,8 @@
                 "booking_fill": 0.0,
                 "total_bookings": 0,
                 "no_show_bookings": 0,
+                "early_release_rate": 0.0,
+                "idle_reserved_minutes": 0.0,
                 "booking_compliance": 0.0,
                 "booking_utilization": 0.0,
                 "downtime_minutes": 0.0,
@@ -72283,6 +72364,18 @@
                       "default": 0,
                       "description": "Bookings with no session."
                     },
+                    "early_release_rate": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Unused booked time after the last session that was released by completing the booking early, against all such unused time, 0-1; null when no booking had unused time left."
+                    },
+                    "idle_reserved_minutes": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0.0,
+                      "description": "Booked minutes left after the last session that stayed reserved (not released)."
+                    },
                     "last_remote_at": {
                       "type": "string",
                       "format": "date-time",
@@ -72359,6 +72452,8 @@
                 "booking_utilization": 0.0,
                 "slot_adherence": 0.0,
                 "no_show_bookings": 0,
+                "early_release_rate": 0.0,
+                "idle_reserved_minutes": 0.0,
                 "last_remote_at": "2026-10-20T12:00:00Z",
                 "labs_accessed": 0,
                 "total_bookings": 0,
@@ -72434,7 +72529,7 @@
       "method": "GET",
       "operation_id": "labs_leaderboard_users_assessment_retrieve_by_id",
       "summary": "Get Leaderboard Users Assessment by ID",
-      "description": "KPI assessment of one user: scorecard, rating, strengths, development areas and trend.\n\nLab coordinators and administrators read anyone's; a lab member reads only their own. The rankings\nare visible to every lab member, the assessment of another person is not.",
+      "description": "KPI assessment of one user: scorecard, rating, strengths, development areas and trend.\n\nLab coordinators and administrators read anyone's; a lab member reads only their own. The route\nfollows the leaderboard policy (lab members read); the subject is checked per request.",
       "tags": [
         "Leaderboard"
       ],
@@ -72602,6 +72697,59 @@
           }
         },
         "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
           "description": "",
           "content_type": "application/json",
           "schema": {

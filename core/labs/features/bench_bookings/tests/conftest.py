@@ -62,6 +62,8 @@ def make_booking(db, bench, actor):
             booking_code=code or f"BOOKING-TEST-{BenchBooking.objects.count() + 1:04d}",
             # The database requires a reason on cancelled bookings (Booking.clean() invariant).
             cancellation_reason="Cancelled in test setup" if status == BookingStatus.CANCELLED else "",
+            # The database requires a completion time exactly on completed bookings.
+            completed_at=ends_at if status == BookingStatus.COMPLETED else None,
         )
         booking.save(actor=actor)
         return booking
