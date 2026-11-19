@@ -71222,18 +71222,24 @@
                       "readOnly": true,
                       "nullable": true
                     },
-                    "booking_id": {
-                      "type": "integer",
+                    "booking": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
                       "readOnly": true,
-                      "nullable": true
+                      "nullable": true,
+                      "description": "The verified booking (access type booked); null otherwise."
                     }
                   },
                   "required": [
                     "access_type",
                     "active_minutes",
                     "bench",
+                    "booking",
                     "booking_code",
-                    "booking_id",
                     "computer",
                     "duration_minutes",
                     "host_name",
@@ -71274,7 +71280,7 @@
                 "user": {},
                 "access_type": {},
                 "booking_code": "string",
-                "booking_id": 1
+                "booking": {}
               }
             ]
           }

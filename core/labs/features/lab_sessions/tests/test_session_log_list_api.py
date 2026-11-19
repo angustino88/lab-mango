@@ -9,7 +9,14 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.labs.models import SessionAccessType
-from tests.factories import BenchFactory, LabSessionLogFactory, UserFactory, grant_labs_role
+from tests.factories import (
+    BenchBookingFactory,
+    BenchFactory,
+    LabProjectFactory,
+    LabSessionLogFactory,
+    UserFactory,
+    grant_labs_role,
+)
 
 URL = "/api/labs/lab-sessions"
 DAY = date(2026, 11, 10)
@@ -84,7 +91,27 @@ def test_lists_sessions_in_range_newest_first_with_links(client):
     assert first["computer"]["id"] == early.computing_equipment_id
     assert first["access_type"] == {"value": "booked", "label": "Booked"}
     assert first["booking_code"] == "BK-1"
+    assert first["booking"] is None  # no verified booking linked
     assert response.json()["meta"]["pagination"]["count"] == 2
+
+
+@pytest.mark.django_db
+def test_verified_booking_carries_schedule_and_project(client):
+    bench = BenchFactory()
+    project = LabProjectFactory(project_name="Apollo", code="PRJ-7")
+    booking = BenchBookingFactory(
+        bench=bench, project=project, booking_code="BK-9", starts_at=at(DAY, 8), ends_at=at(DAY, 12)
+    )
+    session(bench=bench, booking=booking, booking_code="BK-9", access_type=SessionAccessType.BOOKED)
+
+    row = get(client).json()["data"][0]
+
+    assert row["booking"]["id"] == booking.id
+    assert row["booking"]["booking_code"] == "BK-9"
+    assert row["booking"]["starts_at"].startswith("2026-11-10T")
+    assert row["booking"]["ends_at"].startswith("2026-11-10T")
+    assert row["booking"]["status"]["value"] == booking.status
+    assert row["booking"]["project"] == {"id": project.id, "name": "Apollo"}
 
 
 @pytest.mark.django_db
@@ -111,7 +138,18 @@ def test_ordering_is_stable_with_id_tie_breaker(client):
 @pytest.mark.django_db
 def test_page_query_count_does_not_grow_with_rows(client):
     for hour in range(8, 18):
-        session(hour=hour, bench=BenchFactory(), user=UserFactory())
+        bench = BenchFactory()
+        booking = BenchBookingFactory(
+            bench=bench, project=LabProjectFactory(), starts_at=at(DAY, hour), ends_at=at(DAY, hour + 1)
+        )
+        session(
+            hour=hour,
+            bench=bench,
+            user=UserFactory(),
+            booking=booking,
+            booking_code=booking.booking_code,
+            access_type=SessionAccessType.BOOKED,
+        )
     get(client)  # warm the per-request role lookup so both measurements compare the same work
     with CaptureQueriesContext(connection) as small:
         get(client, page_size=2)

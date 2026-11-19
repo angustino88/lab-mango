@@ -130,6 +130,10 @@ class DashboardComputingSerializer(serializers.Serializer):
     remote_user_display_name = serializers.CharField(allow_blank=True)
     remote_computer = serializers.CharField(allow_blank=True, help_text="Client computer of the remote session.")
     remote_ip = serializers.CharField(allow_null=True)
+    status_started_at = serializers.DateTimeField(
+        allow_null=True,
+        help_text="When the current offline or inactive status began; null for any other status.",
+    )
 
 
 @embedded_resource
@@ -153,6 +157,10 @@ class DashboardComputingDetailSerializer(serializers.Serializer):
     activity_status = serializers.CharField()
     last_agent_report_at = serializers.DateTimeField(allow_null=True)
     is_stale = serializers.BooleanField(allow_null=True)
+    status_started_at = serializers.DateTimeField(
+        allow_null=True,
+        help_text="When the current offline or inactive status began; null for any other status.",
+    )
 
 
 @embedded_resource
@@ -173,6 +181,17 @@ class DashboardEquipmentActivitySerializer(serializers.Serializer):
     status = serializers.CharField()
     last_agent_report_at = serializers.DateTimeField(allow_null=True)
     is_stale = serializers.BooleanField(allow_null=True)
+
+
+def _status_started_at(activity: Any) -> Any:
+    """Start of the current offline or inactive spell, so the UI can show how long it has lasted."""
+    if activity is None:
+        return None
+    if activity.status == ComputingActivityStatus.OFFLINE:
+        return activity.offline_at
+    if activity.status == ComputingActivityStatus.INACTIVE:
+        return activity.inactive_at
+    return None
 
 
 def _equipment_activity_summary(equipment: Any) -> dict[str, Any] | None:
@@ -312,6 +331,7 @@ class DashboardBenchSerializer(serializers.Serializer):
                         "sku": equipment.sku or "",
                         "name": equipment.name or "",
                         "activity_status": activity.status if activity else "offline",
+                        "status_started_at": _status_started_at(activity),
                     }
                     if self.include_remote_details:
                         rdp_url = None

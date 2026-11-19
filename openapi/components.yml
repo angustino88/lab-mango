@@ -4136,6 +4136,12 @@ components:
         remote_ip:
           type: string
           nullable: true
+        status_started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the current offline or inactive status began; null for
+            any other status.
       required:
       - activity_status
       - id
@@ -4146,6 +4152,7 @@ components:
       - remote_ip
       - remote_user
       - remote_user_display_name
+      - status_started_at
       x-embedded-resource: true
     DashboardComputingDetail:
       type: object
@@ -4168,11 +4175,18 @@ components:
         is_stale:
           type: boolean
           nullable: true
+        status_started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the current offline or inactive status began; null for
+            any other status.
       required:
       - activity_status
       - id
       - is_stale
       - last_agent_report_at
+      - status_started_at
       x-embedded-resource: true
     DashboardEquipmentActivity:
       type: object
@@ -18028,6 +18042,42 @@ components:
           $ref: '#/components/schemas/SendOTPResponse'
       required:
       - data
+    SessionLogBooking:
+      type: object
+      description: 'The verified booking a session ran under: its schedule and project,
+        to compare with the session.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        booking_code:
+          type: string
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        project:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+      required:
+      - booking_code
+      - ends_at
+      - id
+      - project
+      - starts_at
+      - status
+      x-embedded-resource: true
     SessionLogItem:
       type: object
       description: One completed remote session as pushed by the agent, with the links
@@ -18092,16 +18142,18 @@ components:
           type: string
           readOnly: true
           nullable: true
-        booking_id:
-          type: integer
+        booking:
+          allOf:
+          - $ref: '#/components/schemas/SessionLogBooking'
           readOnly: true
           nullable: true
+          description: The verified booking (access type booked); null otherwise.
       required:
       - access_type
       - active_minutes
       - bench
+      - booking
       - booking_code
-      - booking_id
       - computer
       - duration_minutes
       - host_name

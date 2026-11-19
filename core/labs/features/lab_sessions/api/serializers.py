@@ -9,9 +9,10 @@ from rest_framework import serializers
 
 from core.common.api.pagination import PageNumberQuerySerializer
 from core.common.api.search import SearchQueryMixin
-from core.common.api.summary_serializers import UserReferenceSerializer, choice_field
-from core.labs.features.base.serializers import UIDNamedReferenceSerializer
+from core.common.api.summary_serializers import UserReferenceSerializer, choice_field, embedded_resource
+from core.labs.features.base.serializers import NamedReferenceSerializer, UIDNamedReferenceSerializer
 from core.labs.features.lab_sessions.queries import SESSION_LOG_ORDERINGS
+from core.labs.models import BookingStatus
 from core.labs.models.session.lab_session import SessionAccessType
 
 MAX_RANGE_DAYS = 366
@@ -45,6 +46,21 @@ class SessionLogListQuerySerializer(SearchQueryMixin, PageNumberQuerySerializer)
         return attrs
 
 
+@embedded_resource
+class SessionLogBookingSerializer(serializers.Serializer):
+    """The verified booking a session ran under: its schedule and project, to compare with the session."""
+
+    id = serializers.IntegerField(read_only=True)
+    booking_code = serializers.CharField(read_only=True)
+    starts_at = serializers.DateTimeField(read_only=True)
+    ends_at = serializers.DateTimeField(read_only=True)
+    status = choice_field(BookingStatus.choices)
+    project = NamedReferenceSerializer(read_only=True, allow_null=True)
+
+    class Meta:
+        ref_name = "SessionLogBooking"
+
+
 class SessionLogItemSerializer(serializers.Serializer):
     """One completed remote session as pushed by the agent, with the links derived from it."""
 
@@ -61,7 +77,11 @@ class SessionLogItemSerializer(serializers.Serializer):
     user = UserReferenceSerializer(read_only=True, allow_null=True)
     access_type = choice_field(SessionAccessType.choices, allow_null=True)
     booking_code = serializers.CharField(read_only=True, allow_null=True)
-    booking_id = serializers.IntegerField(read_only=True, allow_null=True)
+    booking = SessionLogBookingSerializer(
+        read_only=True,
+        allow_null=True,
+        help_text="The verified booking (access type booked); null otherwise.",
+    )
 
     class Meta:
         ref_name = "SessionLogItem"

@@ -506,6 +506,12 @@ components:
         remote_ip:
           type: string
           nullable: true
+        status_started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the current offline or inactive status began; null for
+            any other status.
       required:
       - activity_status
       - id
@@ -516,6 +522,7 @@ components:
       - remote_ip
       - remote_user
       - remote_user_display_name
+      - status_started_at
       x-embedded-resource: true
     DashboardComputingDetail:
       type: object
@@ -538,11 +545,18 @@ components:
         is_stale:
           type: boolean
           nullable: true
+        status_started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the current offline or inactive status began; null for
+            any other status.
       required:
       - activity_status
       - id
       - is_stale
       - last_agent_report_at
+      - status_started_at
       x-embedded-resource: true
     DashboardEquipmentActivity:
       type: object
