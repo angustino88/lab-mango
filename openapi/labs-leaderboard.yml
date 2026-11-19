@@ -275,10 +275,10 @@ paths:
         areas and trend.
 
 
-        Lab coordinators and administrators only: the rankings are visible to every
-        lab member, the
+        Lab coordinators and administrators read anyone''s; a lab member reads only
+        their own. The rankings
 
-        assessment of a person is not.'
+        are visible to every lab member, the assessment of another person is not.'
       parameters:
       - in: query
         name: end_date

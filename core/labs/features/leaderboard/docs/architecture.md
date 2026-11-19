@@ -115,8 +115,9 @@ Login count reflects how much the lab is used; active hours and the booking KPIs
 
 ### KPI assessment (`queries/assessment.py`)
 
-`GET /leaderboard/users/<id>/assessment` and `GET /benches/<id>/assessment`, **lab coordinators and
-administrators only** (`LABS_STAFF_ACCESS`); the rankings stay readable by every lab member.
+`GET /leaderboard/users/<id>/assessment`: lab coordinators and administrators read anyone's, a lab
+member reads **only their own** (`IsOwnAssessmentOrLabStaff`). `GET /benches/<id>/assessment`: lab
+coordinators and administrators only (`LABS_STAFF_ACCESS`). The rankings stay readable by every lab member.
 
 - Scorecard: each KPI with its value, previous-period value, target and status (on / near / below
   target, or not applicable). Targets (persona): attendance ≥ 90 %, booked time used ≥ 75 %, active

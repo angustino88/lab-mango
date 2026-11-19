@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.utils import timezone
 from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -169,14 +170,24 @@ class UserWeeklyUsageHeatmapAPIView(FeatureAPIView):
         return self.respond_data(get_user_weekly_usage(pk))
 
 
+class IsOwnAssessmentOrLabStaff(BasePermission):
+    """Coordinators, admins and API keys read any user's assessment; a lab member reads only their own."""
+
+    def has_permission(self, request: Request, view) -> bool:
+        if LABS_STAFF_ACCESS[0]().has_permission(request, view):
+            return True
+        own = str(view.kwargs.get("pk")) == str(getattr(request.user, "pk", None))
+        return own and request.method in SAFE_METHODS and LABS_MEMBER_READ_ACCESS[0]().has_permission(request, view)
+
+
 class UserAssessmentAPIView(FeatureAPIView):
     """KPI assessment of one user: scorecard, rating, strengths, development areas and trend.
 
-    Lab coordinators and administrators only: the rankings are visible to every lab member, the
-    assessment of a person is not.
+    Lab coordinators and administrators read anyone's; a lab member reads only their own. The rankings
+    are visible to every lab member, the assessment of another person is not.
     """
 
-    permission_classes = LABS_STAFF_ACCESS
+    permission_classes = [IsOwnAssessmentOrLabStaff]
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
         query=LeaderboardDateRangeQuerySerializer,

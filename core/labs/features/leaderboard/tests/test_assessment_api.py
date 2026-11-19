@@ -61,6 +61,23 @@ def test_assessments_are_for_coordinators_and_admins_only():
 
 
 @pytest.mark.django_db
+def test_a_lab_member_reads_their_own_assessment_only():
+    me = grant_labs_role(UserFactory(), "user")
+    other = UserFactory()
+    api = APIClient()
+    api.force_authenticate(user=me)
+
+    assert api.get(f"/api/labs/leaderboard/users/{me.pk}/assessment", RANGE).status_code == 200
+    assert api.get(f"/api/labs/leaderboard/users/{other.pk}/assessment", RANGE).status_code == 403
+    assert api.get(f"/api/labs/benches/{BenchFactory().pk}/assessment", RANGE).status_code == 403
+
+    no_role = UserFactory()  # no Labs role: not even their own
+    outsider = APIClient()
+    outsider.force_authenticate(user=no_role)
+    assert outsider.get(f"/api/labs/leaderboard/users/{no_role.pk}/assessment", RANGE).status_code == 403
+
+
+@pytest.mark.django_db
 def test_user_assessment_reports_strengths_development_areas_and_trend():
     user, bench = UserFactory(username="assess-alice"), BenchFactory()
     for day in (6, 7, 8, 9):  # four booked, fully used, focused days

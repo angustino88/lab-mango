@@ -20849,7 +20849,7 @@
     "/api/labs/leaderboard/users/{id}/assessment": {
       "get": {
         "operationId": "labs_leaderboard_users_assessment_retrieve_by_id",
-        "description": "KPI assessment of one user: scorecard, rating, strengths, development areas and trend.\n\nLab coordinators and administrators only: the rankings are visible to every lab member, the\nassessment of a person is not.",
+        "description": "KPI assessment of one user: scorecard, rating, strengths, development areas and trend.\n\nLab coordinators and administrators read anyone's; a lab member reads only their own. The rankings\nare visible to every lab member, the assessment of another person is not.",
         "parameters": [
           {
             "in": "query",
