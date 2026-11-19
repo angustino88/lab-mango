@@ -6,12 +6,16 @@ from datetime import datetime
 from typing import Any
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, DurationField, ExpressionWrapper, F, Max, Sum
+from django.db.models import Q
+from django.db.models.functions import Lower
+from django.utils import timezone
 
 from core.labs.features.equipment.public import get_equipment_status_summary
 from core.labs.models import (
     Bench,
     BenchBooking,
+    BookingApprovalStatus,
+    BookingStatus,
     LabSessionLog,
 )
 
@@ -23,131 +27,201 @@ from ..helpers import (
 )
 
 
+# Bookings a person was expected to attend: approved, not cancelled, already started (the KPI window
+# never counts future bookings). Expired bookings stay in: they are the no-shows.
+def _attendable_bookings(start_date: datetime, end_date: datetime):
+    return BenchBooking.objects.filter(
+        starts_at__gte=start_date,
+        starts_at__lte=min(end_date, timezone.now()),
+        approval_status=BookingApprovalStatus.APPROVED,
+    ).exclude(status=BookingStatus.CANCELLED)
+
+
+def _login_key(name: str | None) -> str:
+    """Login name as the session log resolves it: case ignored, Windows ``DOMAIN\\`` prefix dropped."""
+    return (name or "").strip().rsplit("\\", 1)[-1].strip().lower()
+
+
+def _seconds(start: datetime, end: datetime) -> float:
+    return max(0.0, (end - start).total_seconds())
+
+
+def _active_seconds(row: dict[str, Any]) -> float:
+    """Active time the agent reported, else the whole session (rows stored before it was reported)."""
+    wall = _seconds(row["login_time"], row["logout_time"])
+    active = row.get("active_duration_seconds")
+    return min(wall, max(0.0, float(active))) if active is not None else wall
+
+
+def _ratio(part: float, whole: float) -> float | None:
+    """Rounded ``part / whole`` in [0, 1], or None when there is nothing to measure against."""
+    return round(clamp(part / whole), 2) if whole > 0 else None
+
+
+def _booking_usage(bookings: list[dict[str, Any]]) -> dict[int, dict[str, float]]:
+    """Per booking: session seconds inside the slot, session seconds in total, whether anyone attended."""
+    usage: dict[int, dict[str, float]] = {
+        b["id"]: {"in_slot": 0.0, "total": 0.0, "attended": 0.0} for b in bookings
+    }
+    slots = {b["id"]: (b["starts_at"], b["ends_at"]) for b in bookings}
+    linked = LabSessionLog.objects.filter(
+        booking_id__in=list(slots), login_time__isnull=False, logout_time__isnull=False
+    ).values("booking_id", "login_time", "logout_time")
+    for row in linked:
+        slot_start, slot_end = slots[row["booking_id"]]
+        entry = usage[row["booking_id"]]
+        entry["attended"] = 1.0
+        entry["total"] += _seconds(row["login_time"], row["logout_time"])
+        entry["in_slot"] += _seconds(max(row["login_time"], slot_start), min(row["logout_time"], slot_end))
+    return usage
+
+
+def _booking_kpis(bookings: list[dict[str, Any]], usage: dict[int, dict[str, float]]) -> dict[str, Any]:
+    """Attendance, use of booked time and slot adherence over a set of bookings."""
+    total = len(bookings)
+    attended = sum(1 for b in bookings if usage[b["id"]]["attended"])
+    booked = sum(_seconds(b["starts_at"], b["ends_at"]) for b in bookings)
+    # Time used of each booking, capped at its own length so one long session cannot hide a no-show.
+    used = sum(min(usage[b["id"]]["in_slot"], _seconds(b["starts_at"], b["ends_at"])) for b in bookings)
+    in_slot = sum(usage[b["id"]]["in_slot"] for b in bookings)
+    session_time = sum(usage[b["id"]]["total"] for b in bookings)
+    return {
+        "total_bookings": total,
+        "no_show_bookings": total - attended,
+        "booking_compliance": _ratio(attended, total),
+        "booking_utilization": _ratio(used, booked),
+        "slot_adherence": _ratio(in_slot, session_time),
+        "booked_minutes": booked / 60,
+    }
+
+
+def _top_projects(bookings: list[dict[str, Any]]) -> list[str]:
+    counts: dict[str, int] = defaultdict(int)
+    for b in bookings:
+        if b["project__project_name"]:
+            counts[b["project__project_name"]] += 1
+    return [name for name, _ in sorted(counts.items(), key=lambda item: item[1], reverse=True)[:3]]
+
+
 def compute_leaderboard_persona(
     start_date: datetime,
     end_date: datetime,
 ) -> list[dict[str, Any]]:
-    """Compute persona ranking and scoring across users for the date window."""
-    sessions_qs = LabSessionLog.objects.filter(
-        login_time__gte=start_date,
-        login_time__lte=end_date,
-        login_time__isnull=False,
-        logout_time__isnull=False,
+    """KPIs and points per user for the date window (KPI definitions: docs/architecture.md section 5).
+
+    Sessions count for the app user the session log resolved; rows stored before that link existed
+    fall back to the login name. Bookings count for the person they are for (requester, else creator).
+    """
+    sessions = list(
+        LabSessionLog.objects.filter(
+            login_time__gte=start_date,
+            login_time__lte=end_date,
+            login_time__isnull=False,
+            logout_time__isnull=False,
+        ).values(
+            "user_id",
+            "remote_user",
+            "login_time",
+            "logout_time",
+            "active_duration_seconds",
+            "computing_equipment_id",
+            "booking_id",
+        )
     )
-
-    # Aggregate bookings by user
-    bookings_qs = BenchBooking.objects.filter(
-        starts_at__gte=start_date,
-        ends_at__lte=end_date,
-    ).select_related("creator", "project")
-
-    active_usernames = set(
-        sessions_qs.exclude(remote_user="").values_list("remote_user", flat=True).distinct()
-    ) | set(
-        bookings_qs.exclude(creator__username="").values_list("creator__username", flat=True).distinct()
+    bookings = list(
+        _attendable_bookings(start_date, end_date).values(
+            "id", "requester_id", "creator_id", "starts_at", "ends_at", "project__project_name"
+        )
     )
 
     User = get_user_model()
+    user_ids = {row["user_id"] for row in sessions if row["user_id"]}
+    user_ids |= {b["requester_id"] or b["creator_id"] for b in bookings if b["requester_id"] or b["creator_id"]}
+    login_names = {_login_key(row["remote_user"]) for row in sessions if not row["user_id"]} - {""}
     users = {
-        u.username: u
-        for u in User.objects.filter(is_active=True, username__in=active_usernames).only(
-            "id", "username", "display_name", "first_name", "last_name", "avatar"
-        )
+        user.pk: user
+        for user in User.objects.annotate(login_key=Lower("username"))
+        .filter(is_active=True)
+        .filter(Q(pk__in=user_ids) | Q(login_key__in=login_names))
+        .only("id", "username", "display_name", "first_name", "last_name", "avatar")
     }
+    by_login: dict[str, list[int]] = defaultdict(list)
+    for user in users.values():
+        by_login[user.username.lower()].append(user.pk)
 
-    agg = sessions_qs.values("remote_user").annotate(
-        total_sessions=Count("id"),
-        total_duration=Sum(
-            ExpressionWrapper(F("logout_time") - F("login_time"), output_field=DurationField())
-        ),
-        longest_session=Max(
-            ExpressionWrapper(F("logout_time") - F("login_time"), output_field=DurationField())
-        ),
-        last_remote=Max("login_time"),
-        labs_accessed=Count("computing_equipment", distinct=True),
-    )
-    user_session_stats = {row["remote_user"]: row for row in agg if row["remote_user"]}
+    sessions_by_user: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    for row in sessions:
+        owner = row["user_id"]
+        if owner is None:
+            matches = by_login.get(_login_key(row["remote_user"]), [])
+            owner = matches[0] if len(matches) == 1 else None  # never attribute to a guessed person
+        if owner in users:
+            sessions_by_user[owner].append(row)
 
-    # Group session intervals for late rate
-    user_session_tuples: dict[str, list[tuple[datetime, datetime]]] = defaultdict(list)
-    for log in sessions_qs.values("remote_user", "login_time", "logout_time"):
-        u = log["remote_user"]
-        if u and log["login_time"] and log["logout_time"]:
-            user_session_tuples[u].append((log["login_time"], log["logout_time"]))
-
-    user_late_rates = {
-        u: calculate_late_rate_from_tuples(tuples)
-        for u, tuples in user_session_tuples.items()
-    }
-
-    user_booking_counts: dict[str, int] = defaultdict(int)
-    user_project_counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
-    for b in bookings_qs:
-        if b.creator and b.creator.username:
-            un = b.creator.username
-            user_booking_counts[un] += 1
-            if b.project and b.project.name:
-                user_project_counts[un][b.project.name] += 1
-
-    user_top_projects = {
-        un: [proj for proj, _ in sorted(proj_map.items(), key=lambda x: x[1], reverse=True)[:3]]
-        for un, proj_map in user_project_counts.items()
-    }
+    bookings_by_user: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    for b in bookings:
+        owner = b["requester_id"] or b["creator_id"]
+        if owner in users:
+            bookings_by_user[owner].append(b)
+    usage = _booking_usage(bookings)
 
     num_weekdays = max(1, count_weekdays(start_date, end_date))
     result: list[dict[str, Any]] = []
 
-    for un, user in users.items():
-        s = user_session_stats.get(un, {})
-        total_sessions = s.get("total_sessions", 0)
-        tot_dur = s.get("total_duration")
-        total_dur_min = tot_dur.total_seconds() / 60 if tot_dur else 0.0
+    for pk, user in users.items():
+        rows = sessions_by_user.get(pk, [])
+        user_bookings = bookings_by_user.get(pk, [])
+        if not rows and not user_bookings:
+            continue
+        total_sessions = len(rows)
+        wall_seconds = [_seconds(r["login_time"], r["logout_time"]) for r in rows]
+        total_dur_min = sum(wall_seconds) / 60
+        active_min = sum(_active_seconds(r) for r in rows) / 60
+        late_rate = calculate_late_rate_from_tuples([(r["login_time"], r["logout_time"]) for r in rows])
 
-        longest = s.get("longest_session")
-        longest_session_minutes = longest.total_seconds() / 60 if longest else 0.0
-        avg_session_minutes = round(total_dur_min / total_sessions, 2) if total_sessions > 0 else 0.0
-
-        total_bookings = user_booking_counts.get(un, 0)
-        late_rate = user_late_rates.get(un, 0.0)
-
-        # Work from office vs home rates
+        # RFO/RFH: unchanged detection (sessions against two per weekday).
         wfo_rate = round(min(1.0, total_sessions / (num_weekdays * 2)), 2)
         wfh_rate = round(max(0.0, 1.0 - wfo_rate), 2)
-        usage_efficiency = round(clamp(total_dur_min / (num_weekdays * 480)), 2)
-        booking_compliance = round(clamp(total_sessions / total_bookings if total_bookings > 0 else 1.0), 2)
+        usage_efficiency = round(clamp(active_min / (num_weekdays * 480)), 2)
+        booking = _booking_kpis(user_bookings, usage)
 
-        # Overall points calculation
+        # Points reward productive, booked, on-slot lab time; session counts no longer score on their own,
+        # so many short logins cannot outrank real work.
         points = int(
-            (total_sessions * 10)
-            + (total_dur_min * 0.1)
-            + (usage_efficiency * 100)
-            + (booking_compliance * 50)
-            - (late_rate * 30)
+            (active_min / 60) * 10
+            + usage_efficiency * 100
+            + (booking["booking_compliance"] or 0) * 50
+            + (booking["booking_utilization"] or 0) * 50
+            + (booking["slot_adherence"] or 0) * 20
+            - late_rate * 30
         )
-        points = max(0, points)
 
-        display_name = getattr(user, "display_name", None) or getattr(user, "get_full_name", lambda: "")() or un
-        avatar = getattr(user, "avatar_url", None)
-
+        display_name = getattr(user, "display_name", None) or user.get_full_name() or user.username
         result.append({
-            "id": user.pk,
-            "username": un,
+            "id": pk,
+            "username": user.username,
             "display_name": display_name,
-            "avatar": avatar,
-            "points": points,
+            "avatar": getattr(user, "avatar_url", None),
+            "points": max(0, points),
             "wfo_rate": wfo_rate,
             "wfh_rate": wfh_rate,
             "late_rate": late_rate,
             "usage_efficiency": usage_efficiency,
-            "booking_compliance": booking_compliance,
-            "last_remote": s.get("last_remote"),
-            "labs_accessed": s.get("labs_accessed", 0),
-            "total_bookings": total_bookings,
+            "active_rate": _ratio(active_min, total_dur_min),
+            "ad_hoc_rate": _ratio(sum(1 for r in rows if not r["booking_id"]), total_sessions),
+            "booking_compliance": booking["booking_compliance"],
+            "booking_utilization": booking["booking_utilization"],
+            "slot_adherence": booking["slot_adherence"],
+            "no_show_bookings": booking["no_show_bookings"],
+            "last_remote": max((r["login_time"] for r in rows), default=None),
+            "labs_accessed": len({r["computing_equipment_id"] for r in rows if r["computing_equipment_id"]}),
+            "total_bookings": booking["total_bookings"],
             "total_sessions": total_sessions,
             "total_usage_minutes": round(total_dur_min, 2),
-            "avg_session_minutes": avg_session_minutes,
-            "longest_session_minutes": round(longest_session_minutes, 2),
-            "top_projects": user_top_projects.get(un, []),
+            "active_usage_minutes": round(active_min, 2),
+            "avg_session_minutes": round(total_dur_min / total_sessions, 2) if total_sessions else 0.0,
+            "longest_session_minutes": round(max(wall_seconds, default=0.0) / 60, 2),
+            "top_projects": _top_projects(user_bookings),
         })
 
     result.sort(key=lambda x: x["points"], reverse=True)
@@ -158,30 +232,64 @@ def compute_leaderboard_lab(
     start_date: datetime,
     end_date: datetime,
 ) -> list[dict[str, Any]]:
-    """Compute laboratory utilization rankings."""
-    benches = Bench.objects.filter(deleted_at__isnull=True)
+    """KPIs and points per bench for the date window.
+
+    Sessions count for the bench the computer stood on at login (``LabSessionLog.bench``), so moving a
+    computer later does not move its history. Four queries in total, whatever the number of benches.
+    """
+    benches = list(Bench.objects.filter(deleted_at__isnull=True).values("id", "name"))
+    sessions_by_bench: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    for row in LabSessionLog.objects.filter(
+        bench_id__isnull=False,
+        login_time__gte=start_date,
+        login_time__lte=end_date,
+        login_time__isnull=False,
+        logout_time__isnull=False,
+    ).values("bench_id", "user_id", "remote_user", "login_time", "logout_time", "active_duration_seconds"):
+        sessions_by_bench[row["bench_id"]].append(row)
+
+    bookings = list(
+        _attendable_bookings(start_date, end_date).values(
+            "id", "bench_id", "starts_at", "ends_at", "project__project_name"
+        )
+    )
+    bookings_by_bench: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    for b in bookings:
+        bookings_by_bench[b["bench_id"]].append(b)
+    usage = _booking_usage(bookings)
+
+    capacity_min = max(1, count_weekdays(start_date, end_date)) * 480
     result = []
     for bench in benches:
-        sessions = LabSessionLog.objects.filter(
-            computing_equipment__bench_assignments__bench=bench,
-            computing_equipment__bench_assignments__unassigned_at__isnull=True,
-            login_time__gte=start_date,
-            login_time__lte=end_date,
+        rows = sessions_by_bench.get(bench["id"], [])
+        bench_bookings = bookings_by_bench.get(bench["id"], [])
+        active_min = sum(_active_seconds(r) for r in rows) / 60
+        users = {r["user_id"] or _login_key(r["remote_user"]) for r in rows} - {""}
+        booking = _booking_kpis(bench_bookings, usage)
+        utilization_rate = round(clamp(active_min / capacity_min), 2)
+        points = int(
+            (active_min / 60) * 10
+            + len(users) * 15
+            + utilization_rate * 100
+            + (booking["booking_compliance"] or 0) * 50
         )
-        total_sessions = sessions.count()
-        active_users = sessions.values("remote_user").distinct().count()
-        last_remote = sessions.aggregate(Max("login_time"))["login_time__max"]
-        points = total_sessions * 20 + active_users * 15
 
         result.append({
-            "id": bench.pk,
-            "name": bench.name,
-            "points": points,
-            "total_sessions": total_sessions,
-            "active_users": active_users,
-            "last_remote": last_remote,
+            "id": bench["id"],
+            "name": bench["name"],
+            "points": max(0, points),
+            "total_sessions": len(rows),
+            "active_users": len(users),
+            "last_remote": max((r["login_time"] for r in rows), default=None),
+            "total_usage_minutes": round(active_min, 2),
+            "utilization_rate": utilization_rate,
+            "booking_fill": round(clamp(booking["booked_minutes"] / capacity_min), 2),
+            "total_bookings": booking["total_bookings"],
+            "no_show_bookings": booking["no_show_bookings"],
+            "booking_compliance": booking["booking_compliance"],
+            "booking_utilization": booking["booking_utilization"],
             "downtime_minutes": 0.0,
-            "top_projects": [],
+            "top_projects": _top_projects(bench_bookings),
         })
 
     result.sort(key=lambda x: x["points"], reverse=True)

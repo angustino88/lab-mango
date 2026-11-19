@@ -71489,12 +71489,43 @@
                     "usage_efficiency": {
                       "type": "number",
                       "format": "double",
-                      "default": 0.0
+                      "default": 0.0,
+                      "description": "Active lab time against 8 hours per weekday, 0-1."
+                    },
+                    "active_rate": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Active time against total session time, 0-1; null without sessions."
+                    },
+                    "ad_hoc_rate": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Sessions without a verified booking against all sessions, 0-1; null without sessions."
                     },
                     "booking_compliance": {
                       "type": "number",
                       "format": "double",
-                      "default": 0.0
+                      "nullable": true,
+                      "description": "Attended bookings (at least one session) against approved bookings that have started, 0-1; null without bookings."
+                    },
+                    "booking_utilization": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Booked time actually used against booked time, 0-1; null without bookings."
+                    },
+                    "slot_adherence": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Session time inside the booked slot against all time of booked sessions, 0-1; null when no booking was attended."
+                    },
+                    "no_show_bookings": {
+                      "type": "integer",
+                      "default": 0,
+                      "description": "Bookings with no session."
                     },
                     "last_remote_at": {
                       "type": "string",
@@ -71516,6 +71547,12 @@
                       "type": "number",
                       "format": "double",
                       "default": 0.0
+                    },
+                    "active_usage_minutes": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0.0,
+                      "description": "Active minutes in sessions."
                     },
                     "avg_session_minutes": {
                       "type": "number",
@@ -71560,12 +71597,18 @@
                 "wfh_rate": 0.0,
                 "late_rate": 0.0,
                 "usage_efficiency": 0.0,
+                "active_rate": 0.0,
+                "ad_hoc_rate": 0.0,
                 "booking_compliance": 0.0,
+                "booking_utilization": 0.0,
+                "slot_adherence": 0.0,
+                "no_show_bookings": 0,
                 "last_remote_at": "2026-10-20T12:00:00Z",
                 "labs_accessed": 0,
                 "total_bookings": 0,
                 "total_sessions": 1,
                 "total_usage_minutes": 0.0,
+                "active_usage_minutes": 0.0,
                 "avg_session_minutes": 0.0,
                 "longest_session_minutes": 0.0,
                 "top_projects": [
@@ -71697,6 +71740,45 @@
                       "format": "date-time",
                       "nullable": true
                     },
+                    "total_usage_minutes": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0.0,
+                      "description": "Active minutes on the bench."
+                    },
+                    "utilization_rate": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0.0,
+                      "description": "Active time against 8 hours per weekday, 0-1."
+                    },
+                    "booking_fill": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0.0,
+                      "description": "Booked time against 8 hours per weekday, 0-1."
+                    },
+                    "total_bookings": {
+                      "type": "integer",
+                      "default": 0
+                    },
+                    "no_show_bookings": {
+                      "type": "integer",
+                      "default": 0,
+                      "description": "Bookings with no session."
+                    },
+                    "booking_compliance": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Attended bookings against approved bookings that have started, 0-1; null without bookings."
+                    },
+                    "booking_utilization": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Booked time actually used against booked time, 0-1; null without bookings."
+                    },
                     "downtime_minutes": {
                       "type": "number",
                       "format": "double",
@@ -71732,6 +71814,13 @@
                 "total_sessions": 1,
                 "active_users": 0,
                 "last_remote_at": "2026-10-20T12:00:00Z",
+                "total_usage_minutes": 0.0,
+                "utilization_rate": 0.0,
+                "booking_fill": 0.0,
+                "total_bookings": 0,
+                "no_show_bookings": 0,
+                "booking_compliance": 0.0,
+                "booking_utilization": 0.0,
                 "downtime_minutes": 0.0,
                 "top_projects": [
                   {}
@@ -71876,12 +71965,43 @@
                     "usage_efficiency": {
                       "type": "number",
                       "format": "double",
-                      "default": 0.0
+                      "default": 0.0,
+                      "description": "Active lab time against 8 hours per weekday, 0-1."
+                    },
+                    "active_rate": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Active time against total session time, 0-1; null without sessions."
+                    },
+                    "ad_hoc_rate": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Sessions without a verified booking against all sessions, 0-1; null without sessions."
                     },
                     "booking_compliance": {
                       "type": "number",
                       "format": "double",
-                      "default": 0.0
+                      "nullable": true,
+                      "description": "Attended bookings (at least one session) against approved bookings that have started, 0-1; null without bookings."
+                    },
+                    "booking_utilization": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Booked time actually used against booked time, 0-1; null without bookings."
+                    },
+                    "slot_adherence": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Session time inside the booked slot against all time of booked sessions, 0-1; null when no booking was attended."
+                    },
+                    "no_show_bookings": {
+                      "type": "integer",
+                      "default": 0,
+                      "description": "Bookings with no session."
                     },
                     "last_remote_at": {
                       "type": "string",
@@ -71903,6 +72023,12 @@
                       "type": "number",
                       "format": "double",
                       "default": 0.0
+                    },
+                    "active_usage_minutes": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0.0,
+                      "description": "Active minutes in sessions."
                     },
                     "avg_session_minutes": {
                       "type": "number",
@@ -71947,12 +72073,18 @@
                 "wfh_rate": 0.0,
                 "late_rate": 0.0,
                 "usage_efficiency": 0.0,
+                "active_rate": 0.0,
+                "ad_hoc_rate": 0.0,
                 "booking_compliance": 0.0,
+                "booking_utilization": 0.0,
+                "slot_adherence": 0.0,
+                "no_show_bookings": 0,
                 "last_remote_at": "2026-10-20T12:00:00Z",
                 "labs_accessed": 0,
                 "total_bookings": 0,
                 "total_sessions": 1,
                 "total_usage_minutes": 0.0,
+                "active_usage_minutes": 0.0,
                 "avg_session_minutes": 0.0,
                 "longest_session_minutes": 0.0,
                 "top_projects": [

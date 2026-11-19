@@ -80,21 +80,39 @@ flowchart LR
 
 ## 5. Scoring algorithms and metrics
 
-### Persona Ranking Formula
+### KPI definitions
+
+Sessions count for the app user the session log resolved (`LabSessionLog.user`); older rows without
+that link fall back to the login name (case ignored, `DOMAIN\` dropped, never a guessed person).
+Bookings count for the person they are for (`requester`, else `creator`). A booking is *expected*
+when it is approved, not cancelled and has started inside the window; expired bookings are no-shows.
+"Active" time is the agent-reported `active_duration_seconds`, else the whole session.
+
+| KPI | Definition | Null when |
+|---|---|---|
+| `wfo_rate` / `wfh_rate` (shown as RFO / RFH) | `sessions ÷ (weekdays × 2)`, clamped; RFH is `1 − RFO`. Detection unchanged. | — |
+| `late_rate` | Share of session time between 20:00 and 06:00 local time | — |
+| `usage_efficiency` | Active minutes ÷ (weekdays × 480) | — |
+| `active_rate` | Active minutes ÷ session minutes | no sessions |
+| `ad_hoc_rate` | Sessions without a verified booking ÷ sessions | no sessions |
+| `booking_compliance` | Expected bookings with at least one session ÷ expected bookings | no bookings |
+| `booking_utilization` | Session time inside each slot (capped at the slot) ÷ booked time | no bookings |
+| `slot_adherence` | Session time inside the slot ÷ all time of booked sessions | no attended booking |
+| `no_show_bookings` | Expected bookings with no session | — |
+
+Benches use the bench the computer stood on at login (`LabSessionLog.bench`): `utilization_rate`
+(active minutes ÷ weekdays × 480), `booking_fill` (booked minutes ÷ weekdays × 480), and the booking
+KPIs above over the bench's bookings. `downtime_minutes` is not computed yet (always 0).
+
+### Points
+
 ```text
-points = max(0, int(
-    (total_sessions * 10)
-  + (total_duration_minutes * 0.1)
-  + (usage_efficiency * 100)
-  + (booking_compliance * 50)
-  - (late_rate * 30)
-))
+persona = active_hours×10 + usage_efficiency×100 + booking_compliance×50
+        + booking_utilization×50 + slot_adherence×20 − late_rate×30        (null KPIs add 0)
+bench   = active_hours×10 + active_users×15 + utilization_rate×100 + booking_compliance×50
 ```
-- **WFO Rate:** Ratio of sessions to expected weekday capacity (clamped to `[0.0, 1.0]`).
-- **WFH Rate:** `1.0 - wfo_rate`.
-- **Late Rate:** Proportion of session duration occurring between 20:00 and 06:00 local time.
-- **Usage Efficiency:** Ratio of active computing minutes to standard 8-hour working days.
-- **Booking Compliance:** Ratio of actual session count to booked slots.
+Session counts do not score on their own, so many short logins cannot outrank real lab time.
+The assessment (rating, strengths, improvements) is derived from these KPIs in the web app.
 
 ---
 

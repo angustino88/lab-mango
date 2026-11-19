@@ -418,6 +418,40 @@ components:
           type: string
           format: date-time
           nullable: true
+        total_usage_minutes:
+          type: number
+          format: double
+          default: 0.0
+          description: Active minutes on the bench.
+        utilization_rate:
+          type: number
+          format: double
+          default: 0.0
+          description: Active time against 8 hours per weekday, 0-1.
+        booking_fill:
+          type: number
+          format: double
+          default: 0.0
+          description: Booked time against 8 hours per weekday, 0-1.
+        total_bookings:
+          type: integer
+          default: 0
+        no_show_bookings:
+          type: integer
+          default: 0
+          description: Bookings with no session.
+        booking_compliance:
+          type: number
+          format: double
+          nullable: true
+          description: Attended bookings against approved bookings that have started,
+            0-1; null without bookings.
+        booking_utilization:
+          type: number
+          format: double
+          nullable: true
+          description: Booked time actually used against booked time, 0-1; null without
+            bookings.
         downtime_minutes:
           type: number
           format: double
@@ -473,10 +507,40 @@ components:
           type: number
           format: double
           default: 0.0
+          description: Active lab time against 8 hours per weekday, 0-1.
+        active_rate:
+          type: number
+          format: double
+          nullable: true
+          description: Active time against total session time, 0-1; null without sessions.
+        ad_hoc_rate:
+          type: number
+          format: double
+          nullable: true
+          description: Sessions without a verified booking against all sessions, 0-1;
+            null without sessions.
         booking_compliance:
           type: number
           format: double
-          default: 0.0
+          nullable: true
+          description: Attended bookings (at least one session) against approved bookings
+            that have started, 0-1; null without bookings.
+        booking_utilization:
+          type: number
+          format: double
+          nullable: true
+          description: Booked time actually used against booked time, 0-1; null without
+            bookings.
+        slot_adherence:
+          type: number
+          format: double
+          nullable: true
+          description: Session time inside the booked slot against all time of booked
+            sessions, 0-1; null when no booking was attended.
+        no_show_bookings:
+          type: integer
+          default: 0
+          description: Bookings with no session.
         last_remote_at:
           type: string
           format: date-time
@@ -493,6 +557,11 @@ components:
           type: number
           format: double
           default: 0.0
+        active_usage_minutes:
+          type: number
+          format: double
+          default: 0.0
+          description: Active minutes in sessions.
         avg_session_minutes:
           type: number
           format: double
