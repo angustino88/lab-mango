@@ -11,6 +11,13 @@ from .application.change_state import (
 )
 from .application.create_equipment import CreateEquipmentInput, create_equipment
 from .application.delete_equipment import DeleteEquipmentInput, delete_equipment
+from .application.hardware_ids import (
+    RegisterHardwareIdInput,
+    delete_hardware_id,
+    is_port_bound,
+    normalize_hardware_id,
+    register_hardware_id,
+)
 from .application.loans import (
     ExtendLoanInput,
     ExtendLoansInput,
@@ -26,7 +33,6 @@ from .application.loans import (
     return_equipment_batch,
 )
 from .application.monitoring_locks import lock_monitoring_computing
-from .application.observed_serials import claim_equipment_serial
 from .application.place_equipment import (
     PlaceEquipmentInput,
     RemovePlacementInput,
@@ -63,7 +69,6 @@ from .exceptions import (
 from .queries.device_matching import (
     active_bench_assignments,
     equipment_ids_on_bench,
-    match_observed_devices,
     monitoring_interfaces,
 )
 from .queries.equipment import (
@@ -77,6 +82,7 @@ from .queries.equipment import (
     lock_active_equipment_bench_assignment,
     with_equipment_info,
 )
+from .queries.hardware_ids import hardware_ids_by_equipment, list_hardware_ids, match_hardware_ids
 from .queries.inactivity_notifications import inactive_equipment_candidates
 from .queries.loans import get_active_loan, get_loan_batch, list_loans
 from .queries.placements import bench_id_at, get_active_placement, has_active_placements
@@ -90,10 +96,16 @@ from .queries.summaries import (
 
 __all__ = (
     "lock_monitoring_computing",
-    "claim_equipment_serial",
+    "RegisterHardwareIdInput",
+    "register_hardware_id",
+    "delete_hardware_id",
+    "normalize_hardware_id",
+    "is_port_bound",
+    "list_hardware_ids",
+    "match_hardware_ids",
+    "hardware_ids_by_equipment",
     "active_bench_assignments",
     "equipment_ids_on_bench",
-    "match_observed_devices",
     "monitoring_interfaces",
     "CancelEquipmentBookingsForDowntimeInput",
     "cancel_equipment_bookings_for_downtime",

@@ -5,22 +5,38 @@ hardware behavior are not verified in the selected repositories.
 
 ## Ownership and behavior
 
-An enrolled computing-equipment agent reports device observations. Equipment matches exact,
-nonblank serial numbers against the equipment-declared interfaces (interface names
-are case-insensitive). Capability names alone never identify an asset. Unknown
-serials remain `unmatched`; incompatible interfaces are `interface_mismatch`;
-multiple compatible candidates remain `ambiguous`. Matching never creates inventory
-or changes assignments, lifecycle, activity, bookings, RDP targets or session logs.
+An enrolled computing-equipment agent reports device observations with the **hardware IDs** it read
+(Windows PnP device instance ID, kind `pnp_id`; Vector device name, kind `vector_device`). Equipment
+matches them against IDs a coordinator **registered** on units (`EquipmentHardwareId`):
+`matched` when they belong to one active unit, `ambiguous` when to several, `unmatched` otherwise.
+`Equipment.serial_number` is a human label and is never used to match or written by monitoring. A
+PnP ID whose last segment contains `&` was generated from a USB port; it is registered with the
+computer it was read on and only matches there. Matching never creates inventory or changes
+assignments, lifecycle, activity, bookings, RDP targets or session logs.
+
+**Link** (`POST /api/labs/device-connections/{id}/actions/link`) registers the connection's reported
+hardware IDs on the chosen unit and re-matches every observation that reported them; an ID already
+registered on another unit → `409 hardware_id_in_use`, a device without IDs →
+`409 hardware_id_unavailable`. IDs can also be managed directly:
+`GET/POST /api/labs/equipment/{id}/hardware-ids`, `DELETE …/hardware-ids/{hardware_id_id}`.
+
+**Watch list.** `GET /agent/monitoring-policy` returns `expected_devices`: the `ExpectedDevice`
+rows of the agent's computer with each unit's registered IDs valid there. The agent reports only
+devices on that list (plus a one-off discovery snapshot when an administrator asks for it in the
+agent), so other peripherals never leave the computer. Discovery snapshots use collector
+`discovery` and are evidence for linking only: they never confirm an expected device's presence,
+never count as the computer reporting, and never raise disconnect alerts.
 
 Equipment owns matching queries and frozen DTOs through `public.py`/`contracts.py`.
 Monitoring owns observations, replay receipts and current connections. Agents owns
 credential identity and revocation fencing. Legacy `computing.monitored_devices`
-JSON and its operator write behavior are preserved; the UI uses the typed API.
+JSON (the previous agent's PnP ID list per computer) is read-only input for link suggestions
+(`GET /api/labs/expected-devices/legacy-suggestions`); the UI uses the typed API.
 
 ```mermaid
 flowchart LR
     A[Signed computing agent] --> I[Snapshot intake]
-    E[Equipment serials and interfaces] --> M[Public matching query]
+    E[Registered hardware IDs] --> M[Public matching query]
     I --> M
     I --> T[Monitoring transaction]
     T --> L[Immutable events]
@@ -56,7 +72,7 @@ Example POST body; replace the generation with the actual policy result:
     "observation_key": "usb:stable-instance",
     "interface_name": "USB",
     "name": "Measurement probe",
-    "serial_number": "LAB-PROBE-001",
+    "hardware_ids": [{"kind": "pnp_id", "value": "USB\\VID_0403&PID_6001\\LABPROBE001"}],
     "state": "connected"
   }]
 }
@@ -77,8 +93,8 @@ self-contained. This guarantees a lost or delayed delta (for example a detach) i
 silently dropped.
 A complete snapshot disconnects omitted currently connected devices only within
 that collector. Partial updates never disconnect omitted devices. Empty complete
-snapshots are valid. A detach without a serial preserves known evidence for that
-instance; a reconnect without a serial remains unresolved. Multipart snapshots are
+snapshots are valid. A detach without hardware IDs preserves known evidence for that
+instance; a reconnect without IDs remains unresolved. Multipart snapshots are
 not supported: never mark a truncated
 or failed collector result complete. Instance keys must be stable across snapshots.
 
@@ -95,7 +111,7 @@ complete within that window; see [Retention](#retention).
 
 Read rows contain computing/equipment references `{id, uid, name}` and lookup interface
 references `{id, name}`, nullable unresolved
-references, reported `interface_name`, serial/name evidence, collector/observation
+references, reported `interface_name`, hardware IDs and name evidence, collector/observation
 keys, enum-shaped state/match/freshness, and observed/received timestamps.
 
 ## Integrity and freshness
@@ -131,7 +147,7 @@ devices; historical disconnected observations preserve their original timestamps
 
 Each accepted snapshot writes an immutable `inventory_snapshot` event with its
 typed records and completeness flag. Inventory lookups use a bounded joined result
-(4001 rows); saturation fails closed as ambiguity. The serial index is reasoned,
+(one query per batch over the `equipment_hardware_id_lookup` index). The index is reasoned,
 not measured on production data. Reads use one joined serialization query or two
 with pagination, verified with multiple related rows. Rows are ordered connected first,
 then by most recent observation, with collector/observation key as a stable tiebreak.
@@ -146,12 +162,13 @@ All endpoints below use the Labs staff policy (coordinators and admins, or an en
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /api/labs/device-connections` | Paginated list. `computing_id` is optional; filters `bench_id`, `state`, `is_attention_required` (`true`/`false`) and `q` (device, serial, equipment or computing name/SKU). Ordered by computing unit, connected first, newest observation first. Rows add `bench` (`{id, name}` or null), `is_attention_required` and `expected_device_id`. |
+| `GET /api/labs/device-connections` | Paginated list. `computing_id` is optional; filters `bench_id`, `state`, `is_attention_required` (`true`/`false`) and `q` (device name, serial label, reported hardware ID, equipment or computing name/SKU). Ordered by computing unit, connected first, newest observation first. Rows add `bench` (`{id, name}` or null), `is_attention_required` and `expected_device_id`. |
 | `GET /api/labs/device-connections/summary` | `connected` (connected and fresh), `needs_matching`, `unconfirmed` (last reported connected, not fresh), `missing` (expected, agent reporting, not connected) and `computing_units`; optional `bench_id`. Two aggregate queries. |
 | `GET /api/labs/device-connections/{id}` | One row plus `first_seen_at` and `history`: state changes, newest first, derived from the latest 200 `inventory_snapshot` events of its collector (at most 20 changes). A complete snapshot that omits the device records it disconnected. |
-| `POST /api/labs/device-connections/{id}/actions/link` | Body `{equipment_id}`. Records the observed serial on that active unit (through the equipment feature's `update_equipment`, so the change is stamped and validated), then re-matches every observation with that serial. 409 `serial_unavailable` (no serial reported), `equipment_serial_conflict` (the unit holds another serial; never overwritten), `equipment_serial_in_use` (another active unit holds it). Repeating a successful link is a no-op. |
+| `POST /api/labs/device-connections/{id}/actions/link` | Body `{equipment_id}`. Registers the connection's reported hardware IDs on that active unit (`EquipmentHardwareId`, port-bound PnP IDs scoped to the reporting computer), then re-matches every observation that reported them. 409 `hardware_id_unavailable` (no ID reported), `hardware_id_in_use` (registered on another unit; never moved). `Equipment.serial_number` is not written. Repeating a successful link is a no-op. |
 | `GET /api/labs/expected-devices` | Paginated; filters `computing_id`, `bench_id`, `presence`. Each row has `presence`: `present`, `missing` or `unconfirmed`, plus `last_seen_at`. Missing first. |
 | `POST /api/labs/expected-devices` | Body `{computing_id, equipment_id, is_disconnect_alert_enabled}`. 409 `expected_device_exists` on a duplicate (`expected_device_unique`); 422 when the unit is expected on itself (`expected_device_not_self`). |
+| `GET /api/labs/expected-devices/legacy-suggestions` | Required `computing_id`. `{items}`: each entry of the computer's legacy `monitored_devices` list (`[{key: PnP ID, value: label}]`, at most 200, normalised, duplicates dropped) with `status` `unregistered`, `registered` (on `equipment`, not expected here), `expected` (`expected_device_id`) or `ambiguous`, and `is_port_bound`. Read-only: the web app registers the ID (`POST /api/labs/equipment/{id}/hardware-ids`) on the unit a coordinator picks and creates the expected device. 404 when the unit is not computing equipment. |
 | `PATCH /api/labs/expected-devices/{id}` | Body `{is_disconnect_alert_enabled}`. |
 | `DELETE /api/labs/expected-devices/{id}` | 204; 404 when already gone. |
 
@@ -168,9 +185,9 @@ the websocket push to that user's channel only (never the broadcast channel) run
 Repeated snapshots of an already-disconnected device do not alert again.
 
 **Lock order for linking.** Reporting computing unit → target equipment row → projection rows,
-the same parent-first order as ingestion. Serial numbers are not unique in the schema; a
-concurrent link of one serial to two units can still create a duplicate, which matching then
-reports as `ambiguous` instead of choosing.
+the same parent-first order as ingestion. A hardware ID is unique per kind (and computer, for
+port-bound IDs) in the schema, so a concurrent link of one ID to two units fails for the second
+with `hardware_id_in_use` instead of creating a duplicate.
 
 ## Retention
 
@@ -191,8 +208,8 @@ follow the monitoring-event history policy and are not purged here; each is boun
 
 ## Compatibility and rollout
 
-This is an additive T2 change. The tables, constraints and the equipment serial-number
-index are folded into `labs/0001_initial` (ADR 005: one initial migration until the first
+This is an additive T2 change. The tables, constraints and the hardware-ID indexes
+(`EquipmentHardwareId`, `DeviceConnection.hardware_ids`) are folded into `labs/0001_initial` (ADR 005: one initial migration until the first
 database is deployed). Development databases must be recreated, as with every 0001 fold.
 Deploy backend, then frontend, then the agent collector.
 
@@ -203,8 +220,8 @@ are preserved. No automatic backfill or production deployment occurs.
 
 The external agent must persist queued batches/sequences, retry with stable keys
 and fresh signature nonces, fetch policy after enrollment, report within the freshness
-window, answer `snapshot_required` with a complete snapshot, and collect real serial
-and interface evidence. Vendor/product-only matching and configurable detector
+window, answer `snapshot_required` with a complete snapshot, and report the PnP IDs of
+the devices on its watch list. Vendor/product-only matching and configurable detector
 rules are not implemented. Do not log raw inventories or credentials. Physical
 integration requires agent source and representative devices.
 

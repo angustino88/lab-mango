@@ -22,6 +22,10 @@ paths:
     $ref: ./agents.yml#/paths/~1agent~1heartbeat
   /agent/info:
     $ref: ./agents.yml#/paths/~1agent~1info
+  /agent/license-checks:
+    $ref: ./agents.yml#/paths/~1agent~1license-checks
+  /agent/license-checks/{check_key}/actions/report:
+    $ref: ./agents.yml#/paths/~1agent~1license-checks~1{check_key}~1actions~1report
   /agent/monitoring-policy:
     $ref: ./agents.yml#/paths/~1agent~1monitoring-policy
   /agent/session-logs:
@@ -350,6 +354,10 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1activity
   /api/labs/equipment/{equipment_id}/assignment:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1assignment
+  /api/labs/equipment/{equipment_id}/hardware-ids:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1hardware-ids
+  /api/labs/equipment/{equipment_id}/hardware-ids/{hardware_id_id}:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1hardware-ids~1{hardware_id_id}
   /api/labs/equipment/{equipment_id}/image:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1image
   /api/labs/equipment/{equipment_id}/loan:
@@ -462,6 +470,8 @@ paths:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices
   /api/labs/expected-devices/{expected_device_id}:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices~1{expected_device_id}
+  /api/labs/expected-devices/legacy-suggestions:
+    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices~1legacy-suggestions
   /api/labs/monitoring-events:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events
   /api/labs/monitoring-events/{id}:
@@ -556,6 +566,16 @@ paths:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1reference-data~1vendors~1{reference_id}
   /api/labs/licenses/status-summary:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1status-summary
+  /api/labs/license-checks:
+    $ref: ./labs-license-checks.yml#/paths/~1api~1labs~1license-checks
+  /api/labs/license-checks/{check_id}:
+    $ref: ./labs-license-checks.yml#/paths/~1api~1labs~1license-checks~1{check_id}
+  /api/labs/license-checks/{check_id}/runs:
+    $ref: ./labs-license-checks.yml#/paths/~1api~1labs~1license-checks~1{check_id}~1runs
+  /api/labs/license-checks/presets:
+    $ref: ./labs-license-checks.yml#/paths/~1api~1labs~1license-checks~1presets
+  /api/labs/license-observations:
+    $ref: ./labs-license-checks.yml#/paths/~1api~1labs~1license-observations
   /api/labs/purchase-items/{purchase_item_id}/resources:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchase-items~1{purchase_item_id}~1resources
   /api/labs/purchase-priorities:
@@ -718,6 +738,8 @@ tags:
   description: Lab Sessions endpoints
 - name: Leaderboard
   description: Leaderboard endpoints
+- name: License Checks
+  description: License Checks endpoints
 - name: Licenses
   description: Licenses endpoints
 - name: Locations

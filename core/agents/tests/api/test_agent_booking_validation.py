@@ -129,6 +129,7 @@ def test_info_publishes_session_and_validation_paths(db):
         "booking_check_in": "/agent/bookings/actions/check-in",
         "booking_complete": "/agent/bookings/actions/complete",
         "booking_extend": "/agent/bookings/actions/extend",
+        "license_checks": "/agent/license-checks",
     }
 
 

@@ -27,7 +27,7 @@ the packages of one release); without it the UI omits the download commands.
 ## Commands
 
 ```
-labmango-agent enroll --url <backend-origin> --agent-uid <uuid> [--grant <grant>] [--unattended]
+labmango-agent enroll --url <server-url> --agent-uid <uuid> [--grant <grant>] [--unattended]
 labmango-agent service install [--start]
 labmango-agent service start | stop | uninstall
 labmango-agent status [--json]
@@ -35,7 +35,7 @@ labmango-agent unenroll
 ```
 
 `enroll`
-- `--url`: backend origin, HTTPS in production; the agent checks `GET /agent/info` and refuses on mismatch of
+- `--url`: the server URL from the web app's setup dialog. Production: the public Nginx or Router address (the application server is never exposed); development: the backend directly. HTTPS in production; the agent checks `GET /agent/info` and refuses on mismatch of
   `backend_key` with a later enrollment.
 - `--agent-uid`: the pending agent created by the operator; ties the grant to this identity.
 - `--grant`: one-time enrollment grant (`eg_…`). Also read from `LABMANGO_AGENT_GRANT`. If neither is given and a

@@ -99,7 +99,10 @@ class DeviceConnection(models.Model):
     observation_key = models.CharField(max_length=255)
     generation_key = models.UUIDField()
     name = models.CharField(max_length=255, blank=True)
-    serial_number = models.CharField(max_length=255, blank=True)
+    serial_number = models.CharField(max_length=255, blank=True)  # reported evidence only; not used for matching
+    hardware_ids = models.JSONField(
+        default=list, blank=True, help_text="Reported hardware IDs, [{kind, value}]; matched to EquipmentHardwareId."
+    )
     interface_name = models.CharField(max_length=255)
     state = models.CharField(max_length=16, choices=DeviceConnectionState.choices)
     match_status = models.CharField(max_length=24, choices=DeviceMatchStatus.choices)

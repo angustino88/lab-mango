@@ -77,6 +77,8 @@ from .resource.equipment import (
     EquipmentDisplayStatus,
     EquipmentEvent,
     EquipmentEventAxis,
+    EquipmentHardwareId,
+    EquipmentHardwareIdKind,
     EquipmentInterface,
     EquipmentKind,
     EquipmentLifecycleState,
@@ -95,6 +97,16 @@ from .resource.equipment.assignment import EquipmentAssignment, EquipmentPlaceme
 from .resource.equipment.computing import ComputingProfile, TechnicalUser
 from .resource.license.agreement import LicenseAgreement
 from .resource.license.assignment import LicenseAssignment
+from .resource.license.check import (
+    LicenseAlert,
+    LicenseAlertKind,
+    LicenseCheck,
+    LicenseCheckRun,
+    LicenseCheckRunStatus,
+    LicenseCheckTarget,
+    LicenseObservation,
+    LicenseObservationStatus,
+)
 from .resource.license.license import License, LicenseStatus, LicenseStatusRecord
 from .resource.license.payment import LicensePayment
 from .resource.location import (
@@ -148,6 +160,8 @@ __all__ = [
     "EquipmentPlacement",
     "EquipmentCategory",
     "EquipmentBooking",
+    "EquipmentHardwareId",
+    "EquipmentHardwareIdKind",
     "EquipmentInterface",
     "EquipmentKind",
     "EquipmentManufacturer",
@@ -175,6 +189,14 @@ __all__ = [
     "Material",
     "License",
     "LicenseAssignment",
+    "LicenseAlert",
+    "LicenseAlertKind",
+    "LicenseCheck",
+    "LicenseCheckRun",
+    "LicenseCheckRunStatus",
+    "LicenseCheckTarget",
+    "LicenseObservation",
+    "LicenseObservationStatus",
     "LicenseAgreement",
     "LicensePayment",
     "LicenseStatus",

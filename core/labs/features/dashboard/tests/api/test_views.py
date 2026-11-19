@@ -163,6 +163,7 @@ class TestDashboardOverviewAPI:
             status=ComputingActivityStatus.ACTIVE,
             remote_user="dev_user",
             remote_user_display_name="Developer User",
+            remote_computer="LT-DEV-01",
         )
         EquipmentAssignment.objects.create(
             bench=bench,
@@ -183,6 +184,7 @@ class TestDashboardOverviewAPI:
         assert item["computing"]["activity_status"] == ComputingActivityStatus.ACTIVE
         assert item["computing"]["remote_user"] == "dev_user"
         assert item["computing"]["remote_user_display_name"] == "Developer User"
+        assert item["computing"]["remote_computer"] == "LT-DEV-01"
         assert item["samples"] == []
         assert item["licenses"] == []
         assert item["assigned_equipment_count"] == 1
@@ -332,6 +334,7 @@ class TestDashboardOverviewAPI:
         bench_mapped = make_bench()
 
         from core.labs.models import Station
+
         station = Station.objects.create(
             name=f"Station-{uuid.uuid4().hex[:6]}",
             sku=f"ST-{uuid.uuid4().hex[:8]}",
@@ -536,9 +539,14 @@ class TestDashboardBenchDetailAPI:
             "last_agent_report_at": heartbeat.isoformat().replace("+00:00", "Z"),
             "is_stale": True,
         }
-        assert not {"ip_address", "rdp_file_url", "remote_user", "remote_user_display_name", "remote_ip"} & set(
-            data["computing"]
-        )
+        assert not {
+            "ip_address",
+            "rdp_file_url",
+            "remote_user",
+            "remote_user_display_name",
+            "remote_computer",
+            "remote_ip",
+        } & set(data["computing"])
         assert data["current_booking"]["id"] == current_booking.pk
         assert "user" not in data["current_booking"]
         assert [item["id"] for item in data["upcoming_bookings"]] == [current_booking.pk, future_booking.pk]
@@ -561,9 +569,14 @@ class TestDashboardBenchDetailAPI:
         assert booking_ref == "DashboardBookingDetail"
         assert computing_ref == "DashboardComputingDetail"
         assert "user" not in schema["components"]["schemas"][booking_ref]["properties"]
-        assert not {"ip_address", "rdp_file_url", "remote_user", "remote_user_display_name", "remote_ip"} & set(
-            schema["components"]["schemas"][computing_ref]["properties"]
-        )
+        assert not {
+            "ip_address",
+            "rdp_file_url",
+            "remote_user",
+            "remote_user_display_name",
+            "remote_computer",
+            "remote_ip",
+        } & set(schema["components"]["schemas"][computing_ref]["properties"])
 
     def test_dashboard_list_payload_remains_unchanged(self, client_and_user):
         client, user = client_and_user

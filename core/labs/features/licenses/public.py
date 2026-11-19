@@ -17,6 +17,7 @@ from .application import (
     unassign_license,
     update_license,
 )
+from .application.expiry_alerts import ExpiryAlertResult, send_license_expiry_alerts
 from .exceptions import InvalidLicenseStatus, LicenseAlreadyAssigned, LicenseConflict
 from .queries import (
     active_license_assignment_mapping_rows,
@@ -31,6 +32,8 @@ from .queries import (
 from .queries.summaries import get_license_status_summary, list_license_category_summary
 
 __all__ = (
+    "ExpiryAlertResult",
+    "send_license_expiry_alerts",
     "get_license_status_summary",
     "list_license_category_summary",
     "AssignLicenseInput",

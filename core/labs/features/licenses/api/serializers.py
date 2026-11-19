@@ -89,6 +89,7 @@ class LicenseSerializer(AppModelSerializer):
             "seats_in_use",
             "assigned_equipment",
             "max_version",
+            "serial_number",
             "expires_at",
             "status",
             "acquisition_price",
@@ -128,6 +129,7 @@ LicenseListQuerySerializer = LICENSE_FILTERS.serializer("LicenseListQuerySeriali
 class LicenseCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
     """Inventory fields of a license. Uniqueness and relations are enforced by the command and PostgreSQL.
 
+    ``serial_number`` is the vendor's license serial (visible, unique per vendor among live licenses).
     ``identifier`` is the license key: accepted here, never returned by any serializer.
     """
 
@@ -140,6 +142,7 @@ class LicenseCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSer
     category_id = serializers.IntegerField(min_value=1)
     restriction_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     seats = serializers.IntegerField(min_value=1, max_value=32767, required=False)
+    serial_number = serializers.CharField(required=False, allow_blank=True, max_length=255, trim_whitespace=True)
     identifier = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=255)
     expires_at = serializers.DateTimeField(source="expiry_date", required=False, allow_null=True)
 
@@ -159,6 +162,7 @@ class LicenseCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSer
             "restriction_id",
             "seats",
             "max_version",
+            "serial_number",
             "identifier",
             "expires_at",
         )

@@ -839,6 +839,31 @@ components:
       - capabilities
       - endpoints
       - server_time
+    AgentLicenseCheckReportLicenseCheckSerializersLicenseCheckRunAcknowledgmentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheckRunAcknowledgment'
+      required:
+      - data
+    AgentLicenseChecks:
+      type: object
+      properties:
+        checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckDefinition'
+      required:
+      - checks
+    AgentLicenseChecksLicenseCheckSerializersAgentLicenseChecksDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentLicenseChecks'
+      required:
+      - data
     AgentListMeta:
       type: object
       properties:
@@ -3136,6 +3161,25 @@ components:
             $ref: '#/components/schemas/CannedResponse'
       required:
       - data
+    CarrierId:
+      type: object
+      description: The carrier as the license tool names it (Vector device name);
+        never a PnP ID.
+      properties:
+        kind:
+          $ref: '#/components/schemas/CarrierIdKindEnum'
+        value:
+          type: string
+          maxLength: 512
+      required:
+      - kind
+      - value
+      additionalProperties: false
+    CarrierIdKindEnum:
+      enum:
+      - vector_device
+      type: string
+      description: '* `vector_device` - Vector device name'
     CatalogOption:
       type: object
       description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
@@ -4086,6 +4130,9 @@ components:
           type: string
         remote_user_display_name:
           type: string
+        remote_computer:
+          type: string
+          description: Client computer of the remote session.
         remote_ip:
           type: string
           nullable: true
@@ -4095,6 +4142,7 @@ components:
       - ip_address
       - os_name
       - rdp_file_url
+      - remote_computer
       - remote_ip
       - remote_user
       - remote_user_display_name
@@ -4548,6 +4596,13 @@ components:
           type: string
         serial_number:
           type: string
+          description: Reported evidence only; not used for matching.
+        hardware_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportedHardwareId'
+          description: IDs the agent read from the device; Link registers them on
+            the chosen unit.
         state:
           allOf:
           - $ref: '#/components/schemas/Choice'
@@ -4580,6 +4635,7 @@ components:
       - equipment
       - expected_device_id
       - freshness
+      - hardware_ids
       - id
       - interface
       - interface_name
@@ -4641,6 +4697,13 @@ components:
           type: string
         serial_number:
           type: string
+          description: Reported evidence only; not used for matching.
+        hardware_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportedHardwareId'
+          description: IDs the agent read from the device; Link registers them on
+            the chosen unit.
         state:
           allOf:
           - $ref: '#/components/schemas/Choice'
@@ -4682,6 +4745,7 @@ components:
       - expected_device_id
       - first_seen_at
       - freshness
+      - hardware_ids
       - history
       - id
       - interface
@@ -4799,7 +4863,15 @@ components:
         serial_number:
           type: string
           default: ''
+          description: Evidence only; not used for matching.
           maxLength: 255
+        hardware_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareId'
+          description: IDs read from the device (Windows PnP instance ID); matched
+            to registered equipment IDs.
+          maxItems: 4
       required:
       - interface_name
       - observation_key
@@ -6525,6 +6597,71 @@ components:
           maxLength: 255
       required:
       - due_at
+    EquipmentHardwareId:
+      type: object
+      description: One ID registered on the unit; owned by it.
+      properties:
+        id:
+          type: integer
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        value:
+          type: string
+        computing:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          nullable: true
+          description: Set only for IDs valid on one computer.
+        is_port_bound:
+          type: boolean
+          readOnly: true
+          description: Read from a USB port, not from the device.
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - computing
+      - created_at
+      - id
+      - is_port_bound
+      - kind
+      - value
+      x-embedded-resource: true
+    EquipmentHardwareIdCreatedHardwareIdsEquipmentHardwareIdDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentHardwareId'
+      required:
+      - data
+    EquipmentHardwareIdKindEnum:
+      enum:
+      - pnp_id
+      - vector_device
+      type: string
+      description: '* `pnp_id` - PnP device ID
+
+        * `vector_device` - Vector device name'
+    EquipmentHardwareIdList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentHardwareId'
+      required:
+      - items
+    EquipmentHardwareIdListHardwareIdsEquipmentHardwareIdListDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentHardwareIdList'
+      required:
+      - data
     EquipmentInterfaceCatalogCreate:
       type: object
       properties:
@@ -8828,6 +8965,42 @@ components:
           $ref: '#/components/schemas/ExpectedDevice'
       required:
       - data
+    ExpectedDeviceWatch:
+      type: object
+      properties:
+        equipment_uid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        hardware_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyHardwareId'
+      required:
+      - equipment_uid
+      - hardware_ids
+      - name
+    ExpectedLicense:
+      type: object
+      description: A license the check should find, and whether a current run finds
+        it.
+      properties:
+        id:
+          type: integer
+        uid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        is_found:
+          type: boolean
+      required:
+      - id
+      - is_found
+      - name
+      - uid
+      x-embedded-resource: true
     Expense:
       type: object
       description: Read shape for expenses.
@@ -9775,6 +9948,18 @@ components:
           $ref: '#/components/schemas/GroupReferenceListSerializersGroupCatalogRecordPagination'
       required:
       - pagination
+    HardwareId:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/EquipmentHardwareIdKindEnum'
+        value:
+          type: string
+          maxLength: 512
+      required:
+      - kind
+      - value
+      additionalProperties: false
     ImportProblem:
       type: object
       properties:
@@ -9866,6 +10051,24 @@ components:
       - existing
       - updated
       - warning_count
+    InventoryValues:
+      type: object
+      description: The matched license's registered values, to compare with what the
+        agent found.
+      properties:
+        serial_number:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        max_version:
+          type: string
+      required:
+      - expires_at
+      - max_version
+      - serial_number
+      x-embedded-resource: true
     KeyStorageEnum:
       enum:
       - tpm
@@ -10608,6 +10811,57 @@ components:
             $ref: '#/components/schemas/LeaderboardPersona'
       required:
       - data
+    LegacyDeviceSuggestion:
+      type: object
+      description: One entry of the computer's legacy device list and what is left
+        to do for it.
+      properties:
+        pnp_id:
+          type: string
+          description: Windows PnP device instance ID from the legacy list (normalised).
+        label:
+          type: string
+          description: Label a coordinator gave the entry in the legacy list.
+        is_port_bound:
+          type: boolean
+          description: 'Read from a USB port: register it for this computer only.'
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          nullable: true
+          description: Unit the ID is registered on, if any.
+        expected_device_id:
+          type: integer
+          nullable: true
+      required:
+      - equipment
+      - expected_device_id
+      - is_port_bound
+      - label
+      - pnp_id
+      - status
+      x-embedded-resource: true
+    LegacyDeviceSuggestionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LegacyDeviceSuggestion'
+      required:
+      - items
+    LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LegacyDeviceSuggestionList'
+      required:
+      - data
     LegacyStationSlotStatusEnum:
       enum:
       - available
@@ -10707,6 +10961,11 @@ components:
         max_version:
           type: string
           readOnly: true
+        serial_number:
+          type: string
+          readOnly: true
+          description: Vendor's license serial or ID (for example the Vector license
+            ID). Not secret; agents match the licenses they find to this value.
         expires_at:
           type: string
           format: date-time
@@ -10747,6 +11006,7 @@ components:
       - restriction
       - seats
       - seats_in_use
+      - serial_number
       - sku
       - status
       - type
@@ -11129,11 +11389,455 @@ components:
           $ref: '#/components/schemas/LicenseCategorySummaryListSerializersLicenseCategorySummaryPagination'
       required:
       - pagination
+    LicenseCheck:
+      type: object
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        name:
+          type: string
+        vendor:
+          type: string
+        probe:
+          description: 'Closed catalog: {type: command, executable, args, timeout_s,
+            encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}.'
+        extract:
+          description: '{format: xml|json|text|values, records, fields: {product_name,
+            product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial,
+            is_reactivatable, carrier_type}, date_formats, never_values}.'
+        carrier:
+          description: '{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind,
+            equipment_uid, type_map, default_type}.'
+        interval_minutes:
+          type: integer
+        is_enabled:
+          type: boolean
+        is_lab_wide:
+          type: boolean
+          description: Runs on every computer with an agent.
+        revision:
+          type: integer
+          description: Increases on every change agents pick up.
+        preset_key:
+          type: string
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckTarget'
+          readOnly: true
+        license_count:
+          type: integer
+          description: Licenses currently found by this check.
+        attention_count:
+          type: integer
+          description: Found licenses that are not matched.
+        expected_licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpectedLicense'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - attention_count
+      - carrier
+      - created_at
+      - expected_licenses
+      - extract
+      - id
+      - interval_minutes
+      - is_enabled
+      - is_lab_wide
+      - key
+      - license_count
+      - name
+      - preset_key
+      - probe
+      - revision
+      - targets
+      - updated_at
+      - vendor
+    LicenseCheckCreateSerializersLicenseCheckDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheck'
+      required:
+      - data
+    LicenseCheckDefinition:
+      type: object
+      description: One check as the agent parses it (``agent/src/core/licensing/checks.py``).
+      properties:
+        key:
+          type: string
+        revision:
+          type: integer
+        name:
+          type: string
+        vendor:
+          type: string
+        interval_minutes:
+          type: integer
+        probe: {}
+        extract: {}
+        carrier: {}
+      required:
+      - carrier
+      - extract
+      - interval_minutes
+      - key
+      - name
+      - probe
+      - revision
+      - vendor
+    LicenseCheckDetailSerializersLicenseCheckDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheck'
+      required:
+      - data
+    LicenseCheckListSerializersLicenseCheckPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseCheckListSerializersLicenseCheckPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheck'
+      required:
+      - data
+      - meta
+    LicenseCheckListSerializersLicenseCheckPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseCheckListSerializersLicenseCheckPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseCheckListSerializersLicenseCheckPagination'
+      required:
+      - pagination
+    LicenseCheckPreset:
+      type: object
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        vendor:
+          type: string
+        description:
+          type: string
+        interval_minutes:
+          type: integer
+        probe: {}
+        extract: {}
+        carrier: {}
+      required:
+      - carrier
+      - description
+      - extract
+      - interval_minutes
+      - key
+      - name
+      - probe
+      - vendor
+    LicenseCheckPresetList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckPreset'
+      required:
+      - items
+    LicenseCheckPresetListSerializersLicenseCheckPresetListDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheckPresetList'
+      required:
+      - data
+    LicenseCheckRun:
+      type: object
+      description: Newest run of the check on one computer.
+      properties:
+        id:
+          type: integer
+        computing:
+          $ref: '#/components/schemas/LabsUIDNamedReference'
+        revision:
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        error_code:
+          type: string
+        error_message:
+          type: string
+        license_count:
+          type: integer
+        is_applied:
+          type: boolean
+        started_at:
+          type: string
+          format: date-time
+        duration_ms:
+          type: integer
+        received_at:
+          type: string
+          format: date-time
+      required:
+      - computing
+      - duration_ms
+      - error_code
+      - error_message
+      - id
+      - is_applied
+      - license_count
+      - received_at
+      - revision
+      - started_at
+      - status
+      x-embedded-resource: true
+    LicenseCheckRunAcknowledgment:
+      type: object
+      properties:
+        idempotency_key:
+          type: string
+          format: uuid
+        sequence:
+          type: integer
+        result:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+      required:
+      - idempotency_key
+      - received_at
+      - result
+      - sequence
+    LicenseCheckRunList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckRun'
+      required:
+      - items
+    LicenseCheckRunListSerializersLicenseCheckRunListDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheckRunList'
+      required:
+      - data
+    LicenseCheckRunReport:
+      type: object
+      properties:
+        revision:
+          type: integer
+          minimum: 1
+        sequence:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        status:
+          $ref: '#/components/schemas/LicenseCheckRunReportStatusEnum'
+        started_at:
+          type: string
+          format: date-time
+        reported_at:
+          type: string
+          format: date-time
+          description: Agent clock; informational.
+        duration_ms:
+          type: integer
+          maximum: 3600000
+          minimum: 0
+          default: 0
+        is_complete:
+          type: boolean
+        error:
+          $ref: '#/components/schemas/RunError'
+        licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportedLicense'
+      required:
+      - is_complete
+      - licenses
+      - revision
+      - sequence
+      - started_at
+      - status
+      additionalProperties: false
+    LicenseCheckRunReportStatusEnum:
+      enum:
+      - ok
+      - not_installed
+      - failed
+      - rejected
+      type: string
+      description: '* `ok` - OK: the license list is complete
+
+        * `not_installed` - Tool, file or key not on this computer
+
+        * `failed` - Ran but failed
+
+        * `rejected` - The agent refused the configuration'
+    LicenseCheckTarget:
+      type: object
+      description: One scope the check runs on; owned by the check.
+      properties:
+        id:
+          type: integer
+          description: Id of the room, station, bench, category or computer.
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        name:
+          type: string
+      required:
+      - id
+      - kind
+      - name
+      x-embedded-resource: true
+    LicenseCheckTargetRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/LicenseCheckTargetRequestKindEnum'
+        target_id:
+          type: integer
+          minimum: 1
+          description: Id of the room, station, bench, category or computer.
+      required:
+      - kind
+      - target_id
+    LicenseCheckTargetRequestKindEnum:
+      enum:
+      - room
+      - station
+      - bench
+      - category
+      - equipment
+      type: string
+      description: '* `room` - Room
+
+        * `station` - Station
+
+        * `bench` - Bench
+
+        * `category` - Equipment category
+
+        * `equipment` - Computer'
+    LicenseCheckUpdateSerializersLicenseCheckDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheck'
+      required:
+      - data
+    LicenseCheckWrite:
+      type: object
+      description: 'Create (from scratch or a preset) or change a check. Admin-only:
+        vendor, probe, extract, carrier.'
+      properties:
+        preset_key:
+          type: string
+          description: Create from this preset; probe, extract and carrier are copied.
+          maxLength: 32
+        key:
+          type: string
+          maxLength: 32
+          pattern: ^[a-z][a-z0-9_-]{0,31}$
+        name:
+          type: string
+          maxLength: 128
+        vendor:
+          type: string
+          maxLength: 128
+        probe:
+          description: 'Closed catalog: {type: command, executable, args, timeout_s,
+            encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}.'
+        extract:
+          description: '{format: xml|json|text|values, records, fields: {product_name,
+            product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial,
+            is_reactivatable, carrier_type}, date_formats, never_values}.'
+        carrier:
+          description: '{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind,
+            equipment_uid, type_map, default_type}.'
+        interval_minutes:
+          type: integer
+          maximum: 10080
+          minimum: 15
+        is_enabled:
+          type: boolean
+        is_lab_wide:
+          type: boolean
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckTargetRequest'
+        expected_license_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          description: Licenses this check should find; one no run reports is flagged
+            missing.
+          maxItems: 200
     LicenseCreate:
       type: object
       description: 'Inventory fields of a license. Uniqueness and relations are enforced
         by the command and PostgreSQL.
 
+
+        ``serial_number`` is the vendor''s license serial (visible, unique per vendor
+        among live licenses).
 
         ``identifier`` is the license key: accepted here, never returned by any serializer.'
       properties:
@@ -11179,6 +11883,9 @@ components:
           maximum: 32767
           minimum: 1
         max_version:
+          type: string
+          maxLength: 255
+        serial_number:
           type: string
           maxLength: 255
         identifier:
@@ -11305,6 +12012,138 @@ components:
       properties:
         pagination:
           $ref: '#/components/schemas/LicenseListSerializersLicensePagination'
+      required:
+      - pagination
+    LicenseObservation:
+      type: object
+      description: A license an agent found, and how it compares with the inventory.
+      properties:
+        id:
+          type: integer
+        check:
+          $ref: '#/components/schemas/LabsNamedReference'
+        computing:
+          $ref: '#/components/schemas/LabsUIDNamedReference'
+        observation_key:
+          type: string
+        vendor:
+          type: string
+        product_code:
+          type: string
+        product_name:
+          type: string
+        license_serial:
+          type: string
+        carrier_type:
+          type: string
+        carrier_hardware_kind:
+          type: string
+        carrier_hardware_value:
+          type: string
+        carrier_equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          nullable: true
+        license:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          nullable: true
+        inventory:
+          allOf:
+          - $ref: '#/components/schemas/InventoryValues'
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        final_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 'Null: perpetual.'
+        max_version:
+          type: string
+        is_reactivatable:
+          type: boolean
+        first_seen_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        removed_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - carrier_equipment
+      - carrier_hardware_kind
+      - carrier_hardware_value
+      - carrier_type
+      - check
+      - computing
+      - expires_at
+      - final_expires_at
+      - first_seen_at
+      - id
+      - inventory
+      - is_reactivatable
+      - last_seen_at
+      - license
+      - license_serial
+      - max_version
+      - observation_key
+      - product_code
+      - product_name
+      - removed_at
+      - status
+      - vendor
+    LicenseObservationListSerializersLicenseObservationPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/LicenseObservationListSerializersLicenseObservationPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseObservation'
+      required:
+      - data
+      - meta
+    LicenseObservationListSerializersLicenseObservationPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    LicenseObservationListSerializersLicenseObservationPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/LicenseObservationListSerializersLicenseObservationPagination'
       required:
       - pagination
     LicenseProductCatalogCreate:
@@ -12814,7 +13653,14 @@ components:
           type: array
           items:
             type: string
+        expected_devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpectedDeviceWatch'
+          description: 'Equipment expected on this computer with their registered
+            hardware IDs: the agent reports only devices whose ID is listed here.'
       required:
+      - expected_devices
       - freshness_seconds
       - generation_key
       - interface_names
@@ -13585,6 +14431,55 @@ components:
           type: array
           items:
             type: integer
+    PatchedLicenseCheckWrite:
+      type: object
+      description: 'Create (from scratch or a preset) or change a check. Admin-only:
+        vendor, probe, extract, carrier.'
+      properties:
+        preset_key:
+          type: string
+          description: Create from this preset; probe, extract and carrier are copied.
+          maxLength: 32
+        key:
+          type: string
+          maxLength: 32
+          pattern: ^[a-z][a-z0-9_-]{0,31}$
+        name:
+          type: string
+          maxLength: 128
+        vendor:
+          type: string
+          maxLength: 128
+        probe:
+          description: 'Closed catalog: {type: command, executable, args, timeout_s,
+            encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}.'
+        extract:
+          description: '{format: xml|json|text|values, records, fields: {product_name,
+            product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial,
+            is_reactivatable, carrier_type}, date_formats, never_values}.'
+        carrier:
+          description: '{type: computer|device|dongle|server|equipment|mapped, hardware_id_kind,
+            equipment_uid, type_map, default_type}.'
+        interval_minutes:
+          type: integer
+          maximum: 10080
+          minimum: 15
+        is_enabled:
+          type: boolean
+        is_lab_wide:
+          type: boolean
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckTargetRequest'
+        expected_license_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          description: Licenses this check should find; one no run reports is flagged
+            missing.
+          maxItems: 200
     PatchedLicenseUpdate:
       type: object
       description: 'Partial update: the same fields, none required; ``sku`` cannot
@@ -13632,6 +14527,9 @@ components:
           maximum: 32767
           minimum: 1
         max_version:
+          type: string
+          maxLength: 255
+        serial_number:
           type: string
           maxLength: 255
         identifier:
@@ -14062,6 +14960,16 @@ components:
         department:
           type: string
           maxLength: 255
+    PolicyHardwareId:
+      type: object
+      properties:
+        kind:
+          type: string
+        value:
+          type: string
+      required:
+      - kind
+      - value
     Priority:
       type: object
       properties:
@@ -15284,6 +16192,22 @@ components:
           $ref: '#/components/schemas/RefreshTokenResponse'
       required:
       - data
+    RegisterHardwareIdRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/EquipmentHardwareIdKindEnum'
+        value:
+          type: string
+          maxLength: 512
+        computing_id:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Required for a port-bound PnP ID.
+      required:
+      - kind
+      - value
     Relation:
       type: object
       description: REL-3 relation ``{id, name}`` to any model row; ``name`` follows
@@ -15311,6 +16235,91 @@ components:
       required:
       - ends_at
       - starts_at
+    ReportedCarrier:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ReportedCarrierTypeEnum'
+        hardware_id:
+          $ref: '#/components/schemas/CarrierId'
+        equipment_uid:
+          type: string
+          format: uuid
+      required:
+      - type
+      additionalProperties: false
+    ReportedCarrierTypeEnum:
+      enum:
+      - computer
+      - device
+      - dongle
+      - server
+      - equipment
+      type: string
+      description: '* `computer` - This computer
+
+        * `device` - Hardware mounted to the computer
+
+        * `dongle` - License dongle
+
+        * `server` - License server
+
+        * `equipment` - Unit configured on the check'
+    ReportedHardwareId:
+      type: object
+      properties:
+        kind:
+          type: string
+        value:
+          type: string
+      required:
+      - kind
+      - value
+    ReportedLicense:
+      type: object
+      properties:
+        observation_key:
+          type: string
+          maxLength: 255
+        vendor:
+          type: string
+          default: ''
+          maxLength: 128
+        product_code:
+          type: string
+          default: ''
+          maxLength: 128
+        product_name:
+          type: string
+          maxLength: 255
+        license_serial:
+          type: string
+          default: ''
+          description: The tool's license serial or ID; matched to License.serial_number.
+            Never a license key.
+          maxLength: 128
+        carrier:
+          $ref: '#/components/schemas/ReportedCarrier'
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        final_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        max_version:
+          type: string
+          default: ''
+          maxLength: 64
+        is_reactivatable:
+          type: boolean
+          default: false
+      required:
+      - carrier
+      - observation_key
+      - product_name
+      additionalProperties: false
     ResolutionCodeEnum:
       enum:
       - fixed
@@ -16817,6 +17826,19 @@ components:
           $ref: '#/components/schemas/Room'
       required:
       - data
+    RunError:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 64
+        message:
+          type: string
+          default: ''
+          maxLength: 512
+      required:
+      - code
+      additionalProperties: false
     SampleCharacteristicCatalogCreate:
       type: object
       properties:

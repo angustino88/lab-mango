@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
+# One-off snapshots an administrator pushes from the agent so new devices can be linked. They are
+# evidence for linking only: never presence of an expected device, never "reporting", never alerts.
+DISCOVERY_COLLECTOR_KEY = "discovery"
+
 
 @dataclass(frozen=True, slots=True)
 class DeviceObservation:
@@ -11,7 +15,8 @@ class DeviceObservation:
     interface_name: str
     state: str
     name: str = ""
-    serial_number: str = ""
+    serial_number: str = ""  # reported evidence only; matching uses ``hardware_ids``
+    hardware_ids: tuple[tuple[str, str], ...] = ()  # (kind, normalised value), e.g. ("pnp_id", "USB\\VID_…")
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,4 +41,4 @@ class ObservationAcknowledgment:
     is_replayed: bool = False
 
 
-__all__ = ("DeviceObservation", "DeviceObservationInput", "ObservationAcknowledgment")
+__all__ = ("DISCOVERY_COLLECTOR_KEY", "DeviceObservation", "DeviceObservationInput", "ObservationAcknowledgment")

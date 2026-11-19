@@ -55,6 +55,8 @@ def test_public_module_exports_license_commands_and_queries():
         "get_active_license",
         "get_license",
         "get_license_status_summary",
+        "ExpiryAlertResult",
+        "send_license_expiry_alerts",
         "list_license_category_summary",
         "get_license_for_mapping",
         "license_images",

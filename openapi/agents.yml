@@ -493,6 +493,120 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Anonymous or user request rate exceeded
+  /agent/license-checks:
+    get:
+      operationId: agent_license_checks_retrieve
+      description: The enabled checks that target this computer; strong ETag, 304
+        when unchanged.
+      tags:
+      - Agents
+      security:
+      - observationSignatureAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentLicenseChecksLicenseCheckSerializersAgentLicenseChecksDetailResponse'
+          description: ''
+        '304':
+          description: Checks unchanged
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Agent License Checks
+  /agent/license-checks/{check_key}/actions/report:
+    post:
+      operationId: agent_license_checks_actions_report_create_by_check_key
+      description: One run of one check. Exact retries with the same Idempotency-Key
+        are acknowledged again.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Durable UUID run key; reuse on retry with the same content.
+        required: true
+      - in: path
+        name: check_key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseCheckRunReport'
+        required: true
+      security:
+      - observationSignatureAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentLicenseCheckReportLicenseCheckSerializersLicenseCheckRunAcknowledgmentDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Report Agent License Checks by Check Key
   /agent/monitoring-policy:
     get:
       operationId: agent_monitoring_policy_retrieve
@@ -1423,6 +1537,31 @@ components:
       - capabilities
       - endpoints
       - server_time
+    AgentLicenseCheckReportLicenseCheckSerializersLicenseCheckRunAcknowledgmentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LicenseCheckRunAcknowledgment'
+      required:
+      - data
+    AgentLicenseChecks:
+      type: object
+      properties:
+        checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseCheckDefinition'
+      required:
+      - checks
+    AgentLicenseChecksLicenseCheckSerializersAgentLicenseChecksDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/AgentLicenseChecks'
+      required:
+      - data
     AgentListMeta:
       type: object
       properties:
@@ -1529,6 +1668,25 @@ components:
           $ref: '#/components/schemas/AgentSessionLogData'
       required:
       - data
+    CarrierId:
+      type: object
+      description: The carrier as the license tool names it (Vector device name);
+        never a PnP ID.
+      properties:
+        kind:
+          $ref: '#/components/schemas/CarrierIdKindEnum'
+        value:
+          type: string
+          maxLength: 512
+      required:
+      - kind
+      - value
+      additionalProperties: false
+    CarrierIdKindEnum:
+      enum:
+      - vector_device
+      type: string
+      description: '* `vector_device` - Vector device name'
     Choice:
       type: object
       description: ENU-1 ``{value, label}``.
@@ -1598,7 +1756,15 @@ components:
         serial_number:
           type: string
           default: ''
+          description: Evidence only; not used for matching.
           maxLength: 255
+        hardware_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareId'
+          description: IDs read from the device (Windows PnP instance ID); matched
+            to registered equipment IDs.
+          maxItems: 4
       required:
       - interface_name
       - observation_key
@@ -1742,6 +1908,14 @@ components:
           $ref: '#/components/schemas/EnrollmentGrant'
       required:
       - data
+    EquipmentHardwareIdKindEnum:
+      enum:
+      - pnp_id
+      - vector_device
+      type: string
+      description: '* `pnp_id` - PnP device ID
+
+        * `vector_device` - Vector device name'
     ErrorBody:
       type: object
       properties:
@@ -1776,6 +1950,34 @@ components:
           $ref: '#/components/schemas/ErrorBody'
       required:
       - error
+    ExpectedDeviceWatch:
+      type: object
+      properties:
+        equipment_uid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        hardware_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyHardwareId'
+      required:
+      - equipment_uid
+      - hardware_ids
+      - name
+    HardwareId:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/EquipmentHardwareIdKindEnum'
+        value:
+          type: string
+          maxLength: 512
+      required:
+      - kind
+      - value
+      additionalProperties: false
     KeyStorageEnum:
       enum:
       - tpm
@@ -1800,6 +2002,107 @@ components:
       required:
       - id
       - name
+    LicenseCheckDefinition:
+      type: object
+      description: One check as the agent parses it (``agent/src/core/licensing/checks.py``).
+      properties:
+        key:
+          type: string
+        revision:
+          type: integer
+        name:
+          type: string
+        vendor:
+          type: string
+        interval_minutes:
+          type: integer
+        probe: {}
+        extract: {}
+        carrier: {}
+      required:
+      - carrier
+      - extract
+      - interval_minutes
+      - key
+      - name
+      - probe
+      - revision
+      - vendor
+    LicenseCheckRunAcknowledgment:
+      type: object
+      properties:
+        idempotency_key:
+          type: string
+          format: uuid
+        sequence:
+          type: integer
+        result:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+      required:
+      - idempotency_key
+      - received_at
+      - result
+      - sequence
+    LicenseCheckRunReport:
+      type: object
+      properties:
+        revision:
+          type: integer
+          minimum: 1
+        sequence:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        status:
+          $ref: '#/components/schemas/LicenseCheckRunReportStatusEnum'
+        started_at:
+          type: string
+          format: date-time
+        reported_at:
+          type: string
+          format: date-time
+          description: Agent clock; informational.
+        duration_ms:
+          type: integer
+          maximum: 3600000
+          minimum: 0
+          default: 0
+        is_complete:
+          type: boolean
+        error:
+          $ref: '#/components/schemas/RunError'
+        licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportedLicense'
+      required:
+      - is_complete
+      - licenses
+      - revision
+      - sequence
+      - started_at
+      - status
+      additionalProperties: false
+    LicenseCheckRunReportStatusEnum:
+      enum:
+      - ok
+      - not_installed
+      - failed
+      - rejected
+      type: string
+      description: '* `ok` - OK: the license list is complete
+
+        * `not_installed` - Tool, file or key not on this computer
+
+        * `failed` - Ran but failed
+
+        * `rejected` - The agent refused the configuration'
     MonitoringPolicy:
       type: object
       properties:
@@ -1816,7 +2119,14 @@ components:
           type: array
           items:
             type: string
+        expected_devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpectedDeviceWatch'
+          description: 'Equipment expected on this computer with their registered
+            hardware IDs: the agent reports only devices whose ID is listed here.'
       required:
+      - expected_devices
       - freshness_seconds
       - generation_key
       - interface_names
@@ -1887,6 +2197,16 @@ components:
         booking_code:
           type: string
           maxLength: 255
+    PolicyHardwareId:
+      type: object
+      properties:
+        kind:
+          type: string
+        value:
+          type: string
+      required:
+      - kind
+      - value
     ProblemDetail:
       type: object
       properties:
@@ -1914,6 +2234,94 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    ReportedCarrier:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ReportedCarrierTypeEnum'
+        hardware_id:
+          $ref: '#/components/schemas/CarrierId'
+        equipment_uid:
+          type: string
+          format: uuid
+      required:
+      - type
+      additionalProperties: false
+    ReportedCarrierTypeEnum:
+      enum:
+      - computer
+      - device
+      - dongle
+      - server
+      - equipment
+      type: string
+      description: '* `computer` - This computer
+
+        * `device` - Hardware mounted to the computer
+
+        * `dongle` - License dongle
+
+        * `server` - License server
+
+        * `equipment` - Unit configured on the check'
+    ReportedLicense:
+      type: object
+      properties:
+        observation_key:
+          type: string
+          maxLength: 255
+        vendor:
+          type: string
+          default: ''
+          maxLength: 128
+        product_code:
+          type: string
+          default: ''
+          maxLength: 128
+        product_name:
+          type: string
+          maxLength: 255
+        license_serial:
+          type: string
+          default: ''
+          description: The tool's license serial or ID; matched to License.serial_number.
+            Never a license key.
+          maxLength: 128
+        carrier:
+          $ref: '#/components/schemas/ReportedCarrier'
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        final_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        max_version:
+          type: string
+          default: ''
+          maxLength: 64
+        is_reactivatable:
+          type: boolean
+          default: false
+      required:
+      - carrier
+      - observation_key
+      - product_name
+      additionalProperties: false
+    RunError:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 64
+        message:
+          type: string
+          default: ''
+          maxLength: 512
+      required:
+      - code
+      additionalProperties: false
     StateEnum:
       enum:
       - connected

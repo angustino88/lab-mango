@@ -16,7 +16,11 @@ from django.utils import timezone
 from django_stubs_ext import WithAnnotations
 
 from core.common.domain.errors import NotFound
-from core.labs.features.equipment.public import active_bench_assignments, equipment_ids_on_bench
+from core.labs.features.equipment.public import (
+    active_bench_assignments,
+    equipment_ids_on_bench,
+    hardware_ids_by_equipment,
+)
 from core.labs.models.monitoring import (
     DeviceConnection,
     DeviceConnectionState,
@@ -24,6 +28,7 @@ from core.labs.models.monitoring import (
     ExpectedDevice,
 )
 
+from ..contracts import DISCOVERY_COLLECTOR_KEY
 from .connections import FRESHNESS_WINDOW
 
 
@@ -36,15 +41,16 @@ class ExpectedAnnotations(TypedDict):
 
 def _annotated(queryset: QuerySet[ExpectedDevice]) -> QuerySet[WithAnnotations[ExpectedDevice, ExpectedAnnotations]]:
     cutoff = timezone.now() - FRESHNESS_WINDOW
+    # Discovery snapshots are one-off evidence for linking; they never confirm presence.
     observed = DeviceConnection.objects.filter(
         computing_id=OuterRef("computing_id"), equipment_id=OuterRef("equipment_id")
-    )
+    ).exclude(collector_key=DISCOVERY_COLLECTOR_KEY)
     reporting = DeviceObservationCursor.objects.filter(
         computing_id=OuterRef("computing_id"),
         is_current=True,
         last_received_at__gte=cutoff,
         last_collected_at__gte=cutoff,
-    )
+    ).exclude(collector_key=DISCOVERY_COLLECTOR_KEY)
     placement = active_bench_assignments(equipment_field="computing_id")
     return (
         queryset.select_related("computing", "equipment", "creator")
@@ -103,3 +109,28 @@ def expected_device_counts(*, bench_id: int | None = None) -> dict[str, int]:
         unconfirmed=Count("pk", filter=Q(presence="unconfirmed")),
         present=Count("pk", filter=Q(presence="present")),
     )
+
+
+MAX_WATCHED_DEVICES = 200
+
+
+def expected_device_watch_list(*, computing_id: int) -> list[dict]:
+    """What the computing unit's agent watches: expected equipment and its registered hardware IDs.
+
+    Bounded to ``MAX_WATCHED_DEVICES`` units; units without a registered ID are listed with none, so
+    the agent and the coordinator can both see what still needs registering.
+    """
+    rows = list(
+        _scoped(computing_id=computing_id, bench_id=None)
+        .order_by("equipment__name", "pk")
+        .values_list("equipment_id", "equipment__uid", "equipment__name")[:MAX_WATCHED_DEVICES]
+    )
+    ids = hardware_ids_by_equipment(equipment_ids=[row[0] for row in rows], computing_id=computing_id)
+    return [
+        {
+            "equipment_uid": uid,
+            "name": name,
+            "hardware_ids": [{"kind": kind, "value": value} for kind, value in ids.get(equipment_id, [])],
+        }
+        for equipment_id, uid, name in rows
+    ]

@@ -31,6 +31,11 @@ from core.common.contracts import ActorContext
 from core.common.db.idempotency import try_claim_operation
 from core.common.domain.errors import Conflict
 from core.labs.features.equipment.public import lock_monitoring_computing
+from core.labs.features.license_checks.public import (
+    LicenseCheckRunAcknowledgment,
+    LicenseCheckRunInput,
+    report_license_check_run,
+)
 from core.labs.features.monitoring.contracts import DeviceObservationInput, ObservationAcknowledgment
 from core.labs.features.monitoring.public import (
     InvalidateDeviceConnectionsInput,
@@ -470,3 +475,29 @@ def report_device_observations(command: ReportDeviceObservationsInput, *, actor:
         str(current.agent_uid), "agent", frozenset({"monitoring:report"}), frozenset({current.equipment_id})
     )
     return observe_devices(observation, actor=scoped_actor)
+
+
+@dataclass(frozen=True, slots=True)
+class ReportLicenseCheckRunInput:
+    identity: AgentIdentity
+    run: LicenseCheckRunInput
+
+
+@transaction.atomic
+def report_license_check(command: ReportLicenseCheckRunInput) -> LicenseCheckRunAcknowledgment:
+    """Equipment -> identity -> license checks, the same lock order as device observations.
+
+    The identity is rechecked under its lock so a revoked or re-keyed agent cannot write licenses.
+    """
+    identity = command.identity
+    lock_monitoring_computing(identity.equipment_id)
+    current = AgentIdentity.objects.select_for_update().get(pk=identity.pk)
+    if (
+        current.state != AgentIdentity.State.ACTIVE
+        or current.public_key_sha256 != identity.public_key_sha256
+        or current.enrolled_at != identity.enrolled_at
+        or current.equipment_id != identity.equipment_id
+        or command.run.computing_id != current.equipment_id
+    ):
+        raise AgentRequestUnauthenticated("Agent request authentication failed.")
+    return report_license_check_run(command.run)

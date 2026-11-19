@@ -8,7 +8,11 @@ from drf_spectacular.extensions import OpenApiSerializerExtension
 from rest_framework import serializers
 
 from core.common.api.summary_serializers import choice_field
+from core.labs.features.equipment.public import normalize_hardware_id
 from core.labs.features.monitoring.contracts import DeviceObservation
+
+HARDWARE_ID_KINDS = (("pnp_id", "PnP device ID"), ("vector_device", "Vector device name"))
+MAX_HARDWARE_IDS = 4
 
 
 class ObservationTextField(serializers.CharField):
@@ -45,12 +49,26 @@ class StrictObservationSerializer(serializers.Serializer):
         return super().to_internal_value(data)
 
 
+class HardwareIdSerializer(StrictObservationSerializer):
+    kind = serializers.ChoiceField(choices=HARDWARE_ID_KINDS)
+    value = ObservationTextField(max_length=512)
+
+
 class DeviceObservationSerializer(StrictObservationSerializer):
     observation_key = ObservationTextField(max_length=255)
     interface_name = ObservationTextField(max_length=255)
     state = serializers.ChoiceField(choices=(("connected", "Connected"), ("disconnected", "Disconnected")))
     name = ObservationTextField(max_length=255, allow_blank=True, required=False, default="")
-    serial_number = ObservationTextField(max_length=255, allow_blank=True, required=False, default="")
+    serial_number = ObservationTextField(
+        max_length=255, allow_blank=True, required=False, default="", help_text="Evidence only; not used for matching."
+    )
+    hardware_ids = serializers.ListField(
+        child=HardwareIdSerializer(),
+        max_length=MAX_HARDWARE_IDS,
+        required=False,
+        default=list,
+        help_text="IDs read from the device (Windows PnP instance ID); matched to registered equipment IDs.",
+    )
 
 
 class ObservationDateTimeField(serializers.DateTimeField):
@@ -92,7 +110,16 @@ class DeviceObservationReportSerializer(StrictObservationSerializer):
         keys = [row["observation_key"] for row in value]
         if len(keys) != len(set(keys)):
             raise serializers.ValidationError("Observation keys must be unique.")
-        return tuple(DeviceObservation(**row) for row in value)
+        devices = []
+        for row in value:
+            ids = tuple(
+                dict.fromkeys(
+                    (item["kind"], normalize_hardware_id(item["kind"], item["value"]))
+                    for item in row.pop("hardware_ids", [])
+                )
+            )
+            devices.append(DeviceObservation(**row, hardware_ids=ids))
+        return tuple(devices)
 
 
 class ObservationAcknowledgmentSerializer(serializers.Serializer):
@@ -102,12 +129,30 @@ class ObservationAcknowledgmentSerializer(serializers.Serializer):
     received_at = serializers.DateTimeField(default_timezone=datetime_timezone.utc, format="%Y-%m-%dT%H:%M:%S.%fZ")
 
 
+class PolicyHardwareIdSerializer(serializers.Serializer):
+    kind = serializers.CharField()
+    value = serializers.CharField()
+
+
+class ExpectedDeviceWatchSerializer(serializers.Serializer):
+    equipment_uid = serializers.UUIDField()
+    name = serializers.CharField()
+    hardware_ids = PolicyHardwareIdSerializer(many=True)
+
+
 class MonitoringPolicySerializer(serializers.Serializer):
     generation_key = ObservationUUIDField()
     max_devices = serializers.IntegerField()
     max_body_bytes = serializers.IntegerField()
     freshness_seconds = serializers.IntegerField()
     interface_names = serializers.ListField(child=serializers.CharField())
+    expected_devices = ExpectedDeviceWatchSerializer(
+        many=True,
+        help_text=(
+            "Equipment expected on this computer with their registered hardware IDs: the agent reports "
+            "only devices whose ID is listed here."
+        ),
+    )
 
 
 class ClosedObservationSchema(OpenApiSerializerExtension):

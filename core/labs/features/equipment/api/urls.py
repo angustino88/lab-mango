@@ -2,7 +2,7 @@ from django.urls import path
 
 from core.labs.features.equipment.categories.computing.api import ComputingActivityAPIView
 
-from . import collection, views
+from . import collection, hardware_ids, views
 from .reference_data import urlpatterns as reference_urlpatterns
 
 urlpatterns = [
@@ -35,6 +35,16 @@ urlpatterns = [
         "equipment/<int:equipment_id>/assignment",
         views.EquipmentAssignmentAPIView.as_view(),
         name="equipment-assignment-detail",
+    ),
+    path(
+        "equipment/<int:equipment_id>/hardware-ids",
+        hardware_ids.EquipmentHardwareIdListCreateAPIView.as_view(),
+        name="equipment-hardware-id-list-create",
+    ),
+    path(
+        "equipment/<int:equipment_id>/hardware-ids/<int:hardware_id_id>",
+        hardware_ids.EquipmentHardwareIdDetailAPIView.as_view(),
+        name="equipment-hardware-id-detail",
     ),
     path(
         "equipment/<int:equipment_id>/placement",

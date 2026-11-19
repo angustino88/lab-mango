@@ -9,6 +9,10 @@ database-wide) and the four default purchase priorities (last).
 Folded 2026-11-17: device connection monitoring (DeviceConnection, DeviceObservationCursor,
 DeviceObservationBatch, ExpectedDevice) and the equipment serial-number index
 (core/labs/features/monitoring/docs/device-connections.md).
+
+Folded 2026-11-18: license serial numbers, equipment hardware IDs (EquipmentHardwareId) and license
+checks (LicenseCheck, LicenseCheckTarget, LicenseCheckRun, LicenseObservation, LicenseAlert;
+core/labs/features/license_checks/docs/spec.md).
 """
 
 import uuid
@@ -9097,6 +9101,685 @@ class Migration(migrations.Migration):
                         ),
                         name="expected_device_not_self",
                     ),
+                ],
+            },
+        ),
+        migrations.AddField(
+            model_name="license",
+            name="serial_number",
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="Vendor's license serial or ID (for example the Vector license ID). Not secret; agents match the licenses they find to this value.",
+                max_length=255,
+            ),
+        ),
+        migrations.AlterField(
+            model_name="license",
+            name="identifier",
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="License key (activation key). Secret: never log or export it.",
+                max_length=255,
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="license",
+            index=models.Index(
+                django.db.models.functions.text.Lower("serial_number"),
+                name="license_serial_lower_idx",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="license",
+            constraint=models.UniqueConstraint(
+                models.F("vendor"),
+                django.db.models.functions.text.Lower("serial_number"),
+                condition=models.Q(
+                    ("deleted_at__isnull", True),
+                    models.Q(("serial_number", ""), _negated=True),
+                ),
+                name="license_vendor_serial_uniq",
+            ),
+        ),
+        migrations.AddField(
+            model_name="deviceconnection",
+            name="hardware_ids",
+            field=models.JSONField(
+                blank=True,
+                default=list,
+                help_text="Reported hardware IDs, [{kind, value}]; matched to EquipmentHardwareId.",
+            ),
+        ),
+        migrations.CreateModel(
+            name="EquipmentHardwareId",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "kind",
+                    models.CharField(
+                        choices=[
+                            ("pnp_id", "PnP device ID"),
+                            ("vector_device", "Vector device name"),
+                        ],
+                        max_length=24,
+                    ),
+                ),
+                (
+                    "value",
+                    models.CharField(
+                        help_text="Normalised: upper case, backslash separators.",
+                        max_length=512,
+                    ),
+                ),
+                (
+                    "computing",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Only for IDs valid on one computer (port-bound PnP IDs): that computing unit.",
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="scoped_hardware_ids",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "creator",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_creator",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Created by",
+                    ),
+                ),
+                (
+                    "equipment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="hardware_ids",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "last_modified_by",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_last_modified_by",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Last modified by",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("equipment_id", "kind", "value"),
+                "indexes": [models.Index(fields=["kind", "value"], name="equipment_hardware_id_lookup")],
+                "constraints": [
+                    models.UniqueConstraint(
+                        condition=models.Q(("computing__isnull", True)),
+                        fields=("kind", "value"),
+                        name="equipment_hardware_id_global_uniq",
+                    ),
+                    models.UniqueConstraint(
+                        condition=models.Q(("computing__isnull", False)),
+                        fields=("kind", "value", "computing"),
+                        name="equipment_hardware_id_scoped_uniq",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(("value", ""), _negated=True),
+                        name="equipment_hardware_id_value_not_empty",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(("kind__in", ["pnp_id", "vector_device"])),
+                        name="equipment_hardware_id_valid_kind",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(
+                            ("kind", "pnp_id"),
+                            ("value__regex", "\\\\[^\\\\]*&[^\\\\]*$"),
+                            ("computing__isnull", True),
+                            _negated=True,
+                        ),
+                        name="equipment_hardware_id_port_bound_scoped",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(("computing", models.F("equipment")), _negated=True),
+                        name="equipment_hardware_id_not_self",
+                    ),
+                ],
+            },
+        ),
+        migrations.CreateModel(
+            name="LicenseCheck",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created",
+                    model_utils.fields.AutoCreatedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    model_utils.fields.AutoLastModifiedField(
+                        default=django.utils.timezone.now,
+                        editable=False,
+                        verbose_name="modified",
+                    ),
+                ),
+                (
+                    "key",
+                    models.CharField(
+                        max_length=32,
+                        unique=True,
+                        validators=[
+                            django.core.validators.RegexValidator(
+                                "^[a-z][a-z0-9_-]{0,31}$",
+                                "Use a lowercase slug of at most 32 characters.",
+                            )
+                        ],
+                    ),
+                ),
+                ("name", models.CharField(max_length=128)),
+                ("vendor", models.CharField(blank=True, default="", max_length=128)),
+                (
+                    "probe",
+                    models.JSONField(
+                        help_text="Probe of the closed catalog: command, file or registry."
+                    ),
+                ),
+                (
+                    "extract",
+                    models.JSONField(
+                        help_text="Declarative mapping from the probe output to license fields."
+                    ),
+                ),
+                (
+                    "carrier",
+                    models.JSONField(
+                        help_text="What holds the licenses: computer, device, dongle, server, equipment, mapped."
+                    ),
+                ),
+                (
+                    "interval_minutes",
+                    models.PositiveIntegerField(
+                        default=360,
+                        validators=[django.core.validators.MinValueValidator(15)],
+                    ),
+                ),
+                ("is_enabled", models.BooleanField(default=True)),
+                (
+                    "is_lab_wide",
+                    models.BooleanField(
+                        default=False, help_text="Runs on every computer with an agent."
+                    ),
+                ),
+                ("revision", models.PositiveIntegerField(default=1)),
+                (
+                    "preset_key",
+                    models.CharField(
+                        blank=True,
+                        default="",
+                        help_text="Preset it was created from.",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "creator",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_creator",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Created by",
+                    ),
+                ),
+                (
+                    "last_modified_by",
+                    models.ForeignKey(
+                        blank=True,
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="%(app_label)s_%(class)s_last_modified_by",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Last modified by",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("name", "pk"),
+            },
+        ),
+        migrations.CreateModel(
+            name="LicenseCheckRun",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("agent_uid", models.UUIDField()),
+                ("idempotency_key", models.UUIDField()),
+                ("content_hash", models.CharField(max_length=64)),
+                ("revision", models.PositiveIntegerField()),
+                ("sequence", models.PositiveBigIntegerField()),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("ok", "OK"),
+                            ("not_installed", "Not installed"),
+                            ("failed", "Failed"),
+                            ("rejected", "Rejected by the agent"),
+                        ],
+                        max_length=16,
+                    ),
+                ),
+                ("error_code", models.CharField(blank=True, default="", max_length=64)),
+                (
+                    "error_message",
+                    models.CharField(blank=True, default="", max_length=512),
+                ),
+                ("started_at", models.DateTimeField()),
+                ("duration_ms", models.PositiveIntegerField(default=0)),
+                ("license_count", models.PositiveIntegerField(default=0)),
+                (
+                    "is_applied",
+                    models.BooleanField(
+                        default=False,
+                        help_text="False for stale or outdated-revision runs.",
+                    ),
+                ),
+                ("received_at", models.DateTimeField()),
+                (
+                    "computing",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="license_check_runs",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "license_check",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="runs",
+                        to="labs.licensecheck",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("-received_at", "-pk"),
+            },
+        ),
+        migrations.CreateModel(
+            name="LicenseCheckTarget",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "bench",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="+",
+                        to="labs.bench",
+                    ),
+                ),
+                (
+                    "category",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="+",
+                        to="labs.equipmentcategory",
+                    ),
+                ),
+                (
+                    "equipment",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="+",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "license_check",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="targets",
+                        to="labs.licensecheck",
+                    ),
+                ),
+                (
+                    "room",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="+",
+                        to="labs.room",
+                    ),
+                ),
+                (
+                    "station",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="+",
+                        to="labs.station",
+                    ),
+                ),
+            ],
+        ),
+        migrations.CreateModel(
+            name="LicenseObservation",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("observation_key", models.CharField(max_length=255)),
+                ("vendor", models.CharField(blank=True, default="", max_length=128)),
+                (
+                    "product_code",
+                    models.CharField(blank=True, default="", max_length=128),
+                ),
+                ("product_name", models.CharField(max_length=255)),
+                (
+                    "license_serial",
+                    models.CharField(blank=True, default="", max_length=128),
+                ),
+                ("carrier_type", models.CharField(max_length=16)),
+                (
+                    "carrier_hardware_kind",
+                    models.CharField(blank=True, default="", max_length=32),
+                ),
+                (
+                    "carrier_hardware_value",
+                    models.CharField(blank=True, default="", max_length=512),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("matched", "Matched"),
+                            ("unregistered", "Not in inventory"),
+                            ("ambiguous", "Several licenses match"),
+                            ("carrier_unlinked", "Carrier not linked"),
+                            ("carrier_not_at_computer", "Carrier not at this computer"),
+                            ("carrier_mismatch", "Assigned elsewhere"),
+                            ("unassigned", "Not assigned"),
+                        ],
+                        max_length=32,
+                    ),
+                ),
+                ("expires_at", models.DateTimeField(blank=True, null=True)),
+                ("final_expires_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "max_version",
+                    models.CharField(blank=True, default="", max_length=64),
+                ),
+                ("is_reactivatable", models.BooleanField(default=False)),
+                ("first_seen_at", models.DateTimeField()),
+                ("last_seen_at", models.DateTimeField()),
+                ("removed_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "carrier_equipment",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="carried_license_observations",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "computing",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="license_observations",
+                        to="labs.equipment",
+                    ),
+                ),
+                (
+                    "last_run",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="+",
+                        to="labs.licensecheckrun",
+                    ),
+                ),
+                (
+                    "license",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="observations",
+                        to="labs.license",
+                    ),
+                ),
+                (
+                    "license_check",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="observations",
+                        to="labs.licensecheck",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("computing_id", "product_name", "pk"),
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="licensecheck",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("interval_minutes__gte", 15)),
+                name="license_check_min_interval",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="licensecheck",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("revision__gte", 1)),
+                name="license_check_revision_positive",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="licensecheckrun",
+            index=models.Index(
+                fields=["license_check", "computing", "-sequence"],
+                name="license_check_run_latest_idx",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="licensecheckrun",
+            index=models.Index(
+                fields=["received_at"], name="license_check_run_received_idx"
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="licensecheckrun",
+            constraint=models.UniqueConstraint(
+                fields=("computing", "license_check", "idempotency_key"),
+                name="license_check_run_idempotency_uniq",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="licensechecktarget",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    models.Q(
+                        ("bench__isnull", True),
+                        ("category__isnull", True),
+                        ("equipment__isnull", True),
+                        ("room__isnull", False),
+                        ("station__isnull", True),
+                    ),
+                    models.Q(
+                        ("bench__isnull", True),
+                        ("category__isnull", True),
+                        ("equipment__isnull", True),
+                        ("room__isnull", True),
+                        ("station__isnull", False),
+                    ),
+                    models.Q(
+                        ("bench__isnull", False),
+                        ("category__isnull", True),
+                        ("equipment__isnull", True),
+                        ("room__isnull", True),
+                        ("station__isnull", True),
+                    ),
+                    models.Q(
+                        ("bench__isnull", True),
+                        ("category__isnull", False),
+                        ("equipment__isnull", True),
+                        ("room__isnull", True),
+                        ("station__isnull", True),
+                    ),
+                    models.Q(
+                        ("bench__isnull", True),
+                        ("category__isnull", True),
+                        ("equipment__isnull", False),
+                        ("room__isnull", True),
+                        ("station__isnull", True),
+                    ),
+                    _connector="OR",
+                ),
+                name="license_check_target_exactly_one",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="licenseobservation",
+            index=models.Index(
+                condition=models.Q(("removed_at__isnull", True)),
+                fields=["status"],
+                name="license_obs_status_idx",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="licenseobservation",
+            index=models.Index(fields=["license"], name="license_obs_license_idx"),
+        ),
+        migrations.AddConstraint(
+            model_name="licenseobservation",
+            constraint=models.UniqueConstraint(
+                fields=("license_check", "computing", "observation_key"),
+                name="license_observation_key_uniq",
+            ),
+        ),
+        migrations.AddField(
+            model_name="licensecheck",
+            name="expected_licenses",
+            field=models.ManyToManyField(
+                blank=True,
+                help_text="Licenses this check should find; one no run reports is flagged missing.",
+                related_name="expecting_checks",
+                to="labs.license",
+            ),
+        ),
+        migrations.CreateModel(
+            name="LicenseAlert",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "kind",
+                    models.CharField(
+                        choices=[("expiry", "Expiry"), ("missing", "Missing")],
+                        max_length=16,
+                    ),
+                ),
+                ("key", models.CharField(max_length=64)),
+                ("sent_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "license",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="alerts",
+                        to="labs.license",
+                    ),
+                ),
+            ],
+            options={
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("license", "kind", "key"),
+                        name="license_alert_once_uniq",
+                    )
                 ],
             },
         ),

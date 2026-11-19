@@ -207,3 +207,45 @@ def test_delete_is_refused_while_the_license_is_assigned(client, catalog, equipm
 
     assert response.status_code == 409
     assert License.objects.filter(pk=license_id, deleted_at__isnull=True).exists()
+
+
+@pytest.mark.django_db
+def test_serial_number_is_visible_searchable_and_separate_from_the_key(client, catalog):
+    created = _create(client, catalog, serial_number=" 55100045010 ").data["data"]
+
+    assert created["serial_number"] == "55100045010"
+    assert "identifier" not in created
+    record = License.objects.get(pk=created["id"])
+    assert (record.serial_number, record.identifier) == ("55100045010", "SECRET-KEY-123")
+    found = client.get(LIST_URL, {"q": "55100045010"}).data["data"]
+    assert [item["id"] for item in found] == [created["id"]]
+
+    patched = client.patch(f"{LIST_URL}/{created['id']}", {"serial_number": "55100045011"}, format="json")
+    assert patched.status_code == 200, patched.data
+    assert patched.data["data"]["serial_number"] == "55100045011"
+
+
+@pytest.mark.django_db
+def test_a_vendor_serial_is_unique_among_live_licenses(client, catalog):
+    first = _create(client, catalog, serial_number="55100045010").data["data"]
+
+    duplicate = client.post(LIST_URL, _body(catalog, sku="LIC-WRITE-002", serial_number="55100045010"), format="json")
+    assert duplicate.status_code == 409
+
+    other_vendor_product = LicenseProduct.objects.create(name="Other product", vendor=catalog["other_vendor"])
+    other_vendor = client.post(
+        LIST_URL,
+        _body(
+            catalog,
+            sku="LIC-WRITE-003",
+            serial_number="55100045010",
+            vendor_id=catalog["other_vendor"].pk,
+            product_id=other_vendor_product.pk,
+        ),
+        format="json",
+    )
+    assert other_vendor.status_code == 201, other_vendor.data
+
+    assert client.delete(f"{LIST_URL}/{first['id']}").status_code in (200, 204)
+    reused = client.post(LIST_URL, _body(catalog, sku="LIC-WRITE-004", serial_number="55100045010"), format="json")
+    assert reused.status_code == 201, reused.data

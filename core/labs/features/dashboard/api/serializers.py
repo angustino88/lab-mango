@@ -128,6 +128,7 @@ class DashboardComputingSerializer(serializers.Serializer):
     activity_status = serializers.CharField()
     remote_user = serializers.CharField(allow_blank=True)
     remote_user_display_name = serializers.CharField(allow_blank=True)
+    remote_computer = serializers.CharField(allow_blank=True, help_text="Client computer of the remote session.")
     remote_ip = serializers.CharField(allow_null=True)
 
 
@@ -328,6 +329,7 @@ class DashboardBenchSerializer(serializers.Serializer):
                                 "rdp_file_url": rdp_url,
                                 "remote_user": activity.remote_user if activity else "",
                                 "remote_user_display_name": activity.remote_user_display_name if activity else "",
+                                "remote_computer": activity.remote_computer if activity else "",
                                 "remote_ip": str(activity.remote_ip) if (activity and activity.remote_ip) else None,
                             }
                         )

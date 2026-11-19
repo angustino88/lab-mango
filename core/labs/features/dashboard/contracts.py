@@ -63,6 +63,7 @@ class DashboardComputingDTO:
     remote_ip: str | None
     sku: str = ""
     name: str = ""
+    remote_computer: str = ""
 
 
 @dataclass(frozen=True)

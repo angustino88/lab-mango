@@ -11,6 +11,7 @@ from .equipment import (
     EquipmentEventAxis,
     EquipmentLifecycleState,
 )
+from .hardware_id import EquipmentHardwareId, EquipmentHardwareIdKind
 from .loan import EquipmentLoan, EquipmentLoanBatch, EquipmentLoanReminder, LoanCloseReason
 from .lookups import EquipmentInterface, Material
 from .networking import NetworkingProtocol
@@ -30,6 +31,7 @@ __all__ = [
     "NetworkingProtocol",
     "SampleCharacteristic", "SampleCustomer",
     "EquipmentInterface", "Material", "MAC_ADDRESS_VALIDATOR",
+    "EquipmentHardwareId", "EquipmentHardwareIdKind",
     "ProductModelSpecification", "SpecificationDefinition",
     "EquipmentCategory",
     "Equipment",
