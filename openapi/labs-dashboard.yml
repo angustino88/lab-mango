@@ -500,6 +500,9 @@ components:
           type: string
         remote_user_display_name:
           type: string
+        remote_computer:
+          type: string
+          description: Client computer of the remote session.
         remote_ip:
           type: string
           nullable: true
@@ -509,6 +512,7 @@ components:
       - ip_address
       - os_name
       - rdp_file_url
+      - remote_computer
       - remote_ip
       - remote_user
       - remote_user_display_name
