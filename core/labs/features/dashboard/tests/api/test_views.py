@@ -185,9 +185,32 @@ class TestDashboardOverviewAPI:
         assert item["computing"]["remote_user"] == "dev_user"
         assert item["computing"]["remote_user_display_name"] == "Developer User"
         assert item["computing"]["remote_computer"] == "LT-DEV-01"
+        assert item["computing"]["status_started_at"] is None  # only offline and inactive have a start time
         assert item["samples"] == []
         assert item["licenses"] == []
         assert item["assigned_equipment_count"] == 1
+
+    @pytest.mark.parametrize(
+        ("status", "field"),
+        [(ComputingActivityStatus.OFFLINE, "offline_at"), (ComputingActivityStatus.INACTIVE, "inactive_at")],
+    )
+    def test_status_started_at_reports_start_of_offline_or_inactive(self, client_and_user, status, field):
+        client, _ = client_and_user
+        since = timezone.now() - timedelta(hours=3)
+        bench = make_bench()
+        comp = ComputingEquipmentFactory()
+        ComputingActivity.objects.create(computing=comp, status=status, **{field: since})
+        EquipmentAssignment.objects.create(bench=bench, equipment=comp, assigned_at=timezone.now())
+
+        listed = next(
+            i for i in client.get(f"/api/labs/dashboard?q={bench.sku}").json()["data"] if i["id"] == bench.id
+        )
+        detail = client.get(f"/api/labs/dashboard/benches/{bench.id}").json()["data"]
+
+        for computing in (listed["computing"], detail["computing"]):
+            assert computing["activity_status"] == status
+            assert computing["status_started_at"] is not None
+            assert abs(timezone.datetime.fromisoformat(computing["status_started_at"]) - since) < timedelta(seconds=1)
 
     def test_dashboard_benches_samples_and_licenses_serialized(self, client_and_user):
         client, _ = client_and_user
@@ -475,6 +498,7 @@ class TestDashboardBenchDetailAPI:
             "activity_status": "offline",
             "last_agent_report_at": None,
             "is_stale": None,
+            "status_started_at": None,
         }
 
     def test_category_groups_include_per_equipment_licenses_and_safe_activity(self, client_and_user):
@@ -538,6 +562,7 @@ class TestDashboardBenchDetailAPI:
             "activity_status": ComputingActivityStatus.ACTIVE,
             "last_agent_report_at": heartbeat.isoformat().replace("+00:00", "Z"),
             "is_stale": True,
+            "status_started_at": None,
         }
         assert not {
             "ip_address",

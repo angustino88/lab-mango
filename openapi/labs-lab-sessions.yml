@@ -138,6 +138,19 @@ components:
       required:
       - label
       - value
+    LabsNamedReference:
+      type: object
+      description: Compact `{id, name}` object representation of a related entity.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
     LabsUIDNamedReference:
       type: object
       description: Compact `{id, uid, name}` object representation when target defines
@@ -184,6 +197,42 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    SessionLogBooking:
+      type: object
+      description: 'The verified booking a session ran under: its schedule and project,
+        to compare with the session.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        booking_code:
+          type: string
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        project:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+      required:
+      - booking_code
+      - ends_at
+      - id
+      - project
+      - starts_at
+      - status
+      x-embedded-resource: true
     SessionLogItem:
       type: object
       description: One completed remote session as pushed by the agent, with the links
@@ -248,16 +297,18 @@ components:
           type: string
           readOnly: true
           nullable: true
-        booking_id:
-          type: integer
+        booking:
+          allOf:
+          - $ref: '#/components/schemas/SessionLogBooking'
           readOnly: true
           nullable: true
+          description: The verified booking (access type booked); null otherwise.
       required:
       - access_type
       - active_minutes
       - bench
+      - booking
       - booking_code
-      - booking_id
       - computer
       - duration_minutes
       - host_name

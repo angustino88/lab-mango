@@ -1423,6 +1423,14 @@ components:
       - type
       - uid
       - updated_at
+    BenchAssessmentSerializersAssessmentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LeaderboardAssessment'
+      required:
+      - data
     BenchBooking:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -4136,6 +4144,12 @@ components:
         remote_ip:
           type: string
           nullable: true
+        status_started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the current offline or inactive status began; null for
+            any other status.
       required:
       - activity_status
       - id
@@ -4146,6 +4160,7 @@ components:
       - remote_ip
       - remote_user
       - remote_user_display_name
+      - status_started_at
       x-embedded-resource: true
     DashboardComputingDetail:
       type: object
@@ -4168,11 +4183,18 @@ components:
         is_stale:
           type: boolean
           nullable: true
+        status_started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the current offline or inactive status began; null for
+            any other status.
       required:
       - activity_status
       - id
       - is_stale
       - last_agent_report_at
+      - status_started_at
       x-embedded-resource: true
     DashboardEquipmentActivity:
       type: object
@@ -10680,6 +10702,143 @@ components:
       - id
       - name
       - uid
+    LeaderboardAssessment:
+      type: object
+      description: KPI assessment of a user or bench. Lab coordinators and administrators
+        only.
+      properties:
+        period:
+          $ref: '#/components/schemas/LeaderboardAssessmentPeriod'
+        previous_period:
+          $ref: '#/components/schemas/LeaderboardAssessmentPeriod'
+        rating:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        score:
+          type: integer
+          nullable: true
+          description: Weighted KPI score 0-100; null with too little data.
+        previous_score:
+          type: integer
+          nullable: true
+          description: Score of the previous period.
+        summary:
+          type: string
+        total_sessions:
+          type: integer
+        total_bookings:
+          type: integer
+        kpis:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardAssessmentKpi'
+        strengths:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardAssessmentStrength'
+        development_areas:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardAssessmentDevelopmentArea'
+      required:
+      - development_areas
+      - kpis
+      - period
+      - previous_period
+      - previous_score
+      - rating
+      - score
+      - strengths
+      - summary
+      - total_bookings
+      - total_sessions
+    LeaderboardAssessmentDevelopmentArea:
+      type: object
+      properties:
+        kpi:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        severity:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        text:
+          type: string
+          description: The finding, with the figure behind it.
+        recommendation:
+          type: string
+          description: The recommended action.
+      required:
+      - kpi
+      - recommendation
+      - severity
+      - text
+    LeaderboardAssessmentKpi:
+      type: object
+      description: 'One scorecard line: the KPI against its target, with the previous
+        period for the trend.'
+      properties:
+        kpi:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        value:
+          type: number
+          format: double
+          nullable: true
+          description: 0-1; null when the KPI does not apply.
+        previous_value:
+          type: number
+          format: double
+          nullable: true
+          description: Same KPI in the previous period.
+        target:
+          type: number
+          format: double
+          description: 0-1 target; a ceiling when is_higher_better is false.
+        is_higher_better:
+          type: boolean
+        weight:
+          type: integer
+          description: Weight in the overall score.
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+      required:
+      - is_higher_better
+      - kpi
+      - previous_value
+      - status
+      - target
+      - value
+      - weight
+    LeaderboardAssessmentPeriod:
+      type: object
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+      required:
+      - ends_at
+      - starts_at
+    LeaderboardAssessmentStrength:
+      type: object
+      properties:
+        kpi:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        text:
+          type: string
+      required:
+      - kpi
+      - text
     LeaderboardExportSerializersLeaderboardPersonaListResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -10709,6 +10868,40 @@ components:
           type: string
           format: date-time
           nullable: true
+        total_usage_minutes:
+          type: number
+          format: double
+          default: 0.0
+          description: Active minutes on the bench.
+        utilization_rate:
+          type: number
+          format: double
+          default: 0.0
+          description: Active time against 8 hours per weekday, 0-1.
+        booking_fill:
+          type: number
+          format: double
+          default: 0.0
+          description: Booked time against 8 hours per weekday, 0-1.
+        total_bookings:
+          type: integer
+          default: 0
+        no_show_bookings:
+          type: integer
+          default: 0
+          description: Bookings with no session.
+        booking_compliance:
+          type: number
+          format: double
+          nullable: true
+          description: Attended bookings against approved bookings that have started,
+            0-1; null without bookings.
+        booking_utilization:
+          type: number
+          format: double
+          nullable: true
+          description: Booked time actually used against booked time, 0-1; null without
+            bookings.
         downtime_minutes:
           type: number
           format: double
@@ -10764,10 +10957,40 @@ components:
           type: number
           format: double
           default: 0.0
+          description: Active lab time against 8 hours per weekday, 0-1.
+        active_rate:
+          type: number
+          format: double
+          nullable: true
+          description: Active time against total session time, 0-1; null without sessions.
+        ad_hoc_rate:
+          type: number
+          format: double
+          nullable: true
+          description: Sessions without a verified booking against all sessions, 0-1;
+            null without sessions.
         booking_compliance:
           type: number
           format: double
-          default: 0.0
+          nullable: true
+          description: Attended bookings (at least one session) against approved bookings
+            that have started, 0-1; null without bookings.
+        booking_utilization:
+          type: number
+          format: double
+          nullable: true
+          description: Booked time actually used against booked time, 0-1; null without
+            bookings.
+        slot_adherence:
+          type: number
+          format: double
+          nullable: true
+          description: Session time inside the booked slot against all time of booked
+            sessions, 0-1; null when no booking was attended.
+        no_show_bookings:
+          type: integer
+          default: 0
+          description: Bookings with no session.
         last_remote_at:
           type: string
           format: date-time
@@ -10784,6 +11007,11 @@ components:
           type: number
           format: double
           default: 0.0
+        active_usage_minutes:
+          type: number
+          format: double
+          default: 0.0
+          description: Active minutes in sessions.
         avg_session_minutes:
           type: number
           format: double
@@ -18028,6 +18256,42 @@ components:
           $ref: '#/components/schemas/SendOTPResponse'
       required:
       - data
+    SessionLogBooking:
+      type: object
+      description: 'The verified booking a session ran under: its schedule and project,
+        to compare with the session.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        booking_code:
+          type: string
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        project:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+      required:
+      - booking_code
+      - ends_at
+      - id
+      - project
+      - starts_at
+      - status
+      x-embedded-resource: true
     SessionLogItem:
       type: object
       description: One completed remote session as pushed by the agent, with the links
@@ -18092,16 +18356,18 @@ components:
           type: string
           readOnly: true
           nullable: true
-        booking_id:
-          type: integer
+        booking:
+          allOf:
+          - $ref: '#/components/schemas/SessionLogBooking'
           readOnly: true
           nullable: true
+          description: The verified booking (access type booked); null otherwise.
       required:
       - access_type
       - active_minutes
       - bench
+      - booking
       - booking_code
-      - booking_id
       - computer
       - duration_minutes
       - host_name
@@ -21097,6 +21363,14 @@ components:
       - avatar_url
       - id
       - username
+    UserAssessmentSerializersAssessmentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/LeaderboardAssessment'
+      required:
+      - data
     UserAvatarRead:
       type: object
       properties:

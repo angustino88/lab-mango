@@ -41,7 +41,7 @@ def list_session_logs(
     Bounded read: the date range is required (the caller caps its length) and the result is paged by
     the view. Related rows are joined in the same query, so a page costs one query plus the count.
     """
-    queryset = LabSessionLog.objects.select_related("computing_equipment", "bench", "user", "booking").filter(
+    queryset = LabSessionLog.objects.select_related("computing_equipment", "bench", "user", "booking__project").filter(
         login_time__gte=_start_of(start_date),
         login_time__lt=_start_of(end_date + timedelta(days=1)),
     )

@@ -164,6 +164,8 @@ paths:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1reference-data~1types~1{reference_id}
   /api/labs/benches/status-summary:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1status-summary
+  /api/labs/benches/{id}/assessment:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1benches~1{id}~1assessment
   /api/labs/benches/{id}/profile:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1benches~1{id}~1profile
   /api/labs/benches/{id}/weekly-usage:
@@ -176,6 +178,8 @@ paths:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1lab
   /api/labs/leaderboard/persona:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1persona
+  /api/labs/leaderboard/users/{id}/assessment:
+    $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1users~1{id}~1assessment
   /api/labs/leaderboard/users/{id}/profile:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1users~1{id}~1profile
   /api/labs/leaderboard/users/{id}/weekly-usage:

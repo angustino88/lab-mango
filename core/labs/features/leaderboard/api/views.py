@@ -6,24 +6,28 @@ from datetime import timedelta
 from django.utils import timezone
 from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.common.domain.errors import InvalidQuery
-from core.labs.features.base import LABS_MEMBER_READ_ACCESS, FeatureAPIView
+from core.labs.features.base import LABS_MEMBER_READ_ACCESS, LABS_STAFF_ACCESS, FeatureAPIView
 
 from ..helpers import parse_date_range
 from ..public import (
     compute_leaderboard_lab,
     compute_leaderboard_persona,
+    get_bench_assessment,
     get_dashboard_labs,
     get_dashboard_summary,
     get_lab_profile,
     get_lab_weekly_usage,
+    get_user_assessment,
     get_user_profile,
     get_user_weekly_usage,
 )
 from .serializers import (
+    AssessmentSerializer,
     DashboardPaginatedResponseSerializer,
     DashboardSummaryDataSerializer,
     DashboardUnpaginatedResponseSerializer,
@@ -164,6 +168,54 @@ class UserWeeklyUsageHeatmapAPIView(FeatureAPIView):
 
     def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
         return self.respond_data(get_user_weekly_usage(pk))
+
+
+class IsOwnAssessmentOrLabStaff(BasePermission):
+    """Coordinators, admins and API keys read any user's assessment; a lab member reads only their own."""
+
+    def has_permission(self, request: Request, view) -> bool:
+        if LABS_STAFF_ACCESS[0]().has_permission(request, view):
+            return True
+        own = str(view.kwargs.get("pk")) == str(getattr(request.user, "pk", None))
+        return own and request.method in SAFE_METHODS and LABS_MEMBER_READ_ACCESS[0]().has_permission(request, view)
+
+
+class UserAssessmentAPIView(FeatureAPIView):
+    """KPI assessment of one user: scorecard, rating, strengths, development areas and trend.
+
+    Lab coordinators and administrators read anyone's; a lab member reads only their own. The rankings
+    are visible to every lab member, the assessment of another person is not.
+    """
+
+    permission_classes = [IsOwnAssessmentOrLabStaff]
+    schema_tags = ("Leaderboard",)
+    get_contract = OperationContract(
+        query=LeaderboardDateRangeQuerySerializer,
+        success=ResponseContract.success("UserAssessment", AssessmentSerializer),
+        not_found=ResponseContract.not_found(),
+        bad_request=ResponseContract.bad_request(),
+    )
+
+    def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        start_date, end_date = _date_range(request)
+        return self.respond_data(get_user_assessment(pk, start_date, end_date))
+
+
+class BenchAssessmentAPIView(FeatureAPIView):
+    """KPI assessment of one bench. Lab coordinators and administrators only."""
+
+    permission_classes = LABS_STAFF_ACCESS
+    schema_tags = ("Leaderboard",)
+    get_contract = OperationContract(
+        query=LeaderboardDateRangeQuerySerializer,
+        success=ResponseContract.success("BenchAssessment", AssessmentSerializer),
+        not_found=ResponseContract.not_found(),
+        bad_request=ResponseContract.bad_request(),
+    )
+
+    def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        start_date, end_date = _date_range(request)
+        return self.respond_data(get_bench_assessment(pk, start_date, end_date))
 
 
 class DashboardSummaryAPIView(FeatureAPIView):

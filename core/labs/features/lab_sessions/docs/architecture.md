@@ -315,7 +315,9 @@ and A5 will run; the booking FK has Django's default index.
   `±logout_time`, `±active_duration_seconds`). Every ordering ends with the row id, so pages are stable.
 - Response: standard paginated list of `SessionLogItem` (`login_at`, `logout_at`, `duration_minutes`,
   `active_minutes`, `computer`, `host_name`, `bench`, `remote_user`, `remote_user_display_name`, `user`,
-  `access_type`, `booking_code`, `booking_id`). `remote_ip` is not exposed.
+  `access_type`, `booking_code`, `booking`). `booking` is the verified booking as an embedded resource
+  (`id`, `booking_code`, `starts_at`, `ends_at`, `status`, `project` as `{id, name}`), null unless the access
+  type is booked, so the session can be checked against the booked slot. `remote_ip` is not exposed.
 - Reads: `queries/session_logs.py`, one joined query per page plus the count (tested).
 
 Still open from A6: the grouped-by-booking view, exclude/restore, and flag and kind review filters.
