@@ -94,7 +94,9 @@ INSTALLED_APPS += ["django_extensions"]
 
 # CELERY (dev: eager optional)
 # ------------------------------------------------------------------------------
+# Raise task exceptions in the caller instead of swallowing them (useful with ALWAYS_EAGER).
 CELERY_TASK_EAGER_PROPAGATES = False
+# False: .delay() only queues, so a worker must run. True: tasks (e.g. the admin URS sync) run inline, no worker.
 CELERY_TASK_ALWAYS_EAGER = False
 
 # MINIO / S3 STORAGE
