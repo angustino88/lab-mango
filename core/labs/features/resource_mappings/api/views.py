@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.utils.urls import remove_query_param, replace_query_param
 
 from core.common.api.api_views import AppAPIView
-from core.labs.features.base.access import LABS_STAFF_ACCESS
+from core.labs.features.base.access import LAB_OPERATIONS_ACCESS
 
 from ..queries import MappingPageNotFound, MappingQueryError, get_resource_mapping, list_bench_mappings
 from .serializers import (
@@ -19,7 +19,7 @@ from .serializers import (
 
 
 class ResourceMappingAPIView(AppAPIView):
-    permission_classes = LABS_STAFF_ACCESS
+    permission_classes = LAB_OPERATIONS_ACCESS
     schema_tags = ("Resource Mappings",)
     get_contract = OperationContract(
         query=ResourceMappingQuerySerializer,
@@ -81,7 +81,7 @@ class ResourceMappingAPIView(AppAPIView):
     )
 )
 class BenchMappingListAPIView(AppAPIView):
-    permission_classes = LABS_STAFF_ACCESS
+    permission_classes = LAB_OPERATIONS_ACCESS
     schema_tags = ("Resource Mappings",)
     get_contract = OperationContract(
         query=BenchMappingListQuerySerializer,

@@ -23,7 +23,7 @@ from .serializers import (
 
 
 class DowntimeAPIView(AppListAPIView, CommandAPIView):
-    """Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write."""
+    """Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like every other resource write."""
 
     schema_tags = ("Downtime",)
 
@@ -80,7 +80,7 @@ class DowntimeCancelAPIView(DowntimeAPIView):
 
 
 class DowntimeChangeBookingAccessAPIView(DowntimeAPIView):
-    """Open the window to lab staff bookings (``lab_staff``) or close it to everyone (``closed``)."""
+    """Open the window to lab operator bookings (``lab_operators``) or close it to everyone (``closed``)."""
 
     post_contract = operation(
         "DowntimeChangeBookingAccess", DowntimeSerializer, request=DowntimeChangeBookingAccessSerializer

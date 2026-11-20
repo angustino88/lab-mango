@@ -2911,11 +2911,11 @@ components:
     BookingAccessEnum:
       enum:
       - closed
-      - lab_staff
+      - lab_operators
       type: string
       description: '* `closed` - Closed to all bookings
 
-        * `lab_staff` - Lab staff only'
+        * `lab_operators` - Lab operators only'
     BookingBenchChoice:
       type: object
       properties:
@@ -5694,7 +5694,7 @@ components:
           - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
           description: 'Who may still book the covered benches: closed (no one) or
-            lab_staff (coordinators and administrators).'
+            lab_operators (Lab Coordinators and Lab Administrators).'
         state:
           allOf:
           - $ref: '#/components/schemas/Choice'
@@ -5832,14 +5832,14 @@ components:
           allOf:
           - $ref: '#/components/schemas/BookingAccessEnum'
           default: closed
-          description: 'closed (default): no one can book the covered benches. lab_staff:
+          description: 'closed (default): no one can book the covered benches. lab_operators:
             lab coordinators and administrators can still book them; their overlapping
             bookings are kept. Not for equipment.
 
 
             * `closed` - Closed to all bookings
 
-            * `lab_staff` - Lab staff only'
+            * `lab_operators` - Lab operators only'
       required:
       - condition
       - resource_id
@@ -5965,6 +5965,19 @@ components:
       - description
       - quantity
       - unit_price
+    EffectivePermissions:
+      type: object
+      properties:
+        labs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Choice'
+          readOnly: true
+          description: 'Effective Labs permissions (`value` is the code, `label` describes
+            it), sorted by code. Show or hide actions with these; the server decides.
+            Codes: docs/architecture/access-matrix.md.'
+      required:
+      - labs
     EffectiveRoles:
       type: object
       properties:
@@ -11107,9 +11120,9 @@ components:
           - $ref: '#/components/schemas/Choice'
           nullable: true
           readOnly: true
-          description: 'Who may still book while unavailable: lab_staff (coordinators
-            and administrators, every blocker is downtime open to lab staff) or closed.
-            Empty when available.'
+          description: 'Who may still book while unavailable: lab_operators (coordinators
+            and administrators, every blocker is downtime open to lab operators) or
+            closed. Empty when available.'
       required:
       - blocked_by
       - booking_access
@@ -23156,8 +23169,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/EffectiveRoles'
           readOnly: true
+        effective_permissions:
+          allOf:
+          - $ref: '#/components/schemas/EffectivePermissions'
+          readOnly: true
       required:
       - avatar_url
+      - effective_permissions
       - effective_roles
       - groups
       - id

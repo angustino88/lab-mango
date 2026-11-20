@@ -142,8 +142,8 @@ class AvailabilitySerializer(serializers.Serializer):
     reason = serializers.SerializerMethodField(help_text="Lifecycle status, or the downtime reason, of blocked_by.")
     booking_access = serializers.SerializerMethodField(
         help_text=(
-            "Who may still book while unavailable: lab_staff (coordinators and administrators, every "
-            "blocker is downtime open to lab staff) or closed. Empty when available."
+            "Who may still book while unavailable: lab_operators (coordinators and administrators, every "
+            "blocker is downtime open to lab operators) or closed. Empty when available."
         )
     )
 

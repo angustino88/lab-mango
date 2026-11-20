@@ -1,4 +1,4 @@
-"""Downtime windows can stay open to lab staff bookings (``ResourceDowntime.booking_access``).
+"""Downtime windows can stay open to lab operator bookings (``ResourceDowntime.booking_access``).
 
 Additive and online-safe: existing rows read ``closed`` through the database default, which is the
 behavior they had before (every booking blocked). No data migration.
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("closed", "Closed to all bookings"),
-                    ("lab_staff", "Lab staff only"),
+                    ("lab_operators", "Lab operators only"),
                 ],
                 db_default="closed",
                 default="closed",
@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="resourcedowntime",
             constraint=models.CheckConstraint(
-                condition=models.Q(("booking_access__in", ["closed", "lab_staff"])),
+                condition=models.Q(("booking_access__in", ["closed", "lab_operators"])),
                 name="downtime_booking_access_valid",
             ),
         ),

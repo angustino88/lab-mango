@@ -9,8 +9,10 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from core.common.api.permissions import HasAPIKeyAccess
 from core.common.domain.errors import InvalidQuery
-from core.labs.features.base import LABS_MEMBER_READ_ACCESS, LABS_STAFF_ACCESS, FeatureAPIView
+from core.labs.features.base import LEADERBOARD_ACCESS, FeatureAPIView
+from core.users.public import LabsPermission, has_permission
 
 from ..helpers import parse_date_range
 from ..public import (
@@ -52,7 +54,7 @@ def _date_range(request: Request):
 
 class LeaderboardPersonaAPIView(FeatureAPIView):
     """User performance rankings and operational metrics."""
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -69,7 +71,7 @@ class LeaderboardPersonaAPIView(FeatureAPIView):
 
 class LeaderboardLabAPIView(FeatureAPIView):
     """Laboratory and bench utilization rankings."""
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -86,7 +88,7 @@ class LeaderboardLabAPIView(FeatureAPIView):
 
 class LeaderboardExportAPIView(FeatureAPIView):
     """Export leaderboard performance data."""
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -108,7 +110,7 @@ class LeaderboardExportAPIView(FeatureAPIView):
 
 class LabProfileAPIView(FeatureAPIView):
     """Retrieve laboratory bench performance profile."""
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -125,7 +127,7 @@ class LabProfileAPIView(FeatureAPIView):
 
 class LabWeeklyUsageHeatmapAPIView(FeatureAPIView):
     """Weekly utilization heatmap for a specific laboratory bench."""
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -140,7 +142,7 @@ class LabWeeklyUsageHeatmapAPIView(FeatureAPIView):
 
 class UserProfileAPIView(FeatureAPIView):
     """User profile ranking and session summary."""
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -157,7 +159,7 @@ class UserProfileAPIView(FeatureAPIView):
 
 class UserWeeklyUsageHeatmapAPIView(FeatureAPIView):
     """Weekly usage heatmap for an individual user."""
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -170,19 +172,21 @@ class UserWeeklyUsageHeatmapAPIView(FeatureAPIView):
         return self.respond_data(get_user_weekly_usage(pk))
 
 
-def _is_lab_staff(request: Request, view) -> bool:
-    """Lab coordinators, administrators and API keys (the LABS_STAFF_ACCESS policy)."""
-    return all(permission().has_permission(request, view) for permission in LABS_STAFF_ACCESS)
+def _may_read_any_assessment(request: Request, view) -> bool:
+    """Holders of ``assessment.read_any`` (lab operators) and API keys read every assessment."""
+    return has_permission(request.user, LabsPermission.ASSESSMENT_READ_ANY) or HasAPIKeyAccess().has_permission(
+        request, view
+    )
 
 
 class UserAssessmentAPIView(FeatureAPIView):
     """KPI assessment of one user: scorecard, rating, strengths, development areas and trend.
 
-    Lab coordinators and administrators read anyone's; a lab member reads only their own. The route
+    Holders of ``assessment.read_any`` (lab operators) read anyone's; a Lab Member reads only their own. The route
     follows the leaderboard policy (lab members read); the subject is checked per request.
     """
 
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
         query=LeaderboardDateRangeQuerySerializer,
@@ -193,7 +197,7 @@ class UserAssessmentAPIView(FeatureAPIView):
     )
 
     def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        if not _is_lab_staff(request, self) and pk != getattr(request.user, "pk", None):
+        if not _may_read_any_assessment(request, self) and pk != getattr(request.user, "pk", None):
             raise AssessmentAccessDenied("You can see your own assessment only.")
         start_date, end_date = _date_range(request)
         return self.respond_data(get_user_assessment(pk, start_date, end_date))
@@ -203,7 +207,7 @@ class BenchAssessmentAPIView(FeatureAPIView):
     """KPI assessment of one bench. Lab coordinators and administrators only (checked per request; the
     route follows the leaderboard policy)."""
 
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
         query=LeaderboardDateRangeQuerySerializer,
@@ -214,7 +218,7 @@ class BenchAssessmentAPIView(FeatureAPIView):
     )
 
     def handle_get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        if not _is_lab_staff(request, self):
+        if not _may_read_any_assessment(request, self):
             raise AssessmentAccessDenied()
         start_date, end_date = _date_range(request)
         return self.respond_data(get_bench_assessment(pk, start_date, end_date))
@@ -222,7 +226,7 @@ class BenchAssessmentAPIView(FeatureAPIView):
 
 class DashboardSummaryAPIView(FeatureAPIView):
     """High-level asset count and status distribution summary."""
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(
@@ -237,7 +241,7 @@ class DashboardSummaryAPIView(FeatureAPIView):
 
 class LabDashboardAPIView(FeatureAPIView):
     """Laboratory dashboard overview with polymorphic paginated or unpaginated list."""
-    permission_classes = LABS_MEMBER_READ_ACCESS
+    permission_classes = LEADERBOARD_ACCESS
 
     schema_tags = ("Leaderboard",)
     get_contract = OperationContract(

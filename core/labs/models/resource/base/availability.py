@@ -89,12 +89,12 @@ def activity_expression(resource_type: str, *, now: datetime | None = None) -> C
     )
 
 
-def bench_bookings_blocked_by_parents(*, bench_ids, station, room, lab_staff_users=None) -> list[int]:
+def bench_bookings_blocked_by_parents(*, bench_ids, station, room, lab_operator_users=None) -> list[int]:
     """Reserving bench bookings (ending after now) that the new parents would block (design rule 3).
 
     Used when a bench moves to ``station`` or a station moves to ``room``: every booking is blocked when a
     parent is not in service, otherwise the bookings that overlap a downtime window of a parent. A window
-    whose ``booking_access`` is ``lab_staff`` does not block bookings created by ``lab_staff_users`` (a
+    whose ``booking_access`` is ``lab_operators`` does not block bookings created by ``lab_operator_users`` (a
     user queryset, used as a subquery); without it every window blocks. The caller holds the station lock
     and the bench locks. Two queries at most (windows, bookings).
     """
@@ -122,8 +122,8 @@ def bench_bookings_blocked_by_parents(*, bench_ids, station, room, lab_staff_use
         window = Q(ends_at__gt=starts_at)
         if ends_at is not None:
             window &= Q(starts_at__lt=ends_at)
-        if booking_access == DowntimeBookingAccess.LAB_STAFF and lab_staff_users is not None:
-            window &= ~Q(creator__in=lab_staff_users.values("pk"))
+        if booking_access == DowntimeBookingAccess.LAB_OPERATORS and lab_operator_users is not None:
+            window &= ~Q(creator__in=lab_operator_users.values("pk"))
         overlap |= window
     return list(bookings.filter(overlap).values_list("pk", flat=True))
 
@@ -265,28 +265,28 @@ class HierarchyLevel:
     downtime_booking_access: str | None = None
 
     @property
-    def lab_staff_may_book(self) -> bool:
-        """In service, and either operational or down under a window that stays open to lab staff."""
+    def lab_operators_may_book(self) -> bool:
+        """In service, and either operational or down under a window that stays open to lab operators."""
         if self.lifecycle_status != ResourceLifecycleStatus.IN_SERVICE:
             return False
         return (
             self.condition == ResourceCondition.OPERATIONAL
-            or self.downtime_booking_access == DowntimeBookingAccess.LAB_STAFF
+            or self.downtime_booking_access == DowntimeBookingAccess.LAB_OPERATORS
         )
 
 
 def _booking_access(chain: list[HierarchyLevel]) -> str:
-    """``lab_staff`` when every level that blocks still lets lab staff book now, else ``closed``."""
-    if all(level.lab_staff_may_book for level in chain):
-        return DowntimeBookingAccess.LAB_STAFF.value
+    """``lab_operators`` when every level that blocks still lets lab operators book now, else ``closed``."""
+    if all(level.lab_operators_may_book for level in chain):
+        return DowntimeBookingAccess.LAB_OPERATORS.value
     return DowntimeBookingAccess.CLOSED.value
 
 
 def availability(chain: list[HierarchyLevel]) -> dict[str, Any]:
     """``available``, or ``unavailable`` with the first blocking resource (self first, then parents).
 
-    ``booking_access`` (only when unavailable) says who may still book now: ``lab_staff`` when the only
-    blockers are downtime windows open to lab staff, otherwise ``closed``.
+    ``booking_access`` (only when unavailable) says who may still book now: ``lab_operators`` when the only
+    blockers are downtime windows open to lab operators, otherwise ``closed``.
     """
     for level in chain:
         if level.lifecycle_status != ResourceLifecycleStatus.IN_SERVICE:

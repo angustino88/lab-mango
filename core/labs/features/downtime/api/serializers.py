@@ -37,7 +37,10 @@ class DowntimeSerializer(AppModelSerializer):
     kind = serializers.SerializerMethodField()
     reason = serializers.SerializerMethodField()
     booking_access = serializers.SerializerMethodField(
-        help_text="Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+        help_text=(
+            "Who may still book the covered benches: closed (no one) or lab_operators (Lab Coordinators and "
+            "Lab Administrators)."
+        )
     )
     state = serializers.SerializerMethodField()
     actor = UserReferenceSerializer(source="creator", read_only=True, allow_null=True)
@@ -119,7 +122,7 @@ class DowntimeCreateSerializer(ResourceWriteSerializerMixin, serializers.Seriali
         required=False,
         default=DowntimeBookingAccess.CLOSED,
         help_text=(
-            "closed (default): no one can book the covered benches. lab_staff: lab coordinators and "
+            "closed (default): no one can book the covered benches. lab_operators: lab coordinators and "
             "administrators can still book them; their overlapping bookings are kept. Not for equipment."
         ),
     )

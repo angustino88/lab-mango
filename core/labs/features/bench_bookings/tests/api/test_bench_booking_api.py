@@ -8,7 +8,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core.labs.models import BenchBooking, BookingApprovalStatus
-from core.users.public import LabsRole
+from core.users.roles import LabsRole
 from core.users.models import URSGroup
 from core.users.tests.factories import UserFactory
 from tests.factories import grant_labs_role

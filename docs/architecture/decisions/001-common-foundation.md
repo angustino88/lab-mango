@@ -108,6 +108,9 @@ Rejected: domain-event bus; signals as the event mechanism.
 Score: 4, 4, 3, 4, 5, 4, 3, 4, 4 — explicit flow; moving the signal is T2.
 
 ### D5. Authorization
+> Amended 2026-11-20: the coarse layer is `CapabilityPermission` / `LabsAccessPolicy` checking named permissions,
+> not roles ([role-based access redesign](../../proposals/role-based-access-redesign.md)).
+
 Three layers: coarse DRF `RolePermission` subclasses per app; object-level pure `can_*`/`ensure_*` policies;
 queryset visibility in selectors. API keys accepted on every endpoint through **one** declared policy in each
 app's base view (`HasAPIKey | <role permission>`), never ad hoc (Q1, Q2, R-1). Support Desk permissions move

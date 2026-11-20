@@ -8,11 +8,11 @@ from django.db import connection
 from django.test import override_settings
 
 from core.routing.models import RoutingChange
+from core.users.access import effective_labs_roles
 from core.users.models import EntraIdentity, RoleAuditEvent, URSGroup, User
 from core.users.public import (
     StubIdentitiesDisabled,
     StubUserInput,
-    effective_labs_roles,
     ensure_stub_user,
     stub_bind_entra_identity,
     stub_delete_user,

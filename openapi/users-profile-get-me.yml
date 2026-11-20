@@ -29,6 +29,19 @@ paths:
       summary: Get Current User Profile
 components:
   schemas:
+    Choice:
+      type: object
+      description: ENU-1 ``{value, label}``.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     CurrentUserSerializersUserWithPermissionDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -37,6 +50,19 @@ components:
           $ref: '#/components/schemas/UserWithPermission'
       required:
       - data
+    EffectivePermissions:
+      type: object
+      properties:
+        labs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Choice'
+          readOnly: true
+          description: 'Effective Labs permissions (`value` is the code, `label` describes
+            it), sorted by code. Show or hide actions with these; the server decides.
+            Codes: docs/architecture/access-matrix.md.'
+      required:
+      - labs
     EffectiveRoles:
       type: object
       properties:
@@ -114,8 +140,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/EffectiveRoles'
           readOnly: true
+        effective_permissions:
+          allOf:
+          - $ref: '#/components/schemas/EffectivePermissions'
+          readOnly: true
       required:
       - avatar_url
+      - effective_permissions
       - effective_roles
       - groups
       - id

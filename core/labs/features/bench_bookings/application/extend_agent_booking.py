@@ -14,7 +14,7 @@ from core.labs.features.bench_bookings.queries import (
     bench_downtime_blocker,
     bench_parent_blocker,
     conflicting_bench_bookings,
-    is_lab_staff,
+    may_book_during_downtime,
 )
 from core.labs.models import BookingApprovalStatus, BookingStatus
 
@@ -71,7 +71,7 @@ def extend_agent_booking(
             bench=locked.bench,
             starts_at=booking.ends_at,
             ends_at=new_ends_at,
-            lab_staff=is_lab_staff(booking.creator),
+            lab_operator=may_book_during_downtime(booking.creator),
         )
         if downtime is not None:
             raise AgentExtensionNotAllowed(reason="bench_unavailable", message=downtime)

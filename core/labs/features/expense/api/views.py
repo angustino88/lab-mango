@@ -4,8 +4,8 @@ from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.pagination import PageNumberQuerySerializer
-from core.common.api.permissions import HasAPIKeyAccess
 from core.labs.features.base import CommandAPIView
+from core.labs.features.base.access import FINANCE_ACCESS
 from core.labs.features.expense import public
 from core.labs.features.expense.api.serializers import (
     ExpensePaymentSerializer,
@@ -19,12 +19,11 @@ from core.labs.features.expense.public import (
     CreateExpenseInput,
     CreateExpensePaymentInput,
 )
-from core.users.public import IsLabCoordinatorReadWrite
 
 
 class ExpenseAPIView(AppListAPIView, CommandAPIView):
     # Reads and writes: lab coordinators and admins (owner decision 2026-11-11), and API keys.
-    permission_classes = [HasAPIKeyAccess | IsLabCoordinatorReadWrite]
+    permission_classes = FINANCE_ACCESS
 
 
 class RoomExpenseListCreateAPIView(ExpenseAPIView):

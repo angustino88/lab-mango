@@ -1,6 +1,6 @@
 """Telemetry configuration HTTP mapping only; each handler calls one command or selector.
 
-Access: coordinators and admins (`LABS_STAFF_ACCESS`, inherited); approving a device profile additionally
+Access: coordinators and admins (`LAB_OPERATIONS_ACCESS`, inherited); approving a device profile additionally
 needs the lab admin role, enforced in the command (`ProfileApprovalForbidden`, 403).
 """
 

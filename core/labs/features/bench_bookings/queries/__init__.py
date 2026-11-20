@@ -11,8 +11,8 @@ from .bench_bookings import (
     get_bench_booking_by_code,
     get_visible_bench_booking,
     get_visible_bench_booking_by_code,
-    is_lab_staff,
     list_bench_bookings,
+    may_book_during_downtime,
     project_exists,
     visible_to,
 )
@@ -29,7 +29,7 @@ __all__ = [
     "get_bench_booking_by_code",
     "get_visible_bench_booking",
     "get_visible_bench_booking_by_code",
-    "is_lab_staff",
+    "may_book_during_downtime",
     "list_bench_bookings",
     "visible_to",
     "get_lab_project",

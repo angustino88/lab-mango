@@ -21,7 +21,7 @@ from rest_framework.exceptions import ErrorDetail
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from core.common.api.permissions import HasAPIKeyAccess
+from core.common.api.permissions import HasAPIKeyAccess, PermissionClasses
 
 from .command_views import FeatureAPIView
 from .filtering import CSVField, PositiveIDField
@@ -95,7 +95,7 @@ class OptionsAPIView(FeatureAPIView):
     and returns {"data": [{"id": ..., "sku": ..., "name": ...}]}.
     """
 
-    permission_classes = [HasAPIKeyAccess | IsAuthenticated]
+    permission_classes: PermissionClasses = [HasAPIKeyAccess | IsAuthenticated]
     http_method_names = ["get", "options", "head"]
     size_class: SizeClass = SizeClass.SMALL
     required_any: tuple[str, ...] | None = None

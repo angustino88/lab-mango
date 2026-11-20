@@ -2,11 +2,9 @@ from django.contrib.auth.models import Group
 from django.db import models
 from django.db.models import CharField
 
-LABS_ROLE_CHOICES = [
-    ("admin", "Lab admin"),
-    ("coord", "Lab coordinator"),
-    ("user", "Lab user"),
-]
+from core.users.roles import LabsRole
+
+LABS_ROLE_CHOICES = LabsRole.choices
 
 
 class URSGroup(models.Model):

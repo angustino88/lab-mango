@@ -1,4 +1,10 @@
-"""Reference import access policy, independent of persistence."""
+"""Reference import access policy, independent of persistence.
+
+Reads need an active, signed-in user (the owning app's endpoint policy narrows them further). Writes need the
+owner's write rule (``ReferenceResource.can_write``), normally a Labs permission check; a resource without one
+is read-only. Django model permissions (``add_<model>``) grant nothing here (one authorization system,
+role-based-access-redesign.md D3).
+"""
 
 from typing import Any
 
@@ -11,9 +17,5 @@ def ensure_access(resource: ReferenceResource, actor: Any, *, write: bool = Fals
         raise ReferencePermissionDenied()
     if not write:
         return
-    if resource.can_write is not None:
-        allowed = resource.can_write(actor)
-    else:
-        allowed = actor.has_perm(f"{resource.model._meta.app_label}.add_{resource.model._meta.model_name}")
-    if not allowed:
+    if resource.can_write is None or not resource.can_write(actor):
         raise ReferencePermissionDenied()

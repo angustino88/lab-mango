@@ -51,13 +51,13 @@ class DowntimeReason(models.TextChoices):
 class DowntimeBookingAccess(models.TextChoices):
     """Who may still book the resources a window covers (bench bookings of a room, station or bench).
 
-    ``closed`` blocks everyone (the default and the only behavior before this field). ``lab_staff`` keeps
-    the window open to lab coordinators and administrators, e.g. so staff can reserve the bench for the
+    ``closed`` blocks everyone (the default and the only behavior before this field). ``lab_operators`` keeps
+    the window open to lab coordinators and administrators, e.g. so they can reserve the bench for the
     maintenance work itself. Equipment windows are always ``closed``.
     """
 
     CLOSED = "closed", _("Closed to all bookings")
-    LAB_STAFF = "lab_staff", _("Lab staff only")
+    LAB_OPERATORS = "lab_operators", _("Lab operators only")
 
 
 DOWNTIME_CONDITIONS = (ResourceCondition.IN_MAINTENANCE, ResourceCondition.OUT_OF_SERVICE)
@@ -103,10 +103,10 @@ class ResourceDowntimeQuerySet(models.QuerySet["ResourceDowntime"]):
     def upcoming(self, moment: datetime | None = None) -> ResourceDowntimeQuerySet:
         return self.not_cancelled().filter(starts_at__gt=moment or timezone.now())
 
-    def blocking(self, *, lab_staff: bool) -> ResourceDowntimeQuerySet:
-        """Windows that block a booking held by lab staff (``lab_staff=True``) or by anyone else."""
-        if lab_staff:
-            return self.exclude(booking_access=DowntimeBookingAccess.LAB_STAFF)
+    def blocking(self, *, lab_operator: bool) -> ResourceDowntimeQuerySet:
+        """Windows that block a booking held by lab operators (``lab_operator=True``) or by anyone else."""
+        if lab_operator:
+            return self.exclude(booking_access=DowntimeBookingAccess.LAB_OPERATORS)
         return self
 
     def worst_first(self) -> ResourceDowntimeQuerySet:

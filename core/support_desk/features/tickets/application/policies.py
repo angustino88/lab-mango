@@ -13,22 +13,20 @@ from core.support_desk.models.settings import SupportSettings
 from core.support_desk.models.ticket import SupportTicket
 from core.support_desk.models.transition import SupportStatusTransition
 from core.support_desk.models.watcher import TicketWatcher
-from core.users.public import LabsRole, effective_labs_roles
+from core.users.public import LabsPermission, has_permission
 
 
 def resolve_support_role(user: Any) -> SupportRole | None:
-    """Resolve the support role from Labs roles: admin -> support admin, coordinator -> support agent.
+    """Resolve the support role from Labs permissions: ``support.administer`` -> support admin,
+    ``support.handle`` -> support agent, any other signed-in user -> requester.
 
-    Group names grant nothing; roles are configured on URS groups (``core.users``).
+    Group names grant nothing; who holds the permissions is configured in ``core.users``.
     """
     if not user or not getattr(user, "is_authenticated", False):
         return None
-    if getattr(user, "is_superuser", False):
+    if has_permission(user, LabsPermission.SUPPORT_ADMINISTER):
         return SupportRole.ADMIN
-    roles = effective_labs_roles(user)
-    if LabsRole.ADMIN in roles:
-        return SupportRole.ADMIN
-    if LabsRole.COORDINATOR in roles:
+    if has_permission(user, LabsPermission.SUPPORT_HANDLE):
         return SupportRole.AGENT
     return SupportRole.REQUESTER
 

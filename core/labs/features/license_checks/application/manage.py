@@ -24,7 +24,7 @@ from core.labs.models import (
     Room,
     Station,
 )
-from core.users.public import LabsRole, has_labs_role
+from core.users.public import LabsPermission, has_permission
 
 from ..config import validate_configuration
 from ..presets import PRESETS
@@ -86,7 +86,7 @@ class UpdateLicenseCheckInput:
 
 
 def _require_admin(actor) -> None:
-    if not has_labs_role(actor, LabsRole.ADMIN):
+    if not has_permission(actor, LabsPermission.LICENSE_CHECK_MANAGE):
         raise Forbidden("Only Labs administrators may change what agents run.", code="license_check_admin_only")
 
 

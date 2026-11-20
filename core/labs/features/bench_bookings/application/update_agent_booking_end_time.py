@@ -12,7 +12,7 @@ from core.labs.features.bench_bookings.queries import (
     bench_downtime_blocker,
     bench_parent_blocker,
     conflicting_bench_bookings,
-    is_lab_staff,
+    may_book_during_downtime,
 )
 from core.labs.features.equipment.public import lock_active_equipment_bench_assignment
 from core.labs.models import BenchBooking, BookingApprovalStatus, BookingStatus
@@ -92,7 +92,7 @@ def update_agent_booking_end_time(command: AgentBookingEndTimeInput, *, actor: o
                 bench=bench,
                 starts_at=booking.ends_at,
                 ends_at=command.ends_at,
-                lab_staff=is_lab_staff(booking.creator),
+                lab_operator=may_book_during_downtime(booking.creator),
             )
         )
 

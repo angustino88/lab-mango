@@ -11,9 +11,8 @@ from rest_framework.response import Response
 
 from core.common.api.correlation import REQUEST_ID_HEADER, get_request_id
 from core.common.api.exceptions import api_exception_handler
-from core.common.api.permissions import HasAPIKeyAccess
+from core.labs.features.base.access import FINANCE_ACCESS
 from core.labs.features.base.common import FeatureAPIView
-from core.users.public import IsLabCoordinatorReadWrite
 
 from ...public import AnalyticsValidationError, get_finance_breakdown, get_finance_monthly_trends, get_finance_summary
 from .schema import FinanceAutoSchema
@@ -29,7 +28,7 @@ from .throttles import FinanceCallerThrottle
 
 @extend_schema(parameters=[FinanceQuerySerializer])
 class _FinanceAPIView(FeatureAPIView):
-    permission_classes = [HasAPIKeyAccess | IsLabCoordinatorReadWrite]
+    permission_classes = FINANCE_ACCESS
     throttle_classes = [FinanceCallerThrottle]
     schema = FinanceAutoSchema()
     schema_tags = ("Analytics",)

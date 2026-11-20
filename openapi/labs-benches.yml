@@ -3225,9 +3225,9 @@ components:
           - $ref: '#/components/schemas/Choice'
           nullable: true
           readOnly: true
-          description: 'Who may still book while unavailable: lab_staff (coordinators
-            and administrators, every blocker is downtime open to lab staff) or closed.
-            Empty when available.'
+          description: 'Who may still book while unavailable: lab_operators (coordinators
+            and administrators, every blocker is downtime open to lab operators) or
+            closed. Empty when available.'
       required:
       - blocked_by
       - booking_access

@@ -1,164 +1,103 @@
 # Design: Role-based access for Lab Mango (roles, permissions, naming)
 
-- Tier: T2 (authorization, public API contract, cross-feature). Access-control change: needs owner approval
-  before implementation (AGENTS.md rules 5, 6, 9).
-- Status: **Proposed (2026-11-20), awaiting owner decisions D1-D5.** Nothing in this note is implemented yet.
-- Revisits: [user roles and URS sync](user-roles-and-urs-sync.md), "Alternative role models" (decision
-  2026-11-11: keep model A). This note keeps model A's three roles and adds the permission layer that model C
-  described, defined in code instead of in the database, so the cost stays small.
-- Unblocks: [downtime booking access](downtime-lab-staff-booking-access.md) (the downtime value and its
-  name follow D1).
+- Tier: T2 (authorization, public API contract, cross-feature).
+- Status: **Decided (2026-11-20) and implemented** on branch `claude/gracious-cray-omxgvw`; needs review and
+  human approval before merge. D4 (API keys) stays open.
+- Revisits: [user roles and URS sync](user-roles-and-urs-sync.md), "Alternative role models" (2026-11-11: keep
+  model A). This design keeps model A's three roles and adds the permission layer of model C, defined in code
+  instead of in the database.
+- Current matrix: [access matrix](../architecture/access-matrix.md) (generated from code).
+- Used by: [lab operator booking access](downtime-lab-operator-booking-access.md).
 
-## 1. Problem
+## 1. Decisions (owner, 2026-11-20)
 
-Who may do what in Lab Mango is answered by reading code, not one table:
-
-| # | Finding | Evidence |
+| # | Decision | Outcome |
 |---|---|---|
-| F1 | Features check **roles**, not actions: `has_labs_role(actor, LabsRole.COORDINATOR)` 7 times, `LabsRole.ADMIN` 4 times, `effective_labs_roles` in the support desk. Changing who may approve bookings means finding every call. | `core/labs/features/bench_bookings/application/decide_booking_approval.py:53`, `update_booking.py:43`, `queries/bench_bookings.py:74,130`, `api/serializers.py:94`, `support_desk/features/tickets/application/policies.py:28` |
-| F2 | Real rules are missing from the published access matrix: equipment reference data is read by coordinators but written by administrators only (OD12); license check changes, workbook import and telemetry profile approval are administrator-only. The matrix says coordinators "read and write" these areas. | `equipment/application/reference_data.py:22`, `equipment/queries/reference_data.py:28`, `license_checks/application/manage.py:89`, `workbook_import/application/policies.py:9`, `telemetry/application/profiles.py:94`; matrix in `user-roles-and-urs-sync.md` |
-| F3 | Policy logic is copied: the leaderboard re-runs the DRF permission classes to ask "is this a coordinator or admin?" | `leaderboard/api/views.py:173` (`_is_lab_staff`) |
-| F4 | Naming is inconsistent. "Staff" (`LABS_STAFF_ACCESS`, `_is_lab_staff`) is not a Lab Mango term and clashes with Django `is_staff` (admin-site access). The `user` role is called "member" in classes (`IsLabMember`). `IsLabCoordinatorOnly` is an alias of `IsLabCoordinatorReadWrite`. `IsLabAdmin` (anyone reads, admin writes) and `IsLabAdminReadWrite` (admin only) differ in a way the names hide. | `core/labs/features/base/access.py:23`, `core/users/access.py:109-140` |
-| F5 | Three authorization systems remain: Labs roles, Django model permissions (reference-data writes), and `is_staff` / `is_superuser`. | `core/reference_data/policies.py:17`, `core/users/admin.py` |
-| F6 | API keys pass every Labs policy (`HasAPIKeyAccess \| ...`) and are on by default. A key has no user, so ownership, approval and audit rules cannot apply. Open item R4. | `core/labs/features/base/access.py:23-25`, `config/settings/base.py:427` |
-| F7 | The frontend gets role codes only (`effective_roles.labs`), so it re-implements "can this user see the Approve button?" from roles. | `core/users/features/profile/serializers.py:53` |
+| D1 | Umbrella term for "Lab Coordinator or Lab Administrator" | **Lab operator**: a person whose role grants `lab_operations.manage`. "Staff" is not used (it means Django `is_staff`, admin-site access). |
+| D2 | Role display names | **Lab Administrator** (`admin`), **Lab Coordinator** (`coord`), **Lab Member** (`user`). Stored values unchanged. |
+| D3 | Reference-data writes | **Labs permissions only.** The Django model-permission fallback is removed; a reference resource without a write rule is read-only. |
+| D4 | API keys | **Open.** Behavior unchanged: keys pass the policies composed with `HasAPIKeyAccess`, as before. Proposal: read-only scope by default and off in production (closes R4). |
+| D5 | Administrator-only rules | **Kept as they are**, now visible in the matrix. |
+| - | Remove the old role API | Done: `IsLab*` classes, `LABS_*_ACCESS`, `has_labs_role`, `users_holding_labs_role`, `RolePermission`, `_is_lab_staff` are gone. |
 
-## 2. Target model
+## 2. Problem (before this change)
 
-Two layers, in the standard RBAC shape (roles are assigned to people, permissions to roles; code checks
-permissions only):
+| # | Finding | Resolution |
+|---|---|---|
+| F1 | Features checked **roles**, not actions (`has_labs_role(actor, LabsRole.COORDINATOR)` 7 times, `ADMIN` 4 times; the support desk read roles). | Features call `has_permission(actor, LabsPermission.X)`; an architecture test forbids role imports outside `core.users`. |
+| F2 | Administrator-only rules (equipment reference data, license checks, workbook import, telemetry profile approval) were missing from the published matrix. | Each is a permission in the registry and a row in the generated matrix. |
+| F3 | The leaderboard re-ran DRF permission classes to ask "coordinator or admin?" (`_is_lab_staff`). | `assessment.read_any`. |
+| F4 | Inconsistent names: "staff", "member" vs "user", the `IsLabCoordinatorOnly` alias, `IsLabAdmin` vs `IsLabAdminReadWrite`. | One vocabulary: roles (D2), permissions (`area.action`), policies named after the area (`FINANCE_ACCESS`). |
+| F5 | Three authorization systems: Labs roles, Django model permissions, `is_staff`. | Django model permissions removed from reference data (D3); `is_staff` only opens Django admin. |
+| F6 | API keys pass every Labs policy and are on by default. | Unchanged; open as D4. |
+| F7 | The frontend received role codes only. | `GET /api/users/me` adds `effective_permissions.labs`. |
+| F8 | Agents endpoints let every Labs role (Lab Members included) **read** agents, unlike the rest of the matrix. | Kept (no access change without a decision) as `agent.read` granted to Lab Members. **Review:** move `agent.read` to Lab Coordinator if members should not see agents. |
+
+## 3. Model
 
 ```
-URS group ──(labs_role, Django admin)──▶ Role ──(ROLE_PERMISSIONS, in code)──▶ Permission ◀── checked by features
+URS group ──(labs_role, Django admin)──▶ Role ──(ROLE_PERMISSIONS, code)──▶ Permission ◀── checked by features and endpoints
 ```
 
-### 2.1 Roles (unchanged values)
+| Layer | Module | Owns |
+|---|---|---|
+| Role | `core/users/roles.py` | `LabsRole` (values persisted, labels per D2), `LABS_ROLE_HIERARCHY` (`admin` > `coord` > `user`) |
+| Permission | `core/users/permissions.py` | `LabsPermission` (code and description), `ROLE_PERMISSIONS` (what each role adds), `render_access_matrix` |
+| Check | `core/users/access.py` | `effective_permissions`, `has_permission`, `require_permission`, `users_with_permission`, `is_lab_operator`, `LabsAccessPolicy` (DRF) |
+| Generic mechanics | `core/common/api/permissions.py` | `RoleHierarchy`, `CapabilityPermission` (business-agnostic) |
+| Labs endpoint policies | `core/labs/features/base/access.py` | `LAB_OPERATIONS_ACCESS` (default of every Labs base view), `DASHBOARD_ACCESS`, `LEADERBOARD_ACCESS`, `BENCH_BOOKING_ACCESS`, `BENCH_BOOKING_DECISION_ACCESS`, `FINANCE_ACCESS`, `ORGANIZATION_ACCESS`, `WORKBOOK_IMPORT_ACCESS` |
+| Other endpoint policies | Owning feature | `AGENT_ACCESS` (`core/agents/api/views.py`), `DIRECTORY_ACCESS` (`core/users/features/groups/list_groups/api.py`) |
 
-| Stored value | Display name | Who | Implies |
-|---|---|---|---|
-| `admin` | Lab Administrator | Owns the lab system: user directory, master/reference data, agent configuration, imports | Lab Coordinator |
-| `coord` | Lab Coordinator | Runs daily lab operations: resources, downtime, bookings of everyone, approvals, procurement, expenses | Lab Member |
-| `user` | Lab Member | Uses the lab: dashboard, leaderboard, own bookings | none |
+Other apps import only `core.users.public`: `LabsPermission`, `LabsAccessPolicy`, `has_permission`,
+`require_permission`, `users_with_permission`, `is_lab_operator`, `effective_permissions`. Roles are not exported.
 
-Stored values do not change (`URSGroup.labs_role`, rule 1). Superusers keep every permission (platform
-owner). `is_staff` keeps one meaning only: may open the Django admin site.
+## 4. Permissions (20)
 
-### 2.2 The term for "coordinator or administrator" (D1)
+The generated [access matrix](../architecture/access-matrix.md) is authoritative. Lab Member holds 5, Lab
+Coordinator adds 9, Lab Administrator adds 6.
 
-Recommended: **Lab operator**: a user whose role carries lab operations authority (Lab Coordinator or Lab
-Administrator). It matches how the lab describes the work ("lab operation role") and is not used elsewhere
-in the code.
+Change from the proposal draft: `resource.manage`, `downtime.manage` and `monitoring.read` became one permission,
+`lab_operations.manage`, because every Labs operations endpoint inherits one policy from the Labs base views and
+the same people hold all three. Splitting it later is mechanical: add the permission, give the feature's base
+view its own policy, grant it in `ROLE_PERMISSIONS`. `agent.read`, `agent.manage` and `reference_data.import`
+were added to name rules the draft had missed.
 
-| Option | Code | UI | Note |
-|---|---|---|---|
-| **Lab operator** (recommended) | `is_lab_operator()`, `LABS_OPERATOR_ACCESS` | "Lab operators" | Distinct from Django `is_staff` and from support-desk "agent" |
-| Lab management | `is_lab_management()`, `LABS_MANAGEMENT_ACCESS` | "Lab management" | Already used in emails as a sender/mailbox name, so it reads as a team, not a person |
-| Lab manager | `is_lab_manager()` | "Lab managers" | Short, but suggests a single job title and blocks a future `manager` role |
+## 5. Rules
 
-The term appears only in access-policy names and UI text. Business rules check permissions (2.3), so code
-rarely needs the term at all. Example, the user's own question:
+1. Features check permissions, never roles (`tests/architecture/test_access_control.py`).
+2. Every `/api/labs/` route is covered by an area policy (`core/labs/tests/test_access_policy.py`).
+3. `ROLE_PERMISSIONS` is the only place that decides who holds what. The matrix document is generated from it
+   (`uv run python manage.py access_matrix`) and `core/users/tests/test_permissions.py` fails when they differ.
+4. Every permission is granted to some role; a role does not repeat what a lower role grants; codes are
+   `area.action`; permission values are API-visible and are never edited in place.
+5. Deny by default: anonymous users, API keys (outside `HasAPIKeyAccess` policies), users without a mapped group,
+   and a policy side set to `None` grant nothing. Superusers hold every permission.
+6. Features that publish a specific error code (`license_check_admin_only`, reference-data and assessment denials)
+   keep it: they check `has_permission` and raise their own error. New code may use `require_permission`
+   (`permission_denied`).
 
-```python
-# Today (leaderboard/api/views.py:173)
-def _is_lab_staff(request, view) -> bool:
-    return all(permission().has_permission(request, view) for permission in LABS_STAFF_ACCESS)
+## 6. Extending
 
-# Proposed
-if not has_permission(request.user, LabsPermission.ASSESSMENT_READ_ANY) and pk != request.user.pk:
-    raise AssessmentAccessDenied("You can see your own assessment only.")
-```
-
-### 2.3 Permissions (code-defined registry)
-
-`LabsPermission` (`core/users/permissions.py`, exported through `core/users/public.py`): one `StrEnum`,
-values `area.action`, reviewed like code. `ROLE_PERMISSIONS` maps each role to the permissions it adds; the
-hierarchy adds the lower roles' permissions. This mapping is **the** access matrix: the doc table in section 3
-is generated from it and a test fails when they differ.
-
-API helpers (replace `has_labs_role` in features):
-
-| Helper | Use |
+| Change | Steps |
 |---|---|
-| `has_permission(actor, LabsPermission.X) -> bool` | Application rules and object checks |
-| `require_permission(actor, LabsPermission.X)` | Raises `Forbidden` with code `permission_denied` and `details.permission` |
-| `effective_permissions(actor) -> frozenset[str]` | Cached per request like roles today (one query) |
-| `users_with_permission(LabsPermission.X)` | Replaces `users_holding_labs_role` (queryset, one query) |
-| DRF `RequiresPermission(read=..., write=...)` | Endpoint policies; `LABS_OPERATOR_ACCESS` etc. become named instances |
-| `is_lab_operator(actor)` | Only for UI-facing wording; never for a business rule |
+| New endpoint in an existing area | Inherit the area's base view or set its policy. No registry change. |
+| Change who may do X | Edit one line in `ROLE_PERMISSIONS`; regenerate the matrix; record the owner decision. |
+| New distinct rule | Add a `LabsPermission` (code and description), grant it in `ROLE_PERMISSIONS`, use it (`has_permission` or a `LabsAccessPolicy`), regenerate the matrix. |
+| New role | Add a `LabsRole` value (migration of the choices and of the `users_ursgroup_valid_labs_role` constraint), place it in `LABS_ROLE_HIERARCHY`, map it in `ROLE_PERMISSIONS`. |
+| Frontend | Read `effective_permissions.labs` (`{value, label}` items, ENU-1) from `/api/users/me` once; gate each action with `can("area.action")` on `value`. Keep the frontend's list of codes in step with the access matrix. |
 
-### 2.4 API keys (D4)
+## 7. Compatibility and verification
 
-A key is a machine client, not a role. Proposed: a key carries an explicit, read-only scope by default
-(`ApiKeyScope`: `read`, or `read_write` set per key in Django admin); write endpoints that need a user
-(approval, ownership, money) refuse key-only requests; `API_KEY_ACCESS_ENABLED` defaults to `False` in
-`config/settings/production.py`. This closes R4.
+- Stored role values, routes, error codes and existing response fields are unchanged. Additive:
+  `effective_permissions` on `/api/users/me`; role labels in the choices (migration `users.0002`, state only).
+- Route-level access was compared before and after for every `/api/` route × 5 HTTP methods × 6 actors (none,
+  member, coordinator, administrator, superuser, API key): 10,740 decisions, 16 differ, all write methods on the
+  two read-only user-group endpoints (no write handler: 405 before, 403 now).
+- Application-level checks (booking visibility, approval and editing, reference-data writes, license checks,
+  workbook import, telemetry approval, assessments, support roles) map to permissions held by exactly the same
+  roles as before; their tests pass unchanged.
 
-### 2.5 Frontend
+## 8. Not in scope
 
-`GET /api/users/me` adds `effective_permissions.labs` (sorted permission codes) next to
-`effective_roles.labs` (additive). The UI shows or hides actions by permission; the server stays
-authoritative. Role display names come from the existing `{value, label}` choices.
-
-## 3. Access matrix (from `ROLE_PERMISSIONS`)
-
-L = Lab Member, C = Lab Coordinator, A = Lab Administrator. Rows marked **(F2)** are today's rules made
-visible; **(new)** rows need D2/D3.
-
-| Permission | Meaning | L | C | A |
-|---|---|---|---|---|
-| `dashboard.read` | Overview, summary, bench detail with equipment mapping | ✓ | ✓ | ✓ |
-| `leaderboard.read` | Leaderboard, bench and user profiles, own assessment | ✓ | ✓ | ✓ |
-| `bench_booking.manage_own` | Create, change, cancel own bench bookings | ✓ | ✓ | ✓ |
-| `bench_booking.manage_any` | Read and change everyone's bookings | | ✓ | ✓ |
-| `bench_booking.approve` | Approve or reject long bookings (never one's own, S2) | | ✓ | ✓ |
-| `bench_booking.book_during_downtime` | Book benches under a downtime window opened to lab operators | | ✓ | ✓ |
-| `assessment.read_any` | Any user's KPI assessment | | ✓ | ✓ |
-| `resource.manage` | Rooms, stations, benches, equipment, licenses, locations | | ✓ | ✓ |
-| `downtime.manage` | Schedule, end, cancel downtime; change its booking access | | ✓ | ✓ |
-| `monitoring.read` | Monitoring, telemetry readings, resource audit, analytics | | ✓ | ✓ |
-| `finance.manage` | Procurement, expenses, finance reports | | ✓ | ✓ |
-| `support.handle` | Support desk agent (today: coordinator → agent) | | ✓ | ✓ |
-| `reference_data.read` | Equipment reference data **(F2)** | | ✓ | ✓ |
-| `reference_data.manage` | Write equipment reference data and catalogs **(F2, OD12)** | | | ✓ |
-| `license_check.manage` | Change what agents run **(F2)** | | | ✓ |
-| `workbook.import` | Workbook import **(F2)** | | | ✓ |
-| `telemetry_profile.approve` | Approve device profiles **(F2)** | | | ✓ |
-| `support.administer` | Support desk administration | | | ✓ |
-| `directory.read` | User groups and members | | | ✓ |
-
-## 4. Rules
-
-1. Features check permissions, never roles. `has_labs_role`, `effective_labs_roles` and `LabsRole` are not
-   imported outside `core.users` (architecture test, like the existing Labs access-policy walk).
-2. Every `/api/` route declares one policy built from permissions (extends `tests/architecture/test_labs_access_policy.py`).
-3. Deny by default: an unknown permission, no role, an anonymous user, or an inactive user has none.
-4. Stored role values, routes, response fields and error codes stay as they are; additions only.
-5. Every permission denial on a write is logged with actor, permission and object (no payloads).
-
-## 5. Compatibility and rollout
-
-| Step | Change | Behavior change |
-|---|---|---|
-| 1 | Add `LabsPermission`, `ROLE_PERMISSIONS`, helpers, `RequiresPermission`; generated matrix doc and its test | None |
-| 2 | Replace the 14 role checks and the leaderboard duplicate with permission checks; rename policies (`LABS_STAFF_ACCESS` → `LABS_OPERATOR_ACCESS`, `IsLabMember*` → permission policies); delete `IsLabCoordinatorOnly` alias | None (same grants; tests prove each route) |
-| 3 | Reference-data writes use `reference_data.manage` instead of Django model permissions (closes F5 / R10 remainder) | Users who only had a Django model permission lose reference-data writes (confirm D3) |
-| 4 | `effective_permissions.labs` on `/api/users/me`; OpenAPI regenerated | Additive |
-| 5 | API key scope and production default off (D4) | Key-only writes refused |
-| 6 | Downtime: `booking_access` values `closed` / `lab_operators` ("Lab operators only"), checked through `bench_booking.book_during_downtime` | Finishes the pending downtime change |
-
-Steps 1-2 are one reviewable change with no behavior change; 3 and 5 are separate because they remove access.
-
-## 6. Owner decisions needed
-
-| # | Question | Recommendation |
-|---|---|---|
-| D1 | Term for coordinator or administrator | **Lab operator** |
-| D2 | Display names | Lab Administrator, Lab Coordinator, Lab Member |
-| D3 | Reference-data writes: Labs permission only, drop Django model permissions | Yes (one authorization system) |
-| D4 | API keys: scoped, read-only by default, off in production | Yes (closes R4) |
-| D5 | Confirm the administrator-only rows of section 3 as intended | Keep as today |
-
-## 7. Not in scope
-
-Per-room or per-department scoping (model D: each department has its own backend), database-editable
-permission bundles (model C's admin UI), and changes to URS group sync.
+API key scoping (D4), per-room or per-department scoping (each department has its own backend),
+database-editable permission bundles, URS group sync.

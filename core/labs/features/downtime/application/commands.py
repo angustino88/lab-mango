@@ -1,5 +1,5 @@
 """Downtime commands: schedule (or start), end and cancel a window, and change who may still book
-(design rules 1, 3, 4; RS4; booking access: ``docs/proposals/downtime-lab-staff-booking-access.md``).
+(design rules 1, 3, 4; RS4; booking access: ``docs/proposals/downtime-lab-operator-booking-access.md``).
 
 Race guards: ``lock_target`` locks the resource and every bench it covers before bookings are read
 (see ``targets``); same-resource overlap is the ``downtime_no_overlap`` exclusion constraint, mapped to
@@ -37,7 +37,7 @@ from core.labs.models import (
 )
 from core.labs.models.resource.base.availability import booking_conflict_details
 from core.labs.models.resource.base.downtime import DOWNTIME_CONDITIONS
-from core.users.public import LabsRole, users_holding_labs_role
+from core.users.public import LabsPermission, users_with_permission
 
 from .targets import RESOURCE_MODELS, lock_target
 
@@ -70,15 +70,18 @@ class ChangeDowntimeBookingAccessInput:
     cancel_conflicting_bookings: bool = False
 
 
-# Bench bookings are the only bookings lab staff can keep making during downtime.
-LAB_STAFF_ACCESS_RESOURCE_TYPES = ("room", "station", "bench")
+# Bench bookings are the only bookings lab operators can keep making during downtime.
+LAB_OPERATOR_ACCESS_RESOURCE_TYPES = ("room", "station", "bench")
 
 
 def _validate_booking_access(resource_type: str, booking_access: str) -> dict[str, str]:
     if booking_access not in DowntimeBookingAccess.values:
-        return {"booking_access": "Select closed or lab_staff."}
-    if booking_access == DowntimeBookingAccess.LAB_STAFF and resource_type not in LAB_STAFF_ACCESS_RESOURCE_TYPES:
-        return {"booking_access": "Lab staff access applies to rooms, stations and benches, not equipment."}
+        return {"booking_access": "Select closed or lab_operators."}
+    if (
+        booking_access == DowntimeBookingAccess.LAB_OPERATORS
+        and resource_type not in LAB_OPERATOR_ACCESS_RESOURCE_TYPES
+    ):
+        return {"booking_access": "Lab operator access applies to rooms, stations and benches, not equipment."}
     return {}
 
 
@@ -106,8 +109,8 @@ def _reserving(
 ):
     """Reserving bookings in ``queryset`` that overlap the period and the window would block.
 
-    A window open to lab staff does not block bookings created by a current coordinator or administrator
-    (the same rule bench booking writers apply to the holder, ``bench_bookings.queries.is_lab_staff``).
+    A window open to lab operators does not block bookings created by a current holder of
+    ``bench_booking.book_during_downtime`` (the rule bench booking writers apply, ``may_book_during_downtime``).
     """
     queryset = queryset.filter(
         status__in=Booking.ACTIVE_STATUSES,
@@ -116,8 +119,9 @@ def _reserving(
     )
     if ends_at is not None:
         queryset = queryset.filter(starts_at__lt=ends_at)
-    if booking_access == DowntimeBookingAccess.LAB_STAFF:
-        queryset = queryset.exclude(creator__in=users_holding_labs_role(LabsRole.COORDINATOR).values("pk"))
+    if booking_access == DowntimeBookingAccess.LAB_OPERATORS:
+        exempt = users_with_permission(LabsPermission.BENCH_BOOKING_BOOK_DURING_DOWNTIME)
+        queryset = queryset.exclude(creator__in=exempt.values("pk"))
     return list(queryset.order_by("pk").values_list("pk", flat=True))
 
 
@@ -231,10 +235,10 @@ def cancel_downtime(command: DowntimeActionInput, *, actor) -> ResourceDowntime:
 
 
 def change_downtime_booking_access(command: ChangeDowntimeBookingAccessInput, *, actor) -> ResourceDowntime:
-    """Open a scheduled or current window to lab staff bookings, or close it to everyone.
+    """Open a scheduled or current window to lab operator bookings, or close it to everyone.
 
-    Opening (``closed`` → ``lab_staff``) never conflicts. Closing (``lab_staff`` → ``closed``) applies RS4
-    to the rest of the window: reserving bench bookings that overlap it from now on (lab staff bookings made
+    Opening (``closed`` → ``lab_operators``) never conflicts. Closing (``lab_operators`` → ``closed``) applies
+    RS4 to the rest of the window: reserving bench bookings that overlap it from now on (lab operator bookings made
     while it was open) are refused with ``DowntimeBookingConflict`` unless ``cancel_conflicting_bookings``
     confirms their cancellation in the same transaction. An ended or cancelled window cannot change.
 

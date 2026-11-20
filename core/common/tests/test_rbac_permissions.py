@@ -1,4 +1,4 @@
-"""Generic role-permission building blocks: no database and no business roles involved."""
+"""Generic RBAC building blocks: no database and no business roles or capabilities involved."""
 
 from types import SimpleNamespace
 
@@ -6,15 +6,15 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.test import APIRequestFactory
 
-from core.common.api.permissions import RoleHierarchy, RolePermission, is_authenticated, is_owner
+from core.common.api.permissions import CapabilityPermission, RoleHierarchy, is_authenticated, is_owner
 
 _factory = APIRequestFactory()
 
 HIERARCHY = RoleHierarchy(grants={"owner": ("editor", "viewer"), "editor": ("viewer",), "viewer": ()})
 
 
-def _user(*roles: str, pk: int = 1):
-    return SimpleNamespace(is_authenticated=True, pk=pk, roles=frozenset(roles))
+def _user(*capabilities: str, pk: int = 1):
+    return SimpleNamespace(is_authenticated=True, pk=pk, capabilities=frozenset(capabilities))
 
 
 def _request(method: str, user):
@@ -23,11 +23,11 @@ def _request(method: str, user):
     return request
 
 
-class _TestPermission(RolePermission):
-    """Resolves roles straight from the fake user."""
+class _TestPermission(CapabilityPermission):
+    """Resolves capabilities straight from the fake user."""
 
-    def resolve_roles(self, user):
-        return user.roles
+    def resolve_capabilities(self, user):
+        return user.capabilities
 
 
 class TestRoleHierarchy:
@@ -80,46 +80,45 @@ class TestIsOwner:
         assert not is_owner(_user(pk=7), SimpleNamespace(creator_id=None))
 
 
-class TestRolePermission:
+class TestCapabilityPermission:
     @pytest.mark.parametrize("method", ["POST", "PUT", "PATCH", "DELETE"])
-    def test_writes_require_a_write_role(self, method):
-        class EditorsWrite(_TestPermission):
-            write_roles = ("editor",)
-
-        permission = EditorsWrite()
-        assert permission.has_permission(_request(method, _user("editor")), view=None)
-        assert not permission.has_permission(_request(method, _user("viewer")), view=None)
+    def test_writes_require_the_write_capability(self, method):
+        permission = _TestPermission.requiring(read="page.read", write="page.edit", name="Pages")()
+        assert permission.has_permission(_request(method, _user("page.edit")), view=None)
+        assert not permission.has_permission(_request(method, _user("page.read")), view=None)
         assert not permission.has_permission(_request(method, _user()), view=None)
 
     @pytest.mark.parametrize("method", ["GET", "HEAD", "OPTIONS"])
-    def test_reads_allow_any_authenticated_user_by_default(self, method):
-        assert _TestPermission().has_permission(_request(method, _user()), view=None)
+    def test_reads_require_the_read_capability(self, method):
+        permission = _TestPermission.requiring(read="page.read", write="page.edit", name="Pages")()
+        assert permission.has_permission(_request(method, _user("page.read")), view=None)
+        assert not permission.has_permission(_request(method, _user("page.edit")), view=None)
 
-    def test_read_roles_restrict_reads(self):
-        class EditorsRead(_TestPermission):
-            read_roles = ("editor",)
+    @pytest.mark.parametrize("method", ["GET", "POST"])
+    def test_a_missing_capability_denies_that_method_class(self, method):
+        assert not _TestPermission().has_permission(_request(method, _user("page.read", "page.edit")), view=None)
 
-        permission = EditorsRead()
-        assert permission.has_permission(_request("GET", _user("editor")), view=None)
-        assert not permission.has_permission(_request("GET", _user("viewer")), view=None)
-
-    def test_empty_write_roles_deny_every_write(self):
-        permission = _TestPermission()
-        assert not permission.has_permission(_request("POST", _user("owner", "editor")), view=None)
+    def test_read_only_policy_denies_every_write(self):
+        permission = _TestPermission.requiring(read="page.read", write=None, name="ReadOnly")()
+        assert permission.has_permission(_request("GET", _user("page.read")), view=None)
+        assert not permission.has_permission(_request("POST", _user("page.read", "page.edit")), view=None)
 
     @pytest.mark.parametrize("method", ["GET", "POST", "DELETE"])
     def test_anonymous_is_always_denied(self, method):
-        class OpenReads(_TestPermission):
-            write_roles = ("editor",)
-
-        assert not OpenReads().has_permission(_request(method, AnonymousUser()), view=None)
+        permission = _TestPermission.requiring(read="page.read", write="page.edit", name="Pages")()
+        assert not permission.has_permission(_request(method, AnonymousUser()), view=None)
 
     def test_request_without_user_is_denied(self):
-        assert not _TestPermission().has_permission(_factory.get("/"), view=None)
+        permission = _TestPermission.requiring(read="page.read", write=None, name="Pages")()
+        assert not permission.has_permission(_factory.get("/"), view=None)
 
-    def test_resolve_roles_must_be_implemented(self):
-        class WritesNeedRole(RolePermission):
-            write_roles = ("editor",)
+    def test_requiring_names_the_policy(self):
+        policy = _TestPermission.requiring(read="page.read", write=None, name="PageReaders")
+        assert policy.__name__ == "PageReaders"
+        assert (policy.read_capability, policy.write_capability) == ("page.read", None)
+
+    def test_resolve_capabilities_must_be_implemented(self):
+        policy = CapabilityPermission.requiring(read=None, write="page.edit", name="Unresolved")
 
         with pytest.raises(NotImplementedError):
-            WritesNeedRole().has_permission(_request("POST", _user()), view=None)
+            policy().has_permission(_request("POST", _user()), view=None)

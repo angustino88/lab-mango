@@ -1,7 +1,9 @@
 """The public surface of ``core.users`` for other apps.
 
-Other apps import roles, permission classes and user lifecycle contracts from here, never from
-``core.users.access`` or ``core.users.features``. These wrappers are internal APIs, not a security
+Other apps import permissions, access policies and user lifecycle contracts from here, never from
+``core.users.access`` or ``core.users.features``. Roles are not exported: other apps check permissions
+(``has_permission``, ``LabsAccessPolicy``), so who holds a permission is decided only in
+``core.users.permissions.ROLE_PERMISSIONS``. These wrappers are internal APIs, not a security
 boundary against arbitrary code already executing in this Django process.
 """
 
@@ -9,18 +11,14 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from core.users.access import (
-    IsLabAdmin,
-    IsLabAdminReadWrite,
-    IsLabCoordinator,
-    IsLabCoordinatorOnly,
-    IsLabCoordinatorReadWrite,
-    IsLabMember,
-    IsLabMemberReadOnly,
-    LabsRole,
+    LabsAccessPolicy,
+    LabsPermission,
     clear_labs_roles_cache,
-    effective_labs_roles,
-    has_labs_role,
-    users_holding_labs_role,
+    effective_permissions,
+    has_permission,
+    is_lab_operator,
+    require_permission,
+    users_with_permission,
 )
 from core.users.features.auth.access_token import diagnose_access_token, with_entra_access_token
 from core.users.features.lifecycle.application import (
@@ -170,14 +168,8 @@ __all__ = [
     "ReplaceEntraIdentityInput",
     "SetUserActiveInput",
     "UnlinkEntraIdentityInput",
-    "IsLabAdmin",
-    "IsLabAdminReadWrite",
-    "IsLabCoordinator",
-    "IsLabCoordinatorReadWrite",
-    "IsLabCoordinatorOnly",
-    "IsLabMember",
-    "IsLabMemberReadOnly",
-    "LabsRole",
+    "LabsAccessPolicy",
+    "LabsPermission",
     "NotificationRecipientProfile",
     "VerifiedTeamsRecipient",
     "UserLifecycleResult",
@@ -191,12 +183,14 @@ __all__ = [
     "set_user_active",
     "unlink_entra_identity",
     "clear_labs_roles_cache",
-    "effective_labs_roles",
-    "has_labs_role",
+    "effective_permissions",
+    "has_permission",
+    "is_lab_operator",
+    "require_permission",
     "resolve_notification_recipient",
     "resolve_user_id_for_login_name",
     "resolve_teams_recipient",
-    "users_holding_labs_role",
+    "users_with_permission",
     "with_entra_access_token",
     # Local stub identities (tools/stubs); refuse unless the stub issuer is enabled in DEBUG.
     "STUB_USERNAME_PREFIX",

@@ -85,7 +85,7 @@ formula are documented in **[kpis.md](kpis.md)**, the single reference for this 
 
 Access to the KPI assessment: `GET /leaderboard/users/<id>/assessment` for lab coordinators and
 administrators (anyone) or a lab member (only their own, `IsOwnAssessmentOrLabStaff`);
-`GET /benches/<id>/assessment` for lab coordinators and administrators (`LABS_STAFF_ACCESS`). The rankings
+`GET /benches/<id>/assessment` for holders of `assessment.read_any` (lab operators) and API keys. The rankings
 stay readable by every lab member.
 
 ---

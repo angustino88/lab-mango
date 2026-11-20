@@ -1,6 +1,6 @@
-"""Downtime windows that stay open to lab staff bookings (``booking_access``).
+"""Downtime windows that stay open to lab operator bookings (``booking_access``).
 
-Design: docs/proposals/downtime-lab-staff-booking-access.md (rules BA1-BA7).
+Design: docs/proposals/downtime-lab-operator-booking-access.md (rules BA1-BA7).
 """
 
 from datetime import timedelta
@@ -124,7 +124,7 @@ def _change_access(client, downtime_id, booking_access, **extra):
     )
 
 
-# BA1: closed is the default and keeps the previous behavior (nobody books, staff included).
+# BA1: closed is the default and keeps the previous behavior (nobody books, lab operators included).
 @pytest.mark.django_db
 def test_windows_are_closed_to_everyone_by_default(client, coordinator, admin, bench):
     starts_at, ends_at = _window()
@@ -138,19 +138,19 @@ def test_windows_are_closed_to_everyone_by_default(client, coordinator, admin, b
             _book(bench, actor, starts_at, ends_at)
 
 
-# BA2: a lab_staff window lets coordinators and administrators book, and nobody else.
+# BA2: a lab_operators window lets coordinators and administrators book, and nobody else.
 @pytest.mark.django_db
 @pytest.mark.parametrize("resource_type", ["room", "station", "bench"])
-def test_lab_staff_window_admits_coordinators_and_admins_only(
+def test_lab_operator_window_admits_coordinators_and_admins_only(
     client, coordinator, admin, member, room, station, bench, resource_type
 ):
     resource_id = {"room": room.pk, "station": station.pk, "bench": bench.pk}[resource_type]
     starts_at, ends_at = _window(hours=4)
 
-    created = _schedule(client, resource_type, resource_id, starts_at, ends_at, booking_access="lab_staff")
+    created = _schedule(client, resource_type, resource_id, starts_at, ends_at, booking_access="lab_operators")
 
     assert created.status_code == 201, created.data
-    assert created.data["data"]["booking_access"] == {"value": "lab_staff", "label": "Lab staff only"}
+    assert created.data["data"]["booking_access"] == {"value": "lab_operators", "label": "Lab operators only"}
     with pytest.raises(BenchBookingConflict, match="Only lab coordinators and administrators can book it"):
         _book(bench, member, starts_at, starts_at + timedelta(hours=1))
     assert _book(bench, coordinator, starts_at, starts_at + timedelta(hours=1)).creator == coordinator
@@ -158,45 +158,45 @@ def test_lab_staff_window_admits_coordinators_and_admins_only(
 
 
 @pytest.mark.django_db
-def test_a_closed_window_at_another_level_still_blocks_lab_staff(client, coordinator, room, bench):
+def test_a_closed_window_at_another_level_still_blocks_lab_operators(client, coordinator, room, bench):
     starts_at, ends_at = _window()
-    _schedule(client, "room", room.pk, starts_at, ends_at, booking_access="lab_staff")
+    _schedule(client, "room", room.pk, starts_at, ends_at, booking_access="lab_operators")
     _schedule(client, "bench", bench.pk, starts_at, ends_at)
 
     with pytest.raises(BenchBookingConflict, match="Bench is in maintenance"):
         _book(bench, coordinator, starts_at, ends_at)
 
 
-# BA3: scheduling a lab_staff window keeps staff bookings and still reports everyone else's.
+# BA3: scheduling a lab_operators window keeps lab operator bookings and still reports everyone else's.
 @pytest.mark.django_db
-def test_scheduling_a_lab_staff_window_only_conflicts_with_non_staff_bookings(
+def test_scheduling_a_lab_operator_window_only_conflicts_with_other_bookings(
     client, coordinator, member, room, bench
 ):
     starts_at, ends_at = _window(hours=4)
-    staff_booking = _book(bench, coordinator, starts_at, starts_at + timedelta(hours=1))
+    operator_booking = _book(bench, coordinator, starts_at, starts_at + timedelta(hours=1))
     member_booking = _book(bench, member, starts_at + timedelta(hours=2), starts_at + timedelta(hours=3))
 
-    refused = _schedule(client, "room", room.pk, starts_at, ends_at, booking_access="lab_staff")
+    refused = _schedule(client, "room", room.pk, starts_at, ends_at, booking_access="lab_operators")
 
     assert refused.status_code == 409, refused.data
     assert [d["field"] for d in refused.data["error"]["details"]] == [f"bench_bookings.{member_booking.pk}"]
 
     confirmed = _schedule(
-        client, "room", room.pk, starts_at, ends_at, booking_access="lab_staff", cancel_conflicting_bookings=True
+        client, "room", room.pk, starts_at, ends_at, booking_access="lab_operators", cancel_conflicting_bookings=True
     )
 
     assert confirmed.status_code == 201, confirmed.data
-    staff_booking.refresh_from_db()
+    operator_booking.refresh_from_db()
     member_booking.refresh_from_db()
-    assert staff_booking.status == BookingStatus.RESERVED
+    assert operator_booking.status == BookingStatus.RESERVED
     assert member_booking.status == BookingStatus.CANCELLED
 
 
 # BA4: the holder decides, not the editor.
 @pytest.mark.django_db
-def test_a_coordinator_cannot_move_a_members_booking_into_a_lab_staff_window(client, coordinator, member, bench):
+def test_a_coordinator_cannot_move_a_members_booking_into_a_lab_operator_window(client, coordinator, member, bench):
     starts_at, ends_at = _window(hours=2)
-    _schedule(client, "bench", bench.pk, starts_at, ends_at, booking_access="lab_staff")
+    _schedule(client, "bench", bench.pk, starts_at, ends_at, booking_access="lab_operators")
     booking = _book(bench, member, ends_at + timedelta(hours=1), ends_at + timedelta(hours=2))
 
     with pytest.raises(BenchBookingConflict, match="Only lab coordinators and administrators"):
@@ -212,27 +212,27 @@ def test_opening_then_closing_a_window_follows_rs4(client, coordinator, bench):
     starts_at, ends_at = _window(hours=3)
     window = _schedule(client, "bench", bench.pk, starts_at, ends_at).data["data"]
 
-    opened = _change_access(client, window["id"], "lab_staff")
-    opened_again = _change_access(client, window["id"], "lab_staff")
+    opened = _change_access(client, window["id"], "lab_operators")
+    opened_again = _change_access(client, window["id"], "lab_operators")
 
     assert opened.status_code == 200, opened.data
-    assert opened.data["data"]["booking_access"]["value"] == "lab_staff"
+    assert opened.data["data"]["booking_access"]["value"] == "lab_operators"
     assert opened_again.data["data"]["updated_at"] == opened.data["data"]["updated_at"]
-    staff_booking = _book(bench, coordinator, starts_at, starts_at + timedelta(hours=1))
+    operator_booking = _book(bench, coordinator, starts_at, starts_at + timedelta(hours=1))
 
     refused = _change_access(client, window["id"], "closed")
 
     assert refused.status_code == 409, refused.data
     assert refused.data["error"]["code"] == "downtime_booking_conflict"
-    assert [d["field"] for d in refused.data["error"]["details"]] == [f"bench_bookings.{staff_booking.pk}"]
-    assert ResourceDowntime.objects.get(pk=window["id"]).booking_access == DowntimeBookingAccess.LAB_STAFF
+    assert [d["field"] for d in refused.data["error"]["details"]] == [f"bench_bookings.{operator_booking.pk}"]
+    assert ResourceDowntime.objects.get(pk=window["id"]).booking_access == DowntimeBookingAccess.LAB_OPERATORS
 
     closed = _change_access(client, window["id"], "closed", cancel_conflicting_bookings=True)
 
     assert closed.status_code == 200, closed.data
     assert closed.data["data"]["booking_access"]["value"] == "closed"
-    staff_booking.refresh_from_db()
-    assert staff_booking.status == BookingStatus.CANCELLED
+    operator_booking.refresh_from_db()
+    assert operator_booking.status == BookingStatus.CANCELLED
     with pytest.raises(BenchBookingConflict):
         _book(bench, coordinator, starts_at, starts_at + timedelta(hours=1))
 
@@ -245,22 +245,22 @@ def test_ended_and_cancelled_windows_keep_their_access(client, bench):
     client.post(f"{URL}/{later['id']}/actions/cancel")
 
     for window_id in (current["id"], later["id"]):
-        response = _change_access(client, window_id, "lab_staff")
+        response = _change_access(client, window_id, "lab_operators")
         assert response.status_code == 409, response.data
         assert response.data["error"]["code"] == "downtime_not_allowed"
 
 
 @pytest.mark.django_db
 def test_change_booking_access_of_a_missing_window_is_not_found(client):
-    assert _change_access(client, 999999, "lab_staff").status_code == 404
+    assert _change_access(client, 999999, "lab_operators").status_code == 404
 
 
-# BA6: equipment reservations are not bench bookings; lab staff access is refused for them.
+# BA6: equipment reservations are not bench bookings; lab operator access is refused for them.
 @pytest.mark.django_db
-def test_lab_staff_access_is_refused_for_equipment(client):
+def test_lab_operator_access_is_refused_for_equipment(client):
     unit = create_computing_equipment(sku="PC-ACCESS", name="PC access")
 
-    created = _schedule(client, "equipment", unit.pk, booking_access="lab_staff")
+    created = _schedule(client, "equipment", unit.pk, booking_access="lab_operators")
 
     assert created.status_code == 422, created.data
     assert created.data["error"]["details"][0]["field"].startswith("booking_access")
@@ -275,7 +275,7 @@ def test_change_booking_access_is_refused_for_equipment_windows(coordinator):
 
     with pytest.raises(ValidationError, match="not equipment"):
         change_downtime_booking_access(
-            ChangeDowntimeBookingAccessInput(window.pk, DowntimeBookingAccess.LAB_STAFF), actor=coordinator
+            ChangeDowntimeBookingAccessInput(window.pk, DowntimeBookingAccess.LAB_OPERATORS), actor=coordinator
         )
 
 
@@ -286,7 +286,7 @@ def test_plain_lab_user_cannot_change_booking_access(client, member, bench):
     member_client = APIClient()
     member_client.force_authenticate(member)
 
-    assert _change_access(member_client, window["id"], "lab_staff").status_code == 403
+    assert _change_access(member_client, window["id"], "lab_operators").status_code == 403
     assert ResourceDowntime.objects.get(pk=window["id"]).booking_access == DowntimeBookingAccess.CLOSED
 
 
@@ -300,8 +300,8 @@ def test_database_refuses_an_unknown_booking_access(bench):
 
 
 @pytest.mark.django_db
-def test_closing_while_a_staff_booking_is_in_progress_is_refused(client, coordinator, bench):
-    window = _schedule(client, "bench", bench.pk, booking_access="lab_staff").data["data"]
+def test_closing_while_a_operator_booking_is_in_progress_is_refused(client, coordinator, bench):
+    window = _schedule(client, "bench", bench.pk, booking_access="lab_operators").data["data"]
     booking = _book(bench, coordinator, timezone.now(), timezone.now() + timedelta(hours=1))
     BenchBooking.objects.filter(pk=booking.pk).update(status=BookingStatus.IN_PROGRESS)
 
@@ -311,17 +311,17 @@ def test_closing_while_a_staff_booking_is_in_progress_is_refused(client, coordin
         )
 
 
-# Reads: availability tells the frontend that staff may still book.
+# Reads: availability tells the frontend that lab operators may still book.
 @pytest.mark.django_db
 def test_availability_reports_who_may_still_book(client, room, bench):
-    window = _schedule(client, "room", room.pk, booking_access="lab_staff").data["data"]
+    window = _schedule(client, "room", room.pk, booking_access="lab_operators").data["data"]
 
     bench_read = client.get(f"/api/labs/benches/{bench.pk}").data["data"]["availability"]
     room_read = client.get(f"/api/labs/rooms/{room.pk}").data["data"]["availability"]
 
     assert bench_read["status"]["value"] == "unavailable"
-    assert bench_read["booking_access"] == {"value": "lab_staff", "label": "Lab staff only"}
-    assert room_read["booking_access"]["value"] == "lab_staff"
+    assert bench_read["booking_access"] == {"value": "lab_operators", "label": "Lab operators only"}
+    assert room_read["booking_access"]["value"] == "lab_operators"
 
     _change_access(client, window["id"], "closed")
 
@@ -332,23 +332,26 @@ def test_availability_reports_who_may_still_book(client, room, bench):
 
 @pytest.mark.django_db
 def test_list_filters_by_booking_access(client, room, bench):
-    _schedule(client, "room", room.pk, booking_access="lab_staff")
+    _schedule(client, "room", room.pk, booking_access="lab_operators")
     _schedule(client, "bench", bench.pk)
 
-    response = client.get(URL, {"booking_access": "lab_staff"})
+    response = client.get(URL, {"booking_access": "lab_operators"})
 
     assert response.status_code == 200, response.data
     assert [row["resource"]["type"] for row in response.data["data"]] == ["room"]
 
 
-# Moves keep the same rule: a lab_staff parent window does not block staff bookings.
+# Moves keep the same rule: a lab_operators parent window does not block lab operator bookings.
 @pytest.mark.django_db
-def test_moving_a_bench_under_a_lab_staff_window_only_counts_non_staff_bookings(client, coordinator, member, bench):
+def test_moving_a_bench_under_a_lab_operator_window_only_counts_other_bookings(client, coordinator, member, bench):
     starts_at, ends_at = _window(hours_from_now=3)
-    staff_booking = _book(bench, coordinator, starts_at, starts_at + timedelta(hours=1))
-    target = Station.objects.create(sku="ST-STAFF", room=bench.setup_location.room)
+    operator_booking = _book(bench, coordinator, starts_at, starts_at + timedelta(hours=1))
+    target = Station.objects.create(sku="ST-OPS", room=bench.setup_location.room)
     ResourceDowntime.for_new_resource(
-        target, condition="in_maintenance", starts_at=timezone.now(), booking_access=DowntimeBookingAccess.LAB_STAFF
+        target,
+        condition="in_maintenance",
+        starts_at=timezone.now(),
+        booking_access=DowntimeBookingAccess.LAB_OPERATORS,
     ).save()
     member_booking = _book(bench, member, starts_at + timedelta(hours=1), ends_at)
 
@@ -363,5 +366,5 @@ def test_moving_a_bench_under_a_lab_staff_window_only_counts_non_staff_bookings(
     moved = client.post(f"/api/labs/benches/{bench.pk}/actions/place", {"setup_location_id": target.pk}, format="json")
 
     assert moved.status_code == 200, moved.data
-    staff_booking.refresh_from_db()
-    assert staff_booking.status == BookingStatus.RESERVED
+    operator_booking.refresh_from_db()
+    assert operator_booking.status == BookingStatus.RESERVED

@@ -136,7 +136,7 @@ sequenceDiagram
 
 ## 7. Security and authorization
 
-- **Authentication:** Analytics endpoints use the labs `FeatureAPIView` default, `LABS_STAFF_ACCESS` (`HasAPIKeyAccess | IsLabCoordinatorReadWrite`: lab coordinators, admins and API keys), unless a view overrides it. The finance reports use the same rule (owner decision 2026-11-11). Plain lab members get `403` (verified for the count endpoints in `tests/test_daily_series.py`).
+- **Authentication:** Analytics endpoints use the labs `FeatureAPIView` default, `LAB_OPERATIONS_ACCESS` (`lab_operations.manage`: lab operators, and API keys), unless a view overrides it. The finance reports use `FINANCE_ACCESS` (`finance.manage`, the same people; owner decision 2026-11-11). Plain lab members get `403` (verified for the count endpoints in `tests/test_daily_series.py`).
 - **Query Parameter Validation:** Date strings, sort order, and limit values are strictly validated via DRF serializers with explicit bounds.
 
 ---

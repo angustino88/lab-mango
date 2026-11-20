@@ -37,7 +37,7 @@ from core.labs.models import (
 )
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 from core.users.models import URSGroup
-from core.users.public import LabsRole
+from core.users.roles import LabsRole
 from core.users.tests.factories import UserFactory
 from tests.factories import create_computing_equipment
 

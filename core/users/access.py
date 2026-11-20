@@ -1,62 +1,43 @@
-"""Labs access control: role vocabulary, role resolution, and permission classes.
+"""Labs access control: resolve what a user may do, and the endpoint policy that checks it.
 
-``core.users`` owns the role mapping. Each ``URSGroup`` row links a synced URS group to a Django
-``Group`` and carries a ``labs_role`` (``admin``, ``coord``, ``user``, or empty), edited by
-administrators in Django admin. A user's roles are the ``labs_role`` values of the URS groups whose
-Django group they belong to.
+Design: ``docs/proposals/role-based-access-redesign.md``. Three layers, each with one owner:
 
-* ``admin``: everything a coordinator can do, plus the user directory (groups and members).
-* ``coord``: operational management of labs, equipment, licenses, benches, rooms and monitoring;
-  procurement, expenses and finance reports; and the work of other users (booking approval).
-* ``user``: reads the dashboard (including bench detail) and the leaderboard; creates and changes only
-  their own bookings. No direct access to benches, equipment or other Labs data.
+* **Role** (``core.users.roles``): who a person is. Assigned through their URS group
+  (``URSGroup.labs_role``, edited by superusers in Django admin). A user's roles are the ``labs_role``
+  values of the URS groups whose Django group they belong to, plus the roles those imply.
+* **Permission** (``core.users.permissions``): what can be done. ``ROLE_PERMISSIONS`` maps roles to
+  permissions; it is the access matrix.
+* **Check** (this module): features call ``has_permission`` and endpoints declare a
+  ``LabsAccessPolicy``. Nothing outside ``core.users`` checks a role
+  (``tests/architecture/test_users_feature_boundaries.py``).
 
-The per-endpoint matrix lives in ``core/labs/features/base/access.py`` (owner decision 2026-11-11).
+Deny by default: anonymous users, API keys, users without a mapped group and unknown permissions hold
+nothing (inactive users cannot sign in). Superusers (platform owners) hold every permission. Django
+``is_staff`` only opens the Django admin site and grants no Labs permission.
 
-Higher roles imply lower ones (``admin`` > ``coord`` > ``user``). Superusers hold every role. A user
-with no mapped group holds no role and can neither read nor write through these classes (fail closed).
-
-Effective roles are cached on the user instance, so a request pays for at most one query. Code that
-changes a user's groups and then re-checks access on the same instance must call
-``clear_labs_roles_cache`` first.
-
-The generic mechanics live in ``core.common.api.permissions``; this module only supplies the Labs
-vocabulary and lookup. Object-level rules (such as booking ownership) are enforced in the
-application layer, and querysets must still be scoped by the caller.
+Roles are read from the database once per request and cached on the user instance. Code that changes a
+user's groups and then re-checks access on the same instance must call ``clear_labs_roles_cache`` first.
+Object-level rules (such as booking ownership) are enforced in the application layer, and querysets must
+still be scoped by the caller.
 """
 
-from enum import StrEnum
-from typing import Any
+from typing import Any, cast
 
 from django.db.models import Q, QuerySet
 
-from core.common.api.permissions import RoleHierarchy, RolePermission, is_authenticated
+from core.common.api.permissions import CapabilityPermission, is_authenticated
+from core.common.domain.errors import Forbidden
 from core.users.models import URSGroup, User
+from core.users.permissions import ALL_PERMISSIONS, LabsPermission, permissions_for_roles, roles_granting
+from core.users.roles import LABS_ROLE_HIERARCHY
 
 _ROLES_CACHE_ATTR = "_labs_roles_cache"
 
 
-class LabsRole(StrEnum):
-    """Labs roles. Values are persisted in ``URSGroup.labs_role`` and must not change."""
-
-    ADMIN = "admin"
-    COORDINATOR = "coord"
-    USER = "user"
-
-
-LABS_ROLE_HIERARCHY = RoleHierarchy(
-    grants={
-        LabsRole.ADMIN: (LabsRole.COORDINATOR, LabsRole.USER),
-        LabsRole.COORDINATOR: (LabsRole.USER,),
-        LabsRole.USER: (),
-    }
-)
-
-
 def effective_labs_roles(user: Any) -> frozenset[str]:
-    """Return the Labs roles ``user`` holds, including implied roles.
+    """The Labs roles ``user`` holds, implied roles included. For ``core.users`` and role display only.
 
-    Anonymous and missing users hold none; superusers hold all. The result is cached on ``user``.
+    Anonymous users hold none; superusers hold all. The result is cached on ``user``.
     """
     if not is_authenticated(user):
         return frozenset()
@@ -73,9 +54,35 @@ def effective_labs_roles(user: Any) -> frozenset[str]:
     return roles
 
 
-def users_holding_labs_role(role: LabsRole) -> QuerySet[User]:
-    """Active users who hold ``role`` directly, through a higher role, or as superusers. One query."""
-    granting = [held for held in LABS_ROLE_HIERARCHY.roles if role in LABS_ROLE_HIERARCHY.expand([held])]
+def effective_permissions(user: Any) -> frozenset[str]:
+    """Every Labs permission ``user`` holds (at most one query per request, shared with the roles)."""
+    if is_authenticated(user) and user.is_superuser:
+        return ALL_PERMISSIONS
+    return permissions_for_roles(effective_labs_roles(user))
+
+
+def has_permission(user: Any, permission: LabsPermission) -> bool:
+    """Whether ``user`` holds ``permission``. API keys and anonymous users hold none."""
+    return permission in effective_permissions(user)
+
+
+def require_permission(user: Any, permission: LabsPermission, *, message: str | None = None) -> None:
+    """Raise ``Forbidden`` (code ``permission_denied``) unless ``user`` holds ``permission``.
+
+    Features that already publish a specific error code keep raising their own error after ``has_permission``.
+    """
+    if not has_permission(user, permission):
+        raise Forbidden(message)
+
+
+def is_lab_operator(user: Any) -> bool:
+    """Whether ``user`` is a lab operator (holds lab operations authority). For wording, not for rules."""
+    return has_permission(user, LabsPermission.LAB_OPERATIONS_MANAGE)
+
+
+def users_with_permission(permission: LabsPermission) -> QuerySet[User]:
+    """Active users who hold ``permission`` through a role, or as superusers. One query; usable as a subquery."""
+    granting = roles_granting(permission)
     return (
         User.objects.filter(is_active=True)
         .filter(Q(is_superuser=True) | Q(groups__ursgroup__labs_role__in=granting))
@@ -89,78 +96,37 @@ def clear_labs_roles_cache(user: Any) -> None:
         delattr(user, _ROLES_CACHE_ATTR)
 
 
-def has_labs_role(user: Any, role: LabsRole) -> bool:
-    """Return True when ``user`` holds ``role`` or any role that implies it."""
-    return role in effective_labs_roles(user)
+class LabsAccessPolicy(CapabilityPermission):
+    """DRF permission for Labs endpoints: one permission for reads, one for writes (``None`` denies).
 
-
-class LabsRolePermission(RolePermission):
-    """Base for Labs permission classes: roles are resolved from URS group mappings.
-
-    Reads require at least the ``user`` role; a user without any Labs role is denied.
+    Create policies with ``LabsAccessPolicy.of`` and name them after what they protect; compose with
+    ``HasAPIKeyAccess`` (``HasAPIKeyAccess | policy``) only where machine clients are allowed.
     """
 
-    read_roles = (LabsRole.USER,)
+    def resolve_capabilities(self, user: Any) -> frozenset[str]:
+        return effective_permissions(user)
 
-    def resolve_roles(self, user: Any) -> frozenset[str]:
-        return effective_labs_roles(user)
-
-
-class IsLabAdmin(LabsRolePermission):
-    """Reads: any Labs role. Writes: lab administrators."""
-
-    write_roles = (LabsRole.ADMIN,)
-
-
-class IsLabCoordinator(LabsRolePermission):
-    """Reads: any Labs role. Writes: lab coordinators and administrators."""
-
-    write_roles = (LabsRole.COORDINATOR,)
-
-
-class IsLabMember(LabsRolePermission):
-    """Reads and writes: any Labs role. Ownership is enforced per object."""
-
-    write_roles = (LabsRole.USER,)
-
-
-class IsLabMemberReadOnly(LabsRolePermission):
-    """Reads: any Labs role. Writes: nobody (dashboards and rankings)."""
-
-    write_roles = ()
-
-
-class IsLabCoordinatorReadWrite(LabsRolePermission):
-    """Reads and writes: lab coordinators and administrators (procurement, expenses, finance reports)."""
-
-    read_roles = (LabsRole.COORDINATOR,)
-    write_roles = (LabsRole.COORDINATOR,)
-
-
-# Same policy, earlier name used by the equipment feature.
-IsLabCoordinatorOnly = IsLabCoordinatorReadWrite
-
-
-class IsLabAdminReadWrite(LabsRolePermission):
-    """Reads and writes: lab administrators only (user directory and group membership)."""
-
-    read_roles = (LabsRole.ADMIN,)
-    write_roles = (LabsRole.ADMIN,)
+    @classmethod
+    def of(
+        cls,
+        name: str,
+        *,
+        read: LabsPermission | None,
+        write: LabsPermission | None,
+    ) -> type["LabsAccessPolicy"]:
+        policy = cast(type[LabsAccessPolicy], cls.requiring(read=read, write=write, name=name))
+        policy.__doc__ = f"Reads: {read.value if read else 'nobody'}. Writes: {write.value if write else 'nobody'}."
+        return policy
 
 
 __all__ = [
-    "LABS_ROLE_HIERARCHY",
-    "IsLabAdmin",
-    "IsLabAdminReadWrite",
-    "IsLabCoordinator",
-    "IsLabCoordinatorReadWrite",
-    "IsLabCoordinatorOnly",
-    "IsLabMember",
-    "IsLabMemberReadOnly",
-    "LabsRole",
-    "LabsRolePermission",
+    "LabsAccessPolicy",
+    "LabsPermission",
     "clear_labs_roles_cache",
     "effective_labs_roles",
-    "has_labs_role",
-    "users_holding_labs_role",
+    "effective_permissions",
+    "has_permission",
+    "is_lab_operator",
+    "require_permission",
+    "users_with_permission",
 ]

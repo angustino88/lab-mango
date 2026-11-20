@@ -32,7 +32,7 @@ from core.labs.models.resource.base.availability import (
 )
 from core.labs.models.resource.base.status import ensure_lifecycle_transition
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
-from core.users.public import LabsRole, users_holding_labs_role
+from core.users.public import LabsPermission, users_with_permission
 
 from .policies import validate_capacity, validate_slot
 
@@ -179,7 +179,7 @@ def _ensure_bookings_fit_new_station(bench, station) -> None:
         bench_ids=(bench.pk,),
         station=station,
         room=station.room,
-        lab_staff_users=users_holding_labs_role(LabsRole.COORDINATOR),
+        lab_operator_users=users_with_permission(LabsPermission.BENCH_BOOKING_BOOK_DURING_DOWNTIME),
     )
     if blocked:
         raise BenchConflict(

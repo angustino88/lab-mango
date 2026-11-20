@@ -33740,7 +33740,7 @@
       "method": "GET",
       "operation_id": "labs_downtimes_retrieve",
       "summary": "Get Downtimes",
-      "description": "Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write.",
+      "description": "Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like every other resource write.",
       "tags": [
         "Downtime"
       ],
@@ -33749,11 +33749,11 @@
           "name": "booking_access",
           "in": "query",
           "required": false,
-          "description": "* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only",
+          "description": "* `closed` - Closed to all bookings\n* `lab_operators` - Lab operators only",
           "schema": {
             "enum": [
               "closed",
-              "lab_staff"
+              "lab_operators"
             ],
             "type": "string",
             "minLength": 1
@@ -33905,7 +33905,7 @@
                         }
                       ],
                       "readOnly": true,
-                      "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                      "description": "Who may still book the covered benches: closed (no one) or lab_operators (Lab Coordinators and Lab Administrators)."
                     },
                     "state": {
                       "allOf": [
@@ -34188,7 +34188,7 @@
       "method": "POST",
       "operation_id": "labs_downtimes_create",
       "summary": "Create Downtimes",
-      "description": "Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write.",
+      "description": "Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like every other resource write.",
       "tags": [
         "Downtime"
       ],
@@ -34291,14 +34291,14 @@
                 {
                   "enum": [
                     "closed",
-                    "lab_staff"
+                    "lab_operators"
                   ],
                   "type": "string",
-                  "description": "* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only"
+                  "description": "* `closed` - Closed to all bookings\n* `lab_operators` - Lab operators only"
                 }
               ],
               "default": "closed",
-              "description": "closed (default): no one can book the covered benches. lab_staff: lab coordinators and administrators can still book them; their overlapping bookings are kept. Not for equipment.\n\n* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only"
+              "description": "closed (default): no one can book the covered benches. lab_operators: lab coordinators and administrators can still book them; their overlapping bookings are kept. Not for equipment.\n\n* `closed` - Closed to all bookings\n* `lab_operators` - Lab operators only"
             }
           },
           "required": [
@@ -34380,7 +34380,7 @@
                       }
                     ],
                     "readOnly": true,
-                    "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                    "description": "Who may still book the covered benches: closed (no one) or lab_operators (Lab Coordinators and Lab Administrators)."
                   },
                   "state": {
                     "allOf": [
@@ -34706,7 +34706,7 @@
       "method": "GET",
       "operation_id": "labs_downtimes_retrieve_by_downtime_id",
       "summary": "Get Downtimes by Downtime ID",
-      "description": "Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write.",
+      "description": "Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like every other resource write.",
       "tags": [
         "Downtime"
       ],
@@ -34782,7 +34782,7 @@
                       }
                     ],
                     "readOnly": true,
-                    "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                    "description": "Who may still book the covered benches: closed (no one) or lab_operators (Lab Coordinators and Lab Administrators)."
                   },
                   "state": {
                     "allOf": [
@@ -35002,7 +35002,7 @@
       "method": "POST",
       "operation_id": "labs_downtimes_actions_cancel_create_by_downtime_id",
       "summary": "Cancel Downtimes by Downtime ID",
-      "description": "Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write.",
+      "description": "Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like every other resource write.",
       "tags": [
         "Downtime"
       ],
@@ -35078,7 +35078,7 @@
                       }
                     ],
                     "readOnly": true,
-                    "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                    "description": "Who may still book the covered benches: closed (no one) or lab_operators (Lab Coordinators and Lab Administrators)."
                   },
                   "state": {
                     "allOf": [
@@ -35298,7 +35298,7 @@
       "method": "POST",
       "operation_id": "labs_downtimes_actions_change_booking_access_create_by_downtime_id",
       "summary": "Change Booking Access Downtimes by Downtime ID",
-      "description": "Open the window to lab staff bookings (``lab_staff``) or close it to everyone (``closed``).",
+      "description": "Open the window to lab operator bookings (``lab_operators``) or close it to everyone (``closed``).",
       "tags": [
         "Downtime"
       ],
@@ -35329,10 +35329,10 @@
             "booking_access": {
               "enum": [
                 "closed",
-                "lab_staff"
+                "lab_operators"
               ],
               "type": "string",
-              "description": "* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only"
+              "description": "* `closed` - Closed to all bookings\n* `lab_operators` - Lab operators only"
             },
             "cancel_conflicting_bookings": {
               "type": "boolean",
@@ -35409,7 +35409,7 @@
                       }
                     ],
                     "readOnly": true,
-                    "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                    "description": "Who may still book the covered benches: closed (no one) or lab_operators (Lab Coordinators and Lab Administrators)."
                   },
                   "state": {
                     "allOf": [
@@ -35735,7 +35735,7 @@
       "method": "POST",
       "operation_id": "labs_downtimes_actions_end_create_by_downtime_id",
       "summary": "End Downtimes by Downtime ID",
-      "description": "Coordinators and administrators (``LABS_STAFF_ACCESS``), like every other resource write.",
+      "description": "Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like every other resource write.",
       "tags": [
         "Downtime"
       ],
@@ -35811,7 +35811,7 @@
                       }
                     ],
                     "readOnly": true,
-                    "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                    "description": "Who may still book the covered benches: closed (no one) or lab_operators (Lab Coordinators and Lab Administrators)."
                   },
                   "state": {
                     "allOf": [
@@ -73055,7 +73055,7 @@
       "method": "GET",
       "operation_id": "labs_leaderboard_users_assessment_retrieve_by_id",
       "summary": "Get Leaderboard Users Assessment by ID",
-      "description": "KPI assessment of one user: scorecard, rating, strengths, development areas and trend.\n\nLab coordinators and administrators read anyone's; a lab member reads only their own. The route\nfollows the leaderboard policy (lab members read); the subject is checked per request.",
+      "description": "KPI assessment of one user: scorecard, rating, strengths, development areas and trend.\n\nHolders of ``assessment.read_any`` (lab operators) read anyone's; a Lab Member reads only their own. The route\nfollows the leaderboard policy (lab members read); the subject is checked per request.",
       "tags": [
         "Leaderboard"
       ],
@@ -153058,10 +153058,20 @@
                       }
                     ],
                     "readOnly": true
+                  },
+                  "effective_permissions": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   }
                 },
                 "required": [
                   "avatar_url",
+                  "effective_permissions",
                   "effective_roles",
                   "groups",
                   "id",
@@ -153082,7 +153092,8 @@
               "groups": [
                 {}
               ],
-              "effective_roles": {}
+              "effective_roles": {},
+              "effective_permissions": {}
             }
           }
         },

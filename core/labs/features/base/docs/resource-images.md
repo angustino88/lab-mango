@@ -45,7 +45,7 @@ presigned URL when MinIO is enabled) for avatars.
 | `PUT` | `multipart/form-data`, exactly one `file` part | `200` with the new `image_url` | `404`; `413 payload_too_large` (over 5 MB); `415 unsupported_media_type` (detected type not JPEG/PNG/GIF/WebP, or a non-multipart body); `422 validation_failed` (missing part, unknown part, two `file` parts, content is not an image) |
 | `DELETE` | none | `204`, also when there was no image | `404` |
 
-Access: the Labs default (`LABS_STAFF_ACCESS`): coordinators, admins and API keys. Plain Labs users get `403`.
+Access: the Labs default (`LAB_OPERATIONS_ACCESS`): lab operators and API keys. Plain Labs users get `403`.
 
 ## Write safety
 

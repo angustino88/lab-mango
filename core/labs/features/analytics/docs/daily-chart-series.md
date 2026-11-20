@@ -46,7 +46,7 @@ Response: `{"data": [{"date": "2026-11-12", "count": 42}, ...]}`, oldest first, 
   `400` with the standard error body (previously an invalid `unit` failed in the selector, and unknown
   parameters were ignored). Rejecting unknown parameters follows SCP-3 (owner delegated, 2026-11-13); the
   frontend must send only `unit`, `date_after` and `date_before`.
-- **Access:** lab coordinators, admins and API keys (`LABS_STAFF_ACCESS`), unchanged and confirmed by the owner
+- **Access:** lab operators and API keys (`LAB_OPERATIONS_ACCESS`), unchanged and confirmed by the owner
   (2026-11-13). Plain lab members get `403`; hide the charts for them.
 
 ## 3. Design

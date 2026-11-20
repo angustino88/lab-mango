@@ -39,7 +39,7 @@ Owned by `write-safety.instructions.md`.
 | Labs command or selector endpoint | `CommandAPIView` + `operation(...)` | `core/labs/features/base/command.py` |
 | List filters | `FilterSpec` / `resource_filter_spec` | `core/common/api/filtering.py`, `core/labs/features/base/resource_filters.py` |
 | Pagination | `ResultsSetPagination` | `core/common/api/pagination.py` |
-| Role checks | `RolePermission` | `core/common/api/permissions.py` |
+| Access checks | `has_permission(actor, LabsPermission.X)`; endpoint policies `LabsAccessPolicy.of(...)` (never check a role) | `core/users/public.py`, `core/labs/features/base/access.py`, `docs/architecture/access-matrix.md` |
 New endpoints do not use `ModelViewSet` / `AppModelViewSet`: they bypass the command layer
 (drift: `core/jira_integration/features/requests/manage_requests/api.py`).
 A new feature starts from the scaffold: `uv run python scripts/scaffolding/scaffold_feature.py <domain> <feature> --entity <name> --dry-run`.

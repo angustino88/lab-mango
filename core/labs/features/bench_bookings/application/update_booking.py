@@ -15,11 +15,11 @@ from core.labs.features.bench_bookings.queries import (
     bench_has_computing,
     bench_parent_blocker,
     conflicting_bench_bookings,
-    is_lab_staff,
+    may_book_during_downtime,
     project_exists,
 )
 from core.labs.models import BenchBooking, BookingApprovalStatus, BookingStatus, ensure_booking_status_transition
-from core.users.public import LabsRole, has_labs_role
+from core.users.public import LabsPermission, has_permission
 
 from . import policies
 from .locks import lock_benches
@@ -40,7 +40,7 @@ class UpdateBenchBookingInput:
 
 def _ensure_can_modify(actor, booking: BenchBooking) -> None:
     """Edits, cancels and completions are allowed for the owner and for lab coordinators and admins."""
-    if is_owner(actor, booking) or has_labs_role(actor, LabsRole.COORDINATOR):
+    if is_owner(actor, booking) or has_permission(actor, LabsPermission.BENCH_BOOKING_MANAGE_ANY):
         return
     raise BenchBookingPermissionDenied(
         "Only the booking owner, a lab coordinator, or a lab administrator can change this booking."
@@ -150,8 +150,8 @@ def update_bench_booking(*, actor, data: UpdateBenchBookingInput) -> BenchBookin
                     starts_at=booking.starts_at,
                     ends_at=booking.ends_at,
                     # The holder uses the bench, not the editor: a coordinator cannot move a user's
-                    # booking into a window that is open to lab staff only.
-                    lab_staff=is_lab_staff(booking.creator),
+                    # booking into a window that is open to lab operators only.
+                    lab_operator=may_book_during_downtime(booking.creator),
                 )
             )
         booking.save(actor=actor)

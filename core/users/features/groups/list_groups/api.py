@@ -9,7 +9,10 @@ from rest_framework import serializers
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.pagination import PageNumberQuerySerializer
-from core.users.access import IsLabAdminReadWrite
+from core.users.access import LabsAccessPolicy, LabsPermission
+
+# User groups and their members: Lab Administrators only (owner decision R8). Read-only.
+DIRECTORY_ACCESS = LabsAccessPolicy.of("DirectoryAccess", read=LabsPermission.DIRECTORY_READ, write=None)
 
 
 class UserGroupSerializer(serializers.Serializer):
@@ -39,7 +42,7 @@ class ListGroupUserView(AppListAPIView):
 
     schema_tags = ("User Groups",)
     # Group membership shows who holds which role: lab administrators only.
-    permission_classes = [IsLabAdminReadWrite]
+    permission_classes = [DIRECTORY_ACCESS]
     get_contract = OperationContract(
         query=PageNumberQuerySerializer,
         success=ResponseContract.paginated("UserGroupList", UserGroupSerializer),
@@ -61,7 +64,7 @@ class ListUsersInGroupView(AppListAPIView):
 
     schema_tags = ("User Groups",)
     # Group membership shows who holds which role: lab administrators only.
-    permission_classes = [IsLabAdminReadWrite]
+    permission_classes = [DIRECTORY_ACCESS]
     get_contract = OperationContract(
         query=UserGroupMembersQuerySerializer,
         success=ResponseContract.paginated("UserGroupMemberList", UserGroupMemberSerializer),

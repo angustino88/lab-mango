@@ -2,11 +2,11 @@
 
 from typing import Any
 
-from core.users.public import LabsRole, has_labs_role
+from core.users.public import LabsPermission, has_permission
 
 
 def can_import_workbook(actor: Any) -> bool:
-    return bool(getattr(actor, "is_authenticated", False)) and has_labs_role(actor, LabsRole.ADMIN)
+    return bool(getattr(actor, "is_authenticated", False)) and has_permission(actor, LabsPermission.WORKBOOK_IMPORT)
 
 
 __all__ = ["can_import_workbook"]
