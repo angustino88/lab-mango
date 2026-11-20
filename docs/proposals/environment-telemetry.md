@@ -296,8 +296,9 @@ reading, so history does not move when something is relocated later.
 ### 6.2 `MetricDefinition` (reference data)
 
 `key` (PK slug), `name`, `unit`, `value_min`, `value_max` (null = open), `kind` (`gauge` / `counter`),
-`aggregation` (`mean` / `max` / `last`; counters roll up as delta), `decimals`, `active`.
-v1 seed: `temperature_c` (≥ -273.15), `humidity_percent` (0–100), `power_w` (≥ 0). Later examples:
+`aggregation` (over time: `mean` / `min` / `max` / `last`; counters roll up as `delta`), `combine` (across several
+channels of one target: `sum` / `mean` / `max` / `min`), `decimals`, `is_active`.
+v1 seed: `temperature_c` (≥ -273.15, combine `mean`), `humidity_percent` (0–100, `mean`), `power_w` (≥ 0, `sum`). Later examples:
 `energy_wh` (counter), `voltage_v`, `current_a`, `co2_ppm`, `differential_pressure_pa`.
 
 ### 6.3 `TelemetryDevice`: gateways and sources
@@ -536,7 +537,64 @@ room, so a room dashboard sees everything inside it. Message (STM-3):
 `{"type": "telemetry.latest", "data": {"target": {"type": "equipment", "id": 88}, "channel_id": 101,
 "metric": "power_w", "observed_at": "…", "value": "1830.5"}}`; also `telemetry.connectivity`. Published on
 commit, coalesced to the newest reading per channel per batch. On (re)connect the client calls
-`…/telemetry/latest` (STM-4). Heartbeat every 30 s.
+`…/telemetry/latest` (STM-4). Heartbeat every 30 s. When a target's status level changes (§7.5) a
+`telemetry.status_changed` message is also sent.
+
+### 7.5 3D dashboard (scene) API and thresholds
+
+**Verified current state (frontend `angustino88/beauty`, "LabMango Frontend v2", 2026-11-20):** the 3D room view
+(`src/features/interactive-dashboard`, React Three Fiber) loads rooms, stations and `/api/labs/rooms/{id}/mapping`,
+renders each station as a rack on its room slot, and colours it from `temperature`, `humidity` and `power_usage`
+(`utils/rackMapper.ts`). The backend returns none of these fields (no such field in
+`core/labs/features/locations` or `core/labs/features/resource_mappings`), so the view falls back to `0`.
+Warning/critical thresholds are hard-coded in the browser (`config/rackThresholds.ts`: temperature 30/50 °C,
+humidity 65/75 %, power 80/95 % of a fixed 200 kW).
+
+**Proposed.** One bounded read gives the whole scene; the WS channel keeps it live; thresholds move to the server.
+
+`GET /api/labs/rooms/{id}/telemetry/scene` (≤ 200 stations; ≤ 6 queries regardless of size):
+
+```json
+{"data": {
+  "room": {"id": 3, "name": "Room 3", "geometry": {"length_m": "12.00", "width_m": "8.00", "height_m": "3.00",
+           "rows": 4, "cols": 6},
+           "metrics": {"temperature_c": {"value": "24.1", "observed_at": "…", "stale": false, "level": "ok"}},
+           "level": "ok"},
+  "stations": [
+    {"id": 5, "name": "Station A", "slot_code": "A1", "position": [2.0, 0.0, 1.5], "orientation_degrees": 0,
+     "size_mm": {"width": 600, "depth": 1200, "height": 2000},
+     "metrics": {"power_w": {"value": "1830.5", "observed_at": "…", "stale": false, "level": "warning",
+                             "capacity": "2000", "channels": 1}},
+     "level": "warning",
+     "children": {"benches_with_telemetry": 2, "equipment_with_telemetry": 1, "worst_level": "ok"}}],
+  "devices": [
+    {"id": 41, "kind": "modbus_tcp", "model": "USR-W630", "installed_at": {"type": "station", "id": 5},
+     "connectivity": "online", "last_seen_at": "…"}],
+  "gateway": {"id": 7, "connectivity": "online", "config_version_applied": 17, "config_version": 17},
+  "thresholds_version": 4
+}}
+```
+
+- **Values per target and metric** combine the target's channels with `MetricDefinition.combine` (power summed,
+  temperature averaged). `stale` is true when the newest reading is older than 3 × the gateway's poll interval.
+- **Levels** (`ok` / `warning` / `critical` / `unknown`) are computed server-side so every client agrees.
+  `level` on a target is the worst of its metrics; `unknown` when no fresh data (never `ok` by default).
+- **`TelemetryThreshold`** (new, slice 5): `metric`, optional `target` (null = default for all), `warning_low`,
+  `warning_high`, `critical_low`, `critical_high`, optional `relative_to` = `power_capacity` (bounds are
+  percentages of the target's `power_capacity_w`, which rooms and stations already have). Most specific wins:
+  target → its station → its room → default. DB checks: ordered bounds. Seeded defaults copy today's frontend
+  values so nothing changes visually at switch-over.
+- **Live updates**: the client subscribes to `ws/telemetry/rooms/{id}`, merges `telemetry.latest` and
+  `telemetry.status_changed` into the scene, and re-fetches the scene on reconnect or when `thresholds_version`
+  changes.
+- **History** for the side panel: `GET /api/labs/stations/{id}/telemetry?resolution=1m&from=…` (§7.2).
+
+**Frontend changes (in `angustino88/beauty`)**: an RTK Query endpoint for the scene, a WS hook, `rackMapper.ts`
+reading scene metrics instead of station fields, removal of `config/rackThresholds.ts` in favour of server
+levels, a stale/unknown visual state, device markers (sources at their install location, coloured by
+connectivity) and a gateway status chip in the top bar. Management screens: Devices (discovered/claimed,
+claim wizard, channels, "Measures" target picker), Device profiles (draft/approve), Gateways (scope, config
+version applied, health). This session can read that repository but cannot push to it.
 
 ---
 
@@ -692,6 +750,18 @@ Authorization (deny-by-default, object-scoped):
 | New target types (rack, building) | one nullable FK on `TelemetryTarget` + placement rule (D5) |
 | MQTT ingestion | push-receiving adapter on the gateway, or a bridge calling `record_telemetry_batch` |
 | Long-range storage | TimescaleDB or compression (D7-C) |
+
+### 12.1 Delivery plan
+
+| Slice | Content | Status |
+|---|---|---|
+| 1 | Configuration models + migrations (targets, metrics, profiles, devices, Modbus settings, channels, bindings); placement resolver via locations/benches/equipment public selectors; constraint and placement tests | **Implemented** (branch `claude/eloquent-franklin-6hbxgx`) |
+| 2 | Storage: partitioned `TelemetryReading`, `TelemetryLatest`, `TelemetryRollup`, health; partition/rollup/connectivity tasks; written migration plan | Next |
+| 3 | Gateway API: config, discovery, ingest | |
+| 4 | Operator configuration API (devices, channels, bindings, profiles + approval) + OpenAPI | |
+| 5 | Operator read API, scene API, `TelemetryThreshold`, WS routes | |
+| 6 | Gateway collector service (separate repository) | |
+| 7 | Frontend 3D dashboard and management screens (`angustino88/beauty`) | Needs push access |
 
 ---
 
@@ -897,10 +967,12 @@ PostgreSQL ≥ 15 (CI uses 16).
 | Q11 | Station gateways (TP3) in v1? | No; room gateway only |
 | Q13 | Gateway PC dedicated to the collector (D8-A)? | Yes, always on, wired |
 | Q15 | Gateway OS and collector language | Linux + Python service |
-| Q17 | v1 metrics | `temperature_c`, `humidity_percent`, `power_w` |
-| Q18 | Unlocated bench/equipment: reject readings, or allow a fallback room? | Reject |
+| Q17 | v1 metrics | **Applied in slice 1:** `temperature_c`, `humidity_percent`, `power_w` |
+| Q18 | Unlocated bench/equipment: reject readings, or allow a fallback room? | **Applied in slice 1:** reject (placement resolver returns nothing) |
 | Q19 | Room views include everything inside by default? | Yes |
 | Q20 | Who may approve device profiles? | Lab staff with a dedicated permission |
+| Q21 | Default thresholds: copy today's frontend values (temperature 30/50 °C, humidity 65/75 %, power 80/95 % of capacity)? | Yes, then tune per room |
+| Q22 | Push access to `angustino88/beauty` for the frontend slice, or will the frontend team implement it from §7.5? | Owner decides |
 
 **Worked example**
 
