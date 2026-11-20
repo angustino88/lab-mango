@@ -293,6 +293,9 @@ proxy strips (`routing-sync.md:74`). The current authentication code was written
 
 #### M11. API keys are a second, identity-less authentication path
 
+> **Done (2026-11-20, D4 in [role-based access](role-based-access-redesign.md)):** off by default in production,
+> read-only unless `API_KEY_WRITE_ACCESS_ENABLED`.
+
 - **Evidence:** `HasAPIKey | IsAuthenticated` is the default on shared view bases
   (`core/common/api/command_views.py:37`, `core/common/api/options.py:97`) and on `GetMeView`
   (`profile/get_me/api.py:17`). A key bypasses Entra, carries no user, and cannot be object-scoped

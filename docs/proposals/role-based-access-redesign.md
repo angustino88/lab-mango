@@ -2,7 +2,7 @@
 
 - Tier: T2 (authorization, public API contract, cross-feature).
 - Status: **Decided (2026-11-20) and implemented** on branch `claude/gracious-cray-omxgvw`; needs review and
-  human approval before merge. D4 (API keys) stays open.
+  human approval before merge.
 - Revisits: [user roles and URS sync](user-roles-and-urs-sync.md), "Alternative role models" (2026-11-11: keep
   model A). This design keeps model A's three roles and adds the permission layer of model C, defined in code
   instead of in the database.
@@ -16,7 +16,7 @@
 | D1 | Umbrella term for "Lab Coordinator or Lab Administrator" | **Lab operator**: a person whose role grants `lab_operations.manage`. "Staff" is not used (it means Django `is_staff`, admin-site access). |
 | D2 | Role display names | **Lab Administrator** (`admin`), **Lab Coordinator** (`coord`), **Lab Member** (`user`). Stored values unchanged. |
 | D3 | Reference-data writes | **Labs permissions only.** The Django model-permission fallback is removed; a reference resource without a write rule is read-only. |
-| D4 | API keys | **Open.** Behavior unchanged: keys pass the policies composed with `HasAPIKeyAccess`, as before. Proposal: read-only scope by default and off in production (closes R4). |
+| D4 | API keys | **Read-only by default and off in production** (closes R4, M11). `HasAPIKeyAccess` allows reads only unless `API_KEY_WRITE_ACCESS_ENABLED` (default `False`); `config/settings/production.py` defaults `API_KEY_ACCESS_ENABLED` to `False` and fixes `API_KEY_WRITE_ACCESS_ENABLED = False`. Keys are for API testing only. |
 | D5 | Administrator-only rules | **Kept as they are**, now visible in the matrix. |
 | - | Remove the old role API | Done: `IsLab*` classes, `LABS_*_ACCESS`, `has_labs_role`, `users_holding_labs_role`, `RolePermission`, `_is_lab_staff` are gone. |
 
@@ -29,9 +29,9 @@
 | F3 | The leaderboard re-ran DRF permission classes to ask "coordinator or admin?" (`_is_lab_staff`). | `assessment.read_any`. |
 | F4 | Inconsistent names: "staff", "member" vs "user", the `IsLabCoordinatorOnly` alias, `IsLabAdmin` vs `IsLabAdminReadWrite`. | One vocabulary: roles (D2), permissions (`area.action`), policies named after the area (`FINANCE_ACCESS`). |
 | F5 | Three authorization systems: Labs roles, Django model permissions, `is_staff`. | Django model permissions removed from reference data (D3); `is_staff` only opens Django admin. |
-| F6 | API keys pass every Labs policy and are on by default. | Unchanged; open as D4. |
+| F6 | API keys pass every Labs policy and are on by default. | D4: read-only by default; off in production. |
 | F7 | The frontend received role codes only. | `GET /api/users/me` adds `effective_permissions.labs`. |
-| F8 | Agents endpoints let every Labs role (Lab Members included) **read** agents, unlike the rest of the matrix. | Kept (no access change without a decision) as `agent.read` granted to Lab Members. **Review:** move `agent.read` to Lab Coordinator if members should not see agents. |
+| F8 | Agents endpoints let every Labs role (Lab Members included) **read** agents, unlike the rest of the matrix. | **Restricted (owner decision 2026-11-20):** reads and writes need `agent.manage` (lab operators). Lab Members get 403. |
 
 ## 3. Model
 
@@ -51,16 +51,16 @@ URS group ──(labs_role, Django admin)──▶ Role ──(ROLE_PERMISSIONS,
 Other apps import only `core.users.public`: `LabsPermission`, `LabsAccessPolicy`, `has_permission`,
 `require_permission`, `users_with_permission`, `is_lab_operator`, `effective_permissions`. Roles are not exported.
 
-## 4. Permissions (20)
+## 4. Permissions (19)
 
-The generated [access matrix](../architecture/access-matrix.md) is authoritative. Lab Member holds 5, Lab
+The generated [access matrix](../architecture/access-matrix.md) is authoritative. Lab Member holds 4, Lab
 Coordinator adds 9, Lab Administrator adds 6.
 
 Change from the proposal draft: `resource.manage`, `downtime.manage` and `monitoring.read` became one permission,
 `lab_operations.manage`, because every Labs operations endpoint inherits one policy from the Labs base views and
 the same people hold all three. Splitting it later is mechanical: add the permission, give the feature's base
-view its own policy, grant it in `ROLE_PERMISSIONS`. `agent.read`, `agent.manage` and `reference_data.import`
-were added to name rules the draft had missed.
+view its own policy, grant it in `ROLE_PERMISSIONS`. `agent.manage` and `reference_data.import` were added to
+name rules the draft had missed (`agent.read` was merged into `agent.manage` when agents were restricted, F8).
 
 ## 5. Rules
 
@@ -99,5 +99,5 @@ were added to name rules the draft had missed.
 
 ## 8. Not in scope
 
-API key scoping (D4), per-room or per-department scoping (each department has its own backend),
+Per-key API key scopes (one switch for all keys is enough while keys are for testing only), per-room or per-department scoping (each department has its own backend),
 database-editable permission bundles, URS group sync.

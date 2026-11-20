@@ -8,7 +8,8 @@ vocabulary and the lookup, then reuse the pieces here:
 * ``CapabilityPermission``: a DRF permission that gates a request on one named capability for reads
   and one for writes. Applications map roles to capabilities; endpoints never name roles.
 * ``is_owner``: object-level ownership check against a user-stamped field.
-* ``HasAPIKeyAccess``: API-key access that can be switched off with ``API_KEY_ACCESS_ENABLED``.
+* ``HasAPIKeyAccess``: API-key access: read-only unless ``API_KEY_WRITE_ACCESS_ENABLED``, and switched off
+  entirely with ``API_KEY_ACCESS_ENABLED``.
 
 Authorization is deny-by-default: unauthenticated callers are always rejected, and a method class
 without a required capability is denied. Object-level rules are enforced in the application layer,
@@ -100,22 +101,35 @@ class CapabilityPermission(BasePermission):
 
 
 def api_key_access_enabled() -> bool:
-    """True unless ``settings.API_KEY_ACCESS_ENABLED`` is set to False (default: enabled)."""
+    """True unless ``settings.API_KEY_ACCESS_ENABLED`` is False. Production defaults to False."""
     return bool(getattr(settings, "API_KEY_ACCESS_ENABLED", True))
 
 
-class HasAPIKeyAccess(HasAPIKey):
-    """A valid API key grants access only while API-key access is enabled.
+def api_key_writes_enabled() -> bool:
+    """True only when ``settings.API_KEY_WRITE_ACCESS_ENABLED`` is True (default: keys are read-only)."""
+    return bool(getattr(settings, "API_KEY_WRITE_ACCESS_ENABLED", False))
 
-    Use this instead of ``rest_framework_api_key.permissions.HasAPIKey`` so one setting turns every
-    API-key path on or off.
+
+def _api_key_allows(request: Request) -> bool:
+    if not api_key_access_enabled():
+        return False
+    return request.method in SAFE_METHODS or api_key_writes_enabled()
+
+
+class HasAPIKeyAccess(HasAPIKey):
+    """A valid API key grants access only while API-key access is enabled, and reads only by default.
+
+    A key has no user, so ownership, approval and audit rules cannot apply to it: writes need
+    ``API_KEY_WRITE_ACCESS_ENABLED`` (test environments only). Use this instead of
+    ``rest_framework_api_key.permissions.HasAPIKey`` so the settings govern every API-key path
+    (owner decisions M11 and D4, docs/proposals/role-based-access-redesign.md).
     """
 
     def has_permission(self, request: Request, view: APIView) -> bool:
-        return api_key_access_enabled() and super().has_permission(request, view)
+        return _api_key_allows(request) and super().has_permission(request, view)
 
     def has_object_permission(self, request: Request, view: APIView, obj: Any) -> bool:
-        return api_key_access_enabled() and super().has_object_permission(request, view, obj)
+        return _api_key_allows(request) and super().has_object_permission(request, view, obj)
 
 
 def is_owner(user: Any, obj: Any, *, owner_field: str = "creator_id") -> bool:
@@ -132,6 +146,7 @@ __all__ = [
     "PermissionClasses",
     "RoleHierarchy",
     "api_key_access_enabled",
+    "api_key_writes_enabled",
     "is_authenticated",
     "is_owner",
 ]

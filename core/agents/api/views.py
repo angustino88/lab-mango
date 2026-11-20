@@ -115,9 +115,8 @@ def _error_response(status_code: int, code: str, message: str, request: Request,
     )
 
 
-# Agents: every Labs role reads (kept from the previous policy; see role-based-access-redesign.md, F8);
-# registering, granting, revoking and decommissioning need agent.manage.
-AGENT_ACCESS = LabsAccessPolicy.of("AgentAccess", read=LabsPermission.AGENT_READ, write=LabsPermission.AGENT_MANAGE)
+# Agents: lab operators only (agent.manage), reads included (owner decision 2026-11-20, role-based-access-redesign.md F8).
+AGENT_ACCESS = LabsAccessPolicy.of("AgentAccess", read=LabsPermission.AGENT_MANAGE, write=LabsPermission.AGENT_MANAGE)
 
 
 class AgentListCreateAPIView(APIView):

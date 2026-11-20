@@ -13,8 +13,9 @@ base views or sets one of the policies below. ``core/labs/tests/test_access_poli
 * ``ORGANIZATION_ACCESS``: departments and groups lookups every Labs role reads.
 * ``WORKBOOK_IMPORT_ACCESS``: the data workbook import (Lab Administrators).
 
-API keys (``HasAPIKeyAccess``) keep access to the policies composed with it while ``API_KEY_ACCESS_ENABLED`` is
-on (the default). Users without a Labs role get nothing.
+API keys (``HasAPIKeyAccess``) read through the policies composed with it while ``API_KEY_ACCESS_ENABLED`` is on
+(off in production); they write only with ``API_KEY_WRITE_ACCESS_ENABLED`` (decision D4). Users without a Labs
+role get nothing.
 """
 
 from typing import Any

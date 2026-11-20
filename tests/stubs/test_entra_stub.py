@@ -31,7 +31,7 @@ def test_bound_persona_logs_in_and_gets_an_entra_session(stub_env):
     assert response.status_code == 200
     assert response.json()["data"]["username"] == "stub.alice"
     token = response.json()["data"]["access"]
-    assert APIClient().get("/api/agents", HTTP_AUTHORIZATION=f"Bearer {token}").status_code == 200
+    assert APIClient().get("/api/users/me", HTTP_AUTHORIZATION=f"Bearer {token}").status_code == 200
 
 
 @pytest.mark.parametrize(

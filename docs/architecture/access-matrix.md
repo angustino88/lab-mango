@@ -13,7 +13,6 @@ marked below (higher roles hold everything lower roles hold). Superusers hold ev
 | `leaderboard.read` | Read the leaderboard, bench and user profiles and usage, and one's own assessment | yes | yes | yes |
 | `bench_booking.manage_own` | Create, change and cancel one's own bench bookings; read the bench picker and lab projects for booking | yes | yes | yes |
 | `organization.read` | Read the organization lookups (departments, groups) other screens use | yes | yes | yes |
-| `agent.read` | Read the registered agents and their grants | yes | yes | yes |
 | `lab_operations.manage` | Read and manage lab resources and operations: rooms, stations, benches, equipment, licenses, downtime, monitoring, telemetry, resource mappings, resource audit, lab sessions and analytics |  | yes | yes |
 | `finance.manage` | Read and manage procurement, expenses and finance reports |  | yes | yes |
 | `bench_booking.manage_any` | Read and change everyone's bench bookings |  | yes | yes |
@@ -21,7 +20,7 @@ marked below (higher roles hold everything lower roles hold). Superusers hold ev
 | `bench_booking.book_during_downtime` | Book benches during downtime windows that stay open to lab operators |  | yes | yes |
 | `assessment.read_any` | Read the KPI assessment of any user or bench |  | yes | yes |
 | `reference_data.import` | Add lab reference data: lab projects and bench, location and license catalogs |  | yes | yes |
-| `agent.manage` | Register, grant, revoke and decommission agents |  | yes | yes |
+| `agent.manage` | Read, register, grant, revoke and decommission agents |  | yes | yes |
 | `support.handle` | Handle support tickets as an agent |  | yes | yes |
 | `equipment_reference.manage` | Add equipment reference data: catalogs and the lookups equipment points at (OD12) |  |  | yes |
 | `license_check.manage` | Change which license checks agents run |  |  | yes |

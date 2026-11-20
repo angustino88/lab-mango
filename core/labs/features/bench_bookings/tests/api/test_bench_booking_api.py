@@ -56,7 +56,19 @@ class TestAuthentication:
         )
         assert response.status_code in (401, 403)
 
-    def test_api_key_alone_is_sufficient(self, bench, project, future_window):
+    def test_api_key_alone_is_refused_for_writes_by_default(self, bench, project, future_window):
+        """API keys are read-only unless API_KEY_WRITE_ACCESS_ENABLED (owner decision D4)."""
+        starts_at, ends_at = future_window
+        with patch(_PATCH_APIKEY, return_value=True):
+            response = APIClient().post(
+                URL,
+                {"bench_id": bench.pk, "starts_at": starts_at.isoformat(), "ends_at": ends_at.isoformat()},
+                format="json",
+            )
+        assert response.status_code == 401
+
+    def test_api_key_alone_is_sufficient_when_writes_are_enabled(self, settings, bench, project, future_window):
+        settings.API_KEY_WRITE_ACCESS_ENABLED = True
         starts_at, ends_at = future_window
         with patch(_PATCH_APIKEY, return_value=True):
             response = APIClient().post(

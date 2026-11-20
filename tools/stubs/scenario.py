@@ -255,7 +255,7 @@ def scenario_operator_authz(ctx: Context, report: Report) -> None:
     report.expect("carol (coord) lists agents", ctx.as_("carol", "GET", "/api/agents"), {200})
     report.expect("adam (admin) lists agents", ctx.as_("adam", "GET", "/api/agents"), {200})
     # IsLabCoordinator: any Labs role may read; only coordinators and admins may write.
-    report.expect("alice (user) may read agents", ctx.as_("alice", "GET", "/api/agents"), {200})
+    report.expect("alice (user) cannot read agents", ctx.as_("alice", "GET", "/api/agents"), {403})
     pc1 = ctx.agent("pc-1")
     grant = {"equipment_uid": pc1.equipment_uid, "ttl_minutes": 5}
     report.expect(

@@ -6,7 +6,13 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.test import APIRequestFactory
 
-from core.common.api.permissions import CapabilityPermission, RoleHierarchy, is_authenticated, is_owner
+from core.common.api.permissions import (
+    CapabilityPermission,
+    HasAPIKeyAccess,
+    RoleHierarchy,
+    is_authenticated,
+    is_owner,
+)
 
 _factory = APIRequestFactory()
 
@@ -125,3 +131,39 @@ class TestCapabilityPermission:
 
         with pytest.raises(NotImplementedError):
             policy().has_permission(_request("POST", _user()), view=None)
+
+
+class TestHasAPIKeyAccess:
+    """API keys: read-only unless writes are enabled, and off entirely with the main switch (D4, M11)."""
+
+    @pytest.fixture(autouse=True)
+    def _valid_key(self, monkeypatch):
+        monkeypatch.setattr("rest_framework_api_key.permissions.HasAPIKey.has_permission", lambda *args: True)
+
+    @pytest.mark.parametrize("method", ["GET", "HEAD", "OPTIONS"])
+    def test_reads_are_allowed(self, settings, method):
+        settings.API_KEY_ACCESS_ENABLED = True
+        assert HasAPIKeyAccess().has_permission(_request(method, AnonymousUser()), view=None)
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "PATCH", "DELETE"])
+    def test_writes_are_refused_by_default(self, settings, method):
+        settings.API_KEY_ACCESS_ENABLED = True
+        assert not HasAPIKeyAccess().has_permission(_request(method, AnonymousUser()), view=None)
+
+    def test_writes_need_the_explicit_setting(self, settings):
+        settings.API_KEY_ACCESS_ENABLED = True
+        settings.API_KEY_WRITE_ACCESS_ENABLED = True
+        assert HasAPIKeyAccess().has_permission(_request("POST", AnonymousUser()), view=None)
+
+    def test_the_main_switch_turns_every_key_path_off(self, settings):
+        settings.API_KEY_ACCESS_ENABLED = False
+        settings.API_KEY_WRITE_ACCESS_ENABLED = True
+        assert not HasAPIKeyAccess().has_permission(_request("GET", AnonymousUser()), view=None)
+
+
+def test_production_turns_api_keys_off_and_never_writes():
+    from pathlib import Path
+
+    source = (Path(__file__).resolve().parents[3] / "config" / "settings" / "production.py").read_text()
+    assert 'API_KEY_ACCESS_ENABLED = env.bool("API_KEY_ACCESS_ENABLED", default=False)' in source
+    assert "API_KEY_WRITE_ACCESS_ENABLED = False" in source

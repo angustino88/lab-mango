@@ -35,7 +35,6 @@ class LabsPermission(models.TextChoices):
         "Create, change and cancel one's own bench bookings; read the bench picker and lab projects for booking",
     )
     ORGANIZATION_READ = "organization.read", "Read the organization lookups (departments, groups) other screens use"
-    AGENT_READ = "agent.read", "Read the registered agents and their grants"
 
     # Lab Coordinator (lab operator)
     LAB_OPERATIONS_MANAGE = (
@@ -55,7 +54,7 @@ class LabsPermission(models.TextChoices):
         "reference_data.import",
         "Add lab reference data: lab projects and bench, location and license catalogs",
     )
-    AGENT_MANAGE = "agent.manage", "Register, grant, revoke and decommission agents"
+    AGENT_MANAGE = "agent.manage", "Read, register, grant, revoke and decommission agents"
     SUPPORT_HANDLE = "support.handle", "Handle support tickets as an agent"
 
     # Lab Administrator
@@ -79,7 +78,6 @@ ROLE_PERMISSIONS: dict[str, frozenset[LabsPermission]] = {
             _P.LEADERBOARD_READ,
             _P.BENCH_BOOKING_MANAGE_OWN,
             _P.ORGANIZATION_READ,
-            _P.AGENT_READ,
         }
     ),
     LabsRole.COORDINATOR: frozenset(
