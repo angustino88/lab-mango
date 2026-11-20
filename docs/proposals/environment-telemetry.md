@@ -529,6 +529,18 @@ retention); `channel_not_bound` (wrong source, disabled, no binding at `observed
 
 Gateway enrollment stays on `POST /api/agents`, `/enrollment-grants`, `/agent/enrollments`.
 
+**As built (slice 4, 2026-11-20).** Wire names follow the contract gate (`core/common/openapi/contract_rules.py`):
+requests name targets with flat pairs (`target_type`/`target_id`, `install_location_type`/`install_location_id`);
+responses use `install_location` and `scope` relations `{id, name, type}`, `measures: {target, started_at}`,
+Modbus `has_shared_bus` (stored as `serialize_requests`), and `q` for search. Gateways are keyed
+`equipment-<id>` (their equipment link, which agent authentication resolves) rather than the agent UID.
+A channel may only measure a target in the room its source is installed in. Endpoints under `/api/labs/telemetry/`:
+`metrics`; `device-profiles` (+`/{id}`, `/{id}/actions/approve`, admin only); `devices` (+`/{id}`,
+`/actions/claim`, `/actions/retire`); `gateways` (+`/{id}/actions/bind-scope`); `sources` (+`PATCH /{id}`,
+`/{id}/channels` GET/POST from profile, `/{id}/actions/bind-target`); `channels/{id}` (GET/PATCH,
+`/actions/bind-target`, `/actions/unbind`); `targets/{type}/{id}` (Telemetry tab overview). `request-scan` waits
+for the gateway API (slice 3).
+
 ### 7.4 Real-time push
 
 `ws/telemetry/{target_type}/{id}` (`rooms`, `stations`, `benches`, `equipment`) → Redis
@@ -758,10 +770,10 @@ Authorization (deny-by-default, object-scoped):
 | 1 | Configuration models + migrations (targets, metrics, profiles, devices, Modbus settings, channels, bindings); placement resolver via locations/benches/equipment public selectors; constraint and placement tests | **Implemented** (branch `claude/eloquent-franklin-6hbxgx`) |
 | 2 | Storage: partitioned `TelemetryReading`, `TelemetryLatest`, `TelemetryRollup`, health; partition/rollup/connectivity tasks; written migration plan | Next |
 | 3 | Gateway API: config, discovery, ingest | |
-| 4 | Operator configuration API (devices, channels, bindings, profiles + approval) + OpenAPI | |
+| 4 | Operator configuration API (devices, channels, bindings, profiles + approval) + OpenAPI | **Implemented** (§7.3 as built) |
 | 5 | Operator read API, scene API, `TelemetryThreshold`, WS routes | |
 | 6 | Gateway collector service (separate repository) | |
-| 7 | Frontend 3D dashboard and management screens (`angustino88/beauty`) | Needs push access |
+| 7 | Frontend: sensor configuration screens, then 3D dashboard (`angustino88/beauty`) | Configuration screens in progress |
 
 ---
 
@@ -970,7 +982,7 @@ PostgreSQL ≥ 15 (CI uses 16).
 | Q17 | v1 metrics | **Applied in slice 1:** `temperature_c`, `humidity_percent`, `power_w` |
 | Q18 | Unlocated bench/equipment: reject readings, or allow a fallback room? | **Applied in slice 1:** reject (placement resolver returns nothing) |
 | Q19 | Room views include everything inside by default? | Yes |
-| Q20 | Who may approve device profiles? | Lab staff with a dedicated permission |
+| Q20 | Who may approve device profiles? | **Decided:** lab admins (`admin` role); configuration by coordinators and admins (`LABS_STAFF_ACCESS`) |
 | Q21 | Default thresholds: copy today's frontend values (temperature 30/50 °C, humidity 65/75 %, power 80/95 % of capacity)? | Yes, then tune per room |
 | Q22 | Push access to `angustino88/beauty` for the frontend slice, or will the frontend team implement it from §7.5? | Owner decides |
 

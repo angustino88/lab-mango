@@ -6,7 +6,7 @@ from core.labs.features.telemetry import public
 
 
 def test_public_exports_are_explicit():
-    assert set(public.__all__) == {"Placement", "resolve_placement"}
+    assert set(public.__all__) == {"Placement", "TargetRef", "resolve_placement"}
     for name in public.__all__:
         assert hasattr(public, name)
 

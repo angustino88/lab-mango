@@ -32973,6 +32973,1832 @@
         "summary": "Get Stations Status Summary"
       }
     },
+    "/api/labs/telemetry/channels/{channel_id}": {
+      "get": {
+        "operationId": "labs_telemetry_channels_retrieve_by_channel_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "channel_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryChannelDetailSerializersChannelDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Telemetry Channels by Channel ID"
+      },
+      "patch": {
+        "operationId": "labs_telemetry_channels_partial_update_by_channel_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "channel_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedChannelUpdate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedChannelUpdate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedChannelUpdate"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryChannelUpdateSerializersChannelDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Telemetry Channels by Channel ID"
+      }
+    },
+    "/api/labs/telemetry/channels/{channel_id}/actions/bind-target": {
+      "post": {
+        "operationId": "labs_telemetry_channels_actions_bind_target_create_by_channel_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "channel_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindTarget"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BindTarget"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BindTarget"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryChannelBindTargetSerializersChannelDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Bind Target Telemetry Channels by Channel ID"
+      }
+    },
+    "/api/labs/telemetry/channels/{channel_id}/actions/unbind": {
+      "post": {
+        "operationId": "labs_telemetry_channels_actions_unbind_create_by_channel_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "channel_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryChannelUnbindSerializersChannelDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Unbind Telemetry Channels by Channel ID"
+      }
+    },
+    "/api/labs/telemetry/device-profiles": {
+      "get": {
+        "operationId": "labs_telemetry_device_profiles_retrieve",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "protocol",
+            "schema": {
+              "enum": [
+                "modbus"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `modbus` - Modbus"
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Free-text search in key, manufacturer and model."
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "enum": [
+                "draft",
+                "approved"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `draft` - Draft\n* `approved` - Approved"
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryDeviceProfileListSerializersDeviceProfilePaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Telemetry Device Profiles"
+      },
+      "post": {
+        "operationId": "labs_telemetry_device_profiles_create",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceProfileCreate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceProfileCreate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceProfileCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryDeviceProfileCreateSerializersDeviceProfileDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Telemetry Device Profiles"
+      }
+    },
+    "/api/labs/telemetry/device-profiles/{profile_id}": {
+      "get": {
+        "operationId": "labs_telemetry_device_profiles_retrieve_by_profile_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryDeviceProfileDetailSerializersDeviceProfileDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Telemetry Device Profiles by Profile ID"
+      }
+    },
+    "/api/labs/telemetry/device-profiles/{profile_id}/actions/approve": {
+      "post": {
+        "operationId": "labs_telemetry_device_profiles_actions_approve_create_by_profile_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryDeviceProfileApproveSerializersDeviceProfileDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Approve Telemetry Device Profiles by Profile ID"
+      }
+    },
+    "/api/labs/telemetry/devices": {
+      "get": {
+        "operationId": "labs_telemetry_devices_retrieve",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "schema": {
+              "enum": [
+                "room_host",
+                "station_pc",
+                "equipment_agent",
+                "modbus_tcp"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `room_host` - Room gateway\n* `station_pc` - Station gateway\n* `equipment_agent` - Equipment self-reporting agent\n* `modbus_tcp` - Modbus TCP endpoint"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Free-text search: UID, model, asset, IP address."
+          },
+          {
+            "in": "query",
+            "name": "role",
+            "schema": {
+              "enum": [
+                "gateway",
+                "source"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `gateway` - Gateway\n* `source` - Source"
+          },
+          {
+            "in": "query",
+            "name": "room_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Installed in, or covering, this room."
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "enum": [
+                "discovered",
+                "claimed",
+                "retired"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `discovered` - Discovered\n* `claimed` - Claimed\n* `retired` - Retired"
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryDeviceListSerializersDevicePaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Telemetry Devices"
+      }
+    },
+    "/api/labs/telemetry/devices/{device_id}": {
+      "get": {
+        "operationId": "labs_telemetry_devices_retrieve_by_device_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryDeviceDetailSerializersDeviceDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Telemetry Devices by Device ID"
+      }
+    },
+    "/api/labs/telemetry/devices/{device_id}/actions/claim": {
+      "post": {
+        "operationId": "labs_telemetry_devices_actions_claim_create_by_device_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceClaim"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceClaim"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceClaim"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryDeviceClaimSerializersDeviceDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Claim Telemetry Devices by Device ID"
+      }
+    },
+    "/api/labs/telemetry/devices/{device_id}/actions/retire": {
+      "post": {
+        "operationId": "labs_telemetry_devices_actions_retire_create_by_device_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryDeviceRetireSerializersDeviceDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Retire Telemetry Devices by Device ID"
+      }
+    },
+    "/api/labs/telemetry/gateways": {
+      "post": {
+        "operationId": "labs_telemetry_gateways_create",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GatewayCreate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/GatewayCreate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/GatewayCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryGatewayCreateSerializersDeviceDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Telemetry Gateways"
+      }
+    },
+    "/api/labs/telemetry/gateways/{device_id}/actions/bind-scope": {
+      "post": {
+        "operationId": "labs_telemetry_gateways_actions_bind_scope_create_by_device_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindTarget"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BindTarget"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BindTarget"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryGatewayBindScopeSerializersScopeBindingDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Bind Scope Telemetry Gateways by Device ID"
+      }
+    },
+    "/api/labs/telemetry/metrics": {
+      "get": {
+        "operationId": "labs_telemetry_metrics_retrieve",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryMetricListSerializersMetricPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Telemetry Metrics"
+      }
+    },
+    "/api/labs/telemetry/sources": {
+      "post": {
+        "operationId": "labs_telemetry_sources_create",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceCreate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceCreate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetrySourceCreateSerializersDeviceDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Telemetry Sources"
+      }
+    },
+    "/api/labs/telemetry/sources/{device_id}": {
+      "patch": {
+        "operationId": "labs_telemetry_sources_partial_update_by_device_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedSourceUpdate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedSourceUpdate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedSourceUpdate"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetrySourceUpdateSerializersDeviceDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Telemetry Sources by Device ID"
+      }
+    },
+    "/api/labs/telemetry/sources/{device_id}/actions/bind-target": {
+      "post": {
+        "operationId": "labs_telemetry_sources_actions_bind_target_create_by_device_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindTarget"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BindTarget"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BindTarget"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetrySourceBindTargetSerializersDeviceDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Bind Target Telemetry Sources by Device ID"
+      }
+    },
+    "/api/labs/telemetry/sources/{device_id}/channels": {
+      "get": {
+        "operationId": "labs_telemetry_sources_channels_retrieve_by_device_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetrySourceChannelListSerializersChannelPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Telemetry Sources Channels by Device ID"
+      },
+      "post": {
+        "operationId": "labs_telemetry_sources_channels_create_by_device_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChannelsFromProfile"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ChannelsFromProfile"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ChannelsFromProfile"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetrySourceChannelsFromProfileSerializersDeviceDetailDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Telemetry Sources Channels by Device ID"
+      }
+    },
+    "/api/labs/telemetry/targets/{target_type}/{resource_id}": {
+      "get": {
+        "operationId": "labs_telemetry_targets_retrieve_by_target_type_resource_id",
+        "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "target_type",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Telemetry"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryTargetOverviewSerializersTargetOverviewDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Telemetry Targets by Target Type Resource ID"
+      }
+    },
     "/api/labs/workbook-imports/actions/apply": {
       "post": {
         "operationId": "labs_workbook_imports_actions_apply_create",
@@ -44123,6 +45949,27 @@
         "type": "string",
         "description": "* `one_time` - One-time\n* `monthly` - Monthly\n* `quarterly` - Quarterly\n* `annual` - Annual"
       },
+      "BindTarget": {
+        "type": "object",
+        "properties": {
+          "target_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstallLocationTypeEnum"
+              }
+            ],
+            "description": "Room, station, bench or equipment.\n\n* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment"
+          },
+          "target_id": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "target_id",
+          "target_type"
+        ]
+      },
       "BlankEnum": {
         "enum": [
           ""
@@ -44815,6 +46662,146 @@
           "mode"
         ],
         "x-protocol-spec": "docs/agent-platform/routing-sync.md"
+      },
+      "Channel": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "label": {
+            "type": "string",
+            "readOnly": true
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "metric": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Relation `{id, name}`; `id` is the metric key.",
+            "readOnly": true
+          },
+          "unit": {
+            "type": "string",
+            "readOnly": true
+          },
+          "is_enabled": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "unit_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Modbus unit ID (bus address).",
+            "readOnly": true
+          },
+          "profile": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "measures": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryChannelMeasures"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "field_device": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "field_device",
+          "id",
+          "is_enabled",
+          "label",
+          "measures",
+          "metric",
+          "profile",
+          "source",
+          "unit",
+          "unit_id",
+          "updated_at"
+        ]
+      },
+      "ChannelsFromProfile": {
+        "type": "object",
+        "properties": {
+          "unit_id": {
+            "type": "integer",
+            "maximum": 247,
+            "minimum": 1,
+            "description": "Modbus unit ID (bus address)."
+          },
+          "profile_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Default: all profile metrics."
+          },
+          "field_device_equipment_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "default": "",
+            "maxLength": 120
+          },
+          "target_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstallLocationTypeEnum"
+              }
+            ],
+            "description": "What the new channels measure.\n\n* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment"
+          },
+          "target_id": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "profile_id",
+          "unit_id"
+        ]
       },
       "Choice": {
         "type": "object",
@@ -46588,6 +48575,172 @@
           "pagination"
         ]
       },
+      "Device": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "device_uid": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Source: normalized MAC or serial. Gateway: its agent_uid."
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "readOnly": true
+          },
+          "model": {
+            "type": "string",
+            "readOnly": true
+          },
+          "equipment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "install_location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryTarget"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "room": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryTarget"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "modbus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryModbusSettings"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "channel_count": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "config_version": {
+            "type": "integer",
+            "readOnly": true,
+            "description": "Gateways: bumped on any change to its config."
+          },
+          "config_version_applied": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Gateways: last config version the gateway reported using."
+          },
+          "reported_by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "last_seen_address": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Informational address from the latest discovery report."
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "channel_count",
+          "config_version",
+          "config_version_applied",
+          "created_at",
+          "device_uid",
+          "equipment",
+          "first_seen_at",
+          "id",
+          "install_location",
+          "kind",
+          "last_seen_address",
+          "last_seen_at",
+          "manufacturer",
+          "modbus",
+          "model",
+          "reported_by",
+          "role",
+          "room",
+          "scope",
+          "state",
+          "updated_at"
+        ]
+      },
       "DeviceConnection": {
         "type": "object",
         "properties": {
@@ -46996,6 +49149,180 @@
           "data"
         ]
       },
+      "DeviceDetail": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "device_uid": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Source: normalized MAC or serial. Gateway: its agent_uid."
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "readOnly": true
+          },
+          "model": {
+            "type": "string",
+            "readOnly": true
+          },
+          "equipment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "install_location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryTarget"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "room": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryTarget"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "modbus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryModbusSettings"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "channel_count": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "config_version": {
+            "type": "integer",
+            "readOnly": true,
+            "description": "Gateways: bumped on any change to its config."
+          },
+          "config_version_applied": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Gateways: last config version the gateway reported using."
+          },
+          "reported_by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "last_seen_address": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Informational address from the latest discovery report."
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TelemetryEmbeddedChannel"
+            },
+            "readOnly": true
+          }
+        },
+        "required": [
+          "channel_count",
+          "channels",
+          "config_version",
+          "config_version_applied",
+          "created_at",
+          "device_uid",
+          "equipment",
+          "first_seen_at",
+          "id",
+          "install_location",
+          "kind",
+          "last_seen_address",
+          "last_seen_at",
+          "manufacturer",
+          "modbus",
+          "model",
+          "reported_by",
+          "role",
+          "room",
+          "scope",
+          "state",
+          "updated_at"
+        ]
+      },
       "DeviceObservation": {
         "type": "object",
         "properties": {
@@ -47078,6 +49405,170 @@
           "sequence"
         ],
         "additionalProperties": false
+      },
+      "DeviceProfile": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "key": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Model code, e.g. chint_ddsu666.",
+            "pattern": "^[-a-zA-Z0-9_]+$"
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true,
+            "default": 1
+          },
+          "reference": {
+            "type": "string",
+            "readOnly": true,
+            "description": "`key@version`, recorded on every reading."
+          },
+          "protocol": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "readOnly": true
+          },
+          "model": {
+            "type": "string",
+            "readOnly": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "read_map": {
+            "readOnly": true,
+            "description": "Per metric key, protocol-specific read instructions (validated per protocol)."
+          },
+          "comm_defaults": {
+            "readOnly": true,
+            "description": "Informational defaults, e.g. serial settings from the manual."
+          },
+          "notes": {
+            "type": "string",
+            "readOnly": true
+          },
+          "approved_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "channel_count": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "approved_at",
+          "channel_count",
+          "comm_defaults",
+          "created_at",
+          "created_by",
+          "id",
+          "key",
+          "manufacturer",
+          "model",
+          "notes",
+          "protocol",
+          "read_map",
+          "reference",
+          "status",
+          "updated_at",
+          "updated_by",
+          "version"
+        ]
+      },
+      "DeviceProfileCreate": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Model code; an existing key gets a new version.",
+            "maxLength": 64
+          },
+          "protocol": {
+            "$ref": "#/components/schemas/ProtocolEnum"
+          },
+          "manufacturer": {
+            "type": "string",
+            "default": "",
+            "maxLength": 120
+          },
+          "model": {
+            "type": "string",
+            "default": "",
+            "maxLength": 120
+          },
+          "read_map": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "description": "Per metric key, how to read it (protocol-specific)."
+          },
+          "comm_defaults": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "notes": {
+            "type": "string",
+            "default": "",
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "key",
+          "protocol",
+          "read_map"
+        ]
       },
       "DigestResponse": {
         "type": "object",
@@ -53791,6 +56282,40 @@
           "pending"
         ]
       },
+      "FramingEnum": {
+        "enum": [
+          "mbap",
+          "rtu_over_tcp"
+        ],
+        "type": "string",
+        "description": "* `mbap` - Modbus TCP (MBAP header)\n* `rtu_over_tcp` - Modbus RTU frames over a TCP socket"
+      },
+      "GatewayCreate": {
+        "type": "object",
+        "properties": {
+          "equipment_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The gateway PC's inventory asset."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/GatewayCreateKindEnum"
+          }
+        },
+        "required": [
+          "equipment_id",
+          "kind"
+        ]
+      },
+      "GatewayCreateKindEnum": {
+        "enum": [
+          "room_host",
+          "station_pc",
+          "equipment_agent"
+        ],
+        "type": "string",
+        "description": "* `room_host` - Room gateway\n* `station_pc` - Station gateway\n* `equipment_agent` - Equipment self-reporting agent"
+      },
       "GroupCatalogCreate": {
         "type": "object",
         "properties": {
@@ -54219,6 +56744,16 @@
           "updated",
           "warning_count"
         ]
+      },
+      "InstallLocationTypeEnum": {
+        "enum": [
+          "room",
+          "station",
+          "bench",
+          "equipment"
+        ],
+        "type": "string",
+        "description": "* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment"
       },
       "InventoryValues": {
         "type": "object",
@@ -59115,6 +61650,80 @@
         "type": "string",
         "description": "* `success` - Success\n* `error` - Error\n* `warning` - Warning\n* `info` - Info\n* `announcement` - Announcement"
       },
+      "Metric": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "key": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Stable code, e.g. temperature_c.",
+            "pattern": "^[-a-zA-Z0-9_]+$"
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "unit": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Display unit, e.g. °C, %, W."
+          },
+          "value_min": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,10}(?:\\.\\d{0,4})?$",
+            "readOnly": true,
+            "nullable": true
+          },
+          "value_max": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,10}(?:\\.\\d{0,4})?$",
+            "readOnly": true,
+            "nullable": true
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "aggregation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "combine": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "decimals": {
+            "type": "integer",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "aggregation",
+          "combine",
+          "decimals",
+          "key",
+          "kind",
+          "name",
+          "unit",
+          "value_max",
+          "value_min"
+        ]
+      },
       "ModeEnum": {
         "enum": [
           "delta",
@@ -59833,6 +62442,15 @@
           "previous"
         ]
       },
+      "ParityEnum": {
+        "enum": [
+          "N",
+          "E",
+          "O"
+        ],
+        "type": "string",
+        "description": "* `N` - None\n* `E` - Even\n* `O` - Odd"
+      },
       "PatchedAdminCannedResponseUpdate": {
         "type": "object",
         "properties": {
@@ -60303,6 +62921,22 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          }
+        }
+      },
+      "PatchedChannelUpdate": {
+        "type": "object",
+        "properties": {
+          "is_enabled": {
+            "type": "boolean"
+          },
+          "field_device_equipment_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 120
           }
         }
       },
@@ -60840,6 +63474,34 @@
           "utilities": {
             "type": "object",
             "additionalProperties": {}
+          }
+        }
+      },
+      "PatchedSourceUpdate": {
+        "type": "object",
+        "properties": {
+          "modbus": {
+            "$ref": "#/components/schemas/TelemetryModbusSettingsInput"
+          },
+          "manufacturer": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "install_location_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstallLocationTypeEnum"
+              }
+            ],
+            "description": "Move the device.\n\n* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment"
+          },
+          "install_location_id": {
+            "type": "integer",
+            "minimum": 1
           }
         }
       },
@@ -61543,6 +64205,13 @@
         "required": [
           "data"
         ]
+      },
+      "ProtocolEnum": {
+        "enum": [
+          "modbus"
+        ],
+        "type": "string",
+        "description": "* `modbus` - Modbus"
       },
       "Purchase": {
         "type": "object",
@@ -65379,6 +68048,14 @@
           "data"
         ]
       },
+      "SerialInterfaceEnum": {
+        "enum": [
+          "rs485",
+          "rs232"
+        ],
+        "type": "string",
+        "description": "* `` - None (native network device)\n* `rs485` - RS485\n* `rs232` - RS232"
+      },
       "SessionLogBooking": {
         "type": "object",
         "description": "The verified booking a session ran under: its schedule and project, to compare with the session.",
@@ -65728,6 +68405,113 @@
           "next_after"
         ],
         "x-protocol-spec": "docs/agent-platform/routing-sync.md"
+      },
+      "SourceClaim": {
+        "type": "object",
+        "properties": {
+          "modbus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryModbusSettingsInput"
+              }
+            ],
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "default": "",
+            "maxLength": 120
+          },
+          "model": {
+            "type": "string",
+            "default": "",
+            "maxLength": 120
+          },
+          "equipment_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The device's inventory asset."
+          },
+          "install_location_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstallLocationTypeEnum"
+              }
+            ],
+            "description": "Where the device physically is.\n\n* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment"
+          },
+          "install_location_id": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "equipment_id",
+          "install_location_id",
+          "install_location_type"
+        ]
+      },
+      "SourceCreate": {
+        "type": "object",
+        "properties": {
+          "modbus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryModbusSettingsInput"
+              }
+            ],
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "default": "",
+            "maxLength": 120
+          },
+          "model": {
+            "type": "string",
+            "default": "",
+            "maxLength": 120
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SourceCreateKindEnum"
+          },
+          "device_uid": {
+            "type": "string",
+            "description": "MAC address or serial number from the label.",
+            "maxLength": 64
+          },
+          "equipment_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The device's inventory asset."
+          },
+          "install_location_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstallLocationTypeEnum"
+              }
+            ],
+            "description": "Where the device physically is.\n\n* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment"
+          },
+          "install_location_id": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "device_uid",
+          "equipment_id",
+          "install_location_id",
+          "install_location_type",
+          "kind"
+        ]
+      },
+      "SourceCreateKindEnum": {
+        "enum": [
+          "modbus_tcp"
+        ],
+        "type": "string",
+        "description": "* `modbus_tcp` - Modbus TCP endpoint"
       },
       "SourceEnum": {
         "enum": [
@@ -68272,6 +71056,939 @@
           "pagination"
         ]
       },
+      "TelemetryChannelBindTargetSerializersChannelDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Channel"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryChannelDetailSerializersChannelDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Channel"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryChannelMeasures": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "$ref": "#/components/schemas/TelemetryTarget"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "started_at",
+          "target"
+        ]
+      },
+      "TelemetryChannelUnbindSerializersChannelDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Channel"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryChannelUpdateSerializersChannelDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Channel"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryDeviceClaimSerializersDeviceDetailDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceDetail"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryDeviceDetailSerializersDeviceDetailDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceDetail"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryDeviceListSerializersDevicePaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/TelemetryDeviceListSerializersDevicePaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Device"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "TelemetryDeviceListSerializersDevicePagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "TelemetryDeviceListSerializersDevicePaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/TelemetryDeviceListSerializersDevicePagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "TelemetryDeviceProfileApproveSerializersDeviceProfileDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceProfile"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryDeviceProfileCreateSerializersDeviceProfileDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceProfile"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryDeviceProfileDetailSerializersDeviceProfileDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceProfile"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryDeviceProfileListSerializersDeviceProfilePaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/TelemetryDeviceProfileListSerializersDeviceProfilePaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceProfile"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "TelemetryDeviceProfileListSerializersDeviceProfilePagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "TelemetryDeviceProfileListSerializersDeviceProfilePaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/TelemetryDeviceProfileListSerializersDeviceProfilePagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "TelemetryDeviceRetireSerializersDeviceDetailDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceDetail"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryEmbeddedChannel": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "label": {
+            "type": "string",
+            "readOnly": true
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "metric": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Relation `{id, name}`; `id` is the metric key.",
+            "readOnly": true
+          },
+          "unit": {
+            "type": "string",
+            "readOnly": true
+          },
+          "is_enabled": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "unit_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Modbus unit ID (bus address).",
+            "readOnly": true
+          },
+          "profile": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "measures": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryChannelMeasures"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "field_device": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "field_device",
+          "id",
+          "is_enabled",
+          "label",
+          "measures",
+          "metric",
+          "profile",
+          "source",
+          "unit",
+          "unit_id",
+          "updated_at"
+        ],
+        "x-embedded-resource": true
+      },
+      "TelemetryEmbeddedDevice": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "device_uid": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Source: normalized MAC or serial. Gateway: its agent_uid."
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "readOnly": true
+          },
+          "model": {
+            "type": "string",
+            "readOnly": true
+          },
+          "equipment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "install_location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryTarget"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "room": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryTarget"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "modbus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryModbusSettings"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "channel_count": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "config_version": {
+            "type": "integer",
+            "readOnly": true,
+            "description": "Gateways: bumped on any change to its config."
+          },
+          "config_version_applied": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Gateways: last config version the gateway reported using."
+          },
+          "reported_by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "last_seen_address": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Informational address from the latest discovery report."
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "channel_count",
+          "config_version",
+          "config_version_applied",
+          "created_at",
+          "device_uid",
+          "equipment",
+          "first_seen_at",
+          "id",
+          "install_location",
+          "kind",
+          "last_seen_address",
+          "last_seen_at",
+          "manufacturer",
+          "modbus",
+          "model",
+          "reported_by",
+          "role",
+          "room",
+          "scope",
+          "state",
+          "updated_at"
+        ],
+        "x-embedded-resource": true
+      },
+      "TelemetryGatewayBindScopeSerializersScopeBindingDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TelemetryScopeBinding"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryGatewayCreateSerializersDeviceDetailDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceDetail"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryMetricListSerializersMetricPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/TelemetryMetricListSerializersMetricPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Metric"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "TelemetryMetricListSerializersMetricPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "TelemetryMetricListSerializersMetricPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/TelemetryMetricListSerializersMetricPagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "TelemetryModbusSettings": {
+        "type": "object",
+        "properties": {
+          "network_host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer"
+          },
+          "framing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "serial_interface": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "baud_rate": {
+            "type": "integer",
+            "nullable": true
+          },
+          "parity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "data_bits": {
+            "type": "integer",
+            "nullable": true
+          },
+          "stop_bits": {
+            "type": "integer",
+            "nullable": true
+          },
+          "request_timeout_ms": {
+            "type": "integer"
+          },
+          "has_shared_bus": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "baud_rate",
+          "data_bits",
+          "framing",
+          "has_shared_bus",
+          "network_host",
+          "parity",
+          "port",
+          "request_timeout_ms",
+          "serial_interface",
+          "stop_bits"
+        ]
+      },
+      "TelemetryModbusSettingsInput": {
+        "type": "object",
+        "properties": {
+          "network_host": {
+            "type": "string",
+            "description": "IP address or host name.",
+            "maxLength": 253
+          },
+          "port": {
+            "type": "integer",
+            "maximum": 65535,
+            "minimum": 1,
+            "default": 502
+          },
+          "framing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FramingEnum"
+              }
+            ],
+            "default": "mbap"
+          },
+          "serial_interface": {
+            "default": "",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SerialInterfaceEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              }
+            ]
+          },
+          "baud_rate": {
+            "type": "integer",
+            "nullable": true
+          },
+          "parity": {
+            "default": "",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ParityEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              }
+            ]
+          },
+          "data_bits": {
+            "type": "integer",
+            "nullable": true
+          },
+          "stop_bits": {
+            "type": "integer",
+            "nullable": true
+          },
+          "request_timeout_ms": {
+            "type": "integer",
+            "default": 800
+          },
+          "has_shared_bus": {
+            "type": "boolean",
+            "default": true,
+            "description": "A half-duplex bus is behind the device: one request at a time."
+          }
+        },
+        "required": [
+          "network_host"
+        ]
+      },
+      "TelemetryScopeBinding": {
+        "type": "object",
+        "properties": {
+          "gateway_id": {
+            "type": "integer"
+          },
+          "target": {
+            "$ref": "#/components/schemas/TelemetryTarget"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "gateway_id",
+          "started_at",
+          "target"
+        ]
+      },
+      "TelemetrySourceBindTargetSerializersDeviceDetailDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceDetail"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetrySourceChannelListSerializersChannelPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/TelemetrySourceChannelListSerializersChannelPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Channel"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "TelemetrySourceChannelListSerializersChannelPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "TelemetrySourceChannelListSerializersChannelPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/TelemetrySourceChannelListSerializersChannelPagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "TelemetrySourceChannelsFromProfileSerializersDeviceDetailDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceDetail"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetrySourceCreateSerializersDeviceDetailDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceDetail"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetrySourceUpdateSerializersDeviceDetailDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceDetail"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TelemetryTarget": {
+        "type": "object",
+        "description": "REL-13 polymorphic relation to a room, station, bench or equipment item.",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/InstallLocationTypeEnum"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type"
+        ]
+      },
+      "TelemetryTargetOverview": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "$ref": "#/components/schemas/TelemetryTarget"
+          },
+          "installed_devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TelemetryEmbeddedDevice"
+            },
+            "description": "Devices installed at this target."
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TelemetryEmbeddedChannel"
+            },
+            "description": "Measurements currently about this target."
+          }
+        },
+        "required": [
+          "channels",
+          "installed_devices",
+          "target"
+        ]
+      },
+      "TelemetryTargetOverviewSerializersTargetOverviewDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TelemetryTargetOverview"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "TicketActivity": {
         "type": "object",
         "properties": {
@@ -70403,6 +74120,10 @@
     {
       "name": "Support Desk Administration",
       "description": "Support Desk Administration endpoints"
+    },
+    {
+      "name": "Telemetry",
+      "description": "Telemetry endpoints"
     },
     {
       "name": "User Authentication",

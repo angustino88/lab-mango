@@ -11,4 +11,12 @@ class Placement:
     station_id: int | None
 
 
-__all__ = ("Placement",)
+@dataclass(frozen=True, slots=True)
+class TargetRef:
+    """A room, station, bench or equipment item named by type and id (`{"type": "station", "id": 5}`)."""
+
+    type: str
+    id: int
+
+
+__all__ = ("Placement", "TargetRef")
