@@ -144,6 +144,7 @@ def test_public_module_exports_supported_queries_and_commands():
         "SyncComputingActivityInput",
         "sync_computing_activity",
         "active_bench_assignment_mapping_rows",
+        "active_bench_ids",
         "active_equipment_bench_assignment",
         "lock_active_equipment_bench_assignment",
         "equipment_mapping_rows",

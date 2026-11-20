@@ -54,6 +54,7 @@ def test_public_exports_supported_commands_and_queries():
         "bench_mapping_list",
         "bench_mapping_rows",
         "bench_mapping_summary",
+        "bench_station_ids",
         "create_bench",
         "delete_bench",
         "get_bench",
@@ -82,7 +83,7 @@ def test_public_exports_supported_commands_and_queries():
     }
     assert exported_from[".queries.selectors"] == {
         "bench_mapping_rows", "get_bench", "get_bench_for_mapping", "get_reference", "list_benches", "list_references", "reference_data",
-        "MAPPING_STATES", "bench_mapping_list", "bench_mapping_summary",
+        "MAPPING_STATES", "bench_mapping_list", "bench_mapping_summary", "bench_station_ids",
     }
 
 
@@ -101,7 +102,7 @@ def test_application_and_query_package_exports_are_explicit():
         "remove_favorite", "retire_reference", "save_reference", "update_bench",
     }
     assert set(_public_names(FEATURE_ROOT / "queries" / "__init__.py")) == {
-        "bench_mapping_rows", "get_bench", "get_bench_for_mapping", "get_reference", "list_bench_equipment", "list_benches", "list_references", "reference_data",
+        "bench_mapping_rows", "bench_station_ids", "get_bench", "get_bench_for_mapping", "get_reference", "list_bench_equipment", "list_benches", "list_references", "reference_data",
     }
     assert set(_public_names(FEATURE_ROOT / "application" / "services.py")) == {
         "add_favorite", "change_bench_lifecycle", "create_bench", "delete_bench", "place_bench", "remove_favorite",
@@ -109,7 +110,7 @@ def test_application_and_query_package_exports_are_explicit():
     }
     assert set(_public_names(FEATURE_ROOT / "queries" / "selectors.py")) == {
         "bench_mapping_rows", "get_bench", "get_bench_for_mapping", "get_reference", "list_bench_equipment", "list_bench_options", "list_benches", "list_references", "reference_data",
-        "MAPPING_STATES", "bench_mapping_list", "bench_mapping_summary", "list_booking_bench_choices",
+        "MAPPING_STATES", "bench_mapping_list", "bench_mapping_summary", "bench_station_ids", "list_booking_bench_choices",
     }
     assert set(_public_names(FEATURE_ROOT / "application" / "policies.py")) == {
         "BenchConflict", "validate_capacity", "validate_slot",

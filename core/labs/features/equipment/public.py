@@ -73,6 +73,7 @@ from .queries.device_matching import (
 )
 from .queries.equipment import (
     active_bench_assignment_mapping_rows,
+    active_bench_ids,
     active_equipment_bench_assignment,
     bench_assignment_subquery,
     bench_computers,
@@ -95,6 +96,7 @@ from .queries.summaries import (
 )
 
 __all__ = (
+    "active_bench_ids",
     "lock_monitoring_computing",
     "RegisterHardwareIdInput",
     "register_hardware_id",

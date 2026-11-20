@@ -15,6 +15,7 @@ from .rooms.queries import (
     get_room_for_mapping,
     list_room_slots,
     list_rooms,
+    live_room_ids,
     room_mapping_rows,
     room_observations,
     room_slot_mapping_rows,
@@ -45,6 +46,7 @@ from .stations.queries import (
     station_history,
     station_mapping_rows,
     station_reference_data,
+    station_room_ids,
     station_slot_mapping_rows,
 )
 from .stations.queries.summaries import get_station_status_summary
@@ -63,6 +65,7 @@ __all__ = (
     "get_room_for_mapping",
     "list_room_slots",
     "list_rooms",
+    "live_room_ids",
     "room_mapping_rows",
     "room_slot_mapping_rows",
     "record_room_observation",
@@ -88,6 +91,7 @@ __all__ = (
     "record_station_status",
     "station_history",
     "station_reference_data",
+    "station_room_ids",
     "update_station",
     "update_station_slot",
     "update_station_type",

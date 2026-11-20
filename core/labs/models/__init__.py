@@ -126,6 +126,17 @@ from .resource.location import (
 )
 from .routing import RoutingChange, RoutingEntity, SyncState
 from .session import SessionAccessType
+from .telemetry import (
+    ChannelTargetBinding,
+    DeviceProfile,
+    GatewayScopeBinding,
+    MetricDefinition,
+    ModbusChannelSettings,
+    ModbusSourceSettings,
+    TelemetryChannel,
+    TelemetryDevice,
+    TelemetryTarget,
+)
 
 __all__ = [
     "ActiveLaboratoryObservation",
@@ -250,4 +261,13 @@ __all__ = [
     "StorageQuotaMeasurement",
     "TechnicalUser",
     "VisitorVolumeObservation",
+    "ChannelTargetBinding",
+    "DeviceProfile",
+    "GatewayScopeBinding",
+    "MetricDefinition",
+    "ModbusChannelSettings",
+    "ModbusSourceSettings",
+    "TelemetryChannel",
+    "TelemetryDevice",
+    "TelemetryTarget",
 ]

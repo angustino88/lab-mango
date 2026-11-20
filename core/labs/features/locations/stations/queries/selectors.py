@@ -117,6 +117,16 @@ def get_station_type(*, type_id):
 
 
 __all__ = [
+    "station_room_ids",
     "get_station", "get_station_for_mapping", "get_station_type", "list_station_slots", "list_station_types", "list_stations",
     "station_history", "station_mapping_rows", "station_reference_data", "station_slot_mapping_rows",
 ]
+
+
+def station_room_ids(*, station_ids) -> dict[int, int]:
+    """Room of each live station placed in a live room, in one query (telemetry placement)."""
+    return dict(
+        Station.objects.filter(
+            pk__in=station_ids, room__isnull=False, room__deleted_at__isnull=True
+        ).values_list("pk", "room_id")
+    )

@@ -58,6 +58,7 @@ def room_observations(*, room_id):
 
 
 __all__ = [
+    "live_room_ids",
     "get_room",
     "get_room_for_mapping",
     "list_room_slots",
@@ -67,3 +68,8 @@ __all__ = [
     "room_slot_mapping_rows",
     "room_status_history",
 ]
+
+
+def live_room_ids(*, room_ids) -> set[int]:
+    """The given room ids that exist and are not soft-deleted, in one query (telemetry placement)."""
+    return set(Room.objects.filter(pk__in=room_ids).values_list("pk", flat=True))

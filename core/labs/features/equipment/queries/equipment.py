@@ -571,3 +571,19 @@ def lock_active_equipment_bench_assignment(*, equipment_id: int) -> ActiveEquipm
         equipment_id=assignment["equipment_id"],
         bench_id=assignment["bench_id"],
     )
+
+
+def active_bench_ids(*, equipment_ids) -> dict[int, int]:
+    """Bench of each live equipment item with an open assignment to a live bench, in one query.
+
+    Unassigned equipment is absent: it has no physical placement (telemetry rejects it).
+    """
+    return dict(
+        EquipmentAssignment.objects.filter(
+            equipment_id__in=equipment_ids,
+            unassigned_at__isnull=True,
+            bench__isnull=False,
+            bench__deleted_at__isnull=True,
+            equipment__deleted_at__isnull=True,
+        ).values_list("equipment_id", "bench_id")
+    )

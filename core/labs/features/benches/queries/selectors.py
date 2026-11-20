@@ -261,8 +261,21 @@ def _reference_model(model):
 
 
 __all__ = [
+    "bench_station_ids",
     "get_bench", "get_bench_for_mapping", "get_reference", "list_bench_equipment", "list_bench_options", "list_benches",
     "bench_mapping_rows", "bench_mapping_list", "bench_mapping_summary", "list_booking_bench_choices",
     "MAPPING_STATES",
     "list_references", "reference_data",
 ]
+
+
+def bench_station_ids(*, bench_ids) -> dict[int, int]:
+    """Station of each live bench that sits in a station slot of a live station, in one query.
+
+    Benches without a station slot are absent: they have no physical placement (telemetry rejects them).
+    """
+    return dict(
+        Bench.objects.filter(
+            pk__in=bench_ids, station_slot__isnull=False, station_slot__station__deleted_at__isnull=True
+        ).values_list("pk", "station_slot__station_id")
+    )

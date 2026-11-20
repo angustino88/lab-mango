@@ -598,6 +598,42 @@ paths:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1items~1draft
   /api/labs/purchases/{purchase_id}/transactions:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1transactions
+  /api/labs/telemetry/channels/{channel_id}:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1channels~1{channel_id}
+  /api/labs/telemetry/channels/{channel_id}/actions/bind-target:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1channels~1{channel_id}~1actions~1bind-target
+  /api/labs/telemetry/channels/{channel_id}/actions/unbind:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1channels~1{channel_id}~1actions~1unbind
+  /api/labs/telemetry/device-profiles:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1device-profiles
+  /api/labs/telemetry/device-profiles/{profile_id}:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1device-profiles~1{profile_id}
+  /api/labs/telemetry/device-profiles/{profile_id}/actions/approve:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1device-profiles~1{profile_id}~1actions~1approve
+  /api/labs/telemetry/devices:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1devices
+  /api/labs/telemetry/devices/{device_id}:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1devices~1{device_id}
+  /api/labs/telemetry/devices/{device_id}/actions/claim:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1devices~1{device_id}~1actions~1claim
+  /api/labs/telemetry/devices/{device_id}/actions/retire:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1devices~1{device_id}~1actions~1retire
+  /api/labs/telemetry/gateways:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1gateways
+  /api/labs/telemetry/gateways/{device_id}/actions/bind-scope:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1gateways~1{device_id}~1actions~1bind-scope
+  /api/labs/telemetry/metrics:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1metrics
+  /api/labs/telemetry/sources:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1sources
+  /api/labs/telemetry/sources/{device_id}:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1sources~1{device_id}
+  /api/labs/telemetry/sources/{device_id}/actions/bind-target:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1sources~1{device_id}~1actions~1bind-target
+  /api/labs/telemetry/sources/{device_id}/channels:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1sources~1{device_id}~1channels
+  /api/labs/telemetry/targets/{target_type}/{resource_id}:
+    $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1targets~1{target_type}~1{resource_id}
   /api/labs/workbook-imports/actions/apply:
     $ref: ./labs-workbook-import.yml#/paths/~1api~1labs~1workbook-imports~1actions~1apply
   /api/labs/workbook-imports/actions/check:
@@ -768,6 +804,8 @@ tags:
   description: Support Desk endpoints
 - name: Support Desk Administration
   description: Support Desk Administration endpoints
+- name: Telemetry
+  description: Telemetry endpoints
 - name: User Authentication
   description: User Authentication endpoints
 - name: User Groups
