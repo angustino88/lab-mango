@@ -169,6 +169,17 @@ Both models refer to resource targets with generic content-type/object-id associ
   - `labsess_access_type_matches_code`: `ad_hoc` has no booking code; `booked` and `unverified_booking` have one. `labsess_booking_only_when_booked`: only `booked` rows link a booking (null access type explicitly excluded). A `booked` row may lose its booking link when the booking is deleted.
   - Indexes `(bench, login_time)`, `(user, login_time)`, `(access_type, login_time)` serve the planned utilisation reports. Design: `core/labs/features/lab_sessions/docs/architecture.md` section 11.
 
+### Telemetry configuration (proposal `docs/proposals/environment-telemetry.md`, slice 1)
+
+**Models:** `TelemetryTarget`, `MetricDefinition`, `DeviceProfile`, `TelemetryDevice`, `ModbusSourceSettings`, `TelemetryChannel`, `ModbusChannelSettings`, `GatewayScopeBinding`, `ChannelTargetBinding`, in `core/labs/models/telemetry/` (owner: `core/labs/features/telemetry`). Migrations `0002_telemetry_configuration` (schema) and `0003_seed_telemetry_metrics` (seeds `temperature_c`, `humidity_percent`, `power_w`).
+
+- `TelemetryTarget` is the thing a reading is about: exactly one of `room`, `station`, `bench`, `equipment` (all `PROTECT`) matching `target_type` (`telemetry_target_type_matches_resource`), unique per resource. Placement (room, station) is resolved at read/ingest time through the owning features' public selectors; benches without a station slot, unassigned equipment and roomless stations are "not located".
+- `MetricDefinition` (PK `key`) holds unit and physical range; `telemetry_metric_range_ordered`, and counters must roll up as `delta` (`telemetry_metric_counter_uses_delta`). New metrics are rows, not schema.
+- `DeviceProfile` is versioned (`telemetry_profile_key_version_uniq`); approved versions need `approved_at`. The Modbus `read_map` shape is validated in `clean()` (pure function `validate_modbus_read_map`).
+- `TelemetryDevice` is a gateway or a source. `state` (`discovered` → `claimed` → `retired`) is registration only, separate from equipment lifecycle and connectivity. Checks: kind matches role; non-empty unique `device_uid`; claimed devices link an `Equipment` (one-to-one, `PROTECT`); claimed sources have `installed_at` (a target; decides which gateway reads it, never used for attribution); gateways have none; `config_version_applied <= config_version`.
+- `ModbusSourceSettings` (one-to-one, `CASCADE` with its device) is unique on `(network_host, port)`; serial fields are all set (bus converter) or all empty (native device). `ModbusChannelSettings` (one-to-one, `CASCADE` with its channel) copies `source`/`metric` so `(source, unit_id, metric)` is unique; `unit_id` 1-247. Copy equality and `channel.source.role = source` are application-only rules (cross-table).
+- `GatewayScopeBinding` and `ChannelTargetBinding` are half-open `[valid_from, valid_to)` histories with exclusion constraints (`btree_gist`): one scope per gateway, one `room_host` gateway per room, one target per channel at any instant. Kept as history (`PROTECT`).
+
 ### Agent identity and enrollment
 
 **Models:** `AgentIdentity`, `EnrollmentGrant`.

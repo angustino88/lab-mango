@@ -2,6 +2,7 @@
 
 from .selectors import (
     bench_mapping_rows,
+    bench_station_ids,
     get_bench,
     get_bench_for_mapping,
     get_reference,
@@ -13,6 +14,7 @@ from .selectors import (
 
 __all__ = [
     "bench_mapping_rows",
+    "bench_station_ids",
     "get_bench",
     "get_bench_for_mapping",
     "get_reference",
