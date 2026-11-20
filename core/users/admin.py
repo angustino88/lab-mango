@@ -202,7 +202,6 @@ class UserAdmin(auth_admin.UserAdmin):
                 ),
             },
         ),
-        (_("Legacy fields"), {"classes": ("collapse",), "fields": ("name", "first_name", "last_name", "password")}),
     )
     add_fieldsets = (
         (

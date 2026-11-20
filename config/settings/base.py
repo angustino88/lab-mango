@@ -283,17 +283,25 @@ BOOKING_APPROVAL_PA_API = env("BOOKING_APPROVAL_PA_API", default="")
 # Labs roles are mapped per URS group in Django admin (URSGroup.labs_role); see
 # core/users/access.py. Superusers are always treated as admin.
 # ------------------------------------------------------------------------------
+# Endpoint the sync POSTs to. Empty: the sync logs an error and changes nothing.
 URS_API_URL = env("URS_API_URL", default="https://rb-pandora-n1.bosch.com:15000/service/info")
+# Passed as ``verify=`` to requests. Off by default (insecure); turn on wherever the certificate is valid.
 URS_API_VERIFY_SSL = env.bool("URS_API_VERIFY_SSL", default=False)
 # Service token sent to the URS API. Empty by default: sync fails closed when unset.
 URS_ACCESS_TOKEN = env("URS_ACCESS_TOKEN", default="")
+# Request timeout in seconds, per group. A timeout marks that group Failed; other groups still sync.
 URS_API_TIMEOUT_S = env.int("URS_API_TIMEOUT_S", default=15)
 # URS is the source of truth and every sync applies all changes at once (owner decision 2026-11-12).
 # Optional safety check, off by default: when on, a group sync that removes every member, or more than
 # URS_SYNC_MAX_REMOVAL_RATIO of a group with at least URS_SYNC_BRAKE_MIN_MEMBERS members, is blocked
 # until an operator forces it in Django admin.
+# Master switch for the check above. Off: every sync applies all changes at once, and the admin hides the
+# "apply blocked removals" action because nothing can be blocked.
 URS_SYNC_SAFETY_BRAKE = env.bool("URS_SYNC_SAFETY_BRAKE", default=False)
+# Brake only: block a group when a sync would remove more than this share of its current members.
 URS_SYNC_MAX_REMOVAL_RATIO = env.float("URS_SYNC_MAX_REMOVAL_RATIO", default=0.5)
+# Brake only: the ratio check applies to groups with at least this many current members; smaller groups skip it.
+# A group whose URS member list comes back empty is always blocked while it still has members.
 URS_SYNC_BRAKE_MIN_MEMBERS = env.int("URS_SYNC_BRAKE_MIN_MEMBERS", default=10)
 
 # ADMIN

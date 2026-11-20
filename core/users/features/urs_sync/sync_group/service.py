@@ -86,6 +86,15 @@ def sync_urs_group(queryset: Iterable[URSGroup], *, force: bool = False) -> Sync
     """Fetch every URS group in ``queryset`` and apply the successfully fetched ones.
 
     ``force=True`` applies groups the safety check would block. Only operators may request it.
+
+    Flags that shape the result:
+    - ``URSGroup.active``: filtered by the caller (the scheduled task syncs active groups only; the admin
+      action syncs whatever was selected).
+    - ``User.is_urs_managed``: unmanaged accounts are never added or removed; they count as skipped.
+    - Superusers already in a group are never removed by the sync.
+    - ``settings.URS_SYNC_SAFETY_BRAKE`` (and ``force``): see ``_blocked_reason``.
+    - Usernames URS lists that have no account get a URS-managed stub account.
+    Every group ends as Applied, Failed or Blocked; the outcome is stored on the URS group for the admin.
     """
     report = SyncReport()
     urs_api_url: str = settings.URS_API_URL
@@ -261,6 +270,12 @@ def _apply(fetched: list[_FetchedGroup], failures: dict[int, str], *, report: Sy
 
 
 def _blocked_reason(existing: set[int], removals: set[int], usernames: frozenset[str]) -> str | None:
+    """Return why the safety brake blocks this group, or ``None`` to apply it.
+
+    Blocks when URS returns no members for a group that still has some, or when the group has at least
+    ``URS_SYNC_BRAKE_MIN_MEMBERS`` members and removals exceed ``URS_SYNC_MAX_REMOVAL_RATIO`` of them.
+    A blocked group changes nothing; other groups in the same run still apply.
+    """
     if not existing:
         return None
     if not usernames:
