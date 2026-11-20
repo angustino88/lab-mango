@@ -85,7 +85,6 @@ PERSONA_KPIS = (
     KpiDefinition(K.SLOT_ADHERENCE_RATE, "slot_adherence", target=0.95, near=0.80, weight=1),
     KpiDefinition(K.EARLY_RELEASE_RATE, "early_release_rate", target=0.80, near=0.50, weight=1),
     KpiDefinition(K.AD_HOC_SESSION_RATE, "ad_hoc_rate", target=0.20, near=0.40, weight=1, is_higher_better=False),
-    KpiDefinition(K.OFF_HOURS_USAGE_RATE, "late_rate", target=0.20, near=0.10, weight=1),
     KpiDefinition(K.WORKDAY_UTILIZATION_RATE, "usage_efficiency", target=0.50, near=0.25, weight=1),
 )
 BENCH_KPIS = (
@@ -155,8 +154,8 @@ def _development(kpi: str, v: float, row: dict[str, Any]) -> tuple[str, str]:
             "Reserve the bench before use, so availability stays predictable for the team.",
         ),
         K.OFF_HOURS_USAGE_RATE: (
-            f"Only {_pct(v)} of lab time was off-hours (20:00-06:00).",
-            "Off-hours work is rewarded: running long jobs in the evening or overnight raises this score.",
+            f"{_pct(v)} of lab time was off-hours (20:00-06:00).",
+            "Plan long runs within working hours where possible, or agree off-hours work with the lab coordinator.",
         ),
         K.WORKDAY_UTILIZATION_RATE: (
             f"Low lab presence: {_hours_per_weekday(v)} of active work per weekday.",
