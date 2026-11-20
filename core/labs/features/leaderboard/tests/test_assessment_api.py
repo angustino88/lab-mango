@@ -184,3 +184,16 @@ def test_early_release_rate_credits_completing_the_booking_when_done():
     assert (
         area["text"] == "Only 0% of unused booked time was released: 3 h stayed reserved after the last session ended."
     )
+
+
+@pytest.mark.parametrize(("late_rate", "recognised"), [(0.0, False), (0.19, False), (0.20, True), (0.6, True)])
+def test_extended_hours_activity_is_recognised_never_a_gap(late_rate, recognised):
+    from core.labs.features.leaderboard.queries.assessment import EXTENDED_HOURS_RECOGNITION, PERSONA_KPIS, _assess
+
+    row = {"total_sessions": 10, "total_bookings": 10, "late_rate": late_rate}
+    result = _assess(PERSONA_KPIS, row, None, at(6, 0), at(10, 0), at(1, 0), EXTENDED_HOURS_RECOGNITION)
+
+    keys = [s["kpi"] for s in result["strengths"]]
+    assert ("off_hours_usage_rate" in keys) is recognised
+    assert "off_hours_usage_rate" not in [a["kpi"] for a in result["development_areas"]]
+    assert "off_hours_usage_rate" not in [k["kpi"] for k in result["kpis"]]
