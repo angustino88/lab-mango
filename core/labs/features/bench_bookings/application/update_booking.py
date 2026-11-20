@@ -95,6 +95,8 @@ def update_bench_booking(*, actor, data: UpdateBenchBookingInput) -> BenchBookin
             if data.fields["status"] in {BookingStatus.EXPIRED, BookingStatus.IN_PROGRESS}:
                 status_label = BookingStatus(data.fields["status"]).label.lower()
                 raise ValidationError({"status": f"{status_label.capitalize()} status is managed automatically."})
+            if booking.status == BookingStatus.IN_PROGRESS and data.fields["status"] == BookingStatus.CANCELLED:
+                raise ValidationError({"status": "An in-progress booking cannot be cancelled; complete it instead."})
             ensure_booking_status_transition(
                 current_status=booking.status,
                 target_status=data.fields["status"],
