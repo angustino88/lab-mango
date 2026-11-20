@@ -46,7 +46,7 @@ class AssessmentKpi(models.TextChoices):
     SLOT_ADHERENCE_RATE = "slot_adherence_rate", "Slot Adherence Rate"
     EARLY_RELEASE_RATE = "early_release_rate", "Early Release Rate"
     AD_HOC_SESSION_RATE = "ad_hoc_session_rate", "Ad-hoc Session Rate"
-    OFF_HOURS_USAGE_RATE = "off_hours_usage_rate", "Extended-Hours Activity"
+    EXTENDED_HOURS_ACTIVITY = "extended_hours_activity", "Extended-Hours Activity"
     WORKDAY_UTILIZATION_RATE = "workday_utilization_rate", "Workday Utilization Rate"
     BENCH_UTILIZATION_RATE = "bench_utilization_rate", "Bench Utilization Rate"
     BOOKING_OCCUPANCY_RATE = "booking_occupancy_rate", "Booking Occupancy Rate"
@@ -79,7 +79,7 @@ class KpiDefinition:
 
 K = AssessmentKpi
 # Recognition only: reaching the threshold adds a strength, falling short is never a gap (no target, no weight).
-EXTENDED_HOURS_RECOGNITION = (K.OFF_HOURS_USAGE_RATE, "late_rate", 0.20)
+EXTENDED_HOURS_RECOGNITION = (K.EXTENDED_HOURS_ACTIVITY, "extended_hours_rate", 0.20)
 PERSONA_KPIS = (
     KpiDefinition(K.SHOW_UP_RATE, "booking_compliance", target=0.90, near=0.75, weight=3),
     KpiDefinition(K.BOOKING_UTILIZATION_RATE, "booking_utilization", target=0.75, near=0.50, weight=2),
@@ -120,7 +120,7 @@ def _strength(kpi: str, v: float, row: dict[str, Any]) -> str:
         K.ACTIVE_TIME_RATIO: f"Focused sessions: {_pct(v)} of session time was active.",
         K.EARLY_RELEASE_RATE: f"Releases the bench when done: {_pct(v)} of unused booked time was released early.",
         K.AD_HOC_SESSION_RATE: f"Plans ahead: {_pct(1 - v)} of sessions ran under a booking.",
-        K.OFF_HOURS_USAGE_RATE: f"Extended-hours activity: {_pct(v)} of lab time was between 20:00 and 06:00.",
+        K.EXTENDED_HOURS_ACTIVITY: f"Extended-hours activity: {_pct(v)} of lab time was between 20:00 and 06:00.",
         K.WORKDAY_UTILIZATION_RATE: f"Consistent lab presence: {_hours_per_weekday(v)} of active work per weekday.",
         K.BENCH_UTILIZATION_RATE: f"Well utilised: active {_pct(v)} of working hours.",
         K.BOOKING_OCCUPANCY_RATE: f"In demand: {_pct(v)} of working hours are booked.",

@@ -71814,7 +71814,7 @@
                       "format": "double",
                       "default": 0.0
                     },
-                    "late_rate": {
+                    "extended_hours_rate": {
                       "type": "number",
                       "format": "double",
                       "default": 0.0
@@ -71940,7 +71940,7 @@
                 "points": 1,
                 "wfo_rate": 0.0,
                 "wfh_rate": 0.0,
-                "late_rate": 0.0,
+                "extended_hours_rate": 0.0,
                 "usage_efficiency": 0.0,
                 "active_rate": 0.0,
                 "ad_hoc_rate": 0.0,
@@ -72318,7 +72318,7 @@
                       "format": "double",
                       "default": 0.0
                     },
-                    "late_rate": {
+                    "extended_hours_rate": {
                       "type": "number",
                       "format": "double",
                       "default": 0.0
@@ -72444,7 +72444,7 @@
                 "points": 1,
                 "wfo_rate": 0.0,
                 "wfh_rate": 0.0,
-                "late_rate": 0.0,
+                "extended_hours_rate": 0.0,
                 "usage_efficiency": 0.0,
                 "active_rate": 0.0,
                 "ad_hoc_rate": 0.0,

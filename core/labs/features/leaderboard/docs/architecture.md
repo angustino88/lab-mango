@@ -7,7 +7,7 @@
 The leaderboard feature provides gamified user engagement scoring, laboratory and bench utilization rankings, weekly heatmaps, user/bench profiles, and operational dashboard summaries.
 
 - **In Scope:**
-  - Persona leaderboard: user points, work-from-office (WFO) vs work-from-home (WFH) ratios, late-night session rates, booking compliance, and session duration metrics.
+  - Persona leaderboard: user points, work-from-office (WFO) vs work-from-home (WFH) ratios, extended-hours (20:00–06:00) session rates, booking compliance, and session duration metrics.
   - Laboratory leaderboard: bench utilization ranking based on active session volume and distinct user engagement.
   - Profile summaries: detailed activity and booking statistics for individual benches and users.
   - Weekly utilization heatmaps (7 days x 24 hours).
@@ -108,4 +108,4 @@ stay readable by every lab member.
 
 - `core/labs/features/leaderboard/tests/test_public_boundary.py`: Enforces zero model imports in API views and public facade exports.
 - `tests/integration/test_leaderboard_api.py`: 10 integration tests verifying auth, date range filtering, empty display name resilience, and 404 handling.
-- `tests/unit/test_leaderboard_helpers.py`: 30 unit tests covering late rate math, downtime calculations, weekday counters, and cache timeouts.
+- `tests/unit/test_leaderboard_helpers.py`: 30 unit tests covering extended-hours rate math, downtime calculations, weekday counters, and cache timeouts.

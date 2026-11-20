@@ -12,7 +12,7 @@ SHORT_RANGE_CACHE_TIMEOUT = 3600
 LAB_CACHE_TIMEOUT = 86400
 
 
-def _late_overlap_seconds(login_dt: datetime, logout_dt: datetime, tz: ZoneInfo) -> float:
+def _extended_hours_overlap_seconds(login_dt: datetime, logout_dt: datetime, tz: ZoneInfo) -> float:
     """Return seconds of [login_dt, logout_dt] that fall in 20:00–06:00 local time."""
     total = 0.0
     cur = login_dt.astimezone(tz).date()
@@ -37,18 +37,18 @@ def _late_overlap_seconds(login_dt: datetime, logout_dt: datetime, tz: ZoneInfo)
     return total
 
 
-def calculate_late_rate_from_tuples(session_tuples: list[tuple]) -> float:
-    """Compute late rate from list of (login_time, logout_time) tuples."""
+def calculate_extended_hours_rate_from_tuples(session_tuples: list[tuple]) -> float:
+    """Compute the extended-hours rate from list of (login_time, logout_time) tuples."""
     tz = ZoneInfo(settings.TIME_ZONE)
     total_seconds = 0.0
-    late_seconds = 0.0
+    extended_seconds = 0.0
     for login_time, logout_time in session_tuples:
         duration = (logout_time - login_time).total_seconds()
         if duration <= 0:
             continue
         total_seconds += duration
-        late_seconds += _late_overlap_seconds(login_time, logout_time, tz)
-    return round(late_seconds / total_seconds, 4) if total_seconds > 0 else 0
+        extended_seconds += _extended_hours_overlap_seconds(login_time, logout_time, tz)
+    return round(extended_seconds / total_seconds, 4) if total_seconds > 0 else 0
 
 
 def calculate_downtime_minutes(offline_logs: list[dict], start: datetime, end: datetime) -> float:
@@ -112,7 +112,7 @@ def parse_date_range(request, baseline: datetime) -> tuple[datetime, datetime]:
 
 __all__ = [
     "calculate_downtime_minutes",
-    "calculate_late_rate_from_tuples",
+    "calculate_extended_hours_rate_from_tuples",
     "clamp",
     "count_weekdays",
     "get_cache_timeout",
