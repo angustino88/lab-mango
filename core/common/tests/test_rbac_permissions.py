@@ -57,6 +57,9 @@ class TestIsAuthenticated:
     def test_real_user_is_authenticated(self):
         assert is_authenticated(_user())
 
+    def test_object_without_is_authenticated_is_not_a_user(self):
+        assert not is_authenticated(SimpleNamespace(pk=1))
+
     @pytest.mark.parametrize("user", [None, AnonymousUser()])
     def test_missing_and_anonymous_users_are_not(self, user):
         assert not is_authenticated(user)

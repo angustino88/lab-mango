@@ -30,8 +30,9 @@ PermissionClasses: TypeAlias = list[type[BasePermission] | OperandHolder]
 
 
 def is_authenticated(user: Any) -> bool:
-    """Return True for a real, authenticated user. ``None`` and anonymous users are not."""
-    return bool(user and user.is_authenticated)
+    """Return True for a real, authenticated user. ``None``, anonymous users and objects that are not users
+    (no ``is_authenticated``) are not: access checks deny instead of failing."""
+    return bool(user and getattr(user, "is_authenticated", False))
 
 
 @dataclass(frozen=True, slots=True)
