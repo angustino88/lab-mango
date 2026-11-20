@@ -5,14 +5,21 @@ from core.common.api.pagination import PAGE_QUERY_PARAMS, with_page_query
 from core.labs.features.base import CommandAPIView, operation
 from core.labs.features.downtime import queries
 from core.labs.features.downtime.application import (
+    ChangeDowntimeBookingAccessInput,
     DowntimeActionInput,
     ScheduleDowntimeInput,
     cancel_downtime,
+    change_downtime_booking_access,
     end_downtime,
     schedule_downtime,
 )
 
-from .serializers import DowntimeCreateSerializer, DowntimeListQuerySerializer, DowntimeSerializer
+from .serializers import (
+    DowntimeChangeBookingAccessSerializer,
+    DowntimeCreateSerializer,
+    DowntimeListQuerySerializer,
+    DowntimeSerializer,
+)
 
 
 class DowntimeAPIView(AppListAPIView, CommandAPIView):
@@ -72,8 +79,25 @@ class DowntimeCancelAPIView(DowntimeAPIView):
         )
 
 
+class DowntimeChangeBookingAccessAPIView(DowntimeAPIView):
+    """Open the window to lab staff bookings (``lab_staff``) or close it to everyone (``closed``)."""
+
+    post_contract = operation(
+        "DowntimeChangeBookingAccess", DowntimeSerializer, request=DowntimeChangeBookingAccessSerializer
+    )
+
+    def handle_post(self, request, downtime_id, **kwargs):
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        data = serializer.validated_data if serializer is not None else {}
+        command = ChangeDowntimeBookingAccessInput(downtime_id=downtime_id, **data)
+        return self._execute(lambda: change_downtime_booking_access(command, actor=self.acting_user), project=_project)
+
+
 __all__ = [
     "DowntimeCancelAPIView",
+    "DowntimeChangeBookingAccessAPIView",
     "DowntimeDetailAPIView",
     "DowntimeEndAPIView",
     "DowntimeListCreateAPIView",

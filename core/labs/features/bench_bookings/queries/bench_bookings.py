@@ -11,6 +11,7 @@ from core.labs.models import (
     Booking,
     BookingApprovalStatus,
     BookingStatus,
+    DowntimeBookingAccess,
     EquipmentAssignment,
     LabProject,
     ResourceDowntime,
@@ -224,11 +225,22 @@ def bench_has_computing(*, bench_id: int) -> bool:
     ).exists()
 
 
-def bench_downtime_blocker(*, bench, starts_at, ends_at) -> str | None:
-    """The first downtime window of the bench, its station or its room that overlaps the period.
+def is_lab_staff(user: Any) -> bool:
+    """Whether ``user`` holds the coordinator role or a role that implies it (administrator, superuser).
 
-    Design rule 3. Downtime writers lock the bench row this caller already holds (``lock_benches``), so a
-    window created concurrently is either committed and seen here, or waits for this transaction.
+    Lab staff may book benches during a downtime window whose ``booking_access`` is ``lab_staff``.
+    API keys and anonymous actors are never lab staff.
+    """
+    return has_labs_role(user, LabsRole.COORDINATOR)
+
+
+def bench_downtime_blocker(*, bench, starts_at, ends_at, lab_staff: bool = False) -> str | None:
+    """The first downtime window of the bench, its station or its room that blocks the period.
+
+    Design rule 3. ``lab_staff`` says whether the booking holder is lab staff (``is_lab_staff``): a window
+    whose ``booking_access`` is ``lab_staff`` then does not block. Downtime writers lock the bench row this
+    caller already holds (``lock_benches``), so a window created or narrowed concurrently is either
+    committed and seen here, or waits for this transaction.
     """
     scopes = [(type(bench), bench.pk, "Bench")]
     if bench.setup_location_id is not None:
@@ -240,12 +252,16 @@ def bench_downtime_blocker(*, bench, starts_at, ends_at) -> str | None:
         window = (
             ResourceDowntime.objects.for_resources(model, (pk,))
             .overlapping(starts_at, ends_at)
+            .blocking(lab_staff=lab_staff)
             .order_by("starts_at", "pk")
             .first()
         )
         if window is not None:
             until = "until further notice" if window.ends_at is None else f"until {window.ends_at:%Y-%m-%d %H:%M}"
-            return f"{label} is {window.get_condition_display().lower()} ({window.reason}) {until}."
+            message = f"{label} is {window.get_condition_display().lower()} ({window.reason}) {until}."
+            if window.booking_access == DowntimeBookingAccess.LAB_STAFF:
+                message += " Only lab coordinators and administrators can book it."
+            return message
     return None
 
 

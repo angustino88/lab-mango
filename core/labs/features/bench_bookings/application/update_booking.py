@@ -15,6 +15,7 @@ from core.labs.features.bench_bookings.queries import (
     bench_has_computing,
     bench_parent_blocker,
     conflicting_bench_bookings,
+    is_lab_staff,
     project_exists,
 )
 from core.labs.models import BenchBooking, BookingApprovalStatus, BookingStatus, ensure_booking_status_transition
@@ -145,7 +146,12 @@ def update_bench_booking(*, actor, data: UpdateBenchBookingInput) -> BenchBookin
             policies.ensure_no_conflicting_bookings(has_conflicts=conflicts.exists())
             policies.ensure_no_downtime(
                 bench_downtime_blocker(
-                    bench=benches[booking.bench_id], starts_at=booking.starts_at, ends_at=booking.ends_at
+                    bench=benches[booking.bench_id],
+                    starts_at=booking.starts_at,
+                    ends_at=booking.ends_at,
+                    # The holder uses the bench, not the editor: a coordinator cannot move a user's
+                    # booking into a window that is open to lab staff only.
+                    lab_staff=is_lab_staff(booking.creator),
                 )
             )
         booking.save(actor=actor)

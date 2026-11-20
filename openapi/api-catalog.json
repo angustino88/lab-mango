@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 516,
+  "total_endpoints": 517,
   "generated_at": "2026-11-20",
   "endpoints": [
     {
@@ -33746,6 +33746,20 @@
       ],
       "parameters": [
         {
+          "name": "booking_access",
+          "in": "query",
+          "required": false,
+          "description": "* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only",
+          "schema": {
+            "enum": [
+              "closed",
+              "lab_staff"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
           "name": "page",
           "in": "query",
           "required": false,
@@ -33883,6 +33897,16 @@
                       ],
                       "readOnly": true
                     },
+                    "booking_access": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                    },
                     "state": {
                       "allOf": [
                         {
@@ -33947,6 +33971,7 @@
                   },
                   "required": [
                     "actor",
+                    "booking_access",
                     "cancelled_at",
                     "condition",
                     "created_at",
@@ -33983,6 +34008,7 @@
                 "condition": {},
                 "kind": {},
                 "reason": {},
+                "booking_access": {},
                 "state": {},
                 "starts_at": "2026-10-20T12:00:00Z",
                 "ends_at": "2026-10-20T12:00:00Z",
@@ -34259,6 +34285,20 @@
               "type": "boolean",
               "default": false,
               "description": "Cancel reserved and in-progress bookings that overlap the window, in the same transaction."
+            },
+            "booking_access": {
+              "allOf": [
+                {
+                  "enum": [
+                    "closed",
+                    "lab_staff"
+                  ],
+                  "type": "string",
+                  "description": "* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only"
+                }
+              ],
+              "default": "closed",
+              "description": "closed (default): no one can book the covered benches. lab_staff: lab coordinators and administrators can still book them; their overlapping bookings are kept. Not for equipment.\n\n* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only"
             }
           },
           "required": [
@@ -34276,7 +34316,8 @@
           "starts_at": "2026-10-20T12:00:00Z",
           "ends_at": "2026-10-20T12:00:00Z",
           "notes": "",
-          "cancel_conflicting_bookings": false
+          "cancel_conflicting_bookings": false,
+          "booking_access": {}
         }
       },
       "responses": {
@@ -34330,6 +34371,16 @@
                       }
                     ],
                     "readOnly": true
+                  },
+                  "booking_access": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
                   },
                   "state": {
                     "allOf": [
@@ -34395,6 +34446,7 @@
                 },
                 "required": [
                   "actor",
+                  "booking_access",
                   "cancelled_at",
                   "condition",
                   "created_at",
@@ -34422,6 +34474,7 @@
               "condition": {},
               "kind": {},
               "reason": {},
+              "booking_access": {},
               "state": {},
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
@@ -34721,6 +34774,16 @@
                     ],
                     "readOnly": true
                   },
+                  "booking_access": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                  },
                   "state": {
                     "allOf": [
                       {
@@ -34785,6 +34848,7 @@
                 },
                 "required": [
                   "actor",
+                  "booking_access",
                   "cancelled_at",
                   "condition",
                   "created_at",
@@ -34812,6 +34876,7 @@
               "condition": {},
               "kind": {},
               "reason": {},
+              "booking_access": {},
               "state": {},
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
@@ -35005,6 +35070,16 @@
                     ],
                     "readOnly": true
                   },
+                  "booking_access": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                  },
                   "state": {
                     "allOf": [
                       {
@@ -35069,6 +35144,7 @@
                 },
                 "required": [
                   "actor",
+                  "booking_access",
                   "cancelled_at",
                   "condition",
                   "created_at",
@@ -35096,6 +35172,7 @@
               "condition": {},
               "kind": {},
               "reason": {},
+              "booking_access": {},
               "state": {},
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
@@ -35162,6 +35239,443 @@
           }
         },
         "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/downtimes/{downtime_id}/actions/change-booking-access",
+      "method": "POST",
+      "operation_id": "labs_downtimes_actions_change_booking_access_create_by_downtime_id",
+      "summary": "Change Booking Access Downtimes by Downtime ID",
+      "description": "Open the window to lab staff bookings (``lab_staff``) or close it to everyone (``closed``).",
+      "tags": [
+        "Downtime"
+      ],
+      "parameters": [
+        {
+          "name": "downtime_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+          "properties": {
+            "booking_access": {
+              "enum": [
+                "closed",
+                "lab_staff"
+              ],
+              "type": "string",
+              "description": "* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only"
+            },
+            "cancel_conflicting_bookings": {
+              "type": "boolean",
+              "default": false,
+              "description": "When closing a window, cancel the reserved and in-progress bookings that overlap the rest of it, in the same transaction."
+            }
+          },
+          "required": [
+            "booking_access"
+          ]
+        },
+        "example_payload": {
+          "booking_access": "closed",
+          "cancel_conflicting_bookings": false
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "resource": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "condition": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "kind": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "reason": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "booking_access": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                  },
+                  "state": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "starts_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "ends_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Empty while the end is not known."
+                  },
+                  "cancelled_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "notes": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "actor": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "ended_by": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "actor",
+                  "booking_access",
+                  "cancelled_at",
+                  "condition",
+                  "created_at",
+                  "ended_by",
+                  "ends_at",
+                  "id",
+                  "kind",
+                  "notes",
+                  "reason",
+                  "resource",
+                  "starts_at",
+                  "state",
+                  "updated_at"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "resource": {},
+              "condition": {},
+              "kind": {},
+              "reason": {},
+              "booking_access": {},
+              "state": {},
+              "starts_at": "2026-10-20T12:00:00Z",
+              "ends_at": "2026-10-20T12:00:00Z",
+              "cancelled_at": "2026-10-20T12:00:00Z",
+              "notes": "string",
+              "actor": {},
+              "ended_by": {},
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -35289,6 +35803,16 @@
                     ],
                     "readOnly": true
                   },
+                  "booking_access": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+                  },
                   "state": {
                     "allOf": [
                       {
@@ -35353,6 +35877,7 @@
                 },
                 "required": [
                   "actor",
+                  "booking_access",
                   "cancelled_at",
                   "condition",
                   "created_at",
@@ -35380,6 +35905,7 @@
               "condition": {},
               "kind": {},
               "reason": {},
+              "booking_access": {},
               "state": {},
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",

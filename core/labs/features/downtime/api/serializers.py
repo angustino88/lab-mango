@@ -13,7 +13,7 @@ from core.labs.features.base.serializers import (
 )
 from core.labs.features.downtime.application.targets import RESOURCE_MODELS
 from core.labs.features.downtime.queries import STATES, resource_type_of, state_of
-from core.labs.models import DowntimeKind, DowntimeReason, ResourceCondition, ResourceDowntime
+from core.labs.models import DowntimeBookingAccess, DowntimeKind, DowntimeReason, ResourceCondition, ResourceDowntime
 from core.labs.models.resource.base.downtime import DOWNTIME_CONDITIONS
 
 DOWNTIME_CONDITION_CHOICES = [(value, ResourceCondition(value).label) for value in DOWNTIME_CONDITIONS]
@@ -36,6 +36,9 @@ class DowntimeSerializer(AppModelSerializer):
     condition = serializers.SerializerMethodField()
     kind = serializers.SerializerMethodField()
     reason = serializers.SerializerMethodField()
+    booking_access = serializers.SerializerMethodField(
+        help_text="Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+    )
     state = serializers.SerializerMethodField()
     actor = UserReferenceSerializer(source="creator", read_only=True, allow_null=True)
     ended_by = UserReferenceSerializer(read_only=True, allow_null=True)
@@ -48,6 +51,7 @@ class DowntimeSerializer(AppModelSerializer):
             "condition",
             "kind",
             "reason",
+            "booking_access",
             "state",
             "starts_at",
             "ends_at",
@@ -79,6 +83,10 @@ class DowntimeSerializer(AppModelSerializer):
     def get_reason(self, obj) -> dict[str, str] | None:
         return to_choice_reference(obj.reason, DowntimeReason.choices)
 
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_booking_access(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(obj.booking_access, DowntimeBookingAccess.choices)
+
     @extend_schema_field(ChoiceSerializer)
     def get_state(self, obj) -> dict[str, str] | None:
         return to_choice(state_of(obj), STATE_CHOICES)
@@ -106,12 +114,34 @@ class DowntimeCreateSerializer(ResourceWriteSerializerMixin, serializers.Seriali
         default=False,
         help_text="Cancel reserved and in-progress bookings that overlap the window, in the same transaction.",
     )
+    booking_access = serializers.ChoiceField(
+        choices=DowntimeBookingAccess.choices,
+        required=False,
+        default=DowntimeBookingAccess.CLOSED,
+        help_text=(
+            "closed (default): no one can book the covered benches. lab_staff: lab coordinators and "
+            "administrators can still book them; their overlapping bookings are kept. Not for equipment."
+        ),
+    )
+
+
+class DowntimeChangeBookingAccessSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    booking_access = serializers.ChoiceField(choices=DowntimeBookingAccess.choices)
+    cancel_conflicting_bookings = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text=(
+            "When closing a window, cancel the reserved and in-progress bookings that overlap the rest of it, "
+            "in the same transaction."
+        ),
+    )
 
 
 class DowntimeListQuerySerializer(serializers.Serializer):
     resource_type = serializers.ChoiceField(choices=tuple(RESOURCE_MODELS), required=False)
     resource_id = serializers.IntegerField(min_value=1, required=False)
     state = serializers.ChoiceField(choices=STATES, required=False)
+    booking_access = serializers.ChoiceField(choices=DowntimeBookingAccess.choices, required=False)
 
     def validate(self, attrs):
         if "resource_id" in attrs and "resource_type" not in attrs:
@@ -119,4 +149,9 @@ class DowntimeListQuerySerializer(serializers.Serializer):
         return attrs
 
 
-__all__ = ["DowntimeCreateSerializer", "DowntimeListQuerySerializer", "DowntimeSerializer"]
+__all__ = [
+    "DowntimeChangeBookingAccessSerializer",
+    "DowntimeCreateSerializer",
+    "DowntimeListQuerySerializer",
+    "DowntimeSerializer",
+]

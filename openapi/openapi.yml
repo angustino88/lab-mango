@@ -488,6 +488,8 @@ paths:
     $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}
   /api/labs/downtimes/{downtime_id}/actions/cancel:
     $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}~1actions~1cancel
+  /api/labs/downtimes/{downtime_id}/actions/change-booking-access:
+    $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}~1actions~1change-booking-access
   /api/labs/downtimes/{downtime_id}/actions/end:
     $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}~1actions~1end
   /api/labs/expenses/{expense_id}/payments:

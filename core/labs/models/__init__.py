@@ -58,7 +58,7 @@ from .procurement import (
     PurchaseStatus,
     PurchaseTransaction,
 )
-from .resource.base.downtime import DowntimeKind, DowntimeReason, ResourceDowntime
+from .resource.base.downtime import DowntimeBookingAccess, DowntimeKind, DowntimeReason, ResourceDowntime
 from .resource.base.resource import Department, Group
 from .resource.base.service_record import ResourceServiceRecord
 from .resource.base.status import (
@@ -164,6 +164,7 @@ __all__ = [
     "ComputingProfile",
     "Country",
     "Department",
+    "DowntimeBookingAccess",
     "DowntimeKind",
     "DowntimeReason",
     "Equipment",

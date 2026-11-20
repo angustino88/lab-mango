@@ -12,7 +12,7 @@ from core.common.api import AppModelSerializer
 from core.common.api.api_views import RESOURCE_FIELD_IMMUTABLE
 from core.common.api.summary_serializers import ChoiceSerializer, UserReferenceSerializer, to_choice
 from core.labs.models.auditing.resource_audit import ResourceAudit
-from core.labs.models.resource.base.downtime import DowntimeReason
+from core.labs.models.resource.base.downtime import DowntimeBookingAccess, DowntimeReason
 from core.labs.models.resource.base.resource import Department
 from core.labs.models.resource.base.service_record import ResourceServiceRecord
 from core.labs.models.resource.base.status import ResourceAvailability, ResourceCondition, ResourceLifecycleStatus
@@ -140,6 +140,12 @@ class AvailabilitySerializer(serializers.Serializer):
     blocked_by = AvailabilitySourceSerializer(read_only=True, allow_null=True, help_text="The resource that blocks.")
     condition = serializers.SerializerMethodField()
     reason = serializers.SerializerMethodField(help_text="Lifecycle status, or the downtime reason, of blocked_by.")
+    booking_access = serializers.SerializerMethodField(
+        help_text=(
+            "Who may still book while unavailable: lab_staff (coordinators and administrators, every "
+            "blocker is downtime open to lab staff) or closed. Empty when available."
+        )
+    )
 
     class Meta:
         ref_name = "LabsAvailability"
@@ -155,6 +161,10 @@ class AvailabilitySerializer(serializers.Serializer):
     @extend_schema_field(ChoiceSerializer(allow_null=True))
     def get_reason(self, obj) -> dict[str, str] | None:
         return to_choice(obj["reason"], [*ResourceLifecycleStatus.choices, *DowntimeReason.choices])
+
+    @extend_schema_field(ChoiceSerializer(allow_null=True))
+    def get_booking_access(self, obj) -> dict[str, str] | None:
+        return to_choice(obj.get("booking_access"), DowntimeBookingAccess.choices)
 
 
 def to_choice_reference(value: str | None, choices=None) -> dict[str, str] | None:

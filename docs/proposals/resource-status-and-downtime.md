@@ -63,6 +63,8 @@ computed condition.
    cancels future windows. A found equipment unit (`lost` → `in_service`) opens an `in_maintenance` window.
 3. A booking (bench) or reservation (equipment) is refused when the resource, or a parent, is not
    `in_service`, or when any downtime window of the resource or a parent overlaps the requested period.
+   Exception: a window with `booking_access = lab_staff` does not block bench bookings held by lab
+   coordinators and administrators ([lab staff booking access](downtime-lab-staff-booking-access.md)).
 4. Ending a downtime window sets `ends_at` to now (only an open or current window). Cancelling is for a
    window that has not started; it keeps the row with `cancelled_at`.
 5. The old write paths open or end an unplanned window starting now. Room/station `change-status`

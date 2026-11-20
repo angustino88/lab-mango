@@ -9826,6 +9826,19 @@
         "parameters": [
           {
             "in": "query",
+            "name": "booking_access",
+            "schema": {
+              "enum": [
+                "closed",
+                "lab_staff"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only"
+          },
+          {
+            "in": "query",
             "name": "page",
             "schema": {
               "type": "integer",
@@ -10142,6 +10155,106 @@
           }
         },
         "summary": "Cancel Downtimes by Downtime ID"
+      }
+    },
+    "/api/labs/downtimes/{downtime_id}/actions/change-booking-access": {
+      "post": {
+        "operationId": "labs_downtimes_actions_change_booking_access_create_by_downtime_id",
+        "description": "Open the window to lab staff bookings (``lab_staff``) or close it to everyone (``closed``).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "downtime_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Downtime"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DowntimeChangeBookingAccess"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DowntimeChangeBookingAccess"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DowntimeChangeBookingAccess"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DowntimeChangeBookingAccessSerializersDowntimeDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Change Booking Access Downtimes by Downtime ID"
       }
     },
     "/api/labs/downtimes/{downtime_id}/actions/end": {
@@ -46047,6 +46160,14 @@
           "booked_hours"
         ]
       },
+      "BookingAccessEnum": {
+        "enum": [
+          "closed",
+          "lab_staff"
+        ],
+        "type": "string",
+        "description": "* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only"
+      },
       "BookingBenchChoice": {
         "type": "object",
         "properties": {
@@ -49932,6 +50053,15 @@
             ],
             "readOnly": true
           },
+          "booking_access": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true,
+            "description": "Who may still book the covered benches: closed (no one) or lab_staff (coordinators and administrators)."
+          },
           "state": {
             "allOf": [
               {
@@ -49993,6 +50123,7 @@
         },
         "required": [
           "actor",
+          "booking_access",
           "cancelled_at",
           "condition",
           "created_at",
@@ -50009,6 +50140,35 @@
         ]
       },
       "DowntimeCancelSerializersDowntimeDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Downtime"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "DowntimeChangeBookingAccess": {
+        "type": "object",
+        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+        "properties": {
+          "booking_access": {
+            "$ref": "#/components/schemas/BookingAccessEnum"
+          },
+          "cancel_conflicting_bookings": {
+            "type": "boolean",
+            "default": false,
+            "description": "When closing a window, cancel the reserved and in-progress bookings that overlap the rest of it, in the same transaction."
+          }
+        },
+        "required": [
+          "booking_access"
+        ]
+      },
+      "DowntimeChangeBookingAccessSerializersDowntimeDetailResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
         "properties": {
@@ -50075,6 +50235,15 @@
             "type": "boolean",
             "default": false,
             "description": "Cancel reserved and in-progress bookings that overlap the window, in the same transaction."
+          },
+          "booking_access": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BookingAccessEnum"
+              }
+            ],
+            "default": "closed",
+            "description": "closed (default): no one can book the covered benches. lab_staff: lab coordinators and administrators can still book them; their overlapping bookings are kept. Not for equipment.\n\n* `closed` - Closed to all bookings\n* `lab_staff` - Lab staff only"
           }
         },
         "required": [
@@ -57377,10 +57546,21 @@
             "nullable": true,
             "readOnly": true,
             "description": "Lifecycle status, or the downtime reason, of blocked_by."
+          },
+          "booking_access": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true,
+            "description": "Who may still book while unavailable: lab_staff (coordinators and administrators, every blocker is downtime open to lab staff) or closed. Empty when available."
           }
         },
         "required": [
           "blocked_by",
+          "booking_access",
           "condition",
           "reason",
           "status"

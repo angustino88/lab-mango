@@ -2908,6 +2908,14 @@ components:
       required:
       - bench
       - booked_hours
+    BookingAccessEnum:
+      enum:
+      - closed
+      - lab_staff
+      type: string
+      description: '* `closed` - Closed to all bookings
+
+        * `lab_staff` - Lab staff only'
     BookingBenchChoice:
       type: object
       properties:
@@ -5681,6 +5689,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
+        booking_access:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: 'Who may still book the covered benches: closed (no one) or
+            lab_staff (coordinators and administrators).'
         state:
           allOf:
           - $ref: '#/components/schemas/Choice'
@@ -5723,6 +5737,7 @@ components:
           readOnly: true
       required:
       - actor
+      - booking_access
       - cancelled_at
       - condition
       - created_at
@@ -5737,6 +5752,28 @@ components:
       - state
       - updated_at
     DowntimeCancelSerializersDowntimeDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Downtime'
+      required:
+      - data
+    DowntimeChangeBookingAccess:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        booking_access:
+          $ref: '#/components/schemas/BookingAccessEnum'
+        cancel_conflicting_bookings:
+          type: boolean
+          default: false
+          description: When closing a window, cancel the reserved and in-progress
+            bookings that overlap the rest of it, in the same transaction.
+      required:
+      - booking_access
+    DowntimeChangeBookingAccessSerializersDowntimeDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -5791,6 +5828,18 @@ components:
           default: false
           description: Cancel reserved and in-progress bookings that overlap the window,
             in the same transaction.
+        booking_access:
+          allOf:
+          - $ref: '#/components/schemas/BookingAccessEnum'
+          default: closed
+          description: 'closed (default): no one can book the covered benches. lab_staff:
+            lab coordinators and administrators can still book them; their overlapping
+            bookings are kept. Not for equipment.
+
+
+            * `closed` - Closed to all bookings
+
+            * `lab_staff` - Lab staff only'
       required:
       - condition
       - resource_id
@@ -11053,8 +11102,17 @@ components:
           nullable: true
           readOnly: true
           description: Lifecycle status, or the downtime reason, of blocked_by.
+        booking_access:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          nullable: true
+          readOnly: true
+          description: 'Who may still book while unavailable: lab_staff (coordinators
+            and administrators, every blocker is downtime open to lab staff) or closed.
+            Empty when available.'
       required:
       - blocked_by
+      - booking_access
       - condition
       - reason
       - status
