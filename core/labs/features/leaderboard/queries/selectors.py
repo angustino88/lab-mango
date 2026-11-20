@@ -254,7 +254,7 @@ def compute_leaderboard_persona(
             + (booking["booking_utilization"] or 0) * 50
             + (booking["slot_adherence"] or 0) * 20
             + (booking["early_release_rate"] or 0) * 20
-            - late_rate * 30
+            + late_rate * 30
         )
 
         display_name = getattr(user, "display_name", None) or user.get_full_name() or user.username

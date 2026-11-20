@@ -96,13 +96,12 @@ the score and add nothing to points.
 - **Target:** ≤ 20 % (near ≤ 40 %) · **Weight:** 1.
 
 ### 2.7 Off-hours Usage Rate
-- **API field:** `late_rate` · **Assessment key:** `off_hours_usage_rate` · **Direction:** lower is better.
+- **API field:** `late_rate` · **Assessment key:** `off_hours_usage_rate` · **Direction:** higher is better (off-hours work is encouraged).
 - **Measures:** how much lab time falls outside working hours.
 - **Formula:** `session time between 20:00 and 06:00 (server time zone) ÷ session time`, each session split
   exactly at the boundaries.
 - **Null when:** never; 0 without sessions.
-- **Charts:** shown as its complement **On-hours Usage Rate**.
-- **Target:** ≤ 10 % (near ≤ 25 %) · **Weight:** 1.
+- **Target:** ≥ 20 % (near ≥ 10 %) · **Weight:** 1.
 
 ### 2.8 Workday Utilization Rate
 - **API field:** `usage_efficiency` · **Assessment key:** `workday_utilization_rate` · **Direction:** higher is better.

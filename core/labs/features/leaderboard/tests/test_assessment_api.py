@@ -95,7 +95,7 @@ def test_user_assessment_reports_strengths_development_areas_and_trend():
     assert kpis["show_up_rate"]["status"]["value"] == "near"
     assert kpis["booking_utilization_rate"]["status"]["value"] == "met"
     assert kpis["active_time_ratio"]["value"] == 1.0
-    assert kpis["off_hours_usage_rate"]["is_higher_better"] is False
+    assert kpis["off_hours_usage_rate"]["is_higher_better"] is True
 
     strengths = [s["kpi"]["value"] for s in data["strengths"]]
     assert strengths[:2] == ["booking_utilization_rate", "active_time_ratio"]
