@@ -21,7 +21,7 @@ from core.labs.models import (
 
 from ..exceptions import ResourceNotFoundError
 from ..helpers import (
-    calculate_late_rate_from_tuples,
+    calculate_extended_hours_rate_from_tuples,
     clamp,
     count_weekdays,
 )
@@ -237,7 +237,7 @@ def compute_leaderboard_persona(
         wall_seconds = [_seconds(r["login_time"], r["logout_time"]) for r in rows]
         total_dur_min = sum(wall_seconds) / 60
         active_min = sum(_active_seconds(r) for r in rows) / 60
-        late_rate = calculate_late_rate_from_tuples([(r["login_time"], r["logout_time"]) for r in rows])
+        extended_hours_rate = calculate_extended_hours_rate_from_tuples([(r["login_time"], r["logout_time"]) for r in rows])
 
         # RFO/RFH: unchanged detection (sessions against two per weekday).
         wfo_rate = round(min(1.0, total_sessions / (num_weekdays * 2)), 2)
@@ -254,7 +254,7 @@ def compute_leaderboard_persona(
             + (booking["booking_utilization"] or 0) * 50
             + (booking["slot_adherence"] or 0) * 20
             + (booking["early_release_rate"] or 0) * 20
-            - late_rate * 30
+            + extended_hours_rate * 30
         )
 
         display_name = getattr(user, "display_name", None) or user.get_full_name() or user.username
@@ -266,7 +266,7 @@ def compute_leaderboard_persona(
             "points": max(0, points),
             "wfo_rate": wfo_rate,
             "wfh_rate": wfh_rate,
-            "late_rate": late_rate,
+            "extended_hours_rate": extended_hours_rate,
             "usage_efficiency": usage_efficiency,
             "active_rate": _ratio(active_min, total_dur_min),
             "ad_hoc_rate": _ratio(sum(1 for r in rows if not r["booking_id"]), total_sessions),

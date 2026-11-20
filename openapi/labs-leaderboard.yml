@@ -783,7 +783,7 @@ components:
           type: number
           format: double
           default: 0.0
-        late_rate:
+        extended_hours_rate:
           type: number
           format: double
           default: 0.0

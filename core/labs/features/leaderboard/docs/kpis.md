@@ -95,14 +95,14 @@ the score and add nothing to points.
 - **Charts:** shown as its complement **Pre-booked Session Rate** (`1 − value`) where further out is better.
 - **Target:** ≤ 20 % (near ≤ 40 %) · **Weight:** 1.
 
-### 2.7 Off-hours Usage Rate
-- **API field:** `late_rate` · **Assessment key:** `off_hours_usage_rate` · **Direction:** lower is better.
+### 2.7 Extended-Hours Activity
+- **API field:** `extended_hours_rate` · **Assessment key:** `extended_hours_activity` · **Direction:** higher is better, and rewarded as bonus points (`+ extended_hours_rate × 30`); not an assessment KPI.
 - **Measures:** how much lab time falls outside working hours.
 - **Formula:** `session time between 20:00 and 06:00 (server time zone) ÷ session time`, each session split
   exactly at the boundaries.
 - **Null when:** never; 0 without sessions.
-- **Charts:** shown as its complement **On-hours Usage Rate**.
-- **Target:** ≤ 10 % (near ≤ 25 %) · **Weight:** 1.
+- **Assessment:** recognition only. A share of 20 % or more adds a strength; a lower share is never a development
+  area, and it has no target or weight in the score.
 
 ### 2.8 Workday Utilization Rate
 - **API field:** `usage_efficiency` · **Assessment key:** `workday_utilization_rate` · **Direction:** higher is better.

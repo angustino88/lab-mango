@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from core.labs.features.leaderboard.helpers import (
     calculate_downtime_minutes,
-    calculate_late_rate_from_tuples,
+    calculate_extended_hours_rate_from_tuples,
     clamp,
     count_weekdays,
     get_cache_timeout,
@@ -180,30 +180,30 @@ class TestParseDateRange:
             )
 
 
-class TestCalculateLateRateFromTuples:
+class TestCalculateExtendedHoursRateFromTuples:
     def test_empty_returns_zero(self):
-        assert calculate_late_rate_from_tuples([]) == 0
+        assert calculate_extended_hours_rate_from_tuples([]) == 0
 
-    def test_session_fully_in_late_hours_returns_one(self):
+    def test_session_fully_in_extended_hours_returns_one(self):
         login = datetime(2026, 4, 1, 21, 0, tzinfo=_TZ)
         logout = datetime(2026, 4, 1, 23, 0, tzinfo=_TZ)
-        assert calculate_late_rate_from_tuples([(login, logout)]) == 1.0
+        assert calculate_extended_hours_rate_from_tuples([(login, logout)]) == 1.0
 
     def test_session_fully_in_day_hours_returns_zero(self):
         login = datetime(2026, 4, 1, 8, 0, tzinfo=_TZ)
         logout = datetime(2026, 4, 1, 17, 0, tzinfo=_TZ)
-        assert calculate_late_rate_from_tuples([(login, logout)]) == 0.0
+        assert calculate_extended_hours_rate_from_tuples([(login, logout)]) == 0.0
 
     def test_zero_duration_session_ignored(self):
         now = datetime(2026, 4, 1, 10, 0, tzinfo=_TZ)
-        assert calculate_late_rate_from_tuples([(now, now)]) == 0
+        assert calculate_extended_hours_rate_from_tuples([(now, now)]) == 0
 
     def test_mixed_sessions(self):
         sessions = [
-            # 2h daytime (0% late)
+            # 2h daytime (0% extended)
             (datetime(2026, 4, 1, 8, 0, tzinfo=_TZ), datetime(2026, 4, 1, 10, 0, tzinfo=_TZ)),
-            # 2h nighttime (100% late)
+            # 2h nighttime (100% extended)
             (datetime(2026, 4, 1, 21, 0, tzinfo=_TZ), datetime(2026, 4, 1, 23, 0, tzinfo=_TZ)),
         ]
-        rate = calculate_late_rate_from_tuples(sessions)
-        assert 0.4 <= rate <= 0.6  # ~50% late
+        rate = calculate_extended_hours_rate_from_tuples(sessions)
+        assert 0.4 <= rate <= 0.6  # ~50% extended

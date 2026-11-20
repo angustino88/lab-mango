@@ -95,7 +95,7 @@ def test_user_assessment_reports_strengths_development_areas_and_trend():
     assert kpis["show_up_rate"]["status"]["value"] == "near"
     assert kpis["booking_utilization_rate"]["status"]["value"] == "met"
     assert kpis["active_time_ratio"]["value"] == 1.0
-    assert kpis["off_hours_usage_rate"]["is_higher_better"] is False
+    assert "extended_hours_activity" not in kpis  # extended-hours work earns bonus points, not an assessment KPI
 
     strengths = [s["kpi"]["value"] for s in data["strengths"]]
     assert strengths[:2] == ["booking_utilization_rate", "active_time_ratio"]
@@ -184,3 +184,16 @@ def test_early_release_rate_credits_completing_the_booking_when_done():
     assert (
         area["text"] == "Only 0% of unused booked time was released: 3 h stayed reserved after the last session ended."
     )
+
+
+@pytest.mark.parametrize(("extended_hours_rate", "recognised"), [(0.0, False), (0.19, False), (0.20, True), (0.6, True)])
+def test_extended_hours_activity_is_recognised_never_a_gap(extended_hours_rate, recognised):
+    from core.labs.features.leaderboard.queries.assessment import EXTENDED_HOURS_RECOGNITION, PERSONA_KPIS, _assess
+
+    row = {"total_sessions": 10, "total_bookings": 10, "extended_hours_rate": extended_hours_rate}
+    result = _assess(PERSONA_KPIS, row, None, at(6, 0), at(10, 0), at(1, 0), EXTENDED_HOURS_RECOGNITION)
+
+    keys = [s["kpi"] for s in result["strengths"]]
+    assert ("extended_hours_activity" in keys) is recognised
+    assert "extended_hours_activity" not in [a["kpi"] for a in result["development_areas"]]
+    assert "extended_hours_activity" not in [k["kpi"] for k in result["kpis"]]

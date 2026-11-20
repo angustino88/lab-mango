@@ -1,7 +1,7 @@
 """Leaderboard feature domain package."""
 from .helpers import (
     calculate_downtime_minutes,
-    calculate_late_rate_from_tuples,
+    calculate_extended_hours_rate_from_tuples,
     clamp,
     count_weekdays,
     get_cache_timeout,
@@ -10,7 +10,7 @@ from .helpers import (
 
 __all__ = [
     "calculate_downtime_minutes",
-    "calculate_late_rate_from_tuples",
+    "calculate_extended_hours_rate_from_tuples",
     "clamp",
     "count_weekdays",
     "get_cache_timeout",

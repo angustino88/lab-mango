@@ -41,7 +41,7 @@ class LeaderboardPersonaSerializer(serializers.Serializer):
     points = serializers.IntegerField()
     wfo_rate = serializers.FloatField(required=False, default=0.0)
     wfh_rate = serializers.FloatField(required=False, default=0.0)
-    late_rate = serializers.FloatField(required=False, default=0.0)
+    extended_hours_rate = serializers.FloatField(required=False, default=0.0)
     usage_efficiency = serializers.FloatField(
         required=False, default=0.0, help_text="Active lab time against 8 hours per weekday, 0-1."
     )
