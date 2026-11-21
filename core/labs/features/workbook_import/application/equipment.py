@@ -22,6 +22,7 @@ from core.labs.models import (
     Bench,
     Equipment,
     EquipmentInterface,
+    EquipmentKind,
     EquipmentManufacturer,
     EquipmentProductModel,
     EquipmentType,
@@ -132,8 +133,8 @@ def _detail_fields(run: ImportRun, catalog: Catalog, row: Row) -> tuple[dict[str
         if row.get("hostname") is not None:
             computing["hostname"] = row.get("hostname")
         if row.get("technical_user") is not None:
-            computing["technical_user"] = TechnicalUser.objects.get(
-                pk=catalog.one(row, "technical_user", TechnicalUser, "username", row.get("technical_user"))
+            computing["technical_user"] = catalog.instance(
+                TechnicalUser, catalog.one(row, "technical_user", TechnicalUser, "username", row.get("technical_user"))
             )
         if row.get("os_name") is not None:
             run.row_warning(
@@ -150,7 +151,7 @@ def _detail_fields(run: ImportRun, catalog: Catalog, row: Row) -> tuple[dict[str
     )
     for key, model, label in lookups:
         if row.get(key) is not None:
-            fields[key] = model._default_manager.get(pk=catalog.one(row, key, model, label, row.get(key)))
+            fields[key] = catalog.instance(model, catalog.one(row, key, model, label, row.get(key)))
     for key, related in (("interfaces", EquipmentInterface), ("characteristics", SampleCharacteristic)):
         if row.get(key):
             fields[key] = catalog.many(row, key, related)
@@ -171,7 +172,7 @@ def _remember_rdp_file(run: ImportRun, equipment_id: int) -> None:
 
 
 def import_equipment(run: ImportRun) -> None:
-    catalog = Catalog(run)
+    catalog = run.catalog
     details: dict[str, Row] = {}
     for sheet in DETAIL_SHEETS:
         for row in run.rows(sheet.key):
@@ -255,12 +256,12 @@ def import_equipment(run: ImportRun) -> None:
             if detail.failed:
                 raise run.fail(row, f"Fix the details in {detail.sheet.name} row {detail.number} first.", key="sku")
             values.update(typed)
-        technical_user = computing.pop("technical_user", None)
-        if computing:
-            values["computing"] = computing
         if row.get("remark") is not None:
             run.row_warning(row, "Equipment has no remarks field; put the note in Details.", key="remark")
         if existing is not None:
+            technical_user = computing.pop("technical_user", None)
+            if computing:
+                values["computing"] = computing
             explicit_condition = row.get("condition")
             if (
                 explicit_condition is None
@@ -281,15 +282,26 @@ def import_equipment(run: ImportRun) -> None:
                 lifecycle=explicit_lifecycle,
                 condition=explicit_condition,
             )
-        created = create_equipment(CreateEquipmentInput(fields=tuple(values.items())), actor=run.actor)
-        if technical_user is not None:
-            update_equipment(
-                UpdateEquipmentInput(
-                    equipment_id=created.pk, fields=(("computing", {"technical_user": technical_user}),)
-                ),
-                actor=run.actor,
-            )
-        _remember_rdp_file(run, created.pk)
+        if computing:
+            values["computing"] = computing
+        # Hand the create command cached instances so it does not re-select every reference per row.
+        create_fields = dict(values)
+        create_fields["kind"] = catalog.instance(EquipmentKind, kind_id, select_related=("category",))
+        for ref_key, ref_model in (
+            ("type", EquipmentType),
+            ("manufacturer", EquipmentManufacturer),
+            ("product_model", EquipmentProductModel),
+            ("department", Department),
+            ("group", Group),
+        ):
+            if ref_key in create_fields and isinstance(create_fields[ref_key], int):
+                create_fields[ref_key] = catalog.instance(ref_model, create_fields[ref_key])
+        if "owner" in create_fields and isinstance(create_fields["owner"], int):
+            create_fields["owner"] = catalog.user_instance(create_fields["owner"])
+        created = create_equipment(CreateEquipmentInput(fields=tuple(create_fields.items())), actor=run.actor)
+        catalog.register(Equipment, created.pk, sku=created.sku)
+        if category.monitored:
+            _remember_rdp_file(run, created.pk)
         if condition is not None:
             change_condition(
                 ChangeConditionInput(equipment_id=created.pk, condition=condition, reason=IMPORT_NOTE),
@@ -383,6 +395,18 @@ def import_equipment(run: ImportRun) -> None:
                 bound.outcome.created += 1
 
     placed: set[str] = set()
+    active_assignments: dict[int, dict[str, Any]] | None = None
+
+    def _active_assignment(equipment_id: int) -> dict[str, Any] | None:
+        nonlocal active_assignments
+        if active_assignments is None:
+            active_assignments = {
+                int(row_dict["equipment_id"]): row_dict
+                for row_dict in EquipmentAssignment.objects.filter(unassigned_at__isnull=True).values(
+                    "equipment_id", "room_id", "bench_id", "role", "position"
+                )
+            }
+        return active_assignments.get(equipment_id)
 
     def placement(row: Row) -> str:
         sku = row.get("equipment")
@@ -404,11 +428,7 @@ def import_equipment(run: ImportRun) -> None:
         bench_id = catalog.one(row, "bench", Bench, "sku", row.get("bench"))
         equipment_id = catalog.one(row, "equipment", Equipment, "sku", sku)
         role, position = row.get("role", "default"), row.get("position", 0)
-        current = (
-            EquipmentAssignment.objects.filter(equipment_id=equipment_id, unassigned_at__isnull=True)
-            .values("bench_id", "role", "position")
-            .first()
-        )
+        current = _active_assignment(equipment_id)
         if current is not None and current["bench_id"] == bench_id:
             placed.add(sku.casefold())
             if (current["role"], current["position"]) == (role, position):
@@ -429,6 +449,14 @@ def import_equipment(run: ImportRun) -> None:
             ),
             actor=run.actor,
         )
+        if active_assignments is not None:
+            active_assignments[equipment_id] = {
+                "equipment_id": equipment_id,
+                "room_id": None,
+                "bench_id": bench_id,
+                "role": role,
+                "position": position,
+            }
         placed.add(sku.casefold())
         return "created" if current is None else "updated"
 

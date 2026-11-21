@@ -185,7 +185,14 @@ def aad_login(*, id_token: str, nonce_secret: str) -> tuple[dict, User]:
             raise AADAuthError(INVALID_SSO_TOKEN)
         _consume_nonce(payload)
         # Recorded for the access review (dormant privileged accounts); the user row is already locked.
-        User.objects.filter(pk=user.pk).update(last_login=now)
+        updates: dict[str, object] = {"last_login": now}
+        entra_name = payload.get("name")
+        if isinstance(entra_name, str) and entra_name.strip():
+            display_name = entra_name.strip()[:255]
+            if user.display_name != display_name:
+                updates["display_name"] = display_name
+                user.display_name = display_name
+        User.objects.filter(pk=user.pk).update(**updates)
         refresh = RefreshToken.for_user(user)
         refresh["auth_source"] = "entra"
         refresh["entra_tid"] = str(current_identity.tenant_id)

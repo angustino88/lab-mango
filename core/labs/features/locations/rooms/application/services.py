@@ -51,10 +51,23 @@ def _sync_grid(room, actor):
     stale = [slot for key, slot in existing.items() if key not in grid_keys]
     if stale and Station.objects.filter(slot__in=stale).exists():
         raise RoomConflict("Slots outside the room layout are assigned to stations.")
-    RoomSlot.objects.filter(pk__in=[slot.pk for slot in stale]).delete()
+    if stale:
+        RoomSlot.objects.filter(pk__in=[slot.pk for slot in stale]).delete()
+    actor_user = actor if getattr(actor, "is_authenticated", False) else None
+    new_slots = []
     for row, column, code in grid:
         if (row, column) not in existing:
-            RoomSlot(room=room, row_index=row, col_index=column, slot_code=code).save(actor=actor)
+            slot = RoomSlot(
+                room=room,
+                row_index=row,
+                col_index=column,
+                slot_code=code.strip().upper(),
+                creator=actor_user,
+                last_modified_by=actor_user,
+            )
+            new_slots.append(slot)
+    if new_slots:
+        RoomSlot.objects.bulk_create(new_slots)
 
 
 @_room_atomic_command

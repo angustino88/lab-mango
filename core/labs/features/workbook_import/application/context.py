@@ -81,9 +81,18 @@ class RowFailed(Exception):
 
 
 class ImportRun:
-    def __init__(self, *, actor: Any, report: ImportReport, file_digest: str, mode: str = MODE_CREATE) -> None:
+    def __init__(
+        self,
+        *,
+        actor: Any,
+        report: ImportReport,
+        file_digest: str,
+        mode: str = MODE_CREATE,
+        dry_run: bool = False,
+    ) -> None:
         self.actor = actor
         self.mode = mode
+        self.dry_run = dry_run
         self.report = report
         self.file_digest = file_digest
         self.bound: dict[str, BoundSheet] = {}
@@ -91,6 +100,18 @@ class ImportRun:
         self.failed_keys: dict[tuple[str, str], tuple[str, int]] = {}
         # Files written by commands (computing .rdp files); deleted again when the run is rolled back.
         self.written_files: list[tuple[Any, str]] = []
+        self._catalog: Any = None
+        # Preloaded active SKUs per resource model so create mode checks existence in O(1) without per-row SELECTs.
+        self._active_skus: dict[Any, set[str]] = {}
+        self._existing_by_sku: dict[tuple[Any, tuple[str, ...]], dict[str, Any]] = {}
+
+    @property
+    def catalog(self) -> Any:
+        if self._catalog is None:
+            from .references import Catalog
+
+            self._catalog = Catalog(self)
+        return self._catalog
 
     @property
     def upsert(self) -> bool:
@@ -106,15 +127,30 @@ class ImportRun:
         sku = row.get("sku")
         if sku is None:
             return None
-        found = model._default_manager.select_related(*select_related).filter(sku=sku, deleted_at__isnull=True).first()
-        if found is not None and not self.upsert:
-            raise self.fail(
-                row,
-                f"Asset tag '{sku}' already exists. Import with mode Update existing (upsert) to change it.",
-                key="sku",
-                code="already_exists",
+        if not self.upsert:
+            active = self._active_skus.get(model)
+            if active is None:
+                active = set(model._default_manager.filter(deleted_at__isnull=True).values_list("sku", flat=True))
+                self._active_skus[model] = active
+            if sku in active:
+                raise self.fail(
+                    row,
+                    f"Asset tag '{sku}' already exists. Import with mode Update existing (upsert) to change it.",
+                    key="sku",
+                    code="already_exists",
+                )
+            return None
+        cache_key = (model, select_related)
+        by_sku = self._existing_by_sku.get(cache_key)
+        if by_sku is None:
+            rows = self.rows(row.sheet.key)
+            wanted_skus = {r.get("sku") for r in rows if r.get("sku") is not None}
+            qs = model._default_manager.select_related(*select_related).filter(
+                sku__in=wanted_skus, deleted_at__isnull=True
             )
-        return found
+            by_sku = {obj.sku: obj for obj in qs}
+            self._existing_by_sku[cache_key] = by_sku
+        return by_sku.get(sku)
 
     def failed_row(self, model: Any, value: Any) -> tuple[str, int] | None:
         return self.failed_keys.get((model._meta.label_lower, str(value).casefold()))

@@ -37,6 +37,14 @@ class UserSerializer(serializers.ModelSerializer):
     def get_avatar_url(self, obj) -> str | None:
         return get_media_url(obj.avatar, request=self.context.get("request"))
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not (data.get("display_name") or "").strip():
+            fallback = (getattr(instance, "name", "") or instance.get_full_name() or "").strip()
+            if fallback:
+                data["display_name"] = fallback
+        return data
+
 
 class EffectiveRolesSerializer(serializers.Serializer):
     labs = serializers.ListField(child=serializers.CharField(), read_only=True)

@@ -165,3 +165,77 @@ async def test_aad_login_missing_id_token_returns_422(api_client):
     body = resp.json()
     assert body["error"]["code"] == "validation_failed"
     assert any(error["field"] == "id_token" for error in body["error"]["details"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_aad_login_populates_blank_display_name_from_token_claim(api_client, user, rsa_key_pair):
+    user.username = "uah2hc"
+    user.display_name = ""
+    await user.asave()
+
+    secret = secrets.token_urlsafe(32)
+    object_id = uuid4()
+    await EntraIdentity.objects.acreate(user=user, tenant_id=settings.AAD_TENANT_ID, object_id=object_id)
+    id_token = make_test_id_token(
+        rsa_key_pair,
+        username="uah2hc",
+        name="Nguyen Van A",
+        nonce=nonce_for_secret(secret),
+        object_id=object_id,
+    )
+
+    mock_signing_key = MagicMock()
+    mock_signing_key.key = rsa_key_pair.public_key()
+
+    with patch("core.users.features.auth.aad_login.service._jwks_client") as MockClient:
+        mock_client_instance = MagicMock()
+        mock_client_instance.get_signing_key_from_jwt.return_value = mock_signing_key
+        MockClient.return_value = mock_client_instance
+
+        resp = await api_client.post(
+            "/api/aad-login",
+            data={"id_token": id_token, "nonce_secret": secret},
+            content_type="application/json",
+        )
+
+    assert resp.status_code == 200
+    await user.arefresh_from_db()
+    assert user.display_name == "Nguyen Van A"
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_aad_login_updates_display_name_when_microsoft_name_changes(api_client, user, rsa_key_pair):
+    user.username = "uah2hc"
+    user.display_name = "Old Name"
+    await user.asave()
+
+    secret = secrets.token_urlsafe(32)
+    object_id = uuid4()
+    await EntraIdentity.objects.acreate(user=user, tenant_id=settings.AAD_TENANT_ID, object_id=object_id)
+    id_token = make_test_id_token(
+        rsa_key_pair,
+        username="uah2hc",
+        name="Updated Microsoft Name",
+        nonce=nonce_for_secret(secret),
+        object_id=object_id,
+    )
+
+    mock_signing_key = MagicMock()
+    mock_signing_key.key = rsa_key_pair.public_key()
+
+    with patch("core.users.features.auth.aad_login.service._jwks_client") as MockClient:
+        mock_client_instance = MagicMock()
+        mock_client_instance.get_signing_key_from_jwt.return_value = mock_signing_key
+        MockClient.return_value = mock_client_instance
+
+        resp = await api_client.post(
+            "/api/aad-login",
+            data={"id_token": id_token, "nonce_secret": secret},
+            content_type="application/json",
+        )
+
+    assert resp.status_code == 200
+    await user.arefresh_from_db()
+    assert user.display_name == "Updated Microsoft Name"
