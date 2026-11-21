@@ -128,7 +128,7 @@ def _by_sku(run: ImportRun, catalog: Catalog, row: Row, key: str, model: type) -
 
 
 def import_spaces(run: ImportRun) -> None:
-    catalog = Catalog(run)
+    catalog = run.catalog
 
     def room(row: Row) -> str:
         lifecycle, access, condition = space_state(run, row, legacy=_LEGACY_SPACE_STATUS)
@@ -169,8 +169,10 @@ def import_spaces(run: ImportRun) -> None:
         if existing is not None:
             return _update_room(run, row, existing, data, (lifecycle, access, condition))
         created = create_room(actor=run.actor, **data)
+        catalog.register(Room, created.pk, sku=created.sku)
         if created.layout_rows and created.layout_columns:
             generate_room_slots(room_id=created.pk, actor=run.actor)
+            catalog.invalidate(RoomSlot)
         if access == "restricted":
             change_room_lifecycle(
                 room_id=created.pk, actor=run.actor, access_policy="restricted", metadata={"source": "workbook_import"}
@@ -229,6 +231,7 @@ def import_spaces(run: ImportRun) -> None:
         if existing is not None:
             return _update_station(run, row, existing, data, (lifecycle, access, condition))
         created = create_station(actor=run.actor, **data)
+        catalog.register(Station, created.pk, sku=created.sku)
         if access == "restricted":
             change_station_lifecycle(
                 station_id=created.pk,
@@ -282,7 +285,10 @@ def import_spaces(run: ImportRun) -> None:
                 return "existing"
             update_station_slot(station_id=station_id, slot_id=existing.pk, actor=run.actor, **changes)
             return "updated"
-        create_station_slot(station_id=station_id, actor=run.actor, compatible_bench_types=types, **data)
+        created_slot = create_station_slot(
+            station_id=station_id, actor=run.actor, compatible_bench_types=types, **data
+        )
+        catalog.register(StationSlot, created_slot.pk, station_id=station_id, slot_code=created_slot.slot_code)
         return "created"
 
     run.each("station_slots", station_slot, natural_key="__row__")
@@ -345,6 +351,7 @@ def import_spaces(run: ImportRun) -> None:
         # Created in service (or planned); retirement is a lifecycle change after the downtime check.
         data["lifecycle_status"] = "planned" if lifecycle == "planned" else "in_service"
         created = create_bench(actor=run.actor, **data)
+        catalog.register(Bench, created.pk, sku=created.sku)
         open_downtime(run, "bench", created.pk, condition)
         if lifecycle == "retired":
             change_bench_lifecycle(bench_id=created.pk, actor=run.actor, lifecycle_status="retired")
