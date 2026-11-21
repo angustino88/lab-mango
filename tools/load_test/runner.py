@@ -688,7 +688,6 @@ def _seed_synthetic_computing_inventory(count: int) -> None:
     kind, _ = EquipmentKind.objects.get_or_create(
         name="Benchmark PC",
         category=category,
-        defaults={"key": "benchmark-pc"},
     )
     existing = Equipment.objects.filter(sku__startswith="BENCH-PC-").count()
     needed = max(0, count - existing)
