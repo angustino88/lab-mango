@@ -7,9 +7,20 @@ paths:
   /api/labs/downtimes:
     get:
       operationId: labs_downtimes_retrieve
-      description: Coordinators and administrators (``LABS_STAFF_ACCESS``), like every
-        other resource write.
+      description: Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like
+        every other resource write.
       parameters:
+      - in: query
+        name: booking_access
+        schema:
+          enum:
+          - closed
+          - lab_operators
+          type: string
+          minLength: 1
+        description: '* `closed` - Closed to all bookings
+
+          * `lab_operators` - Lab operators only'
       - in: query
         name: page
         schema:
@@ -93,8 +104,8 @@ paths:
       summary: Get Downtimes
     post:
       operationId: labs_downtimes_create
-      description: Coordinators and administrators (``LABS_STAFF_ACCESS``), like every
-        other resource write.
+      description: Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like
+        every other resource write.
       tags:
       - Downtime
       requestBody:
@@ -147,8 +158,8 @@ paths:
   /api/labs/downtimes/{downtime_id}:
     get:
       operationId: labs_downtimes_retrieve_by_downtime_id
-      description: Coordinators and administrators (``LABS_STAFF_ACCESS``), like every
-        other resource write.
+      description: Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like
+        every other resource write.
       parameters:
       - in: path
         name: downtime_id
@@ -183,8 +194,8 @@ paths:
   /api/labs/downtimes/{downtime_id}/actions/cancel:
     post:
       operationId: labs_downtimes_actions_cancel_create_by_downtime_id
-      description: Coordinators and administrators (``LABS_STAFF_ACCESS``), like every
-        other resource write.
+      description: Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like
+        every other resource write.
       parameters:
       - in: path
         name: downtime_id
@@ -216,11 +227,71 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Cancel Downtimes by Downtime ID
+  /api/labs/downtimes/{downtime_id}/actions/change-booking-access:
+    post:
+      operationId: labs_downtimes_actions_change_booking_access_create_by_downtime_id
+      description: Open the window to lab operator bookings (``lab_operators``) or
+        close it to everyone (``closed``).
+      parameters:
+      - in: path
+        name: downtime_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Downtime
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DowntimeChangeBookingAccess'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DowntimeChangeBookingAccess'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DowntimeChangeBookingAccess'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DowntimeChangeBookingAccessSerializersDowntimeDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Change Booking Access Downtimes by Downtime ID
   /api/labs/downtimes/{downtime_id}/actions/end:
     post:
       operationId: labs_downtimes_actions_end_create_by_downtime_id
-      description: Coordinators and administrators (``LABS_STAFF_ACCESS``), like every
-        other resource write.
+      description: Coordinators and administrators (``LAB_OPERATIONS_ACCESS``), like
+        every other resource write.
       parameters:
       - in: path
         name: downtime_id
@@ -254,6 +325,14 @@ paths:
       summary: End Downtimes by Downtime ID
 components:
   schemas:
+    BookingAccessEnum:
+      enum:
+      - closed
+      - lab_operators
+      type: string
+      description: '* `closed` - Closed to all bookings
+
+        * `lab_operators` - Lab operators only'
     Choice:
       type: object
       description: ENU-1 ``{value, label}``.
@@ -291,6 +370,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
+        booking_access:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: 'Who may still book the covered benches: closed (no one) or
+            lab_operators (Lab Coordinators and Lab Administrators).'
         state:
           allOf:
           - $ref: '#/components/schemas/Choice'
@@ -333,6 +418,7 @@ components:
           readOnly: true
       required:
       - actor
+      - booking_access
       - cancelled_at
       - condition
       - created_at
@@ -347,6 +433,28 @@ components:
       - state
       - updated_at
     DowntimeCancelSerializersDowntimeDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Downtime'
+      required:
+      - data
+    DowntimeChangeBookingAccess:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        booking_access:
+          $ref: '#/components/schemas/BookingAccessEnum'
+        cancel_conflicting_bookings:
+          type: boolean
+          default: false
+          description: When closing a window, cancel the reserved and in-progress
+            bookings that overlap the rest of it, in the same transaction.
+      required:
+      - booking_access
+    DowntimeChangeBookingAccessSerializersDowntimeDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -401,6 +509,18 @@ components:
           default: false
           description: Cancel reserved and in-progress bookings that overlap the window,
             in the same transaction.
+        booking_access:
+          allOf:
+          - $ref: '#/components/schemas/BookingAccessEnum'
+          default: closed
+          description: 'closed (default): no one can book the covered benches. lab_operators:
+            lab coordinators and administrators can still book them; their overlapping
+            bookings are kept. Not for equipment.
+
+
+            * `closed` - Closed to all bookings
+
+            * `lab_operators` - Lab operators only'
       required:
       - condition
       - resource_id

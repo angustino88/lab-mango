@@ -12,7 +12,7 @@ from core.support_desk.features.tickets.application.shared import actor_display_
 from core.support_desk.models.outbox import NotificationOutbox
 from core.support_desk.models.ticket import SupportTicket
 from core.support_desk.models.watcher import TicketWatcher
-from core.users.public import LabsRole, users_holding_labs_role
+from core.users.public import LabsPermission, users_with_permission
 
 User = get_user_model()
 
@@ -21,8 +21,8 @@ IN_APP_ONLY = (OutboxChannel.IN_APP,)
 
 
 def _get_support_agents_and_admins() -> list[Any]:
-    """Active support agents and administrators: Labs coordinators, admins and superusers."""
-    return list(users_holding_labs_role(LabsRole.COORDINATOR))
+    """Active support agents and administrators: holders of ``support.handle`` and superusers."""
+    return list(users_with_permission(LabsPermission.SUPPORT_HANDLE))
 
 
 def _team_or_all_agents(ticket: SupportTicket) -> list[Any]:

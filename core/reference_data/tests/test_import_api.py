@@ -104,7 +104,7 @@ def test_create_retrieve_replay_and_mismatched_key(client):
 def test_permissions_input_and_foreign_keys(client):
     url = ROOT + "equipment/reference-data/departments"
     reader = get_user_model().objects.create(username="synthetic-no-permissions")
-    grant_labs_role(reader, "user")  # plain Labs users may not import reference data
+    grant_labs_role(reader, "member")  # plain Labs users may not import reference data
     client.force_authenticate(reader)
     denied = client.post(url, {"name": "Denied"}, format="json", HTTP_IDEMPOTENCY_KEY="denied")
     assert denied.status_code == 403, denied.data
@@ -150,7 +150,7 @@ def test_equipment_parent_validation_and_many_to_many(client):
 @pytest.mark.django_db(transaction=True)
 def test_concurrent_same_key_replays_one_record():
     actor = get_user_model().objects.create(username="synthetic-concurrent", is_superuser=True)
-    resource = ReferenceResource("test-department", Department, ("name",), ("name",))
+    resource = ReferenceResource("test-department", Department, ("name",), ("name",), can_write=lambda actor: True)
     barrier = Barrier(2)
 
     def run():
@@ -241,7 +241,7 @@ def test_create_and_retrieve_every_reference_type(client):
         assert replay.status_code == 201, (catalog, replay.data)
         assert replay.data == response.data
         assert replay["Idempotency-Replayed"] == "true"
-        grant_labs_role(reader, "user")  # can read catalogs through the dashboard, may not import
+        grant_labs_role(reader, "member")  # can read catalogs through the dashboard, may not import
         client.force_authenticate(reader)
         denied = client.post(ROOT + catalog, payload, format="json", HTTP_IDEMPOTENCY_KEY=f"denied-{index}")
         assert denied.status_code == 403, (catalog, denied.data)
@@ -302,7 +302,7 @@ def test_lab_role_decides_reference_imports_not_django_permissions(client):
 
     scoped = get_user_model().objects.create(username="synthetic-scoped-importer")
     scoped.user_permissions.add(Permission.objects.get(content_type__app_label="labs", codename="add_licensetype"))
-    grant_labs_role(scoped, "user")
+    grant_labs_role(scoped, "member")
     client.force_authenticate(scoped)
     denied = client.post(
         ROOT + "licenses/reference-data/types",
@@ -348,3 +348,19 @@ def test_reference_query_budgets(client, django_assert_num_queries):
         assert client.get(ROOT + "equipment/reference-data/departments").status_code == 200
     with django_assert_num_queries(1):
         assert client.get(ROOT + f"equipment/reference-data/departments/{rows[0].pk}").status_code == 200
+
+
+@pytest.mark.django_db
+def test_a_resource_without_a_write_rule_is_read_only():
+    """Without the owner's write rule nobody writes, superusers included (no Django permission fallback)."""
+    from types import SimpleNamespace
+
+    from core.reference_data.exceptions import ReferencePermissionDenied
+    from core.reference_data.policies import ensure_access
+
+    superuser = get_user_model().objects.create(username="synthetic-superuser", is_superuser=True)
+    resource = SimpleNamespace(can_write=None)
+
+    ensure_access(resource, superuser)  # reads stay open to signed-in users
+    with pytest.raises(ReferencePermissionDenied):
+        ensure_access(resource, superuser, write=True)

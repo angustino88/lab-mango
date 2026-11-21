@@ -12,6 +12,7 @@ from core.labs.features.bench_bookings.queries import (
     bench_downtime_blocker,
     bench_parent_blocker,
     conflicting_bench_bookings,
+    may_book_during_downtime,
 )
 from core.labs.features.equipment.public import lock_active_equipment_bench_assignment
 from core.labs.models import BenchBooking, BookingApprovalStatus, BookingStatus
@@ -87,7 +88,12 @@ def update_agent_booking_end_time(command: AgentBookingEndTimeInput, *, actor: o
     policies.ensure_no_conflicting_bookings(has_conflicts=conflicts.exists())
     if command.ends_at > booking.ends_at:
         policies.ensure_no_downtime(
-            bench_downtime_blocker(bench=bench, starts_at=booking.ends_at, ends_at=command.ends_at)
+            bench_downtime_blocker(
+                bench=bench,
+                starts_at=booking.ends_at,
+                ends_at=command.ends_at,
+                lab_operator=may_book_during_downtime(booking.creator),
+            )
         )
 
     booking.ends_at = command.ends_at

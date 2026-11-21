@@ -61,7 +61,7 @@ from core.labs.features.lab_sessions.public import (
 )
 from core.labs.models import Equipment
 from core.routing.api.serializers import ErrorEnvelopeSerializer
-from core.users.public import IsLabCoordinator
+from core.users.public import LabsAccessPolicy, LabsPermission
 
 from .serializers import (
     AgentActivityDataSerializer,
@@ -115,11 +115,15 @@ def _error_response(status_code: int, code: str, message: str, request: Request,
     )
 
 
+# Agents: lab operators only (agent.manage), reads included (owner decision 2026-11-20, role-based-access-redesign.md F8).
+AGENT_ACCESS = LabsAccessPolicy.of("AgentAccess", read=LabsPermission.AGENT_MANAGE, write=LabsPermission.AGENT_MANAGE)
+
+
 class AgentListCreateAPIView(APIView):
     """List agent identities or issue an initial enrollment grant."""
 
     # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
-    permission_classes = [IsLabCoordinator]
+    permission_classes = [AGENT_ACCESS]
 
     @extend_schema(
         operation_id="list_agents",
@@ -244,7 +248,7 @@ class AgentDetailAPIView(APIView):
     """Retrieve detail of an enrolled agent."""
 
     # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
-    permission_classes = [IsLabCoordinator]
+    permission_classes = [AGENT_ACCESS]
 
     @extend_schema(
         operation_id="get_agent_detail",
@@ -265,7 +269,7 @@ class AgentGrantCreateAPIView(APIView):
     """List an agent's enrollment grants, or issue a new or recovery grant for it."""
 
     # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
-    permission_classes = [IsLabCoordinator]
+    permission_classes = [AGENT_ACCESS]
 
     @extend_schema(
         operation_id="list_agent_grants",
@@ -349,7 +353,7 @@ class AgentGrantRevokeActionAPIView(APIView):
     """Revoke one unredeemed enrollment grant of an agent."""
 
     # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
-    permission_classes = [IsLabCoordinator]
+    permission_classes = [AGENT_ACCESS]
 
     @extend_schema(
         operation_id="revoke_agent_grant",
@@ -383,7 +387,7 @@ class AgentRevokeActionAPIView(APIView):
     """Revoke an active agent identity."""
 
     # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
-    permission_classes = [IsLabCoordinator]
+    permission_classes = [AGENT_ACCESS]
 
     @extend_schema(
         operation_id="revoke_agent",
@@ -411,7 +415,7 @@ class AgentDecommissionActionAPIView(APIView):
     """Decommission an active agent identity."""
 
     # Reads: any authenticated user. Writes (grants, revoke, decommission): lab coordinators and admins.
-    permission_classes = [IsLabCoordinator]
+    permission_classes = [AGENT_ACCESS]
 
     @extend_schema(
         operation_id="decommission_agent",

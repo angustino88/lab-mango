@@ -26,7 +26,7 @@ Exposes Django authorization groups and their members. Membership comes from URS
 ---
 
 ## 3. Authorization
-Both endpoints require the Labs `admin` role (`IsLabAdminReadWrite`): membership reveals who holds which
+Both endpoints require `directory.read` (Lab Administrators; `DIRECTORY_ACCESS`, read-only): membership reveals who holds which
 role (owner decision, 2026-11-11). Superusers hold every role.
 
 ## 4. API Endpoints & Transport Contracts

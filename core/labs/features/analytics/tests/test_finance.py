@@ -513,7 +513,7 @@ def test_finance_openapi_declares_required_inputs_and_money_schema():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("role", ["", "user"])
+@pytest.mark.parametrize("role", ["", "member"])
 @pytest.mark.parametrize("endpoint", ENDPOINTS)
 def test_finance_requires_coordinator(endpoint, role):
     from django.contrib.auth.models import Group

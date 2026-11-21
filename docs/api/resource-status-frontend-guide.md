@@ -75,12 +75,15 @@ export type ResourceType = "room" | "station" | "bench" | "equipment";
 export type DowntimeReason = "maintenance" | "fault" | "calibration" | "safety_hold" | "renovation" | "other";
 export type DowntimeKind = "planned" | "unplanned";
 export type DowntimeState = "scheduled" | "current" | "ended" | "cancelled";
+export type DowntimeBookingAccess = "closed" | "lab_operators";
 
 export interface Availability {
   value: "available" | "unavailable";
   blocked_by: { type: "room" | "station" | "bench"; id: number; name: string } | null;
   condition: Condition | null;
   reason: DowntimeReason | LifecycleStatus | null;
+  /** Who may still book while unavailable; null when available (section 6.4). */
+  booking_access: Choice<DowntimeBookingAccess> | null;
 }
 
 /** Shared by Room, Station and Bench reads. */
@@ -102,6 +105,7 @@ export interface Downtime {
   condition: Choice<"in_maintenance" | "out_of_service">;
   kind: Choice<DowntimeKind>;
   reason: Choice<DowntimeReason>;
+  booking_access: Choice<DowntimeBookingAccess>;
   state: DowntimeState;
   starts_at: string;            // ISO 8601 with offset
   ends_at: string | null;       // null: end not known yet
@@ -306,11 +310,45 @@ Rooms and stations accept `lifecycle_status` and/or `access_policy` (and optiona
 - A room can be retired only after all its stations are retired; a station only after its benches are (409).
 - "Out of service" is not a lifecycle value: use downtime (6.1).
 
+### 6.4 Let lab operators keep booking during downtime
+
+A window can stay open to lab coordinators and administrators (for example so they can book the bench for the
+maintenance work). Add a control "Who can still book?" to the downtime form for rooms, stations and benches
+(hide it for equipment: the API answers 422):
+
+| `booking_access` | Option text |
+|---|---|
+| `closed` (default) | No one |
+| `lab_operators` | Lab coordinators and administrators |
+
+```http
+POST /api/labs/downtimes
+{ "resource_type": "room", "resource_id": 12, "condition": "in_maintenance", "reason": "maintenance",
+  "booking_access": "lab_operators" }
+```
+
+With `lab_operators`, the 409 `downtime_booking_conflict` lists only bookings of other users; lab operator bookings
+stay. To change an existing `scheduled` or `current` window:
+
+```http
+POST /api/labs/downtimes/{id}/actions/change-booking-access
+{ "booking_access": "closed", "cancel_conflicting_bookings": false }
+```
+
+Opening to `lab_operators` always succeeds. Closing answers 409 `downtime_booking_conflict` (same `details` as 6.1)
+while lab operator bookings overlap the rest of the window; confirm and resend with `"cancel_conflicting_bookings": true`.
+Ended or cancelled windows answer 409 `downtime_not_allowed`. Repeating the current value returns the window
+unchanged.
+
+On resource reads, `availability.booking_access` tells the booking UI who can still book now: for lab operators,
+treat `unavailable` with `booking_access.value === "lab_operators"` as bookable (show a "Lab operators only" badge);
+for everyone else it stays unavailable. The server decides in every case, so the form must still handle 409.
+
 ## 7. Effects elsewhere in the UI
 
 | Screen | What to handle |
 |---|---|
-| Bench booking form | Creating or changing a booking now fails with 409 `bench_booking_conflict` ("The bench is unavailable for the requested period: Room is in maintenance ...") when the period overlaps downtime of the bench, its station or its room, and with 422 when the station or room is not in service. Pre-check with the bench's `availability` and the downtime list, and grey out blocked time in the calendar |
+| Bench booking form | Creating or changing a booking now fails with 409 `bench_booking_conflict` ("The bench is unavailable for the requested period: Room is in maintenance ...") when the period overlaps downtime of the bench, its station or its room (unless the window is `lab_operators` and the booking holder is a coordinator or administrator; the message then ends "Only lab coordinators and administrators can book it."), and with 422 when the station or room is not in service. Pre-check with the bench's `availability` and the downtime list, and grey out blocked time in the calendar |
 | Agent booking extension | New refusal reason `bench_unavailable` next to `bench_not_in_service` |
 | Moving a bench or station | 409 (`bench_conflict` for a bench, `location_conflict` for a station) with `details` entries `bench_bookings.<id>` (code `booking_overlaps_downtime`) when its future bookings would fall in the new parent's downtime; the same codes without details when the target station or room is retired. Cancel or move the listed bookings, then retry |
 | Equipment | `change-condition` works as before. Reservations are refused when a downtime window with a known end overlaps the period. Equipment can also get windows from the downtime API (`resource_type: "equipment"`) |

@@ -156,7 +156,7 @@ class TestAuditCatalog:
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("role", [None, "user"])
+@pytest.mark.parametrize("role", [None, "member"])
 def test_users_without_coordinator_role_are_denied(role):
     user = UserFactory()
     if role:

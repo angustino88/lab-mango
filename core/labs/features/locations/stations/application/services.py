@@ -31,6 +31,7 @@ from core.labs.models.resource.location.room import Room
 from core.labs.models.resource.location.room_slot import RoomSlot
 from core.labs.models.resource.location.station import Station, StationStatusRecord, StationType
 from core.labs.models.resource.location.station_slot import StationSlot
+from core.users.public import LabsPermission, users_with_permission
 
 STATION_WRITE_FIELDS = (
     "sku", "name", "department_id", "group_id", "owner_id", "remark", "label", "type_id", "room_id", "slot_id",
@@ -139,7 +140,12 @@ def _ensure_bookings_fit_new_room(station, room):
         .order_by("pk")
         .values_list("pk", flat=True)
     )
-    blocked = bench_bookings_blocked_by_parents(bench_ids=bench_ids, station=station, room=room)
+    blocked = bench_bookings_blocked_by_parents(
+        bench_ids=bench_ids,
+        station=station,
+        room=room,
+        lab_operator_users=users_with_permission(LabsPermission.BENCH_BOOKING_BOOK_DURING_DOWNTIME),
+    )
     if blocked:
         raise LocationConflict(
             "Bookings at this station fall in downtime of the new room. Move or cancel them first.",

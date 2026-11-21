@@ -40,7 +40,7 @@ from core.users.models import EntraIdentity, URSGroup, User
 STUB_CALLER = "stub-identities-command"
 STUB_USERNAME_PREFIX = "stub."
 # Reserved URS group ids for stub roles; real URS ids are far smaller.
-STUB_URS_GROUP_IDS = {"admin": 9_000_000_000_001, "coord": 9_000_000_000_002, "user": 9_000_000_000_003}
+STUB_URS_GROUP_IDS = {"admin": 9_000_000_000_001, "coord": 9_000_000_000_002, "member": 9_000_000_000_003}
 
 
 class StubIdentitiesDisabled(PermissionError):
@@ -52,7 +52,7 @@ class StubUserInput:
     username: str
     name: str
     email: str
-    labs_role: str = ""  # "", "user", "coord" or "admin"
+    labs_role: str = ""  # "", "member", "coord" or "admin"
 
 
 @dataclass(frozen=True, slots=True)

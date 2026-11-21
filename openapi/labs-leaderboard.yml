@@ -283,8 +283,8 @@ paths:
         areas and trend.
 
 
-        Lab coordinators and administrators read anyone''s; a lab member reads only
-        their own. The route
+        Holders of ``assessment.read_any`` (lab operators) read anyone''s; a Lab Member
+        reads only their own. The route
 
         follows the leaderboard policy (lab members read); the subject is checked
         per request.'

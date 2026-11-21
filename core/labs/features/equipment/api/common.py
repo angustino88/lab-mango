@@ -1,16 +1,14 @@
 """Equipment-specific API foundation and persistence helpers."""
 
-from core.common.api.permissions import HasAPIKeyAccess
-from core.labs.features.base import LABS_STAFF_ACCESS, FeatureAPIView
-from core.users.public import IsLabCoordinator
+from core.labs.features.base import LAB_OPERATIONS_ACCESS, ORGANIZATION_ACCESS, FeatureAPIView
 
-# Equipment is visible to and managed by lab coordinators and administrators only (owner decision
-# R4, 2026-11-10), or an API key (agents). Department scope (redesign OD9) is a later stage.
-EQUIPMENT_PERMISSIONS = LABS_STAFF_ACCESS
-# Organisation lookups (departments, groups) served from this feature but used by other
-# screens stay readable by every Labs role (R9; users without a Labs role are denied, owner decision
-# 2026-11-11); writes need a coordinator.
-ORGANIZATION_PERMISSIONS = [HasAPIKeyAccess | IsLabCoordinator]
+# Equipment is visible to and managed by lab operators only (owner decision R4, 2026-11-10), or an
+# API key (agents). Department scope (redesign OD9) is a later stage.
+EQUIPMENT_PERMISSIONS = LAB_OPERATIONS_ACCESS
+# Organisation lookups (departments, groups) served from this feature but used by other screens stay
+# readable by every Labs role (R9, owner decision 2026-11-11); writes need equipment_reference.manage
+# (``create_catalog_reference``).
+ORGANIZATION_PERMISSIONS = ORGANIZATION_ACCESS
 
 
 def sku_exists(sku: str, *, exclude_model=None, exclude_pk: int | None = None) -> bool:

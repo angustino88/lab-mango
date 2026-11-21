@@ -308,7 +308,7 @@ and A5 will run; the booking FK has Django's default index.
 
 `GET /api/labs/lab-sessions` lists completed sessions for the Lab Analytics session table (proposal §5.4).
 
-- Access: lab coordinators and admins only (`LABS_STAFF_ACCESS`, O11); plain Labs users get 403.
+- Access: lab operators only (`LAB_OPERATIONS_ACCESS`, O11); plain Labs users get 403.
 - Query: `start_date` and `end_date` are required (login day, inclusive, server time zone, at most 366
   days); optional `bench_id`, `computer_id`, `user_id`, `access_type`, `q` (remote user, host, booking
   code, computer or bench SKU/name) and `ordering` (`-login_time` by default, also `login_time`,

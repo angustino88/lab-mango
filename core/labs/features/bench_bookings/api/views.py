@@ -13,7 +13,14 @@ from rest_framework.response import Response
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.options import SizeClass
-from core.labs.features.base import LABS_MEMBER_ACCESS, CommandAPIView, FeatureAPIView, OptionsAPIView, operation
+from core.labs.features.base import (
+    BENCH_BOOKING_ACCESS,
+    BENCH_BOOKING_DECISION_ACCESS,
+    CommandAPIView,
+    FeatureAPIView,
+    OptionsAPIView,
+    operation,
+)
 from core.labs.features.bench_bookings.application import (
     CreateBenchBookingInput,
     DecideBenchBookingApprovalInput,
@@ -34,7 +41,6 @@ from core.labs.features.bench_bookings.queries import (
 )
 from core.labs.features.bench_bookings.queries.lab_projects import list_lab_project_options
 from core.labs.models import BookingStatus
-from core.users.public import IsLabCoordinator
 
 from .serializers import (
     BenchBookingCancelActionSerializer,
@@ -50,7 +56,7 @@ from .serializers import (
 
 
 class BenchBookingAPIView(CommandAPIView):
-    permission_classes = LABS_MEMBER_ACCESS
+    permission_classes = BENCH_BOOKING_ACCESS
     schema_tags = ("Bench Bookings",)
 
     def project_result(self, result):
@@ -165,7 +171,7 @@ class BenchBookingCancelActionAPIView(BenchBookingAPIView):
 
 
 class BenchBookingApproveActionAPIView(BenchBookingAPIView):
-    permission_classes = [IsLabCoordinator]
+    permission_classes = BENCH_BOOKING_DECISION_ACCESS
     post_contract = operation(
         "BenchBookingApproveAction",
         BenchBookingSerializer,
@@ -203,7 +209,7 @@ class BenchBookingApproveActionAPIView(BenchBookingAPIView):
 
 
 class BenchBookingRejectActionAPIView(BenchBookingAPIView):
-    permission_classes = [IsLabCoordinator]
+    permission_classes = BENCH_BOOKING_DECISION_ACCESS
     post_contract = operation(
         "BenchBookingRejectAction",
         BenchBookingSerializer,
@@ -329,7 +335,7 @@ class BenchBookingCancelByCodeActionAPIView(BenchBookingAPIView):
 
 class LabProjectListAPIView(AppListAPIView, FeatureAPIView):
     """List the lab projects a booking can be charged to."""
-    permission_classes = LABS_MEMBER_ACCESS
+    permission_classes = BENCH_BOOKING_ACCESS
 
     schema_tags = ("Bench Bookings",)
     get_contract = OperationContract(
@@ -349,7 +355,7 @@ class LabProjectListAPIView(AppListAPIView, FeatureAPIView):
 
 class LabProjectOptionsAPIView(OptionsAPIView):
     """Selector options for lab projects."""
-    permission_classes = LABS_MEMBER_ACCESS
+    permission_classes = BENCH_BOOKING_ACCESS
 
     query_serializer = LabProjectOptionsQuerySerializer
     size_class = SizeClass.LARGE
@@ -362,7 +368,7 @@ class LabProjectOptionsAPIView(OptionsAPIView):
 
 class LabProjectDetailAPIView(FeatureAPIView):
     """Retrieve one lab project."""
-    permission_classes = LABS_MEMBER_ACCESS
+    permission_classes = BENCH_BOOKING_ACCESS
 
     schema_tags = ("Bench Bookings",)
     get_contract = OperationContract(

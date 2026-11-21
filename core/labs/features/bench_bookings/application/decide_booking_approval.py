@@ -24,7 +24,7 @@ from core.labs.models import (
     BookingApprovalStatus,
     BookingStatus,
 )
-from core.users.public import LabsRole, has_labs_role
+from core.users.public import LabsPermission, has_permission
 
 from .locks import lock_benches
 
@@ -50,7 +50,7 @@ def decide_bench_booking_approval(
     Separation of duties: nobody decides a booking they created or that is for them, superusers
     included (owner decision 2026-11-12). Another coordinator or an administrator decides it.
     """
-    if not is_authenticated(actor) or not has_labs_role(actor, LabsRole.COORDINATOR):
+    if not is_authenticated(actor) or not has_permission(actor, LabsPermission.BENCH_BOOKING_APPROVE):
         raise BenchBookingPermissionDenied("Only a lab coordinator or administrator can decide booking approval.")
 
     if data.decision not in {BookingApprovalStatus.APPROVED, BookingApprovalStatus.REJECTED}:

@@ -28,7 +28,7 @@ from core.labs.models import (
     TechnicalUser,
 )
 from core.labs.models.resource.equipment import DisplaySize, EquipmentInterface
-from core.users.public import effective_labs_roles
+from core.users.public import effective_permissions
 
 ROOT = "/api/labs/equipment"
 User = get_user_model()
@@ -200,7 +200,7 @@ def test_category_route_sets_are_gone(client, path):
 
 @pytest.mark.django_db
 def test_list_query_count_does_not_grow_with_rows(client, coordinator, django_assert_max_num_queries):
-    effective_labs_roles(coordinator)
+    effective_permissions(coordinator)
     kind = _kind("sample")
     interface = EquipmentInterface.objects.create(name="USB")
     for index in range(5):

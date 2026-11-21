@@ -210,7 +210,7 @@ def test_needs_coordinator(unit):
     plain = APIClient()
     plain.force_authenticate(User.objects.create_user(username="sc-plain"))
     labs_user = APIClient()
-    labs_user.force_authenticate(grant_labs_role(User.objects.create_user(username="sc-user"), "user"))
+    labs_user.force_authenticate(grant_labs_role(User.objects.create_user(username="sc-user"), "member"))
     assert anonymous.get(_url(unit.pk)).status_code in (401, 403)
     assert plain.get(_url(unit.pk)).status_code == 403
     assert labs_user.get(_url(unit.pk)).status_code == 403

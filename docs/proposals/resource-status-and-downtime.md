@@ -63,6 +63,8 @@ computed condition.
    cancels future windows. A found equipment unit (`lost` → `in_service`) opens an `in_maintenance` window.
 3. A booking (bench) or reservation (equipment) is refused when the resource, or a parent, is not
    `in_service`, or when any downtime window of the resource or a parent overlaps the requested period.
+   Exception: a window with `booking_access = lab_operators` does not block bench bookings held by lab
+   coordinators and administrators ([lab operator booking access](downtime-lab-operator-booking-access.md)).
 4. Ending a downtime window sets `ends_at` to now (only an open or current window). Cancelling is for a
    window that has not started; it keeps the row with `cancelled_at`.
 5. The old write paths open or end an unplanned window starting now. Room/station `change-status`
@@ -85,7 +87,7 @@ computed condition.
 | `POST /api/labs/rooms/{id}/actions/change-lifecycle`, `.../stations/{id}/actions/change-lifecycle` | Set `lifecycle_status` and/or `access_policy`. |
 | Room, station, bench reads | Add `lifecycle_status`, `access_policy` (room/station), `condition`, `availability`, `activity_status`. |
 
-Access: all downtime routes use `LABS_STAFF_ACCESS` (coordinators and admins), the same as every
+Access: all downtime routes use `LAB_OPERATIONS_ACCESS` (lab operators), the same as every
 location, bench and equipment write. No access-control change.
 
 ## Ownership and locks

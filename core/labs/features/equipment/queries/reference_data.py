@@ -15,17 +15,17 @@ from core.labs.models.resource.equipment.reference_data import (
 from core.reference_data.contracts import ReferenceResource
 from core.reference_data.exceptions import ReferencePermissionDenied
 from core.reference_data.public import get_reference, list_references
-from core.users.public import LabsRole, has_labs_role
+from core.users.public import LabsPermission, has_permission
 
-# Organisation lookups other screens use; every other equipment reference list is visible to
-# coordinators and administrators only (owner decisions R4, R9).
+# Organisation lookups other screens use; every other equipment reference list needs
+# lab_operations.manage (owner decisions R4, R9).
 OPEN_REFERENCE_MODELS = frozenset({"department", "group"})
 
 
 def _ensure_can_read(resource: ReferenceResource, actor: Any) -> None:
     if resource.model._meta.model_name in OPEN_REFERENCE_MODELS:
         return
-    if not has_labs_role(actor, LabsRole.COORDINATOR):
+    if not has_permission(actor, LabsPermission.LAB_OPERATIONS_MANAGE):
         raise ReferencePermissionDenied()
 
 

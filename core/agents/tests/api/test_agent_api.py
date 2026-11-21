@@ -49,7 +49,7 @@ def admin_user(db):
 
 @pytest.fixture
 def plain_user(db):
-    return _user_with_labs_role("agent-viewer", "user")
+    return _user_with_labs_role("agent-viewer", "member")
 
 
 @pytest.fixture
@@ -81,10 +81,9 @@ def test_operator_writes_require_lab_coordinator_role(api_client, admin_user, pl
     agent = AgentIdentity.objects.get(agent_uid=created.data["data"]["agent_uid"])
 
     api_client.force_authenticate(user=plain_user)
-    # Reads stay open to any authenticated user.
-    assert api_client.get("/api/agents").status_code == 200
-    assert api_client.get(f"/api/agents/{agent.pk}").status_code == 200
-    # Every write is denied without the coordinator role, and nothing changes.
+    # Reads and writes need agent.manage (lab operators; owner decision 2026-11-20), and nothing changes.
+    assert api_client.get("/api/agents").status_code == 403
+    assert api_client.get(f"/api/agents/{agent.pk}").status_code == 403
     for path, body in (
         ("/api/agents", {"equipment_uid": str(computing_equipment.uid)}),
         (f"/api/agents/{agent.pk}/enrollment-grants", {}),

@@ -24,7 +24,7 @@ from core.infrastructure.spreadsheets import (
     read_workbook,
 )
 from core.labs.features.base import FeatureAPIView
-from core.users.public import IsLabAdminReadWrite
+from core.labs.features.base.access import WORKBOOK_IMPORT_ACCESS
 
 from ..application import ImportWorkbookInput, import_workbook
 from ..contracts import ERROR, SheetRows
@@ -68,7 +68,7 @@ def _field_error(message: str, code: str) -> dict[str, list[ErrorDetail]]:
 class WorkbookImportAPIView(FeatureAPIView):
     """Labs administrators only (owner decision 2026-11-16); API keys cannot import."""
 
-    permission_classes: Any = [IsLabAdminReadWrite]
+    permission_classes: Any = WORKBOOK_IMPORT_ACCESS
     schema_tags = ("Workbook import",)
 
 

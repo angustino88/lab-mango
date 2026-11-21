@@ -3,8 +3,11 @@ from django.contrib.auth.models import Group, Permission
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from core.common.api.summary_serializers import ChoiceSerializer
 from core.infrastructure.storage.urls import get_media_url
-from core.users.access import LabsRole, effective_labs_roles
+from core.users.access import effective_labs_roles, effective_permissions
+from core.users.permissions import LabsPermission
+from core.users.roles import LabsRole
 
 User = get_user_model()
 
@@ -42,17 +45,34 @@ class EffectiveRolesSerializer(serializers.Serializer):
     labs = serializers.ListField(child=serializers.CharField(), read_only=True)
 
 
+class EffectivePermissionsSerializer(serializers.Serializer):
+    labs = ChoiceSerializer(
+        many=True,
+        read_only=True,
+        help_text=(
+            "Effective Labs permissions (`value` is the code, `label` describes it), sorted by code. Show or hide "
+            "actions with these; the server decides. Codes: docs/architecture/access-matrix.md."
+        ),
+    )
+
+
 class UserWithPermissionSerializer(UserSerializer):
     groups = GroupPermissionSerializer(many=True, read_only=True)
     effective_roles = serializers.SerializerMethodField()
+    effective_permissions = serializers.SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ["groups", "effective_roles"]
+        fields = UserSerializer.Meta.fields + ["groups", "effective_roles", "effective_permissions"]
 
     @extend_schema_field(EffectiveRolesSerializer)
     def get_effective_roles(self, obj) -> dict[str, list[str]]:
         roles = effective_labs_roles(obj)
         return {"labs": [role.value for role in LabsRole if role in roles]}
+
+    @extend_schema_field(EffectivePermissionsSerializer)
+    def get_effective_permissions(self, obj) -> dict[str, list[dict[str, str]]]:
+        held = sorted(effective_permissions(obj))
+        return {"labs": [{"value": code, "label": str(LabsPermission(code).label)} for code in held]}
 
 
 class UserAvatarReadSerializer(serializers.ModelSerializer):

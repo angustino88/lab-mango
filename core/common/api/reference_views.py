@@ -50,7 +50,8 @@ def reference_urlpatterns(
     """Bind one explicitly declared resource to owner commands and queries.
 
     ``permission_classes`` lets the owning app set its access policy; the default is authenticated users.
-    ``can_write`` is the owner's write rule ``(actor) -> bool``; the default is the model's ``add_`` permission.
+    ``can_write`` is the owner's write rule ``(actor) -> bool`` (normally a permission check); without it every
+    write is refused.
     ``read_only`` publishes list and detail only: the collection has no POST (405), and ``create`` is unused.
     """
     access = list(permission_classes) if permission_classes is not None else [IsAuthenticated]

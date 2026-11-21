@@ -51,7 +51,7 @@ def get(client, **params):
 @pytest.mark.django_db
 def test_plain_lab_user_is_denied():
     api = APIClient()
-    api.force_authenticate(user=grant_labs_role(UserFactory(), "user"))
+    api.force_authenticate(user=grant_labs_role(UserFactory(), "member"))
     assert api.get(URL, {"start_date": DAY.isoformat(), "end_date": DAY.isoformat()}).status_code == 403
 
 

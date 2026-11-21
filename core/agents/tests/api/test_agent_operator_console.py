@@ -35,7 +35,7 @@ def coordinator(db):
 
 @pytest.fixture
 def viewer(db):
-    return _user("console-viewer", "user")
+    return _user("console-viewer", "member")
 
 
 @pytest.fixture
@@ -199,7 +199,18 @@ def test_grant_revoke_requires_coordinator(client, viewer):
     agent = AgentIdentity.objects.get(agent_uid=_issue(client, _computer("perm"))["agent_uid"])
     grant = agent.enrollment_grants.get()
     client.force_authenticate(user=viewer)
-    assert client.get(f"/api/agents/{agent.pk}/enrollment-grants").status_code == 200
+    assert client.get(f"/api/agents/{agent.pk}/enrollment-grants").status_code == 403
     assert client.post(f"/api/agents/{agent.pk}/enrollment-grants/{grant.pk}/actions/revoke").status_code == 403
     grant.refresh_from_db()
     assert grant.revoked_at is None
+
+
+@pytest.mark.django_db
+def test_lab_members_cannot_read_agents(client, viewer):
+    """Agents are for lab operators only, reads included (agent.manage; owner decision 2026-11-20)."""
+    issued = _issue(client, _computer("console-member-read"))
+    agent = AgentIdentity.objects.get(agent_uid=issued["agent_uid"])
+    client.force_authenticate(user=viewer)
+
+    assert client.get("/api/agents").status_code == 403
+    assert client.get(f"/api/agents/{agent.pk}").status_code == 403

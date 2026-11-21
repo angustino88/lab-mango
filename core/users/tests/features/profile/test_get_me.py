@@ -67,9 +67,9 @@ async def test_get_me_includes_group_permissions(api_client, user, group):
 @pytest.mark.parametrize(
     ("assigned_role", "expected_roles"),
     [
-        ("admin", ["admin", "coord", "user"]),
-        ("coord", ["coord", "user"]),
-        ("user", ["user"]),
+        ("admin", ["admin"]),
+        ("coord", ["coord"]),
+        ("member", ["member"]),
         ("", []),
     ],
 )
@@ -103,5 +103,30 @@ async def test_get_me_superuser_has_all_effective_roles_without_groups(api_clien
     token = await make_access_token(user)
     resp = await api_client.get("/api/users/me", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
-    assert resp.json()["data"]["effective_roles"] == {"labs": ["admin", "coord", "user"]}
+    assert resp.json()["data"]["effective_roles"] == {"labs": ["admin"]}
     assert resp.json()["data"]["groups"] == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("assigned_role", ["admin", "coord", "member", ""])
+async def test_get_me_lists_the_permissions_the_role_grants(api_client, user, assigned_role):
+    from core.users.permissions import LabsPermission, permissions_for_roles
+
+    def _setup():
+        group = Group.objects.create(name=f"permissions-{assigned_role or 'none'}")
+        user.groups.add(group)
+        URSGroup.objects.create(group=group, urs_group_id=987654322, labs_role=assigned_role)
+
+    await sync_to_async(_setup)()
+    token = await make_access_token(user)
+
+    resp = await api_client.get("/api/users/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert resp.status_code == 200
+    expected = sorted(permissions_for_roles([assigned_role]))
+    listed = resp.json()["data"]["effective_permissions"]["labs"]
+    assert [item["value"] for item in listed] == expected
+    assert all(item["label"] == LabsPermission(item["value"]).label for item in listed)
+    if assigned_role == "member":
+        assert "bench_booking.approve" not in {item["value"] for item in listed}

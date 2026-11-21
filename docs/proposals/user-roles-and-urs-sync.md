@@ -1,5 +1,10 @@
 # User Roles and URS Group Sync Proposal
 
+> **Superseded for access checks (2026-11-20):** roles now grant permissions and features check permissions
+> ([role-based access redesign](role-based-access-redesign.md), [access matrix](../architecture/access-matrix.md)).
+> Class names below (`IsLab*`, `RolePermission`, `has_labs_role`) describe the code as it was; URS sync,
+> role assignment and the audit items here still apply.
+
 **Status:** In implementation on branch `claude/bold-volta-rjje8r` (2026-11-11); T2, needs review and owner approval before merge
 **Risk tier:** T2 — authorization, background job, external integration, migration
 **Scope:** `core/users/access.py`, `core/common/api/permissions.py`, `core/users/models/urs_group.py`,

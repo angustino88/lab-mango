@@ -2908,6 +2908,14 @@ components:
       required:
       - bench
       - booked_hours
+    BookingAccessEnum:
+      enum:
+      - closed
+      - lab_operators
+      type: string
+      description: '* `closed` - Closed to all bookings
+
+        * `lab_operators` - Lab operators only'
     BookingBenchChoice:
       type: object
       properties:
@@ -5681,6 +5689,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
+        booking_access:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: 'Who may still book the covered benches: closed (no one) or
+            lab_operators (Lab Coordinators and Lab Administrators).'
         state:
           allOf:
           - $ref: '#/components/schemas/Choice'
@@ -5723,6 +5737,7 @@ components:
           readOnly: true
       required:
       - actor
+      - booking_access
       - cancelled_at
       - condition
       - created_at
@@ -5737,6 +5752,28 @@ components:
       - state
       - updated_at
     DowntimeCancelSerializersDowntimeDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Downtime'
+      required:
+      - data
+    DowntimeChangeBookingAccess:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        booking_access:
+          $ref: '#/components/schemas/BookingAccessEnum'
+        cancel_conflicting_bookings:
+          type: boolean
+          default: false
+          description: When closing a window, cancel the reserved and in-progress
+            bookings that overlap the rest of it, in the same transaction.
+      required:
+      - booking_access
+    DowntimeChangeBookingAccessSerializersDowntimeDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
@@ -5791,6 +5828,18 @@ components:
           default: false
           description: Cancel reserved and in-progress bookings that overlap the window,
             in the same transaction.
+        booking_access:
+          allOf:
+          - $ref: '#/components/schemas/BookingAccessEnum'
+          default: closed
+          description: 'closed (default): no one can book the covered benches. lab_operators:
+            lab coordinators and administrators can still book them; their overlapping
+            bookings are kept. Not for equipment.
+
+
+            * `closed` - Closed to all bookings
+
+            * `lab_operators` - Lab operators only'
       required:
       - condition
       - resource_id
@@ -5916,6 +5965,19 @@ components:
       - description
       - quantity
       - unit_price
+    EffectivePermissions:
+      type: object
+      properties:
+        labs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Choice'
+          readOnly: true
+          description: 'Effective Labs permissions (`value` is the code, `label` describes
+            it), sorted by code. Show or hide actions with these; the server decides.
+            Codes: docs/architecture/access-matrix.md.'
+      required:
+      - labs
     EffectiveRoles:
       type: object
       properties:
@@ -11053,8 +11115,17 @@ components:
           nullable: true
           readOnly: true
           description: Lifecycle status, or the downtime reason, of blocked_by.
+        booking_access:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          nullable: true
+          readOnly: true
+          description: 'Who may still book while unavailable: lab_operators (coordinators
+            and administrators, every blocker is downtime open to lab operators) or
+            closed. Empty when available.'
       required:
       - blocked_by
+      - booking_access
       - condition
       - reason
       - status
@@ -23098,8 +23169,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/EffectiveRoles'
           readOnly: true
+        effective_permissions:
+          allOf:
+          - $ref: '#/components/schemas/EffectivePermissions'
+          readOnly: true
       required:
       - avatar_url
+      - effective_permissions
       - effective_roles
       - groups
       - id

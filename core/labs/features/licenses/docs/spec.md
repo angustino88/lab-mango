@@ -69,7 +69,7 @@ The Licenses feature tracks commercial software and firmware entitlements, seat 
 ## 5. Inventory writes (`application/inventory.py`)
 Commands take a frozen input and a keyword-only `actor`: `create_license(CreateLicenseInput)`,
 `update_license(UpdateLicenseInput)`, `delete_license(DeleteLicenseInput)`. Access: lab coordinators and
-admins (`LABS_STAFF_ACCESS`).
+admins (`LAB_OPERATIONS_ACCESS`).
 
 ### 5.1 Request body (create and update)
 

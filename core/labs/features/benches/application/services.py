@@ -32,6 +32,7 @@ from core.labs.models.resource.base.availability import (
 )
 from core.labs.models.resource.base.status import ensure_lifecycle_transition
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
+from core.users.public import LabsPermission, users_with_permission
 
 from .policies import validate_capacity, validate_slot
 
@@ -174,7 +175,12 @@ def _ensure_bookings_fit_new_station(bench, station) -> None:
 
     Race guard: the station and bench locks of ``_lock_bench``; downtime writers lock the same rows.
     """
-    blocked = bench_bookings_blocked_by_parents(bench_ids=(bench.pk,), station=station, room=station.room)
+    blocked = bench_bookings_blocked_by_parents(
+        bench_ids=(bench.pk,),
+        station=station,
+        room=station.room,
+        lab_operator_users=users_with_permission(LabsPermission.BENCH_BOOKING_BOOK_DURING_DOWNTIME),
+    )
     if blocked:
         raise BenchConflict(
             "Bookings of this bench fall in downtime of the new station or room. Move or cancel them first.",

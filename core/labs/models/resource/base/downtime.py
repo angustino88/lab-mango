@@ -48,6 +48,18 @@ class DowntimeReason(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+class DowntimeBookingAccess(models.TextChoices):
+    """Who may still book the resources a window covers (bench bookings of a room, station or bench).
+
+    ``closed`` blocks everyone (the default and the only behavior before this field). ``lab_operators`` keeps
+    the window open to lab coordinators and administrators, e.g. so they can reserve the bench for the
+    maintenance work itself. Equipment windows are always ``closed``.
+    """
+
+    CLOSED = "closed", _("Closed to all bookings")
+    LAB_OPERATORS = "lab_operators", _("Lab operators only")
+
+
 DOWNTIME_CONDITIONS = (ResourceCondition.IN_MAINTENANCE, ResourceCondition.OUT_OF_SERVICE)
 
 
@@ -90,6 +102,12 @@ class ResourceDowntimeQuerySet(models.QuerySet["ResourceDowntime"]):
 
     def upcoming(self, moment: datetime | None = None) -> ResourceDowntimeQuerySet:
         return self.not_cancelled().filter(starts_at__gt=moment or timezone.now())
+
+    def blocking(self, *, lab_operator: bool) -> ResourceDowntimeQuerySet:
+        """Windows that block a booking held by lab operators (``lab_operator=True``) or by anyone else."""
+        if lab_operator:
+            return self.exclude(booking_access=DowntimeBookingAccess.LAB_OPERATORS)
+        return self
 
     def worst_first(self) -> ResourceDowntimeQuerySet:
         severity = Case(
@@ -192,6 +210,13 @@ class ResourceDowntime(TimeStampedModel, UserStampedModel):
     )
     kind = models.CharField(max_length=16, choices=DowntimeKind.choices, default=DowntimeKind.UNPLANNED)
     reason = models.CharField(max_length=32, choices=DowntimeReason.choices, default=DowntimeReason.OTHER)
+    booking_access = models.CharField(
+        max_length=16,
+        choices=DowntimeBookingAccess.choices,
+        default=DowntimeBookingAccess.CLOSED,
+        db_default=DowntimeBookingAccess.CLOSED,
+        help_text="Who may still book the covered benches during the window.",
+    )
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField(null=True, blank=True, help_text="Empty while the end is not known.")
     notes = models.TextField(blank=True, default="")
@@ -264,6 +289,10 @@ class ResourceDowntime(TimeStampedModel, UserStampedModel):
             ),
             models.CheckConstraint(condition=Q(kind__in=DowntimeKind.values), name="downtime_kind_valid"),
             models.CheckConstraint(condition=Q(reason__in=DowntimeReason.values), name="downtime_reason_valid"),
+            models.CheckConstraint(
+                condition=Q(booking_access__in=DowntimeBookingAccess.values),
+                name="downtime_booking_access_valid",
+            ),
             ExclusionConstraint(
                 name="downtime_no_overlap",
                 expressions=[
@@ -307,8 +336,16 @@ def downtime_reason_expression(model: type[models.Model], *, outer_ref: str = "p
     return Subquery(current_downtime(model, outer_ref=outer_ref).values("reason")[:1], output_field=CharField())
 
 
+def downtime_booking_access_expression(model: type[models.Model], *, outer_ref: str = "pk") -> Subquery:
+    """Annotation: the ``booking_access`` of the window behind ``condition_expression`` (null when operational)."""
+    return Subquery(
+        current_downtime(model, outer_ref=outer_ref).values("booking_access")[:1], output_field=CharField()
+    )
+
+
 __all__ = [
     "DOWNTIME_CONDITIONS",
+    "DowntimeBookingAccess",
     "DowntimeKind",
     "DowntimeReason",
     "ResourceCondition",
@@ -316,6 +353,7 @@ __all__ = [
     "ResourceLifecycleStatus",
     "condition_expression",
     "current_downtime",
+    "downtime_booking_access_expression",
     "downtime_reason_expression",
     "outer_windows",
 ]

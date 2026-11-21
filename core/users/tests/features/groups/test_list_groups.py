@@ -41,7 +41,7 @@ async def test_list_groups_returns_group_with_users(api_client, user, group):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-@pytest.mark.parametrize("role", ["", "user", "coord"])
+@pytest.mark.parametrize("role", ["", "member", "coord"])
 async def test_list_groups_requires_lab_admin(api_client, user, group, role):
     if role:
         await sync_to_async(_grant_role)(user, role, 97002)

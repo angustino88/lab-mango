@@ -6,8 +6,8 @@ from rest_framework.response import Response
 from core.common.api.api_views import AppListAPIView
 from core.common.api.correlation import get_request_id
 from core.common.api.pagination import PageNumberQuerySerializer
-from core.common.api.permissions import HasAPIKeyAccess
 from core.labs.features.base import CommandAPIView, FeatureAPIView
+from core.labs.features.base.access import FINANCE_ACCESS
 from core.labs.features.procurement import public
 from core.labs.features.procurement.api.serializers import (
     DraftLineInputSerializer,
@@ -39,17 +39,16 @@ from core.labs.features.procurement.public import (
     UpdateDraftLineInput,
     UpdatePurchaseDraftInput,
 )
-from core.users.public import IsLabCoordinatorReadWrite
 
 
 class ProcurementAPIView(AppListAPIView, CommandAPIView):
     # Reads and writes: lab coordinators and admins (owner decision 2026-11-11), and API keys.
-    permission_classes = [HasAPIKeyAccess | IsLabCoordinatorReadWrite]
+    permission_classes = FINANCE_ACCESS
 
 
 class PurchasePriorityOptionsAPIView(FeatureAPIView):
     schema_tags = ("Procurement",)
-    permission_classes = [HasAPIKeyAccess | IsLabCoordinatorReadWrite]
+    permission_classes = FINANCE_ACCESS
     get_contract = OperationContract(
         query=PurchasePriorityQuerySerializer,
         success=ResponseContract.success("PurchasePriorityOptions", PurchasePriorityOptionSerializer, many=True),

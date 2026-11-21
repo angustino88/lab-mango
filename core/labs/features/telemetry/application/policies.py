@@ -15,8 +15,8 @@ def ensure_scope_fits_gateway(*, gateway_kind: str, target_type: str) -> None:
         raise GatewayKindMismatch()
 
 
-def ensure_can_approve_profiles(*, actor_is_lab_admin: bool) -> None:
-    if not actor_is_lab_admin:
+def ensure_can_approve_profiles(*, may_approve_profiles: bool) -> None:
+    if not may_approve_profiles:
         raise ProfileApprovalForbidden()
 
 

@@ -1,33 +1,40 @@
-"""Generic, role-based permission building blocks.
+"""Generic role-based access control (RBAC) building blocks.
 
 This module is business-agnostic technical code. It knows nothing about Labs, URS groups, or any
-concrete role names, and must not import business apps. Applications supply the role vocabulary
-and the lookup, then reuse the pieces here:
+concrete role or capability names, and must not import business apps. Applications supply the
+vocabulary and the lookup, then reuse the pieces here:
 
 * ``RoleHierarchy``: declares which roles imply others (for example admin implies manager).
-* ``RolePermission``: a DRF permission that gates requests by role and HTTP method class.
+* ``CapabilityPermission``: a DRF permission that gates a request on one named capability for reads
+  and one for writes. Applications map roles to capabilities; endpoints never name roles.
 * ``is_owner``: object-level ownership check against a user-stamped field.
-* ``HasAPIKeyAccess``: API-key access that can be switched off with ``API_KEY_ACCESS_ENABLED``.
+* ``HasAPIKeyAccess``: API-key access: read-only unless ``API_KEY_WRITE_ACCESS_ENABLED``, and switched off
+  entirely with ``API_KEY_ACCESS_ENABLED``.
 
-Authorization stays deny-by-default: unauthenticated callers are always rejected, and unsafe
-methods require a role unless a subclass explicitly says otherwise. Object-level rules are
-enforced in the application layer, and querysets must still be scoped by the caller.
+Authorization is deny-by-default: unauthenticated callers are always rejected, and a method class
+without a required capability is denied. Object-level rules are enforced in the application layer,
+and querysets must still be scoped by the caller.
 """
 
 from collections.abc import Collection, Iterable, Mapping, Set
 from dataclasses import dataclass, field
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TypeAlias
 
 from django.conf import settings
-from rest_framework.permissions import SAFE_METHODS, BasePermission
+from django.http import HttpRequest
+from rest_framework.permissions import SAFE_METHODS, BasePermission, OperandHolder
 from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework_api_key.permissions import HasAPIKey
 
+# What a view assigns to ``permission_classes``: permission classes, or ``|`` compositions of them.
+PermissionClasses: TypeAlias = list[type[BasePermission] | OperandHolder]
+
 
 def is_authenticated(user: Any) -> bool:
-    """Return True for a real, authenticated user. ``None`` and anonymous users are not."""
-    return bool(user and user.is_authenticated)
+    """Return True for a real, authenticated user. ``None``, anonymous users and objects that are not users
+    (no ``is_authenticated``) are not: access checks deny instead of failing."""
+    return bool(user and getattr(user, "is_authenticated", False))
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,50 +66,71 @@ class RoleHierarchy:
         return frozenset(effective)
 
 
-class RolePermission(BasePermission):
-    """Gate requests by role. Subclass, set the roles, and implement ``resolve_roles``.
+class CapabilityPermission(BasePermission):
+    """Gate requests by capability. Subclass, set the capabilities, and implement ``resolve_capabilities``.
 
-    * Safe methods: any authenticated user when ``read_roles`` is ``None``; otherwise a user
-      holding at least one of ``read_roles``.
-    * Unsafe methods: a user holding at least one of ``write_roles``. Leaving ``write_roles``
-      empty denies every write.
+    * Safe methods (GET, HEAD, OPTIONS): the user must hold ``read_capability``.
+    * Unsafe methods: the user must hold ``write_capability``.
+    * A capability left as ``None`` denies that method class (deny-by-default).
+
+    Applications create one subclass per endpoint policy (see ``requiring``); the class name and the
+    two capabilities make every policy readable in code, tests and generated documentation.
     """
 
-    read_roles: ClassVar[Collection[str] | None] = None
-    write_roles: ClassVar[Collection[str]] = ()
+    read_capability: ClassVar[str | None] = None
+    write_capability: ClassVar[str | None] = None
     message = "You do not have permission to perform this action."
 
-    def resolve_roles(self, user: Any) -> Set[str]:
-        """Return the effective roles of an authenticated ``user`` (implied roles included)."""
-        raise NotImplementedError(f"{type(self).__name__} must implement resolve_roles().")
+    def resolve_capabilities(self, user: Any) -> Set[str]:
+        """Return every capability an authenticated ``user`` holds."""
+        raise NotImplementedError(f"{type(self).__name__} must implement resolve_capabilities().")
+
+    def required_capability(self, request: Request) -> str | None:
+        return self.read_capability if request.method in SAFE_METHODS else self.write_capability
 
     def has_permission(self, request: Request, view: APIView) -> bool:
         user = getattr(request, "user", None)
         if not is_authenticated(user):
             return False
-        required = self.read_roles if request.method in SAFE_METHODS else self.write_roles
-        if required is None:
-            return True
-        return not self.resolve_roles(user).isdisjoint(required)
+        required = self.required_capability(request)
+        return required is not None and required in self.resolve_capabilities(user)
+
+    @classmethod
+    def requiring(cls, *, read: str | None, write: str | None, name: str) -> type["CapabilityPermission"]:
+        """A named subclass that requires ``read`` for safe methods and ``write`` for the others."""
+        return type(name, (cls,), {"read_capability": read, "write_capability": write, "__module__": cls.__module__})
 
 
 def api_key_access_enabled() -> bool:
-    """True unless ``settings.API_KEY_ACCESS_ENABLED`` is set to False (default: enabled)."""
+    """True unless ``settings.API_KEY_ACCESS_ENABLED`` is False. Production defaults to False."""
     return bool(getattr(settings, "API_KEY_ACCESS_ENABLED", True))
 
 
-class HasAPIKeyAccess(HasAPIKey):
-    """A valid API key grants access only while API-key access is enabled.
+def api_key_writes_enabled() -> bool:
+    """True only when ``settings.API_KEY_WRITE_ACCESS_ENABLED`` is True (default: keys are read-only)."""
+    return bool(getattr(settings, "API_KEY_WRITE_ACCESS_ENABLED", False))
 
-    Use this instead of ``rest_framework_api_key.permissions.HasAPIKey`` so one setting turns every
-    API-key path on or off.
+
+def _api_key_allows(request: HttpRequest | Request) -> bool:
+    if not api_key_access_enabled():
+        return False
+    return request.method in SAFE_METHODS or api_key_writes_enabled()
+
+
+class HasAPIKeyAccess(HasAPIKey):
+    """A valid API key grants access only while API-key access is enabled, and reads only by default.
+
+    A key has no user, so ownership, approval and audit rules cannot apply to it: writes need
+    ``API_KEY_WRITE_ACCESS_ENABLED`` (test environments only). Use this instead of
+    ``rest_framework_api_key.permissions.HasAPIKey`` so the settings govern every API-key path
+    (owner decisions M11 and D4, docs/proposals/role-based-access-redesign.md).
     """
 
-    def has_permission(self, request: Request, view: APIView) -> bool:
-        return api_key_access_enabled() and super().has_permission(request, view)
+    def has_permission(self, request: HttpRequest, view: Any) -> bool:
+        return _api_key_allows(request) and super().has_permission(request, view)
 
-    def has_object_permission(self, request: Request, view: APIView, obj: Any) -> bool:
-        return api_key_access_enabled() and super().has_object_permission(request, view, obj)
+    def has_object_permission(self, request: HttpRequest, view: Any, obj: Any) -> bool:
+        return _api_key_allows(request) and super().has_object_permission(request, view, obj)
 
 
 def is_owner(user: Any, obj: Any, *, owner_field: str = "creator_id") -> bool:
@@ -114,10 +142,12 @@ def is_owner(user: Any, obj: Any, *, owner_field: str = "creator_id") -> bool:
 
 
 __all__ = [
+    "CapabilityPermission",
     "HasAPIKeyAccess",
+    "PermissionClasses",
     "RoleHierarchy",
-    "RolePermission",
     "api_key_access_enabled",
+    "api_key_writes_enabled",
     "is_authenticated",
     "is_owner",
 ]

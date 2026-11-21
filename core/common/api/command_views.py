@@ -21,7 +21,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .api_views import AppAPIView
-from .permissions import HasAPIKeyAccess, is_authenticated
+from .permissions import HasAPIKeyAccess, PermissionClasses, is_authenticated
 
 
 def actor_from_request(request: Any) -> Any:
@@ -33,7 +33,7 @@ def actor_from_request(request: Any) -> Any:
 class FeatureAPIView(AppAPIView):
     """Cross-feature API foundation without domain-specific behavior."""
 
-    permission_classes = [HasAPIKeyAccess | IsAuthenticated]
+    permission_classes: PermissionClasses = [HasAPIKeyAccess | IsAuthenticated]
     required_attributes: ClassVar[tuple[str, ...]] = ()
 
     @classmethod

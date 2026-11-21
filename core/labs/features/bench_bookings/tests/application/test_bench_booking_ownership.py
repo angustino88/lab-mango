@@ -28,7 +28,7 @@ def _user_with_role(username: str, role: str):
 
 @pytest.fixture()
 def other_user(db):
-    return _user_with_role("bb-other-user", "user")
+    return _user_with_role("bb-other-user", "member")
 
 
 @pytest.fixture()

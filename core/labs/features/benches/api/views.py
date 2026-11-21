@@ -8,8 +8,8 @@ from core.common.api.api_views import AppListAPIView
 from core.common.api.filtering import FilterMetadataMixin, FilterMetadataSerializer
 from core.common.api.options import OptionsQueryMixin, SizeClass
 from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
-from core.labs.features.base import LABS_MEMBER_ACCESS, CommandAPIView, FeatureAPIView, operation
-from core.labs.features.base.access import LABS_STAFF_ACCESS
+from core.labs.features.base import BENCH_BOOKING_ACCESS, CommandAPIView, FeatureAPIView, operation
+from core.labs.features.base.access import LAB_OPERATIONS_ACCESS
 from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.base.resource_images import ResourceImageAPIView
 from core.labs.features.benches.application import bench_images, services
@@ -47,7 +47,7 @@ from .serializers import (
 
 
 class BenchAPIView(AppListAPIView, CommandAPIView):
-    permission_classes = LABS_STAFF_ACCESS
+    permission_classes = LAB_OPERATIONS_ACCESS
     schema_tags = ("Benches",)
 
     def project_result(self, result):
@@ -196,7 +196,7 @@ class BookingBenchChoicesAPIView(FeatureAPIView):
     ``include_ids`` adds the bench of an existing booking. At most 1000 rows, else ``400 too_many_results``.
     """
 
-    permission_classes = LABS_MEMBER_ACCESS
+    permission_classes = BENCH_BOOKING_ACCESS
     schema_tags = ("Benches",)
     get_contract = OperationContract(
         query=BookingBenchChoicesQuerySerializer,

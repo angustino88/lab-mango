@@ -11,6 +11,7 @@ from core.labs.models import (
     Booking,
     BookingApprovalStatus,
     BookingStatus,
+    DowntimeBookingAccess,
     EquipmentAssignment,
     LabProject,
     ResourceDowntime,
@@ -18,7 +19,7 @@ from core.labs.models import (
     Room,
     Station,
 )
-from core.users.public import LabsRole, has_labs_role
+from core.users.public import LabsPermission, has_permission
 
 
 def list_bench_bookings(
@@ -70,7 +71,7 @@ def list_bench_bookings(
         bookings = bookings.order_by(*ordering_paths)
     shared_calendar = False
     if view_side == "booking_calendar" and getattr(actor, "is_authenticated", False):
-        if not has_labs_role(actor, LabsRole.COORDINATOR):
+        if not has_permission(actor, LabsPermission.BENCH_BOOKING_MANAGE_ANY):
             shared_calendar = True
             bookings = bookings.filter(
                 status__in=Booking.ACTIVE_STATUSES,
@@ -120,13 +121,13 @@ def list_bench_bookings(
 
 
 def visible_to(bookings: QuerySet[BenchBooking], *, actor: Any) -> QuerySet[BenchBooking]:
-    """Object scope for booking reads: coordinators/admins see all, users only what they created.
+    """Object scope for booking reads: holders of ``bench_booking.manage_any`` see all, others only their own.
 
     Callers without a user (anonymous or API-key-only) see nothing.
     """
     if not getattr(actor, "is_authenticated", False):
         return bookings.none()
-    if has_labs_role(actor, LabsRole.COORDINATOR):
+    if has_permission(actor, LabsPermission.BENCH_BOOKING_MANAGE_ANY):
         return bookings
     return bookings.filter(creator_id=actor.pk)
 
@@ -224,11 +225,23 @@ def bench_has_computing(*, bench_id: int) -> bool:
     ).exists()
 
 
-def bench_downtime_blocker(*, bench, starts_at, ends_at) -> str | None:
-    """The first downtime window of the bench, its station or its room that overlaps the period.
+def may_book_during_downtime(user: Any) -> bool:
+    """Whether ``user`` holds ``bench_booking.book_during_downtime`` (lab operators).
 
-    Design rule 3. Downtime writers lock the bench row this caller already holds (``lock_benches``), so a
-    window created concurrently is either committed and seen here, or waits for this transaction.
+    They may book benches during a downtime window whose ``booking_access`` is ``lab_operators``.
+    API keys and anonymous actors never may.
+    """
+    return has_permission(user, LabsPermission.BENCH_BOOKING_BOOK_DURING_DOWNTIME)
+
+
+def bench_downtime_blocker(*, bench, starts_at, ends_at, lab_operator: bool = False) -> str | None:
+    """The first downtime window of the bench, its station or its room that blocks the period.
+
+    Design rule 3. ``lab_operator`` says whether the booking holder may book during downtime
+    (``may_book_during_downtime``): a window whose ``booking_access`` is ``lab_operators`` then does not
+    block. Downtime writers lock the bench row this
+    caller already holds (``lock_benches``), so a window created or narrowed concurrently is either
+    committed and seen here, or waits for this transaction.
     """
     scopes = [(type(bench), bench.pk, "Bench")]
     if bench.setup_location_id is not None:
@@ -240,12 +253,16 @@ def bench_downtime_blocker(*, bench, starts_at, ends_at) -> str | None:
         window = (
             ResourceDowntime.objects.for_resources(model, (pk,))
             .overlapping(starts_at, ends_at)
+            .blocking(lab_operator=lab_operator)
             .order_by("starts_at", "pk")
             .first()
         )
         if window is not None:
             until = "until further notice" if window.ends_at is None else f"until {window.ends_at:%Y-%m-%d %H:%M}"
-            return f"{label} is {window.get_condition_display().lower()} ({window.reason}) {until}."
+            message = f"{label} is {window.get_condition_display().lower()} ({window.reason}) {until}."
+            if window.booking_access == DowntimeBookingAccess.LAB_OPERATORS:
+                message += " Only lab coordinators and administrators can book it."
+            return message
     return None
 
 

@@ -15,7 +15,7 @@ def actor(db):
     """A plain Labs user: bench bookings are open to every Labs role."""
     from tests.factories import grant_labs_role
 
-    return grant_labs_role(UserFactory(username="bench-booking-actor"), "user")
+    return grant_labs_role(UserFactory(username="bench-booking-actor"), "member")
 
 
 def place_computer(bench, *, sku):

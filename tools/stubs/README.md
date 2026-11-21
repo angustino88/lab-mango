@@ -51,13 +51,13 @@ The former `tools/stub_agent.py` and `tools/stub_router.py` are now `agent` and 
 
 | Key | Username | Labs role | Bound | Active | Backend | Use |
 |---|---|---|---|---|---|---|
-| alice | stub.alice | user | yes | yes | dept_a | books benches; normal user |
+| alice | stub.alice | member | yes | yes | dept_a | books benches; normal user |
 | carol | stub.carol | coord | yes | yes | dept_a | operator API, approvals |
 | adam | stub.adam | admin | yes | yes | dept_a | admin access |
-| dave | stub.dave | user | **no** | yes | dept_a | binds on first login (by username) |
-| ivy | stub.ivy | user | yes | **no** | dept_a | inactive: refused, never routed |
+| dave | stub.dave | member | **no** | yes | dept_a | binds on first login (by username) |
+| ivy | stub.ivy | member | yes | **no** | dept_a | inactive: refused, never routed |
 | nora | stub.nora | none | yes | yes | dept_a | authenticated but no Labs role: 403 |
-| bob | stub.bob | user | yes | yes | **dept_b** | owned by another backend (two-backend routing) |
+| bob | stub.bob | member | yes | yes | **dept_b** | owned by another backend (two-backend routing) |
 
 The UPN is `stub.<key>@stub.labmango.test`. The object ID is `uuid5(namespace, "<tenant>:<key>:<generation>")`, so
 a persona has the same routing key after a database reset. `identities replace` bumps the generation.

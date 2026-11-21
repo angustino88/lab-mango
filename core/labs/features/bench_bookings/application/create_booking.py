@@ -11,6 +11,7 @@ from core.labs.features.bench_bookings.queries import (
     bench_has_computing,
     bench_parent_blocker,
     conflicting_bench_bookings,
+    may_book_during_downtime,
     project_exists,
 )
 from core.labs.models import BenchBooking
@@ -47,7 +48,12 @@ def create_bench_booking(*, actor, data: CreateBenchBookingInput) -> BenchBookin
         )
         policies.ensure_no_conflicting_bookings(has_conflicts=conflicts.exists())
         policies.ensure_no_downtime(
-            bench_downtime_blocker(bench=bench, starts_at=data.starts_at, ends_at=data.ends_at)
+            bench_downtime_blocker(
+                bench=bench,
+                starts_at=data.starts_at,
+                ends_at=data.ends_at,
+                lab_operator=may_book_during_downtime(actor),
+            )
         )
         for _ in range(3):
             booking = BenchBooking(

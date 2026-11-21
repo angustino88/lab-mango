@@ -209,7 +209,20 @@ class TestExpenseAccess:
             response = api_client.get(f"/api/labs/rooms/{room.pk}/expenses")
         assert response.status_code == 200, response.content
 
-    def test_api_key_can_create_expense(self, api_client):
+    def test_api_key_cannot_create_expense_by_default(self, api_client):
+        """API keys are read-only unless API_KEY_WRITE_ACCESS_ENABLED (owner decision D4)."""
+        room = _room()
+        with patch(_PATCH_APIKEY, return_value=True):
+            response = api_client.post(
+                f"/api/labs/rooms/{room.pk}/expenses",
+                {"name": "Rent", "expense_type": "rent", "cost": {"amount": "10.00", "currency": "EUR"}},
+                format="json",
+            )
+        assert response.status_code == 401
+        assert not Expense.objects.filter(resource_id=room.pk).exists()
+
+    def test_api_key_can_create_expense_when_writes_are_enabled(self, settings, api_client):
+        settings.API_KEY_WRITE_ACCESS_ENABLED = True
         room = _room()
         with patch(_PATCH_APIKEY, return_value=True):
             response = api_client.post(

@@ -20,7 +20,7 @@ from core.labs.models.telemetry import (
     MetricDefinition,
 )
 from core.labs.models.telemetry.reference_data import READ_MAP_VALIDATORS
-from core.users.public import LabsRole, has_labs_role
+from core.users.public import LabsPermission, has_permission
 
 from .policies import ensure_can_approve_profiles
 from .targets import raise_invalid
@@ -91,7 +91,8 @@ def create_device_profile(command: CreateDeviceProfileInput, *, actor) -> Device
 @transaction.atomic
 def approve_device_profile(command: ApproveDeviceProfileInput, *, actor) -> DeviceProfile:
     """Approve a draft after its bench test; channels may then use it."""
-    ensure_can_approve_profiles(actor_is_lab_admin=has_labs_role(actor, LabsRole.ADMIN))
+    may_approve = has_permission(actor, LabsPermission.TELEMETRY_PROFILE_APPROVE)
+    ensure_can_approve_profiles(may_approve_profiles=may_approve)
     profile = DeviceProfile.objects.select_for_update().get(pk=command.profile_id)
     if profile.status == DeviceProfileStatus.APPROVED:
         return profile

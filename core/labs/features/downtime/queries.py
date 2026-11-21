@@ -27,7 +27,9 @@ def state_of(window: ResourceDowntime) -> str:
     return "current"
 
 
-def list_downtimes(*, resource_type=None, resource_id=None, state=None) -> QuerySet[ResourceDowntime]:
+def list_downtimes(
+    *, resource_type=None, resource_id=None, state=None, booking_access=None
+) -> QuerySet[ResourceDowntime]:
     queryset = (
         ResourceDowntime.objects.get_queryset()
         .select_related("resource_content_type", "creator", "ended_by")
@@ -41,6 +43,8 @@ def list_downtimes(*, resource_type=None, resource_id=None, state=None) -> Query
         )
         if resource_id is not None:
             queryset = queryset.filter(resource_object_id=str(resource_id))
+    if booking_access is not None:
+        queryset = queryset.filter(booking_access=booking_access)
     now = timezone.now()
     if state == "cancelled":
         queryset = queryset.filter(cancelled_at__isnull=False)

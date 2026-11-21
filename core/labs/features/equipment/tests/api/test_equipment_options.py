@@ -19,7 +19,7 @@ from core.labs.models.resource.equipment.reference_data import (
     EquipmentProductModel,
     EquipmentType,
 )
-from core.users.public import effective_labs_roles
+from core.users.public import effective_permissions
 from tests.factories import set_condition
 
 
@@ -469,7 +469,7 @@ def test_category_reference_data_query_count_is_bounded(
     api_client.force_authenticate(user=actor)
     # Reads are role-checked; resolve the actor's roles first (cached on the user) so the count
     # below measures only the endpoint's own queries.
-    effective_labs_roles(actor)
+    effective_permissions(actor)
     category, kind = computing_category
     equipment_type = EquipmentType.objects.create(kind=kind, name="Query Budget Type")
     manufacturer = EquipmentManufacturer.objects.create(name="Query Budget Manufacturer")
@@ -601,7 +601,7 @@ def test_equipment_options_query_count_is_bounded_as_results_grow(
     api_client.force_authenticate(user=actor)
     # Reads are role-checked; resolve the actor's roles first (cached on the user) so the count
     # below measures only the endpoint's own queries.
-    effective_labs_roles(actor)
+    effective_permissions(actor)
     _, kind = computing_category
     Equipment.objects.create(sku="EQ-QUERY-1", name="Query Item 1", kind=kind)
 

@@ -43,7 +43,7 @@ The User Profile feature governs identity self-service, user discoverability, ro
 
 | Method & Path | View Class | Request Payload / Params | Success Contract (200/204) | Problem Codes |
 |---|---|---|---|---|
-| `GET /api/users/me` | `GetMeView` | None (reads auth session) | `UserWithPermissionSerializer`: profile, `groups` (`id`, editable `name`), `effective_roles.labs` (stable role codes) | 401 (`unauthorized`) |
+| `GET /api/users/me` | `GetMeView` | None (reads auth session) | `UserWithPermissionSerializer`: profile, `groups` (`id`, editable `name`), `effective_roles.labs` (stable role codes), `effective_permissions.labs` (`{value, label}` per permission) | 401 (`unauthorized`) |
 | `GET /api/profile/users` | `ListUsersView` | `UsersListQuerySerializer` (`username`, pagination) | `Paginated[UserSerializer]` | 400, 401 |
 | `GET /api/profile/users/{id}` | `RetrieveUserView` | Path `{id}` | `UserSerializer` | 401, 404 (`user_not_found`) |
 | `PATCH /api/profile/users/{id}` | `RetrieveUserView` | `_UpdateUserSerializer` (`display_name`, `name`, `department`) | `UserSerializer` | 400, 401, 403 (`forbidden`), 404 |
@@ -51,4 +51,4 @@ The User Profile feature governs identity self-service, user discoverability, ro
 | `POST /api/profile/avatar` | `UserAvatarView` | Multipart Form (`avatar`) | `UserAvatarReadSerializer` (`avatar_url`) | 400, 401, 422 (`invalid_image`) |
 | `DELETE /api/profile/avatar` | `UserAvatarView` | None | 204 No Content | 401, 404 (`no_avatar`) |
 
-`effective_roles.labs` lists effective Labs roles in `admin`, `coord`, `user` order (including implied roles). It is empty when no Labs role is mapped. Clients use these codes for UI hints instead of relying on mutable Django group names; server-side authorization remains authoritative.
+`effective_roles.labs` lists the user's assigned Labs roles in `admin`, `coord`, `member` order (`["admin"]` for superusers), for display (Lab Administrator, Lab Coordinator, Lab Member); hierarchy expansion happens in `effective_permissions.labs`. `effective_permissions.labs` lists the user's Labs permissions as `{value, label}` (ENU-1), sorted by `value` (`docs/architecture/access-matrix.md`). Both are empty when no Labs role is mapped; a superuser holds every permission. Clients show or hide actions by permission, never by role or Django group name; server-side authorization remains authoritative.

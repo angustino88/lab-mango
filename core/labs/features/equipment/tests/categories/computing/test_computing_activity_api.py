@@ -69,7 +69,8 @@ def test_activity_is_read_only_here_even_for_coordinators_and_api_keys(admin_cli
     assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
     with patch(_PATCH_APIKEY, return_value=True):
         keyed = getattr(APIClient(), method)(_url(computing.pk), {"status": "free"}, format="json")
-    assert keyed.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+    # API keys are read-only (owner decision D4): the write is refused before the method check.
+    assert keyed.status_code == status.HTTP_401_UNAUTHORIZED
     assert not ComputingActivity.objects.filter(computing=computing).exists()
 
 

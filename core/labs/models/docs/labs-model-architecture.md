@@ -171,7 +171,7 @@ Both models refer to resource targets with generic content-type/object-id associ
 
 ### Telemetry configuration (proposal `docs/proposals/environment-telemetry.md`, slice 1)
 
-**Models:** `TelemetryTarget`, `MetricDefinition`, `DeviceProfile`, `TelemetryDevice`, `ModbusSourceSettings`, `TelemetryChannel`, `ModbusChannelSettings`, `GatewayScopeBinding`, `ChannelTargetBinding`, in `core/labs/models/telemetry/` (owner: `core/labs/features/telemetry`). Migrations `0002_telemetry_configuration` (schema) and `0003_seed_telemetry_metrics` (seeds `temperature_c`, `humidity_percent`, `power_w`).
+**Models:** `TelemetryTarget`, `MetricDefinition`, `DeviceProfile`, `TelemetryDevice`, `ModbusSourceSettings`, `TelemetryChannel`, `ModbusChannelSettings`, `GatewayScopeBinding`, `ChannelTargetBinding`, in `core/labs/models/telemetry/` (owner: `core/labs/features/telemetry`). Folded into `labs.0001_initial` (schema and `temperature_c`, `humidity_percent`, `power_w` seed).
 
 - `TelemetryTarget` is the thing a reading is about: exactly one of `room`, `station`, `bench`, `equipment` (all `PROTECT`) matching `target_type` (`telemetry_target_type_matches_resource`), unique per resource. Placement (room, station) is resolved at read/ingest time through the owning features' public selectors; benches without a station slot, unassigned equipment and roomless stations are "not located".
 - `MetricDefinition` (PK `key`) holds unit and physical range; `telemetry_metric_range_ordered`, and counters must roll up as `delta` (`telemetry_metric_counter_uses_delta`). New metrics are rows, not schema.

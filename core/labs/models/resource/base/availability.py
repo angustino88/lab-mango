@@ -27,8 +27,10 @@ from core.labs.models.booking.base import BookingApprovalStatus, BookingStatus
 from core.labs.models.booking.bench_booking import BenchBooking
 from core.labs.models.booking.equipment_booking import EquipmentBooking
 from core.labs.models.resource.base.downtime import (
+    DowntimeBookingAccess,
     ResourceDowntime,
     condition_expression,
+    downtime_booking_access_expression,
     downtime_reason_expression,
 )
 from core.labs.models.resource.base.status import (
@@ -87,12 +89,14 @@ def activity_expression(resource_type: str, *, now: datetime | None = None) -> C
     )
 
 
-def bench_bookings_blocked_by_parents(*, bench_ids, station, room) -> list[int]:
+def bench_bookings_blocked_by_parents(*, bench_ids, station, room, lab_operator_users=None) -> list[int]:
     """Reserving bench bookings (ending after now) that the new parents would block (design rule 3).
 
     Used when a bench moves to ``station`` or a station moves to ``room``: every booking is blocked when a
-    parent is not in service, otherwise the bookings that overlap a downtime window of a parent. The
-    caller holds the station lock and the bench locks. Two queries at most (windows, bookings).
+    parent is not in service, otherwise the bookings that overlap a downtime window of a parent. A window
+    whose ``booking_access`` is ``lab_operators`` does not block bookings created by ``lab_operator_users`` (a
+    user queryset, used as a subquery); without it every window blocks. The caller holds the station lock
+    and the bench locks. Two queries at most (windows, bookings).
     """
     if station is None or not bench_ids:
         return []
@@ -110,14 +114,16 @@ def bench_bookings_blocked_by_parents(*, bench_ids, station, room) -> list[int]:
     for parent in parents:
         windows = windows | ResourceDowntime.objects.for_resources(type(parent), (parent.pk,))
     overlap = Q(pk__in=[])
-    for starts_at, ends_at in (
+    for starts_at, ends_at, booking_access in (
         windows.not_cancelled()
         .filter(Q(ends_at__isnull=True) | Q(ends_at__gt=now))
-        .values_list("starts_at", "ends_at")
+        .values_list("starts_at", "ends_at", "booking_access")
     ):
         window = Q(ends_at__gt=starts_at)
         if ends_at is not None:
             window &= Q(starts_at__lt=ends_at)
+        if booking_access == DowntimeBookingAccess.LAB_OPERATORS and lab_operator_users is not None:
+            window &= ~Q(creator__in=lab_operator_users.values("pk"))
         overlap |= window
     return list(bookings.filter(overlap).values_list("pk", flat=True))
 
@@ -198,10 +204,13 @@ def with_bench_state(queryset, *, now: datetime | None = None):
     return queryset.annotate(
         condition=condition_expression(queryset.model),
         downtime_reason=downtime_reason_expression(queryset.model),
+        downtime_booking_access=downtime_booking_access_expression(queryset.model),
         station_condition=condition_expression(Station, outer_ref="setup_location_id"),
         station_downtime_reason=downtime_reason_expression(Station, outer_ref="setup_location_id"),
+        station_downtime_booking_access=downtime_booking_access_expression(Station, outer_ref="setup_location_id"),
         room_condition=condition_expression(Room, outer_ref="setup_location__room_id"),
         room_downtime_reason=downtime_reason_expression(Room, outer_ref="setup_location__room_id"),
+        room_downtime_booking_access=downtime_booking_access_expression(Room, outer_ref="setup_location__room_id"),
         activity_status=activity_expression("bench", now=now),
     ).annotate(legacy_status=legacy_bench_status_expression())
 
@@ -214,11 +223,13 @@ def with_location_state(queryset, resource_type: str, *, now: datetime | None = 
     annotations = {
         "condition": condition_expression(queryset.model),
         "downtime_reason": downtime_reason_expression(queryset.model),
+        "downtime_booking_access": downtime_booking_access_expression(queryset.model),
         "activity_status": activity_expression(resource_type, now=now),
     }
     if resource_type == "station":
         annotations["room_condition"] = condition_expression(Room, outer_ref="room_id")
         annotations["room_downtime_reason"] = downtime_reason_expression(Room, outer_ref="room_id")
+        annotations["room_downtime_booking_access"] = downtime_booking_access_expression(Room, outer_ref="room_id")
     return queryset.annotate(**annotations).annotate(legacy_status=legacy_status_expression())
 
 
@@ -251,10 +262,32 @@ class HierarchyLevel:
     lifecycle_status: str
     condition: str
     downtime_reason: str | None = None
+    downtime_booking_access: str | None = None
+
+    @property
+    def lab_operators_may_book(self) -> bool:
+        """In service, and either operational or down under a window that stays open to lab operators."""
+        if self.lifecycle_status != ResourceLifecycleStatus.IN_SERVICE:
+            return False
+        return (
+            self.condition == ResourceCondition.OPERATIONAL
+            or self.downtime_booking_access == DowntimeBookingAccess.LAB_OPERATORS
+        )
+
+
+def _booking_access(chain: list[HierarchyLevel]) -> str:
+    """``lab_operators`` when every level that blocks still lets lab operators book now, else ``closed``."""
+    if all(level.lab_operators_may_book for level in chain):
+        return DowntimeBookingAccess.LAB_OPERATORS.value
+    return DowntimeBookingAccess.CLOSED.value
 
 
 def availability(chain: list[HierarchyLevel]) -> dict[str, Any]:
-    """``available``, or ``unavailable`` with the first blocking resource (self first, then parents)."""
+    """``available``, or ``unavailable`` with the first blocking resource (self first, then parents).
+
+    ``booking_access`` (only when unavailable) says who may still book now: ``lab_operators`` when the only
+    blockers are downtime windows open to lab operators, otherwise ``closed``.
+    """
     for level in chain:
         if level.lifecycle_status != ResourceLifecycleStatus.IN_SERVICE:
             reason = level.lifecycle_status
@@ -267,13 +300,21 @@ def availability(chain: list[HierarchyLevel]) -> dict[str, Any]:
             "blocked_by": {"id": level.resource_id, "name": level.name, "type": level.resource_type},
             "condition": level.condition,
             "reason": reason,
+            "booking_access": _booking_access(chain),
         }
-    return {"value": ResourceAvailability.AVAILABLE.value, "blocked_by": None, "condition": None, "reason": None}
+    return {
+        "value": ResourceAvailability.AVAILABLE.value,
+        "blocked_by": None,
+        "condition": None,
+        "reason": None,
+        "booking_access": None,
+    }
 
 
 def level_of(resource_type: str, obj: Any, *, annotated: Any = None, prefix: str = "") -> HierarchyLevel:
-    """Build a level from a model row; ``<prefix>condition`` and ``<prefix>downtime_reason`` are read
-    from ``annotated`` (default ``obj``), e.g. a bench row carrying its station's condition.
+    """Build a level from a model row; ``<prefix>condition``, ``<prefix>downtime_reason`` and
+    ``<prefix>downtime_booking_access`` are read from ``annotated`` (default ``obj``), e.g. a bench row
+    carrying its station's condition.
     """
     source = obj if annotated is None else annotated
     return HierarchyLevel(
@@ -283,6 +324,7 @@ def level_of(resource_type: str, obj: Any, *, annotated: Any = None, prefix: str
         lifecycle_status=obj.lifecycle_status,
         condition=getattr(source, f"{prefix}condition", None) or ResourceCondition.OPERATIONAL,
         downtime_reason=getattr(source, f"{prefix}downtime_reason", None),
+        downtime_booking_access=getattr(source, f"{prefix}downtime_booking_access", None),
     )
 
 

@@ -27,11 +27,11 @@ from django.utils.html import format_html, format_html_join
 from django.utils.timesince import timesince
 from django.utils.translation import gettext_lazy as _
 
-from core.users.access import LabsRole
 from core.users.audit import diff, record_role_event
 from core.users.forms import UserAdminChangeForm, UserAdminCreationForm
 from core.users.models import EntraIdentity, LabManagementEmail, PrivilegedUser, RoleAuditEvent, URSGroup
 from core.users.public import ensure_urs_group_linked
+from core.users.roles import LabsRole
 from core.users.tasks import sync_selected_urs_groups
 
 logger = logging.getLogger(__name__)
@@ -81,8 +81,8 @@ def _group_permission_snapshot(group) -> list[str]:
 # ----------------------------------------------------------------------------------------------
 # Presentation helpers (display only; no access decisions are made here)
 
-_ROLE_LABELS = {"admin": _("Lab admin"), "coord": _("Lab coordinator"), "user": _("Lab user"), "": _("No role")}
-_ROLE_COLORS = {"admin": "#b42318", "coord": "#175cd3", "user": "#067647", "": "#667085", "superuser": "#6941c6"}
+_ROLE_LABELS = {"admin": _("Lab Administrator"), "coord": _("Lab Coordinator"), "member": _("Lab Member"), "": _("No role")}
+_ROLE_COLORS = {"admin": "#b42318", "coord": "#175cd3", "member": "#067647", "": "#667085", "superuser": "#6941c6"}
 _ROLE_RIGHTS = (
     ("admin", _("Everything a coordinator can do, plus the user directory (groups and members).")),
     (
@@ -92,7 +92,7 @@ _ROLE_RIGHTS = (
             "reports; approves other people's bookings."
         ),
     ),
-    ("user", _("Reads the dashboard and the leaderboard; creates and changes their own bookings.")),
+    ("member", _("Reads the dashboard and the leaderboard; creates and changes their own bookings.")),
     ("", _("Grants nothing. Members without any other role cannot use Labs.")),
 )
 _SYNC_ICONS = {"applied": ("✔", "#067647"), "blocked": ("⏸", "#b54708"), "failed": ("✖", "#b42318")}
@@ -148,19 +148,14 @@ class LabsRoleFilter(admin.SimpleListFilter):
     parameter_name = "labs_role"
 
     def lookups(self, request, model_admin):
-        return (
-            ("admin", _("Lab admin")),
-            ("coord", _("Lab coordinator")),
-            ("user", _("Lab user")),
-            ("none", _("No role")),
-        )
+        return (*LabsRole.choices, ("none", _("No role")))
 
     def queryset(self, request, queryset):
         value = self.value()
-        if value in {"admin", "coord", "user"}:
+        if value in LabsRole.values:
             return queryset.filter(groups__ursgroup__labs_role=value).distinct()
         if value == "none":
-            return queryset.exclude(groups__ursgroup__labs_role__in=["admin", "coord", "user"]).exclude(
+            return queryset.exclude(groups__ursgroup__labs_role__in=LabsRole.values).exclude(
                 is_superuser=True
             )
         return queryset
@@ -259,7 +254,7 @@ class UserAdmin(auth_admin.UserAdmin):
     def role_badges(self, user):
         if user.is_superuser:
             return _badge(_("Superuser"), _ROLE_COLORS["superuser"])
-        roles = sorted({g.labs_role for g in _role_groups(user) if g.labs_role}, key=["admin", "coord", "user"].index)
+        roles = sorted({g.labs_role for g in _role_groups(user) if g.labs_role}, key=["admin", "coord", "member"].index)
         if not roles:
             return _role_badge("")
         return format_html_join(" ", "{}", ((_role_badge(role),) for role in roles))
@@ -655,9 +650,9 @@ class PrivilegeFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         return (
             ("superuser", _("Superuser")),
-            ("admin", _("Lab admin")),
-            ("coord", _("Lab coordinator")),
-            ("staff", _("Staff")),
+            (LabsRole.ADMIN.value, LabsRole.ADMIN.label),
+            (LabsRole.COORDINATOR.value, LabsRole.COORDINATOR.label),
+            ("staff", _("Django admin site access")),
         )
 
     def queryset(self, request, queryset):

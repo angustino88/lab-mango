@@ -67,7 +67,7 @@ def make_license(**kwargs):
 def client_and_user(db):
     user = UserFactory()
     client = APIClient()
-    grant_labs_role(user, "user")
+    grant_labs_role(user, "member")
     client.force_authenticate(user=user)
     return client, user
 

@@ -124,7 +124,7 @@ def test_single_hand_over_accepts_a_borrower_name(coord, items):
 @pytest.mark.django_db
 def test_engineers_cannot_read_equipment_but_can_read_organisation(items):
     engineer = APIClient()
-    engineer.force_authenticate(grant_labs_role(User.objects.create_user(username="lb-engineer"), "user"))
+    engineer.force_authenticate(grant_labs_role(User.objects.create_user(username="lb-engineer"), "member"))
     for path in (
         "equipment",
         f"equipment/{items[0].pk}",

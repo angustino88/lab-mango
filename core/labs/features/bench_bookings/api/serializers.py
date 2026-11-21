@@ -16,7 +16,7 @@ from core.labs.features.base.serializers import (
     to_choice_reference,
 )
 from core.labs.models import BenchBooking, BookingStatus, LabProject
-from core.users.public import LabsRole, has_labs_role
+from core.users.public import LabsPermission, has_permission
 
 _ORDERING_HELP = (
     "Use unique comma-separated fields from starts_at, ends_at, created_at, id; "
@@ -91,7 +91,7 @@ class BenchBookingSerializer(AppModelSerializer):
         actor = getattr(request, "user", None)
         if request is not None and not (
             getattr(actor, "is_authenticated", False)
-            and (instance.creator_id == actor.pk or has_labs_role(actor, LabsRole.COORDINATOR))
+            and (instance.creator_id == actor.pk or has_permission(actor, LabsPermission.BENCH_BOOKING_MANAGE_ANY))
         ):
             data["booking_code"] = ""
         return data

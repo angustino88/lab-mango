@@ -9,6 +9,9 @@ from .base import env
 # No LDAP, local password, allauth signup or password-reset authentication in production.
 ENTRA_SSO_ONLY = True
 ENTRA_STUB_ISSUER_ENABLED = False  # The local stub issuer is never trusted in production.
+# API keys are for API testing only (owner decisions M11, D4): off unless explicitly enabled, never writing.
+API_KEY_ACCESS_ENABLED = env.bool("API_KEY_ACCESS_ENABLED", default=False)
+API_KEY_WRITE_ACCESS_ENABLED = False
 AUTHENTICATION_BACKENDS = ["core.users.backends.EntraSessionBackend"]
 ACCOUNT_ALLOW_REGISTRATION = False
 DJANGO_ADMIN_FORCE_ALLAUTH = False

@@ -11,4 +11,9 @@ urlpatterns = [
         views.DowntimeCancelAPIView.as_view(),
         name="downtime-action-cancel",
     ),
+    path(
+        "downtimes/<int:downtime_id>/actions/change-booking-access",
+        views.DowntimeChangeBookingAccessAPIView.as_view(),
+        name="downtime-action-change-booking-access",
+    ),
 ]

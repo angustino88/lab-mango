@@ -100,5 +100,5 @@ def test_conflict_and_cancel(coord, items):
 @pytest.mark.django_db
 def test_engineers_cannot_see_reservations(items):
     engineer = APIClient()
-    engineer.force_authenticate(grant_labs_role(User.objects.create_user(username="rs-engineer"), "user"))
+    engineer.force_authenticate(grant_labs_role(User.objects.create_user(username="rs-engineer"), "member"))
     assert engineer.get(ROOT + "equipment-reservations").status_code == 403
