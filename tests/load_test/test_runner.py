@@ -1,21 +1,32 @@
-"""Unit tests for the concurrent load-testing tool (tools/load_test.py)."""
+"""Unit tests for the concurrent load-testing tool (`tools/load_test`)."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
+import httpx
+
 from tools.load_test import (
+    PRESET_SCENARIOS,
     SampleResult,
     TargetSpec,
     build_parser,
     build_report,
     build_targets,
+    load_preset_scenarios,
     parse_endpoint_arg,
     percentile,
     run_http_load_test,
     summarize_samples,
 )
+
+
+def test_preset_scenarios_loaded_from_manifest():
+    scenarios = load_preset_scenarios()
+    assert "computing_table" in scenarios
+    assert "equipment_table" in scenarios
+    assert len(PRESET_SCENARIOS["computing_table"]) >= 5
 
 
 def test_parse_endpoint_arg_supports_name_method_path_and_weight():
@@ -122,8 +133,6 @@ def test_build_targets_combines_config_scenario_and_cli_endpoints(tmp_path: Path
 
 
 async def test_run_http_load_test_with_mocked_transport(respx_mock):
-    import httpx
-
     respx_mock.get("http://testserver.local/api/labs/equipment").mock(
         return_value=httpx.Response(
             200,

@@ -1,21 +1,4 @@
-"""Configurable concurrent-user performance and load-testing tool for Lab Mango.
-
-Supports single endpoints, multi-endpoint weighted scenarios, or built-in preset scenarios
-(such as ``equipment_table`` / ``computing_table`` / ``dashboard`` / ``locations``).
-Measures latency percentiles (p50, p90, p95, p99, max), throughput (RPS), HTTP status/ETag
-rates, payload sizes, and per-endpoint breakdowns.
-
-Run as a standalone HTTP load generator against a live server (or with ``--mint-jwt`` /
-``--in-process`` when running inside the Django repository):
-
-    python -m tools.load_test --base-url http://localhost:8000 --concurrency 100 --requests 1000 \\
-        --endpoint "GET /api/labs/equipment"
-
-    python -m tools.load_test --base-url http://localhost:8000 --concurrency 1000 --duration 30 \\
-        --scenario computing_table --mint-jwt admin
-
-    python -m tools.load_test --config tools/load_test_example.json --concurrency 200 --json-out report.json
-"""
+"""Configurable concurrent-user performance and load-testing runner for Lab Mango."""
 
 from __future__ import annotations
 
@@ -26,7 +9,6 @@ import math
 import os
 import random
 import statistics
-import sys
 import time
 import urllib.error
 import urllib.request
@@ -35,6 +17,9 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
+
+PACKAGE_DIR = Path(__file__).resolve().parent
+SCENARIOS_FILE = PACKAGE_DIR / "scenarios.json"
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,112 +93,28 @@ class LoadTestReport:
     endpoints: list[EndpointMetrics]
 
 
-PRESET_SCENARIOS: dict[str, list[TargetSpec]] = {
-    "computing_table": [
-        TargetSpec(
-            name="equipment_list_page1",
-            method="GET",
-            path="/api/labs/equipment?page=1&page_size=25",
-            weight=5.0,
-        ),
-        TargetSpec(
-            name="equipment_list_available",
-            method="GET",
-            path="/api/labs/equipment?status=available&page=1&page_size=25",
-            weight=2.0,
-        ),
-        TargetSpec(
-            name="equipment_list_search",
-            method="GET",
-            path="/api/labs/equipment?q=pc&page=1&page_size=25",
-            weight=1.5,
-        ),
-        TargetSpec(
-            name="equipment_reference_data",
-            method="GET",
-            path="/api/labs/equipment/reference-data",
-            weight=1.0,
-        ),
-        TargetSpec(
-            name="equipment_facets_kind",
-            method="GET",
-            path="/api/labs/equipment/facets?dimension=kind&page_size=25",
-            weight=1.0,
-        ),
-        TargetSpec(
-            name="equipment_facets_manufacturer",
-            method="GET",
-            path="/api/labs/equipment/facets?dimension=manufacturer&page_size=25",
-            weight=1.0,
-        ),
-        TargetSpec(
-            name="equipment_options",
-            method="GET",
-            path="/api/labs/equipment/options?q=a",
-            weight=1.0,
-        ),
-    ],
-    "equipment_table": [
-        TargetSpec(
-            name="equipment_list",
-            method="GET",
-            path="/api/labs/equipment?page=1&page_size=25",
-            weight=4.0,
-        ),
-        TargetSpec(
-            name="equipment_filters",
-            method="GET",
-            path="/api/labs/equipment/filters",
-            weight=1.0,
-        ),
-        TargetSpec(
-            name="equipment_reference_data",
-            method="GET",
-            path="/api/labs/equipment/reference-data",
-            weight=1.0,
-        ),
-        TargetSpec(
-            name="equipment_facets_category",
-            method="GET",
-            path="/api/labs/equipment/facets?dimension=category",
-            weight=1.0,
-        ),
-    ],
-    "locations_and_benches": [
-        TargetSpec(
-            name="benches_list",
-            method="GET",
-            path="/api/labs/benches?page=1&page_size=25",
-            weight=3.0,
-        ),
-        TargetSpec(
-            name="stations_list",
-            method="GET",
-            path="/api/labs/stations?page=1&page_size=25",
-            weight=2.0,
-        ),
-        TargetSpec(
-            name="rooms_list",
-            method="GET",
-            path="/api/labs/rooms?page=1&page_size=25",
-            weight=1.0,
-        ),
-    ],
-    "licenses": [
-        TargetSpec(
-            name="licenses_list",
-            method="GET",
-            path="/api/labs/licenses?page=1&page_size=25",
-            weight=3.0,
-        ),
-        TargetSpec(
-            name="licenses_options",
-            method="GET",
-            path="/api/labs/licenses/options",
-            weight=1.0,
-        ),
-    ],
-}
+def _dict_to_target(item: dict[str, Any]) -> TargetSpec:
+    path = str(item["path"])
+    method = str(item.get("method", "GET")).upper()
+    return TargetSpec(
+        name=str(item.get("name") or f"{method} {path}"),
+        method=method,
+        path=path,
+        weight=float(item.get("weight", 1.0)),
+        headers=dict(item.get("headers") or {}),
+        body=item.get("body"),
+        expected_statuses=tuple(int(s) for s in item.get("expected_statuses", (200, 201, 204, 304))),
+    )
+
+
+def load_preset_scenarios(path: Path = SCENARIOS_FILE) -> dict[str, list[TargetSpec]]:
+    """Load built-in scenarios from ``tools/load_test/scenarios.json``."""
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    scenarios_raw = raw.get("scenarios", {})
+    return {name: [_dict_to_target(entry) for entry in entries] for name, entries in scenarios_raw.items()}
+
+
+PRESET_SCENARIOS: dict[str, list[TargetSpec]] = load_preset_scenarios()
 
 
 def percentile(sorted_values: Sequence[float], pct: float) -> float:
@@ -338,19 +239,7 @@ def build_targets(args: argparse.Namespace) -> list[TargetSpec]:
             if isinstance(item, str):
                 targets.append(parse_endpoint_arg(item, idx))
             elif isinstance(item, dict):
-                path = str(item["path"])
-                method = str(item.get("method", "GET")).upper()
-                targets.append(
-                    TargetSpec(
-                        name=str(item.get("name") or f"{method} {path}"),
-                        method=method,
-                        path=path,
-                        weight=float(item.get("weight", 1.0)),
-                        headers=dict(item.get("headers") or {}),
-                        body=item.get("body"),
-                        expected_statuses=tuple(int(s) for s in item.get("expected_statuses", (200, 201, 204, 304))),
-                    )
-                )
+                targets.append(_dict_to_target(item))
 
     if args.scenario:
         for scenario_name in args.scenario:
@@ -382,7 +271,7 @@ def _setup_django(settings_module: str | None = None) -> None:
 
 
 def mint_jwt_for_user(username: str, *, settings_module: str | None = None) -> str:
-    """Mint a valid SimpleJWT Bearer access token for an existing user (or temporary load-test admin)."""
+    """Mint a valid SimpleJWT Bearer access token for an existing user."""
     _setup_django(settings_module)
     from django.contrib.auth import get_user_model
     from rest_framework_simplejwt.tokens import AccessToken
@@ -619,7 +508,6 @@ async def _drive_virtual_users(
     ramp_up_s: float,
 ) -> tuple[list[SampleResult], float]:
     """Coordinate warmup and concurrent virtual-user coroutines."""
-    # Warm-up phase (sequential or low-concurrency)
     for i in range(warmup_requests):
         target = targets[i % len(targets)]
         await one_call(target, None)
@@ -1115,5 +1003,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0 if report.overall.failed_requests == 0 else 1
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+__all__ = [
+    "EndpointMetrics",
+    "LoadTestReport",
+    "PRESET_SCENARIOS",
+    "SampleResult",
+    "TargetSpec",
+    "build_parser",
+    "build_report",
+    "build_targets",
+    "load_config_file",
+    "load_preset_scenarios",
+    "main",
+    "mint_jwt_for_user",
+    "parse_endpoint_arg",
+    "percentile",
+    "print_report",
+    "run_http_load_test",
+    "run_in_process_benchmark",
+    "summarize_samples",
+]
