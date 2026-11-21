@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from typing import Any, ClassVar, TypeAlias
 
 from django.conf import settings
+from django.http import HttpRequest
 from rest_framework.permissions import SAFE_METHODS, BasePermission, OperandHolder
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -110,7 +111,7 @@ def api_key_writes_enabled() -> bool:
     return bool(getattr(settings, "API_KEY_WRITE_ACCESS_ENABLED", False))
 
 
-def _api_key_allows(request: Request) -> bool:
+def _api_key_allows(request: HttpRequest | Request) -> bool:
     if not api_key_access_enabled():
         return False
     return request.method in SAFE_METHODS or api_key_writes_enabled()
@@ -125,10 +126,10 @@ class HasAPIKeyAccess(HasAPIKey):
     (owner decisions M11 and D4, docs/proposals/role-based-access-redesign.md).
     """
 
-    def has_permission(self, request: Request, view: APIView) -> bool:
+    def has_permission(self, request: HttpRequest, view: Any) -> bool:
         return _api_key_allows(request) and super().has_permission(request, view)
 
-    def has_object_permission(self, request: Request, view: APIView, obj: Any) -> bool:
+    def has_object_permission(self, request: HttpRequest, view: Any, obj: Any) -> bool:
         return _api_key_allows(request) and super().has_object_permission(request, view, obj)
 
 
