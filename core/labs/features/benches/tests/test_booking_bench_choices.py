@@ -18,7 +18,7 @@ pytestmark = pytest.mark.django_db
 def client():
     api_client = APIClient()
     user: Any = UserFactory()
-    api_client.force_authenticate(user=grant_labs_role(user, "user"))
+    api_client.force_authenticate(user=grant_labs_role(user, "member"))
     return api_client
 
 

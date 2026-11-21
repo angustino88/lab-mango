@@ -138,6 +138,6 @@ def test_a_page_beyond_the_last_is_404(client, benches):
 def test_needs_staff_access(benches):
     member = APIClient()
     user: Any = UserFactory()
-    member.force_authenticate(user=grant_labs_role(user, "user"))
+    member.force_authenticate(user=grant_labs_role(user, "member"))
 
     assert member.get(URL).status_code == 403

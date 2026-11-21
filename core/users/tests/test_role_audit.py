@@ -47,7 +47,7 @@ def test_deleting_a_user_keeps_their_history():
 
 
 def test_changing_a_urs_group_role_is_recorded(root_client, django_capture_on_commit_callbacks):
-    urs_group = URSGroupFactory(urs_group_name="Coordinators", labs_role="user")
+    urs_group = URSGroupFactory(urs_group_name="Coordinators", labs_role="member")
     with patch("core.users.admin.sync_selected_urs_groups.delay"), django_capture_on_commit_callbacks(execute=True):
         response = root_client.post(
             f"/admin/users/ursgroup/{urs_group.pk}/change/",
@@ -62,7 +62,7 @@ def test_changing_a_urs_group_role_is_recorded(root_client, django_capture_on_co
     assert response.status_code == 302, response.content
     (event,) = _events("urs_group_changed")
     assert event.actor_label == "audit_root"
-    assert event.changes == {"labs_role": {"before": "user", "after": "coord"}}
+    assert event.changes == {"labs_role": {"before": "member", "after": "coord"}}
 
 
 def test_creating_and_deleting_a_urs_group_is_recorded(root_client, django_capture_on_commit_callbacks):
@@ -134,7 +134,7 @@ def test_access_review_lists_privileged_users_with_their_source(root_client):
     coordinator = UserFactory(username="review_coordinator")
     coordinator.groups.add(coord_group)
     plain_group = Group.objects.create(name="review-plain")
-    URSGroup.objects.create(group=plain_group, urs_group_id=78002, labs_role="user")
+    URSGroup.objects.create(group=plain_group, urs_group_id=78002, labs_role="member")
     UserFactory(username="review_plain").groups.add(plain_group)
 
     page = root_client.get("/admin/users/privilegeduser/").content.decode()

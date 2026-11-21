@@ -10,7 +10,7 @@ Stored values are persisted and must not change; labels are the names people see
   configuration, imports, device profile approval.
 * Lab Coordinator (``coord``): runs daily lab operations: resources, downtime, everyone's bookings and
   their approval, monitoring, procurement, expenses and finance reports, support requests.
-* Lab Member (``user``): uses the lab: dashboard, leaderboard and own bench bookings.
+* Lab Member (``member``): uses the lab: dashboard, leaderboard and own bench bookings.
 
 *Lab operator* is the umbrella term for a person whose role grants lab operations authority
 (``LabsPermission.LAB_OPERATIONS_MANAGE``): today Lab Coordinators and Lab Administrators.
@@ -22,11 +22,11 @@ from core.common.api.permissions import RoleHierarchy
 
 
 class LabsRole(models.TextChoices):
-    """Labs roles. Values are persisted in ``URSGroup.labs_role`` and must not change."""
+    """Labs roles. Values are persisted in ``URSGroup.labs_role``."""
 
     ADMIN = "admin", "Lab Administrator"
     COORDINATOR = "coord", "Lab Coordinator"
-    MEMBER = "user", "Lab Member"
+    MEMBER = "member", "Lab Member"
 
 
 # Higher roles imply lower ones: a Lab Administrator also holds everything a Lab Coordinator holds.

@@ -77,19 +77,19 @@ def test_user_list_shows_roles_and_their_urs_groups(django_assert_max_num_querie
     with django_assert_max_num_queries(12):  # constant: groups and URS groups are prefetched
         page = client.get("/admin/users/user/").content.decode()
 
-    assert "Lab coordinator" in page and "No role" in page and "Superuser" in page
+    assert "Lab Coordinator" in page and "No role" in page and "Superuser" in page
     assert f"/admin/users/ursgroup/{urs_coord.pk}/change/" in page
 
 
 def test_labs_role_filter_lists_only_that_role():
     group = GroupFactory(name="filter-user-group")
-    URSGroup.objects.create(group=group, urs_group_id=98002, labs_role="user")
+    URSGroup.objects.create(group=group, urs_group_id=98002, labs_role="member")
     UserFactory(username="filter_plain").groups.add(group)
     UserFactory(username="filter_nobody")
     client = Client()
     client.force_login(UserFactory(username="filter_root", is_staff=True, is_superuser=True))
 
-    plain = client.get("/admin/users/user/?labs_role=user").content.decode()
+    plain = client.get("/admin/users/user/?labs_role=member").content.decode()
     nobody = client.get("/admin/users/user/?labs_role=none").content.decode()
 
     assert "filter_plain" in plain and "filter_nobody" not in plain

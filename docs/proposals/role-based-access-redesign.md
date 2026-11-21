@@ -14,7 +14,7 @@
 | # | Decision | Outcome |
 |---|---|---|
 | D1 | Umbrella term for "Lab Coordinator or Lab Administrator" | **Lab operator**: a person whose role grants `lab_operations.manage`. "Staff" is not used (it means Django `is_staff`, admin-site access). |
-| D2 | Role display names | **Lab Administrator** (`admin`), **Lab Coordinator** (`coord`), **Lab Member** (`user`). Stored values unchanged. |
+| D2 | Role codes and display names | **Lab Administrator** (`admin`), **Lab Coordinator** (`coord`), **Lab Member** (`member`). |
 | D3 | Reference-data writes | **Labs permissions only.** The Django model-permission fallback is removed; a reference resource without a write rule is read-only. |
 | D4 | API keys | **Read-only by default and off in production** (closes R4, M11). `HasAPIKeyAccess` allows reads only unless `API_KEY_WRITE_ACCESS_ENABLED` (default `False`); `config/settings/production.py` defaults `API_KEY_ACCESS_ENABLED` to `False` and fixes `API_KEY_WRITE_ACCESS_ENABLED = False`. Keys are for API testing only. |
 | D5 | Administrator-only rules | **Kept as they are**, now visible in the matrix. |
@@ -41,7 +41,7 @@ URS group ──(labs_role, Django admin)──▶ Role ──(ROLE_PERMISSIONS,
 
 | Layer | Module | Owns |
 |---|---|---|
-| Role | `core/users/roles.py` | `LabsRole` (values persisted, labels per D2), `LABS_ROLE_HIERARCHY` (`admin` > `coord` > `user`) |
+| Role | `core/users/roles.py` | `LabsRole` (values persisted, labels per D2), `LABS_ROLE_HIERARCHY` (`admin` > `coord` > `member`) |
 | Permission | `core/users/permissions.py` | `LabsPermission` (code and description), `ROLE_PERMISSIONS` (what each role adds), `render_access_matrix` |
 | Check | `core/users/access.py` | `effective_permissions`, `has_permission`, `require_permission`, `users_with_permission`, `is_lab_operator`, `LabsAccessPolicy` (DRF) |
 | Generic mechanics | `core/common/api/permissions.py` | `RoleHierarchy`, `CapabilityPermission` (business-agnostic) |
@@ -88,8 +88,9 @@ name rules the draft had missed (`agent.read` was merged into `agent.manage` whe
 
 ## 7. Compatibility and verification
 
-- Stored role values, routes, error codes and existing response fields are unchanged. Additive:
-  `effective_permissions` on `/api/users/me`; role labels in the choices (migration `users.0002`, state only).
+- `LabsRole.MEMBER` value is `member` (`admin`, `coord`, `member`), folded into `users.0001_initial`.
+  `effective_roles.labs` on `/api/users/me` lists the user's assigned roles (e.g. `["admin"]`), while
+  `effective_permissions.labs` lists all permissions granted through `LABS_ROLE_HIERARCHY`.
 - Route-level access was compared before and after for every `/api/` route × 5 HTTP methods × 6 actors (none,
   member, coordinator, administrator, superuser, API key): 10,740 decisions, 16 differ, all write methods on the
   two read-only user-group endpoints (no write handler: 405 before, 403 now).

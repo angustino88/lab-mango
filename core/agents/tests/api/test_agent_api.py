@@ -49,7 +49,7 @@ def admin_user(db):
 
 @pytest.fixture
 def plain_user(db):
-    return _user_with_labs_role("agent-viewer", "user")
+    return _user_with_labs_role("agent-viewer", "member")
 
 
 @pytest.fixture

@@ -161,7 +161,7 @@ def test_full_setup_flow_station_and_room_converters(coord, admin, layout):
 
 
 def test_plain_lab_users_and_strangers_are_refused(layout):
-    assert _client("tel-user", "user").get(f"{BASE}/devices").status_code == 403
+    assert _client("tel-user", "member").get(f"{BASE}/devices").status_code == 403
     assert _client("tel-none", None).get(f"{BASE}/devices").status_code == 403
 
 

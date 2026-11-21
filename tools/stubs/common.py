@@ -106,7 +106,7 @@ def load_personas(path: Path = PERSONAS_FILE) -> PersonaManifest:
             bound=bool(item.get("bound", True)),
             active=bool(item.get("active", True)),
         )
-        if persona.labs_role not in {"", "user", "coord", "admin"}:
+        if persona.labs_role not in {"", "member", "coord", "admin"}:
             raise ValueError(f"persona {persona.key}: unknown labs_role {persona.labs_role!r}")
         personas[persona.key] = persona
     return PersonaManifest(namespace=uuid.UUID(raw["namespace"]), personas=personas)

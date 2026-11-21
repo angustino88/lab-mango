@@ -243,7 +243,7 @@ def test_missing_unknown_and_duplicate_file_parts_are_422(client):
 @pytest.mark.django_db
 @pytest.mark.parametrize("method", ["get", "put", "delete"])
 def test_plain_labs_user_is_forbidden(method):
-    user = grant_labs_role(User.objects.create_user(username="img-member"), "user")
+    user = grant_labs_role(User.objects.create_user(username="img-member"), "member")
     api = APIClient()
     api.force_authenticate(user)
     bench = _make("benches")

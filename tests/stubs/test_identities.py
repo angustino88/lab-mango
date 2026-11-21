@@ -37,7 +37,7 @@ def test_seed_creates_bound_users_with_roles_and_publishes_eligible_keys(stub_en
     assert set(outcomes) == {key for key, p in manifest.personas.items() if p.backend == "dept_a"}
     alice = User.objects.get(username="stub.alice")
     assert not alice.has_usable_password() and alice.is_urs_managed is False
-    assert effective_labs_roles(User.objects.get(username="stub.carol")) >= {"coord", "user"}
+    assert effective_labs_roles(User.objects.get(username="stub.carol")) == {"coord"}
     assert effective_labs_roles(User.objects.get(username="stub.nora")) == frozenset()
     assert _changes(manifest.user_key(manifest.get("alice"))) == ["upsert"]
     assert _changes(manifest.user_key(manifest.get("ivy"))) == []  # bound but inactive: not routed

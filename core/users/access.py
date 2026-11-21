@@ -29,27 +29,30 @@ from core.common.api.permissions import CapabilityPermission, is_authenticated
 from core.common.domain.errors import Forbidden
 from core.users.models import URSGroup, User
 from core.users.permissions import ALL_PERMISSIONS, LabsPermission, permissions_for_roles, roles_granting
-from core.users.roles import LABS_ROLE_HIERARCHY
+from core.users.roles import LabsRole
 
 _ROLES_CACHE_ATTR = "_labs_roles_cache"
+_VALID_ROLES = frozenset(LabsRole.values)
 
 
 def effective_labs_roles(user: Any) -> frozenset[str]:
-    """The Labs roles ``user`` holds, implied roles included. For ``core.users`` and role display only.
+    """The Labs roles assigned to ``user`` through URS groups (or ``admin`` for superusers).
 
-    Anonymous users hold none; superusers hold all. The result is cached on ``user``.
+    Hierarchy expansion happens in ``permissions_for_roles`` when computing ``effective_permissions``, so an
+    administrator's ``effective_roles.labs`` lists ``["admin"]`` while their ``effective_permissions.labs``
+    includes every permission granted by ``admin``, ``coord`` and ``member``.
     """
     if not is_authenticated(user):
         return frozenset()
     if user.is_superuser:
-        return LABS_ROLE_HIERARCHY.roles
+        return frozenset({LabsRole.ADMIN.value})
 
     cached = getattr(user, _ROLES_CACHE_ATTR, None)
     if cached is not None:
         return cached
 
     assigned_roles = URSGroup.objects.filter(group__user=user).values_list("labs_role", flat=True).distinct()
-    roles = LABS_ROLE_HIERARCHY.expand(assigned_roles)
+    roles = frozenset(role for role in assigned_roles if role in _VALID_ROLES)
     setattr(user, _ROLES_CACHE_ATTR, roles)
     return roles
 

@@ -37,7 +37,7 @@ def _role(user, role, role_id):
 @pytest.mark.django_db
 class TestBenchBookingList:
     def test_user_sees_only_created_bookings_and_creator_is_used(self, actor, bench, make_booking, future_window):
-        _role(actor, "user", 80101)
+        _role(actor, "member", 80101)
         starts_at, ends_at = future_window
         own = make_booking(starts_at=starts_at, ends_at=ends_at)
         other = UserFactory(username="booking-list-other")
@@ -104,7 +104,7 @@ class TestBenchBookingList:
         hidden.save(update_fields=["creator"])
         query = {"starts_at_after": lower.isoformat(), "starts_at_before": upper.isoformat()}
 
-        _role(actor, "user", 80109)
+        _role(actor, "member", 80109)
         member = _client(actor).get(URL, query)
         assert member.status_code == 200
         assert {item["id"] for item in member.json()["data"]} == {spanning.pk}
@@ -246,7 +246,7 @@ class TestBenchBookingList:
     def test_query_count_does_not_grow_with_related_rows(
         self, actor, bench, project, make_booking, future_window, django_assert_num_queries
     ):
-        _role(actor, "user", 80104)
+        _role(actor, "member", 80104)
         starts_at, ends_at = future_window
         for index in range(3):
             booking = make_booking(
@@ -266,7 +266,7 @@ class TestBenchBookingList:
     def test_custom_ordering_keeps_query_count_bounded(
         self, actor, bench, project, make_booking, future_window, django_assert_num_queries
     ):
-        _role(actor, "user", 80114)
+        _role(actor, "member", 80114)
         starts_at, ends_at = future_window
         for index in range(3):
             booking = make_booking(
@@ -444,7 +444,7 @@ class TestBenchBookingList:
         return booking
 
     def test_booking_calendar_shows_others_reserving_bookings_without_their_code(self, actor, make_booking):
-        _role(actor, "user", 80107)
+        _role(actor, "member", 80107)
         own = make_booking(starts_at=timezone.now() - timedelta(days=1), ends_at=timezone.now() + timedelta(days=2))
         other = self._stranger_booking(make_booking)
 
@@ -467,7 +467,7 @@ class TestBenchBookingList:
         assert [row["booking_code"] for row in rows] == [other.booking_code]
 
     def test_booking_calendar_hides_cancelled_bookings_of_others(self, actor, make_booking):
-        _role(actor, "user", 80109)
+        _role(actor, "member", 80109)
         self._stranger_booking(make_booking, status="cancelled")
 
         response = _client(actor).get(URL, {"view_side": "booking_calendar"})
@@ -476,13 +476,13 @@ class TestBenchBookingList:
         assert response.json()["data"] == []
 
     def test_other_views_stay_creator_scoped(self, actor, make_booking):
-        _role(actor, "user", 80110)
+        _role(actor, "member", 80110)
         self._stranger_booking(make_booking)
 
         assert _client(actor).get(URL).json()["data"] == []
 
     def test_booking_calendar_code_filters_cannot_probe_others_codes(self, actor, make_booking):
-        _role(actor, "user", 80111)
+        _role(actor, "member", 80111)
         other = self._stranger_booking(make_booking)
         client = _client(actor)
 
@@ -493,7 +493,7 @@ class TestBenchBookingList:
         assert by_search.json()["data"] == []
 
     def test_range_query_count_remains_bounded(self, actor, bench, project, make_booking, django_assert_num_queries):
-        _role(actor, "user", 80108)
+        _role(actor, "member", 80108)
         starts_at = timezone.now() + timedelta(hours=1)
         for index in range(3):
             booking = make_booking(

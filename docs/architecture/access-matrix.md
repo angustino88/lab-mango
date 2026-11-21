@@ -7,7 +7,7 @@ marked below (higher roles hold everything lower roles hold). Superusers hold ev
 *Lab operators* are the roles holding `lab_operations.manage`. Design:
 [role-based access redesign](../proposals/role-based-access-redesign.md).
 
-| Permission | Allows | Lab Member (`user`) | Lab Coordinator (`coord`) | Lab Administrator (`admin`) |
+| Permission | Allows | Lab Member (`member`) | Lab Coordinator (`coord`) | Lab Administrator (`admin`) |
 |---|---|---|---|---|
 | `dashboard.read` | Read the dashboard: overview, summary and bench detail with equipment mapping | yes | yes | yes |
 | `leaderboard.read` | Read the leaderboard, bench and user profiles and usage, and one's own assessment | yes | yes | yes |

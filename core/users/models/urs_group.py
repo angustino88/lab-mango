@@ -38,7 +38,7 @@ class URSGroup(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["urs_group_id"], name="users_ursgroup_unique_urs_group_id"),
             models.CheckConstraint(
-                condition=models.Q(labs_role__in=["", "admin", "coord", "user"]),
+                condition=models.Q(labs_role__in=["", "admin", "coord", "member"]),
                 name="users_ursgroup_valid_labs_role",
             ),
             models.CheckConstraint(

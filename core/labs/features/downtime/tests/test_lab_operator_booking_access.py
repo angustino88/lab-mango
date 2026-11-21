@@ -56,7 +56,7 @@ def admin(db):
 
 @pytest.fixture
 def member(db):
-    return _user("access-member", "user")
+    return _user("access-member", "member")
 
 
 @pytest.fixture

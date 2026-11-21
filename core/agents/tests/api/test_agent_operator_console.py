@@ -35,7 +35,7 @@ def coordinator(db):
 
 @pytest.fixture
 def viewer(db):
-    return _user("console-viewer", "user")
+    return _user("console-viewer", "member")
 
 
 @pytest.fixture

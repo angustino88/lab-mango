@@ -281,7 +281,7 @@ def test_legacy_start_now_refuses_to_overlap_planned_downtime(room):
 
 @pytest.mark.django_db
 def test_plain_lab_user_cannot_read_or_write_downtime(db, bench):
-    user = grant_labs_role(User.objects.create_user(username="downtime-user"), "user")
+    user = grant_labs_role(User.objects.create_user(username="downtime-user"), "member")
     client = APIClient()
     client.force_authenticate(user)
 

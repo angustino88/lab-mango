@@ -64,22 +64,22 @@ class TestEffectiveLabsRoles:
     @pytest.mark.parametrize(
         ("stored_role", "expected"),
         [
-            ("admin", _ALL),
-            ("coord", {LabsRole.COORDINATOR, LabsRole.MEMBER}),
-            ("user", {LabsRole.MEMBER}),
+            ("admin", {LabsRole.ADMIN}),
+            ("coord", {LabsRole.COORDINATOR}),
+            ("member", {LabsRole.MEMBER}),
         ],
     )
-    def test_higher_roles_imply_lower_roles(self, stored_role, expected):
+    def test_returns_assigned_roles(self, stored_role, expected):
         assert effective_labs_roles(_user_with_roles(f"access-{stored_role}", stored_role)) == expected
 
     def test_multiple_groups_combine(self):
-        user = _user_with_roles("access-multi", "user", "coord")
+        user = _user_with_roles("access-multi", "member", "coord")
         assert effective_labs_roles(user) == {LabsRole.COORDINATOR, LabsRole.MEMBER}
 
-    def test_superuser_holds_every_role_without_a_query(self, django_assert_num_queries):
+    def test_superuser_holds_admin_role_without_a_query(self, django_assert_num_queries):
         user = _user_with_roles("access-super", superuser=True)
         with django_assert_num_queries(0):
-            assert effective_labs_roles(user) == _ALL
+            assert effective_labs_roles(user) == {LabsRole.ADMIN}
 
     def test_roles_are_cached_per_user_instance(self, django_assert_num_queries):
         user = _user_with_roles("access-cache", "coord")
@@ -90,7 +90,7 @@ class TestEffectiveLabsRoles:
             effective_permissions(user)
 
     def test_clearing_the_cache_reflects_group_changes(self):
-        user = _user_with_roles("access-clear", "user")
+        user = _user_with_roles("access-clear", "member")
         assert effective_labs_roles(user) == {LabsRole.MEMBER}
 
         group = Group.objects.create(name="access-clear-admin")
@@ -102,7 +102,7 @@ class TestEffectiveLabsRoles:
         assert LabsRole.ADMIN in effective_labs_roles(user)
 
     def test_clearing_an_uncached_user_is_a_noop(self):
-        clear_labs_roles_cache(_user_with_roles("access-noop", "user"))
+        clear_labs_roles_cache(_user_with_roles("access-noop", "member"))
 
 
 class TestHasPermission:
@@ -114,8 +114,8 @@ class TestHasPermission:
             ("coord", LabsPermission.LAB_OPERATIONS_MANAGE, True),
             ("coord", LabsPermission.DASHBOARD_READ, True),
             ("coord", LabsPermission.DIRECTORY_READ, False),
-            ("user", LabsPermission.BENCH_BOOKING_MANAGE_OWN, True),
-            ("user", LabsPermission.LAB_OPERATIONS_MANAGE, False),
+            ("member", LabsPermission.BENCH_BOOKING_MANAGE_OWN, True),
+            ("member", LabsPermission.LAB_OPERATIONS_MANAGE, False),
             ("", LabsPermission.DASHBOARD_READ, False),
         ],
     )
@@ -133,10 +133,10 @@ class TestHasPermission:
     def test_lab_operators_are_coordinators_and_administrators(self):
         assert is_lab_operator(_user_with_roles("access-op-coord", "coord"))
         assert is_lab_operator(_user_with_roles("access-op-admin", "admin"))
-        assert not is_lab_operator(_user_with_roles("access-op-member", "user"))
+        assert not is_lab_operator(_user_with_roles("access-op-member", "member"))
 
     def test_require_permission_raises_forbidden(self):
-        member = _user_with_roles("access-require", "user")
+        member = _user_with_roles("access-require", "member")
         require_permission(member, LabsPermission.DASHBOARD_READ)
         with pytest.raises(Forbidden) as caught:
             require_permission(member, LabsPermission.BENCH_BOOKING_APPROVE)
@@ -151,7 +151,7 @@ class TestLabsAccessPolicy:
 
     @pytest.mark.parametrize(
         ("role", "reads", "writes"),
-        [("admin", True, True), ("coord", True, True), ("user", True, False), ("", False, False)],
+        [("admin", True, True), ("coord", True, True), ("member", True, False), ("", False, False)],
     )
     def test_reads_and_writes_follow_their_permission(self, role, reads, writes):
         user = _user_with_roles(f"access-policy-{role or 'blank'}", role)
@@ -178,7 +178,7 @@ class TestUsersWithPermission:
     def test_includes_implied_roles_and_superusers_only_once(self, django_assert_num_queries):
         admin = _user_with_roles("holder-admin", "admin", "coord")
         coord = _user_with_roles("holder-coord", "coord")
-        _user_with_roles("holder-user", "user")
+        _user_with_roles("holder-member", "member")
         _user_with_roles("holder-none")
         superuser = _user_with_roles("holder-super", superuser=True)
         inactive = _user_with_roles("holder-inactive", "admin")

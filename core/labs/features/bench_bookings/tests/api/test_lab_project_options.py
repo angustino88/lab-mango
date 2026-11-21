@@ -16,7 +16,7 @@ URL = "/api/labs/lab-projects/options"
 @pytest.fixture()
 def actor(db):
     user = get_user_model().objects.create_user(username="project_actor", email="proj@example.com")
-    return grant_labs_role(user, "user")
+    return grant_labs_role(user, "member")
 
 
 @pytest.fixture()

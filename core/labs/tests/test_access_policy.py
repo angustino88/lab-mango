@@ -77,7 +77,7 @@ def test_every_labs_route_follows_the_policy():
     views = _labs_views()
     assert len(views) > 50, "Labs URL configuration was not found"
     no_role = _user("policy-none")
-    plain = _user("policy-plain", "user")
+    plain = _user("policy-plain", "member")
     coordinator = _user("policy-coord", "coord")
     admin = _user("policy-admin", "admin")
     problems = []
@@ -117,7 +117,7 @@ def test_every_labs_route_follows_the_policy():
 
 def test_plain_user_sees_dashboard_but_not_benches_or_equipment():
     client = APIClient()
-    client.force_authenticate(user=_user("policy-http-plain", "user"))
+    client.force_authenticate(user=_user("policy-http-plain", "member"))
 
     assert client.get("/api/labs/dashboard/summary").status_code == 200
     assert client.get("/api/labs/benches").status_code == 403

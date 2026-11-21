@@ -132,7 +132,7 @@ def test_duplicate_sku_among_live_licenses_is_a_conflict(client, catalog):
 def test_plain_users_and_anonymous_callers_cannot_write(catalog):
     anonymous = APIClient().post(LIST_URL, _body(catalog), format="json")
     member = APIClient()
-    member.force_authenticate(grant_labs_role(User.objects.create_user(username="lic-write-member"), "user"))
+    member.force_authenticate(grant_labs_role(User.objects.create_user(username="lic-write-member"), "member"))
 
     assert anonymous.status_code in (401, 403)
     assert member.post(LIST_URL, _body(catalog), format="json").status_code == 403

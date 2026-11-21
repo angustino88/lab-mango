@@ -202,7 +202,7 @@ class TestGetAndUpdateEndpoints:
         starts_at, ends_at = future_window
         booking = make_booking(starts_at=starts_at, ends_at=ends_at, code="BOOKING-PRIVATE01")
         client = APIClient()
-        client.force_authenticate(user=grant_labs_role(UserFactory(username="booking-detail-outsider"), "user"))
+        client.force_authenticate(user=grant_labs_role(UserFactory(username="booking-detail-outsider"), "member"))
         url = _detail(booking.pk) if route == "id" else _detail_by_code(booking.booking_code)
 
         response = client.get(url)
@@ -225,7 +225,7 @@ class TestGetAndUpdateEndpoints:
         booking = make_booking(starts_at=starts_at, ends_at=ends_at)
         coordinator = _grant_role(UserFactory(username="booking-detail-coordinator"), LabsRole.COORDINATOR)
         client = APIClient()
-        grant_labs_role(coordinator, "user")
+        grant_labs_role(coordinator, "member")
         client.force_authenticate(user=coordinator)
 
         response = client.get(_detail(booking.pk))
@@ -294,7 +294,7 @@ class TestBookingApprovalActions:
         booking.approval_status = BookingApprovalStatus.PENDING
         booking.save()
         client = APIClient()
-        grant_labs_role(coordinator, "user")
+        grant_labs_role(coordinator, "member")
         client.force_authenticate(user=coordinator)
 
         response = client.post(
@@ -312,7 +312,7 @@ class TestBookingApprovalActions:
         booking.approval_status = BookingApprovalStatus.PENDING
         booking.save()
         client = APIClient()
-        grant_labs_role(admin, "user")
+        grant_labs_role(admin, "member")
         client.force_authenticate(user=admin)
 
         response = client.post(
@@ -358,7 +358,7 @@ class TestBookingApprovalActions:
         booking.approval_status = BookingApprovalStatus.PENDING
         booking.save()
         client = APIClient()
-        grant_labs_role(coordinator, "user")
+        grant_labs_role(coordinator, "member")
         client.force_authenticate(user=coordinator)
 
         response = client.post(
@@ -378,7 +378,7 @@ class TestBookingApprovalActions:
         booking.approval_status = BookingApprovalStatus.PENDING
         booking.save()
         client = APIClient()
-        grant_labs_role(coordinator, "user")
+        grant_labs_role(coordinator, "member")
         client.force_authenticate(user=coordinator)
 
         missing = client.post(_approval_action(booking.pk, "approve"), {}, format="json")
@@ -401,7 +401,7 @@ class TestBookingApprovalActions:
         booking.approval_status = BookingApprovalStatus.PENDING
         booking.save()
         client = APIClient()
-        grant_labs_role(coordinator, "user")
+        grant_labs_role(coordinator, "member")
         client.force_authenticate(user=coordinator)
         headers = _idempotency_headers()
         url = _approval_action(booking.pk, "approve")
@@ -422,7 +422,7 @@ class TestBookingApprovalActions:
         booking.approval_status = BookingApprovalStatus.PENDING
         booking.save()
         client = APIClient()
-        grant_labs_role(coordinator, "user")
+        grant_labs_role(coordinator, "member")
         client.force_authenticate(user=coordinator)
         headers = _idempotency_headers()
         url = _approval_action(booking.pk, "reject")

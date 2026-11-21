@@ -76,3 +76,16 @@ Verified: a blank database migrated with the old set (9 files) and one migrated 
 have identical `pg_dump --schema-only` output; on the new database both extensions, the four triggers,
 `support_ticket_number_seq` and the four purchase priorities exist. Every existing database must be
 dropped and recreated, then `python manage.py migrate`.
+
+## Addendum (2026-11-20): regenerated again, one migration per app
+
+On the owner's request ("start a new migration start with 001_ only"), `users` and `labs` migrations were
+regenerated into a single `0001_initial` per app (7 initial migrations across the repository):
+
+| Removed file | Handling |
+|---|---|
+| `users.0002_labs_role_display_names` | Folded into `users.0001_initial` along with `LabsRole.MEMBER = "member", "Lab Member"` and the `users_ursgroup_valid_labs_role` constraint (`["", "admin", "coord", "member"]`). |
+| `labs.0002_telemetry_configuration` | Telemetry configuration models and constraints folded into `labs.0001_initial`. |
+| `labs.0003_seed_telemetry_metrics` | `seed_metrics` (`temperature_c`, `humidity_percent`, `power_w`) folded into `labs.0001_initial` (last). |
+| `labs.0004_downtime_booking_access` | `ResourceDowntime.booking_access` and `downtime_booking_access_valid` folded into `labs.0001_initial`. |
+

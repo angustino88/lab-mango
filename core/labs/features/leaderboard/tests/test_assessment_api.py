@@ -48,7 +48,7 @@ def booked_day(user, bench, day, *, attend=True, active_hours=4):
 @pytest.mark.django_db
 def test_assessments_are_for_coordinators_and_admins_only():
     user, bench = UserFactory(), BenchFactory()
-    member = client_for("user")
+    member = client_for("member")
     assert member.get(f"/api/labs/leaderboard/users/{user.pk}/assessment", RANGE).status_code == 403
     assert member.get(f"/api/labs/benches/{bench.pk}/assessment", RANGE).status_code == 403
     # The rankings themselves stay visible to every lab member.
@@ -62,7 +62,7 @@ def test_assessments_are_for_coordinators_and_admins_only():
 
 @pytest.mark.django_db
 def test_a_lab_member_reads_their_own_assessment_only():
-    me = grant_labs_role(UserFactory(), "user")
+    me = grant_labs_role(UserFactory(), "member")
     other = UserFactory()
     api = APIClient()
     api.force_authenticate(user=me)

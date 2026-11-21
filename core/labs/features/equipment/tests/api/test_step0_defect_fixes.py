@@ -50,7 +50,7 @@ def _client(user):
 @pytest.fixture
 def plain_user(db):
     # A plain Labs user (role ``user``); users without any Labs role get nothing (owner decision 2026-11-11).
-    return grant_labs_role(User.objects.create_user(username="step0-plain"), "user")
+    return grant_labs_role(User.objects.create_user(username="step0-plain"), "member")
 
 
 @pytest.fixture

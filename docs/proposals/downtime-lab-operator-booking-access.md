@@ -49,8 +49,7 @@ Alternatives considered:
 
 - `ResourceDowntime.booking_access`: `varchar(16)`, `default` and `db_default` `closed`.
 - Check constraint `downtime_booking_access_valid` (`booking_access IN ('closed', 'lab_operators')`).
-- Migration `labs.0004_downtime_booking_access`: add column with a database default (no table rewrite on
-  PostgreSQL 11+, no backfill) and add the check constraint. Reversible with the standard reverse operations.
+- Folded into `labs.0001_initial` (ADR 005 single initial migration per app).
 
 ## API (additive)
 
