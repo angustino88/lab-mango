@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 ERROR = "error"
@@ -15,6 +16,47 @@ MODE_UPSERT = "upsert"
 MODES = (MODE_CREATE, MODE_UPSERT)
 # (value, label) pairs; the OpenAPI enum name is pinned to these in config/openapi.py.
 MODE_CHOICES = ((MODE_CREATE, "Create new"), (MODE_UPSERT, "Update existing"))
+
+PROGRESS_STATUS_RUNNING = "running"
+PROGRESS_STATUS_COMPLETED = "completed"
+PROGRESS_STATUS_FAILED = "failed"
+PROGRESS_STATUS_CHOICES = (
+    (PROGRESS_STATUS_RUNNING, "Running"),
+    (PROGRESS_STATUS_COMPLETED, "Completed"),
+    (PROGRESS_STATUS_FAILED, "Failed"),
+)
+
+PROGRESS_PHASE_READING = "reading"
+PROGRESS_PHASE_WAITING_LOCK = "waiting_lock"
+PROGRESS_PHASE_PROCESSING = "processing"
+PROGRESS_PHASE_FINALIZING = "finalizing"
+PROGRESS_PHASE_COMPLETED = "completed"
+PROGRESS_PHASE_FAILED = "failed"
+PROGRESS_PHASE_CHOICES = (
+    (PROGRESS_PHASE_READING, "Reading workbook"),
+    (PROGRESS_PHASE_WAITING_LOCK, "Waiting for another import"),
+    (PROGRESS_PHASE_PROCESSING, "Processing rows"),
+    (PROGRESS_PHASE_FINALIZING, "Finalizing"),
+    (PROGRESS_PHASE_COMPLETED, "Completed"),
+    (PROGRESS_PHASE_FAILED, "Failed"),
+)
+
+
+@dataclass(frozen=True, slots=True)
+class ImportProgress:
+    """Live progress snapshot of one workbook check or apply run."""
+
+    progress_key: str
+    status: str
+    phase: str
+    percent: int
+    current_sheet: str | None
+    processed_rows: int
+    total_rows: int
+    completed_sheets: int
+    total_sheets: int
+    message: str
+    updated_at: datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,8 +135,20 @@ __all__ = [
     "MODE_CHOICES",
     "MODE_CREATE",
     "MODE_UPSERT",
+    "PROGRESS_PHASE_CHOICES",
+    "PROGRESS_PHASE_COMPLETED",
+    "PROGRESS_PHASE_FAILED",
+    "PROGRESS_PHASE_FINALIZING",
+    "PROGRESS_PHASE_PROCESSING",
+    "PROGRESS_PHASE_READING",
+    "PROGRESS_PHASE_WAITING_LOCK",
+    "PROGRESS_STATUS_CHOICES",
+    "PROGRESS_STATUS_COMPLETED",
+    "PROGRESS_STATUS_FAILED",
+    "PROGRESS_STATUS_RUNNING",
     "WARNING",
     "ImportProblem",
+    "ImportProgress",
     "ImportReport",
     "SheetOutcome",
     "SheetRows",

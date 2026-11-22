@@ -8,6 +8,8 @@ from core.common.api.summary_serializers import choice_field
 
 from ..contracts import MODE_CHOICES as _MODE_CHOICES
 from ..contracts import MODE_CREATE
+from ..contracts import PROGRESS_PHASE_CHOICES as _PROGRESS_PHASE_CHOICES
+from ..contracts import PROGRESS_STATUS_CHOICES as _PROGRESS_STATUS_CHOICES
 
 
 @extend_schema_field(OpenApiTypes.BINARY)
@@ -24,6 +26,25 @@ class WorkbookUploadSerializer(serializers.Serializer):
         help_text="create (default): an existing asset tag is an error. upsert: an existing asset tag updates "
         "that record; blank cells keep stored values; the asset tag never changes.",
     )
+    progress_key = serializers.UUIDField(
+        required=False,
+        allow_null=True,
+        help_text="Optional client-generated UUID to poll live progress via GET /workbook-imports/progress/{progress_key}.",
+    )
+
+
+class ImportProgressSerializer(serializers.Serializer):
+    progress_key = serializers.CharField(help_text="Client-supplied progress key (UUID).")
+    status = choice_field(_PROGRESS_STATUS_CHOICES)
+    phase = choice_field(_PROGRESS_PHASE_CHOICES)
+    percent = serializers.IntegerField(min_value=0, max_value=100, help_text="Overall progress percentage (0-100).")
+    current_sheet = serializers.CharField(allow_null=True, help_text="Name of the sheet currently being processed.")
+    processed_rows = serializers.IntegerField(min_value=0, help_text="Number of rows processed so far.")
+    total_rows = serializers.IntegerField(min_value=0, help_text="Total data rows scheduled for processing.")
+    completed_sheets = serializers.IntegerField(min_value=0, help_text="Number of sheets completed so far.")
+    total_sheets = serializers.IntegerField(min_value=0, help_text="Total sheets with data scheduled for processing.")
+    message = serializers.CharField(help_text="Human-readable progress description.")
+    updated_at = serializers.DateTimeField(help_text="UTC timestamp of the latest progress update.")
 
 
 class ImportProblemSerializer(serializers.Serializer):
@@ -79,4 +100,4 @@ class ImportReportSerializer(serializers.Serializer):
         }
 
 
-__all__ = ["ImportReportSerializer", "WorkbookUploadSerializer"]
+__all__ = ["ImportProgressSerializer", "ImportReportSerializer", "WorkbookUploadSerializer"]

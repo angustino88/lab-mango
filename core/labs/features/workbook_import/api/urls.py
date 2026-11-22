@@ -23,4 +23,9 @@ urlpatterns = [
         views.WorkbookImportApplyAPIView.as_view(),
         name="workbook-import-action-apply",
     ),
+    path(
+        "workbook-imports/progress/<uuid:progress_key>",
+        views.WorkbookImportProgressAPIView.as_view(),
+        name="workbook-import-progress",
+    ),
 ]
