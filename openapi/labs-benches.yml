@@ -1045,6 +1045,65 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Favorite Benches by Bench ID
+  /api/labs/benches/{bench_id}/actions/force-delete:
+    post:
+      operationId: labs_benches_actions_force_delete_create_by_bench_id
+      description: Unassign equipment, cancel active bookings, and soft-delete a bench.
+      parameters:
+      - in: path
+        name: bench_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Benches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchForceDelete'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchForceDelete'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchForceDelete'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchForceDeletedSerializersBenchForceDeleteResultDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Force Delete Benches by Bench ID
   /api/labs/benches/{bench_id}/actions/place:
     post:
       operationId: labs_benches_actions_place_create_by_bench_id
@@ -2227,6 +2286,58 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/FilterMetadata'
+      required:
+      - data
+    BenchForceDelete:
+      type: object
+      description: Preserve the benches module's established strict-write helper.
+      properties:
+        reason:
+          type: string
+          description: Operator reason for force-deleting this bench, unassigning
+            equipment, and cancelling active bookings.
+          maxLength: 500
+          minLength: 3
+        confirm:
+          type: boolean
+          description: Must be true to confirm force deletion.
+      required:
+      - confirm
+      - reason
+    BenchForceDeleteReleased:
+      type: object
+      properties:
+        equipment:
+          type: integer
+          minimum: 0
+          readOnly: true
+        bookings:
+          type: integer
+          minimum: 0
+          readOnly: true
+      required:
+      - bookings
+      - equipment
+    BenchForceDeleteResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          readOnly: true
+        released:
+          allOf:
+          - $ref: '#/components/schemas/BenchForceDeleteReleased'
+          readOnly: true
+      required:
+      - id
+      - released
+    BenchForceDeletedSerializersBenchForceDeleteResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchForceDeleteResult'
       required:
       - data
     BenchGroup:

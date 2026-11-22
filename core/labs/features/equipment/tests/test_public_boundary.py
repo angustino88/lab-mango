@@ -125,6 +125,7 @@ def test_public_module_exports_supported_queries_and_commands():
         "get_active_loan",
         "PlaceEquipmentInput",
         "RemovePlacementInput",
+        "close_placements_for_location",
         "place_equipment",
         "remove_placement",
         "bench_id_at",

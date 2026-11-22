@@ -18,6 +18,11 @@ urlpatterns = [
         name="room-action-change-lifecycle",
     ),
     path("rooms/<int:room_id>/actions/change-status", views.RoomStatusAPIView.as_view(), name="room-action-change-status"),
+    path(
+        "rooms/<int:room_id>/actions/force-delete",
+        views.RoomForceDeleteAPIView.as_view(),
+        name="room-action-force-delete",
+    ),
     path("rooms/<int:room_id>/history", views.RoomHistoryAPIView.as_view(), name="room-history"),
     path(
         "rooms/<int:room_id>/observations",

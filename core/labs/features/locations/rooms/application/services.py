@@ -1,17 +1,22 @@
 """Room writes lock the room row before mutating layout, slots, status, or observations."""
 
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 
 from core.common.db.transactions import apply_fields, atomic_command
 from core.labs.features.base.immutable import drop_unchanged_immutable_fields
-from core.labs.features.equipment.public import summarize_active_placements
+from core.labs.features.equipment.public import close_placements_for_location, summarize_active_placements
 from core.labs.features.locations.application.lifecycle import apply_legacy_status, apply_lifecycle, record_initial
 from core.labs.features.locations.rooms.application.policies import RoomConflict, grid_positions
+from core.labs.models import ResourceChangeLog, ResourceDowntime
 from core.labs.models.resource.base.status import ResourceLifecycleStatus
 from core.labs.models.resource.location.room import Room, RoomStatusRecord
 from core.labs.models.resource.location.room_observation import RoomObservation
 from core.labs.models.resource.location.room_slot import RoomSlot
 from core.labs.models.resource.location.station import Station
+
+FORCE_DELETE_REASON_MIN_LENGTH = 3
+FORCE_DELETE_REASON_MAX_LENGTH = 500
 
 ROOM_WRITE_FIELDS = (
     "sku", "name", "label", "department_id", "group_id", "owner_id", "remark", "map_url", "length_m", "width_m",
@@ -112,7 +117,7 @@ def delete_room(*, room_id, actor):
         if stations_total
         else []
     )
-    equipment_total, equipment_labels = summarize_active_placements(room_id=room.pk, limit=5)
+    equipment_total, equipment_labels, equipment_categories = summarize_active_placements(room_id=room.pk, limit=5)
 
     if stations_total or equipment_total:
         details: dict[str, object] = {}
@@ -122,6 +127,7 @@ def delete_room(*, room_id, actor):
         if equipment_total:
             details["equipment_total"] = equipment_total
             details["equipment"] = equipment_labels
+            details["equipment_categories"] = equipment_categories
         if stations_total and equipment_total:
             message = "Move or detach stations and move the equipment kept in this room before deleting it."
         elif stations_total:
@@ -130,6 +136,54 @@ def delete_room(*, room_id, actor):
             message = "Move the equipment kept in this room before deleting it."
         raise RoomConflict(message, details=details)
     room.soft_delete(actor=actor)
+
+
+def force_delete_room(*, room_id, reason, confirm=True, actor):
+    """Detach child stations (preserving their lifecycle status), clear resting equipment placements, and soft-delete the room.
+
+    Race guard: validates input before opening a transaction, then locks the room row, its child stations
+    (PK order), and occupied room slots (PK order), matching the station placement lock order.
+    Idempotency: calling again on a soft-deleted room raises ``Room.DoesNotExist`` (404).
+    """
+    if confirm is not True:
+        raise ValidationError({"confirm": "Explicit confirmation is required to force-delete a room."})
+    cleaned_reason = (reason or "").strip()
+    if len(cleaned_reason) < FORCE_DELETE_REASON_MIN_LENGTH:
+        raise ValidationError(
+            {"reason": f"Provide a reason of at least {FORCE_DELETE_REASON_MIN_LENGTH} characters."}
+        )
+    if len(cleaned_reason) > FORCE_DELETE_REASON_MAX_LENGTH:
+        raise ValidationError({"reason": f"Use at most {FORCE_DELETE_REASON_MAX_LENGTH} characters."})
+    return _force_delete_room_tx(room_id=room_id, reason=cleaned_reason, actor=actor)
+
+
+@_room_atomic_command
+def _force_delete_room_tx(*, room_id, reason: str, actor):
+    room = _lock_room(room_id)
+    stations = list(Station.objects.select_for_update().filter(room_id=room.pk).order_by("pk"))
+    slot_ids = sorted({station.slot_id for station in stations if station.slot_id is not None})
+    if slot_ids:
+        list(RoomSlot.objects.select_for_update().filter(pk__in=slot_ids).order_by("pk"))
+    for station in stations:
+        station.slot = None
+        station.room = None
+        station.save(actor=actor)
+    released_equipment = close_placements_for_location(room_id=room.pk, actor=actor)
+    ResourceDowntime.objects.close_all(room, actor=actor)
+    released = {"stations": len(stations), "equipment": released_equipment}
+    acting_user = actor if getattr(actor, "is_authenticated", False) else None
+    if acting_user is not None:
+        content_type = ContentType.objects.get_for_model(room, for_concrete_model=False)
+        ResourceChangeLog(
+            resource_content_type=content_type,
+            resource_object_id=str(room.pk),
+            action=ResourceChangeLog.Action.DELETE,
+            field_name="force_delete",
+            old_value=None,
+            new_value={"reason": reason, "released": released},
+        ).save(actor=acting_user)
+    room.soft_delete(actor=actor)
+    return {"id": room.pk, "released": released}
 
 
 @_room_atomic_command
@@ -177,6 +231,6 @@ def record_room_observation(*, room_id, **data):
 
 
 __all__ = [
-    "change_room_lifecycle", "create_room", "delete_room", "generate_room_slots", "record_room_observation",
-    "record_room_status", "update_room",
+    "change_room_lifecycle", "create_room", "delete_room", "force_delete_room", "generate_room_slots",
+    "record_room_observation", "record_room_status", "update_room",
 ]

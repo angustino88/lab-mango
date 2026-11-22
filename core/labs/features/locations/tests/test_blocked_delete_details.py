@@ -79,6 +79,7 @@ def test_room_delete_returns_both_station_and_equipment_blockers(coordinator, eq
     assert len(items["stations"]) == 5
     assert items["stations"][0] == "BD-ST-00 — Station 0"
     assert items["equipment"] == ["BD-EQ-RM — Room Scope"]
+    assert items["equipment_categories"] == ["bd-samples"]
 
 
 @pytest.mark.django_db
@@ -96,6 +97,7 @@ def test_station_delete_returns_both_bench_and_equipment_blockers(coordinator, e
     assert totals == {"benches": 1, "equipment": 1}
     assert items["benches"] == ["BD-BN-01 — Alpha Bench"]
     assert items["equipment"] == ["BD-EQ-ST — Station Meter"]
+    assert items["equipment_categories"] == ["bd-samples"]
 
 
 @pytest.mark.django_db
@@ -117,6 +119,7 @@ def test_bench_delete_returns_both_equipment_and_booking_blockers(coordinator, e
     totals, items = _details_by_group(response.data["error"]["details"])
     assert totals == {"equipment": 1, "bookings": 1}
     assert items["equipment"] == ["BD-EQ-BN — Bench Oscilloscope"]
+    assert items["equipment_categories"] == ["bd-samples"]
     assert items["bookings"] == ["BD-BB-01"]
 
 
@@ -141,3 +144,4 @@ def test_license_delete_returns_assigned_equipment_blockers(coordinator, equipme
     totals, items = _details_by_group(response.data["error"]["details"])
     assert totals == {"equipment": 1}
     assert items["equipment"] == ["BD-EQ-LIC — Licensed Host"]
+    assert items["equipment_categories"] == ["bd-samples"]

@@ -28,7 +28,13 @@ from .loans import (
     return_equipment,
     return_equipment_batch,
 )
-from .place_equipment import PlaceEquipmentInput, RemovePlacementInput, place_equipment, remove_placement
+from .place_equipment import (
+    PlaceEquipmentInput,
+    RemovePlacementInput,
+    close_placements_for_location,
+    place_equipment,
+    remove_placement,
+)
 from .reservations import (
     CancelReservationInput,
     HandOverReservationInput,
@@ -88,6 +94,7 @@ __all__ = (
     "extend_loan",
     "hand_over_equipment",
     "return_equipment",
+    "close_placements_for_location",
     "place_equipment",
     "remove_placement",
     "unassign_equipment",

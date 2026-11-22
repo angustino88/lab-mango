@@ -7,11 +7,12 @@ capacity reductions with bench placement/edits without nullable lock joins.
 Downtime writers lock room, then stations, then benches: the same order.
 """
 
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 
 from core.common.db.transactions import apply_fields, atomic_command
 from core.labs.features.base.immutable import drop_unchanged_immutable_fields
-from core.labs.features.equipment.public import summarize_active_placements
+from core.labs.features.equipment.public import close_placements_for_location, summarize_active_placements
 from core.labs.features.locations.application.lifecycle import apply_legacy_status, apply_lifecycle, record_initial
 from core.labs.features.locations.exceptions import LocationConflict
 from core.labs.features.locations.stations.application.policies import (
@@ -20,6 +21,7 @@ from core.labs.features.locations.stations.application.policies import (
     validate_room_slot,
     validate_station_capacity,
 )
+from core.labs.models import ResourceChangeLog, ResourceDowntime
 from core.labs.models.resource.base.availability import (
     bench_bookings_blocked_by_parents,
     booking_conflict_details,
@@ -32,6 +34,9 @@ from core.labs.models.resource.location.room_slot import RoomSlot
 from core.labs.models.resource.location.station import Station, StationStatusRecord, StationType
 from core.labs.models.resource.location.station_slot import StationSlot
 from core.users.public import LabsPermission, users_with_permission
+
+FORCE_DELETE_REASON_MIN_LENGTH = 3
+FORCE_DELETE_REASON_MAX_LENGTH = 500
 
 STATION_WRITE_FIELDS = (
     "sku", "name", "department_id", "group_id", "owner_id", "remark", "label", "type_id", "room_id", "slot_id",
@@ -179,7 +184,7 @@ def delete_station(*, station_id, actor):
         if benches_total
         else []
     )
-    equipment_total, equipment_labels = summarize_active_placements(station_id=station.pk, limit=5)
+    equipment_total, equipment_labels, equipment_categories = summarize_active_placements(station_id=station.pk, limit=5)
 
     if benches_total or equipment_total:
         details: dict[str, object] = {}
@@ -189,6 +194,7 @@ def delete_station(*, station_id, actor):
         if equipment_total:
             details["equipment_total"] = equipment_total
             details["equipment"] = equipment_labels
+            details["equipment_categories"] = equipment_categories
         if benches_total and equipment_total:
             message = "Move or detach configured benches and move the equipment kept at this station before deleting it."
         elif benches_total:
@@ -203,6 +209,59 @@ def delete_station(*, station_id, actor):
     station.room = None
     station.save(actor=actor)
     station.soft_delete(actor=actor)
+
+
+def force_delete_station(*, station_id, reason, confirm=True, actor):
+    """Detach child benches (preserving their lifecycle status), clear resting equipment placements, and soft-delete the station.
+
+    Race guard: validates input before opening a transaction, then locks the parent room (if any),
+    the station, its room slot, its child benches (PK order), and occupied station slots (PK order).
+    Idempotency: calling again on a soft-deleted station raises ``Station.DoesNotExist`` (404).
+    """
+    if confirm is not True:
+        raise ValidationError({"confirm": "Explicit confirmation is required to force-delete a station."})
+    cleaned_reason = (reason or "").strip()
+    if len(cleaned_reason) < FORCE_DELETE_REASON_MIN_LENGTH:
+        raise ValidationError(
+            {"reason": f"Provide a reason of at least {FORCE_DELETE_REASON_MIN_LENGTH} characters."}
+        )
+    if len(cleaned_reason) > FORCE_DELETE_REASON_MAX_LENGTH:
+        raise ValidationError({"reason": f"Use at most {FORCE_DELETE_REASON_MAX_LENGTH} characters."})
+    return _force_delete_station_tx(station_id=station_id, reason=cleaned_reason, actor=actor)
+
+
+@_atomic_command
+def _force_delete_station_tx(*, station_id, reason: str, actor):
+    station, _ = _lock_station_with_rooms(station_id, {})
+    if station.slot_id is not None:
+        RoomSlot.objects.select_for_update().get(pk=station.slot_id)
+    benches = list(Bench.objects.select_for_update().filter(setup_location_id=station.pk).order_by("pk"))
+    slot_ids = sorted({bench.station_slot_id for bench in benches if bench.station_slot_id is not None})
+    if slot_ids:
+        list(StationSlot.objects.select_for_update().filter(pk__in=slot_ids).order_by("pk"))
+    for bench in benches:
+        bench.station_slot = None
+        bench.setup_location = None
+        bench.save(actor=actor)
+    released_equipment = close_placements_for_location(station_id=station.pk, actor=actor)
+    ResourceDowntime.objects.close_all(station, actor=actor)
+    released = {"benches": len(benches), "equipment": released_equipment}
+    acting_user = actor if getattr(actor, "is_authenticated", False) else None
+    if acting_user is not None:
+        content_type = ContentType.objects.get_for_model(station, for_concrete_model=False)
+        ResourceChangeLog(
+            resource_content_type=content_type,
+            resource_object_id=str(station.pk),
+            action=ResourceChangeLog.Action.DELETE,
+            field_name="force_delete",
+            old_value=None,
+            new_value={"reason": reason, "released": released},
+        ).save(actor=acting_user)
+    station.slot = None
+    station.room = None
+    station.save(actor=actor)
+    station.soft_delete(actor=actor)
+    return {"id": station.pk, "released": released}
 
 
 def _slot_unique(slot):
@@ -318,6 +377,6 @@ def delete_station_type(*, type_id, actor):
 
 __all__ = [
     "change_station_lifecycle", "create_station", "create_station_slot", "create_station_type", "delete_station",
-    "delete_station_slot", "delete_station_type", "place_station", "record_station_status",
+    "delete_station_slot", "delete_station_type", "force_delete_station", "place_station", "record_station_status",
     "update_station", "update_station_slot", "update_station_type",
 ]

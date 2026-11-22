@@ -7,6 +7,7 @@ Equipment remains owned by the equipment assignment feature.
 
 from functools import wraps
 
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models.deletion import ProtectedError
@@ -15,17 +16,22 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from core.labs.features.base.immutable import drop_unchanged_immutable_fields
 from core.labs.features.benches.exceptions import BenchConflict
+from core.labs.features.equipment.public import close_placements_for_location
 from core.labs.models import (
     Bench,
+    BenchBooking,
     BenchFavorite,
     BenchGroup,
     BenchType,
+    Booking,
     Group,
+    ResourceChangeLog,
     ResourceDowntime,
     ResourceLifecycleStatus,
     Station,
     StationSlot,
 )
+from core.labs.models.booking.base import BookingStatus, ensure_booking_status_transition
 from core.labs.models.resource.base.availability import (
     bench_bookings_blocked_by_parents,
     booking_conflict_details,
@@ -35,6 +41,9 @@ from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 from core.users.public import LabsPermission, users_with_permission
 
 from .policies import validate_capacity, validate_slot
+
+FORCE_DELETE_REASON_MIN_LENGTH = 3
+FORCE_DELETE_REASON_MAX_LENGTH = 500
 
 WRITE_FIELDS = (
     "sku",
@@ -255,19 +264,23 @@ def _resource_label(sku: str | None, name: str | None, pk: int) -> str:
 def delete_bench(*, bench_id, actor):
     bench, _ = _lock_bench(bench_id, {})
     # Assign commands lock the bench before creating a live assignment.
-    equipment_qs = EquipmentAssignment.objects.filter(bench_id=bench.pk, unassigned_at__isnull=True)
+    equipment_qs = EquipmentAssignment.objects.filter(
+        bench_id=bench.pk,
+        unassigned_at__isnull=True,
+        equipment__deleted_at__isnull=True,
+    )
     equipment_total = equipment_qs.count()
-    equipment_labels = (
-        [
-            _resource_label(sku, name, eq_id)
-            for sku, name, eq_id in equipment_qs.order_by("equipment_id").values_list(
-                "equipment__sku", "equipment__name", "equipment_id"
+    equipment_rows = (
+        list(
+            equipment_qs.order_by("equipment_id").values_list(
+                "equipment__sku", "equipment__name", "equipment_id", "equipment__kind__category__key"
             )[:5]
-        ]
+        )
         if equipment_total
         else []
     )
-    from core.labs.models import BenchBooking, Booking
+    equipment_labels = [_resource_label(sku, name, eq_id) for sku, name, eq_id, _ in equipment_rows]
+    equipment_categories = [(category_key or "").strip() for _, _, _, category_key in equipment_rows]
 
     bookings_qs = BenchBooking.objects.filter(bench_id=bench.pk, status__in=Booking.ACTIVE_STATUSES)
     bookings_total = bookings_qs.count()
@@ -281,6 +294,7 @@ def delete_bench(*, bench_id, actor):
         if equipment_total:
             details["equipment_total"] = equipment_total
             details["equipment"] = equipment_labels
+            details["equipment_categories"] = equipment_categories
         if bookings_total:
             details["bookings_total"] = bookings_total
             details["bookings"] = booking_labels
@@ -297,6 +311,64 @@ def delete_bench(*, bench_id, actor):
     bench.setup_location = None
     bench.save(actor=actor)
     bench.soft_delete(actor=actor)
+
+
+def force_delete_bench(*, bench_id, reason, confirm=True, actor):
+    """Unassign equipment (returning units to Available), cancel active bench bookings, and soft-delete the bench.
+
+    Race guard: validates input before opening a transaction, then locks the station and bench
+    via ``_lock_bench``, closes active equipment assignments (PK order), cancels active bench
+    bookings (PK order), closes open downtime windows, releases the station slot, writes a
+    ``ResourceChangeLog`` entry, and soft-deletes the bench.
+    Idempotency: calling again on a soft-deleted bench raises ``Bench.DoesNotExist`` (404).
+    """
+    if confirm is not True:
+        raise ValidationError({"confirm": "Explicit confirmation is required to force-delete a bench."})
+    cleaned_reason = (reason or "").strip()
+    if len(cleaned_reason) < FORCE_DELETE_REASON_MIN_LENGTH:
+        raise ValidationError(
+            {"reason": f"Provide a reason of at least {FORCE_DELETE_REASON_MIN_LENGTH} characters."}
+        )
+    if len(cleaned_reason) > FORCE_DELETE_REASON_MAX_LENGTH:
+        raise ValidationError({"reason": f"Use at most {FORCE_DELETE_REASON_MAX_LENGTH} characters."})
+    return _force_delete_bench_tx(bench_id=bench_id, reason=cleaned_reason, actor=actor)
+
+
+@_command
+def _force_delete_bench_tx(*, bench_id, reason: str, actor):
+    bench, _ = _lock_bench(bench_id, {})
+    released_equipment = close_placements_for_location(bench_id=bench.pk, actor=actor)
+    active_bookings = list(
+        BenchBooking.objects.select_for_update()
+        .filter(bench_id=bench.pk, status__in=Booking.ACTIVE_STATUSES)
+        .order_by("pk")
+    )
+    cancellation_reason = f"Bench force-deleted: {reason}"
+    for booking in active_bookings:
+        ensure_booking_status_transition(current_status=booking.status, target_status=BookingStatus.CANCELLED)
+        booking.status = BookingStatus.CANCELLED
+        booking.cancellation_reason = cancellation_reason
+        booking.save(update_fields=("status", "cancellation_reason", "modified"))
+    ResourceDowntime.objects.close_all(bench, actor=actor)
+    if bench.station_slot_id is not None:
+        StationSlot.objects.select_for_update().get(pk=bench.station_slot_id)
+    released = {"equipment": released_equipment, "bookings": len(active_bookings)}
+    acting_user = actor if getattr(actor, "is_authenticated", False) else None
+    if acting_user is not None:
+        content_type = ContentType.objects.get_for_model(bench, for_concrete_model=False)
+        ResourceChangeLog(
+            resource_content_type=content_type,
+            resource_object_id=str(bench.pk),
+            action=ResourceChangeLog.Action.DELETE,
+            field_name="force_delete",
+            old_value=None,
+            new_value={"reason": reason, "released": released},
+        ).save(actor=acting_user)
+    bench.station_slot = None
+    bench.setup_location = None
+    bench.save(actor=actor)
+    bench.soft_delete(actor=actor)
+    return {"id": bench.pk, "released": released}
 
 
 @_command
@@ -347,6 +419,7 @@ __all__ = [
     "change_bench_lifecycle",
     "create_bench",
     "delete_bench",
+    "force_delete_bench",
     "place_bench",
     "remove_favorite",
     "retire_reference",

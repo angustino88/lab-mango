@@ -20,6 +20,11 @@ urlpatterns = [
         views.BenchLifecycleAPIView.as_view(),
         name="bench-action-change-lifecycle",
     ),
+    path(
+        "benches/<int:bench_id>/actions/force-delete",
+        views.BenchForceDeleteAPIView.as_view(),
+        name="bench-action-force-delete",
+    ),
     path("benches/<int:bench_id>/actions/favorite", views.BenchFavoriteAPIView.as_view(), name="bench-action-favorite"),
     path("bench-groups", views.BenchGroupListCreateAPIView.as_view(), name="bench-group-list-create"),
     path("bench-groups/options", views.BenchGroupOptionsAPIView.as_view(), name="bench-group-options"),

@@ -43,6 +43,7 @@ from .application.monitoring_locks import lock_monitoring_computing
 from .application.place_equipment import (
     PlaceEquipmentInput,
     RemovePlacementInput,
+    close_placements_for_location,
     place_equipment,
     remove_placement,
 )
@@ -173,6 +174,7 @@ __all__ = (
     "get_active_placement",
     "has_active_placements",
     "summarize_active_placements",
+    "close_placements_for_location",
     "place_equipment",
     "remove_placement",
     "inactive_equipment_candidates",
