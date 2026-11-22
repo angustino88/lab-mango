@@ -51,6 +51,8 @@ def _slot_projection(slot):
 class StationStatusSummaryAPIView(StationAPIView):
     """Non-deleted stations counted by their stored lifecycle `status`."""
 
+    read_cache_namespace = "labs:locations"
+    read_cache_ttl = 15
     get_contract = OperationContract(
         success=ResponseContract.success("StationStatusSummaryData", StationStatusSummarySerializer),
         bad_request=ResponseContract.bad_request(),
@@ -63,6 +65,8 @@ class StationStatusSummaryAPIView(StationAPIView):
 
 
 class StationListCreateAPIView(StationAPIView):
+    read_cache_namespace = "labs:locations"
+    read_cache_ttl = 15
     get_contract = operation("StationList", StationSerializer, query=with_page_query(StationListQuerySerializer), many=True)
     post_contract = operation("StationCreate", StationSerializer, request=StationCreateSerializer, created=True)
 

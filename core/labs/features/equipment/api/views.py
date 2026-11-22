@@ -716,6 +716,8 @@ class EquipmentOptionsAPIView(OptionsAPIView):
     )
     owner = "equipment"
     schema_tags = ("Equipment",)
+    read_cache_namespace = "labs:equipment:inventory"
+    read_cache_ttl = 30
 
     def select(self, *, actor: Any, filters: dict[str, Any]) -> Any:
         return list_equipment_options(actor=actor, **filters)

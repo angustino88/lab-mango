@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
@@ -257,6 +258,15 @@ class Equipment(ResourceModel):
             models.Index(fields=("serial_number",), name="equipment_serial_number_idx"),
             models.Index(fields=("kind", "deleted_at"), name="equipment_kind_deleted_idx"),
             models.Index(fields=("kind", "name"), name="equipment_kind_name_idx"),
+            models.Index(
+                fields=("kind", "name", "id"),
+                condition=models.Q(deleted_at__isnull=True),
+                name="equipment_active_kind_name_idx",
+            ),
+            GinIndex(fields=("sku",), opclasses=("gin_trgm_ops",), name="equipment_sku_trgm_idx"),
+            GinIndex(fields=("name",), opclasses=("gin_trgm_ops",), name="equipment_name_trgm_idx"),
+            GinIndex(fields=("serial_number",), opclasses=("gin_trgm_ops",), name="equipment_sn_trgm_idx"),
+            GinIndex(fields=("log_label",), opclasses=("gin_trgm_ops",), name="equipment_log_label_trgm_idx"),
         ]
 
     def __str__(self) -> str:

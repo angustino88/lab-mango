@@ -93,6 +93,8 @@ class EquipmentFacetsAPIView(AppListAPIView, EquipmentAPIView):
     permission_classes = EQUIPMENT_PERMISSIONS
     schema = EquipmentFacetsAutoSchema()
     pagination_class = ResultsSetPagination
+    read_cache_namespace = "labs:equipment:inventory"
+    read_cache_ttl = 30
     queryset_provider: Callable = staticmethod(list_equipment)
     filter_spec = facet_filter_spec(EQUIPMENT_FILTERS)
     get_contract = OperationContract(

@@ -57,6 +57,8 @@ class BenchAPIView(AppListAPIView, CommandAPIView):
 class BenchStatusSummaryAPIView(BenchAPIView):
     """Non-deleted benches by lifecycle state, not activity or bookings."""
 
+    read_cache_namespace = "labs:benches"
+    read_cache_ttl = 15
     get_contract = OperationContract(
         success=ResponseContract.success("BenchStatusSummaryData", BenchStatusSummarySerializer),
         bad_request=ResponseContract.bad_request(),
@@ -69,6 +71,9 @@ class BenchStatusSummaryAPIView(BenchAPIView):
 
 
 class BenchListCreateAPIView(BenchAPIView):
+    read_cache_namespace = "labs:benches"
+    read_cache_ttl = 15
+    read_cache_scope = "user"
     get_contract = operation("BenchList", BenchSerializer, query=with_page_query(BenchListQuerySerializer), many=True)
     post_contract = operation("BenchCreate", BenchSerializer, request=BenchCreateSerializer, created=True)
 
@@ -84,6 +89,8 @@ class BenchListCreateAPIView(BenchAPIView):
 
 class BenchFiltersAPIView(FilterMetadataMixin, BenchAPIView):
     filter_spec = BENCH_FILTERS
+    read_cache_namespace = "labs:benches"
+    read_cache_ttl = 600
     get_contract = OperationContract(
         query=PageNumberQuerySerializer,
         success=ResponseContract.success("BenchFilters", FilterMetadataSerializer),

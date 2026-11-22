@@ -32,7 +32,13 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["example.com"])
 
 # DATABASES
 # ------------------------------------------------------------------------------
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
+# Under ASGI (Uvicorn), Django threadpools pin one DB connection per thread when CONN_MAX_AGE > 0,
+# which can exceed PostgreSQL max_connections under concurrency bursts. Default to 0 and use
+# PgBouncer or DB_POOL_ENABLED=True (psycopg_pool) for connection pooling.
+DATABASES["default"]["CONN_MAX_AGE"] = (
+    0 if env.bool("DB_POOL_ENABLED", default=False) else env.int("CONN_MAX_AGE", default=0)
+)
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 
 # CACHES
 # ------------------------------------------------------------------------------
@@ -42,6 +48,8 @@ CACHES = {
         "LOCATION": env("REDIS_URL"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SOCKET_CONNECT_TIMEOUT": env.int("REDIS_SOCKET_CONNECT_TIMEOUT", default=3),
+            "SOCKET_TIMEOUT": env.int("REDIS_SOCKET_TIMEOUT", default=3),
             "IGNORE_EXCEPTIONS": False,
         },
     }

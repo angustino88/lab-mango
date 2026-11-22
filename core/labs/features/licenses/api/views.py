@@ -103,6 +103,8 @@ class LicenseListAPIView(AppListAPIView, CommandAPIView):
     """List non-deleted license inventory with acquisition information, and create a license."""
 
     schema_tags = ("Licenses",)
+    read_cache_namespace = "labs:licenses"
+    read_cache_ttl = 15
     get_contract = OperationContract(
         query=with_page_query(LicenseListQuerySerializer),
         success=ResponseContract.paginated("LicenseList", LicenseSerializer),
@@ -132,6 +134,8 @@ class LicenseListAPIView(AppListAPIView, CommandAPIView):
 class LicenseFiltersAPIView(FilterMetadataMixin, FeatureAPIView):
     filter_spec = LICENSE_FILTERS
     schema_tags = ("Licenses",)
+    read_cache_namespace = "labs:licenses"
+    read_cache_ttl = 600
     get_contract = OperationContract(
         query=PageNumberQuerySerializer,
         success=ResponseContract.success("LicenseFilters", FilterMetadataSerializer),
