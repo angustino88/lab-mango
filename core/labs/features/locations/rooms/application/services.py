@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 
 from core.common.db.transactions import apply_fields, atomic_command
 from core.labs.features.base.immutable import drop_unchanged_immutable_fields
-from core.labs.features.equipment.public import has_active_placements
+from core.labs.features.equipment.public import summarize_active_placements
 from core.labs.features.locations.application.lifecycle import apply_legacy_status, apply_lifecycle, record_initial
 from core.labs.features.locations.rooms.application.policies import RoomConflict, grid_positions
 from core.labs.models.resource.base.status import ResourceLifecycleStatus
@@ -94,13 +94,41 @@ def update_room(*, room_id, actor, **data):
     return room
 
 
+def _resource_label(sku: str | None, name: str | None, pk: int) -> str:
+    sku_text = (sku or "").strip()
+    name_text = (name or "").strip()
+    if sku_text and name_text:
+        return f"{sku_text} — {name_text}"
+    return sku_text or name_text or f"#{pk}"
+
+
 @_room_atomic_command
 def delete_room(*, room_id, actor):
     room = _lock_room(room_id)
-    if Station.objects.filter(room=room).exists():
-        raise RoomConflict("Move or detach stations before deleting the room.")
-    if has_active_placements(room_id=room.pk):
-        raise RoomConflict("Move the equipment kept in this room before deleting it.")
+    stations_qs = Station.objects.filter(room=room)
+    stations_total = stations_qs.count()
+    station_labels = (
+        [_resource_label(sku, name, pk) for sku, name, pk in stations_qs.order_by("pk").values_list("sku", "name", "pk")[:5]]
+        if stations_total
+        else []
+    )
+    equipment_total, equipment_labels = summarize_active_placements(room_id=room.pk, limit=5)
+
+    if stations_total or equipment_total:
+        details: dict[str, object] = {}
+        if stations_total:
+            details["stations_total"] = stations_total
+            details["stations"] = station_labels
+        if equipment_total:
+            details["equipment_total"] = equipment_total
+            details["equipment"] = equipment_labels
+        if stations_total and equipment_total:
+            message = "Move or detach stations and move the equipment kept in this room before deleting it."
+        elif stations_total:
+            message = "Move or detach stations before deleting the room."
+        else:
+            message = "Move the equipment kept in this room before deleting it."
+        raise RoomConflict(message, details=details)
     room.soft_delete(actor=actor)
 
 

@@ -11,7 +11,7 @@ from django.core.exceptions import ValidationError
 
 from core.common.db.transactions import apply_fields, atomic_command
 from core.labs.features.base.immutable import drop_unchanged_immutable_fields
-from core.labs.features.equipment.public import has_active_placements
+from core.labs.features.equipment.public import summarize_active_placements
 from core.labs.features.locations.application.lifecycle import apply_legacy_status, apply_lifecycle, record_initial
 from core.labs.features.locations.exceptions import LocationConflict
 from core.labs.features.locations.stations.application.policies import (
@@ -161,13 +161,41 @@ def place_station(*, station_id, actor, **data):
     return update_station(station_id=station_id, actor=actor, **data)
 
 
+def _resource_label(sku: str | None, name: str | None, pk: int) -> str:
+    sku_text = (sku or "").strip()
+    name_text = (name or "").strip()
+    if sku_text and name_text:
+        return f"{sku_text} — {name_text}"
+    return sku_text or name_text or f"#{pk}"
+
+
 @_atomic_command
 def delete_station(*, station_id, actor):
     station, _ = _lock_station_with_rooms(station_id, {})
-    if Bench.objects.filter(setup_location_id=station.pk).exists():
-        raise LocationConflict("Move or detach configured benches before deleting the station.")
-    if has_active_placements(station_id=station.pk):
-        raise LocationConflict("Move the equipment kept at this station before deleting it.")
+    benches_qs = Bench.objects.filter(setup_location_id=station.pk)
+    benches_total = benches_qs.count()
+    bench_labels = (
+        [_resource_label(sku, name, pk) for sku, name, pk in benches_qs.order_by("pk").values_list("sku", "name", "pk")[:5]]
+        if benches_total
+        else []
+    )
+    equipment_total, equipment_labels = summarize_active_placements(station_id=station.pk, limit=5)
+
+    if benches_total or equipment_total:
+        details: dict[str, object] = {}
+        if benches_total:
+            details["benches_total"] = benches_total
+            details["benches"] = bench_labels
+        if equipment_total:
+            details["equipment_total"] = equipment_total
+            details["equipment"] = equipment_labels
+        if benches_total and equipment_total:
+            message = "Move or detach configured benches and move the equipment kept at this station before deleting it."
+        elif benches_total:
+            message = "Move or detach configured benches before deleting the station."
+        else:
+            message = "Move the equipment kept at this station before deleting it."
+        raise LocationConflict(message, details=details)
     if station.slot_id is not None:
         RoomSlot.objects.select_for_update().get(pk=station.slot_id)
     # The unconditional slot uniqueness constraint also covers deleted stations.

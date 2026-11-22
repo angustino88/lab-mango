@@ -118,6 +118,11 @@ urlpatterns = [
         collection.EquipmentChangeLifecycleAPIView.as_view(),
         name="equipment-action-change-lifecycle",
     ),
+    path(
+        "equipment/<int:equipment_id>/actions/force-delete",
+        views.EquipmentForceDeleteAPIView.as_view(),
+        name="equipment-action-force-delete",
+    ),
 
     # Lookup catalogs and options (ADR 002)
     path("equipment-categories", views.EquipmentCategoriesListAPIView.as_view(), name="equipment-category-list"),

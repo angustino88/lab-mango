@@ -13148,6 +13148,106 @@
         "summary": "Extend Loan Equipment by Equipment ID"
       }
     },
+    "/api/labs/equipment/{equipment_id}/actions/force-delete": {
+      "post": {
+        "operationId": "labs_equipment_actions_force_delete_create_by_equipment_id",
+        "description": "Release all live dependents atomically and soft-delete an equipment item.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "equipment_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentForceDelete"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentForceDelete"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentForceDelete"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentForceDeletedSerializersEquipmentForceDeleteResultDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Force Delete Equipment by Equipment ID"
+      }
+    },
     "/api/labs/equipment/{equipment_id}/actions/hand-over": {
       "post": {
         "operationId": "labs_equipment_actions_hand_over_create_by_equipment_id",
@@ -52023,6 +52123,91 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/FilterMetadata"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EquipmentForceDelete": {
+        "type": "object",
+        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Operator reason for force-deleting this equipment and releasing active dependents.",
+            "maxLength": 500,
+            "minLength": 3
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "Must be true to confirm force deletion."
+          }
+        },
+        "required": [
+          "confirm",
+          "reason"
+        ]
+      },
+      "EquipmentForceDeleteReleased": {
+        "type": "object",
+        "properties": {
+          "bench_assignments": {
+            "type": "integer",
+            "minimum": 0,
+            "readOnly": true
+          },
+          "loans": {
+            "type": "integer",
+            "minimum": 0,
+            "readOnly": true
+          },
+          "license_assignments": {
+            "type": "integer",
+            "minimum": 0,
+            "readOnly": true
+          },
+          "bookings": {
+            "type": "integer",
+            "minimum": 0,
+            "readOnly": true
+          }
+        },
+        "required": [
+          "bench_assignments",
+          "bookings",
+          "license_assignments",
+          "loans"
+        ]
+      },
+      "EquipmentForceDeleteResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "readOnly": true
+          },
+          "released": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EquipmentForceDeleteReleased"
+              }
+            ],
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "released"
+        ]
+      },
+      "EquipmentForceDeletedSerializersEquipmentForceDeleteResultDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentForceDeleteResult"
           }
         },
         "required": [

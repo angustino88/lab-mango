@@ -350,6 +350,8 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-lifecycle
   /api/labs/equipment/{equipment_id}/actions/extend-loan:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1extend-loan
+  /api/labs/equipment/{equipment_id}/actions/force-delete:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1force-delete
   /api/labs/equipment/{equipment_id}/actions/hand-over:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1hand-over
   /api/labs/equipment/{equipment_id}/actions/return:

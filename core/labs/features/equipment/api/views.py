@@ -27,6 +27,7 @@ from core.labs.features.equipment.application import (
     ChangeLifecycleInput,
     ExtendLoanInput,
     ExtendLoansInput,
+    ForceDeleteEquipmentInput,
     HandOverEquipmentInput,
     HandOverReservationInput,
     LendEquipmentBatchInput,
@@ -44,6 +45,7 @@ from core.labs.features.equipment.application import (
     equipment_images,
     extend_loan,
     extend_loans,
+    force_delete_equipment,
     hand_over_equipment,
     hand_over_reservation,
     lend_equipment_batch,
@@ -107,6 +109,8 @@ from .serializers import (
     EquipmentChangeLifecycleSerializer,
     EquipmentExtendLoanSerializer,
     EquipmentExtendLoansSerializer,
+    EquipmentForceDeleteResultSerializer,
+    EquipmentForceDeleteSerializer,
     EquipmentHandOverSerializer,
     EquipmentKindOptionsQuerySerializer,
     EquipmentLendBatchSerializer,
@@ -637,6 +641,46 @@ class EquipmentReservationHandOverAPIView(EquipmentAPIView):
             actor=self.acting_user,
         )
         return self.respond(get_loan_batch(batch_id=batch_id))
+
+
+class EquipmentForceDeleteAPIView(EquipmentAPIView):
+    """Release all live dependents atomically and soft-delete an equipment item."""
+
+    post_contract = OperationContract(
+        request=EquipmentForceDeleteSerializer,
+        success=ResponseContract.success("EquipmentForceDeleted", EquipmentForceDeleteResultSerializer),
+        bad_request=ResponseContract.bad_request(),
+        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
+        not_found=ResponseContract.not_found(),
+        conflict=ResponseContract.conflict(),
+    )
+
+    def handle_post(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        if serializer is None:
+            raise TypeError("Request validation returned no serializer.")
+        data = serializer.validated_data
+        result = force_delete_equipment(
+            ForceDeleteEquipmentInput(
+                equipment_id=equipment_id,
+                reason=data["reason"],
+                confirm=data["confirm"],
+            ),
+            actor=self.acting_user,
+        )
+        return self.respond(
+            {
+                "id": result.equipment.pk,
+                "released": {
+                    "bench_assignments": result.released.bench_assignments,
+                    "loans": result.released.loans,
+                    "license_assignments": result.released.license_assignments,
+                    "bookings": result.released.bookings,
+                },
+            }
+        )
 
 
 class EquipmentStateActionAPIView(EquipmentAPIView):

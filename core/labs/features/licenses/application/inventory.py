@@ -153,11 +153,30 @@ def update_license(command: UpdateLicenseInput, *, actor) -> License:
     return license_record
 
 
+def _equipment_label(sku: str | None, name: str | None, pk: int) -> str:
+    sku_text = (sku or "").strip()
+    name_text = (name or "").strip()
+    if sku_text and name_text:
+        return f"{sku_text} — {name_text}"
+    return sku_text or name_text or f"#{pk}"
+
+
 @_command
 def delete_license(command: DeleteLicenseInput, *, actor) -> None:
     license_record = License.objects.select_for_update().get(pk=command.license_id, deleted_at__isnull=True)
-    if license_record.equipment_assignments.filter(unassigned_at__isnull=True).exists():
-        raise LicenseConflict("Unassign the license from its equipment before deleting it.")
+    active_qs = license_record.equipment_assignments.filter(unassigned_at__isnull=True)
+    equipment_total = active_qs.count()
+    if equipment_total:
+        equipment_labels = [
+            _equipment_label(sku, name, eq_id)
+            for sku, name, eq_id in active_qs.order_by("equipment_id").values_list(
+                "equipment__sku", "equipment__name", "equipment_id"
+            )[:5]
+        ]
+        raise LicenseConflict(
+            "Unassign the license from its equipment before deleting it.",
+            details={"equipment_total": equipment_total, "equipment": equipment_labels},
+        )
     license_record.soft_delete(actor=actor)
 
 

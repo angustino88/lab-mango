@@ -6,7 +6,14 @@ from core.labs.models import Equipment
 from .assign_equipment import AssignEquipmentInput, assign_equipment
 from .change_state import ChangeConditionInput, ChangeLifecycleInput, change_condition, change_lifecycle
 from .create_equipment import CreateEquipmentInput, create_equipment
-from .delete_equipment import DeleteEquipmentInput, delete_equipment
+from .delete_equipment import (
+    DeleteEquipmentInput,
+    ForceDeleteEquipmentInput,
+    ForceDeleteEquipmentResult,
+    ForceDeleteReleasedSummary,
+    delete_equipment,
+    force_delete_equipment,
+)
 from .loans import (
     ExtendLoanInput,
     ExtendLoansInput,
@@ -74,6 +81,10 @@ __all__ = (
     "change_lifecycle",
     "create_equipment",
     "delete_equipment",
+    "ForceDeleteEquipmentInput",
+    "ForceDeleteEquipmentResult",
+    "ForceDeleteReleasedSummary",
+    "force_delete_equipment",
     "extend_loan",
     "hand_over_equipment",
     "return_equipment",

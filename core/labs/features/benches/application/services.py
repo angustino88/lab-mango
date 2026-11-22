@@ -243,16 +243,54 @@ def place_bench(*, bench_id, actor, **data):
     return update_bench(bench_id=bench_id, actor=actor, **data)
 
 
+def _resource_label(sku: str | None, name: str | None, pk: int) -> str:
+    sku_text = (sku or "").strip()
+    name_text = (name or "").strip()
+    if sku_text and name_text:
+        return f"{sku_text} — {name_text}"
+    return sku_text or name_text or f"#{pk}"
+
+
 @_command
 def delete_bench(*, bench_id, actor):
     bench, _ = _lock_bench(bench_id, {})
     # Assign commands lock the bench before creating a live assignment.
-    if EquipmentAssignment.objects.filter(bench_id=bench.pk, unassigned_at__isnull=True).exists():
-        raise BenchConflict("Unassign equipment before deleting this bench.")
+    equipment_qs = EquipmentAssignment.objects.filter(bench_id=bench.pk, unassigned_at__isnull=True)
+    equipment_total = equipment_qs.count()
+    equipment_labels = (
+        [
+            _resource_label(sku, name, eq_id)
+            for sku, name, eq_id in equipment_qs.order_by("equipment_id").values_list(
+                "equipment__sku", "equipment__name", "equipment_id"
+            )[:5]
+        ]
+        if equipment_total
+        else []
+    )
     from core.labs.models import BenchBooking, Booking
 
-    if BenchBooking.objects.filter(bench_id=bench.pk, status__in=Booking.ACTIVE_STATUSES).exists():
-        raise BenchConflict("Cancel active bookings before deleting this bench.")
+    bookings_qs = BenchBooking.objects.filter(bench_id=bench.pk, status__in=Booking.ACTIVE_STATUSES)
+    bookings_total = bookings_qs.count()
+    booking_labels = (
+        list(bookings_qs.order_by("starts_at", "pk").values_list("booking_code", flat=True)[:5])
+        if bookings_total
+        else []
+    )
+    if equipment_total or bookings_total:
+        details: dict[str, object] = {}
+        if equipment_total:
+            details["equipment_total"] = equipment_total
+            details["equipment"] = equipment_labels
+        if bookings_total:
+            details["bookings_total"] = bookings_total
+            details["bookings"] = booking_labels
+        if equipment_total and bookings_total:
+            message = "Unassign equipment and cancel active bookings before deleting this bench."
+        elif equipment_total:
+            message = "Unassign equipment before deleting this bench."
+        else:
+            message = "Cancel active bookings before deleting this bench."
+        raise BenchConflict(message, details=details)
     if bench.station_slot_id is not None:
         StationSlot.objects.select_for_update().get(pk=bench.station_slot_id)
     bench.station_slot = None
