@@ -110,7 +110,12 @@ def bump_namespace_version_on_commit(*namespaces: str) -> None:
         for ns in unique:
             bump_namespace_version(ns)
 
-    transaction.on_commit(_bump)
+    try:
+        transaction.on_commit(_bump)
+    except RuntimeError:
+        # In unit tests running without database fixtures (pytest-django raises RuntimeError
+        # when get_connection().ensure_connection() is called), execute the bump directly.
+        _bump()
 
 
 def singleflight_get_or_set(

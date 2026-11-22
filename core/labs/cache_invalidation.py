@@ -30,7 +30,6 @@ def register_cache_invalidation() -> None:
         BenchType,
         Building,
         City,
-        ComputingActivity,
         ComputingProfile,
         Country,
         Department,
@@ -73,7 +72,6 @@ def register_cache_invalidation() -> None:
         # Equipment inventory & live state
         (Equipment, (EQUIPMENT_INVENTORY_CACHE_NS,)),
         (ComputingProfile, (EQUIPMENT_INVENTORY_CACHE_NS,)),
-        (ComputingActivity, (EQUIPMENT_INVENTORY_CACHE_NS,)),
         (EquipmentAssignment, (EQUIPMENT_INVENTORY_CACHE_NS, BENCHES_CACHE_NS, LOCATIONS_CACHE_NS)),
         (EquipmentLoan, (EQUIPMENT_INVENTORY_CACHE_NS,)),
         (EquipmentBooking, (EQUIPMENT_INVENTORY_CACHE_NS,)),
