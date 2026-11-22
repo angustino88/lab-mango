@@ -1,8 +1,8 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 517,
-  "generated_at": "2026-11-20",
+  "total_endpoints": 518,
+  "generated_at": "2026-11-22",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -127723,6 +127723,12 @@
               ],
               "default": "create",
               "description": "create (default): an existing asset tag is an error. upsert: an existing asset tag updates that record; blank cells keep stored values; the asset tag never changes.\n\n* `create` - Create new\n* `upsert` - Update existing"
+            },
+            "progress_key": {
+              "type": "string",
+              "format": "uuid",
+              "nullable": true,
+              "description": "Optional client-generated UUID to poll live progress via GET /workbook-imports/progress/{progress_key}."
             }
           },
           "required": [
@@ -127731,7 +127737,8 @@
         },
         "example_payload": {
           "file": "string",
-          "mode": {}
+          "mode": {},
+          "progress_key": "123e4567-e89b-12d3-a456-426614174000"
         }
       },
       "responses": {
@@ -128137,6 +128144,12 @@
               ],
               "default": "create",
               "description": "create (default): an existing asset tag is an error. upsert: an existing asset tag updates that record; blank cells keep stored values; the asset tag never changes.\n\n* `create` - Create new\n* `upsert` - Update existing"
+            },
+            "progress_key": {
+              "type": "string",
+              "format": "uuid",
+              "nullable": true,
+              "description": "Optional client-generated UUID to poll live progress via GET /workbook-imports/progress/{progress_key}."
             }
           },
           "required": [
@@ -128145,7 +128158,8 @@
         },
         "example_payload": {
           "file": "string",
-          "mode": {}
+          "mode": {},
+          "progress_key": "123e4567-e89b-12d3-a456-426614174000"
         }
       },
       "responses": {
@@ -128535,6 +128549,245 @@
           "example_payload": "string"
         },
         "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/workbook-imports/progress/{progress_key}",
+      "method": "GET",
+      "operation_id": "labs_workbook_imports_progress_retrieve_by_progress_key",
+      "summary": "Get Workbook Imports Progress by Progress Key",
+      "description": "Poll live progress for a workbook check or apply started with ``progress_key``.",
+      "tags": [
+        "Workbook Import"
+      ],
+      "parameters": [
+        {
+          "name": "progress_key",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "progress_key": {
+                    "type": "string",
+                    "description": "Client-supplied progress key (UUID)."
+                  },
+                  "status": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "phase": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "percent": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 0,
+                    "description": "Overall progress percentage (0-100)."
+                  },
+                  "current_sheet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name of the sheet currently being processed."
+                  },
+                  "processed_rows": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of rows processed so far."
+                  },
+                  "total_rows": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Total data rows scheduled for processing."
+                  },
+                  "completed_sheets": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of sheets completed so far."
+                  },
+                  "total_sheets": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Total sheets with data scheduled for processing."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Human-readable progress description."
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "UTC timestamp of the latest progress update."
+                  }
+                },
+                "required": [
+                  "completed_sheets",
+                  "current_sheet",
+                  "message",
+                  "percent",
+                  "phase",
+                  "processed_rows",
+                  "progress_key",
+                  "status",
+                  "total_rows",
+                  "total_sheets",
+                  "updated_at"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "progress_key": "string",
+              "status": {},
+              "phase": {},
+              "percent": 1,
+              "current_sheet": "string",
+              "processed_rows": 1,
+              "total_rows": 1,
+              "completed_sheets": 1,
+              "total_sheets": 1,
+              "message": "string",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {
