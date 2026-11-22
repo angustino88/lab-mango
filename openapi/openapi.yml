@@ -650,6 +650,8 @@ paths:
     $ref: ./labs-workbook-import.yml#/paths/~1api~1labs~1workbook-imports~1actions~1check
   /api/labs/workbook-imports/export:
     $ref: ./labs-workbook-import.yml#/paths/~1api~1labs~1workbook-imports~1export
+  /api/labs/workbook-imports/progress/{progress_key}:
+    $ref: ./labs-workbook-import.yml#/paths/~1api~1labs~1workbook-imports~1progress~1{progress_key}
   /api/labs/workbook-imports/template:
     $ref: ./labs-workbook-import.yml#/paths/~1api~1labs~1workbook-imports~1template
   /api/login:

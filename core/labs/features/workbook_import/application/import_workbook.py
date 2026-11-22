@@ -14,6 +14,7 @@ from ..queries.sheets import SHEETS
 from .context import ImportRun
 from .equipment import import_equipment
 from .policies import can_import_workbook
+from .progress import ProgressTracker
 from .references import import_references
 from .spaces import import_spaces
 
@@ -38,6 +39,8 @@ class ImportWorkbookInput:
     template_version: str | None = None
     # ``create`` (default): every asset tag must be new. ``upsert``: an existing asset tag updates its record.
     mode: str = MODE_CREATE
+    # Optional client-generated UUID key for live progress polling via GET /workbook-imports/progress/{progress_key}.
+    progress_key: str | None = None
 
 
 class _Rollback(Exception):
@@ -59,6 +62,9 @@ def import_workbook(command: ImportWorkbookInput, *, actor: Any) -> ImportReport
         raise WorkbookImportNotAllowed("Only Labs administrators can import workbooks.")
     if command.mode not in MODES:
         raise ValueError(f"Unknown import mode {command.mode!r}.")
+    tracker = (
+        ProgressTracker(command.progress_key, actor=actor, dry_run=command.dry_run) if command.progress_key else None
+    )
     report = ImportReport(dry_run=command.dry_run, template_version=command.template_version, mode=command.mode)
     run = ImportRun(
         actor=actor,
@@ -66,23 +72,38 @@ def import_workbook(command: ImportWorkbookInput, *, actor: Any) -> ImportReport
         file_digest=command.file_digest,
         mode=command.mode,
         dry_run=command.dry_run,
+        progress=tracker,
     )
     try:
-        with transaction.atomic():
-            if not command.dry_run:
-                _acquire_apply_lock()
-            run.bind(command.sheets, SHEETS)
-            if not run.bound:
-                run.problem("Workbook", "No sheet of the data template was found in the file.", code="no_sheets")
-            import_references(run)
-            import_spaces(run)
-            import_equipment(run)
-            if command.dry_run or not report.valid:
-                raise _Rollback
-    except _Rollback:
-        run.discard_written_files()
+        try:
+            with transaction.atomic():
+                if not command.dry_run:
+                    if tracker is not None:
+                        tracker.waiting_lock()
+                    _acquire_apply_lock()
+                run.bind(command.sheets, SHEETS)
+                run.start_progress()
+                if not run.bound:
+                    run.problem("Workbook", "No sheet of the data template was found in the file.", code="no_sheets")
+                import_references(run)
+                import_spaces(run)
+                import_equipment(run)
+                if tracker is not None:
+                    tracker.finalizing()
+                if command.dry_run or not report.valid:
+                    raise _Rollback
+        except _Rollback:
+            run.discard_written_files()
+    except Exception:
+        if tracker is not None:
+            tracker.fail()
+        raise
     if not command.dry_run and not report.valid:
+        if tracker is not None:
+            tracker.fail("Nothing was imported: the workbook has errors.")
         raise WorkbookRejected(report)
+    if tracker is not None:
+        tracker.complete()
     return report
 
 

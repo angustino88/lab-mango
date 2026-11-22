@@ -61,7 +61,9 @@ def validate_room_slot(station, slot, *, staying=False):
         check_limit(field, getattr(slot, field), getattr(station, field))
     requested_power = station.power_reserved_w if station.power_capacity_w is None else station.power_capacity_w
     check_limit("power_capacity_w", slot.power_capacity_w, requested_power)
-    validate_utilities(station.utilities, slot.utilities)
+    # Auto-generated room slots carry empty utilities until customized; room utilities are validated separately.
+    if slot.utilities:
+        validate_utilities(station.utilities, slot.utilities)
 
 
 def validate_room_capacity(room, station, other_stations):

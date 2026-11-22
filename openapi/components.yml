@@ -10712,6 +10712,64 @@ components:
       - row
       - severity
       - sheet
+    ImportProgress:
+      type: object
+      properties:
+        progress_key:
+          type: string
+          description: Client-supplied progress key (UUID).
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        phase:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        percent:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Overall progress percentage (0-100).
+        current_sheet:
+          type: string
+          nullable: true
+          description: Name of the sheet currently being processed.
+        processed_rows:
+          type: integer
+          minimum: 0
+          description: Number of rows processed so far.
+        total_rows:
+          type: integer
+          minimum: 0
+          description: Total data rows scheduled for processing.
+        completed_sheets:
+          type: integer
+          minimum: 0
+          description: Number of sheets completed so far.
+        total_sheets:
+          type: integer
+          minimum: 0
+          description: Total sheets with data scheduled for processing.
+        message:
+          type: string
+          description: Human-readable progress description.
+        updated_at:
+          type: string
+          format: date-time
+          description: UTC timestamp of the latest progress update.
+      required:
+      - completed_sheets
+      - current_sheet
+      - message
+      - percent
+      - phase
+      - processed_rows
+      - progress_key
+      - status
+      - total_rows
+      - total_sheets
+      - updated_at
     ImportReport:
       type: object
       properties:
@@ -23524,6 +23582,14 @@ components:
       description: '* `create` - Create new
 
         * `upsert` - Update existing'
+    WorkbookImportProgressSerializersImportProgressDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/ImportProgress'
+      required:
+      - data
     WorkbookUpload:
       type: object
       properties:
@@ -23544,6 +23610,12 @@ components:
             * `create` - Create new
 
             * `upsert` - Update existing'
+        progress_key:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional client-generated UUID to poll live progress via GET
+            /workbook-imports/progress/{progress_key}.
       required:
       - file
   securitySchemes:

@@ -234,3 +234,23 @@ def test_force_delete_spaces_enforces_lab_operations_permission(member):
     ):
         assert _client().post(ROOT + path, payload, format="json").status_code == 401
         assert _client(member).post(ROOT + path, payload, format="json").status_code == 403
+
+
+@pytest.mark.django_db
+def test_force_delete_bench_via_django_client_with_jwt_returns_json(coordinator):
+    from django.test import Client
+    from rest_framework_simplejwt.tokens import RefreshToken
+
+    bench = Bench.objects.create(sku="FD-JWT-BN", name="JWT Bench")
+    token = str(RefreshToken.for_user(coordinator).access_token)
+    client = Client(enforce_csrf_checks=True)
+    response = client.post(
+        ROOT + f"benches/{bench.pk}/actions/force-delete",
+        data={"reason": "Operator cleanup via browser JWT", "confirm": True},
+        content_type="application/json",
+        HTTP_AUTHORIZATION=f"Bearer {token}",
+    )
+    assert response.status_code == 200, response.content
+    assert response["Content-Type"].startswith("application/json")
+    assert response.json()["data"] == {"id": bench.pk, "released": {"equipment": 0, "bookings": 0}}
+
