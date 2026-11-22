@@ -89,12 +89,14 @@ class ImportRun:
         file_digest: str,
         mode: str = MODE_CREATE,
         dry_run: bool = False,
+        progress: Any = None,
     ) -> None:
         self.actor = actor
         self.mode = mode
         self.dry_run = dry_run
         self.report = report
         self.file_digest = file_digest
+        self.progress = progress
         self.bound: dict[str, BoundSheet] = {}
         # Natural keys of rows that failed, by model label, so dependent rows can point at the cause.
         self.failed_keys: dict[tuple[str, str], tuple[str, int]] = {}
@@ -336,6 +338,31 @@ class ImportRun:
             )
 
     # ---- running -----------------------------------------------------------------------------
+    def start_progress(self) -> None:
+        if self.progress is None:
+            return
+        iterated = [
+            bound
+            for bound in self.bound.values()
+            if not bound.sheet.read_only and bound.sheet.detail_category is None and bound.rows
+        ]
+        self.progress.start(
+            total_rows=sum(len(bound.rows) for bound in iterated),
+            total_sheets=len(iterated),
+        )
+
+    def begin_sheet(self, sheet_name: str, row_count: int) -> None:
+        if self.progress is not None:
+            self.progress.begin_sheet(sheet_name, row_count)
+
+    def advance_row(self) -> None:
+        if self.progress is not None:
+            self.progress.advance_row()
+
+    def finish_sheet(self, row_count: int) -> None:
+        if self.progress is not None:
+            self.progress.finish_sheet(row_count)
+
     def rows(self, key: str) -> list[Row]:
         bound = self.bound.get(key)
         return [] if bound is None else bound.rows
@@ -345,6 +372,8 @@ class ImportRun:
         bound = self.bound.get(key)
         if bound is None:
             return
+        row_count = len(bound.rows)
+        self.begin_sheet(bound.sheet.name, row_count)
         seen: dict[Any, int] = {}
         for row in bound.rows:
             identity = row.get(natural_key)
@@ -359,6 +388,7 @@ class ImportRun:
             if row.failed:
                 bound.outcome.failed += 1
                 self._remember_failure(bound, row, natural_key)
+                self.advance_row()
                 continue
             result: str | None = None
             with self.capture(row):
@@ -372,6 +402,8 @@ class ImportRun:
                 bound.outcome.updated += 1
             elif result == "existing":
                 bound.outcome.existing += 1
+            self.advance_row()
+        self.finish_sheet(row_count)
 
 
 __all__ = ["BoundSheet", "ImportRun", "Row", "RowFailed"]

@@ -434,11 +434,14 @@ def _import_lookups(run: ImportRun) -> None:
     bound = run.bound.get("lookups")
     if bound is None:
         return
+    row_count = len(bound.rows)
+    run.begin_sheet(bound.sheet.name, row_count)
     resources = {key: _resource(model, (label,), (label,)) for key, (model, label) in _LOOKUP_MODELS.items()}
     seen: dict[tuple[str, str], int] = {}
     for row in bound.rows:
         if row.failed:
             bound.outcome.failed += 1
+            run.advance_row()
             continue
         for key, (model, label) in _LOOKUP_MODELS.items():
             value = row.get(key)
@@ -457,6 +460,8 @@ def _import_lookups(run: ImportRun) -> None:
                 bound.outcome.created += 1
         if row.failed:
             bound.outcome.failed += 1
+        run.advance_row()
+    run.finish_sheet(row_count)
 
 
 __all__ = ["Catalog", "RowFailed", "import_references"]

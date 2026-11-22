@@ -26,8 +26,15 @@ from core.infrastructure.spreadsheets import (
 from core.labs.features.base import FeatureAPIView
 from core.users.public import IsLabAdminReadWrite
 
-from ..application import ImportWorkbookInput, import_workbook
-from ..contracts import ERROR, SheetRows
+from ..application import ImportWorkbookInput, get_progress, import_workbook, record_progress
+from ..contracts import (
+    ERROR,
+    PROGRESS_PHASE_FAILED,
+    PROGRESS_PHASE_READING,
+    PROGRESS_STATUS_FAILED,
+    PROGRESS_STATUS_RUNNING,
+    SheetRows,
+)
 from ..exceptions import WorkbookImportNotAllowed, WorkbookRejected
 from ..queries import export_rows, readme_rows, template_sheets
 from ..queries.sheets import (
@@ -40,7 +47,7 @@ from ..queries.sheets import (
     SHEETS,
     TEMPLATE_VERSION,
 )
-from .serializers import ImportReportSerializer, WorkbookUploadSerializer
+from .serializers import ImportProgressSerializer, ImportReportSerializer, WorkbookUploadSerializer
 
 MAX_WORKBOOK_BYTES = 10 * 1024 * 1024
 META_SHEET = "_Meta"
@@ -88,14 +95,34 @@ class _WorkbookUploadAPIView(WorkbookImportAPIView):
             return None, error
         assert serializer is not None
         upload = serializer.validated_data["file"]
+        raw_progress_key = serializer.validated_data.get("progress_key")
+        progress_key = str(raw_progress_key) if raw_progress_key is not None else None
         if upload.size > MAX_WORKBOOK_BYTES:
             return None, self.respond_problem(
                 "payload_too_large",
                 code="payload_too_large",
                 errors=_field_error("The workbook must not exceed 10 MB.", "max_size"),
             )
+        if progress_key is not None:
+            record_progress(
+                progress_key,
+                actor=self.acting_user,
+                status=PROGRESS_STATUS_RUNNING,
+                phase=PROGRESS_PHASE_READING,
+                percent=2,
+                message="Reading workbook...",
+            )
         data = upload.read()
         if not data.startswith(_ZIP_MAGIC):
+            if progress_key is not None:
+                record_progress(
+                    progress_key,
+                    actor=self.acting_user,
+                    status=PROGRESS_STATUS_FAILED,
+                    phase=PROGRESS_PHASE_FAILED,
+                    percent=100,
+                    message="Upload an Excel workbook (.xlsx).",
+                )
             return None, self.respond_problem(
                 "unsupported_media_type",
                 code="unsupported_media_type",
@@ -110,6 +137,15 @@ class _WorkbookUploadAPIView(WorkbookImportAPIView):
                 max_data_rows=MAX_DATA_ROWS,
             )
         except SpreadsheetUnreadable as exc:
+            if progress_key is not None:
+                record_progress(
+                    progress_key,
+                    actor=self.acting_user,
+                    status=PROGRESS_STATUS_FAILED,
+                    phase=PROGRESS_PHASE_FAILED,
+                    percent=100,
+                    message=str(exc),
+                )
             return None, self.respond_problem(
                 "validation_error",
                 code="validation_failed",
@@ -131,6 +167,7 @@ class _WorkbookUploadAPIView(WorkbookImportAPIView):
             dry_run=self.dry_run,
             template_version=version,
             mode=serializer.validated_data["mode"],
+            progress_key=progress_key,
         )
         return command, None
 
@@ -281,9 +318,26 @@ class WorkbookExportAPIView(WorkbookImportAPIView):
         return response
 
 
+class WorkbookImportProgressAPIView(WorkbookImportAPIView):
+    """Poll live progress for a workbook check or apply started with ``progress_key``."""
+
+    get_contract = OperationContract(
+        success=ResponseContract.success("WorkbookImportProgress", ImportProgressSerializer),
+        forbidden=ResponseContract.forbidden(),
+        not_found=ResponseContract.not_found(),
+    )
+
+    def handle_get(self, request: Request, progress_key: Any, *args: Any, **kwargs: Any) -> Response:
+        snapshot = get_progress(str(progress_key), actor=self.acting_user)
+        if snapshot is None:
+            return self.respond_problem("not_found")
+        return self.respond(snapshot)
+
+
 __all__ = [
     "WorkbookExportAPIView",
     "WorkbookImportApplyAPIView",
     "WorkbookImportCheckAPIView",
+    "WorkbookImportProgressAPIView",
     "WorkbookImportTemplateAPIView",
 ]
