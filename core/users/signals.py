@@ -2,6 +2,11 @@
 
 Auto-loaded by ``UsersConfig.ready()`` in ``core/users/apps.py``. Imports only models and
 technical cache helpers (no cross-capability feature imports).
+
+Note: Any ``User.save()`` bumps the global ``users:access`` namespace (and also bumps
+``labs:equipment:refdata`` via ``core/labs/cache_invalidation.py``). Normal Entra logins
+update ``last_login`` via ``QuerySet.update()`` in ``aad_login``, intentionally avoiding
+global auth-cache invalidation on routine logins.
 """
 
 from __future__ import annotations

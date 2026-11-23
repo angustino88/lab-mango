@@ -124,20 +124,22 @@ def singleflight_get_or_set(
     *,
     timeout: int,
     lock_timeout: int = 5,
-    wait_timeout: float = 2.0,
-    poll_interval: float = 0.02,
+    wait_timeout: float = 5.0,
+    poll_interval: float = 0.05,
     cache_predicate: Callable[[T], bool] | None = None,
+    skip_initial_get: bool = False,
 ) -> tuple[T, bool]:
     """Read-through cache with singleflight lock to prevent thundering-herd stampedes.
 
     Returns ``(value, cache_hit)``. Only one worker builds the value on miss while
-    concurrent callers wait briefly for the populated entry. Degrades transparently to
-    calling ``builder()`` directly if the cache backend is unreachable.
+    concurrent callers wait up to ``wait_timeout`` for the populated entry. Degrades
+    transparently to calling ``builder()`` directly if the cache backend is unreachable.
     """
     sentinel = object()
-    cached = safe_cache_get(key, sentinel)
-    if cached is not sentinel:
-        return cached, True
+    if not skip_initial_get:
+        cached = safe_cache_get(key, sentinel)
+        if cached is not sentinel:
+            return cached, True
 
     lock_key = f"{key}:sf_lock"
     acquired = safe_cache_add(lock_key, 1, timeout=lock_timeout)

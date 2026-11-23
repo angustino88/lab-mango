@@ -154,6 +154,7 @@ def update_reservation(command: UpdateReservationInput, *, actor) -> EquipmentLo
     for line in lines:
         if line.equipment_id in remove:
             _cancel(line, "Removed from the reservation.")
+    updated_booking = False
     try:
         with transaction.atomic():
             for line in keep:
@@ -161,10 +162,16 @@ def update_reservation(command: UpdateReservationInput, *, actor) -> EquipmentLo
                     EquipmentBooking.objects.filter(pk=line.pk).update(
                         starts_at=starts_at, ends_at=ends_at, modified=now
                     )
+                    updated_booking = True
     except IntegrityError as error:
         if _constraint(error) != "equipment_booking_no_overlap":
             raise
         raise ReservationConflict() from error
+    if updated_booking:
+        from core.common.cache import bump_namespace_version_on_commit
+        from core.labs.cache_invalidation import EQUIPMENT_INVENTORY_CACHE_NS
+
+        bump_namespace_version_on_commit(EQUIPMENT_INVENTORY_CACHE_NS)
     for equipment_id in add:
         _create_booking(equipment[equipment_id], batch, starts_at, ends_at, now=now, actor=actor)
     return batch

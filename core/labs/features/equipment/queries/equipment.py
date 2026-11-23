@@ -24,7 +24,7 @@ from core.labs.models import (
     ResourceServiceRecord,
 )
 from core.labs.models.resource.base.downtime import condition_expression
-from core.labs.models.resource.base.generic_links import resource_root_model
+from core.labs.models.resource.base.generic_links import resource_content_type_filter
 from core.labs.models.resource.base.resource import Group
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
@@ -56,36 +56,11 @@ def display_status_expression() -> Case:
     )
 
 
-def _cached_ct_ids(models: set[type]) -> list[int]:
-    """Return ContentType PKs from Django's in-memory cache without touching the DB."""
-    from django.contrib.contenttypes.models import ContentType
-
-    ct_cache = getattr(ContentType.objects, "_cache", {}).get("default", {})
-    ids: list[int] = []
-    for model in models:
-        ct = ct_cache.get((model._meta.app_label, model._meta.model_name))
-        if ct is None or ct.pk is None:
-            return []
-        ids.append(int(ct.pk))
-    return sorted(set(ids))
-
-
 def _latest_calibration(queryset) -> QuerySet:
     # Latest calibration, matched exactly like ResourceModel.service_records (root and own
-    # content types). Use cached ContentType PKs when available to avoid joining django_content_type
-    # inside every correlated subquery; fall back to app_label/model so building needs no DB access.
-    linked_models = {resource_root_model(queryset.model), queryset.model._meta.concrete_model}
-    ct_ids = _cached_ct_ids(linked_models)
-    ct_filter = (
-        Q(resource_content_type_id__in=ct_ids)
-        if ct_ids
-        else Q(
-            resource_content_type__app_label=Equipment._meta.app_label,
-            resource_content_type__model__in=sorted(model._meta.model_name for model in linked_models),
-        )
-    )
+    # content types) via the shared public ContentType PK filter helper.
     return ResourceServiceRecord.objects.filter(
-        ct_filter,
+        resource_content_type_filter(queryset.model),
         resource_object_id=Cast(OuterRef("pk"), CharField()),
         kind=ResourceServiceRecord.Kind.CALIBRATION,
     ).order_by("-performed_at", "-id")
@@ -110,17 +85,8 @@ def with_display_status(queryset):
 
 def with_equipment_info(queryset):
     """Project canonical equipment acquisition data onto base or category queries."""
-    eq_ct_ids = _cached_ct_ids({Equipment})
-    acq_ct_filter = (
-        Q(resource_type_id=eq_ct_ids[0])
-        if eq_ct_ids
-        else Q(
-            resource_type__app_label=Equipment._meta.app_label,
-            resource_type__model=Equipment._meta.model_name,
-        )
-    )
     acquisition = PurchaseItemResource.objects.filter(
-        acq_ct_filter,
+        resource_content_type_filter(Equipment, field_name="resource_type"),
         resource_id=OuterRef("pk"),
     )
     # Read by Equipment.last_calibrated_at / next_calibration_due_at / calibration_overdue,

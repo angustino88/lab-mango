@@ -183,7 +183,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # ------------------------------------------------------------------------------
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.gzip.GZipMiddleware",
+    "core.common.api.middleware.SafeGZipMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -484,6 +484,8 @@ API_PAGINATION_COUNT_CACHE_TTL = env.int("API_PAGINATION_COUNT_CACHE_TTL", defau
 # Short-TTL cache for user Labs roles and Entra binding checks (invalidated on commit).
 API_AUTH_CACHE_ENABLED = env.bool("API_AUTH_CACHE_ENABLED", default=True)
 API_AUTH_CACHE_TTL = env.int("API_AUTH_CACHE_TTL", default=120)
+# Emit Server-Timing headers only in non-production (or when explicitly enabled).
+API_SERVER_TIMING_ENABLED = env.bool("API_SERVER_TIMING_ENABLED", default=DEBUG)
 
 # SIMPLE JWT
 # ------------------------------------------------------------------------------

@@ -1,9 +1,12 @@
 """Post-commit read-cache invalidation for Labs domain models.
 
-Wired once in ``LabsConfig.ready()``. Every mutation bumps the affected cache namespace
-generation inside ``transaction.on_commit(...)``, so rolled-back writes never invalidate
-cached entries and committed writes (whether via API, admin, workbook import, or tasks)
+Wired once in ``LabsConfig.ready()``. Model ``post_save`` / ``post_delete`` / ``m2m_changed``
+signals bump the affected cache namespace generation inside ``transaction.on_commit(...)``,
+so rolled-back writes never invalidate cached entries and committed ORM saves/deletes
 invalidate stale reads immediately.
+
+Paths that bypass Django model signals (``QuerySet.update()``, ``bulk_create()``,
+``bulk_update()``) must call ``bump_namespace_version_on_commit(...)`` directly.
 """
 
 from __future__ import annotations

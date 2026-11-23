@@ -67,11 +67,6 @@ class ComputingProfile(TimeStampedModel):
                 opclasses=("gin_trgm_ops",),
                 name="computing_os_name_idx",
             ),
-            GinIndex(
-                fields=("hostname",),
-                opclasses=("gin_trgm_ops",),
-                name="computing_hostname_trgm_idx",
-            ),
         ]
 
     def __str__(self) -> str:

@@ -167,6 +167,10 @@ def _record(equipment: Equipment, axis: str, value: str, *, reason: str, details
     Equipment.objects.filter(pk=equipment.pk).update(
         **{field: value}, modified=now, last_modified_by=_user(actor) or equipment.last_modified_by
     )
+    from core.common.cache import bump_namespace_version_on_commit
+    from core.labs.cache_invalidation import EQUIPMENT_INVENTORY_CACHE_NS
+
+    bump_namespace_version_on_commit(EQUIPMENT_INVENTORY_CACHE_NS)
     setattr(equipment, field, value)
     EquipmentEvent.objects.create(
         equipment=equipment,

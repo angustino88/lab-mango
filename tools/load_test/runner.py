@@ -271,10 +271,17 @@ def _setup_django(settings_module: str | None = None) -> None:
 
 
 def mint_jwt_for_user(username: str, *, settings_module: str | None = None) -> str:
-    """Mint a valid SimpleJWT Bearer access token for an existing user."""
+    """Mint a valid SimpleJWT Bearer access token for an existing user.
+
+    When the user has an active ``EntraIdentity`` binding, attaches ``auth_source="entra"``,
+    ``entra_tid``, and ``entra_oid`` so the token exercises ``EntraJWTAuthentication`` (and
+    auth caching) under production-like settings.
+    """
     _setup_django(settings_module)
     from django.contrib.auth import get_user_model
     from rest_framework_simplejwt.tokens import AccessToken
+
+    from core.users.models import EntraIdentity
 
     user_model = get_user_model()
     user = user_model.objects.filter(username=username).first()
@@ -282,7 +289,13 @@ def mint_jwt_for_user(username: str, *, settings_module: str | None = None) -> s
         raise SystemExit(
             f"User {username!r} not found in database. Create the user first or pass an existing username."
         )
-    return str(AccessToken.for_user(user))
+    token = AccessToken.for_user(user)
+    identity = EntraIdentity.objects.filter(user_id=user.pk).first()
+    if identity is not None:
+        token["auth_source"] = "entra"
+        token["entra_tid"] = str(identity.tenant_id)
+        token["entra_oid"] = str(identity.object_id)
+    return str(token)
 
 
 def _choose_target(targets: Sequence[TargetSpec], weights: Sequence[float]) -> TargetSpec:
@@ -551,6 +564,29 @@ async def _drive_virtual_users(
     return results, elapsed_wall
 
 
+def _ensure_local_db_for_in_process(*, allow_non_local_db: bool) -> None:
+    """Refuse mutating a non-local database with synthetic superusers/seed rows unless opted in."""
+    if allow_non_local_db:
+        return
+    from django.conf import settings
+
+    db_cfg = settings.DATABASES.get("default", {})
+    engine = str(db_cfg.get("ENGINE", ""))
+    host = str(db_cfg.get("HOST", "") or "").strip().lower()
+    is_sqlite = "sqlite" in engine
+    is_loopback = host in {"", "localhost", "127.0.0.1", "::1"} or host.startswith("/")
+    if not (is_sqlite or is_loopback) or not getattr(settings, "DEBUG", False) and not is_sqlite:
+        # Allow config.settings.test (where DEBUG=False) only when DB name looks like a test DB or loopback+test.
+        db_name = str(db_cfg.get("NAME", "") or "")
+        is_test_db = "test" in db_name.lower() or "test" in str(os.environ.get("DJANGO_SETTINGS_MODULE", "")).lower()
+        if not (is_loopback and is_test_db):
+            raise SystemExit(
+                f"Refusing --in-process DB mutations (loadtest.admin / seeding) against "
+                f"HOST={host!r}, DEBUG={getattr(settings, 'DEBUG', False)}. "
+                "Use local/test settings or pass --allow-non-local-db explicitly."
+            )
+
+
 def run_in_process_benchmark(
     *,
     targets: Sequence[TargetSpec],
@@ -562,6 +598,7 @@ def run_in_process_benchmark(
     username: str | None,
     settings_module: str | None,
     seed_computing_rows: int = 0,
+    allow_non_local_db: bool = False,
 ) -> tuple[list[SampleResult], float]:
     """Run requests through Django's ASGI/WSGI test client in-process with SQL query counting."""
     _setup_django(settings_module)
@@ -577,12 +614,14 @@ def run_in_process_benchmark(
     if username:
         actor = user_model.objects.filter(username=username).first()
     if actor is None:
+        _ensure_local_db_for_in_process(allow_non_local_db=allow_non_local_db)
         actor, _ = user_model.objects.get_or_create(
             username="loadtest.admin",
             defaults={"is_staff": True, "is_superuser": True, "is_active": True},
         )
 
     if seed_computing_rows > 0:
+        _ensure_local_db_for_in_process(allow_non_local_db=allow_non_local_db)
         _seed_synthetic_computing_inventory(seed_computing_rows)
 
     weights = [max(t.weight, 0.001) for t in targets]
@@ -912,6 +951,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="When using --in-process, ensure at least COUNT synthetic computing equipment rows exist.",
     )
     parser.add_argument(
+        "--allow-non-local-db",
+        action="store_true",
+        help="Explicitly allow --in-process DB mutations (loadtest.admin / seeding) against non-local databases.",
+    )
+    parser.add_argument(
         "--settings",
         default=None,
         help="Django settings module when using --mint-jwt or --in-process (default: config.settings.local).",
@@ -963,6 +1007,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             username=args.mint_jwt,
             settings_module=args.settings,
             seed_computing_rows=args.seed_computing,
+            allow_non_local_db=args.allow_non_local_db,
         )
         mode = "in-process (Django APIClient + SQL query counter)"
     else:

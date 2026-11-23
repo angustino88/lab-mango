@@ -20,20 +20,19 @@ class EntraJWTAuthentication(JWTAuthentication):
         try:
             tenant = UUID(validated_token["entra_tid"])
             subject = UUID(validated_token["entra_oid"])
-            raw_user_id = validated_token.get("user_id")
         except (ValueError, TypeError, KeyError, AttributeError) as exc:
             raise AuthenticationFailed("Invalid authentication token.") from exc
 
+        user = super().get_user(validated_token)
+
         cache_key: str | None = None
-        if getattr(settings, "API_AUTH_CACHE_ENABLED", False) and raw_user_id is not None:
+        if getattr(settings, "API_AUTH_CACHE_ENABLED", False):
             ns_ver = get_namespace_version(_USERS_ACCESS_CACHE_NAMESPACE)
             if ns_ver > 0:
-                cache_key = f"users:entra_user:v{ns_ver}:{raw_user_id}:{tenant}:{subject}"
-                cached_user = safe_cache_get(cache_key)
-                if cached_user is not None:
-                    return cached_user
+                cache_key = f"users:entra_binding:v{ns_ver}:{user.pk}:{tenant}:{subject}"
+                if safe_cache_get(cache_key) is True:
+                    return user
 
-        user = super().get_user(validated_token)
         if not EntraIdentity.objects.filter(
             user_id=user.pk,
             tenant_id=tenant,
@@ -43,7 +42,7 @@ class EntraJWTAuthentication(JWTAuthentication):
 
         if cache_key is not None and getattr(user, "is_active", False):
             ttl = int(getattr(settings, "API_AUTH_CACHE_TTL", 120) or 120)
-            safe_cache_set(cache_key, user, timeout=ttl)
+            safe_cache_set(cache_key, True, timeout=ttl)
         return user
 
 

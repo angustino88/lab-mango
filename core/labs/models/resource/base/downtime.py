@@ -28,6 +28,7 @@ from core.common.models import UserStampedModel
 from core.labs.models.booking.base import TsTzRange
 from core.labs.models.resource.base.generic_links import (
     resource_content_type,
+    resource_content_type_filter,
     resource_content_types,
     resource_root_model,
 )
@@ -64,22 +65,8 @@ DOWNTIME_CONDITIONS = (ResourceCondition.IN_MAINTENANCE, ResourceCondition.OUT_O
 
 
 def _resource_link(model: type[models.Model]) -> Q:
-    """Rows of ``model`` matched by cached ContentType PKs when warmed, else app_label/model (no DB access)."""
-    linked = {resource_root_model(model), model._meta.concrete_model or model}
-    cache = getattr(ContentType.objects, "_cache", {}).get("default", {})
-    cached_ids: list[int] = []
-    for item in linked:
-        ct = cache.get((item._meta.app_label, item._meta.model_name))
-        if ct is None or ct.pk is None:
-            cached_ids = []
-            break
-        cached_ids.append(int(ct.pk))
-    if cached_ids:
-        return Q(resource_content_type_id__in=sorted(set(cached_ids)))
-    return Q(
-        resource_content_type__app_label=model._meta.app_label,
-        resource_content_type__model__in=sorted(item._meta.model_name for item in linked),
-    )
+    """Rows of ``model`` matched via shared ContentType PK filter helper."""
+    return resource_content_type_filter(model)
 
 
 class ResourceDowntimeQuerySet(models.QuerySet["ResourceDowntime"]):

@@ -16,46 +16,46 @@ Load testing the `computing_table` weighted scenario (`GET /api/labs/equipment`,
 
 ### Phase 1 — Concurrency Stability, DB Connections & Compression
 - **Per-Worker Async Concurrency Gate** (`core/common/api/api_views.py::AppAPIView.async_dispatch`): Bounds concurrent sync Django/ORM dispatches per ASGI worker via a per-event-loop `asyncio.Semaphore` (`API_MAX_CONCURRENT_SYNC_HANDLERS`, default `16`).
-- **ASGI-Safe DB Connection Lifecycle** (`config/settings/base.py`, `config/settings/production.py`): Enabled `CONN_HEALTH_CHECKS = True`, defaulted `CONN_MAX_AGE = 0` under ASGI to prevent threadpool connection leaks, and added opt-in `DB_POOL_ENABLED=True` (`psycopg_pool`) configuration for deployments with `psycopg_pool` installed (or external PgBouncer).
-- **HTTP Compression** (`config/settings/base.py`): Added `django.middleware.gzip.GZipMiddleware` right after `CorsMiddleware`.
+- **ASGI-Safe DB Connection Lifecycle** (`config/settings/base.py`, `config/settings/production.py`, `pyproject.toml`): Enabled `CONN_HEALTH_CHECKS = True`, defaulted `CONN_MAX_AGE = 0` under ASGI (required for external PgBouncer transaction pooling and to prevent Uvicorn threadpool connection leaks), and added `psycopg[binary,pool]` (`psycopg_pool`) so opt-in `DB_POOL_ENABLED=True` works cleanly for deployments without PgBouncer.
+- **BREACH-Safe HTTP Compression** (`core/common/api/middleware.py::SafeGZipMiddleware`, `config/settings/base.py`): Subclasses `GZipMiddleware` right after `CorsMiddleware` and excludes auth/token endpoints (`/api/aad-login`, `/api/refresh-token`, `/api/logout`, `/api/csrf-token`, `/api/token`, `/api/auth/`) from compression.
 - **Fail-Fast Redis Timeouts** (`config/settings/production.py`): Added 3s `SOCKET_CONNECT_TIMEOUT` / `SOCKET_TIMEOUT` defaults on `django_redis`.
 
 ### Phase 2 — Resilient Caching, Singleflight, Auth Cache & Post-Commit Invalidation
 - **Technical Cache Primitives** (`core/common/cache.py` — zero business imports):
   - `safe_cache_*`: Fails open to PostgreSQL on Redis connection/timeout errors without failing read requests.
   - `get_namespace_version` / `bump_namespace_version_on_commit`: Versioned invalidation scheduled strictly inside `transaction.on_commit(...)` so rolled-back writes never invalidate caches.
-  - `singleflight_get_or_set`: Distributed lock (`cache.add`) coalescing concurrent cache misses under thundering-herd traffic.
+  - `singleflight_get_or_set`: Distributed lock (`cache.add`, `lock_timeout=5`, `wait_timeout=5.0`, `poll_interval=0.05`) coalescing concurrent cache misses under thundering-herd traffic, with `skip_initial_get` to avoid duplicate Redis round-trips on cache miss.
   - `compute_strong_etag` / `etag_matches` / `canonical_request_hash`: Strong SHA-256 `ETag` and `304 Not Modified` support scoped by scheme, host, path, sorted query parameters, and `Accept-Language`.
 - **Declarative View Read Caching** (`core/common/api/api_views.py::AppAPIView`):
   - Authorization always runs first inside DRF `initial()`.
-  - Fast lock-free cache hits execute off the `thread_sensitive` DB thread (`thread_sensitive=False`).
-  - Emits `ETag`, `Cache-Control: private, no-cache`, `Vary: Accept-Language, Accept-Encoding`, `X-Cache: HIT|MISS|BYPASS`, and `Server-Timing: app;dur=<ms>`.
+  - Fast lock-free cache hits execute off the `thread_sensitive` DB thread (`thread_sensitive=False`); misses pass the precomputed `cache_key` directly to singleflight to avoid redundant Redis lookups.
+  - Emits `ETag`, `Cache-Control: private, no-cache`, `Vary: Accept-Language, Accept-Encoding`, `X-Cache: HIT|MISS|BYPASS`, and optional `Server-Timing: app;dur=<ms>` (`API_SERVER_TIMING_ENABLED`, defaults to `DEBUG`).
 - **Cache Contract Table** (per `.github/instructions/query-performance.instructions.md` §6):
 
 | Surface | Key Format | TTL | Invalidation Trigger (Post-Commit) | Outage Fallback |
 |---|---|---:|---|---|
-| User Labs Roles (`core/users/access.py`) | `users:labs_roles:v{ver}:{user_id}` | `120s` | `post_save`/`post_delete` on `User`, `URSGroup`, `EntraIdentity`, `m2m_changed` on `User.groups` (`core/users/signals.py`) + `clear_labs_roles_cache` | Query `URSGroup` directly |
-| Entra JWT Binding + Active User (`core/users/features/auth/authentication.py`) | `users:entra_user:v{ver}:{user_id}:{tid}:{oid}` | `120s` | Same `users:access` namespace signals (`core/users/signals.py`) | Query `User` + `EntraIdentity` directly |
+| User Labs Roles (`core/users/access.py`) | `users:labs_roles:v{ver}:{user_id}` | `120s` | `post_save`/`post_delete` on `User`, `URSGroup`, `EntraIdentity`, `m2m_changed` on `User.groups` (`core/users/signals.py`), stub `URSGroup.update()` + `clear_labs_roles_cache` | Query `URSGroup` directly |
+| Entra JWT Binding Flag (`core/users/features/auth/authentication.py`) | `users:entra_binding:v{ver}:{user_id}:{tid}:{oid}` | `120s` | Same `users:access` namespace signals (`core/users/signals.py`). Stores boolean `True` only (no pickled `User` object or password hash in Redis); `User` is loaded fresh by PK. | Query `EntraIdentity` directly |
 | Equipment Reference Data & Filters | `api:read:labs:equipment:refdata:v{ver}:global:{hash}` | `600s` | Catalog/reference model signals (`core/labs/cache_invalidation.py`) | Execute queryset (`X-Cache: BYPASS`) |
-| Equipment Facets & Options | `api:read:labs:equipment:inventory:v{ver}:global:{hash}` | `30s` | Equipment/assignment/loan/booking/downtime/service/catalog signals | Execute queryset (`X-Cache: BYPASS`) |
-| Equipment List | `api:read:labs:equipment:inventory:v{ver}:global:{hash}` | `15s` | Same `labs:equipment:inventory` signals | Execute queryset (`X-Cache: BYPASS`) |
+| Equipment Facets & Options | `api:read:labs:equipment:inventory:v{ver}:global:{hash}` | `30s` | Equipment/assignment/loan/booking/downtime/service/catalog signals + explicit bumps on `change_state` / `reservations` `.update()` | Execute queryset (`X-Cache: BYPASS`) |
+| Equipment List | `api:read:labs:equipment:inventory:v{ver}:global:{hash}` | `15s` | Same `labs:equipment:inventory` signals + explicit `.update()` bumps | Execute queryset (`X-Cache: BYPASS`) |
 | Benches List (user-scoped), Summary & Filters | `api:read:labs:benches:v{ver}:{user_id\|global}:{hash}` | `15s` / `600s` | `Bench`, `BenchFavorite`, `BenchType`, `BenchGroup`, `EquipmentAssignment`, `ResourceDowntime` signals | Execute queryset (`X-Cache: BYPASS`) |
-| Rooms & Stations Lists/Summaries | `api:read:labs:locations:v{ver}:global:{hash}` | `15s` | `Room`, `Station`, slots, geo, `EquipmentAssignment`, `ResourceDowntime` signals | Execute queryset (`X-Cache: BYPASS`) |
+| Rooms & Stations Lists/Summaries | `api:read:labs:locations:v{ver}:global:{hash}` | `15s` | `Room`, `Station`, slots, geo, `EquipmentAssignment`, `ResourceDowntime` signals + explicit bump on `RoomSlot.bulk_create()` | Execute queryset (`X-Cache: BYPASS`) |
 | Licenses List & Filters | `api:read:labs:licenses:v{ver}:global:{hash}` | `15s` / `600s` | `License`, `LicenseAssignment`, `LicenseAgreement`, `PurchaseItemResource` signals | Execute queryset (`X-Cache: BYPASS`) |
-| Generic Reference Collections (`core/common/api/reference_views.py`) | `api:read:ref:{key}:v{ver}:global:{hash}` | `300s` | Post-commit bump on `POST` | Execute queryset (`X-Cache: BYPASS`) |
+| Generic Reference Collections (`core/common/api/reference_views.py`) | `api:read:ref:{key}:v{ver}:global:{hash}` | `300s` | `post_save`/`post_delete`/`m2m_changed` signals on `resource.model` + post-commit bump on `POST` | Execute queryset (`X-Cache: BYPASS`) |
 | Pagination `COUNT(*)` (`core/common/api/pagination.py`) | `api:count:{namespace}:v{ver}:{sql_hash}` | `15s` | Same namespace version as owning view | Run `SELECT COUNT(*)` directly |
 
 ### Phase 3 — Query & PostgreSQL Index Optimizations
-- **Pre-resolved Cached `ContentType` PKs**: `core/labs/models/resource/base/downtime.py::_resource_link` and `core/labs/features/equipment/queries/equipment.py` read Django's in-memory `ContentType.objects._cache` (falling back to `app_label`/`model` joins when cold) to remove repeated `INNER JOIN django_content_type` joins inside correlated subqueries.
+- **Shared Public `ContentType` PK Filter**: `core/labs/models/resource/base/generic_links.py::resource_content_type_filter` uses Django's public `ContentType.objects.get_for_models(...)` (in-process cached by Django, no private `_cache` access) so `ResourceDowntime` and `ResourceServiceRecord` correlated subqueries filter by integer FK PKs consistently instead of joining `django_content_type`.
 - **Deferred Unserialized Blobs**: `EquipmentCollectionAPIView.get_queryset` defers `Equipment.details` (only serialized on detail endpoints).
-- **Migration `labs.0002_performance_indexes`**:
-  - `GinIndex(..., opclasses=("gin_trgm_ops",))` on `Equipment` (`sku`, `name`, `serial_number`, `log_label`) and `ComputingProfile.hostname`.
+- **Migration `labs.0002_performance_indexes` (`atomic = False`, `AddIndexConcurrently`)**:
   - Partial composite index `equipment_active_kind_name_idx` on `Equipment (kind, name, id) WHERE deleted_at IS NULL`.
   - Partial covering index `equipment_loan_active_due_idx` on `EquipmentLoan (equipment, due_at) WHERE returned_at IS NULL`.
+  - **Why GIN trigram indexes on `Equipment` / `ComputingProfile` were intentionally omitted**: `EXPLAIN ANALYZE` on PostgreSQL 16 confirmed that Django's `__icontains` compiles to `UPPER(col::text) LIKE UPPER('%q%')`, which ignores plain `gin_trgm_ops` indexes (`Seq Scan`), and even with `UPPER(col)` expression GIN indexes, the multi-table `OR` across `labs_equipment`, `labs_equipmentkind`, `labs_equipmentmanufacturer`, `labs_equipmentproductmodel`, and `labs_computingprofile` still selects `Seq Scan` + `Join Filter`. Keeping 5 unused GIN indexes would add write overhead to workbook imports (PR #42) with zero read benefit.
 
 ### Phase 4 — Observability & Pagination Count Caching
 - Added `_CachedCountPaginator` in `core/common/api/pagination.py` to cache exact `COUNT(*)` across page flips under the view's versioned namespace.
-- Added `Server-Timing: app;dur=<ms>` and `X-Cache` headers on `AppAPIView`.
+- Added `X-Cache` (`HIT`/`MISS`/`BYPASS`) and non-prod-default `Server-Timing: app;dur=<ms>` (`API_SERVER_TIMING_ENABLED`) headers on `AppAPIView`.
 
 ## 3. Measured Before / After Benchmark Results (`tools/load_test`)
 
@@ -81,9 +81,11 @@ Environment: 4 Uvicorn workers, PostgreSQL 16 (500 computing units), Redis 7 (`r
 | p95 Latency | 75,251 ms | **9,924 ms** | **7.6× faster** |
 | Total Duration | 77.27 s | **10.80 s** | **7.2× faster** |
 
-## 4. Residual Risks & Follow-Up Recommendations
+## 4. Deployment Notes & Residual Risks
 
-- **Bulk SQL writes (`QuerySet.update()` / `bulk_create()`)** bypass Django `post_save`/`post_delete` signals; affected views remain bounded to their short TTL (`15s`–`30s`) unless callers explicitly call `bump_namespace_version_on_commit(...)`.
+- **`CONN_MAX_AGE` production default changed (`60` → `0`)**: Under Uvicorn ASGI + PgBouncer transaction pooling, `CONN_MAX_AGE = 0` prevents threadpool connection pinning (`too many clients already`) and matches PgBouncer best practice. If deploying **without** PgBouncer, either enable Django's built-in psycopg pool (`DB_POOL_ENABLED=True`, now supported via `psycopg[binary,pool]`) or explicitly set `CONN_MAX_AGE=60` in the environment.
+- **Migration `labs.0002_performance_indexes`**: Uses `AddIndexConcurrently` with `atomic = False`, avoiding table write locks during deployment on production databases.
+- **Global `User.save()` invalidation scope**: Any `User.save()` bumps the global `users:access` namespace and `labs:equipment:refdata` (because user options are included in equipment reference data). Routine Entra logins in `aad_login` update `last_login` via `QuerySet.update()` and therefore do **not** trigger `User.post_save` or thrash these caches.
 - **Time-dependent statuses** (`display_status`, `loan_overdue`, `is_calibration_overdue`) can reflect at most `15s` staleness on cached equipment list reads.
-- **External PgBouncer** (transaction mode) or adding `psycopg_pool` (separate T2 dependency approval per `AGENTS.md` Rule 7) is recommended when scaling beyond ~6–8 Uvicorn workers per PostgreSQL primary.
-- **Test settings default**: `API_READ_CACHE_ENABLED` and `API_AUTH_CACHE_ENABLED` default to `False` in `config/settings/test.py` so N+1 query-budget tests continue testing real SQL execution, and `True` in `config/settings/base.py` (local & production).
+- **Dependency addition (`psycopg[binary,pool]`)**: Adds the official `psycopg-pool` extra (maintained by the `psycopg` project, required by Django 5.2's `OPTIONS["pool"]`); alternative considered was relying solely on external PgBouncer without an in-app pool option.
+- **Test settings default**: `API_READ_CACHE_ENABLED`, `API_AUTH_CACHE_ENABLED`, and `API_SERVER_TIMING_ENABLED` default to `False` in `config/settings/test.py` so N+1 query-budget tests continue testing real SQL execution; `API_READ_CACHE_ENABLED` and `API_AUTH_CACHE_ENABLED` default to `True` in `config/settings/base.py`, while `API_SERVER_TIMING_ENABLED` defaults to `DEBUG`.

@@ -121,6 +121,45 @@ def reference_urlpatterns(
 
     cache_namespace = f"ref:{resource.key}"
 
+    from django.db import models as dj_models
+    from django.db.models.signals import m2m_changed, post_delete, post_save
+
+    from core.common.cache import bump_namespace_version_on_commit
+
+    if isinstance(resource.model, type) and issubclass(resource.model, dj_models.Model):
+
+        def _invalidate_reference_cache(sender, _ns: str = cache_namespace, **kwargs) -> None:
+            bump_namespace_version_on_commit(_ns)
+
+        post_save.connect(
+            _invalidate_reference_cache,
+            sender=resource.model,
+            weak=False,
+            dispatch_uid=f"ref_cache_inv:{resource.key}:save",
+        )
+        post_delete.connect(
+            _invalidate_reference_cache,
+            sender=resource.model,
+            weak=False,
+            dispatch_uid=f"ref_cache_inv:{resource.key}:delete",
+        )
+        for field_name in resource.fields:
+            field = resource.model._meta.get_field(field_name)
+            if field.many_to_many and getattr(field, "remote_field", None) is not None:
+                through = getattr(field.remote_field, "through", None)
+                if through is not None:
+
+                    def _invalidate_reference_m2m(sender, action: str, _ns: str = cache_namespace, **kwargs) -> None:
+                        if action in {"post_add", "post_remove", "post_clear"}:
+                            bump_namespace_version_on_commit(_ns)
+
+                    m2m_changed.connect(
+                        _invalidate_reference_m2m,
+                        sender=through,
+                        weak=False,
+                        dispatch_uid=f"ref_cache_inv:{resource.key}:m2m:{field_name}",
+                    )
+
     class Collection(AppListAPIView):
         permission_classes = access
         schema_tags = (tag,)

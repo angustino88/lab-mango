@@ -87,7 +87,11 @@ class AppAPIView(APIView):
             async with semaphore:
                 response = await super().async_dispatch(request, *args, **kwargs)
         elapsed_ms = (time.perf_counter() - started) * 1000.0
-        if response is not None and hasattr(response, "__setitem__"):
+        if (
+            response is not None
+            and hasattr(response, "__setitem__")
+            and getattr(settings, "API_SERVER_TIMING_ENABLED", False)
+        ):
             response["Server-Timing"] = f"app;dur={elapsed_ms:.1f}"
         return response
 
@@ -99,22 +103,26 @@ class AppAPIView(APIView):
             return f"user:{user_id}"
         return "global"
 
-    def _try_cached_get_hit(self, request: Any) -> Response | None:
-        """Fast lock-free cache read that runs off the thread_sensitive DB thread."""
+    def _try_cached_get_hit(self, request: Any) -> tuple[Response | None, str | None, bool]:
+        """Fast lock-free cache read off the thread_sensitive DB thread.
+
+        Returns ``(cached_response, cache_key, cache_available)`` so a miss can reuse
+        ``cache_key`` in ``_run_cached_get_sync`` without repeating Redis version/get lookups.
+        """
         namespace = self.read_cache_namespace
         ttl = int(self.read_cache_ttl or 0)
         if not namespace or ttl <= 0 or not getattr(settings, "API_READ_CACHE_ENABLED", False):
-            return None
+            return None, None, False
         ns_ver = get_namespace_version(namespace)
         if ns_ver == 0:
-            return None
+            return None, None, False
         scope_key = self.get_read_cache_scope(request)
         req_hash = canonical_request_hash(request)
         cache_key = f"api:read:{namespace}:v{ns_ver}:{scope_key}:{req_hash}"
         entry = safe_cache_get(cache_key)
         if not isinstance(entry, dict) or not entry.get("cacheable"):
-            return None
-        return self._build_cached_response(request, entry, cache_hit=True)
+            return None, cache_key, True
+        return self._build_cached_response(request, entry, cache_hit=True), cache_key, True
 
     def _build_cached_response(self, request: Any, entry: dict[str, Any], *, cache_hit: bool) -> Response:
         etag = str(entry.get("etag") or "")
@@ -134,22 +142,37 @@ class AppAPIView(APIView):
         response["X-Cache"] = "HIT" if cache_hit else "MISS"
         return response
 
-    def _run_cached_get_sync(self, handler: Callable[..., Response], request: Any, *args: Any, **kwargs: Any) -> Response:
+    def _run_cached_get_sync(
+        self,
+        handler: Callable[..., Response],
+        request: Any,
+        *args: Any,
+        precomputed_cache_key: str | None = None,
+        cache_available: bool | None = None,
+        **kwargs: Any,
+    ) -> Response:
         namespace = self.read_cache_namespace
         ttl = int(self.read_cache_ttl or 0)
         if not namespace or ttl <= 0 or not getattr(settings, "API_READ_CACHE_ENABLED", False):
             return handler(request, *args, **kwargs)
 
-        ns_ver = get_namespace_version(namespace)
-        if ns_ver == 0:
-            # Cache backend unreachable: bypass gracefully to the database.
+        if cache_available is False:
+            # Fast path already detected an unreachable cache backend: bypass gracefully.
             response = handler(request, *args, **kwargs)
             response["X-Cache"] = "BYPASS"
             return response
 
-        scope_key = self.get_read_cache_scope(request)
-        req_hash = canonical_request_hash(request)
-        cache_key = f"api:read:{namespace}:v{ns_ver}:{scope_key}:{req_hash}"
+        cache_key = precomputed_cache_key
+        skip_initial_get = cache_key is not None
+        if cache_key is None:
+            ns_ver = get_namespace_version(namespace)
+            if ns_ver == 0:
+                response = handler(request, *args, **kwargs)
+                response["X-Cache"] = "BYPASS"
+                return response
+            scope_key = self.get_read_cache_scope(request)
+            req_hash = canonical_request_hash(request)
+            cache_key = f"api:read:{namespace}:v{ns_ver}:{scope_key}:{req_hash}"
 
         def _build_entry() -> dict[str, Any]:
             raw_response = handler(request, *args, **kwargs)
@@ -173,6 +196,7 @@ class AppAPIView(APIView):
             _build_entry,
             timeout=ttl,
             cache_predicate=lambda item: bool(item.get("cacheable")),
+            skip_initial_get=skip_initial_get,
         )
         if not entry.get("cacheable"):
             raw_resp: Response = entry["response"]
@@ -192,10 +216,19 @@ class AppAPIView(APIView):
         if handler is None:
             return self.http_method_not_allowed(request, *args, **kwargs)
         if method == "get" and self.read_cache_namespace and self.read_cache_ttl > 0:
-            cached = await sync_to_async(self._try_cached_get_hit, thread_sensitive=False)(request)
+            cached, cache_key, cache_available = await sync_to_async(
+                self._try_cached_get_hit, thread_sensitive=False
+            )(request)
             if cached is not None:
                 return cached
-            return await sync_to_async(self._run_cached_get_sync)(handler, request, *args, **kwargs)
+            return await sync_to_async(self._run_cached_get_sync)(
+                handler,
+                request,
+                *args,
+                precomputed_cache_key=cache_key,
+                cache_available=cache_available,
+                **kwargs,
+            )
         return await sync_to_async(handler)(request, *args, **kwargs)
 
     def _allowed_methods(self) -> list[str]:

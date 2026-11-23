@@ -86,11 +86,12 @@ def test_entra_jwt_authentication_caches_binding_and_invalidates_on_unlink():
     assert resolved.pk == user.pk
     assert len(cold_queries) == 2
 
-    # 2. Warm check serves verified user from cache with 0 DB queries
+    # 2. Warm check loads User by PK (1 query) and skips EntraIdentity query via boolean cache flag
     with CaptureQueriesContext(connection) as warm_queries:
         resolved2 = auth.get_user(token)
     assert resolved2.pk == user.pk
-    assert len(warm_queries) == 0
+    assert len(warm_queries) == 1
+    assert not any("entraidentity" in q["sql"].lower() for q in warm_queries)
 
     # 3. Unlinking EntraIdentity immediately invalidates the cache -> token rejected
     binding.delete()

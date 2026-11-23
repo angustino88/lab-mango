@@ -26,7 +26,6 @@ from core.common.cache import (
     safe_cache_set,
     singleflight_get_or_set,
 )
-from core.labs.models import Equipment
 from tests.factories import ComputingEquipmentFactory, UserFactory
 
 
@@ -102,7 +101,7 @@ def test_namespace_bump_on_commit_ignores_rolled_back_transaction():
 
 
 @pytest.mark.django_db(transaction=True)
-@override_settings(API_READ_CACHE_ENABLED=True, API_AUTH_CACHE_ENABLED=True)
+@override_settings(API_READ_CACHE_ENABLED=True, API_AUTH_CACHE_ENABLED=True, API_SERVER_TIMING_ENABLED=True)
 def test_equipment_list_read_cache_hit_etag_304_invalidation_and_outage():
     admin: Any = UserFactory(username="cache-test-admin", is_staff=True, is_superuser=True)
     unit: Any = ComputingEquipmentFactory(sku="CACHE-EQ-001", name="Cache Unit 1")
@@ -136,7 +135,6 @@ def test_equipment_list_read_cache_hit_etag_304_invalidation_and_outage():
     assert len(cond_queries) == 0
 
     # 4. Write to Equipment invalidates cache on commit -> next read is MISS with fresh data
-    Equipment.objects.filter(pk=unit.pk).update(name="Updated Direct")
     unit.name = "Cache Unit Updated"
     unit.save(update_fields=["name"])
 
@@ -147,7 +145,25 @@ def test_equipment_list_read_cache_hit_etag_304_invalidation_and_outage():
     names = [row["name"] for row in fourth.json()["data"]]
     assert "Cache Unit Updated" in names
 
-    # 5. Cache backend outage falls back cleanly to PostgreSQL with X-Cache: BYPASS
+    # 5. Lifecycle QuerySet.update() in change_state invalidates inventory cache immediately
+    from core.labs.features.equipment.application.change_state import ChangeLifecycleInput, change_lifecycle
+    from core.labs.models import EquipmentLifecycleState
+
+    change_lifecycle(
+        ChangeLifecycleInput(
+            equipment_id=unit.pk,
+            lifecycle_state=EquipmentLifecycleState.RETIRED,
+            reason="Retiring test unit",
+        ),
+        actor=admin,
+    )
+    fifth = client.get(url)
+    assert fifth.status_code == 200
+    assert fifth["X-Cache"] == "MISS"
+    statuses = {row["id"]: row["lifecycle_state"]["value"] for row in fifth.json()["data"]}
+    assert statuses[unit.pk] == EquipmentLifecycleState.RETIRED
+
+    # 6. Cache backend outage falls back cleanly to PostgreSQL with X-Cache: BYPASS
     class _BrokenCache:
         def get(self, *args, **kwargs):
             raise RedisConnectionError("redis down")
@@ -165,6 +181,12 @@ def test_equipment_list_read_cache_hit_etag_304_invalidation_and_outage():
         outage_resp = client.get(url)
     assert outage_resp.status_code == 200
     assert outage_resp["X-Cache"] == "BYPASS"
+
+    # 7. Server-Timing header is omitted when API_SERVER_TIMING_ENABLED=False (production default)
+    with override_settings(API_SERVER_TIMING_ENABLED=False):
+        prod_resp = client.get(url)
+    assert prod_resp.status_code == 200
+    assert "Server-Timing" not in prod_resp
 
 
 @pytest.mark.django_db(transaction=True)
@@ -191,3 +213,60 @@ def test_reference_data_and_facets_cached_and_invalidated():
     third = client.get(ref_url)
     assert third.status_code == 200
     assert third["X-Cache"] == "MISS"
+
+
+@pytest.mark.django_db(transaction=True)
+@override_settings(API_READ_CACHE_ENABLED=True)
+def test_reference_collection_cache_invalidated_on_direct_orm_edit_and_delete():
+    from core.labs.models import EquipmentManufacturer
+
+    admin: Any = UserFactory(username="cache-mfr-admin", is_staff=True, is_superuser=True)
+    mfr = EquipmentManufacturer.objects.create(name="Initial Maker")
+    client = APIClient()
+    client.force_authenticate(user=admin)
+
+    url = "/api/labs/equipment/reference-data/manufacturers"
+    first = client.get(url)
+    assert first.status_code == 200
+    assert first["X-Cache"] == "MISS"
+    assert any(row["name"] == "Initial Maker" for row in first.json()["data"])
+
+    second = client.get(url)
+    assert second.status_code == 200
+    assert second["X-Cache"] == "HIT"
+
+    # Direct ORM save (simulating Django admin or script) invalidates ref:{key}
+    mfr.name = "Renamed Maker"
+    mfr.save(update_fields=["name"])
+    third = client.get(url)
+    assert third.status_code == 200
+    assert third["X-Cache"] == "MISS"
+    assert any(row["name"] == "Renamed Maker" for row in third.json()["data"])
+
+    # Direct ORM delete also invalidates ref:{key}
+    mfr.delete()
+    fourth = client.get(url)
+    assert fourth.status_code == 200
+    assert fourth["X-Cache"] == "MISS"
+    assert not any(row["name"] == "Renamed Maker" for row in fourth.json()["data"])
+
+
+def test_safe_gzip_middleware_skips_auth_endpoints():
+    from django.http import HttpResponse
+    from django.test import RequestFactory
+
+    from core.common.api.middleware import SafeGZipMiddleware
+
+    body = "x" * 2000
+    mw = SafeGZipMiddleware(lambda req: HttpResponse(body, content_type="application/json"))
+    rf = RequestFactory()
+
+    auth_req = rf.post("/api/aad-login", HTTP_ACCEPT_ENCODING="gzip")
+    auth_resp = mw(auth_req)
+    assert isinstance(auth_resp, HttpResponse)
+    assert auth_resp.get("Content-Encoding") != "gzip"
+
+    data_req = rf.get("/api/labs/equipment", HTTP_ACCEPT_ENCODING="gzip")
+    data_resp = mw(data_req)
+    assert isinstance(data_resp, HttpResponse)
+    assert data_resp.get("Content-Encoding") == "gzip"
