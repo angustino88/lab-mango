@@ -91,3 +91,12 @@ def test_bench_reference_serializers_standard_booleans_and_timestamps():
         assert "updated_at" in fields
         assert "created" not in fields
         assert "modified" not in fields
+
+
+def test_bench_serializer_serializes_station_slot_with_code_as_name():
+    from core.labs.models import StationSlot
+
+    slot = StationSlot(id=118, position_index=1, slot_code="S2", label="Middle")
+    serialized = BenchSerializer().fields["station_slot"].to_representation(slot)
+    assert serialized == {"id": 118, "name": "S2"}
+

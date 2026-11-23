@@ -75,5 +75,10 @@ class StationSlot(TimeStampedModel, UserStampedModel):
             ),
         ]
 
+    @property
+    def name(self) -> str:
+        """Display label for REL-3 relation references (``{id, name}``)."""
+        return self.slot_code
+
     def __str__(self) -> str:
         return f"{self.station} / {self.slot_code}"
