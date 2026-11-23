@@ -11,7 +11,13 @@ def actor_display_name(actor: Any, default: str = "Unknown") -> str:
     """Best human-readable name for an actor (``System`` when there is none)."""
     if actor is None:
         return "System"
-    full_name = getattr(actor, "get_full_name", lambda: "")()
+    display_name = (getattr(actor, "display_name", "") or "").strip()
+    if display_name:
+        return display_name
+    name = (getattr(actor, "name", "") or "").strip()
+    if name:
+        return name
+    full_name = (getattr(actor, "get_full_name", lambda: "")() or "").strip()
     return full_name or getattr(actor, "username", "") or default
 
 

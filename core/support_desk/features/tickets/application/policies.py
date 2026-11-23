@@ -176,3 +176,19 @@ def can_unlink_resource(user: Any) -> bool:
 
 def can_manage_configuration(user: Any) -> bool:
     return is_support_admin(user)
+
+
+def can_log_work(user: Any, ticket: SupportTicket) -> bool:
+    """Support agents/admins and users who can view the ticket (requester/watcher) may log work."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    return can_view_ticket(user, ticket)
+
+
+def can_manage_work_log(user: Any, work_log: Any) -> bool:
+    """Authors may edit/delete their own work logs; support agents/admins may manage any work log."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if is_support_agent(user):
+        return True
+    return getattr(work_log, "author_id", None) == user.pk
