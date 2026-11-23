@@ -257,6 +257,11 @@ class Equipment(ResourceModel):
             models.Index(fields=("serial_number",), name="equipment_serial_number_idx"),
             models.Index(fields=("kind", "deleted_at"), name="equipment_kind_deleted_idx"),
             models.Index(fields=("kind", "name"), name="equipment_kind_name_idx"),
+            models.Index(
+                fields=("kind", "name", "id"),
+                condition=models.Q(deleted_at__isnull=True),
+                name="equipment_active_kind_name_idx",
+            ),
         ]
 
     def __str__(self) -> str:

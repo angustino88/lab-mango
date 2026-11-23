@@ -44,6 +44,8 @@ def _room_projection(room):
 class RoomStatusSummaryAPIView(RoomAPIView):
     """Non-deleted rooms counted by their stored lifecycle `status`."""
 
+    read_cache_namespace = "labs:locations"
+    read_cache_ttl = 15
     get_contract = OperationContract(
         success=ResponseContract.success("RoomStatusSummaryData", RoomStatusSummarySerializer),
         bad_request=ResponseContract.bad_request(),
@@ -56,6 +58,8 @@ class RoomStatusSummaryAPIView(RoomAPIView):
 
 
 class RoomListCreateAPIView(RoomAPIView):
+    read_cache_namespace = "labs:locations"
+    read_cache_ttl = 15
     get_contract = operation("RoomList", RoomSerializer, query=with_page_query(RoomListQuerySerializer), many=True)
     post_contract = operation("RoomCreate", RoomSerializer, request=RoomCreateSerializer, created=True)
 
@@ -71,6 +75,8 @@ class RoomListCreateAPIView(RoomAPIView):
 
 class RoomFiltersAPIView(FilterMetadataMixin, RoomAPIView):
     filter_spec = ROOM_FILTERS
+    read_cache_namespace = "labs:locations"
+    read_cache_ttl = 600
     get_contract = operation("RoomFilters", FilterMetadataSerializer, query=PageNumberQuerySerializer)
 
 

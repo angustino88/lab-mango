@@ -28,6 +28,7 @@ from core.common.models import UserStampedModel
 from core.labs.models.booking.base import TsTzRange
 from core.labs.models.resource.base.generic_links import (
     resource_content_type,
+    resource_content_type_filter,
     resource_content_types,
     resource_root_model,
 )
@@ -64,12 +65,8 @@ DOWNTIME_CONDITIONS = (ResourceCondition.IN_MAINTENANCE, ResourceCondition.OUT_O
 
 
 def _resource_link(model: type[models.Model]) -> Q:
-    """Rows of ``model`` matched by app label and model name, so building it needs no database access."""
-    linked = {resource_root_model(model), model._meta.concrete_model or model}
-    return Q(
-        resource_content_type__app_label=model._meta.app_label,
-        resource_content_type__model__in=sorted(item._meta.model_name for item in linked),
-    )
+    """Rows of ``model`` matched via shared ContentType PK filter helper."""
+    return resource_content_type_filter(model)
 
 
 class ResourceDowntimeQuerySet(models.QuerySet["ResourceDowntime"]):

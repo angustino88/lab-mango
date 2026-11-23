@@ -73,6 +73,10 @@ def _sync_grid(room, actor):
             new_slots.append(slot)
     if new_slots:
         RoomSlot.objects.bulk_create(new_slots)
+        from core.common.cache import bump_namespace_version_on_commit
+        from core.labs.cache_invalidation import LOCATIONS_CACHE_NS
+
+        bump_namespace_version_on_commit(LOCATIONS_CACHE_NS)
 
 
 @_room_atomic_command

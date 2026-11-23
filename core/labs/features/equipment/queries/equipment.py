@@ -24,7 +24,7 @@ from core.labs.models import (
     ResourceServiceRecord,
 )
 from core.labs.models.resource.base.downtime import condition_expression
-from core.labs.models.resource.base.generic_links import resource_root_model
+from core.labs.models.resource.base.generic_links import resource_content_type_filter
 from core.labs.models.resource.base.resource import Group
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
@@ -58,11 +58,9 @@ def display_status_expression() -> Case:
 
 def _latest_calibration(queryset) -> QuerySet:
     # Latest calibration, matched exactly like ResourceModel.service_records (root and own
-    # content types). Filter by app_label/model (joined in SQL) so building it needs no DB access.
-    linked_models = {resource_root_model(queryset.model), queryset.model._meta.concrete_model}
+    # content types) via the shared public ContentType PK filter helper.
     return ResourceServiceRecord.objects.filter(
-        resource_content_type__app_label=Equipment._meta.app_label,
-        resource_content_type__model__in=sorted(model._meta.model_name for model in linked_models),
+        resource_content_type_filter(queryset.model),
         resource_object_id=Cast(OuterRef("pk"), CharField()),
         kind=ResourceServiceRecord.Kind.CALIBRATION,
     ).order_by("-performed_at", "-id")
@@ -88,8 +86,7 @@ def with_display_status(queryset):
 def with_equipment_info(queryset):
     """Project canonical equipment acquisition data onto base or category queries."""
     acquisition = PurchaseItemResource.objects.filter(
-        resource_type__app_label=Equipment._meta.app_label,
-        resource_type__model=Equipment._meta.model_name,
+        resource_content_type_filter(Equipment, field_name="resource_type"),
         resource_id=OuterRef("pk"),
     )
     # Read by Equipment.last_calibrated_at / next_calibration_due_at / calibration_overdue,

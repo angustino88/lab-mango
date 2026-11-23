@@ -119,9 +119,52 @@ def reference_urlpatterns(
     output_serializer = type(f"{name}CatalogRecord", (serializers.Serializer,), outputs)
     query_serializer = type(f"{name}ReferenceQuery", (SearchQueryMixin, PageNumberQuerySerializer), query)
 
+    cache_namespace = f"ref:{resource.key}"
+
+    from django.db import models as dj_models
+    from django.db.models.signals import m2m_changed, post_delete, post_save
+
+    from core.common.cache import bump_namespace_version_on_commit
+
+    if isinstance(resource.model, type) and issubclass(resource.model, dj_models.Model):
+
+        def _invalidate_reference_cache(sender, _ns: str = cache_namespace, **kwargs) -> None:
+            bump_namespace_version_on_commit(_ns)
+
+        post_save.connect(
+            _invalidate_reference_cache,
+            sender=resource.model,
+            weak=False,
+            dispatch_uid=f"ref_cache_inv:{resource.key}:save",
+        )
+        post_delete.connect(
+            _invalidate_reference_cache,
+            sender=resource.model,
+            weak=False,
+            dispatch_uid=f"ref_cache_inv:{resource.key}:delete",
+        )
+        for field_name in resource.fields:
+            field = resource.model._meta.get_field(field_name)
+            if field.many_to_many and getattr(field, "remote_field", None) is not None:
+                through = getattr(field.remote_field, "through", None)
+                if through is not None:
+
+                    def _invalidate_reference_m2m(sender, action: str, _ns: str = cache_namespace, **kwargs) -> None:
+                        if action in {"post_add", "post_remove", "post_clear"}:
+                            bump_namespace_version_on_commit(_ns)
+
+                    m2m_changed.connect(
+                        _invalidate_reference_m2m,
+                        sender=through,
+                        weak=False,
+                        dispatch_uid=f"ref_cache_inv:{resource.key}:m2m:{field_name}",
+                    )
+
     class Collection(AppListAPIView):
         permission_classes = access
         schema_tags = (tag,)
+        read_cache_namespace = cache_namespace
+        read_cache_ttl = 300
         get_contract = OperationContract(
             query=query_serializer,
             success=ResponseContract.paginated(f"{name}ReferenceList", output_serializer),
@@ -144,6 +187,8 @@ def reference_urlpatterns(
             )
 
             def handle_post(self, request, **kwargs):
+                from core.common.cache import bump_namespace_version_on_commit
+
                 serializer, error = self.validate_request()
                 if error is not None:
                     return error
@@ -155,6 +200,7 @@ def reference_urlpatterns(
                     idempotency_key=request.headers.get("Idempotency-Key", ""),
                     actor=request.user,
                 )
+                bump_namespace_version_on_commit(cache_namespace)
                 response = Response({"data": result.data}, status=201)
                 response["Location"] = request.build_absolute_uri(f"{request.path}/{result.data['id']}")
                 if result.replayed:

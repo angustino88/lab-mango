@@ -1,0 +1,108 @@
+{
+  "scenarios": {
+    "computing_table": [
+      {
+        "name": "equipment_list_page1",
+        "method": "GET",
+        "path": "/api/labs/equipment?page=1&page_size=25",
+        "weight": 5.0
+      },
+      {
+        "name": "equipment_list_available",
+        "method": "GET",
+        "path": "/api/labs/equipment?status=available&page=1&page_size=25",
+        "weight": 2.0
+      },
+      {
+        "name": "equipment_list_search",
+        "method": "GET",
+        "path": "/api/labs/equipment?q=pc&page=1&page_size=25",
+        "weight": 1.5
+      },
+      {
+        "name": "equipment_reference_data",
+        "method": "GET",
+        "path": "/api/labs/equipment/reference-data",
+        "weight": 1.0
+      },
+      {
+        "name": "equipment_facets_kind",
+        "method": "GET",
+        "path": "/api/labs/equipment/facets?dimension=kind&page_size=25",
+        "weight": 1.0
+      },
+      {
+        "name": "equipment_facets_manufacturer",
+        "method": "GET",
+        "path": "/api/labs/equipment/facets?dimension=manufacturer&page_size=25",
+        "weight": 1.0
+      },
+      {
+        "name": "equipment_options",
+        "method": "GET",
+        "path": "/api/labs/equipment/options?q=a",
+        "weight": 1.0
+      }
+    ],
+    "equipment_table": [
+      {
+        "name": "equipment_list",
+        "method": "GET",
+        "path": "/api/labs/equipment?page=1&page_size=25",
+        "weight": 4.0
+      },
+      {
+        "name": "equipment_filters",
+        "method": "GET",
+        "path": "/api/labs/equipment/filters",
+        "weight": 1.0
+      },
+      {
+        "name": "equipment_reference_data",
+        "method": "GET",
+        "path": "/api/labs/equipment/reference-data",
+        "weight": 1.0
+      },
+      {
+        "name": "equipment_facets_category",
+        "method": "GET",
+        "path": "/api/labs/equipment/facets?dimension=category",
+        "weight": 1.0
+      }
+    ],
+    "locations_and_benches": [
+      {
+        "name": "benches_list",
+        "method": "GET",
+        "path": "/api/labs/benches?page=1&page_size=25",
+        "weight": 3.0
+      },
+      {
+        "name": "stations_list",
+        "method": "GET",
+        "path": "/api/labs/stations?page=1&page_size=25",
+        "weight": 2.0
+      },
+      {
+        "name": "rooms_list",
+        "method": "GET",
+        "path": "/api/labs/rooms?page=1&page_size=25",
+        "weight": 1.0
+      }
+    ],
+    "licenses": [
+      {
+        "name": "licenses_list",
+        "method": "GET",
+        "path": "/api/labs/licenses?page=1&page_size=25",
+        "weight": 3.0
+      },
+      {
+        "name": "licenses_options",
+        "method": "GET",
+        "path": "/api/labs/licenses/options",
+        "weight": 1.0
+      }
+    ]
+  }
+}

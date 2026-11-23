@@ -201,6 +201,10 @@ def _ensure_stub_role_group(labs_role: str) -> Group:
         group, _ = Group.objects.get_or_create(name=f"stub-{labs_role}")
         if urs_group.active or urs_group.labs_role != labs_role or urs_group.group_id != group.pk:
             URSGroup.objects.filter(pk=urs_group.pk).update(active=False, labs_role=labs_role, group=group)
+            from core.common.cache import bump_namespace_version_on_commit
+            from core.users.access import USERS_ACCESS_CACHE_NAMESPACE
+
+            bump_namespace_version_on_commit(USERS_ACCESS_CACHE_NAMESPACE)
     return group
 
 

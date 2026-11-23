@@ -35,6 +35,14 @@ DATABASES = {
 if "PROD_DATABASE_URL" in env and env("PROD_DATABASE_URL"):
     DATABASES["prod"] = env.db("PROD_DATABASE_URL")
 DATABASES["default"]["ATOMIC_REQUESTS"] = False
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+if env.bool("DB_POOL_ENABLED", default=False):
+    DATABASES["default"]["CONN_MAX_AGE"] = 0
+    DATABASES["default"].setdefault("OPTIONS", {})["pool"] = {
+        "min_size": env.int("DB_POOL_MIN_SIZE", default=2),
+        "max_size": env.int("DB_POOL_MAX_SIZE", default=16),
+        "timeout": env.int("DB_POOL_TIMEOUT", default=10),
+    }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 ROOT_URLCONF = "config.urls"
@@ -175,6 +183,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # ------------------------------------------------------------------------------
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    "core.common.api.middleware.SafeGZipMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -463,6 +472,20 @@ REST_FRAMEWORK = {
 
 CORS_URLS_REGEX = r"^/api/.*$"
 CORS_ALLOW_CREDENTIALS = True
+
+# API PERFORMANCE, CONCURRENCY & READ CACHING
+# ------------------------------------------------------------------------------
+# Bounds concurrent sync Django/ORM dispatches per ASGI worker so threadpools
+# stay below PostgreSQL max_connections under burst load (0 disables).
+API_MAX_CONCURRENT_SYNC_HANDLERS = env.int("API_MAX_CONCURRENT_SYNC_HANDLERS", default=16)
+# Declarative versioned read-through cache + ETag/304 + singleflight stampede guard.
+API_READ_CACHE_ENABLED = env.bool("API_READ_CACHE_ENABLED", default=True)
+API_PAGINATION_COUNT_CACHE_TTL = env.int("API_PAGINATION_COUNT_CACHE_TTL", default=15)
+# Short-TTL cache for user Labs roles and Entra binding checks (invalidated on commit).
+API_AUTH_CACHE_ENABLED = env.bool("API_AUTH_CACHE_ENABLED", default=True)
+API_AUTH_CACHE_TTL = env.int("API_AUTH_CACHE_TTL", default=120)
+# Emit Server-Timing headers only in non-production (or when explicitly enabled).
+API_SERVER_TIMING_ENABLED = env.bool("API_SERVER_TIMING_ENABLED", default=DEBUG)
 
 # SIMPLE JWT
 # ------------------------------------------------------------------------------

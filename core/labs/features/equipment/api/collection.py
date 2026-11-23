@@ -247,6 +247,8 @@ class EquipmentReferenceDataQuerySerializer(serializers.Serializer):
 class EquipmentReferenceDataAPIView(EquipmentAPIView):
     """Everything the equipment form needs, optionally for one category."""
 
+    read_cache_namespace = "labs:equipment:refdata"
+    read_cache_ttl = 600
     get_contract = OperationContract(
         query=EquipmentReferenceDataQuerySerializer,
         success=ResponseContract.success("EquipmentReferenceData", EquipmentReferenceDataSerializer),
@@ -280,10 +282,18 @@ class EquipmentCollectionAPIView(EquipmentListCreateAPIView):
     create_serializer_class = EquipmentCreateSerializer  # type: ignore[assignment]
     text_search_fields: ClassVar[list[str]] = list(SEARCH_FIELDS)
     list_filters: ClassVar[tuple] = TYPED_FILTERS
+    read_cache_namespace = "labs:equipment:inventory"
+    read_cache_ttl = 15
+
+    def get_queryset(self, request: Request):
+        # EquipmentItemSerializer does not serialize `details`; skip fetching potentially large text blobs.
+        return super().get_queryset(request).defer("details")
 
 
 class EquipmentFiltersAPIView(FilterMetadataMixin, EquipmentAPIView):
     filter_spec = EquipmentCollectionAPIView.filter_spec
+    read_cache_namespace = "labs:equipment:refdata"
+    read_cache_ttl = 600
     get_contract = OperationContract(
         query=PageNumberQuerySerializer,
         success=ResponseContract.success("EquipmentFilters", FilterMetadataSerializer),
@@ -297,6 +307,8 @@ _FACET_SPEC = facet_filter_spec(EquipmentCollectionAPIView.filter_spec)
 class EquipmentCollectionFacetsAPIView(EquipmentFacetsAPIView):
     queryset_provider = staticmethod(equipment_queryset)
     filter_spec = _FACET_SPEC
+    read_cache_namespace = "labs:equipment:inventory"
+    read_cache_ttl = 30
     get_contract = OperationContract(
         query=facet_query_serializer("EquipmentFacetsQuerySerializer", _FACET_SPEC),
         success=ResponseContract.paginated("EquipmentFacets", EquipmentFacetSerializer),

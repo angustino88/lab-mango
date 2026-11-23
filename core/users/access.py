@@ -23,9 +23,11 @@ still be scoped by the caller.
 
 from typing import Any, cast
 
+from django.conf import settings
 from django.db.models import Q, QuerySet
 
 from core.common.api.permissions import CapabilityPermission, is_authenticated
+from core.common.cache import get_namespace_version, safe_cache_delete, safe_cache_get, safe_cache_set
 from core.common.domain.errors import Forbidden
 from core.users.models import URSGroup, User
 from core.users.permissions import ALL_PERMISSIONS, LabsPermission, permissions_for_roles, roles_granting
@@ -33,6 +35,11 @@ from core.users.roles import LabsRole
 
 _ROLES_CACHE_ATTR = "_labs_roles_cache"
 _VALID_ROLES = frozenset(LabsRole.values)
+USERS_ACCESS_CACHE_NAMESPACE = "users:access"
+
+
+def _roles_cache_key(user_id: Any, version: int) -> str:
+    return f"users:labs_roles:v{version}:{user_id}"
 
 
 def effective_labs_roles(user: Any) -> frozenset[str]:
@@ -51,9 +58,24 @@ def effective_labs_roles(user: Any) -> frozenset[str]:
     if cached is not None:
         return cached
 
+    cache_enabled = bool(getattr(settings, "API_AUTH_CACHE_ENABLED", False))
+    cache_key: str | None = None
+    if cache_enabled and getattr(user, "pk", None) is not None:
+        ns_ver = get_namespace_version(USERS_ACCESS_CACHE_NAMESPACE)
+        if ns_ver > 0:
+            cache_key = _roles_cache_key(user.pk, ns_ver)
+            cached_roles = safe_cache_get(cache_key)
+            if cached_roles is not None:
+                roles = frozenset(role for role in cached_roles if role in _VALID_ROLES)
+                setattr(user, _ROLES_CACHE_ATTR, roles)
+                return roles
+
     assigned_roles = URSGroup.objects.filter(group__user=user).values_list("labs_role", flat=True).distinct()
     roles = frozenset(role for role in assigned_roles if role in _VALID_ROLES)
     setattr(user, _ROLES_CACHE_ATTR, roles)
+    if cache_key is not None:
+        ttl = int(getattr(settings, "API_AUTH_CACHE_TTL", 120) or 120)
+        safe_cache_set(cache_key, tuple(sorted(roles)), timeout=ttl)
     return roles
 
 
@@ -97,6 +119,10 @@ def clear_labs_roles_cache(user: Any) -> None:
     """Drop the cached roles on ``user`` after its groups or role mappings change."""
     if hasattr(user, _ROLES_CACHE_ATTR):
         delattr(user, _ROLES_CACHE_ATTR)
+    if getattr(settings, "API_AUTH_CACHE_ENABLED", False) and getattr(user, "pk", None) is not None:
+        ns_ver = get_namespace_version(USERS_ACCESS_CACHE_NAMESPACE)
+        if ns_ver > 0:
+            safe_cache_delete(_roles_cache_key(user.pk, ns_ver))
 
 
 class LabsAccessPolicy(CapabilityPermission):

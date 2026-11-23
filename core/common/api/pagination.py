@@ -1,7 +1,15 @@
+import hashlib
+from typing import Any
+
+from django.conf import settings
+from django.core.paginator import Paginator
+from django.utils.functional import cached_property
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+
+from core.common.cache import get_namespace_version, safe_cache_get, safe_cache_set
 
 
 class PageNumberQuerySerializer(serializers.Serializer):
@@ -28,12 +36,55 @@ def with_page_query(query_serializer: type[serializers.Serializer]) -> type[seri
     )
 
 
+class _CachedCountPaginator(Paginator):
+    """Django Paginator that caches exact ``COUNT(*)`` per versioned namespace and SQL filter."""
+
+    def __init__(self, object_list: Any, per_page: int, *, cache_namespace: str, cache_ttl: int, **kwargs: Any):
+        super().__init__(object_list, per_page, **kwargs)
+        self._cache_namespace = cache_namespace
+        self._cache_ttl = cache_ttl
+
+    @cached_property
+    def count(self) -> int:
+        query = getattr(self.object_list, "query", None)
+        if query is None or self._cache_ttl <= 0:
+            return super().count
+        ns_ver = get_namespace_version(self._cache_namespace)
+        if ns_ver == 0:
+            return super().count
+        try:
+            sql_key = str(self.object_list.order_by().query)
+        except Exception:  # noqa: BLE001
+            return super().count
+        sql_hash = hashlib.sha256(sql_key.encode("utf-8")).hexdigest()[:32]
+        cache_key = f"api:count:{self._cache_namespace}:v{ns_ver}:{sql_hash}"
+        cached = safe_cache_get(cache_key)
+        if cached is not None:
+            return int(cached)
+        total = super().count
+        safe_cache_set(cache_key, int(total), timeout=self._cache_ttl)
+        return total
+
+
 class ResultsSetPagination(PageNumberPagination):
     """Canonical bounded page-number pagination for the redesigned API."""
 
     page_size = 25
     page_size_query_param = "page_size"
     max_page_size = 100
+
+    def paginate_queryset(self, queryset, request, view=None):
+        namespace = getattr(view, "read_cache_namespace", None) if view is not None else None
+        count_ttl = int(getattr(settings, "API_PAGINATION_COUNT_CACHE_TTL", 15) or 0)
+        if namespace and count_ttl > 0 and getattr(settings, "API_READ_CACHE_ENABLED", False):
+            self.django_paginator_class = lambda object_list, per_page, **kw: _CachedCountPaginator(  # type: ignore[assignment]
+                object_list,
+                per_page,
+                cache_namespace=namespace,
+                cache_ttl=count_ttl,
+                **kw,
+            )
+        return super().paginate_queryset(queryset, request, view=view)
 
     def get_page_size(self, request):
         raw_page_size = request.query_params.get(self.page_size_query_param)

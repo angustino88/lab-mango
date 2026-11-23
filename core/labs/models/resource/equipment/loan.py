@@ -139,6 +139,11 @@ class EquipmentLoan(TimeStampedModel):
             models.Index(
                 fields=("due_at",), condition=Q(returned_at__isnull=True), name="equipment_loan_open_due_idx"
             ),
+            models.Index(
+                fields=("equipment", "due_at"),
+                condition=Q(returned_at__isnull=True),
+                name="equipment_loan_active_due_idx",
+            ),
         ]
 
     def __str__(self) -> str:

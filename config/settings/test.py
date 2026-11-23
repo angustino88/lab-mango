@@ -41,6 +41,9 @@ CACHES = {
         "LOCATION": "",
     }
 }
+# Keep query-budget unit tests deterministic by default; cache tests and load tests opt in.
+API_READ_CACHE_ENABLED = env.bool("API_READ_CACHE_ENABLED", default=False)
+API_AUTH_CACHE_ENABLED = env.bool("API_AUTH_CACHE_ENABLED", default=False)
 
 # PASSWORDS  (fast hasher for test speed)
 # ------------------------------------------------------------------------------
