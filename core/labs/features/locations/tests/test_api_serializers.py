@@ -127,3 +127,12 @@ def test_station_list_passes_declared_room_and_type_filters():
     assert response is not None
     list_stations.assert_called_once_with()
     apply_filters.assert_called_once_with(list_stations.return_value, filters)
+
+
+def test_station_serializer_serializes_room_slot_with_code_as_name():
+    from core.labs.models import RoomSlot
+
+    slot = RoomSlot(id=4171, row_index=0, col_index=0, slot_code="R1C1")
+    serialized = StationSerializer().fields["slot"].to_representation(slot)
+    assert serialized == {"id": 4171, "name": "R1C1"}
+
