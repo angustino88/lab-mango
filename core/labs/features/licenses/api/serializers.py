@@ -58,6 +58,7 @@ class LicenseSerializer(AppModelSerializer):
     image_url = ResourceImageURLField()
     owner = UserReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
+    group = NamedReferenceSerializer(read_only=True, allow_null=True)
     product = NamedReferenceSerializer(read_only=True, allow_null=True)
     vendor = NamedReferenceSerializer(read_only=True, allow_null=True)
     type = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -78,6 +79,7 @@ class LicenseSerializer(AppModelSerializer):
             "name",
             "owner",
             "department",
+            "group",
             "remark",
             "image_url",
             "product",

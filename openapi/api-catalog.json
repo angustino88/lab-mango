@@ -79836,6 +79836,16 @@
                       "readOnly": true,
                       "nullable": true
                     },
+                    "group": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "nullable": true
+                    },
                     "remark": {
                       "type": "string",
                       "readOnly": true
@@ -79966,6 +79976,7 @@
                     "created_at",
                     "department",
                     "expires_at",
+                    "group",
                     "id",
                     "image_url",
                     "max_version",
@@ -80007,6 +80018,7 @@
                 "name": "string",
                 "owner": {},
                 "department": {},
+                "group": {},
                 "remark": "string",
                 "image_url": "https://example.com/resource",
                 "product": {},
@@ -80309,6 +80321,16 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "group": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "remark": {
                     "type": "string",
                     "readOnly": true
@@ -80439,6 +80461,7 @@
                   "created_at",
                   "department",
                   "expires_at",
+                  "group",
                   "id",
                   "image_url",
                   "max_version",
@@ -80471,6 +80494,7 @@
               "name": "string",
               "owner": {},
               "department": {},
+              "group": {},
               "remark": "string",
               "image_url": "https://example.com/resource",
               "product": {},
@@ -84210,6 +84234,16 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "group": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "remark": {
                     "type": "string",
                     "readOnly": true
@@ -84340,6 +84374,7 @@
                   "created_at",
                   "department",
                   "expires_at",
+                  "group",
                   "id",
                   "image_url",
                   "max_version",
@@ -84372,6 +84407,7 @@
               "name": "string",
               "owner": {},
               "department": {},
+              "group": {},
               "remark": "string",
               "image_url": "https://example.com/resource",
               "product": {},
@@ -84623,6 +84659,16 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "group": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "remark": {
                     "type": "string",
                     "readOnly": true
@@ -84753,6 +84799,7 @@
                   "created_at",
                   "department",
                   "expires_at",
+                  "group",
                   "id",
                   "image_url",
                   "max_version",
@@ -84785,6 +84832,7 @@
               "name": "string",
               "owner": {},
               "department": {},
+              "group": {},
               "remark": "string",
               "image_url": "https://example.com/resource",
               "product": {},
@@ -85778,6 +85826,16 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "group": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
                   "remark": {
                     "type": "string",
                     "readOnly": true
@@ -85908,6 +85966,7 @@
                   "created_at",
                   "department",
                   "expires_at",
+                  "group",
                   "id",
                   "image_url",
                   "max_version",
@@ -85940,6 +85999,7 @@
               "name": "string",
               "owner": {},
               "department": {},
+              "group": {},
               "remark": "string",
               "image_url": "https://example.com/resource",
               "product": {},

@@ -85,7 +85,7 @@ def list_licenses(*, search: str | None = None) -> QuerySet[License]:
     )
     queryset = (
         License.objects.filter(deleted_at__isnull=True)
-        .select_related("product", "vendor", "type", "category", "restriction", "owner")
+        .select_related("product", "vendor", "type", "category", "restriction", "owner", "department", "group")
         .prefetch_related(
             # Who holds the seats: one query for the whole page, read as ``active_assignments``.
             Prefetch(

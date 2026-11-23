@@ -109,6 +109,8 @@ license as in `GET /api/labs/licenses/{id}`.
 Status changes, assignment, agreements, images and acquisition price (from procurement allocation) keep
 their own routes.
 
+- License reads include nullable `department` and `group` references. Use `department_id` and `group_id` to set or clear them on create and update.
+
 ### 5.4 Assignment and seats
 - A license read (`GET /licenses`, `GET /licenses/{id}`, and the responses of the write routes) carries
   `assigned_equipment`: the live equipment items that hold a seat, as `{id, uid, sku, name}`, oldest assignment
