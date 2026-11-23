@@ -1860,6 +1860,58 @@ components:
           $ref: '#/components/schemas/FilterMetadata'
       required:
       - data
+    BenchForceDelete:
+      type: object
+      description: Preserve the benches module's established strict-write helper.
+      properties:
+        reason:
+          type: string
+          description: Operator reason for force-deleting this bench, unassigning
+            equipment, and cancelling active bookings.
+          maxLength: 500
+          minLength: 3
+        confirm:
+          type: boolean
+          description: Must be true to confirm force deletion.
+      required:
+      - confirm
+      - reason
+    BenchForceDeleteReleased:
+      type: object
+      properties:
+        equipment:
+          type: integer
+          minimum: 0
+          readOnly: true
+        bookings:
+          type: integer
+          minimum: 0
+          readOnly: true
+      required:
+      - bookings
+      - equipment
+    BenchForceDeleteResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          readOnly: true
+        released:
+          allOf:
+          - $ref: '#/components/schemas/BenchForceDeleteReleased'
+          readOnly: true
+      required:
+      - id
+      - released
+    BenchForceDeletedSerializersBenchForceDeleteResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchForceDeleteResult'
+      required:
+      - data
     BenchGroup:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -7139,6 +7191,69 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/FilterMetadata'
+      required:
+      - data
+    EquipmentForceDelete:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        reason:
+          type: string
+          description: Operator reason for force-deleting this equipment and releasing
+            active dependents.
+          maxLength: 500
+          minLength: 3
+        confirm:
+          type: boolean
+          description: Must be true to confirm force deletion.
+      required:
+      - confirm
+      - reason
+    EquipmentForceDeleteReleased:
+      type: object
+      properties:
+        bench_assignments:
+          type: integer
+          minimum: 0
+          readOnly: true
+        loans:
+          type: integer
+          minimum: 0
+          readOnly: true
+        license_assignments:
+          type: integer
+          minimum: 0
+          readOnly: true
+        bookings:
+          type: integer
+          minimum: 0
+          readOnly: true
+      required:
+      - bench_assignments
+      - bookings
+      - license_assignments
+      - loans
+    EquipmentForceDeleteResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          readOnly: true
+        released:
+          allOf:
+          - $ref: '#/components/schemas/EquipmentForceDeleteReleased'
+          readOnly: true
+      required:
+      - id
+      - released
+    EquipmentForceDeletedSerializersEquipmentForceDeleteResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentForceDeleteResult'
       required:
       - data
     EquipmentHandOver:
@@ -18190,6 +18305,59 @@ components:
           $ref: '#/components/schemas/FinancialReportResponse'
       required:
       - data
+    RoomForceDelete:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        reason:
+          type: string
+          description: Operator reason for force-deleting this room and detaching
+            its stations.
+          maxLength: 500
+          minLength: 3
+        confirm:
+          type: boolean
+          description: Must be true to confirm force deletion.
+      required:
+      - confirm
+      - reason
+    RoomForceDeleteReleased:
+      type: object
+      properties:
+        stations:
+          type: integer
+          minimum: 0
+          readOnly: true
+        equipment:
+          type: integer
+          minimum: 0
+          readOnly: true
+      required:
+      - equipment
+      - stations
+    RoomForceDeleteResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          readOnly: true
+        released:
+          allOf:
+          - $ref: '#/components/schemas/RoomForceDeleteReleased'
+          readOnly: true
+      required:
+      - id
+      - released
+    RoomForceDeletedSerializersRoomForceDeleteResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/RoomForceDeleteResult'
+      required:
+      - data
     RoomHistorySerializersRoomStatusRecordPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -19903,6 +20071,59 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/FilterMetadata'
+      required:
+      - data
+    StationForceDelete:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        reason:
+          type: string
+          description: Operator reason for force-deleting this station and detaching
+            its benches.
+          maxLength: 500
+          minLength: 3
+        confirm:
+          type: boolean
+          description: Must be true to confirm force deletion.
+      required:
+      - confirm
+      - reason
+    StationForceDeleteReleased:
+      type: object
+      properties:
+        benches:
+          type: integer
+          minimum: 0
+          readOnly: true
+        equipment:
+          type: integer
+          minimum: 0
+          readOnly: true
+      required:
+      - benches
+      - equipment
+    StationForceDeleteResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          readOnly: true
+        released:
+          allOf:
+          - $ref: '#/components/schemas/StationForceDeleteReleased'
+          readOnly: true
+      required:
+      - id
+      - released
+    StationForceDeletedSerializersStationForceDeleteResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationForceDeleteResult'
       required:
       - data
     StationHistorySerializersStationStatusRecordPaginatedResponse:

@@ -17,6 +17,8 @@ from core.labs.features.locations.stations.queries.summaries import get_station_
 from .filters import STATION_FILTERS
 from .serializers import (
     StationCreateSerializer,
+    StationForceDeleteResultSerializer,
+    StationForceDeleteSerializer,
     StationLifecycleWriteSerializer,
     StationListQuerySerializer,
     StationOptionsQuerySerializer,
@@ -196,6 +198,19 @@ class StationStatusAPIView(StationAPIView):
             lambda: services.record_station_status(actor=request.user, station_id=station_id, **serializer.validated_data),
             project=lambda record: selectors.get_station(station_id=record.station_id),
         )
+
+
+class StationForceDeleteAPIView(StationAPIView):
+    """Detach child benches, clear resting equipment placements, and soft-delete a station."""
+
+    post_contract = operation(
+        "StationForceDeleted",
+        StationForceDeleteResultSerializer,
+        request=StationForceDeleteSerializer,
+    )
+
+    def handle_post(self, request, station_id, **kwargs):
+        return self._write(services.force_delete_station, lookup={"station_id": station_id})
 
 
 class StationHistoryAPIView(StationAPIView):

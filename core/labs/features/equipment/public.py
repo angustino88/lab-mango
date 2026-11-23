@@ -10,7 +10,14 @@ from .application.change_state import (
     change_lifecycle,
 )
 from .application.create_equipment import CreateEquipmentInput, create_equipment
-from .application.delete_equipment import DeleteEquipmentInput, delete_equipment
+from .application.delete_equipment import (
+    DeleteEquipmentInput,
+    ForceDeleteEquipmentInput,
+    ForceDeleteEquipmentResult,
+    ForceDeleteReleasedSummary,
+    delete_equipment,
+    force_delete_equipment,
+)
 from .application.hardware_ids import (
     RegisterHardwareIdInput,
     delete_hardware_id,
@@ -36,6 +43,7 @@ from .application.monitoring_locks import lock_monitoring_computing
 from .application.place_equipment import (
     PlaceEquipmentInput,
     RemovePlacementInput,
+    close_placements_for_location,
     place_equipment,
     remove_placement,
 )
@@ -86,7 +94,12 @@ from .queries.equipment import (
 from .queries.hardware_ids import hardware_ids_by_equipment, list_hardware_ids, match_hardware_ids
 from .queries.inactivity_notifications import inactive_equipment_candidates
 from .queries.loans import get_active_loan, get_loan_batch, list_loans
-from .queries.placements import bench_id_at, get_active_placement, has_active_placements
+from .queries.placements import (
+    bench_id_at,
+    get_active_placement,
+    has_active_placements,
+    summarize_active_placements,
+)
 from .queries.reservations import list_reservations
 from .queries.state_history import equipment_state_timelines
 from .queries.summaries import (
@@ -160,6 +173,8 @@ __all__ = (
     "bench_id_at",
     "get_active_placement",
     "has_active_placements",
+    "summarize_active_placements",
+    "close_placements_for_location",
     "place_equipment",
     "remove_placement",
     "inactive_equipment_candidates",
@@ -176,6 +191,10 @@ __all__ = (
     "sync_computing_activity",
     "create_equipment",
     "delete_equipment",
+    "ForceDeleteEquipmentInput",
+    "ForceDeleteEquipmentResult",
+    "ForceDeleteReleasedSummary",
+    "force_delete_equipment",
     "bench_assignment_subquery",
     "bench_computers",
     "equipment_mapping_rows",

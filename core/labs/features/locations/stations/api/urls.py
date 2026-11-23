@@ -18,6 +18,11 @@ urlpatterns = [
         name="station-action-change-lifecycle",
     ),
     path("stations/<int:station_id>/actions/change-status", views.StationStatusAPIView.as_view(), name="station-action-change-status"),
+    path(
+        "stations/<int:station_id>/actions/force-delete",
+        views.StationForceDeleteAPIView.as_view(),
+        name="station-action-force-delete",
+    ),
     path("stations/<int:station_id>/slots", views.StationSlotListCreateAPIView.as_view(), name="station-slot-list-create"),
     path("stations/<int:station_id>/slots/<int:slot_id>", views.StationSlotDetailAPIView.as_view(), name="station-slot-detail"),
     path("stations/<int:station_id>/history", views.StationHistoryAPIView.as_view(), name="station-history"),

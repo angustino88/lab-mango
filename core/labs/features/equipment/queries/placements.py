@@ -30,6 +30,35 @@ def has_active_placements(*, room_id: int | None = None, station_id: int | None 
     ).exists()
 
 
+def summarize_active_placements(
+    *, room_id: int | None = None, station_id: int | None = None, limit: int = 5
+) -> tuple[int, list[str], list[str]]:
+    """Count non-deleted equipment placed directly in a room or station and return up to ``limit`` labels and category keys."""
+    if (room_id is None) == (station_id is None):
+        raise ValueError("Pass exactly one of room_id or station_id.")
+    target = {"room_id": room_id} if room_id is not None else {"station_id": station_id}
+    queryset = EquipmentAssignment.all_placements.filter(
+        unassigned_at__isnull=True, equipment__deleted_at__isnull=True, **target
+    )
+    total = queryset.count()
+    if total == 0:
+        return 0, [], []
+    rows = queryset.order_by("equipment_id").values_list(
+        "equipment__sku", "equipment__name", "equipment_id", "equipment__kind__category__key"
+    )[:limit]
+    labels: list[str] = []
+    category_keys: list[str] = []
+    for sku, name, equipment_id, category_key in rows:
+        sku_text = (sku or "").strip()
+        name_text = (name or "").strip()
+        if sku_text and name_text:
+            labels.append(f"{sku_text} — {name_text}")
+        else:
+            labels.append(sku_text or name_text or f"#{equipment_id}")
+        category_keys.append((category_key or "").strip())
+    return total, labels, category_keys
+
+
 def bench_id_at(*, equipment_id: int, at: datetime) -> int | None:
     """The bench the unit was placed on at ``at``, from placement history, or None. 1 query.
 
@@ -45,4 +74,4 @@ def bench_id_at(*, equipment_id: int, at: datetime) -> int | None:
     )
 
 
-__all__ = ("bench_id_at", "get_active_placement", "has_active_placements")
+__all__ = ("bench_id_at", "get_active_placement", "has_active_placements", "summarize_active_placements")

@@ -28,6 +28,8 @@ from .serializers import (
     BenchCreateSerializer,
     BenchEquipmentListQuerySerializer,
     BenchFavoriteSerializer,
+    BenchForceDeleteResultSerializer,
+    BenchForceDeleteSerializer,
     BenchGroupSerializer,
     BenchLifecycleWriteSerializer,
     BenchListQuerySerializer,
@@ -134,6 +136,19 @@ class BenchLifecycleAPIView(BenchAPIView):
 
     def handle_post(self, request, bench_id, **kwargs):
         return self._write(services.change_bench_lifecycle, lookup={"bench_id": bench_id}, project=True)
+
+
+class BenchForceDeleteAPIView(BenchAPIView):
+    """Unassign equipment, cancel active bookings, and soft-delete a bench."""
+
+    post_contract = operation(
+        "BenchForceDeleted",
+        BenchForceDeleteResultSerializer,
+        request=BenchForceDeleteSerializer,
+    )
+
+    def handle_post(self, request, bench_id, **kwargs):
+        return self._write(services.force_delete_bench, lookup={"bench_id": bench_id})
 
 
 class BenchFavoriteAPIView(BenchAPIView):

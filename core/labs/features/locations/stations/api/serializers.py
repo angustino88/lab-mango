@@ -373,6 +373,33 @@ class StationReferenceDataSerializer(serializers.Serializer):
     slot_statuses = ChoiceReferenceSerializer(many=True, read_only=True, help_text="Slot service_status values.")
 
 
+class StationForceDeleteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    reason = serializers.CharField(
+        min_length=3,
+        max_length=500,
+        trim_whitespace=True,
+        help_text="Operator reason for force-deleting this station and detaching its benches.",
+    )
+    confirm = serializers.BooleanField(
+        help_text="Must be true to confirm force deletion.",
+    )
+
+    def validate_confirm(self, value: bool) -> bool:
+        if value is not True:
+            raise serializers.ValidationError("Explicit confirmation is required to force-delete a station.")
+        return value
+
+
+class StationForceDeleteReleasedSerializer(serializers.Serializer):
+    benches = serializers.IntegerField(min_value=0, read_only=True)
+    equipment = serializers.IntegerField(min_value=0, read_only=True)
+
+
+class StationForceDeleteResultSerializer(serializers.Serializer):
+    id = serializers.IntegerField(min_value=1, read_only=True)
+    released = StationForceDeleteReleasedSerializer(read_only=True)
+
+
 class StationOptionsQuerySerializer(OptionsQueryMixin):
     room_id = serializers.IntegerField(required=False, min_value=1)
     station_type_id = serializers.IntegerField(required=False, min_value=1)
@@ -381,6 +408,9 @@ class StationOptionsQuerySerializer(OptionsQueryMixin):
 __all__ = [
     "RoomReferenceSerializer",
     "StationCreateSerializer",
+    "StationForceDeleteReleasedSerializer",
+    "StationForceDeleteResultSerializer",
+    "StationForceDeleteSerializer",
     "StationLifecycleWriteSerializer",
     "StationListQuerySerializer",
     "StationOptionsQuerySerializer",

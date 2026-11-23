@@ -226,6 +226,33 @@ class RoomSerializer(LocationStateFieldsMixin, AppModelSerializer):
         read_only_fields = fields
 
 
+class RoomForceDeleteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    reason = serializers.CharField(
+        min_length=3,
+        max_length=500,
+        trim_whitespace=True,
+        help_text="Operator reason for force-deleting this room and detaching its stations.",
+    )
+    confirm = serializers.BooleanField(
+        help_text="Must be true to confirm force deletion.",
+    )
+
+    def validate_confirm(self, value: bool) -> bool:
+        if value is not True:
+            raise serializers.ValidationError("Explicit confirmation is required to force-delete a room.")
+        return value
+
+
+class RoomForceDeleteReleasedSerializer(serializers.Serializer):
+    stations = serializers.IntegerField(min_value=0, read_only=True)
+    equipment = serializers.IntegerField(min_value=0, read_only=True)
+
+
+class RoomForceDeleteResultSerializer(serializers.Serializer):
+    id = serializers.IntegerField(min_value=1, read_only=True)
+    released = RoomForceDeleteReleasedSerializer(read_only=True)
+
+
 class RoomOptionsQuerySerializer(OptionsQueryMixin):
     building_id = serializers.IntegerField(required=False, min_value=1)
     city_id = serializers.IntegerField(required=False, min_value=1)
@@ -233,6 +260,9 @@ class RoomOptionsQuerySerializer(OptionsQueryMixin):
 
 __all__ = [
     "RoomCreateSerializer",
+    "RoomForceDeleteReleasedSerializer",
+    "RoomForceDeleteResultSerializer",
+    "RoomForceDeleteSerializer",
     "RoomLifecycleWriteSerializer",
     "RoomListQuerySerializer",
     "RoomObservationSerializer",

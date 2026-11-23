@@ -57,6 +57,7 @@ def test_public_exports_supported_commands_and_queries():
         "bench_station_ids",
         "create_bench",
         "delete_bench",
+        "force_delete_bench",
         "get_bench",
         "get_bench_status_summary",
         "get_bench_for_mapping",
@@ -78,7 +79,7 @@ def test_public_exports_supported_commands_and_queries():
         if isinstance(node, ast.ImportFrom)
     }
     assert exported_from[".application"] == {
-        "add_favorite", "change_bench_lifecycle", "create_bench", "delete_bench", "place_bench", "remove_favorite",
+        "add_favorite", "change_bench_lifecycle", "create_bench", "delete_bench", "force_delete_bench", "place_bench", "remove_favorite",
         "retire_reference", "save_reference", "update_bench",
     }
     assert exported_from[".queries.selectors"] == {
@@ -98,14 +99,14 @@ def test_http_adapter_uses_public_entry_points_not_private_implementations():
 
 def test_application_and_query_package_exports_are_explicit():
     assert set(_public_names(FEATURE_ROOT / "application" / "__init__.py")) == {
-        "add_favorite", "bench_images", "change_bench_lifecycle", "create_bench", "delete_bench", "place_bench",
+        "add_favorite", "bench_images", "change_bench_lifecycle", "create_bench", "delete_bench", "force_delete_bench", "place_bench",
         "remove_favorite", "retire_reference", "save_reference", "update_bench",
     }
     assert set(_public_names(FEATURE_ROOT / "queries" / "__init__.py")) == {
         "bench_mapping_rows", "bench_station_ids", "get_bench", "get_bench_for_mapping", "get_reference", "list_bench_equipment", "list_benches", "list_references", "reference_data",
     }
     assert set(_public_names(FEATURE_ROOT / "application" / "services.py")) == {
-        "add_favorite", "change_bench_lifecycle", "create_bench", "delete_bench", "place_bench", "remove_favorite",
+        "add_favorite", "change_bench_lifecycle", "create_bench", "delete_bench", "force_delete_bench", "place_bench", "remove_favorite",
         "retire_reference", "save_reference", "update_bench",
     }
     assert set(_public_names(FEATURE_ROOT / "queries" / "selectors.py")) == {

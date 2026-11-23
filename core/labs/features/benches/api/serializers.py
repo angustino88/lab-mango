@@ -446,3 +446,30 @@ class BookingBenchChoicesSerializer(serializers.Serializer):
         fields = super().get_fields()
         fields["data"] = fields.pop("choices")
         return fields
+
+
+class BenchForceDeleteSerializer(StrictWriteMixin, serializers.Serializer):
+    reason = serializers.CharField(
+        min_length=3,
+        max_length=500,
+        trim_whitespace=True,
+        help_text="Operator reason for force-deleting this bench, unassigning equipment, and cancelling active bookings.",
+    )
+    confirm = serializers.BooleanField(
+        help_text="Must be true to confirm force deletion.",
+    )
+
+    def validate_confirm(self, value: bool) -> bool:
+        if value is not True:
+            raise serializers.ValidationError("Explicit confirmation is required to force-delete a bench.")
+        return value
+
+
+class BenchForceDeleteReleasedSerializer(serializers.Serializer):
+    equipment = serializers.IntegerField(min_value=0, read_only=True)
+    bookings = serializers.IntegerField(min_value=0, read_only=True)
+
+
+class BenchForceDeleteResultSerializer(serializers.Serializer):
+    id = serializers.IntegerField(min_value=1, read_only=True)
+    released = BenchForceDeleteReleasedSerializer(read_only=True)

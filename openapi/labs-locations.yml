@@ -1488,6 +1488,66 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Change Status Rooms by Room ID
+  /api/labs/rooms/{room_id}/actions/force-delete:
+    post:
+      operationId: labs_rooms_actions_force_delete_create_by_room_id
+      description: Detach child stations, clear resting equipment placements, and
+        soft-delete a room.
+      parameters:
+      - in: path
+        name: room_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Rooms
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomForceDelete'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoomForceDelete'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoomForceDelete'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomForceDeletedSerializersRoomForceDeleteResultDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Force Delete Rooms by Room ID
   /api/labs/rooms/{room_id}/actions/generate-slots:
     post:
       operationId: labs_rooms_actions_generate_slots_create_by_room_id
@@ -2680,6 +2740,66 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Change Status Stations by Station ID
+  /api/labs/stations/{station_id}/actions/force-delete:
+    post:
+      operationId: labs_stations_actions_force_delete_create_by_station_id
+      description: Detach child benches, clear resting equipment placements, and soft-delete
+        a station.
+      parameters:
+      - in: path
+        name: station_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationForceDelete'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationForceDelete'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationForceDelete'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationForceDeletedSerializersStationForceDeleteResultDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Force Delete Stations by Station ID
   /api/labs/stations/{station_id}/actions/place:
     post:
       operationId: labs_stations_actions_place_create_by_station_id
@@ -4907,6 +5027,59 @@ components:
           $ref: '#/components/schemas/FilterMetadata'
       required:
       - data
+    RoomForceDelete:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        reason:
+          type: string
+          description: Operator reason for force-deleting this room and detaching
+            its stations.
+          maxLength: 500
+          minLength: 3
+        confirm:
+          type: boolean
+          description: Must be true to confirm force deletion.
+      required:
+      - confirm
+      - reason
+    RoomForceDeleteReleased:
+      type: object
+      properties:
+        stations:
+          type: integer
+          minimum: 0
+          readOnly: true
+        equipment:
+          type: integer
+          minimum: 0
+          readOnly: true
+      required:
+      - equipment
+      - stations
+    RoomForceDeleteResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          readOnly: true
+        released:
+          allOf:
+          - $ref: '#/components/schemas/RoomForceDeleteReleased'
+          readOnly: true
+      required:
+      - id
+      - released
+    RoomForceDeletedSerializersRoomForceDeleteResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/RoomForceDeleteResult'
+      required:
+      - data
     RoomHistorySerializersRoomStatusRecordPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -5926,6 +6099,59 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/FilterMetadata'
+      required:
+      - data
+    StationForceDelete:
+      type: object
+      description: Reject unsupported keys and return a stable error when SKU is supplied
+        on update.
+      properties:
+        reason:
+          type: string
+          description: Operator reason for force-deleting this station and detaching
+            its benches.
+          maxLength: 500
+          minLength: 3
+        confirm:
+          type: boolean
+          description: Must be true to confirm force deletion.
+      required:
+      - confirm
+      - reason
+    StationForceDeleteReleased:
+      type: object
+      properties:
+        benches:
+          type: integer
+          minimum: 0
+          readOnly: true
+        equipment:
+          type: integer
+          minimum: 0
+          readOnly: true
+      required:
+      - benches
+      - equipment
+    StationForceDeleteResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          readOnly: true
+        released:
+          allOf:
+          - $ref: '#/components/schemas/StationForceDeleteReleased'
+          readOnly: true
+      required:
+      - id
+      - released
+    StationForceDeletedSerializersStationForceDeleteResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/StationForceDeleteResult'
       required:
       - data
     StationHistorySerializersStationStatusRecordPaginatedResponse:

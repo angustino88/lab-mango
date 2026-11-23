@@ -140,6 +140,8 @@ paths:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1change-lifecycle
   /api/labs/benches/{bench_id}/actions/favorite:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1favorite
+  /api/labs/benches/{bench_id}/actions/force-delete:
+    $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1force-delete
   /api/labs/benches/{bench_id}/actions/place:
     $ref: ./labs-benches.yml#/paths/~1api~1labs~1benches~1{bench_id}~1actions~1place
   /api/labs/benches/{bench_id}/equipment:
@@ -236,6 +238,8 @@ paths:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1change-lifecycle
   /api/labs/rooms/{room_id}/actions/change-status:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1change-status
+  /api/labs/rooms/{room_id}/actions/force-delete:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1force-delete
   /api/labs/rooms/{room_id}/actions/generate-slots:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1generate-slots
   /api/labs/rooms/{room_id}/history:
@@ -266,6 +270,8 @@ paths:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1change-lifecycle
   /api/labs/stations/{station_id}/actions/change-status:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1change-status
+  /api/labs/stations/{station_id}/actions/force-delete:
+    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1force-delete
   /api/labs/stations/{station_id}/actions/place:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1place
   /api/labs/stations/{station_id}/history:
@@ -350,6 +356,8 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1change-lifecycle
   /api/labs/equipment/{equipment_id}/actions/extend-loan:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1extend-loan
+  /api/labs/equipment/{equipment_id}/actions/force-delete:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1force-delete
   /api/labs/equipment/{equipment_id}/actions/hand-over:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1hand-over
   /api/labs/equipment/{equipment_id}/actions/return:

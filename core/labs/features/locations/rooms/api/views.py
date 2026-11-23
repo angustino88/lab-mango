@@ -17,6 +17,8 @@ from core.labs.features.locations.rooms.queries.summaries import get_room_status
 from .filters import ROOM_FILTERS
 from .serializers import (
     RoomCreateSerializer,
+    RoomForceDeleteResultSerializer,
+    RoomForceDeleteSerializer,
     RoomLifecycleWriteSerializer,
     RoomListQuerySerializer,
     RoomObservationSerializer,
@@ -155,6 +157,19 @@ class RoomStatusAPIView(RoomAPIView):
             ),
             project=lambda record: selectors.get_room(room_id=record.room_id),
         )
+
+
+class RoomForceDeleteAPIView(RoomAPIView):
+    """Detach child stations, clear resting equipment placements, and soft-delete a room."""
+
+    post_contract = operation(
+        "RoomForceDeleted",
+        RoomForceDeleteResultSerializer,
+        request=RoomForceDeleteSerializer,
+    )
+
+    def handle_post(self, request, room_id, **kwargs):
+        return self._write(services.force_delete_room, lookup={"room_id": room_id})
 
 
 class RoomHistoryAPIView(RoomAPIView):

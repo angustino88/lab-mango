@@ -309,6 +309,35 @@ class EquipmentReservationCancelSerializer(ResourceWriteSerializerMixin, seriali
     )
 
 
+class EquipmentForceDeleteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
+    reason = serializers.CharField(
+        min_length=3,
+        max_length=500,
+        trim_whitespace=True,
+        help_text="Operator reason for force-deleting this equipment and releasing active dependents.",
+    )
+    confirm = serializers.BooleanField(
+        help_text="Must be true to confirm force deletion.",
+    )
+
+    def validate_confirm(self, value: bool) -> bool:
+        if value is not True:
+            raise serializers.ValidationError("Explicit confirmation is required to force-delete equipment.")
+        return value
+
+
+class EquipmentForceDeleteReleasedSerializer(serializers.Serializer):
+    bench_assignments = serializers.IntegerField(min_value=0, read_only=True)
+    loans = serializers.IntegerField(min_value=0, read_only=True)
+    license_assignments = serializers.IntegerField(min_value=0, read_only=True)
+    bookings = serializers.IntegerField(min_value=0, read_only=True)
+
+
+class EquipmentForceDeleteResultSerializer(serializers.Serializer):
+    id = serializers.IntegerField(min_value=1, read_only=True)
+    released = EquipmentForceDeleteReleasedSerializer(read_only=True)
+
+
 class EquipmentReservationHandOverSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
     equipment_ids = serializers.ListField(
         child=serializers.IntegerField(min_value=1),
