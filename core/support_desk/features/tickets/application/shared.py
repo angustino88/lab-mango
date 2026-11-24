@@ -11,7 +11,13 @@ def actor_display_name(actor: Any, default: str = "Unknown") -> str:
     """Best human-readable name for an actor (``System`` when there is none)."""
     if actor is None:
         return "System"
-    full_name = getattr(actor, "get_full_name", lambda: "")()
+    display_name = (getattr(actor, "display_name", "") or "").strip()
+    if display_name:
+        return display_name
+    name = (getattr(actor, "name", "") or "").strip()
+    if name:
+        return name
+    full_name = (getattr(actor, "get_full_name", lambda: "")() or "").strip()
     return full_name or getattr(actor, "username", "") or default
 
 
@@ -20,12 +26,16 @@ def actor_or_none(actor: Any) -> Any:
     return actor if getattr(actor, "pk", None) else None
 
 
-def get_ticket_for_actor(ticket_key: str, actor: Any, *, select_related: tuple[str, ...] = ()) -> SupportTicket:
+def get_ticket_for_actor(
+    ticket_key: str, actor: Any, *, select_related: tuple[str, ...] = (), lock: bool = False
+) -> SupportTicket:
     """Load a ticket the actor is allowed to see, or raise :class:`TicketNotFoundError`.
 
     Invisible tickets deliberately look identical to non-existent ones so keys cannot be enumerated.
     """
     qs = SupportTicket.objects.all()
+    if lock:
+        qs = qs.select_for_update(of=("self",))
     if select_related:
         qs = qs.select_related(*select_related)
     ticket = qs.filter(key=ticket_key).first()
