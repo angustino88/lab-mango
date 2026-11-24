@@ -1,5 +1,7 @@
 """Support ticket model."""
 
+from typing import TYPE_CHECKING
+
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import connection, models, transaction
@@ -16,6 +18,9 @@ from core.support_desk.contracts import (
     TicketType,
 )
 
+if TYPE_CHECKING:
+    from core.support_desk.models.transition import SupportStatusTransition
+
 
 def get_next_ticket_number() -> int:
     """Acquire the next sequential ticket number atomically."""
@@ -31,6 +36,9 @@ def get_next_ticket_number() -> int:
 
 class SupportTicket(models.Model):
     """Core ticket entity representing a user incident or inquiry."""
+
+    if TYPE_CHECKING:
+        available_transitions: list[SupportStatusTransition]
 
     key = models.CharField(max_length=32, unique=True, editable=False)
     number = models.BigIntegerField(unique=True, editable=False)

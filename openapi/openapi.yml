@@ -684,6 +684,8 @@ paths:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1labels~1{label_id}
   /api/support/labels/options:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1labels~1options
+  /api/support/people/options:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1people~1options
   /api/support/priorities:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1priorities
   /api/support/priorities/{priority_id}:
@@ -738,6 +740,12 @@ paths:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1work-logs~1{work_log_id}
   /api/support/tickets/stats:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1stats
+  /api/support/work-logs:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1work-logs
+  /api/support/work-logs/contributors:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1work-logs~1contributors
+  /api/support/work-logs/summary:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1work-logs~1summary
   /api/user-groups:
     $ref: ./users-groups-list-groups.yml#/paths/~1api~1user-groups
   /api/user-groups/{group_id}/users:

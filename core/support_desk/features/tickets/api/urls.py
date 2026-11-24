@@ -7,6 +7,10 @@ from . import views, work_logs
 urlpatterns = [
     # Ticket collections and detail
     path("tickets", views.TicketListCreateAPIView.as_view(), name="ticket-list-create"),
+    path("work-logs", work_logs.WorkLogReportListAPIView.as_view(), name="work-log-report-list"),
+    path("work-logs/summary", work_logs.WorkLogReportSummaryAPIView.as_view(), name="work-log-report-summary"),
+    path("work-logs/contributors", work_logs.WorkLogContributorsAPIView.as_view(), name="work-log-report-contributors"),
+    path("people/options", views.SupportPeopleOptionsAPIView.as_view(), name="support-people-options"),
     path("tickets/stats", views.QueueStatsAPIView.as_view(), name="ticket-queue-stats"),
     path("tickets/<str:key>", views.TicketDetailAPIView.as_view(), name="ticket-detail"),
     path("tickets/<str:key>/actions/assign", views.TicketAssignAPIView.as_view(), name="ticket-assign"),

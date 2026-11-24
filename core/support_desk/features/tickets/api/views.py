@@ -59,6 +59,7 @@ from core.support_desk.features.tickets.api.serializers import (
     StatusOptionsQuerySerializer,
     StatusSerializer,
     StatusTransitionSerializer,
+    SupportPeopleOptionsQuerySerializer,
     SupportSettingsSerializer,
     TeamSerializer,
     TicketActivitySerializer,
@@ -160,6 +161,7 @@ from core.support_desk.features.tickets.queries import (
     get_queue_stats,
     get_resource_ticket_summary,
     get_status_options,
+    get_support_people_options,
     get_team_options,
     get_ticket_by_key,
     list_tickets,
@@ -216,7 +218,7 @@ class TicketListCreateAPIView(SupportAPIView):
         )
         return self._execute(
             lambda: create_ticket(cmd, actor=request.user),
-            project=lambda ticket: get_ticket_by_key(ticket.key),
+            project=lambda ticket: get_ticket_by_key(ticket.key, viewer=request.user, include_workflow=True),
         )
 
 
@@ -227,7 +229,7 @@ class TicketDetailAPIView(SupportAPIView):
     patch_contract = operation("TicketUpdate", TicketDetailSerializer, request=TicketUpdateRequestSerializer)
 
     def _get_ticket_or_raise(self, key: str):
-        ticket = get_ticket_by_key(key, viewer=self.request.user)
+        ticket = get_ticket_by_key(key, viewer=self.request.user, include_workflow=True)
         if not ticket:
             raise TicketNotFoundError(f"Ticket {key} not found.")
         return ticket
@@ -261,7 +263,7 @@ class TicketDetailAPIView(SupportAPIView):
         )
         return self._execute(
             lambda: update_ticket(cmd, actor=request.user),
-            project=lambda ticket: get_ticket_by_key(ticket.key),
+            project=lambda ticket: get_ticket_by_key(ticket.key, viewer=request.user, include_workflow=True),
         )
 
 
@@ -282,7 +284,7 @@ class TicketAssignAPIView(SupportAPIView):
         )
         return self._execute(
             lambda: assign_ticket(cmd, actor=request.user),
-            project=lambda ticket: get_ticket_by_key(ticket.key),
+            project=lambda ticket: get_ticket_by_key(ticket.key, viewer=request.user, include_workflow=True),
         )
 
 
@@ -307,7 +309,7 @@ class TicketTransitionAPIView(SupportAPIView):
         )
         return self._execute(
             lambda: transition_ticket(cmd, actor=request.user),
-            project=lambda ticket: get_ticket_by_key(ticket.key),
+            project=lambda ticket: get_ticket_by_key(ticket.key, viewer=request.user, include_workflow=True),
         )
 
 
@@ -601,6 +603,20 @@ class StatusOptionsAPIView(OptionsAPIView):
         return get_status_options(actor=actor, **filters)
 
 
+class SupportPeopleOptionsAPIView(OptionsAPIView):
+    """Find active people for assignment and watcher selection in Support Desk."""
+
+    permission_classes = [IsSupportAgent]
+    query_serializer = SupportPeopleOptionsQuerySerializer
+    size_class = SizeClass.LARGE
+    required_any = ("q", "include_ids")
+    owner = "tickets"
+    schema_tags = ("Support Desk",)
+
+    def select(self, *, actor, filters):
+        return get_support_people_options(**filters)
+
+
 class TeamOptionsAPIView(OptionsAPIView):
     """Options selector endpoint for active teams."""
 
@@ -694,7 +710,7 @@ class TicketCsatAPIView(SupportAPIView):
         cmd = SubmitCsatInput(ticket_key=key, score=data["score"], comment=data.get("comment", ""))
         return self._execute(
             lambda: submit_csat(cmd, actor=request.user),
-            project=lambda ticket: get_ticket_by_key(ticket.key, viewer=request.user),
+            project=lambda ticket: get_ticket_by_key(ticket.key, viewer=request.user, include_workflow=True),
         )
 
 

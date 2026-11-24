@@ -17,7 +17,11 @@ from core.support_desk.exceptions import (
     ReopenWindowExpiredError,
 )
 from core.support_desk.features.tickets.application.notifications import queue_ticket_notifications
-from core.support_desk.features.tickets.application.policies import can_transition_ticket, is_support_agent
+from core.support_desk.features.tickets.application.policies import (
+    can_transition_ticket,
+    is_reopen_transition,
+    is_support_agent,
+)
 from core.support_desk.features.tickets.application.shared import (
     actor_display_name,
     actor_or_none,
@@ -70,10 +74,7 @@ def transition_ticket(command: TransitionTicketInput, *, actor: Any) -> SupportT
         )
 
     # Check permission and reopen window
-    is_reopen = (
-        ticket.status.system_state == SystemState.DONE.value
-        and to_status.system_state == SystemState.OPEN.value
-    )
+    is_reopen = is_reopen_transition(ticket, transition)
 
     if not can_transition_ticket(actor, ticket, transition):
         if is_reopen:
@@ -142,6 +143,8 @@ def transition_ticket(command: TransitionTicketInput, *, actor: Any) -> SupportT
         updates["closed_at"] = None
         updates["resolved_by"] = None
         updates["resolution_code"] = ""
+        updates["resolution_summary"] = ""
+        updates["root_cause"] = ""
         updates["reopen_count"] = ticket.reopen_count + 1
         # Fresh resolution clock from the reopen moment (response clock is not restarted).
         deadlines = compute_deadlines(ticket.priority, start=now, enabled=app_settings.sla_enabled)
@@ -160,7 +163,11 @@ def transition_ticket(command: TransitionTicketInput, *, actor: Any) -> SupportT
                 "Ticket has been modified concurrently by another user. Please refresh and retry."
             )
 
-        previous_resolution_summary = ticket.resolution_summary
+        previous_resolution = {
+            "previous_resolution_summary": ticket.resolution_summary,
+            "previous_resolution_code": ticket.resolution_code,
+            "previous_root_cause": ticket.root_cause,
+        }
         ticket = get_ticket_for_actor(
             command.ticket_key,
             actor,
@@ -188,7 +195,7 @@ def transition_ticket(command: TransitionTicketInput, *, actor: Any) -> SupportT
             "resolution_code": command.resolution_code,
         }
         if is_reopen:
-            activity_payload["previous_resolution_summary"] = previous_resolution_summary
+            activity_payload.update(previous_resolution)
 
         TicketActivity.objects.create(
             ticket=ticket,
