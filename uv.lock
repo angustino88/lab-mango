@@ -1684,11 +1684,6 @@ dependencies = [
     { name = "uvicorn", extra = ["standard"] },
 ]
 
-[package.optional-dependencies]
-native-xlsx = [
-    { name = "xlsx-reader" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "coverage" },
@@ -1746,9 +1741,7 @@ requires-dist = [
     { name = "redis", specifier = ">=5.2.0" },
     { name = "requests", specifier = ">=2.32.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34.0" },
-    { name = "xlsx-reader", marker = "extra == 'native-xlsx'", directory = "packages/native/xlsx-reader" },
 ]
-provides-extras = ["native-xlsx"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2616,8 +2609,3 @@ wheels = [
 watchdog = [
     { name = "watchdog" },
 ]
-
-[[package]]
-name = "xlsx-reader"
-version = "0.1.0"
-source = { directory = "packages/native/xlsx-reader" }

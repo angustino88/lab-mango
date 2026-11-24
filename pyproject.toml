@@ -49,12 +49,8 @@ dependencies = [
     "boto3>=1.28.0",
 ]
 
-[project.optional-dependencies]
-native-xlsx = ["xlsx-reader"]
-
 [tool.uv.sources]
 drf-api-contracts = { path = "packages/drf-api-contracts", editable = true }
-xlsx-reader = { path = "packages/native/xlsx-reader" }
 
 [dependency-groups]
 dev = [
