@@ -1,0 +1,63 @@
+name: Native XLSX reader
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/native-xlsx.yml
+      - core/infrastructure/spreadsheets/**
+      - core/labs/features/workbook_import/**
+      - packages/native/**
+      - pyproject.toml
+      - uv.lock
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/native-xlsx.yml
+      - core/infrastructure/spreadsheets/**
+      - core/labs/features/workbook_import/**
+      - packages/native/**
+      - pyproject.toml
+      - uv.lock
+
+permissions:
+  contents: read
+
+jobs:
+  native-xlsx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: xlsx
+          POSTGRES_PASSWORD: xlsx
+          POSTGRES_DB: xlsx_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U xlsx"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://xlsx:xlsx@localhost:5432/xlsx_ci
+      DJANGO_READ_DOT_ENV_FILE: "False"
+      CELERY_BROKER_URL: memory://
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rust formatting and tests
+        working-directory: packages/native
+        run: |
+          cargo fmt --all --check
+          cargo test --locked
+      - name: Build and install the native wheel
+        run: uv sync --frozen --extra native-xlsx
+      - name: Reader parity and workbook import tests
+        env:
+          XLSX_READER: native
+        run: uv run --no-sync pytest packages/native/xlsx-reader/tests core/labs/features/workbook_import/tests -q

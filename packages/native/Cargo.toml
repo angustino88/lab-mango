@@ -1,0 +1,3 @@
+[workspace]
+members = ["xlsx-reader"]
+resolver = "2"

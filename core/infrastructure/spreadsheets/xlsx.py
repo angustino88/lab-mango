@@ -6,6 +6,7 @@ The module is technical only: callers decide which sheets and columns mean somet
 from __future__ import annotations
 
 import io
+import os
 import zipfile
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -80,6 +81,48 @@ def _is_empty(value: Any) -> bool:
     return value is None or (isinstance(value, str) and not value.strip())
 
 
+def _format_headers(values: Iterable[Any]) -> tuple[str | None, ...]:
+    return tuple(None if _is_empty(value) else str(value).strip() for value in values)
+
+
+def _read_native_sheet(worksheet: Any, header_row: int, first_data_row: int, max_data_rows: int) -> RawSheet | None:
+    try:
+        from xlsx_reader import MAX_XML_BYTES, read_sheet
+    except ModuleNotFoundError as error:
+        if error.name != "xlsx_reader":
+            raise
+        raise RuntimeError("XLSX_READER=native requires the native-xlsx extra.") from error
+
+    # openpyxl resolves and validates the workbook package. Its read-only worksheet
+    # exposes the member stream and styles used by the normal XML decoder.
+    get_source = getattr(worksheet, "_get_source", None)
+    date_styles = getattr(worksheet.parent, "_date_formats", None)
+    shared_strings = getattr(worksheet, "_shared_strings", None)
+    if get_source is None or date_styles is None or shared_strings is None:
+        return None
+
+    with get_source() as source:
+        xml = source.read(MAX_XML_BYTES + 1)
+    if len(xml) > MAX_XML_BYTES:
+        return None
+    decoded = read_sheet(
+        xml,
+        (header_row, first_data_row, max_data_rows),
+        (worksheet.max_row, worksheet.max_column),
+        list(date_styles),
+        tuple(shared_strings),
+    )
+    if decoded is None:
+        return None
+    headers, rows, truncated = decoded
+    return RawSheet(
+        name=worksheet.title,
+        headers=_format_headers(headers),
+        rows=tuple((number, tuple(values)) for number, values in rows),
+        truncated=truncated,
+    )
+
+
 def read_workbook(
     file: IO[bytes] | bytes,
     *,
@@ -100,10 +143,16 @@ def read_workbook(
         raise SpreadsheetUnreadable("The workbook could not be read.") from error
     wanted = set(sheet_names)
     sheets: list[RawSheet] = []
+    use_native = os.environ.get("XLSX_READER") == "native" and 0 < header_row < first_data_row and max_data_rows >= 0
     try:
         for worksheet in workbook.worksheets:
             if worksheet.title not in wanted:
                 continue
+            if use_native:
+                native_sheet = _read_native_sheet(worksheet, header_row, first_data_row, max_data_rows)
+                if native_sheet is not None:
+                    sheets.append(native_sheet)
+                    continue
             header_cells = next(worksheet.iter_rows(min_row=header_row, max_row=header_row, values_only=True), ())
             headers = list(header_cells)
             while headers and _is_empty(headers[-1]):
@@ -126,7 +175,7 @@ def read_workbook(
             sheets.append(
                 RawSheet(
                     name=worksheet.title,
-                    headers=tuple(None if _is_empty(h) else str(h).strip() for h in headers),
+                    headers=_format_headers(headers),
                     rows=tuple(rows),
                     truncated=truncated,
                 )

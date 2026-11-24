@@ -1,0 +1,16 @@
+[package]
+name = "xlsx-reader"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "xlsx_reader"
+crate-type = ["cdylib"]
+
+[features]
+extension-module = ["dep:pyo3", "pyo3/extension-module"]
+
+[dependencies]
+pyo3 = { version = "0.27", features = ["abi3-py312"], optional = true }
+quick-xml = "0.39"
