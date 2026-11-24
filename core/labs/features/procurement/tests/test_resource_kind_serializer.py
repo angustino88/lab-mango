@@ -89,64 +89,19 @@ def test_stable_kind_post_creates_allocation_through_endpoint(api_client, user):
     assert command.resource_id == bench.pk
 
 
-def test_legacy_kind_post_creates_allocation_through_endpoint(api_client, user):
-    purchase = Purchase.objects.create(
-        supplier="Supplier",
-        purchase_date="2026-01-01",
-        total_amount="1.00",
-        creator=user,
-    )
-    item = PurchaseItem.objects.create(
-        purchase=purchase,
-        description="Bench",
-        quantity=1,
-        unit_price="1.00",
-        creator=user,
-    )
-    bench = Bench.objects.create(name="Bench", sku="BENCH", creator=user)
-    content_type = ContentType.objects.get_for_model(Bench)
-    _authorize_coordinator(api_client, user)
-    with patch(
-        "core.labs.features.procurement.api.views.public.create_purchase_item_resource",
-        return_value=PurchaseItemResource(
-            id=9001,  # a created allocation always has an id; the response contract checks it (DOC-4)
-            purchase_item=item,
-            resource_type=content_type,
-            resource_id=bench.pk,
-            acquisition_price=Decimal("1.00"),
-            creator=user,
-        ),
-    ) as create_allocation:
-        response = api_client.post(
-            f"/api/labs/purchase-items/{item.pk}/resources",
-            {
-                "resource_type_id": content_type.pk,
-                "resource_id": bench.pk,
-                "acquisition_price": {"amount": "1.00", "currency": "EUR"},
-            },
-            format="json",
-        )
-
-    assert response.status_code == 201, response.content
-    assert response.data["data"]["resource_kind"]["value"] == "bench"
-    assert create_allocation.call_args.args[0].resource_type_id == content_type.pk
-
-
 @pytest.mark.parametrize(
-    "payload_factory",
+    "payload",
     (
-        lambda: {"resource_id": 1, "acquisition_price": {"amount": "1.00", "currency": "EUR"}},
-        lambda: {
-            "resource_kind": "bench",
-            "resource_type_id": ContentType.objects.get_for_model(Equipment).pk,
+        {"resource_id": 1, "acquisition_price": {"amount": "1.00", "currency": "EUR"}},
+        {
+            "resource_kind": "room",
             "resource_id": 1,
             "acquisition_price": {"amount": "1.00", "currency": "EUR"},
         },
     ),
-    ids=("missing_kind", "mismatched_resource_type_id"),
+    ids=("missing_kind", "unsupported_kind"),
 )
-def test_invalid_kind_input_returns_422_without_creating_allocation(api_client, user, payload_factory):
-    payload = payload_factory()
+def test_invalid_kind_input_returns_422_without_creating_allocation(api_client, user, payload):
     with patch(
         "core.labs.features.procurement.api.views.public.create_purchase_item_resource",
     ) as create_allocation:
@@ -162,49 +117,7 @@ def test_invalid_kind_input_returns_422_without_creating_allocation(api_client, 
         create_allocation.assert_not_called()
 
 
-def test_legacy_resource_type_id_is_still_accepted():
-    content_type = ContentType.objects.get_for_model(Bench)
-    serializer = PurchaseItemResourceCreateSerializer(
-        data={
-            "resource_type_id": content_type.pk,
-            "resource_id": 1,
-            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
-        }
-    )
-
-    assert serializer.is_valid(), serializer.errors
-    assert serializer.validated_data["resource_type_id"] == content_type.pk
-
-
-def test_matching_stable_and_legacy_inputs_are_accepted():
-    content_type = ContentType.objects.get_for_model(Bench)
-    serializer = PurchaseItemResourceCreateSerializer(
-        data={
-            "resource_kind": "bench",
-            "resource_type_id": content_type.pk,
-            "resource_id": 1,
-            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
-        }
-    )
-
-    assert serializer.is_valid(), serializer.errors
-
-
-def test_mismatched_stable_and_legacy_inputs_are_rejected():
-    serializer = PurchaseItemResourceCreateSerializer(
-        data={
-            "resource_kind": "bench",
-            "resource_type_id": ContentType.objects.get_for_model(Equipment).pk,
-            "resource_id": 1,
-            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
-        }
-    )
-
-    assert not serializer.is_valid()
-    assert "resource_type_id" in serializer.errors
-
-
-def test_one_of_stable_or_legacy_input_is_required():
+def test_resource_kind_is_required():
     serializer = PurchaseItemResourceCreateSerializer(
         data={
             "resource_id": 1,
@@ -214,20 +127,6 @@ def test_one_of_stable_or_legacy_input_is_required():
 
     assert not serializer.is_valid()
     assert "resource_kind" in serializer.errors
-
-
-def test_unsupported_legacy_content_type_is_rejected():
-    unsupported_type = ContentType.objects.get_for_model(Station.room.field.related_model)
-    serializer = PurchaseItemResourceCreateSerializer(
-        data={
-            "resource_type_id": unsupported_type.pk,
-            "resource_id": 1,
-            "acquisition_price": {"amount": "1.00", "currency": "EUR"},
-        }
-    )
-
-    assert not serializer.is_valid()
-    assert "resource_type_id" in serializer.errors
 
 
 def test_resource_kind_with_missing_content_type_is_validation_error(monkeypatch):
@@ -280,20 +179,18 @@ def test_resource_kind_is_read_only_output_with_stable_enum(user):
     assert output_serializer.data["resource_kind"]["value"] == "bench"
     assert write_fields["resource_kind"].write_only
     assert set(write_fields["resource_kind"].choices) == {"bench", "equipment", "license", "station"}
-    assert write_fields["resource_type_id"].write_only
+    assert "resource_type_id" not in write_fields
 
 
-def test_openapi_create_schema_requires_either_resource_kind_identifier():
+def test_openapi_create_schema_requires_resource_kind():
     from drf_spectacular.generators import SchemaGenerator
 
     schema = SchemaGenerator().get_schema(request=None, public=True)
     component = schema["components"]["schemas"]["PurchaseItemResourceCreate"]
 
-    assert component["anyOf"] == [
-        {"required": ["resource_kind"]},
-        {"required": ["resource_type_id"]},
-    ]
-    assert {"resource_id", "acquisition_price"}.issubset(component["required"])
+    assert "anyOf" not in component
+    assert "resource_type_id" not in component["properties"]
+    assert {"resource_kind", "resource_id", "acquisition_price"}.issubset(component["required"])
 
 
 def test_resource_allocation_list_query_budget(django_assert_num_queries, user):

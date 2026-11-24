@@ -1,10 +1,7 @@
 """Explicit transport fields; all domain writes go through commands."""
 
-from datetime import timezone
 from typing import Any
-from urllib.parse import urlencode
 
-from drf_api_contracts.serializers import PaginationMetadataSerializer
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -247,94 +244,6 @@ class BenchResourceDetailSerializer(BenchSerializer):
 
     def get_equipment_url(self, obj) -> str:
         return f"/api/labs/benches/{obj.pk}/equipment"
-
-
-class BenchComputingActivitySerializer(serializers.Serializer):
-    status = ChoiceReferenceSerializer(read_only=True)
-    last_agent_report_at = serializers.DateTimeField(read_only=True, allow_null=True, default_timezone=timezone.utc)
-    is_stale = serializers.BooleanField(
-        read_only=True,
-        allow_null=True,
-        help_text="Heartbeat strictly older than ten minutes at booking_summary.evaluated_at; null if unknown.",
-    )
-
-
-class BenchDetailEquipmentSerializer(BenchSetupEquipmentSerializer):
-    computing_activity = BenchComputingActivitySerializer(read_only=True, allow_null=True)
-
-
-class BenchEquipmentPageMetaSerializer(serializers.Serializer):
-    pagination = PaginationMetadataSerializer(read_only=True)
-
-
-class BenchEquipmentPageSerializer(serializers.Serializer):
-    assignments = serializers.ListField(child=BenchDetailEquipmentSerializer(), max_length=100, read_only=True)
-    meta = BenchEquipmentPageMetaSerializer(read_only=True)
-
-    def get_fields(self):
-        fields = super().get_fields()
-        fields["data"] = fields.pop("assignments")
-        return fields
-
-
-class BenchReservationSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    booking_code = serializers.CharField(read_only=True)
-    starts_at = serializers.DateTimeField(read_only=True, default_timezone=timezone.utc)
-    ends_at = serializers.DateTimeField(read_only=True, default_timezone=timezone.utc)
-    status = ChoiceReferenceSerializer(read_only=True)
-    approval_status = ChoiceReferenceSerializer(read_only=True)
-    project = NamedReferenceSerializer(read_only=True, allow_null=True)
-
-
-class BenchBookingSummarySerializer(serializers.Serializer):
-    """Active reserving bookings, current half-open windows and earliest future start; ties by ID."""
-
-    evaluated_at = serializers.DateTimeField(read_only=True, default_timezone=timezone.utc)
-    current_reservations = serializers.ListField(child=BenchReservationSerializer(), max_length=5, read_only=True)
-    current_reservations_count = serializers.IntegerField(read_only=True)
-    is_current_reservations_complete = serializers.BooleanField(read_only=True)
-    next_reservation = BenchReservationSerializer(read_only=True, allow_null=True)
-
-
-class BenchDetailSerializer(BenchResourceDetailSerializer):
-    """Internal serialization for the retained bounded operational read projection."""
-
-    equipment = serializers.SerializerMethodField(read_only=True)
-    booking_summary = BenchBookingSummarySerializer(read_only=True)
-
-    class Meta:
-        model = Bench
-        fields = (*BenchSerializer.Meta.fields, "equipment", "booking_summary")
-        read_only_fields = fields
-
-    @extend_schema_field(BenchEquipmentPageSerializer)
-    def get_equipment(self, obj) -> dict[str, Any]:
-        page = obj.equipment_page
-
-        def link(number: int) -> str:
-            return f"/api/labs/benches/{obj.pk}?" + urlencode(
-                {
-                    "equipment_page": number,
-                    "equipment_page_size": page.paginator.per_page,
-                }
-            )
-
-        return BenchEquipmentPageSerializer(
-            {
-                "data": page.object_list,
-                "meta": {
-                    "pagination": {
-                        "count": page.paginator.count,
-                        "page": page.number,
-                        "page_size": page.paginator.per_page,
-                        "next": link(page.next_page_number()) if page.has_next() else None,
-                        "previous": link(page.previous_page_number()) if page.has_previous() else None,
-                    }
-                },
-            },
-            context=self.context,
-        ).data
 
 
 class BenchSelectQuerySerializer(OptionsQueryMixin):

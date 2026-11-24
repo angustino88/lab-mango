@@ -6102,66 +6102,6 @@ components:
           $ref: '#/components/schemas/EnrollmentGrant'
       required:
       - data
-    EquipmentAssignment:
-      type: object
-      description: Reject unsupported keys and return a stable error when SKU is supplied
-        on update.
-      properties:
-        bench_id:
-          type: integer
-          minimum: 1
-        role:
-          type: string
-          default: default
-          maxLength: 64
-        position:
-          type: integer
-          minimum: 0
-          default: 0
-      required:
-      - bench_id
-    EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/EquipmentAssignmentResult'
-      required:
-      - data
-    EquipmentAssignmentResult:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        equipment:
-          allOf:
-          - $ref: '#/components/schemas/LabsUIDNamedReference'
-          readOnly: true
-        bench:
-          allOf:
-          - $ref: '#/components/schemas/LabsUIDNamedReference'
-          readOnly: true
-        role:
-          type: string
-          readOnly: true
-        position:
-          type: integer
-          readOnly: true
-      required:
-      - bench
-      - equipment
-      - id
-      - position
-      - role
-    EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/EquipmentAssignmentResult'
-      required:
-      - data
     EquipmentAvailability:
       type: object
       properties:
@@ -6527,8 +6467,6 @@ components:
           readOnly: true
         system_info:
           readOnly: true
-        monitored_devices:
-          readOnly: true
         rdp_file:
           type: string
           format: uri
@@ -6543,7 +6481,6 @@ components:
       - disk_usage
       - hostname
       - ip_address
-      - monitored_devices
       - os_name
       - rdp_file
       - system_info
@@ -6557,7 +6494,6 @@ components:
     EquipmentComputingProfileUpdate:
       type: object
       properties:
-        monitored_devices: {}
         technical_user_id:
           type: integer
           nullable: true
@@ -11802,57 +11738,6 @@ components:
             $ref: '#/components/schemas/LeaderboardPersona'
       required:
       - data
-    LegacyDeviceSuggestion:
-      type: object
-      description: One entry of the computer's legacy device list and what is left
-        to do for it.
-      properties:
-        pnp_id:
-          type: string
-          description: Windows PnP device instance ID from the legacy list (normalised).
-        label:
-          type: string
-          description: Label a coordinator gave the entry in the legacy list.
-        is_port_bound:
-          type: boolean
-          description: 'Read from a USB port: register it for this computer only.'
-        status:
-          allOf:
-          - $ref: '#/components/schemas/Choice'
-          readOnly: true
-        equipment:
-          allOf:
-          - $ref: '#/components/schemas/LabsUIDNamedReference'
-          nullable: true
-          description: Unit the ID is registered on, if any.
-        expected_device_id:
-          type: integer
-          nullable: true
-      required:
-      - equipment
-      - expected_device_id
-      - is_port_bound
-      - label
-      - pnp_id
-      - status
-      x-embedded-resource: true
-    LegacyDeviceSuggestionList:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/LegacyDeviceSuggestion'
-      required:
-      - items
-    LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/LegacyDeviceSuggestionList'
-      required:
-      - data
     License:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -11987,118 +11872,6 @@ components:
       - uid
       - updated_at
       - vendor
-    LicenseAgreement:
-      type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        license:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
-        price:
-          allOf:
-          - $ref: '#/components/schemas/LabsMoney'
-          readOnly: true
-        billing_period:
-          allOf:
-          - $ref: '#/components/schemas/Choice'
-          readOnly: true
-        start_date:
-          type: string
-          format: date
-          readOnly: true
-        end_date:
-          type: string
-          format: date
-          readOnly: true
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - billing_period
-      - created_at
-      - end_date
-      - id
-      - license
-      - price
-      - start_date
-    LicenseAgreementListSerializersLicenseAgreementPaginatedResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        meta:
-          $ref: '#/components/schemas/LicenseAgreementListSerializersLicenseAgreementPaginationMeta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/LicenseAgreement'
-      required:
-      - data
-      - meta
-    LicenseAgreementListSerializersLicenseAgreementPagination:
-      type: object
-      properties:
-        count:
-          type: integer
-          minimum: 0
-        page:
-          type: integer
-          minimum: 1
-        page_size:
-          type: integer
-          minimum: 1
-        next:
-          type: string
-          nullable: true
-        previous:
-          type: string
-          nullable: true
-      required:
-      - count
-      - next
-      - page
-      - page_size
-      - previous
-    LicenseAgreementListSerializersLicenseAgreementPaginationMeta:
-      type: object
-      properties:
-        pagination:
-          $ref: '#/components/schemas/LicenseAgreementListSerializersLicenseAgreementPagination'
-      required:
-      - pagination
-    LicenseAgreementSerializersLicenseAgreementDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/LicenseAgreement'
-      required:
-      - data
-    LicenseAgreementWrite:
-      type: object
-      description: Reject unsupported keys and return a stable error when SKU is supplied
-        on update.
-      properties:
-        price:
-          $ref: '#/components/schemas/Money'
-        billing_period:
-          $ref: '#/components/schemas/BillingPeriodEnum'
-        start_date:
-          type: string
-          format: date
-        end_date:
-          type: string
-          format: date
-          nullable: true
-      required:
-      - price
-      - start_date
     LicenseAssignActionSerializersLicenseAssignmentResultDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -14584,17 +14357,6 @@ components:
         event_id:
           type: string
           format: uuid
-        source:
-          type: string
-        event_type:
-          type: string
-        category:
-          type: string
-        object_name:
-          type: string
-        object_id:
-          type: string
-        details: {}
     MonitoringEventDetailSerializersMonitoringEventDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -16736,16 +16498,14 @@ components:
       - resource_kind
     PurchaseItemResourceCreate:
       type: object
-      description: Supply resource_kind, legacy resource_type_id, or both. At least
-        one is required. If both are supplied, they must identify the same resource
-        kind.
+      description: Allocate a physical or license resource to a purchase item using
+        its stable resource_kind.
       properties:
         resource_kind:
           allOf:
           - $ref: '#/components/schemas/ResourceKindEnum'
           writeOnly: true
-          description: 'Stable resource kind. Supply this or legacy resource_type_id;
-            if both are supplied, they must match.
+          description: 'Stable resource kind (bench, equipment, license, or station).
 
 
             * `bench` - bench
@@ -16755,11 +16515,6 @@ components:
             * `license` - license
 
             * `station` - station'
-        resource_type_id:
-          type: integer
-          minimum: 1
-          writeOnly: true
-          description: Legacy resource type ID.
         resource_id:
           type: integer
           minimum: 1
@@ -16770,11 +16525,7 @@ components:
       required:
       - acquisition_price
       - resource_id
-      anyOf:
-      - required:
-        - resource_kind
-      - required:
-        - resource_type_id
+      - resource_kind
     PurchaseItemResourceListSerializersPurchaseItemResourcePaginatedResponse:
       type: object
       description: Base serializer for successful API responses.

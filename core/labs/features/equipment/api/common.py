@@ -11,8 +11,8 @@ EQUIPMENT_PERMISSIONS = LAB_OPERATIONS_ACCESS
 ORGANIZATION_PERMISSIONS = ORGANIZATION_ACCESS
 
 
-def sku_exists(sku: str, *, exclude_model=None, exclude_pk: int | None = None) -> bool:
-    """Check normalized canonical SKUs; retain exclude_model for legacy callers."""
+def sku_exists(sku: str, *, exclude_pk: int | None = None) -> bool:
+    """Check normalized canonical SKUs."""
     from core.labs.models.resource.equipment.equipment import Equipment
 
     queryset = Equipment.objects.filter(sku=sku.strip(), deleted_at__isnull=True)

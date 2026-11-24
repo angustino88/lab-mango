@@ -5,8 +5,7 @@ from importlib import import_module
 import pytest
 
 REMOVED_MODULE_EXPORTS = (
-    ("core.labs.models.resource.license.agreement", ("LicenseBillingPeriod",)),
-    ("core.labs.models", ("LicenseBillingPeriod",)),
+    ("core.labs.models", ("LicenseBillingPeriod", "LicenseAgreement", "LicensePayment")),
     ("core.labs.models.finance.expense", ("ExpenseBillingPeriod",)),
     ("core.labs.models.finance", ("ExpenseBillingPeriod",)),
     ("core.labs.models", ("ExpenseBillingPeriod", "PurchaseTransactionType")),
@@ -66,6 +65,8 @@ REMOVED_MODULE_EXPORTS = (
 REMOVED_MODULES = (
     "core.labs.models.booking.booking",
     "core.common.openapi.endpoint_inventory",
+    "core.labs.models.resource.license.agreement",
+    "core.labs.models.resource.license.payment",
 )
 
 REMOVED_MODEL_ATTRIBUTES = (

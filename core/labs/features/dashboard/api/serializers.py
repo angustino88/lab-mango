@@ -25,7 +25,7 @@ from core.labs.models import ComputingActivityStatus, ResourceCondition, Resourc
 class DashboardQueryFilterSerializer(SearchQueryMixin, PageNumberQuerySerializer):
     """Query parameter validation for dashboard bench listing.
 
-    ``q`` searches bench name, SKU, location, host and remote user (``search`` is a deprecated alias).
+    ``q`` searches bench name, SKU, location, host and remote user.
     """
 
     search_target = "search"

@@ -21,7 +21,6 @@ Foreign-key defaults are out of scope. Creating a baseline row does not make it 
 
 - `EquipmentCategory` in `core/labs/models/resource/equipment/reference_data.py` uses a string `key` primary key and opts into `ProtectedReferenceMixin`; its admin uses `ProtectedReferenceAdmin` and is view-only (no add, change or delete).
 - Standard categories are declared in `core/labs/features/equipment/defaults.py`. They are provisioned automatically at the end of every `migrate` (section 5); `provision_reference_data` remains available for an explicit run.
-- A legacy `provision_equipment_categories` command remains as an alias to the shared command.
 - Categories cannot be created through the import API either: `equipment/reference-data/categories` is list/retrieve only (`POST` returns 405). To add or change a category, edit the declaration and run `provision_reference_data`.
 
 This is the `ENSURE_PRESENT` pattern implemented for one Labs model using the shared framework. Other apps can register declarations through their own `AppConfig` without being imported by the framework.

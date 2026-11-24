@@ -412,43 +412,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Delete Expected Devices by Expected Device ID
-  /api/labs/expected-devices/legacy-suggestions:
-    get:
-      operationId: labs_expected_devices_legacy_suggestions_retrieve
-      description: Entries of a computer's legacy device list, to register and expect
-        on that computer.
-      parameters:
-      - in: query
-        name: computing_id
-        schema:
-          type: integer
-          minimum: 1
-        required: true
-      tags:
-      - Monitoring
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Expected Devices Legacy Suggestions
   /api/labs/monitoring-events:
     get:
       operationId: labs_monitoring_events_retrieve
@@ -461,10 +424,6 @@ paths:
           minLength: 1
       - in: query
         name: bench_id
-        schema:
-          type: integer
-      - in: query
-        name: computer_id
         schema:
           type: integer
       - in: query
@@ -483,15 +442,6 @@ paths:
           type: string
           format: date-time
       - in: query
-        name: from_date_time
-        schema:
-          type: string
-          format: date-time
-      - in: query
-        name: lab
-        schema:
-          type: integer
-      - in: query
         name: page
         schema:
           type: integer
@@ -509,11 +459,6 @@ paths:
           minLength: 1
       - in: query
         name: to_date
-        schema:
-          type: string
-          format: date-time
-      - in: query
-        name: to_date_time
         schema:
           type: string
           format: date-time
@@ -638,10 +583,6 @@ paths:
         schema:
           type: integer
       - in: query
-        name: computer_id
-        schema:
-          type: integer
-      - in: query
         name: computer_sku
         schema:
           type: string
@@ -657,26 +598,12 @@ paths:
           type: string
           format: date-time
       - in: query
-        name: from_date_time
-        schema:
-          type: string
-          format: date-time
-      - in: query
-        name: lab
-        schema:
-          type: integer
-      - in: query
         name: subject_type
         schema:
           type: string
           minLength: 1
       - in: query
         name: to_date
-        schema:
-          type: string
-          format: date-time
-      - in: query
-        name: to_date_time
         schema:
           type: string
           format: date-time
@@ -1170,57 +1097,6 @@ components:
       - id
       - name
       - uid
-    LegacyDeviceSuggestion:
-      type: object
-      description: One entry of the computer's legacy device list and what is left
-        to do for it.
-      properties:
-        pnp_id:
-          type: string
-          description: Windows PnP device instance ID from the legacy list (normalised).
-        label:
-          type: string
-          description: Label a coordinator gave the entry in the legacy list.
-        is_port_bound:
-          type: boolean
-          description: 'Read from a USB port: register it for this computer only.'
-        status:
-          allOf:
-          - $ref: '#/components/schemas/Choice'
-          readOnly: true
-        equipment:
-          allOf:
-          - $ref: '#/components/schemas/LabsUIDNamedReference'
-          nullable: true
-          description: Unit the ID is registered on, if any.
-        expected_device_id:
-          type: integer
-          nullable: true
-      required:
-      - equipment
-      - expected_device_id
-      - is_port_bound
-      - label
-      - pnp_id
-      - status
-      x-embedded-resource: true
-    LegacyDeviceSuggestionList:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/LegacyDeviceSuggestion'
-      required:
-      - items
-    LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/LegacyDeviceSuggestionList'
-      required:
-      - data
     LinkDeviceConnectionRequest:
       type: object
       properties:
@@ -1345,17 +1221,6 @@ components:
         event_id:
           type: string
           format: uuid
-        source:
-          type: string
-        event_type:
-          type: string
-        category:
-          type: string
-        object_name:
-          type: string
-        object_id:
-          type: string
-        details: {}
     MonitoringEventDetailSerializersMonitoringEventDetailResponse:
       type: object
       description: Base serializer for successful API responses.

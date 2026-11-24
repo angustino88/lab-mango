@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-import warnings
 from typing import TYPE_CHECKING, Any
 
 from django.conf import settings
@@ -12,9 +10,6 @@ from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser
-    from django.http import HttpRequest
-
-logger = logging.getLogger(__name__)
 
 
 def authenticated_actor(user: Any) -> AbstractBaseUser | None:
@@ -43,7 +38,6 @@ class UserStampedModel(models.Model):
     Limitations:
       * `bulk_create`, `bulk_update` and `QuerySet.update()` do not call
         `save()`, so they do not stamp users. Set the fields explicitly there.
-      * `request=` is deprecated and will be removed; use `actor=`.
     """
 
     creator = models.ForeignKey(
@@ -68,27 +62,13 @@ class UserStampedModel(models.Model):
     class Meta:
         abstract = True
 
-    @staticmethod
-    def _resolve_actor(actor: Any, request: HttpRequest | None) -> AbstractBaseUser | None:
-        if actor is None and request is not None:
-            warnings.warn(
-                "save(request=...) is deprecated; use save(actor=request.user).",
-                DeprecationWarning,
-                stacklevel=3,
-            )
-            actor = getattr(request, "user", None)
-            if actor is None:
-                logger.warning("UserStampedModel.save: request has no 'user' attribute")
-        return authenticated_actor(actor)
-
     def save(
         self,
         *args: Any,
         actor: Any = None,
-        request: HttpRequest | None = None,
         **kwargs: Any,
     ) -> None:
-        user = self._resolve_actor(actor, request)
+        user = authenticated_actor(actor)
         update_fields = kwargs.get("update_fields")
 
         # An explicit empty update_fields means "write nothing"; don't override it.

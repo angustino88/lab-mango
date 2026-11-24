@@ -14,7 +14,6 @@ from .calculations import (
 )
 from .insights import (
     get_booked_vs_used,
-    get_dashboard_summary,
     get_equipment_availability,
 )
 from .observations import (
@@ -52,7 +51,6 @@ __all__ = [
     "get_bench_group_distribution",
     "get_booked_vs_used",
     "get_booking_volume_metrics",
-    "get_dashboard_summary",
     "get_equipment_availability",
     "get_equipment_status_distribution",
     "get_exceeded_storage_quotas",

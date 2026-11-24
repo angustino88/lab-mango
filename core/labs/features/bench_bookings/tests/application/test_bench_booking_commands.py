@@ -5,13 +5,13 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from threading import Barrier, Event
-from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import close_old_connections, connection, transaction
 from django.utils import timezone
 
+from core.agents.models import AgentIdentity
 from core.labs.features.bench_bookings.application import (
     CreateBenchBookingInput,
     DecideBenchBookingApprovalInput,
@@ -27,7 +27,6 @@ from core.labs.features.bench_bookings.exceptions import (
     BenchBookingPermissionDenied,
 )
 from core.labs.models import (
-    AgentIdentity,
     Bench,
     BenchBooking,
     BookingApprovalStatus,

@@ -1,4 +1,4 @@
-﻿"""HTTP views for the monitoring event feature."""
+"""HTTP views for the monitoring event feature."""
 from __future__ import annotations
 
 from drf_api_contracts import OperationContract, ResponseContract
@@ -18,8 +18,7 @@ from core.labs.features.monitoring.public import CreateMonitoringEventInput
 
 
 def _computing_param(request: Request) -> int | None:
-    """``computing_id`` filter, accepting the legacy ``computer_id`` name."""
-    value = request.query_params.get("computing_id") or request.query_params.get("computer_id")
+    value = request.query_params.get("computing_id")
     return int(value) if value and value.isdigit() else None
 
 
@@ -46,17 +45,17 @@ class MonitoringEventListCreateAPIView(AppListAPIView, CommandAPIView):
     )
 
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
-        bench_param = request.query_params.get("bench_id") or request.query_params.get("lab")
+        bench_param = request.query_params.get("bench_id")
         bench_id = int(bench_param) if bench_param and bench_param.isdigit() else None
         return self._execute(
             lambda: public.list_monitoring_events(
                 computer_id=_computing_param(request),
                 computer_sku=request.query_params.get("computer_sku"),
-                action=request.query_params.get("action") or request.query_params.get("event_type"),
-                subject_type=request.query_params.get("subject_type") or request.query_params.get("category"),
+                action=request.query_params.get("action"),
+                subject_type=request.query_params.get("subject_type"),
                 bench_id=bench_id,
-                from_date=request.query_params.get("from_date") or request.query_params.get("from_date_time"),
-                to_date=request.query_params.get("to_date") or request.query_params.get("to_date_time"),
+                from_date=request.query_params.get("from_date"),
+                to_date=request.query_params.get("to_date"),
             )
         )
 
@@ -96,16 +95,16 @@ class MonitoringEventExportAPIView(MonitoringBaseAPIView):
     )
 
     def handle_get(self, request: Request, *args, **kwargs) -> Response:
-        bench_param = request.query_params.get("bench_id") or request.query_params.get("lab")
+        bench_param = request.query_params.get("bench_id")
         bench_id = int(bench_param) if bench_param and bench_param.isdigit() else None
         qs = public.list_monitoring_events(
             computer_id=_computing_param(request),
             computer_sku=request.query_params.get("computer_sku"),
-            action=request.query_params.get("action") or request.query_params.get("event_type"),
-            subject_type=request.query_params.get("subject_type") or request.query_params.get("category"),
+            action=request.query_params.get("action"),
+            subject_type=request.query_params.get("subject_type"),
             bench_id=bench_id,
-            from_date=request.query_params.get("from_date") or request.query_params.get("from_date_time"),
-            to_date=request.query_params.get("to_date") or request.query_params.get("to_date_time"),
+            from_date=request.query_params.get("from_date"),
+            to_date=request.query_params.get("to_date"),
         )
         return self.respond(qs, many=True)
 

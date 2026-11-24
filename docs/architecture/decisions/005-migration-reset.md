@@ -101,3 +101,4 @@ On the owner's request ("the migration shall only initial 001, since database is
 | `labs.0003_inspection_retirement_snapshot` | `ResourceServiceRecord.result` (`unknown` choice) folded into `labs.0001_initial`. Temporary snapshot table `labs_bench_inspection_retirement_snapshot` dropped (blank DB). |
 | `labs.0004_backfill_bench_inspection_records` | Existing-row backfill dropped (blank DB). |
 | `labs.0005_remove_bench_inspection_dates` | Removal of `Bench.last_inspected_at` and `Bench.next_inspection_due_at` folded into `labs.0001_initial`. Migration-specific test `test_inspection_retirement.py` removed. |
+| Retired deprecated schema | Removed `LicenseAgreement`, `LicensePayment`, and `ComputingProfile.monitored_devices` directly from `labs.0001_initial`. |

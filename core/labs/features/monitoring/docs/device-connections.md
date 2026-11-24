@@ -29,9 +29,7 @@ never count as the computer reporting, and never raise disconnect alerts.
 
 Equipment owns matching queries and frozen DTOs through `public.py`/`contracts.py`.
 Monitoring owns observations, replay receipts and current connections. Agents owns
-credential identity and revocation fencing. Legacy `computing.monitored_devices`
-JSON (the previous agent's PnP ID list per computer) is read-only input for link suggestions
-(`GET /api/labs/expected-devices/legacy-suggestions`); the UI uses the typed API.
+credential identity and revocation fencing. The UI uses the typed API.
 
 ```mermaid
 flowchart LR
@@ -168,7 +166,6 @@ All endpoints below use the Labs staff policy (coordinators and admins, or an en
 | `POST /api/labs/device-connections/{id}/actions/link` | Body `{equipment_id}`. Registers the connection's reported hardware IDs on that active unit (`EquipmentHardwareId`, port-bound PnP IDs scoped to the reporting computer), then re-matches every observation that reported them. 409 `hardware_id_unavailable` (no ID reported), `hardware_id_in_use` (registered on another unit; never moved). `Equipment.serial_number` is not written. Repeating a successful link is a no-op. |
 | `GET /api/labs/expected-devices` | Paginated; filters `computing_id`, `bench_id`, `presence`. Each row has `presence`: `present`, `missing` or `unconfirmed`, plus `last_seen_at`. Missing first. |
 | `POST /api/labs/expected-devices` | Body `{computing_id, equipment_id, is_disconnect_alert_enabled}`. 409 `expected_device_exists` on a duplicate (`expected_device_unique`); 422 when the unit is expected on itself (`expected_device_not_self`). |
-| `GET /api/labs/expected-devices/legacy-suggestions` | Required `computing_id`. `{items}`: each entry of the computer's legacy `monitored_devices` list (`[{key: PnP ID, value: label}]`, at most 200, normalised, duplicates dropped) with `status` `unregistered`, `registered` (on `equipment`, not expected here), `expected` (`expected_device_id`) or `ambiguous`, and `is_port_bound`. Read-only: the web app registers the ID (`POST /api/labs/equipment/{id}/hardware-ids`) on the unit a coordinator picks and creates the expected device. 404 when the unit is not computing equipment. |
 | `PATCH /api/labs/expected-devices/{id}` | Body `{is_disconnect_alert_enabled}`. |
 | `DELETE /api/labs/expected-devices/{id}` | 204; 404 when already gone. |
 

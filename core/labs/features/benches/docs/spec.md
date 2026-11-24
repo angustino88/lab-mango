@@ -25,8 +25,8 @@ The Benches feature governs test bench entities, logical workbench groupings, us
   - Placement Capacity: Total requested power, weight load, and cooling of benches docked at a station must not exceed station rated limits.
 
 ### 2.2 `core.labs.models.BenchFavorite`
-- **Fields:** `user` (FK `AUTH_USER_MODEL`), `bench` (FK `Bench`), `is_delete` (BooleanField).
-- **Invariant:** `UniqueConstraint(fields=("user", "bench"), name="unique_user_bench_favorite")`.
+- **Fields:** `user` (FK `AUTH_USER_MODEL`), `bench` (FK `Bench`).
+- **Invariant:** `UniqueConstraint(fields=("user", "bench"), name="bench_favorite_user_bench_uniq")`.
 
 ---
 

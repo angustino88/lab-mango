@@ -9,7 +9,6 @@ from .connections import (
     DeviceConnectionSummaryAPIView,
     ExpectedDeviceDetailAPIView,
     ExpectedDeviceListCreateAPIView,
-    LegacyDeviceSuggestionListAPIView,
 )
 from .views import (
     MonitoringEventDetailAPIView,
@@ -31,11 +30,6 @@ urlpatterns = [
         name="device-connection-action-link",
     ),
     path("expected-devices", ExpectedDeviceListCreateAPIView.as_view(), name="expected-device-list-create"),
-    path(
-        "expected-devices/legacy-suggestions",
-        LegacyDeviceSuggestionListAPIView.as_view(),
-        name="expected-device-legacy-suggestions",
-    ),
     path(
         "expected-devices/<int:expected_device_id>",
         ExpectedDeviceDetailAPIView.as_view(),

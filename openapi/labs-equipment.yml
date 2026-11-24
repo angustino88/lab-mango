@@ -2142,120 +2142,6 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Equipment Activity by Equipment ID
-  /api/labs/equipment/{equipment_id}/assignment:
-    get:
-      operationId: labs_equipment_assignment_retrieve_by_equipment_id
-      description: 'The equipment''s bench assignment, a singleton sub-resource: PUT
-        sets it, DELETE releases it.'
-      parameters:
-      - in: path
-        name: equipment_id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - Equipment
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Get Equipment Assignment by Equipment ID
-    put:
-      operationId: labs_equipment_assignment_update_by_equipment_id
-      description: 'The equipment''s bench assignment, a singleton sub-resource: PUT
-        sets it, DELETE releases it.'
-      parameters:
-      - in: path
-        name: equipment_id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - Equipment
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EquipmentAssignment'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/EquipmentAssignment'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/EquipmentAssignment'
-        required: true
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Update Equipment Assignment by Equipment ID
-    delete:
-      operationId: labs_equipment_assignment_destroy_by_equipment_id
-      description: 'The equipment''s bench assignment, a singleton sub-resource: PUT
-        sets it, DELETE releases it.'
-      parameters:
-      - in: path
-        name: equipment_id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - Equipment
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '204':
-          description: No response body
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemResponseEnvelope'
-          description: ''
-      summary: Delete Equipment Assignment by Equipment ID
   /api/labs/equipment/{equipment_id}/hardware-ids:
     get:
       operationId: labs_equipment_hardware_ids_retrieve_by_equipment_id
@@ -2522,11 +2408,7 @@ paths:
     get:
       operationId: labs_equipment_placement_retrieve_by_equipment_id
       description: 'Where a unit is: on a bench, at a station, in a room, or at an
-        untracked place.
-
-
-        ``/assignment`` keeps showing bench placements only; this route shows every
-        kind.'
+        untracked place.'
       parameters:
       - in: path
         name: equipment_id
@@ -2555,11 +2437,7 @@ paths:
     put:
       operationId: labs_equipment_placement_update_by_equipment_id
       description: 'Where a unit is: on a bench, at a station, in a room, or at an
-        untracked place.
-
-
-        ``/assignment`` keeps showing bench placements only; this route shows every
-        kind.'
+        untracked place.'
       parameters:
       - in: path
         name: equipment_id
@@ -2617,11 +2495,7 @@ paths:
     delete:
       operationId: labs_equipment_placement_destroy_by_equipment_id
       description: 'Where a unit is: on a bench, at a station, in a room, or at an
-        untracked place.
-
-
-        ``/assignment`` keeps showing bench placements only; this route shows every
-        kind.'
+        untracked place.'
       parameters:
       - in: path
         name: equipment_id
@@ -6601,66 +6475,6 @@ components:
           $ref: '#/components/schemas/DisplaySizeReferenceListSerializersDisplaySizeCatalogRecordPagination'
       required:
       - pagination
-    EquipmentAssignment:
-      type: object
-      description: Reject unsupported keys and return a stable error when SKU is supplied
-        on update.
-      properties:
-        bench_id:
-          type: integer
-          minimum: 1
-        role:
-          type: string
-          default: default
-          maxLength: 64
-        position:
-          type: integer
-          minimum: 0
-          default: 0
-      required:
-      - bench_id
-    EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/EquipmentAssignmentResult'
-      required:
-      - data
-    EquipmentAssignmentResult:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        equipment:
-          allOf:
-          - $ref: '#/components/schemas/LabsUIDNamedReference'
-          readOnly: true
-        bench:
-          allOf:
-          - $ref: '#/components/schemas/LabsUIDNamedReference'
-          readOnly: true
-        role:
-          type: string
-          readOnly: true
-        position:
-          type: integer
-          readOnly: true
-      required:
-      - bench
-      - equipment
-      - id
-      - position
-      - role
-    EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/EquipmentAssignmentResult'
-      required:
-      - data
     EquipmentBySKUCollectionEquipmentDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -6975,8 +6789,6 @@ components:
           readOnly: true
         system_info:
           readOnly: true
-        monitored_devices:
-          readOnly: true
         rdp_file:
           type: string
           format: uri
@@ -6991,7 +6803,6 @@ components:
       - disk_usage
       - hostname
       - ip_address
-      - monitored_devices
       - os_name
       - rdp_file
       - system_info
@@ -7005,7 +6816,6 @@ components:
     EquipmentComputingProfileUpdate:
       type: object
       properties:
-        monitored_devices: {}
         technical_user_id:
           type: integer
           nullable: true

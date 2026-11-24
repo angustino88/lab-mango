@@ -3,7 +3,6 @@ from django.urls import path
 from . import views
 from .reference_data import urlpatterns as reference_urlpatterns
 from .views import (
-    LicenseAgreementListCreateAPIView,
     LicenseAssignActionAPIView,
     LicenseCategorySummaryAPIView,
     LicenseFiltersAPIView,
@@ -24,7 +23,6 @@ urlpatterns = [
     path("licenses/<int:license_id>/actions/change-status", LicenseStatusAPIView.as_view(), name="license-change-status"),
     path("licenses/<int:license_id>/history", LicenseHistoryAPIView.as_view(), name="license-history"),
     path("licenses/<int:license_id>/actions/assign", LicenseAssignActionAPIView.as_view(), name="license-action-assign"),
-    path("licenses/<int:license_id>/agreements", LicenseAgreementListCreateAPIView.as_view(), name="license-agreements"),
 
     # License lookup catalogs and options
     path("license-vendors", views.LicenseVendorListAPIView.as_view(), name="license-vendor-list"),

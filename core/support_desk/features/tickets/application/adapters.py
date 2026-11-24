@@ -2,9 +2,18 @@
 
 from typing import Any
 
+from django.db.models import Q
+
 from core.support_desk.contracts import ResourceAdapter, ResourceChangeBadge, ResourceReferenceDTO, ResourceType
 from core.support_desk.exceptions import ResourceNotFoundError
 from core.support_desk.models.resource_link import TicketResourceLink
+
+
+def _is_resource_active(resource: Any) -> bool:
+    if getattr(resource, "deleted_at", None) is not None:
+        return False
+    lifecycle = getattr(resource, "lifecycle_status", None) or getattr(resource, "lifecycle_state", None)
+    return lifecycle != "retired"
 
 
 class RoomAdapter:
@@ -19,10 +28,18 @@ class RoomAdapter:
             room = get_room(room_id=int(resource_id))
             if not room:
                 return None
-            name = getattr(room, "name", "")
-            code = getattr(room, "code", name)
-            location = getattr(room, "location", None)
-            location_name = getattr(location, "name", "") if location else ""
+            name = getattr(room, "name", "") or ""
+            code = getattr(room, "sku", "") or name
+            location_parts = [
+                part.name
+                for part in (
+                    getattr(room, "building", None),
+                    getattr(room, "city", None),
+                    getattr(room, "country", None),
+                )
+                if part is not None and getattr(part, "name", "")
+            ]
+            location_name = ", ".join(location_parts)
             return ResourceReferenceDTO(
                 resource_type=self.resource_type,
                 resource_id=str(resource_id),
@@ -30,7 +47,7 @@ class RoomAdapter:
                 code=code,
                 parent_context=f"Location: {location_name}" if location_name else "",
                 detail_url=f"/labs/rooms/{resource_id}",
-                is_active=getattr(room, "is_active", True),
+                is_active=_is_resource_active(room),
             )
         except Exception:
             return None
@@ -44,7 +61,7 @@ class RoomAdapter:
         from core.labs.features.locations.public import list_rooms
 
         results = []
-        rooms = list_rooms().filter(name__icontains=query)[:20]
+        rooms = list_rooms().filter(Q(name__icontains=query) | Q(sku__icontains=query))[:20]
         for room in rooms:
             ref = self.get_reference(room.pk)
             if ref and self.can_view(room.pk, user):
@@ -75,8 +92,8 @@ class StationAdapter:
             station = get_station(station_id=int(resource_id))
             if not station:
                 return None
-            name = getattr(station, "name", "")
-            code = getattr(station, "code", name)
+            name = getattr(station, "name", "") or ""
+            code = getattr(station, "sku", "") or name
             room = getattr(station, "room", None)
             room_name = getattr(room, "name", "") if room else ""
             return ResourceReferenceDTO(
@@ -86,7 +103,7 @@ class StationAdapter:
                 code=code,
                 parent_context=f"Room: {room_name}" if room_name else "",
                 detail_url=f"/labs/stations/{resource_id}",
-                is_active=getattr(station, "is_active", True),
+                is_active=_is_resource_active(station),
             )
         except Exception:
             return None
@@ -100,7 +117,7 @@ class StationAdapter:
         from core.labs.features.locations.public import list_stations
 
         results = []
-        stations = list_stations().filter(name__icontains=query)[:20]
+        stations = list_stations().filter(Q(name__icontains=query) | Q(sku__icontains=query))[:20]
         for station in stations:
             ref = self.get_reference(station.pk)
             if ref and self.can_view(station.pk, user):
@@ -131,9 +148,9 @@ class BenchAdapter:
             bench = get_bench(bench_id=int(resource_id))
             if not bench:
                 return None
-            name = getattr(bench, "name", "")
-            sku = getattr(bench, "sku", name)
-            station = getattr(bench, "station", None)
+            name = getattr(bench, "name", "") or ""
+            sku = getattr(bench, "sku", "") or name
+            station = getattr(bench, "setup_location", None)
             station_name = getattr(station, "name", "") if station else ""
             room = getattr(station, "room", None) if station else None
             room_name = getattr(room, "name", "") if room else ""
@@ -150,7 +167,7 @@ class BenchAdapter:
                 code=sku,
                 parent_context=", ".join(parent),
                 detail_url=f"/labs/benches/{resource_id}",
-                is_active=not getattr(bench, "is_delete", False),
+                is_active=_is_resource_active(bench),
             )
         except Exception:
             return None
@@ -164,7 +181,7 @@ class BenchAdapter:
         from core.labs.features.benches.public import list_benches
 
         results = []
-        benches = list_benches().filter(name__icontains=query)[:20]
+        benches = list_benches().filter(Q(name__icontains=query) | Q(sku__icontains=query))[:20]
         for bench in benches:
             ref = self.get_reference(bench.pk)
             if ref and self.can_view(bench.pk, user):
@@ -190,23 +207,37 @@ class EquipmentAdapter:
 
     def get_reference(self, resource_id: str | int) -> ResourceReferenceDTO | None:
         try:
-            from core.labs.features.equipment.public import list_equipment
+            from django.core.exceptions import ObjectDoesNotExist
+
+            from core.labs.features.equipment.public import get_active_placement, list_equipment
 
             eq = list_equipment().filter(pk=int(resource_id)).first()
             if not eq:
                 return None
-            name = getattr(eq, "name", "")
-            sku = getattr(eq, "sku", name)
-            bench = getattr(eq, "bench", None)
-            bench_name = getattr(bench, "name", "") if bench else ""
+            name = getattr(eq, "name", "") or ""
+            sku = getattr(eq, "sku", "") or name
+            parent_context = ""
+            try:
+                active = get_active_placement(equipment_id=eq.pk)
+            except ObjectDoesNotExist:
+                active = None
+            if active is not None:
+                if active.bench is not None:
+                    parent_context = f"Bench: {active.bench.name}"
+                elif active.station is not None:
+                    parent_context = f"Station: {active.station.name}"
+                elif active.room is not None:
+                    parent_context = f"Room: {active.room.name}"
+                elif active.location_note:
+                    parent_context = f"Location: {active.location_note}"
             return ResourceReferenceDTO(
                 resource_type=self.resource_type,
                 resource_id=str(resource_id),
                 name=name,
                 code=sku,
-                parent_context=f"Bench: {bench_name}" if bench_name else "",
+                parent_context=parent_context,
                 detail_url=f"/labs/equipment/{resource_id}",
-                is_active=not getattr(eq, "is_delete", False),
+                is_active=_is_resource_active(eq),
             )
         except Exception:
             return None
@@ -220,7 +251,7 @@ class EquipmentAdapter:
         from core.labs.features.equipment.public import list_equipment
 
         results = []
-        items = list_equipment().filter(name__icontains=query)[:20]
+        items = list_equipment().filter(Q(name__icontains=query) | Q(sku__icontains=query))[:20]
         for eq in items:
             ref = self.get_reference(eq.pk)
             if ref and self.can_view(eq.pk, user):
@@ -251,17 +282,19 @@ class LicenseAdapter:
             lic = get_license(license_id=int(resource_id))
             if not lic:
                 return None
-            name = getattr(lic, "software_name", getattr(lic, "name", ""))
-            sku = getattr(lic, "sku", "")
-            vendor = getattr(lic, "vendor", "")
+            product = getattr(lic, "product", None)
+            name = getattr(lic, "name", "") or (getattr(product, "name", "") if product else "")
+            sku = getattr(lic, "sku", "") or ""
+            vendor = getattr(lic, "vendor", None)
+            vendor_name = getattr(vendor, "name", str(vendor)) if vendor else ""
             return ResourceReferenceDTO(
                 resource_type=self.resource_type,
                 resource_id=str(resource_id),
                 name=name,
                 code=sku,
-                parent_context=f"Vendor: {vendor}" if vendor else "",
+                parent_context=f"Vendor: {vendor_name}" if vendor_name else "",
                 detail_url=f"/labs/licenses/{resource_id}",
-                is_active=not getattr(lic, "is_delete", False),
+                is_active=_is_resource_active(lic),
             )
         except Exception:
             return None
@@ -275,7 +308,9 @@ class LicenseAdapter:
         from core.labs.features.licenses.public import list_licenses
 
         results = []
-        licenses = list_licenses().filter(software_name__icontains=query)[:20]
+        licenses = list_licenses().filter(
+            Q(name__icontains=query) | Q(sku__icontains=query) | Q(product__name__icontains=query)
+        )[:20]
         for lic in licenses:
             ref = self.get_reference(lic.pk)
             if ref and self.can_view(lic.pk, user):

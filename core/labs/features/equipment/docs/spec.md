@@ -15,7 +15,7 @@ Three separate facts describe a unit. They are stored and changed independently;
 |---|---|---|---|
 | `lifecycle_state` | Does the lab still have it? | `planned`, `in_service`, `transferred_out`, `retired`, `lost` | `POST .../actions/change-lifecycle` only |
 | `condition` | Does it work? | `operational`, `in_maintenance`, `out_of_service` | Computed from `ResourceDowntime` windows (RS2), never stored. `POST .../actions/change-condition` (while `in_service`) opens a window starting now or ends the current one; scheduled windows: `/api/labs/downtimes` |
-| placement | Where is it? | a bench, a station, a room, only a `location_note`, or none (unknown) | `PUT` / `DELETE .../placement` (and the bench `/assignment` routes) |
+| placement | Where is it? | a bench, a station, a room, only a `location_note`, or none (unknown) | `PUT` / `DELETE .../placement` |
 | loan | Who holds it, until when? | an open loan (borrower, due time) or none | `POST .../actions/hand-over`, `.../actions/return`, `.../actions/extend-loan` |
 | `display_status` (computed) | One label for lists and counts | see below | never written |
 
@@ -32,7 +32,7 @@ Three separate facts describe a unit. They are stored and changed independently;
 | Given to a partner lab | `transferred_out` | none | `transferred` |
 | Handed to Ada until Friday | `in_service` | none (an open loan instead) | `borrowed` |
 
-**Removing a unit from a bench** (`DELETE .../placement` or `.../assignment`) closes only the bench placement. `lifecycle_state` stays `in_service` and `condition` is unchanged, so `display_status` goes from `in_use` to `available` (or `maintenance`, `broken`, `calibration_overdue` if one applies). The unit's location is unknown until it is placed again. Only `change-lifecycle` moves a unit to another lifecycle state (for example `retired` when scrapped, `lost` when it cannot be found).
+**Removing a unit from a bench** (`DELETE .../placement`) closes only the bench placement. `lifecycle_state` stays `in_service` and `condition` is unchanged, so `display_status` goes from `in_use` to `available` (or `maintenance`, `broken`, `calibration_overdue` if one applies). The unit's location is unknown until it is placed again. Only `change-lifecycle` moves a unit to another lifecycle state (for example `retired` when scrapped, `lost` when it cannot be found).
 
 **Equipment in storage** is a unit placed in a room, at a station, or at an untracked place (`location_note`). It displays as `available`; where it is shows in `placement`. There is no `in_storage` label, because no field marks a room as a storage room (open question 2 in the redesign proposal).
 
@@ -52,7 +52,7 @@ Three separate facts describe a unit. They are stored and changed independently;
 - Entering `transferred_out`, `retired`, or `lost` is refused while the unit is on a bench (409 `equipment_already_placed`); any other placement is closed and reserved equipment bookings are cancelled with the given reason. `transferred_out` requires `receiving_organisation`.
 - Marking a unit `lost` is always a manual action; no timer sets it.
 
-**Placement rules:** only an `in_service` unit can be placed on a bench; `transferred_out`, `retired`, and `lost` units cannot be placed anywhere. `PUT .../placement` moves an item in one call from wherever it is (a bench included) to the new place or bench. The legacy `/assignment` route still refuses a different bench (409 `equipment_already_assigned`). Removing an item from a bench without a destination is allowed; its location is then unknown (owner decision, 2026-11-10). Changing `condition` never moves a unit.
+**Placement rules:** only an `in_service` unit can be placed on a bench; `transferred_out`, `retired`, and `lost` units cannot be placed anywhere. `PUT .../placement` moves an item in one call from wherever it is (a bench included) to the new place or bench. Removing an item from a bench without a destination is allowed; its location is then unknown (owner decision, 2026-11-10). Changing `condition` never moves a unit.
 
 **`display_status`** is computed in SQL; the first matching row wins:
 
@@ -131,7 +131,7 @@ The full design and its rationale are in `docs/proposals/equipment-management-re
   activity). Seeded categories: all flags on except `monitored`, which is on for Computing only.
 - `ComputingProfile` (`core.labs.models`): one-to-one with `Equipment`, primary key = equipment id,
   `related_name="computing_profile"`. Columns `hostname`, `ip_address`, `os_name`, `disk_usage`, `system_info`,
-  `monitored_devices`, `rdp_file`, `technical_user`. A unit has a profile exactly when its category is
+  `rdp_file`, `technical_user`. A unit has a profile exactly when its category is
   `monitored`: `create_equipment` creates it with the activity record; `update_equipment` creates it when a unit
   moves into a monitored category and refuses to move a unit with a profile out of one. The .rdp file is written
   by `application/computing_profile.sync_rdp_file` on create and when the SKU, hostname or technical user
@@ -190,15 +190,14 @@ Append-only history of lifecycle changes, written only by `change_lifecycle` and
 - List and detail return every typed field; fields the category does not use are `null` or empty. `computing`
   is the `ComputingProfile` (`null` for other units); the detail adds `activity` and `details`.
 - Write payloads: typed foreign keys as `<name>_id`, many-to-many as `<name>_ids`; `computing` is a nested
-  object (`hostname` on create; `monitored_devices`, `technical_user_id` on update).
+  object (`hostname` on create; `technical_user_id` on update).
 
 ### Computing field ownership
 - `ip_address`, `os_name`, `system_info`, and `disk_usage` are agent-owned snapshot fields and are never written
   through the API. `hostname` is entered at registration (it names the RDP host).
 - The authenticated agent snapshot endpoint described in `docs/agent-platform/backend-api.md` is not implemented yet.
-- `rdp_file` is server-generated. `mac_address` is a shared column; `computing.monitored_devices` and
-  `computing.technical_user_id` are editable on update. Agent writes to `technical_user` are prohibited by the
-  agent contract.
+- `rdp_file` is server-generated. `mac_address` is a shared column; `computing.technical_user_id` is editable on
+  update. Agent writes to `technical_user` are prohibited by the agent contract.
 - Lifecycle state and condition are read-only in update and change only through `actions/change-lifecycle` and `actions/change-condition` (or the downtime API); history is `EquipmentEvent` and `ResourceDowntime`. `display_status` is computed, never written.
 - Audit result/remarks are managed by the resource-audit API, not category payloads. Authenticated equipment creation currently still creates a server-generated `NOT_ASSESSED` audit record; this behavior is retained.
 - Equipment `details`, shared-resource `remark`, `EquipmentEvent.details`, and per-audit `remarks` remain separate stored concepts. Do not consolidate them without an approved data and API compatibility plan.
@@ -214,9 +213,6 @@ Append-only history of lifecycle changes, written only by `change_lifecycle` and
 | `GET /api/labs/equipment/filters` | `EquipmentFiltersAPIView` | None | Available filter metadata schema. |
 | `GET /api/labs/equipment/reference-data` | `EquipmentReferenceDataAPIView` | Optional `category` | Form catalogs and typed lookups, narrowed to one category. |
 | `GET /api/labs/equipment/status-summary` | `EquipmentStatusSummaryAPIView` | Optional `category` | Count per display status. |
-| `GET /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | Path `{equipment_id}` | Active bench assignment detail. |
-| `POST /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | `EquipmentAssignmentSerializer` | Assign equipment to bench. |
-| `DELETE /api/labs/equipment/{equipment_id}/assignment` | `EquipmentAssignmentAPIView` | Path `{equipment_id}` | Unassign equipment from current bench. |
 | `GET /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | Path `{equipment_id}` | Active placement of any kind (bench, station, room, untracked place); 404 when the location is unknown. |
 | `GET` / `PUT` / `DELETE /api/labs/equipment/{equipment_id}/image` | `EquipmentImageAPIView` | Multipart, one `file` part | Read, replace (JPEG/PNG/GIF/WebP, at most 5 MB) or remove the image; equipment reads return `image_url` (see `core/labs/features/base/docs/resource-images.md`). |
 | `PUT /api/labs/equipment/{equipment_id}/placement` | `EquipmentPlacementAPIView` | `EquipmentPlacementWriteSerializer` | Set where the item is; moves it in one call from its current place or bench. |

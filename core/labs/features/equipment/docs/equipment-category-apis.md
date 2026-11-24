@@ -95,7 +95,7 @@ Optional operation overrides are declared only when their field set differs;
 `None` inherits the default, while an empty tuple explicitly exposes no category
 fields. Computing list exposes `ip_address`, `os_name`, and `mac_address`;
 create permits only `mac_address` beyond shared fields; update permits only
-`monitored_devices` and `technical_user` beyond shared fields. Computing detail
+`technical_user` beyond shared fields. Computing detail
 retains the configured agent and server-managed fields as read-only response data.
 Every category explicitly lists its searchable model
 paths: the shared SKU/name/serial/log-label fields plus category fields and searchable
@@ -117,7 +117,7 @@ Additional writable category fields:
 | Category | Create fields | Update fields |
 | --- | --- | --- |
 | accessory, debugging, laboratory, other | No additional fields | No additional fields |
-| computing | mac_address | monitored_devices, technical_user |
+| computing | mac_address | technical_user |
 | display | size, resolution, interfaces | size, resolution, interfaces |
 | furniture, mechanical | dimensions, material | dimensions, material |
 | instrument | interfaces | interfaces |

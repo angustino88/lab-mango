@@ -8,6 +8,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
+from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
 
 from core.common.models import TimestampedSoftDeleteMixin
@@ -17,32 +18,6 @@ from core.websocket.models import Notification
 
 def _new_notification() -> Notification:
     return Notification(message="test", expiry_date=timezone.now() + timedelta(days=1))
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def make_request(user):
-    """Build a minimal mock request object with an authenticated user."""
-
-    class _MockRequest:
-        user: object  # satisfies mypy
-
-    req = _MockRequest()
-    req.user = user
-    return req
-
-
-def make_anon_request():
-    """Build a minimal mock request with an anonymous user."""
-
-    class _AnonUser:
-        is_authenticated = False
-
-    class _MockRequest:
-        user = _AnonUser()
-
-    return _MockRequest()
 
 
 # ---------------------------------------------------------------------------
@@ -54,7 +29,7 @@ class TestUserStampedModel:
     def test_creator_set_on_first_save(self, db):
         user = UserFactory()
         note = _new_notification()
-        note.save(request=make_request(user))
+        note.save(actor=user)
         note.refresh_from_db()
 
         assert note.creator_id == user.pk  # type: ignore[attr-defined]
@@ -64,11 +39,11 @@ class TestUserStampedModel:
         user2 = UserFactory()
 
         note = _new_notification()
-        note.save(request=make_request(user1))
+        note.save(actor=user1)
         assert note.last_modified_by_id == user1.pk  # type: ignore[attr-defined]
 
         note.message = "updated"
-        note.save(request=make_request(user2))
+        note.save(actor=user2)
         assert note.last_modified_by_id == user2.pk  # type: ignore[attr-defined]
 
     def test_creator_not_overwritten_on_update(self, db):
@@ -76,11 +51,11 @@ class TestUserStampedModel:
         user2 = UserFactory()
 
         note = _new_notification()
-        note.save(request=make_request(user1))
+        note.save(actor=user1)
         original_creator_id = note.creator_id
 
         note.message = "updated"
-        note.save(request=make_request(user2))
+        note.save(actor=user2)
         # creator must not change
         assert note.creator_id == original_creator_id
 
@@ -98,15 +73,15 @@ class TestUserStampedModel:
         assert note.last_modified_by_id == editor.pk
         assert note.message == "updated"
 
-    def test_save_without_request_sets_no_user(self, db):
+    def test_save_without_actor_sets_no_user(self, db):
         note = _new_notification()
-        note.save()  # no request kwarg
+        note.save()
         assert note.creator_id is None
         assert note.last_modified_by_id is None
 
     def test_save_with_anonymous_user_sets_no_user(self, db):
         note = _new_notification()
-        note.save(request=make_anon_request())
+        note.save(actor=AnonymousUser())
         assert note.creator_id is None
         assert note.last_modified_by_id is None
 

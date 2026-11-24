@@ -1351,16 +1351,14 @@ components:
       - resource_kind
     PurchaseItemResourceCreate:
       type: object
-      description: Supply resource_kind, legacy resource_type_id, or both. At least
-        one is required. If both are supplied, they must identify the same resource
-        kind.
+      description: Allocate a physical or license resource to a purchase item using
+        its stable resource_kind.
       properties:
         resource_kind:
           allOf:
           - $ref: '#/components/schemas/ResourceKindEnum'
           writeOnly: true
-          description: 'Stable resource kind. Supply this or legacy resource_type_id;
-            if both are supplied, they must match.
+          description: 'Stable resource kind (bench, equipment, license, or station).
 
 
             * `bench` - bench
@@ -1370,11 +1368,6 @@ components:
             * `license` - license
 
             * `station` - station'
-        resource_type_id:
-          type: integer
-          minimum: 1
-          writeOnly: true
-          description: Legacy resource type ID.
         resource_id:
           type: integer
           minimum: 1
@@ -1385,11 +1378,7 @@ components:
       required:
       - acquisition_price
       - resource_id
-      anyOf:
-      - required:
-        - resource_kind
-      - required:
-        - resource_type_id
+      - resource_kind
     PurchaseItemResourceListSerializersPurchaseItemResourcePaginatedResponse:
       type: object
       description: Base serializer for successful API responses.

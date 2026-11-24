@@ -107,13 +107,12 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
 - `EquipmentAssignment` connects equipment to a bench over an interval. Both FKs are protected. A conditional unique constraint permits at most one active bench assignment per equipment; a check enforces `unassigned_at >= assigned_at` when ended. There is no reciprocal active-capacity constraint per bench in this model.
 - Equipment lifecycle/status history, bench assignment, and equipment booking are distinct. Consult category model source for exact fields and deletion semantics.
 
-### Licenses, assignments, agreements, and payments
+### Licenses and assignments
 
-**Models:** `LicenseProduct`, `LicenseVendor`, `LicenseType`, `LicenseCategory`, `LicenseRestriction`, `License`, `LicenseStatusRecord`, `LicenseAssignment`, `LicenseAgreement`, `LicensePayment`. `LicenseStatus` and the shared `BillingPeriod` are choices.
+**Models:** `LicenseProduct`, `LicenseVendor`, `LicenseType`, `LicenseCategory`, `LicenseRestriction`, `License`, `LicenseStatusRecord`, `LicenseAssignment`. `LicenseStatus` is a choices enum.
 
 - `License` extends resource identity. Product, vendor, type, category, and optional restriction relations are protected. Status history protects its license.
 - `LicenseAssignment` links a license and equipment; both are protected. A conditional unique constraint prevents a duplicate active license/equipment pair, and a check validates the interval. The constraint does not limit a license to one equipment globally.
-- `LicenseAgreement` is the dated price/billing obligation; `LicensePayment` records payments against an agreement. An agreement is not a payment. Agreement period checks are database-enforced; the payment model has a date index, with no explicit amount check found in its source.
 
 ### Bookings and projects
 

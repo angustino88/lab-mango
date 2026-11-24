@@ -21,9 +21,8 @@ from core.agents.application import (
 )
 from core.agents.contracts import CreateEnrollmentGrantInput
 from core.agents.exceptions import AgentEnrollmentConflict, EnrollmentGrantInvalid
+from core.agents.models import AgentIdentity, EnrollmentGrant
 from core.labs.models import (
-    AgentIdentity,
-    EnrollmentGrant,
     EquipmentCategory,
     EquipmentKind,
     RoutingChange,

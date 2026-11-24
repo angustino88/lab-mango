@@ -360,8 +360,6 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1return
   /api/labs/equipment/{equipment_id}/activity:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1activity
-  /api/labs/equipment/{equipment_id}/assignment:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1assignment
   /api/labs/equipment/{equipment_id}/hardware-ids:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1hardware-ids
   /api/labs/equipment/{equipment_id}/hardware-ids/{hardware_id_id}:
@@ -478,8 +476,6 @@ paths:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices
   /api/labs/expected-devices/{expected_device_id}:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices~1{expected_device_id}
-  /api/labs/expected-devices/legacy-suggestions:
-    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices~1legacy-suggestions
   /api/labs/monitoring-events:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events
   /api/labs/monitoring-events/{id}:
@@ -544,8 +540,6 @@ paths:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1assign
   /api/labs/licenses/{license_id}/actions/change-status:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1change-status
-  /api/labs/licenses/{license_id}/agreements:
-    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1agreements
   /api/labs/licenses/{license_id}/history:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1history
   /api/labs/licenses/{license_id}/image:

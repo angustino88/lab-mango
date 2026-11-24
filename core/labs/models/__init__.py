@@ -3,7 +3,6 @@ from .activity import (
     ComputingActivityStatus,
     LabSessionLog,
 )
-from .agents import AgentIdentity, EnrollmentGrant
 from .analytics import (
     ActiveLaboratoryObservation,
     ActiveUserObservation,
@@ -94,7 +93,6 @@ from .resource.equipment import (
 )
 from .resource.equipment.assignment import EquipmentAssignment, EquipmentPlacement
 from .resource.equipment.computing import ComputingProfile, TechnicalUser
-from .resource.license.agreement import LicenseAgreement
 from .resource.license.assignment import LicenseAssignment
 from .resource.license.check import (
     LicenseAlert,
@@ -107,7 +105,6 @@ from .resource.license.check import (
     LicenseObservationStatus,
 )
 from .resource.license.license import License, LicenseStatus, LicenseStatusRecord
-from .resource.license.payment import LicensePayment
 from .resource.location import (
     Building,
     City,
@@ -189,8 +186,6 @@ __all__ = [
     "Expense",
     "ExpensePayment",
     "ExpenseType",
-    "AgentIdentity",
-    "EnrollmentGrant",
     "LabProject",
     "LabSessionLog",
     "SessionAccessType",
@@ -205,8 +200,6 @@ __all__ = [
     "LicenseCheckTarget",
     "LicenseObservation",
     "LicenseObservationStatus",
-    "LicenseAgreement",
-    "LicensePayment",
     "LicenseStatus",
     "LicenseStatusRecord",
     "LaboratoryAvailabilityObservation",

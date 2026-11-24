@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 520,
+  "total_endpoints": 514,
   "generated_at": "2026-11-24",
   "endpoints": [
     {
@@ -12202,16 +12202,6 @@
         },
         {
           "name": "booking_code",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        {
-          "name": "creator",
           "in": "query",
           "required": false,
           "description": "",
@@ -57248,7 +57238,6 @@
             "computing": {
               "type": "object",
               "properties": {
-                "monitored_devices": {},
                 "technical_user_id": {
                   "type": "integer",
                   "nullable": true
@@ -57343,7 +57332,6 @@
           "power_rating": 1,
           "dimensions": null,
           "computing": {
-            "monitored_devices": null,
             "technical_user_id": 1
           },
           "kind_id": 1,
@@ -58858,7 +58846,6 @@
             "computing": {
               "type": "object",
               "properties": {
-                "monitored_devices": {},
                 "technical_user_id": {
                   "type": "integer",
                   "nullable": true
@@ -58953,7 +58940,6 @@
           "power_rating": 1,
           "dimensions": null,
           "computing": {
-            "monitored_devices": null,
             "technical_user_id": 1
           },
           "kind_id": 1,
@@ -62928,567 +62914,6 @@
       }
     },
     {
-      "endpoint": "/api/labs/equipment/{equipment_id}/assignment",
-      "method": "GET",
-      "operation_id": "labs_equipment_assignment_retrieve_by_equipment_id",
-      "summary": "Get Equipment Assignment by Equipment ID",
-      "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "equipment_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "equipment": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "bench": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "role": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "position": {
-                    "type": "integer",
-                    "readOnly": true
-                  }
-                },
-                "required": [
-                  "bench",
-                  "equipment",
-                  "id",
-                  "position",
-                  "role"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "equipment": {},
-              "bench": {},
-              "role": "string",
-              "position": 1
-            }
-          }
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/equipment/{equipment_id}/assignment",
-      "method": "PUT",
-      "operation_id": "labs_equipment_assignment_update_by_equipment_id",
-      "summary": "Update Equipment Assignment by Equipment ID",
-      "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "equipment_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": {
-        "content_type": "application/json",
-        "supported_content_types": [
-          "application/json",
-          "application/x-www-form-urlencoded",
-          "multipart/form-data"
-        ],
-        "required": true,
-        "description": "",
-        "schema": {
-          "type": "object",
-          "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
-          "properties": {
-            "bench_id": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "role": {
-              "type": "string",
-              "default": "default",
-              "maxLength": 64
-            },
-            "position": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0
-            }
-          },
-          "required": [
-            "bench_id"
-          ]
-        },
-        "example_payload": {
-          "bench_id": 1,
-          "role": "default",
-          "position": 0
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "equipment": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "bench": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "role": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "position": {
-                    "type": "integer",
-                    "readOnly": true
-                  }
-                },
-                "required": [
-                  "bench",
-                  "equipment",
-                  "id",
-                  "position",
-                  "role"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "equipment": {},
-              "bench": {},
-              "role": "string",
-              "position": 1
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "422": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "409": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/equipment/{equipment_id}/assignment",
-      "method": "DELETE",
-      "operation_id": "labs_equipment_assignment_destroy_by_equipment_id",
-      "summary": "Delete Equipment Assignment by Equipment ID",
-      "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.",
-      "tags": [
-        "Equipment"
-      ],
-      "parameters": [
-        {
-          "name": "equipment_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "204": {
-          "description": "No response body",
-          "content_type": null,
-          "schema": null,
-          "example_payload": null
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
       "endpoint": "/api/labs/equipment/{equipment_id}/hardware-ids",
       "method": "GET",
       "operation_id": "labs_equipment_hardware_ids_retrieve_by_equipment_id",
@@ -64792,7 +64217,7 @@
       "method": "GET",
       "operation_id": "labs_equipment_placement_retrieve_by_equipment_id",
       "summary": "Get Equipment Placement by Equipment ID",
-      "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+      "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.",
       "tags": [
         "Equipment"
       ],
@@ -64974,7 +64399,7 @@
       "method": "PUT",
       "operation_id": "labs_equipment_placement_update_by_equipment_id",
       "summary": "Update Equipment Placement by Equipment ID",
-      "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+      "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.",
       "tags": [
         "Equipment"
       ],
@@ -65369,7 +64794,7 @@
       "method": "DELETE",
       "operation_id": "labs_equipment_placement_destroy_by_equipment_id",
       "summary": "Delete Equipment Placement by Equipment ID",
-      "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+      "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.",
       "tags": [
         "Equipment"
       ],
@@ -66379,7 +65804,6 @@
             "computing": {
               "type": "object",
               "properties": {
-                "monitored_devices": {},
                 "technical_user_id": {
                   "type": "integer",
                   "nullable": true
@@ -66478,7 +65902,6 @@
           "power_rating": 1,
           "dimensions": null,
           "computing": {
-            "monitored_devices": null,
             "technical_user_id": 1
           },
           "kind_id": 1,
@@ -67308,7 +66731,6 @@
             "computing": {
               "type": "object",
               "properties": {
-                "monitored_devices": {},
                 "technical_user_id": {
                   "type": "integer",
                   "nullable": true
@@ -67403,7 +66825,6 @@
           "power_rating": 1,
           "dimensions": null,
           "computing": {
-            "monitored_devices": null,
             "technical_user_id": 1
           },
           "kind_id": 1,
@@ -69222,172 +68643,6 @@
           }
         },
         "422": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/expected-devices/legacy-suggestions",
-      "method": "GET",
-      "operation_id": "labs_expected_devices_legacy_suggestions_retrieve",
-      "summary": "Get Expected Devices Legacy Suggestions",
-      "description": "Entries of a computer's legacy device list, to register and expect on that computer.",
-      "tags": [
-        "Monitoring"
-      ],
-      "parameters": [
-        {
-          "name": "computing_id",
-          "in": "query",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "properties": {
-                  "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    }
-                  }
-                },
-                "required": [
-                  "items"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "items": [
-                {}
-              ]
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -85929,610 +85184,6 @@
       }
     },
     {
-      "endpoint": "/api/labs/licenses/{license_id}/agreements",
-      "method": "GET",
-      "operation_id": "labs_licenses_agreements_retrieve_by_license_id",
-      "summary": "Get Licenses Agreements by License ID",
-      "description": "List and create commercial agreements for a license.",
-      "tags": [
-        "Licenses"
-      ],
-      "parameters": [
-        {
-          "name": "license_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        {
-          "name": "page_size",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer",
-            "maximum": 100,
-            "minimum": 1
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "meta": {
-                "type": "object",
-                "properties": {
-                  "pagination": {
-                    "type": "object",
-                    "properties": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "required": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    }
-                  }
-                },
-                "required": [
-                  "pagination"
-                ]
-              },
-              "data": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "readOnly": true
-                    },
-                    "license": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "readOnly": true
-                    },
-                    "price": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "readOnly": true
-                    },
-                    "billing_period": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "readOnly": true
-                    },
-                    "start_date": {
-                      "type": "string",
-                      "format": "date",
-                      "readOnly": true
-                    },
-                    "end_date": {
-                      "type": "string",
-                      "format": "date",
-                      "readOnly": true,
-                      "nullable": true
-                    },
-                    "created_at": {
-                      "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
-                    }
-                  },
-                  "required": [
-                    "billing_period",
-                    "created_at",
-                    "end_date",
-                    "id",
-                    "license",
-                    "price",
-                    "start_date"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "data",
-              "meta"
-            ]
-          },
-          "example_payload": {
-            "meta": {
-              "pagination": {
-                "type": null,
-                "description": null
-              }
-            },
-            "data": [
-              {
-                "id": 1,
-                "license": {},
-                "price": {},
-                "billing_period": {},
-                "start_date": "2026-10-20",
-                "end_date": "2026-10-20",
-                "created_at": "2026-10-20T12:00:00Z"
-              }
-            ]
-          }
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/licenses/{license_id}/agreements",
-      "method": "POST",
-      "operation_id": "labs_licenses_agreements_create_by_license_id",
-      "summary": "Create Licenses Agreements by License ID",
-      "description": "List and create commercial agreements for a license.",
-      "tags": [
-        "Licenses"
-      ],
-      "parameters": [
-        {
-          "name": "license_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": {
-        "content_type": "application/json",
-        "supported_content_types": [
-          "application/json",
-          "application/x-www-form-urlencoded",
-          "multipart/form-data"
-        ],
-        "required": true,
-        "description": "",
-        "schema": {
-          "type": "object",
-          "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
-          "properties": {
-            "price": {
-              "type": "object",
-              "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
-              "properties": {
-                "amount": {
-                  "type": "string",
-                  "description": "Decimal string; never a float.",
-                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
-                },
-                "currency": {
-                  "type": "string",
-                  "description": "ISO 4217 code, uppercase.",
-                  "pattern": "^[A-Z]{3}$"
-                }
-              },
-              "required": [
-                "amount",
-                "currency"
-              ]
-            },
-            "billing_period": {
-              "enum": [
-                "one_time",
-                "monthly",
-                "quarterly",
-                "annual"
-              ],
-              "type": "string",
-              "description": "* `one_time` - One-time\n* `monthly` - Monthly\n* `quarterly` - Quarterly\n* `annual` - Annual"
-            },
-            "start_date": {
-              "type": "string",
-              "format": "date"
-            },
-            "end_date": {
-              "type": "string",
-              "format": "date",
-              "nullable": true
-            }
-          },
-          "required": [
-            "price",
-            "start_date"
-          ]
-        },
-        "example_payload": {
-          "price": {
-            "amount": "string",
-            "currency": "string"
-          },
-          "billing_period": "one_time",
-          "start_date": "2026-10-20",
-          "end_date": "2026-10-20"
-        }
-      },
-      "responses": {
-        "201": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "license": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "price": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "billing_period": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "start_date": {
-                    "type": "string",
-                    "format": "date",
-                    "readOnly": true
-                  },
-                  "end_date": {
-                    "type": "string",
-                    "format": "date",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "created_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  }
-                },
-                "required": [
-                  "billing_period",
-                  "created_at",
-                  "end_date",
-                  "id",
-                  "license",
-                  "price",
-                  "start_date"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "license": {},
-              "price": {},
-              "billing_period": {},
-              "start_date": "2026-10-20",
-              "end_date": "2026-10-20",
-              "created_at": "2026-10-20T12:00:00Z"
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "422": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
       "endpoint": "/api/labs/licenses/{license_id}/history",
       "method": "GET",
       "operation_id": "labs_licenses_history_retrieve_by_license_id",
@@ -89800,15 +88451,6 @@
           }
         },
         {
-          "name": "computer_id",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        },
-        {
           "name": "computer_sku",
           "in": "query",
           "required": false,
@@ -89836,25 +88478,6 @@
           "schema": {
             "type": "string",
             "format": "date-time"
-          }
-        },
-        {
-          "name": "from_date_time",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        {
-          "name": "lab",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer"
           }
         },
         {
@@ -89890,16 +88513,6 @@
         },
         {
           "name": "to_date",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        {
-          "name": "to_date_time",
           "in": "query",
           "required": false,
           "description": "",
@@ -90276,23 +88889,7 @@
             "event_id": {
               "type": "string",
               "format": "uuid"
-            },
-            "source": {
-              "type": "string"
-            },
-            "event_type": {
-              "type": "string"
-            },
-            "category": {
-              "type": "string"
-            },
-            "object_name": {
-              "type": "string"
-            },
-            "object_id": {
-              "type": "string"
-            },
-            "details": {}
+            }
           }
         },
         "example_payload": {
@@ -90307,13 +88904,7 @@
           "occurred_at": "2026-10-20T12:00:00Z",
           "agent_id": "agent",
           "agent_version": "",
-          "event_id": "123e4567-e89b-12d3-a456-426614174000",
-          "source": "string",
-          "event_type": "string",
-          "category": "string",
-          "object_name": "string",
-          "object_id": "string",
-          "details": null
+          "event_id": "123e4567-e89b-12d3-a456-426614174000"
         }
       },
       "responses": {
@@ -90703,15 +89294,6 @@
           }
         },
         {
-          "name": "computer_id",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        },
-        {
           "name": "computer_sku",
           "in": "query",
           "required": false,
@@ -90742,25 +89324,6 @@
           }
         },
         {
-          "name": "from_date_time",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        {
-          "name": "lab",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        },
-        {
           "name": "subject_type",
           "in": "query",
           "required": false,
@@ -90772,16 +89335,6 @@
         },
         {
           "name": "to_date",
-          "in": "query",
-          "required": false,
-          "description": "",
-          "schema": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        {
-          "name": "to_date_time",
           "in": "query",
           "required": false,
           "description": "",
@@ -91515,7 +90068,7 @@
         "description": "",
         "schema": {
           "type": "object",
-          "description": "Supply resource_kind, legacy resource_type_id, or both. At least one is required. If both are supplied, they must identify the same resource kind.",
+          "description": "Allocate a physical or license resource to a purchase item using its stable resource_kind.",
           "properties": {
             "resource_kind": {
               "allOf": [
@@ -91531,13 +90084,7 @@
                 }
               ],
               "writeOnly": true,
-              "description": "Stable resource kind. Supply this or legacy resource_type_id; if both are supplied, they must match.\n\n* `bench` - bench\n* `equipment` - equipment\n* `license` - license\n* `station` - station"
-            },
-            "resource_type_id": {
-              "type": "integer",
-              "minimum": 1,
-              "writeOnly": true,
-              "description": "Legacy resource type ID."
+              "description": "Stable resource kind (bench, equipment, license, or station).\n\n* `bench` - bench\n* `equipment` - equipment\n* `license` - license\n* `station` - station"
             },
             "resource_id": {
               "type": "integer",
@@ -91588,22 +90135,18 @@
           },
           "required": [
             "acquisition_price",
-            "resource_id"
-          ],
-          "anyOf": [
-            {
-              "required": [
-                "resource_kind"
-              ]
-            },
-            {
-              "required": [
-                "resource_type_id"
-              ]
-            }
+            "resource_id",
+            "resource_kind"
           ]
         },
-        "example_payload": null
+        "example_payload": {
+          "resource_kind": {},
+          "resource_id": 1,
+          "acquisition_price": {
+            "amount": "string",
+            "currency": "string"
+          }
+        }
       },
       "responses": {
         "201": {

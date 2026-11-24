@@ -30,8 +30,6 @@ class ReferenceDataListAPIView(AppListAPIView, FeatureAPIView):
         field_names = {field.name for field in self.model._meta.get_fields()}
         if "deleted_at" in field_names:
             queryset = queryset.filter(deleted_at__isnull=True)
-        elif "is_delete" in field_names:
-            queryset = queryset.filter(is_delete=False)
         if "active" in field_names:
             queryset = queryset.filter(active=True)
         return queryset

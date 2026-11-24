@@ -48,7 +48,6 @@ def register_cache_invalidation() -> None:
         EquipmentType,
         Group,
         License,
-        LicenseAgreement,
         LicenseAssignment,
         Material,
         ProductModelSpecification,
@@ -116,7 +115,6 @@ def register_cache_invalidation() -> None:
         # Licenses
         (License, (LICENSES_CACHE_NS,)),
         (LicenseAssignment, (LICENSES_CACHE_NS,)),
-        (LicenseAgreement, (LICENSES_CACHE_NS,)),
     ]
 
     for model, namespaces in model_namespaces:

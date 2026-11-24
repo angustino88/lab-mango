@@ -26,26 +26,24 @@
                 <thead>
                     <tr>
                         <th style="border: 1px solid #ddd; padding: 8px;">ID</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Lab Name</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Computer Name</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Computer</th>
                         <th style="border: 1px solid #ddd; padding: 8px;">User</th>
                         <th style="border: 1px solid #ddd; padding: 8px;">Display Name</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Used [GB]</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Quota [GB]</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Exceeded [GB]</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Used [GiB]</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Quota [GiB]</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Exceeded [GiB]</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for quota in quotas %}
                         <tr>
                             <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ forloop.counter }}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.lab_name }}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.computer }}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.username }}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.user_displayname }}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.used|floatformat:2 }}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.quota|floatformat:2 }}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.exceeded|floatformat:2 }}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.computer_identifier }}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.account_identifier }}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.account_display_name }}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.used_gibibytes|floatformat:2 }}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.quota_gibibytes|floatformat:2 }}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ quota.exceeded_gibibytes|floatformat:2 }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

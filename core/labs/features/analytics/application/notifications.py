@@ -64,12 +64,25 @@ def generate_storage_quota_ical(username: str, email_domain: str) -> bytes:
     return "\r\n".join(_fold_ical_line(ln) for ln in lines).encode("utf-8")
 
 
+def _quota_email_row(measurement) -> dict[str, object]:
+    used = getattr(measurement, "used_gibibytes", 0)
+    quota = getattr(measurement, "quota_gibibytes", 0)
+    return {
+        "computer_identifier": getattr(measurement, "computer_identifier", "") or "N/A",
+        "account_identifier": getattr(measurement, "account_identifier", ""),
+        "account_display_name": getattr(measurement, "account_display_name", ""),
+        "used_gibibytes": used,
+        "quota_gibibytes": quota,
+        "exceeded_gibibytes": max(used - quota, 0),
+    }
+
+
 def send_storage_quota_user_email(username: str, quotas: list, email_domain: str) -> bool:
     """Dispatch storage quota warning email with attached iCalendar reminder."""
     try:
         html_content = render_to_string(
             "emails/user_exceed_quota.html",
-            {"user": username, "quotas": quotas},
+            {"user": username, "quotas": [_quota_email_row(item) for item in quotas]},
         )
         email = EmailMessage(
             subject="[Lab Mango] Storage Quota Exceeded",
@@ -90,10 +103,10 @@ def send_storage_quota_management_email(exceeded_quotas: list, receivers: list[s
     if not receivers:
         return True
 
-    grouped: dict[tuple[str, str], list] = defaultdict(list)
-    for q in exceeded_quotas:
-        comp_id = getattr(q, "computer_identifier", "N/A")
-        grouped[("Default Lab", comp_id)].append(q)
+    grouped: dict[str, list[dict[str, object]]] = defaultdict(list)
+    for measurement in exceeded_quotas:
+        row = _quota_email_row(measurement)
+        grouped[str(row["computer_identifier"])].append(row)
 
     return send_email(
         subject="[Lab Mango] Storage Quota Incident Summary",

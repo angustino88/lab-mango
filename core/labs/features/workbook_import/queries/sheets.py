@@ -146,7 +146,6 @@ _CONDITION = Column(
     choices=list_range("condition"),
     choice_list="condition",
 )
-_LEGACY_STATUS = Column("legacy_status", "Status", legacy=True)
 _INTERFACES = _numbered("interfaces", "Interface", 4, sheet_range("Lookups", "A"), "Pick from Lookups > Interfaces")
 _DIMENSIONS = (
     Column("length_mm", "Length (mm)", INT),
@@ -621,7 +620,6 @@ SHEETS: tuple[Sheet, ...] = (
             _yes_no("calibration_required", "Calibration Required"),
             Column("details", "Details", hint="Free text notes", width=30),
             Column("remark", "Remarks", legacy=True),
-            _LEGACY_STATUS,
         ),
     ),
     Sheet(

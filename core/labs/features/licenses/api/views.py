@@ -14,8 +14,6 @@ from core.labs.features.base.common import OptionsAPIView
 from core.labs.features.base.resource_images import ResourceImageAPIView
 from core.labs.features.licenses import public
 from core.labs.features.licenses.api.serializers import (
-    LicenseAgreementSerializer,
-    LicenseAgreementWriteSerializer,
     LicenseAssignmentRequestSerializer,
     LicenseAssignmentResultSerializer,
     LicenseCategorySerializer,
@@ -36,7 +34,6 @@ from core.labs.features.licenses.api.serializers import (
 from core.labs.features.licenses.public import (
     AssignLicenseInput,
     ChangeLicenseStatusInput,
-    CreateLicenseAgreementInput,
     CreateLicenseInput,
     DeleteLicenseInput,
     UnassignLicenseInput,
@@ -295,42 +292,6 @@ class LicenseHistoryAPIView(AppListAPIView, FeatureAPIView):
         return self.list_response_sync(public.list_license_status_history(license_id=license_id))
 
 
-class LicenseAgreementListCreateAPIView(AppListAPIView, FeatureAPIView):
-    """List and create commercial agreements for a license."""
-
-    schema_tags = ("Licenses",)
-    get_contract = OperationContract(
-        query=PageNumberQuerySerializer,
-        success=ResponseContract.paginated("LicenseAgreementList", LicenseAgreementSerializer),
-        not_found=ResponseContract.not_found(),
-    )
-    post_contract = OperationContract(
-        request=LicenseAgreementWriteSerializer,
-        success=ResponseContract.created("LicenseAgreement", LicenseAgreementSerializer),
-        bad_request=ResponseContract.bad_request(),
-        validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
-        not_found=ResponseContract.not_found(),
-    )
-
-    def handle_get(self, request: Request, license_id: int, *args, **kwargs) -> Response:
-        _, error = self.validate_query()
-        if error is not None:
-            return error
-        if public.get_active_license(license_id=license_id) is None:
-            return self.respond_problem("not_found")
-        return self.list_response_sync(public.list_license_agreements(license_id=license_id))
-
-    def handle_post(self, request: Request, license_id: int, *args, **kwargs) -> Response:
-        serializer, error = self.validate_request()
-        if error is not None:
-            return error
-        agreement = public.create_license_agreement(
-            CreateLicenseAgreementInput(license_id=license_id, **serializer.validated_data),
-            actor=request.user,
-        )
-        return self.respond(agreement)
-
-
 # Vendors
 class LicenseVendorListAPIView(AppListAPIView, FeatureAPIView):
     schema_tags = ("Licenses",)
@@ -520,7 +481,6 @@ class LicenseRestrictionOptionsAPIView(OptionsAPIView):
 
 
 __all__ = (
-    "LicenseAgreementListCreateAPIView",
     "LicenseAssignActionAPIView",
     "LicenseAssignmentAPIView",
     "LicenseCategoryDetailAPIView",

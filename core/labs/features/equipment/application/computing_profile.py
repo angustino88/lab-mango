@@ -15,7 +15,7 @@ from core.labs.models import ComputingProfile, Equipment, TechnicalUser
 # The hostname names the RDP host and is entered at registration. ip_address, os_name,
 # disk_usage and system_info are agent-reported and never written through the API.
 PROFILE_CREATE_FIELDS = frozenset({"hostname", "technical_user"})
-PROFILE_UPDATE_FIELDS = frozenset({"monitored_devices", "technical_user"})
+PROFILE_UPDATE_FIELDS = frozenset({"technical_user"})
 # A change to one of these regenerates the .rdp file.
 RDP_SOURCE_FIELDS = frozenset({"hostname", "technical_user"})
 

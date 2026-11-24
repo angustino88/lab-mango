@@ -3,7 +3,7 @@
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, QuerySet, Subquery
 from django.db.models.functions import Coalesce
 
-from core.labs.models import License, LicenseAgreement, LicenseStatusRecord, PurchaseItemResource
+from core.labs.models import License, LicenseStatusRecord, PurchaseItemResource
 from core.labs.models.resource.license.assignment import LicenseAssignment
 
 from .status import license_status_expression
@@ -119,11 +119,6 @@ def list_licenses(*, search: str | None = None) -> QuerySet[License]:
     return queryset
 
 
-def list_license_agreements(*, license_id: int) -> QuerySet[LicenseAgreement]:
-    """Read agreements for an active license, or return no rows if it is absent."""
-    return LicenseAgreement.objects.filter(license_id=license_id).order_by("-created", "-pk")
-
-
 def list_license_status_history(*, license_id: int) -> QuerySet[LicenseStatusRecord]:
     """Status records of one license, newest first. Callers check the license exists first."""
     return (
@@ -139,7 +134,6 @@ __all__ = [
     "get_license",
     "get_license_for_mapping",
     "license_mapping_rows",
-    "list_license_agreements",
     "list_license_status_history",
     "list_licenses",
 ]

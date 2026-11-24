@@ -91,6 +91,7 @@ def remove_metrics(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+
     initial = True
 
     dependencies = [
@@ -1633,7 +1634,6 @@ class Migration(migrations.Migration):
                 ("os_name", models.CharField(blank=True, default="", max_length=255)),
                 ("disk_usage", models.JSONField(blank=True, default=list)),
                 ("system_info", models.JSONField(blank=True, default=dict)),
-                ("monitored_devices", models.JSONField(blank=True, default=dict)),
                 (
                     "rdp_file",
                     models.FileField(blank=True, null=True, upload_to="rdp_file/"),
@@ -4248,107 +4248,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="LicenseAgreement",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created",
-                    model_utils.fields.AutoCreatedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="created",
-                    ),
-                ),
-                (
-                    "modified",
-                    model_utils.fields.AutoLastModifiedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="modified",
-                    ),
-                ),
-                (
-                    "price",
-                    models.DecimalField(
-                        decimal_places=2,
-                        help_text="Amount charged per billing period.",
-                        max_digits=12,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
-                    ),
-                ),
-                (
-                    "currency",
-                    models.CharField(
-                        default=core.labs.models.finance.billing.default_currency,
-                        max_length=3,
-                        validators=[
-                            core.labs.models.finance.billing.validate_currency_code
-                        ],
-                    ),
-                ),
-                (
-                    "billing_period",
-                    models.CharField(
-                        choices=[
-                            ("one_time", "One-time"),
-                            ("monthly", "Monthly"),
-                            ("quarterly", "Quarterly"),
-                            ("annual", "Annual"),
-                        ],
-                        default="one_time",
-                        max_length=20,
-                    ),
-                ),
-                ("valid_from", models.DateField()),
-                ("valid_until", models.DateField(blank=True, null=True)),
-                (
-                    "creator",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_creator",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Created by",
-                    ),
-                ),
-                (
-                    "last_modified_by",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_last_modified_by",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Last modified by",
-                    ),
-                ),
-                (
-                    "license",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="agreements",
-                        to="labs.license",
-                    ),
-                ),
-            ],
-            options={
-                "ordering": ("-valid_from", "-id"),
-            },
-        ),
-        migrations.CreateModel(
             name="LicenseAlert",
             fields=[
                 (
@@ -4826,93 +4725,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("computing_id", "product_name", "pk"),
-            },
-        ),
-        migrations.CreateModel(
-            name="LicensePayment",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created",
-                    model_utils.fields.AutoCreatedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="created",
-                    ),
-                ),
-                (
-                    "modified",
-                    model_utils.fields.AutoLastModifiedField(
-                        default=django.utils.timezone.now,
-                        editable=False,
-                        verbose_name="modified",
-                    ),
-                ),
-                (
-                    "amount",
-                    models.DecimalField(
-                        decimal_places=2,
-                        max_digits=12,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
-                    ),
-                ),
-                (
-                    "currency",
-                    models.CharField(
-                        default=core.labs.models.finance.billing.default_currency,
-                        max_length=3,
-                        validators=[
-                            core.labs.models.finance.billing.validate_currency_code
-                        ],
-                    ),
-                ),
-                ("paid_at", models.DateField()),
-                ("reference", models.CharField(blank=True, default="", max_length=255)),
-                (
-                    "agreement",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="payments",
-                        to="labs.licenseagreement",
-                    ),
-                ),
-                (
-                    "creator",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_creator",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Created by",
-                    ),
-                ),
-                (
-                    "last_modified_by",
-                    models.ForeignKey(
-                        blank=True,
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="%(app_label)s_%(class)s_last_modified_by",
-                        to=settings.AUTH_USER_MODEL,
-                        verbose_name="Last modified by",
-                    ),
-                ),
-            ],
-            options={
-                "ordering": ("-paid_at", "-id"),
             },
         ),
         migrations.CreateModel(
@@ -10045,23 +9857,6 @@ class Migration(migrations.Migration):
                 name="labsess_booking_only_when_booked",
             ),
         ),
-        migrations.AddIndex(
-            model_name="licenseagreement",
-            index=models.Index(
-                fields=["license", "valid_from"], name="license_agreement_start_idx"
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="licenseagreement",
-            constraint=models.CheckConstraint(
-                condition=models.Q(
-                    ("valid_until__isnull", True),
-                    ("valid_until__gte", models.F("valid_from")),
-                    _connector="OR",
-                ),
-                name="license_agreement_valid_dates",
-            ),
-        ),
         migrations.AddConstraint(
             model_name="licensealert",
             constraint=models.UniqueConstraint(
@@ -10170,10 +9965,6 @@ class Migration(migrations.Migration):
                 fields=("license_check", "computing", "observation_key"),
                 name="license_observation_key_uniq",
             ),
-        ),
-        migrations.AddIndex(
-            model_name="licensepayment",
-            index=models.Index(fields=["paid_at"], name="license_payment_date_idx"),
         ),
         migrations.AddIndex(
             model_name="licenserestriction",

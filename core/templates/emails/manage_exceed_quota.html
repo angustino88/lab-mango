@@ -27,17 +27,16 @@
                 <thead>
                     <tr>
                         <th style="border: 1px solid #ddd; padding: 8px;">ID</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Lab Name</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Computer Name</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Computer</th>
                         <th style="border: 1px solid #ddd; padding: 8px;">User</th>
                         <th style="border: 1px solid #ddd; padding: 8px;">Display Name</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Used [GB]</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Quota [GB]</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Exceeded [GB]</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Used [GiB]</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Quota [GiB]</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Exceeded [GiB]</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for lab_group, users in quotas %}
+                    {% for computer_id, users in quotas %}
                         {% for user_entry in users %}
                             <tr>
                                 {% if forloop.first %}
@@ -45,17 +44,14 @@
                                         {{ forloop.parentloop.counter }}
                                     </td>
                                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;" rowspan="{{ users|length }}">
-                                        {{ lab_group.0 }}
-                                    </td>
-                                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;" rowspan="{{ users|length }}">
-                                        {{ lab_group.1 }}
+                                        {{ computer_id }}
                                     </td>
                                 {% endif %}
-                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.username }}</td>
-                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.user_displayname }}</td>
-                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.used|floatformat:2 }}</td>
-                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.quota|floatformat:2 }}</td>
-                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.exceeded|floatformat:2 }}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.account_identifier }}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.account_display_name }}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.used_gibibytes|floatformat:2 }}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.quota_gibibytes|floatformat:2 }}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ user_entry.exceeded_gibibytes|floatformat:2 }}</td>
                             </tr>
                         {% endfor %}
                     {% endfor %}

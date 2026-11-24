@@ -63,7 +63,7 @@ def test_user_publisher_requires_transaction_and_canonical_key():
 @pytest.mark.django_db(transaction=True)
 def test_agent_publication_requires_transaction(routing_agent_setup):
     actor, equipment = routing_agent_setup
-    from core.labs.models import AgentIdentity
+    from core.agents.models import AgentIdentity
 
     identity = AgentIdentity.objects.create(
         equipment=equipment,
@@ -79,7 +79,7 @@ def test_agent_publication_requires_transaction(routing_agent_setup):
 @pytest.mark.django_db(transaction=True)
 def test_agent_publication_rejects_unsaved_source_identity(routing_agent_setup):
     actor, equipment = routing_agent_setup
-    from core.labs.models import AgentIdentity
+    from core.agents.models import AgentIdentity
 
     identity = AgentIdentity(equipment=equipment, creator=actor)
     with transaction.atomic(), pytest.raises(RoutingPublishError, match="persisted agent identity"):
@@ -89,7 +89,7 @@ def test_agent_publication_rejects_unsaved_source_identity(routing_agent_setup):
 @pytest.mark.django_db(transaction=True)
 def test_agent_identity_derives_live_record_or_tombstone_from_source(routing_agent_setup):
     actor, equipment = routing_agent_setup
-    from core.labs.models import AgentIdentity
+    from core.agents.models import AgentIdentity
 
     identity = AgentIdentity.objects.create(
         equipment=equipment,
@@ -123,7 +123,7 @@ def test_agent_identity_derives_live_record_or_tombstone_from_source(routing_age
 @pytest.mark.django_db(transaction=True)
 def test_agent_publication_rolls_back_stream_history_and_projection(routing_agent_setup, monkeypatch):
     actor, equipment = routing_agent_setup
-    from core.labs.models import AgentIdentity
+    from core.agents.models import AgentIdentity
 
     original_save = RoutingEntity.save
 
