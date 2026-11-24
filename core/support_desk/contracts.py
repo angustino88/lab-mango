@@ -179,6 +179,9 @@ class ActivityEventType(StrEnum):
     SLA_PAUSED = "sla_paused"
     SLA_RESUMED = "sla_resumed"
     CSAT_SUBMITTED = "csat_submitted"
+    WORK_LOGGED = "work_logged"
+    WORK_LOG_UPDATED = "work_log_updated"
+    WORK_LOG_DELETED = "work_log_deleted"
 
     @classmethod
     def choices(cls) -> list[tuple[str, str]]:

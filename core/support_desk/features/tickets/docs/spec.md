@@ -65,6 +65,12 @@ Recipients: requester, assignee, **watchers** (never for internal notes), **team
 ### 3.5 Attachments
 Type/size/count limits (from `SupportSettings`) and magic-byte checks. The default allow-list covers images (png, jpg, gif, webp, bmp), documents (pdf, doc/docx, xls/xlsx, ppt/pptx, odt/ods/odp, rtf, md), text/data/logs (txt, log, csv, json, xml) and zip; migration `0002` widens installations still on the original list. Scanning is pluggable: set `SUPPORT_DESK_ATTACHMENT_SCANNER` to a dotted callable `(attachment) -> AttachmentScanStatus`. Without it uploads are `clean` immediately and verified by SHA-256 integrity; with it uploads start `pending` and **cannot be downloaded** (409) until scanned clean.
 
+### 3.6 Work logs
+- Anyone who can view a ticket can list its work logs and record effort. An entry's author and support agents or admins can edit or remove it. Entries are visible to the same people as the ticket, including its watchers.
+- Each entry records 1–14,400 whole minutes, a start timestamp (defaults to the current time), and an optional description up to 4,000 characters. Lists use page-number pagination and sort by most recent start, then highest entry ID.
+- Create requires a UUID `Idempotency-Key`. The actor can replay the original result for 24 hours with the same key, ticket, and input. Edits and deletes require the current entry `ETag` in `If-Match`. A stale edit or delete returns 412. A no-op edit retains its ETag.
+- Work-log writes lock the parent ticket before reading or modifying the entry. Changes and their activity record commit together. Activity records include the duration, and edit events capture changed fields. An activity record survives removal of the entry.
+
 ## 4. API
 Base `/api/support/`. All responses use the [standard envelope](../../../../../docs/api/response-standard.md). `{key}` is the ticket key. "any" means `HasAPIKey | IsAuthenticated`; "visible" applies §3.1. Generated contract: `openapi/support-desk-tickets.yml`.
 
@@ -80,6 +86,7 @@ Base `/api/support/`. All responses use the [standard envelope](../../../../../d
 | `GET/POST tickets/{key}/links`, `DELETE …/links/{id}` | read: visible; write: agent | Ticket links |
 | `POST tickets/{key}/csat` | requester | Rate 1-5 within `csat_window_days` of resolution |
 | `GET/POST tickets/{key}/comments`, `PATCH/DELETE …/comments/{id}` | visible; edit/delete by author within the edit window | Public replies and agent-only internal notes |
+| `GET/POST tickets/{key}/work-logs`, `GET/PATCH/DELETE …/work-logs/{id}` | visible; edit/delete by author or support staff | Track effort and audit changes (§3.6) |
 | `GET/POST tickets/{key}/attachments`, `DELETE …/attachments/{id}`, `GET attachments/{id}/download` | visible | Upload, remove, download (blocked until scanned clean, §3.5) |
 | `GET tickets/{key}/activity` | visible | Audit trail (agent-only entries hidden from requesters) |
 | `GET resources/{type}/{id}/tickets` | any (scoped) | Resource incident history |

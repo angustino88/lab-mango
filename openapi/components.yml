@@ -16085,6 +16085,19 @@ components:
           type: string
           format: date-time
           nullable: true
+    PatchedWorkLogRequest:
+      type: object
+      properties:
+        time_spent_minutes:
+          type: integer
+          maximum: 14400
+          minimum: 1
+        started_at:
+          type: string
+          format: date-time
+        description:
+          type: string
+          maxLength: 4000
     Patched_UpdateUser:
       type: object
       properties:
@@ -23036,6 +23049,121 @@ components:
           $ref: '#/components/schemas/Watcher'
       required:
       - data
+    TicketWorkLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        author:
+          allOf:
+          - $ref: '#/components/schemas/UserReference'
+          readOnly: true
+        time_spent_minutes:
+          type: integer
+          maximum: 14400
+          minimum: 1
+          description: Effort spent in whole minutes (1 to 14,400).
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        can_manage:
+          type: boolean
+          readOnly: true
+        etag:
+          type: string
+          readOnly: true
+      required:
+      - author
+      - can_manage
+      - created_at
+      - description
+      - etag
+      - id
+      - started_at
+      - time_spent_minutes
+      - updated_at
+      x-embedded-resource: true
+    TicketWorkLogCreateWorkLogsTicketWorkLogDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketWorkLog'
+      required:
+      - data
+    TicketWorkLogDetailWorkLogsTicketWorkLogDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketWorkLog'
+      required:
+      - data
+    TicketWorkLogListWorkLogsTicketWorkLogPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/TicketWorkLogListWorkLogsTicketWorkLogPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketWorkLog'
+      required:
+      - data
+      - meta
+    TicketWorkLogListWorkLogsTicketWorkLogPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    TicketWorkLogListWorkLogsTicketWorkLogPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/TicketWorkLogListWorkLogsTicketWorkLogPagination'
+      required:
+      - pagination
+    TicketWorkLogUpdateWorkLogsTicketWorkLogDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TicketWorkLog'
+      required:
+      - data
     TransactionTypeEnum:
       enum:
       - payment
@@ -23558,6 +23686,21 @@ components:
       - day
       - hour
       - usage
+    WorkLogRequest:
+      type: object
+      properties:
+        time_spent_minutes:
+          type: integer
+          maximum: 14400
+          minimum: 1
+        started_at:
+          type: string
+          format: date-time
+        description:
+          type: string
+          maxLength: 4000
+      required:
+      - time_spent_minutes
     WorkbookImportApplySerializersImportReportDetailResponse:
       type: object
       description: Base serializer for successful API responses.
