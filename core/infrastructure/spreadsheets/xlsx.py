@@ -6,21 +6,29 @@ The module is technical only: callers decide which sheets and columns mean somet
 from __future__ import annotations
 
 import io
+import posixpath
 import zipfile
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from datetime import date, datetime, time
 from typing import IO, Any
+from xml.etree import ElementTree
 
-from openpyxl import Workbook, load_workbook
+from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
+from python_calamine import CalamineError, CalamineWorkbook, SheetTypeEnum
 
 XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 # A .xlsx is a zip archive; refuse archives that expand to more than this (zip bombs).
 MAX_UNCOMPRESSED_BYTES = 200 * 1024 * 1024
 # Text that a spreadsheet program would run as a formula when written to a cell (CSV/formula injection).
 _FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+_MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+_DOCUMENT_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+_PACKAGE_REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
+_OFFICE_DOCUMENT_REL = f"{_DOCUMENT_REL_NS}/officeDocument"
 
 _TITLE_FILL = PatternFill("solid", fgColor="1F3864")
 _REQUIRED_FILL = PatternFill("solid", fgColor="1F3864")
@@ -80,6 +88,135 @@ def _is_empty(value: Any) -> bool:
     return value is None or (isinstance(value, str) and not value.strip())
 
 
+def _workbook_part(archive: zipfile.ZipFile) -> str:
+    """The archive path of the main workbook part, from the package relationships."""
+    root = ElementTree.fromstring(archive.read("_rels/.rels"))
+    for relationship in root.iter(f"{{{_PACKAGE_REL_NS}}}Relationship"):
+        if relationship.get("Type") == _OFFICE_DOCUMENT_REL:
+            return _resolve_target("", relationship.get("Target", ""))
+    raise KeyError("officeDocument")
+
+
+def _resolve_target(base_dir: str, target: str) -> str:
+    if target.startswith("/"):
+        return target.lstrip("/")
+    return posixpath.normpath(posixpath.join(base_dir, target))
+
+
+def _sheet_parts(archive: zipfile.ZipFile) -> dict[str, str]:
+    """Sheet name -> archive path of its worksheet XML."""
+    workbook_part = _workbook_part(archive)
+    base_dir, file_name = posixpath.split(workbook_part)
+    rels = ElementTree.fromstring(archive.read(posixpath.join(base_dir, "_rels", f"{file_name}.rels")))
+    targets = {
+        relationship.get("Id"): _resolve_target(base_dir, relationship.get("Target", ""))
+        for relationship in rels.iter(f"{{{_PACKAGE_REL_NS}}}Relationship")
+    }
+    workbook = ElementTree.fromstring(archive.read(workbook_part))
+    parts: dict[str, str] = {}
+    for sheet in workbook.iter(f"{{{_MAIN_NS}}}sheet"):
+        target = targets.get(sheet.get(f"{{{_DOCUMENT_REL_NS}}}id"))
+        name = sheet.get("name")
+        if name is not None and target is not None:
+            parts[name] = target
+    return parts
+
+
+def _coordinate(reference: str) -> tuple[int, int]:
+    """``"AB12"`` -> ``(12, 28)``: 1-based row and column of a cell reference."""
+    letters = reference.rstrip("0123456789")
+    if not letters or not letters.isascii() or not letters.isupper() or len(letters) == len(reference):
+        raise ValueError(f"Invalid cell reference {reference!r}.")
+    column = 0
+    for letter in letters:
+        column = column * 26 + ord(letter) - ord("A") + 1
+    return int(reference[len(letters) :]), column
+
+
+def _error_cells(archive: zipfile.ZipFile, part: str) -> dict[int, dict[int, str]]:
+    """Row -> {column -> error text} (``#DIV/0!``, ``#N/A``...) for every error cell of one worksheet.
+
+    python-calamine returns error cells as empty strings; the import must see the error text instead, so a
+    broken formula is reported, not read as a blank cell.
+    """
+    with archive.open(part) as source:
+        xml = source.read()
+    if b't="e"' not in xml and b"t='e'" not in xml:
+        return {}
+    errors: dict[int, dict[int, str]] = {}
+    for _event, element in ElementTree.iterparse(io.BytesIO(xml)):
+        if element.tag != f"{{{_MAIN_NS}}}c":
+            continue
+        reference = element.get("r")
+        if element.get("t") == "e" and reference:
+            value = element.findtext(f"{{{_MAIN_NS}}}v")
+            if value:
+                row, column = _coordinate(reference)
+                errors.setdefault(row, {})[column] = value
+        element.clear()
+    return errors
+
+
+def _cell(value: Any) -> Any:
+    """Return a calamine value as the reader's callers expect it.
+
+    Empty cells are ``None``; whole numbers are ``int`` (Excel stores every number as a float); a date
+    cell is a ``datetime`` (calamine returns a ``date`` when the time is midnight).
+    """
+    if isinstance(value, str):
+        return value if value else None
+    if isinstance(value, float):
+        return int(value) if value.is_integer() else value
+    if type(value) is date:
+        return datetime.combine(value, time())
+    return value
+
+
+def _read_sheet(
+    workbook: CalamineWorkbook,
+    name: str,
+    errors: dict[int, dict[int, str]],
+    *,
+    header_row: int,
+    first_data_row: int,
+    max_data_rows: int,
+) -> RawSheet:
+    # skip_empty_area=False keeps the grid anchored at A1: list index i is Excel row i + 1.
+    grid = workbook.get_sheet_by_name(name).to_python(skip_empty_area=False)
+
+    def values(number: int, width: int | None = None) -> list[Any]:
+        cells = grid[number - 1] if 0 < number <= len(grid) else []
+        if width is not None:
+            cells = cells[:width]
+        row = [_cell(value) for value in cells]
+        for column, text in errors.get(number, {}).items():
+            if column <= len(row):
+                row[column - 1] = text
+        return row
+
+    headers = values(header_row)
+    while headers and _is_empty(headers[-1]):
+        headers.pop()
+    width = len(headers)
+    rows: list[tuple[int, tuple[Any, ...]]] = []
+    truncated = False
+    if width:
+        for number in range(first_data_row, len(grid) + 1):
+            cells = values(number, width)
+            if all(_is_empty(value) for value in cells):
+                continue
+            if len(rows) >= max_data_rows:
+                truncated = True
+                break
+            rows.append((number, tuple(cells) + (None,) * (width - len(cells))))
+    return RawSheet(
+        name=name,
+        headers=tuple(None if _is_empty(h) else str(h).strip() for h in headers),
+        rows=tuple(rows),
+        truncated=truncated,
+    )
+
+
 def read_workbook(
     file: IO[bytes] | bytes,
     *,
@@ -88,52 +225,35 @@ def read_workbook(
     first_data_row: int = 4,
     max_data_rows: int = 5000,
 ) -> tuple[RawSheet, ...]:
-    """Read the named sheets that exist in the file; cached formula results are read, not formulas.
+    """Read the named worksheets that exist in the file; cached formula results are read, not formulas.
 
     Each sheet stops after ``max_data_rows`` non-empty rows and is then marked ``truncated``.
     """
     data = file if isinstance(file, bytes) else file.read()
     _check_archive(data)
-    try:
-        workbook = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
-    except Exception as error:  # noqa: BLE001 - openpyxl raises many types for corrupt files.
-        raise SpreadsheetUnreadable("The workbook could not be read.") from error
     wanted = set(sheet_names)
-    sheets: list[RawSheet] = []
     try:
-        for worksheet in workbook.worksheets:
-            if worksheet.title not in wanted:
-                continue
-            header_cells = next(worksheet.iter_rows(min_row=header_row, max_row=header_row, values_only=True), ())
-            headers = list(header_cells)
-            while headers and _is_empty(headers[-1]):
-                headers.pop()
-            width = len(headers)
-            rows: list[tuple[int, tuple[Any, ...]]] = []
-            truncated = False
-            if width:
-                for number, values in enumerate(
-                    worksheet.iter_rows(min_row=first_data_row, max_col=width, values_only=True),
-                    start=first_data_row,
-                ):
-                    if all(_is_empty(value) for value in values):
-                        continue
-                    if len(rows) >= max_data_rows:
-                        truncated = True
-                        break
-                    padded = tuple(values) + (None,) * (width - len(values))
-                    rows.append((number, padded))
-            sheets.append(
-                RawSheet(
-                    name=worksheet.title,
-                    headers=tuple(None if _is_empty(h) else str(h).strip() for h in headers),
-                    rows=tuple(rows),
-                    truncated=truncated,
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            parts = _sheet_parts(archive)
+            with CalamineWorkbook.from_filelike(io.BytesIO(data)) as workbook:
+                names = [
+                    sheet.name
+                    for sheet in workbook.sheets_metadata
+                    if sheet.typ == SheetTypeEnum.WorkSheet and sheet.name in wanted
+                ]
+                return tuple(
+                    _read_sheet(
+                        workbook,
+                        name,
+                        _error_cells(archive, parts[name]) if name in parts else {},
+                        header_row=header_row,
+                        first_data_row=first_data_row,
+                        max_data_rows=max_data_rows,
+                    )
+                    for name in names
                 )
-            )
-    finally:
-        workbook.close()
-    return tuple(sheets)
+    except (CalamineError, ElementTree.ParseError, KeyError, ValueError, zipfile.BadZipFile) as error:
+        raise SpreadsheetUnreadable("The workbook could not be read.") from error
 
 
 def safe_cell_value(value: Any) -> Any:
