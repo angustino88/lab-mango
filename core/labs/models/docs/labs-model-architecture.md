@@ -291,3 +291,15 @@ Verified feature packages with `public.py` facades: locations, benches, equipmen
 Coverage check (2026-10-15): source search found 107 class declarations across 46 Python files, including choices, querysets, and abstract bases. The concrete model classes and abstract model bases have been inventoried by group above; choices and querysets are not models. The inventory is an architecture-level model coverage pass, not an exhaustive field-by-field schema audit; equipment category fields, every index, and all migration/deployment behavior were not individually listed.
 
 Source of truth for detailed fields and constraints: model modules under `core/labs/models/`; model registration exports: `core/labs/models/__init__.py`. The 2026-11-07 verification covers the routing additions, not a re-audit of the older inventory. No migrations were applied and no production schema, query plans, or Mermaid renderer were checked/run during this documentation update.
+
+### Bench inspection history
+
+Inspection history uses `ResourceServiceRecord` with kind `inspection`. A result of `unknown`
+means the source supplied a performed date without a result. The service-record date constraint
+requires any next due date to follow the performed date.
+
+The PostgreSQL table `labs_bench_inspection_retirement_snapshot` is owned by the retirement
+migrations and has no application model. It preserves the exact source pairs for data reconciliation
+and rollback, including due-only rows and pairs outside the service-record constraint. The table's
+primary key enforces one source snapshot per bench. Manage access and retention under the database's
+existing controls for lab inventory data.

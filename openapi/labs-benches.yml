@@ -2019,16 +2019,6 @@ components:
           format: date
           readOnly: true
           nullable: true
-        last_inspected_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
-        next_inspection_due_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -2066,10 +2056,8 @@ components:
       - id
       - image_url
       - is_favorite
-      - last_inspected_at
       - lifecycle_status
       - name
-      - next_inspection_due_at
       - owner
       - remark
       - requested_cooling_w
@@ -2181,14 +2169,6 @@ components:
         commissioning_date:
           type: string
           format: date
-          nullable: true
-        last_inspected_at:
-          type: string
-          format: date-time
-          nullable: true
-        next_inspection_due_at:
-          type: string
-          format: date-time
           nullable: true
       required:
       - sku
@@ -2800,16 +2780,6 @@ components:
           format: date
           readOnly: true
           nullable: true
-        last_inspected_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
-        next_inspection_due_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -2847,10 +2817,8 @@ components:
       - id
       - image_url
       - is_favorite
-      - last_inspected_at
       - lifecycle_status
       - name
-      - next_inspection_due_at
       - owner
       - remark
       - requested_cooling_w
@@ -3176,14 +3144,6 @@ components:
         commissioning_date:
           type: string
           format: date
-          nullable: true
-        last_inspected_at:
-          type: string
-          format: date-time
-          nullable: true
-        next_inspection_due_at:
-          type: string
-          format: date-time
           nullable: true
       required:
       - sku
@@ -3551,14 +3511,6 @@ components:
         commissioning_date:
           type: string
           format: date
-          nullable: true
-        last_inspected_at:
-          type: string
-          format: date-time
-          nullable: true
-        next_inspection_due_at:
-          type: string
-          format: date-time
           nullable: true
     ProblemDetail:
       type: object

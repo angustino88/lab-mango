@@ -3,11 +3,14 @@ from types import SimpleNamespace
 from core.labs.features.locations.rooms.api.serializers import (
     RoomCreateSerializer,
     RoomSerializer,
+    RoomSlotSerializer,
 )
 from core.labs.features.locations.stations.api.serializers import (
     StationCreateSerializer,
     StationPlacementSerializer,
     StationSerializer,
+    StationSlotSerializer,
+    StationSlotUpdateSerializer,
 )
 from core.labs.features.locations.stations.api.views import StationListCreateAPIView
 from core.labs.models import RoomStatus, StationStatus
@@ -136,3 +139,19 @@ def test_station_serializer_serializes_room_slot_with_code_as_name():
     serialized = StationSerializer().fields["slot"].to_representation(slot)
     assert serialized == {"id": 4171, "name": "R1C1"}
 
+
+def test_slot_read_schema_exposes_service_status_and_occupancy():
+    for serializer in (RoomSlotSerializer(), StationSlotSerializer()):
+        assert {"service_status", "is_occupied"} <= serializer.fields.keys()
+        assert "status" not in serializer.fields
+        assert "is_active" not in serializer.fields
+
+
+def test_station_slot_write_uses_service_status_as_the_transport_field():
+    serializer = StationSlotUpdateSerializer(data={"service_status": "out_of_service"}, partial=True)
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data == {"status": "out_of_service"}
+
+    serializer = StationSlotUpdateSerializer(data={"status": "occupied", "is_active": True}, partial=True)
+    assert not serializer.is_valid()
+    assert {"status", "is_active"} <= serializer.errors.keys()

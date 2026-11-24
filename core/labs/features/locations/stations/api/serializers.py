@@ -33,18 +33,6 @@ class StationLifecycleWriteSerializer(LocationLifecycleWriteSerializer):
     pass
 
 
-# Deprecated slot inputs (RS3): the old status values and ``is_active`` map onto ``service_status``.
-LEGACY_SLOT_STATUS = {
-    "available": StationSlotStatus.IN_SERVICE,
-    "occupied": StationSlotStatus.IN_SERVICE,
-    "reserved": StationSlotStatus.IN_SERVICE,
-    "maintenance": StationSlotStatus.OUT_OF_SERVICE,
-    "out_of_service": StationSlotStatus.OUT_OF_SERVICE,
-    "in_service": StationSlotStatus.IN_SERVICE,
-    "retired": StationSlotStatus.RETIRED,
-}
-
-
 class StationPlacementSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
     room_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     slot_id = serializers.IntegerField(min_value=1, allow_null=True, required=False)
@@ -150,11 +138,7 @@ class StationUpdateSerializer(StationCreateSerializer):
 class StationSlotCreateSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
     compatible_bench_types = serializers.ListField(child=serializers.IntegerField(min_value=1), required=False)
     utilities = serializers.DictField(required=False)
-    service_status = serializers.ChoiceField(choices=StationSlotStatus.choices, required=False)
-    status = serializers.ChoiceField(
-        choices=sorted(LEGACY_SLOT_STATUS), required=False, help_text="Deprecated: use service_status."
-    )
-    is_active = serializers.BooleanField(required=False, help_text="Deprecated: use service_status.")
+    service_status = serializers.ChoiceField(source="status", choices=StationSlotStatus.choices, required=False)
 
     class Meta:
         model = StationSlot
@@ -162,8 +146,6 @@ class StationSlotCreateSerializer(ResourceWriteSerializerMixin, serializers.Mode
             "position_index",
             "slot_code",
             "label",
-            "is_active",
-            "status",
             "service_status",
             "width_mm",
             "depth_mm",
@@ -175,22 +157,6 @@ class StationSlotCreateSerializer(ResourceWriteSerializerMixin, serializers.Mode
             "compatible_bench_types",
         )
         validators = []
-
-    def validate(self, attrs):
-        """Map the deprecated inputs; ``service_status`` wins, then ``status``, then ``is_active``."""
-        attrs = super().validate(attrs)
-        legacy_status = attrs.pop("status", None)
-        is_active = attrs.pop("is_active", None)
-        if "service_status" not in attrs:
-            if legacy_status is not None:
-                attrs["service_status"] = LEGACY_SLOT_STATUS[legacy_status]
-            elif is_active is not None:
-                attrs["service_status"] = (
-                    StationSlotStatus.IN_SERVICE if is_active else StationSlotStatus.OUT_OF_SERVICE
-                )
-        if "service_status" in attrs:
-            attrs["status"] = attrs.pop("service_status")
-        return attrs
 
 
 class StationSlotUpdateSerializer(StationSlotCreateSerializer):
@@ -213,13 +179,9 @@ StationListQuerySerializer = STATION_FILTERS.serializer("StationListQuerySeriali
 
 
 class StationSlotSerializer(AppModelSerializer):
-    status = serializers.SerializerMethodField(
-        read_only=True, help_text="Deprecated: available, occupied, out_of_service or retired (occupied is computed)."
-    )
     service_status = serializers.SerializerMethodField()
     station_id = serializers.IntegerField(read_only=True)  # REL-16: slots are read under their station
     is_occupied = serializers.BooleanField(source="occupied", read_only=True, default=False)
-    is_active = serializers.SerializerMethodField(help_text="Deprecated: service_status is in_service.")
 
     class Meta:
         model = StationSlot
@@ -234,17 +196,8 @@ class StationSlotSerializer(AppModelSerializer):
         read_only_fields = fields
 
     @extend_schema_field(ChoiceReferenceSerializer)
-    def get_status(self, obj) -> dict[str, str] | None:
-        if obj.status == StationSlotStatus.IN_SERVICE:
-            return to_choice_reference("occupied" if getattr(obj, "occupied", False) else "available")
-        return to_choice_reference(obj.status)
-
-    @extend_schema_field(ChoiceReferenceSerializer)
     def get_service_status(self, obj) -> dict[str, str] | None:
         return to_choice_reference(obj.status, StationSlotStatus.choices)
-
-    def get_is_active(self, obj) -> bool:
-        return obj.status == StationSlotStatus.IN_SERVICE
 
 
 class StationSerializer(LocationStateFieldsMixin, AppModelSerializer):

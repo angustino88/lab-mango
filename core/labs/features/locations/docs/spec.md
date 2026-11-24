@@ -20,7 +20,7 @@ The Locations feature represents geographic and facility real-estate topology: c
   - Computed, never stored: `condition` (downtime windows), `availability`, `activity_status` (bench bookings at its
     stations), and the deprecated seven-value `status`. See `docs/proposals/resource-status-and-downtime.md`.
 - **`RoomSlot`**: A grid cell inside a room (`row_index`, `col_index`, `slot_code`, `status`). `status` is `usable`
-  (default), `blocked` or `retired`; "occupied" is computed from `Station.slot`.
+  (default), `blocked` or `retired`; `is_occupied` is computed from `Station.slot`. The API returns the stored state as `service_status`.
 
 ### 2.3 `core.labs.models.Station` & `StationSlot`
 - **`Station`** (inherits `ResourceModel`):
@@ -31,7 +31,7 @@ The Locations feature represents geographic and facility real-estate topology: c
 - **`StationSlot`**:
   - `station` (FK `Station`, PROTECT), `slot_number` (IntegerField).
   - `status`: `StationSlotStatus` (`in_service`, `out_of_service`, `retired`); "occupied" is computed from
-    `Bench.station_slot`. API: `service_status` (stored), `occupied`, deprecated `status` and `is_active`.
+    `Bench.station_slot`. The API returns `service_status` and `is_occupied`.
   - Invariant: `UniqueConstraint(fields=("station", "slot_number"))`.
 
 ---

@@ -97,9 +97,6 @@ RoomListQuerySerializer = ROOM_FILTERS.serializer("RoomListQuerySerializer")
 
 
 class RoomSlotSerializer(AppModelSerializer):
-    status = serializers.SerializerMethodField(
-        read_only=True, help_text="Deprecated: available, occupied, blocked or retired (occupied is computed)."
-    )
     service_status = serializers.SerializerMethodField()
     room_id = serializers.IntegerField(read_only=True)  # REL-16: slots are read under their room
     slot_type = choice_field(RoomSlot._meta.get_field("slot_type").choices)
@@ -114,7 +111,6 @@ class RoomSlotSerializer(AppModelSerializer):
             "col_index",
             "slot_code",
             "slot_type",
-            "status",
             "service_status",
             "is_occupied",
             "x_mm",
@@ -131,12 +127,6 @@ class RoomSlotSerializer(AppModelSerializer):
             "updated_at",
         )
         read_only_fields = fields
-
-    @extend_schema_field(ChoiceReferenceSerializer)
-    def get_status(self, obj) -> dict[str, str] | None:
-        if obj.status == "usable":
-            return to_choice_reference("occupied" if getattr(obj, "occupied", False) else "available")
-        return to_choice_reference(obj.status)
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_service_status(self, obj) -> dict[str, str] | None:

@@ -135,7 +135,6 @@ The [explicit serializers](../api/serializers.py) accept:
 | `requested_power_w`, `requested_load_kg`, `requested_cooling_w` | Nullable nonnegative integers; zero is valid; null contributes zero to station aggregates |
 | `required_utilities` | JSON object describing requirements, not a list |
 | `commissioning_date` | Nullable date |
-| `last_inspected_at`, `next_inspection_due_at` | Nullable date-times; no inspection ordering policy currently enforced |
 
 Ordinary bench resource read responses include the standard bench fields plus `id`,
 `uid`, `created_at`, `updated_at`, `setup_location_path`, `is_favorite`,
@@ -213,7 +212,7 @@ slot type; dimensions, load, utility and allocated room capacity must fit.
 Explicitly clear both `room` and `slot` to detach an occupied room placement.
 
 Station-slot writes accept `position_index` (zero-based), `slot_code`, `label`,
-`is_active`, `status`, `width_mm`, `depth_mm`, `height_mm`, `max_load_kg`,
+`service_status`, `width_mm`, `depth_mm`, `height_mm`, `max_load_kg`,
 `power_capacity_w`, `network_port_count`, `utilities`, `compatible_bench_types`
 (list of positive IDs). Codes are trimmed/uppercased and unique per station,
 as are position indexes. Configured positions, including inactive ones, must

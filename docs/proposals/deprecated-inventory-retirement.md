@@ -4,15 +4,15 @@ Remove deprecated inventory contracts after their callers and stored data have m
 
 ## Bench inspection dates
 
-- Inventory and workbook import/export still read or write `last_inspected_at` and `next_inspection_due_at`. Replace those paths with inspection service records and remove the obsolete fields from the bench API, workbook format, generated client, and UI.
-- Before dropping the columns, classify existing values as empty, performed-only, ordered pairs, due-only, or unordered pairs. Match existing service records before creating any new records. A legacy timestamp does not establish an inspection result.
-- Preserve the exact timestamps and bench IDs in a restricted export before the schema change. Validate counts and retain the export for rollback. Resolve due-only, unordered, and unknown-result records with the data owner before backfill. A service record requires a performed date and any due date must follow it.
-- Use a new migration for the schema change and retain applied migration history. Test backfill, duplicate detection, export reconciliation, and rollback on a representative copy.
+- The Bench API, workbook and frontend now use the inventory contract without the two inspection dates. Inspection history is stored in service records. Workbooks with populated retired columns report those headers as ignored; export any workbook-only values before adopting the updated template.
+- Apply database migration `0003` to prepare the restricted snapshot. Disable writers of the old dates, then apply `0004` to snapshot exact values and backfill service records in batches. Backfill inserts an unknown result for performed dates with no existing record and sets a due date when it follows the performed date. Source pairs that do not fit the service-record constraint remain available in the snapshot.
+- Verify snapshot row counts and backfill results on a database copy. Back up the database, coordinate the removal with all clients and workbook operators, and switch application processes during the contract release. Apply `0005` with the old writers stopped. It holds a bench write lock during the final consistency check and aborts if the source dates changed during backfill.
+- If `0005` detects drift, stop the old writers, migrate Labs back to `0003`, and reapply `0004` before attempting the contract again. Investigate any source records corrected after backfill before rollout. Rolling back `0005` restores the source fields from the snapshot. Rolling back `0004` keeps canonical service history; reapplying it skips inspections with a matching performed timestamp. Keep `0003` and the snapshot for the agreed retention period.
 
 ## Space and slot status
 
 - Move dashboard, inventory, filters, summaries, and import callers to `lifecycle_status`, `condition`, `availability`, `activity_status`, and `access_policy` where supported.
-- Use `service_status` and `is_occupied` for slots. Remove deprecated status fields, filters, summaries, and write actions after clients have moved. Verify that lifecycle, downtime, access, and booking states retain their distinct behavior.
+- Slot reads now expose `service_status` and `is_occupied`. Station-slot writes use `service_status`. Coordinate the API cutover, including any external slot clients. The remaining space-level status fields, filters, summaries, and write actions require moving their callers to the separate state fields first.
 
 ## Remaining compatibility surfaces
 

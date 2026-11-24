@@ -44485,18 +44485,6 @@
             "readOnly": true,
             "nullable": true
           },
-          "last_inspected_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "next_inspection_due_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -44541,10 +44529,8 @@
           "id",
           "image_url",
           "is_favorite",
-          "last_inspected_at",
           "lifecycle_status",
           "name",
-          "next_inspection_due_at",
           "owner",
           "remark",
           "requested_cooling_w",
@@ -45027,16 +45013,6 @@
           "commissioning_date": {
             "type": "string",
             "format": "date",
-            "nullable": true
-          },
-          "last_inspected_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "next_inspection_due_at": {
-            "type": "string",
-            "format": "date-time",
             "nullable": true
           }
         },
@@ -46061,18 +46037,6 @@
             "readOnly": true,
             "nullable": true
           },
-          "last_inspected_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "next_inspection_due_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -46117,10 +46081,8 @@
           "id",
           "image_url",
           "is_favorite",
-          "last_inspected_at",
           "lifecycle_status",
           "name",
-          "next_inspection_due_at",
           "owner",
           "remark",
           "requested_cooling_w",
@@ -46557,16 +46519,6 @@
           "commissioning_date": {
             "type": "string",
             "format": "date",
-            "nullable": true
-          },
-          "last_inspected_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "next_inspection_due_at": {
-            "type": "string",
-            "format": "date-time",
             "nullable": true
           }
         },
@@ -59069,19 +59021,6 @@
           "data"
         ]
       },
-      "LegacyStationSlotStatusEnum": {
-        "enum": [
-          "available",
-          "in_service",
-          "maintenance",
-          "occupied",
-          "out_of_service",
-          "reserved",
-          "retired"
-        ],
-        "type": "string",
-        "description": "* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
-      },
       "License": {
         "type": "object",
         "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
@@ -63814,16 +63753,6 @@
             "type": "string",
             "format": "date",
             "nullable": true
-          },
-          "last_inspected_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "next_inspection_due_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
           }
         }
       },
@@ -64453,18 +64382,6 @@
           "label": {
             "type": "string",
             "maxLength": 100
-          },
-          "is_active": {
-            "type": "boolean",
-            "description": "Deprecated: use service_status."
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LegacyStationSlotStatusEnum"
-              }
-            ],
-            "description": "Deprecated: use service_status.\n\n* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
           },
           "service_status": {
             "$ref": "#/components/schemas/StationSlotStatusEnum"
@@ -68219,15 +68136,6 @@
             ],
             "readOnly": true
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "readOnly": true,
-            "description": "Deprecated: available, occupied, blocked or retired (occupied is computed)."
-          },
           "service_status": {
             "allOf": [
               {
@@ -68314,7 +68222,6 @@
           "service_status",
           "slot_code",
           "slot_type",
-          "status",
           "updated_at",
           "utilities",
           "width_mm",
@@ -70532,20 +70439,6 @@
             "type": "string",
             "readOnly": true
           },
-          "is_active": {
-            "type": "boolean",
-            "readOnly": true,
-            "description": "Deprecated: service_status is in_service."
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "readOnly": true,
-            "description": "Deprecated: available, occupied, out_of_service or retired (occupied is computed)."
-          },
           "service_status": {
             "allOf": [
               {
@@ -70616,7 +70509,6 @@
           "depth_mm",
           "height_mm",
           "id",
-          "is_active",
           "is_occupied",
           "label",
           "max_load_kg",
@@ -70626,7 +70518,6 @@
           "service_status",
           "slot_code",
           "station_id",
-          "status",
           "updated_at",
           "utilities",
           "width_mm"
@@ -70648,18 +70539,6 @@
           "label": {
             "type": "string",
             "maxLength": 100
-          },
-          "is_active": {
-            "type": "boolean",
-            "description": "Deprecated: use service_status."
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LegacyStationSlotStatusEnum"
-              }
-            ],
-            "description": "Deprecated: use service_status.\n\n* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
           },
           "service_status": {
             "$ref": "#/components/schemas/StationSlotStatusEnum"
@@ -70840,18 +70719,6 @@
           "label": {
             "type": "string",
             "maxLength": 100
-          },
-          "is_active": {
-            "type": "boolean",
-            "description": "Deprecated: use service_status."
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LegacyStationSlotStatusEnum"
-              }
-            ],
-            "description": "Deprecated: use service_status.\n\n* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
           },
           "service_status": {
             "$ref": "#/components/schemas/StationSlotStatusEnum"

@@ -309,8 +309,6 @@ def import_spaces(run: ImportRun) -> None:
                 "requested_cooling_w",
                 "required_utilities",
                 "commissioning_date",
-                "last_inspected_at",
-                "next_inspection_due_at",
             ),
         )
         data.update(_owned(run, catalog, row, with_department=False))

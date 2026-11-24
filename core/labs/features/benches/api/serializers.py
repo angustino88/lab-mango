@@ -77,8 +77,6 @@ class BenchCreateSerializer(StrictWriteMixin, serializers.ModelSerializer):
             "requested_cooling_w",
             "required_utilities",
             "commissioning_date",
-            "last_inspected_at",
-            "next_inspection_due_at",
         )
         validators = []
         extra_kwargs = {"sku": {"validators": []}}
@@ -206,8 +204,6 @@ class BenchSerializer(AppModelSerializer):
             "requested_cooling_w",
             "required_utilities",
             "commissioning_date",
-            "last_inspected_at",
-            "next_inspection_due_at",
             "created_at",
             "updated_at",
             "setup_location_path",

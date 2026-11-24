@@ -18,7 +18,7 @@ The Benches feature governs test bench entities, logical workbench groupings, us
   - `criticality` (CharField(32), default="").
   - `requested_power_w`, `requested_load_kg`, `requested_cooling_w` (PositiveIntegerField, optional).
   - `required_utilities` (JSONField, default=dict).
-  - `commissioning_date`, `last_inspected_at`, `next_inspection_due_at`.
+  - `commissioning_date`. Inspection history is stored in resource service records.
 - **Invariants:**
   - Physical Alignment: `bench.setup_location` must match `bench.station_slot.station`.
   - Station Slot 1:1: A `StationSlot` can accommodate at most one docked bench.
