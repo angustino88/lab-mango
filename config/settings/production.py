@@ -48,8 +48,10 @@ CACHES = {
         "LOCATION": env("REDIS_URL"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "SOCKET_CONNECT_TIMEOUT": env.int("REDIS_SOCKET_CONNECT_TIMEOUT", default=3),
-            "SOCKET_TIMEOUT": env.int("REDIS_SOCKET_TIMEOUT", default=3),
+            # Seconds. Keep well below request latency budgets: a hung Redis must fail fast so the
+            # circuit breaker (CACHE_CIRCUIT_BREAKER_SECONDS) can route requests around it.
+            "SOCKET_CONNECT_TIMEOUT": env.float("REDIS_SOCKET_CONNECT_TIMEOUT", default=0.5),
+            "SOCKET_TIMEOUT": env.float("REDIS_SOCKET_TIMEOUT", default=0.5),
             "IGNORE_EXCEPTIONS": False,
         },
     }
