@@ -84,7 +84,7 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
 
 ### Locations and physical placement
 
-**Models:** `Country`, `City`, `Building`, `Room`, `RoomSlot`, `RoomObservation`, `RoomStatusRecord`, `StationType`, `Station`, `StationSlot`, `StationStatusRecord`. `PhysicalLocationNode` is abstract. `RoomStatus` and `StationStatus` are choices, not models.
+**Models:** `Country`, `City`, `Building`, `Room`, `RoomSlot`, `RoomObservation`, `RoomStatusRecord`, `StationType`, `Station`, `StationSlot`, `StationStatusRecord`. `PhysicalLocationNode` is abstract. `ResourceLifecycleStatus`, `ResourceAccessPolicy`, `ResourceCondition`, `ResourceActivityStatus`, and `ResourceAvailability` are choices, not models.
 
 - Geography records are protected references from `Room`. A room owns its room slots; slots cascade when the room is deleted. `RoomObservation` and `RoomStatusRecord` are protected child histories.
 - A station can reference a room and optionally a room slot; its type is protected. The station's room-slot FK is set null if the slot is deleted. `StationSlot` belongs to a station; compatible bench types are many-to-many. Station status history protects its station.

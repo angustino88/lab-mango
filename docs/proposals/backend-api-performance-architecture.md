@@ -48,7 +48,7 @@ Load testing the `computing_table` weighted scenario (`GET /api/labs/equipment`,
 ### Phase 3 — Query & PostgreSQL Index Optimizations
 - **Shared Public `ContentType` PK Filter**: `core/labs/models/resource/base/generic_links.py::resource_content_type_filter` uses Django's public `ContentType.objects.get_for_models(...)` (in-process cached by Django, no private `_cache` access) so `ResourceDowntime` and `ResourceServiceRecord` correlated subqueries filter by integer FK PKs consistently instead of joining `django_content_type`.
 - **Deferred Unserialized Blobs**: `EquipmentCollectionAPIView.get_queryset` defers `Equipment.details` (only serialized on detail endpoints).
-- **Migration `labs.0002_performance_indexes` (`atomic = False`, `AddIndexConcurrently`)**:
+- **Partial Performance Indexes (originally `labs.0002_performance_indexes`, consolidated into `labs.0001_initial` per ADR 005)**:
   - Partial composite index `equipment_active_kind_name_idx` on `Equipment (kind, name, id) WHERE deleted_at IS NULL`.
   - Partial covering index `equipment_loan_active_due_idx` on `EquipmentLoan (equipment, due_at) WHERE returned_at IS NULL`.
   - **Why GIN trigram indexes on `Equipment` / `ComputingProfile` were intentionally omitted**: `EXPLAIN ANALYZE` on PostgreSQL 16 confirmed that Django's `__icontains` compiles to `UPPER(col::text) LIKE UPPER('%q%')`, which ignores plain `gin_trgm_ops` indexes (`Seq Scan`), and even with `UPPER(col)` expression GIN indexes, the multi-table `OR` across `labs_equipment`, `labs_equipmentkind`, `labs_equipmentmanufacturer`, `labs_equipmentproductmodel`, and `labs_computingprofile` still selects `Seq Scan` + `Join Filter`. Keeping 5 unused GIN indexes would add write overhead to workbook imports (PR #42) with zero read benefit.
@@ -84,7 +84,7 @@ Environment: 4 Uvicorn workers, PostgreSQL 16 (500 computing units), Redis 7 (`r
 ## 4. Deployment Notes & Residual Risks
 
 - **`CONN_MAX_AGE` production default changed (`60` → `0`)**: Under Uvicorn ASGI + PgBouncer transaction pooling, `CONN_MAX_AGE = 0` prevents threadpool connection pinning (`too many clients already`) and matches PgBouncer best practice. If deploying **without** PgBouncer, either enable Django's built-in psycopg pool (`DB_POOL_ENABLED=True`, now supported via `psycopg[binary,pool]`) or explicitly set `CONN_MAX_AGE=60` in the environment.
-- **Migration `labs.0002_performance_indexes`**: Uses `AddIndexConcurrently` with `atomic = False`, avoiding table write locks during deployment on production databases.
+- **Performance indexes (`equipment_active_kind_name_idx`, `equipment_loan_active_due_idx`)**: Originally authored with `AddIndexConcurrently` (`atomic = False`) and later folded into `labs.0001_initial` for the fresh database (ADR 005).
 - **Global `User.save()` invalidation scope**: Any `User.save()` bumps the global `users:access` namespace and `labs:equipment:refdata` (because user options are included in equipment reference data). Routine Entra logins in `aad_login` update `last_login` via `QuerySet.update()` and therefore do **not** trigger `User.post_save` or thrash these caches.
 - **Time-dependent statuses** (`display_status`, `loan_overdue`, `is_calibration_overdue`) can reflect at most `15s` staleness on cached equipment list reads.
 - **Dependency addition (`psycopg[binary,pool]`)**: Adds the official `psycopg-pool` extra (maintained by the `psycopg` project, required by Django 5.2's `OPTIONS["pool"]`); alternative considered was relying solely on external PgBouncer without an in-app pool option.

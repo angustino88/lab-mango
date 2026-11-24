@@ -4,10 +4,8 @@ Remove deprecated inventory contracts after their callers and stored data have m
 
 ## Bench inspection dates
 
-- The Bench API, workbook and frontend now use the inventory contract without the two inspection dates. Inspection history is stored in service records. Workbooks with populated retired columns report those headers as ignored; export any workbook-only values before adopting the updated template.
-- Apply database migration `0003` to prepare the restricted snapshot. Disable writers of the old dates, then apply `0004` to snapshot exact values and backfill service records in batches. Backfill inserts an unknown result for performed dates with no existing record and sets a due date when it follows the performed date. Source pairs that do not fit the service-record constraint remain available in the snapshot.
-- Verify snapshot row counts and backfill results on a database copy. Back up the database, coordinate the removal with all clients and workbook operators, and switch application processes during the contract release. Apply `0005` with the old writers stopped. It holds a bench write lock during the final consistency check and aborts if the source dates changed during backfill.
-- If `0005` detects drift, stop the old writers, migrate Labs back to `0003`, and reapply `0004` before attempting the contract again. Investigate any source records corrected after backfill before rollout. Rolling back `0005` restores the source fields from the snapshot. Rolling back `0004` keeps canonical service history; reapplying it skips inspections with a matching performed timestamp. Keep `0003` and the snapshot for the agreed retention period.
+- The Bench API, workbook and frontend now use the inventory contract without the two inspection dates. Inspection history is stored in service records (`ResourceServiceRecord`, kind `inspection`). Workbooks with populated retired columns report those headers as ignored; export any workbook-only values before adopting the updated template.
+- Because the project database is blank/fresh, the schema removal of `Bench.last_inspected_at` and `Bench.next_inspection_due_at` and the `ResourceServiceRecord.result = "unknown"` choice were consolidated directly into `labs.0001_initial` (see [ADR 005](../architecture/decisions/005-migration-reset.md)). No separate snapshot or backfill migrations remain.
 
 ## Space and slot status
 

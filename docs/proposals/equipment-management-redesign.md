@@ -459,7 +459,7 @@ Found while reviewing; each is outside the core redesign and can be scheduled se
 | Bench bookings | Read computing activity through equipment `public.py` instead of traversing `equipment__computingequipment__activity` | `features/bench_bookings/application/state_transitions.py:38` |
 | Leaderboard | Count the latest status per unit, or read the new stored columns | D5 |
 | Service records | Real foreign key to equipment instead of a generic key with a string id; add a calibration interval on the product model (overridable per unit) and let "overdue" block hand-over | `models/resource/base/service_record.py` |
-| Bench | Remove deprecated `last_inspected_at`, `next_inspection_due_at` once readers use service records | marked deprecated in `models/resource/bench/bench.py` |
+| Bench | Remove deprecated `last_inspected_at`, `next_inspection_due_at` once readers use service records | completed — removed from `models/resource/bench/bench.py`, API, workbook, and frontend |
 | Licenses | The seat limit lives in `LicenseAssignment.clean()`. Whether `assign_license` runs it is not verified; if not, the limit is unenforced. The license row is locked, so a check inside the command would be race-safe | `models/resource/license/assignment.py`; `features/licenses/application/assignments.py` |
 | Monitoring | `MonitoringEvent.bench` runs one query per event when read in a list | `models/monitoring/monitoring.py:124-137` |
 | Computing activity | `booking_code` is free text reported by the agent; resolve it to a booking at write time or document it as untrusted | `models/activity/computing_activity.py` |
