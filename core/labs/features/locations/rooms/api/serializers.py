@@ -15,7 +15,7 @@ from core.labs.features.base.serializers import (
 )
 from core.labs.features.locations.api.serializers import LocationLifecycleWriteSerializer, LocationStateFieldsMixin
 from core.labs.models.resource.base.status import ResourceLifecycleStatus
-from core.labs.models.resource.location.room import Room, RoomStatus, RoomStatusRecord
+from core.labs.models.resource.location.room import Room, RoomStatusRecord
 from core.labs.models.resource.location.room_observation import RoomObservation
 from core.labs.models.resource.location.room_slot import RoomSlot
 
@@ -23,7 +23,7 @@ from .filters import ROOM_FILTERS
 
 
 class RoomStatusSummarySerializer(StatusSummarySerializer):
-    """The deprecated seven-value status, computed from lifecycle, condition, access and activity."""
+    """Counts by room lifecycle status."""
 
 
 class RoomLifecycleWriteSerializer(LocationLifecycleWriteSerializer):
@@ -77,13 +77,6 @@ class RoomUpdateSerializer(RoomCreateSerializer):
         # for the record's own unchanged SKU. The update command rejects a changed SKU under its row lock;
         # the partial unique constraint remains the uniqueness guard.
         extra_kwargs = {"sku": {"validators": []}}
-
-
-class RoomStatusWriteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
-    """Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set."""
-
-    status = serializers.ChoiceField(choices=RoomStatus.choices)
-    metadata = serializers.DictField(required=False, default=dict)
 
 
 class RoomObservationWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
@@ -261,6 +254,5 @@ __all__ = [
     "RoomSerializer",
     "RoomSlotSerializer",
     "RoomStatusRecordSerializer",
-    "RoomStatusWriteSerializer",
     "RoomUpdateSerializer",
 ]

@@ -17,7 +17,6 @@ urlpatterns = [
         views.RoomLifecycleAPIView.as_view(),
         name="room-action-change-lifecycle",
     ),
-    path("rooms/<int:room_id>/actions/change-status", views.RoomStatusAPIView.as_view(), name="room-action-change-status"),
     path(
         "rooms/<int:room_id>/actions/force-delete",
         views.RoomForceDeleteAPIView.as_view(),

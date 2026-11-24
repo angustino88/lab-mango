@@ -11,7 +11,6 @@ from core.labs.features.base.serializers import (
     to_choice_reference,
 )
 from core.labs.models import (
-    LegacyLocationStatus,
     ResourceAccessPolicy,
     ResourceActivityStatus,
     ResourceCondition,
@@ -23,25 +22,18 @@ from core.labs.models.resource.base.availability import location_availability
 class LocationStateFieldsMixin(serializers.Serializer):
     """Separate state fields of a room or station (design: resource-status-and-downtime.md).
 
-    Reads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.
+    Reads annotations from ``with_location_state``.
     """
 
     location_resource_type = "room"
 
-    status = serializers.SerializerMethodField(
-        help_text="Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-    )
     lifecycle_status = serializers.SerializerMethodField()
     access_policy = serializers.SerializerMethodField()
     condition = serializers.SerializerMethodField()
     availability = serializers.SerializerMethodField()
     activity_status = serializers.SerializerMethodField()
 
-    STATE_FIELDS = ("status", "lifecycle_status", "access_policy", "condition", "availability", "activity_status")
-
-    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
-    def get_status(self, obj) -> dict[str, str] | None:
-        return to_choice_reference(getattr(obj, "legacy_status", None), LegacyLocationStatus.choices)
+    STATE_FIELDS = ("lifecycle_status", "access_policy", "condition", "availability", "activity_status")
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_lifecycle_status(self, obj) -> dict[str, str] | None:

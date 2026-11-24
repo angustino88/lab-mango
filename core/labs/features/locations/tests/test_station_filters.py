@@ -17,7 +17,7 @@ from core.labs.features.locations.stations.queries.selectors import list_station
 def test_station_query_compiles_all_filters_without_database_access():
     serializer = StationListQuerySerializer(
         data=QueryDict(
-            "room_id=1,2&type_id=3&status=available,retired&q=bench&ordering=-name"
+            "room_id=1,2&type_id=3&lifecycle_status=in_service,retired&q=bench&ordering=-name"
             "&created_at_after=2026-01-01T00:00:00Z&created_at_before=2026-02-01T00:00:00Z"
         )
     )
@@ -25,7 +25,7 @@ def test_station_query_compiles_all_filters_without_database_access():
     queryset = STATION_FILTERS.apply(list_stations(), serializer.validated_data)
     sql, params = queryset.query.sql_with_params()
     assert queryset.query.order_by == ("-name", "pk")
-    assert "available" in params and "retired" in params
+    assert "in_service" in params and "retired" in params
     assert 1 in params and 2 in params and 3 in params
     assert "IN" in sql and "SELECT" in sql
 
@@ -41,7 +41,8 @@ def test_station_openapi_matches_csv_wire_format_and_metadata_route():
     parameters = {item["name"]: item for item in schema["paths"]["/stations"]["get"]["parameters"]}
     assert parameters["room_id"]["schema"]["type"] == "string"
     assert parameters["q"]["schema"]["maxLength"] == 200
-    assert "ordering" in parameters and "status" in parameters
+    assert {"ordering", "lifecycle_status", "condition", "access_policy", "activity_status"} <= parameters.keys()
+    assert "status" not in parameters
     assert "get" in schema["paths"]["/stations/filters"]
 
 
@@ -49,7 +50,8 @@ def test_station_openapi_matches_csv_wire_format_and_metadata_route():
     "query,field",
     [
         ("room_id=1&room_id=2", "room_id"),
-        ("status=nope", "status"),
+        ("status=available", "status"),
+        ("lifecycle_status=nope", "lifecycle_status"),
         ("ordering=name,-name", "ordering"),
         ("unexpected=x", "unexpected"),
     ],

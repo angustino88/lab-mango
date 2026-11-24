@@ -236,8 +236,6 @@ paths:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}
   /api/labs/rooms/{room_id}/actions/change-lifecycle:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1change-lifecycle
-  /api/labs/rooms/{room_id}/actions/change-status:
-    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1change-status
   /api/labs/rooms/{room_id}/actions/force-delete:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1force-delete
   /api/labs/rooms/{room_id}/actions/generate-slots:
@@ -268,8 +266,6 @@ paths:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}
   /api/labs/stations/{station_id}/actions/change-lifecycle:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1change-lifecycle
-  /api/labs/stations/{station_id}/actions/change-status:
-    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1change-status
   /api/labs/stations/{station_id}/actions/force-delete:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1force-delete
   /api/labs/stations/{station_id}/actions/place:

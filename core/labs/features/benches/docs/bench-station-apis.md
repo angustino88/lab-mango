@@ -131,7 +131,7 @@ The [explicit serializers](../api/serializers.py) accept:
 | `image` | Image upload, not an arbitrary nested resource |
 | `description`, `documentation_url`, `criticality` | Workspace text, validated URL, free-form classification; criticality is not a fixed enum |
 | `setup_location`, `station_slot` | Nullable positive IDs; station slot requires a matching station |
-| `lifecycle_status` | Not writable here (drift fixed in docs): set with `POST /api/labs/benches/{id}/actions/change-lifecycle` to `planned`, `in_service` or `retired` (terminal). Out of service is a downtime window (`/api/labs/downtimes`). Reads add `condition`, `availability` (follows station and room) and `activity_status`; `status` is the deprecated four-value field |
+| `lifecycle_status` | Not writable here (drift fixed in docs): set with `POST /api/labs/benches/{id}/actions/change-lifecycle` to `planned`, `in_service` or `retired` (terminal). Out of service is a downtime window (`/api/labs/downtimes`). Reads add `condition`, `availability` (follows station and room) and `activity_status` |
 | `requested_power_w`, `requested_load_kg`, `requested_cooling_w` | Nullable nonnegative integers; zero is valid; null contributes zero to station aggregates |
 | `required_utilities` | JSON object describing requirements, not a list |
 | `commissioning_date` | Nullable date |

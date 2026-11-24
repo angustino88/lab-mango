@@ -8,7 +8,7 @@ Contract source of truth: the generated OpenAPI (`openapi/labs-downtime.yml`, `l
 
 ## 1. The idea in one picture
 
-A room, station or bench answers four separate questions. Never merge them into one value in the UI state.
+Lifecycle, access, condition, availability, and activity answer separate questions. Never merge them into one value in the UI state.
 
 | Question | Field | Stored or computed | Who changes it |
 |---|---|---|---|
@@ -39,17 +39,18 @@ except `availability`, which is an object of its own.
 | `lifecycle_status` | `planned`, `in_service`, `retired` | `retired` is final; it cannot go back |
 | `access_policy` | `open`, `restricted` | Rooms and stations only. Not a status: a restricted room can be fully working |
 | `condition` | `operational`, `in_maintenance`, `out_of_service` | From the downtime window covering now |
-| `availability.value` | `available`, `unavailable` | See below |
+| `availability.status.value` | `available`, `unavailable` | See below |
 | `activity_status` | `idle`, `scheduled`, `active` | `scheduled` = an approved booking starts later today |
 
 `availability` object:
 
 ```json
 {
-  "value": "unavailable",
+  "status": { "value": "unavailable", "label": "Unavailable" },
   "blocked_by": { "type": "room", "id": 12, "name": "R101" },
-  "condition": "in_maintenance",
-  "reason": "maintenance"
+  "condition": { "value": "in_maintenance", "label": "In maintenance" },
+  "reason": { "value": "maintenance", "label": "Maintenance" },
+  "booking_access": { "value": "closed", "label": "Closed to all bookings" }
 }
 ```
 
@@ -78,10 +79,10 @@ export type DowntimeState = "scheduled" | "current" | "ended" | "cancelled";
 export type DowntimeBookingAccess = "closed" | "lab_operators";
 
 export interface Availability {
-  value: "available" | "unavailable";
+  status: Choice<"available" | "unavailable">;
   blocked_by: { type: "room" | "station" | "bench"; id: number; name: string } | null;
-  condition: Condition | null;
-  reason: DowntimeReason | LifecycleStatus | null;
+  condition: Choice<Condition> | null;
+  reason: Choice<DowntimeReason | LifecycleStatus> | null;
   /** Who may still book while unavailable; null when available (section 6.4). */
   booking_access: Choice<DowntimeBookingAccess> | null;
 }
@@ -92,8 +93,6 @@ export interface ResourceState {
   condition: Choice<Condition>;
   availability: Availability;
   activity_status: Choice<ActivityStatus>;
-  /** @deprecated use the fields above (section 9). */
-  status: Choice<string> | null;
 }
 export interface LocationState extends ResourceState {
   access_policy: Choice<AccessPolicy>;
@@ -134,7 +133,7 @@ export interface ScheduleDowntimeRequest {
 
 ### 4.1 One badge for lists and cards
 
-Show **one** badge, picked in this order (first match wins), and put the other facts in a tooltip or the detail panel:
+When a screen needs an availability badge, derive it from lifecycle, condition, and availability. Show activity separately in its own column or detail row.
 
 ```ts
 export function badge(r: ResourceState) {
@@ -143,10 +142,8 @@ export function badge(r: ResourceState) {
   if (r.lifecycle_status.value === "planned") return { text: "Planned", tone: "info" };
   if (r.condition.value !== "operational")
     return { text: r.condition.label, tone: r.condition.value === "out_of_service" ? "danger" : "warning" };
-  if (a.value === "unavailable" && a.blocked_by)
+  if (a.status.value === "unavailable" && a.blocked_by)
     return { text: `Unavailable (${a.blocked_by.type} ${a.blocked_by.name})`, tone: "warning" };
-  if (r.activity_status.value === "active") return { text: "In use", tone: "success" };
-  if (r.activity_status.value === "scheduled") return { text: "Booked today", tone: "info" };
   return { text: "Available", tone: "success-subtle" };
 }
 ```
@@ -172,10 +169,10 @@ Add a **Downtime** tab with the windows of this resource (section 5.2) and, for 
 | Field | Meaning |
 |---|---|
 | `service_status` | Stored. Station slot: `in_service`, `out_of_service`, `retired`. Room slot: `usable`, `blocked`, `retired` |
-| `occupied` | Computed: a bench (station slot) or station (room slot) uses it |
+| `is_occupied` | Computed: a bench (station slot) or station (room slot) uses it |
 | `status`, `is_active` | Deprecated (section 9) |
 
-A slot can take a bench or station only when `service_status` is `in_service` / `usable` and `occupied` is false.
+A slot can take a bench or station only when `service_status` is `in_service` / `usable` and `is_occupied` is false.
 
 ## 5. Reading
 
@@ -195,8 +192,7 @@ Example: `GET /api/labs/benches?condition=in_maintenance,out_of_service&activity
 Read `GET /api/labs/{rooms|stations|benches}/filters` to build filter UIs; it lists every filter with its choices.
 
 Dropdown values: `GET /api/labs/stations/reference-data` returns `lifecycle_statuses`, `access_policies`
-and `slot_statuses` (plus deprecated `statuses`); `GET /api/labs/benches/reference-data` returns
-`lifecycle_statuses` (plus deprecated `statuses`).
+and `slot_statuses`. `GET /api/labs/benches/reference-data` returns `lifecycle_statuses`.
 
 ### 5.2 Downtime windows
 
@@ -365,23 +361,19 @@ Computed fields are calculated when you request them. Nothing is pushed.
 - A scheduled window becomes `current` at `starts_at` with no write. Refetch at that moment if a window starts
   while the page is open.
 
-## 9. Deprecated fields and how to move off them
+## 9. Space summaries and workbook imports
 
-They still work, so the current frontend keeps running. New screens should not use them. No removal date
-is set yet; the repository owner decides it.
+`GET /api/labs/{rooms|stations|benches}/status-summary` counts resources by stored lifecycle value.
+The response includes `planned`, `in_service`, and `retired` buckets.
 
-| Deprecated | Where | Use instead |
-|---|---|---|
-| `status` (7 values) | rooms, stations: reads, `?status=` filter, `status-summary` | `lifecycle_status`, `access_policy`, `condition`, `activity_status` |
-| `POST .../actions/change-status` | rooms, stations | `change-lifecycle` and `/api/labs/downtimes`. Mapping: `available` ends current downtime and opens access; `maintenance`, `issue`, `closed` open a window from now (refused with 409 `downtime_booking_conflict` while bookings remain); `restricted` sets access; `retired` retires; `reserved` is refused |
-| `status` (4 values) | benches: reads, `?status=`, `status-summary`, dashboard `lifecycle_status` | `lifecycle_status` plus `condition` (`out_of_service` now means an in-service bench with downtime) |
-| slot `status`, `is_active` | station and room slots | `service_status`, `occupied` |
+Dashboard bench reads expose `lifecycle_status` and `condition` independently. The dashboard summary
+returns a separate distribution for each field.
 
-Old `status` values are computed as: retired → `retired`; planned → `closed`; condition out of service →
-`issue`; in maintenance → `maintenance`; restricted → `restricted`; active or scheduled → `reserved`; else `available`.
+Use `Lifecycle`, `Condition`, and `Access` where supported in space workbook sheets.
+Imports report any populated `Status` column on those sheets as ignored.
 
-Name clash: the dashboard's existing `activity_status` filter is **computing** activity (`free`, `active`,
-`inactive`, `offline`, `maintaining`). It is not the resource `activity_status` of this guide.
+The dashboard's `activity_status` filter describes computing activity. Its choices are `free`, `active`,
+`inactive`, `offline`, and `maintaining`.
 
 ## 10. Checklist for the frontend change
 
@@ -390,7 +382,7 @@ Name clash: the dashboard's existing `activity_status` filter is **computing** a
 - [ ] Lifecycle and access actions with allowed targets only and a confirmation for retiring (6.3).
 - [ ] Booking calendar greys out downtime and handles the new 409 messages (7).
 - [ ] Refetch after writes and poll boards (8).
-- [ ] No new code reads deprecated fields (9).
+- [ ] Space summaries show counts by lifecycle (9).
 - [ ] Controls hidden for users who are not coordinators or administrators.
 
 ## 11. Scenarios to test against a real backend

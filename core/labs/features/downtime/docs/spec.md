@@ -55,10 +55,9 @@ Cancelled bookings go through `bench_bookings.public.cancel_bench_bookings_for_d
 ## Dependencies
 
 Imports `bench_bookings.public` and `equipment.public`. Nothing imports this feature (higher workflow owner).
-Compatibility write paths (room/station `change-status`, equipment `change-condition`, condition at loan
-return) use the model primitives `ResourceDowntime.objects.start_now` / `end_current`. Room/station
-`change-status` refuses with 409 `downtime_booking_conflict` while reserving bench bookings end after now;
-equipment paths keep the hand-over check.
+Equipment condition changes and condition at loan return use the model primitives
+`ResourceDowntime.objects.start_now` and `end_current` and keep the hand-over check.
+Room and station condition changes use the downtime endpoints.
 
 Moves: a bench move to another station, or a station move to another room, is refused (409, details
 `bench_booking_ids`) while future bookings would fall in the new parents' downtime or a parent is not in

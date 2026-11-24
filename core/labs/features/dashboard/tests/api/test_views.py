@@ -113,7 +113,8 @@ class TestDashboardOverviewAPI:
         assert item["id"] == bench.id
         assert item["name"] == bench.name
         assert item["sku"] == bench.sku
-        assert item["lifecycle_status"] == "in_service"
+        assert item["lifecycle_status"]["value"] == "in_service"
+        assert item["condition"]["value"] == "operational"
         assert item["bench_group"]["id"] == group.id
         assert item["bench_group"]["name"] == group.name
         assert item["is_favorite"] is True
@@ -432,7 +433,7 @@ class TestDashboardSummaryAPI:
         assert data["total_benches"] >= 2
         assert data["active_bookings_count"] >= 1
         assert data["favorited_benches_count"] >= 1
-        assert set(data["lifecycle_distribution"]) == {"planned", "in_service", "out_of_service", "retired"}
+        assert set(data["lifecycle_distribution"]) == {"planned", "in_service", "retired"}
         assert isinstance(data["utilization_rate"], float)
 
 

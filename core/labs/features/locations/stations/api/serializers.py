@@ -19,14 +19,14 @@ from core.labs.features.base.serializers import (
 )
 from core.labs.features.locations.api.serializers import LocationLifecycleWriteSerializer, LocationStateFieldsMixin
 from core.labs.models.resource.base.status import ResourceLifecycleStatus
-from core.labs.models.resource.location.station import Station, StationStatus, StationStatusRecord, StationType
+from core.labs.models.resource.location.station import Station, StationStatusRecord, StationType
 from core.labs.models.resource.location.station_slot import StationSlot, StationSlotStatus
 
 from .filters import STATION_FILTERS
 
 
 class StationStatusSummarySerializer(StatusSummarySerializer):
-    """The deprecated seven-value status, computed from lifecycle, condition, access and activity."""
+    """Counts by station lifecycle status."""
 
 
 class StationLifecycleWriteSerializer(LocationLifecycleWriteSerializer):
@@ -166,13 +166,6 @@ class StationSlotUpdateSerializer(StationSlotCreateSerializer):
 
 class StationTypeWriteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
     name = serializers.CharField(max_length=255)
-
-
-class StationStatusWriteSerializer(ResourceWriteSerializerMixin, serializers.Serializer):
-    """Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set."""
-
-    status = serializers.ChoiceField(choices=StationStatus.choices)
-    metadata = serializers.DictField(required=False, default=dict)
 
 
 StationListQuerySerializer = STATION_FILTERS.serializer("StationListQuerySerializer")
@@ -320,7 +313,6 @@ class StationReferenceDataSerializer(serializers.Serializer):
     types = StationTypeSerializer(many=True, read_only=True)
     bench_types = NamedReferenceSerializer(many=True, read_only=True)
     rooms = RoomReferenceSerializer(many=True, read_only=True)
-    statuses = ChoiceReferenceSerializer(many=True, read_only=True, help_text="Deprecated seven-value status.")
     lifecycle_statuses = ChoiceReferenceSerializer(many=True, read_only=True)
     access_policies = ChoiceReferenceSerializer(many=True, read_only=True)
     slot_statuses = ChoiceReferenceSerializer(many=True, read_only=True, help_text="Slot service_status values.")
@@ -374,7 +366,6 @@ __all__ = [
     "StationSlotSerializer",
     "StationSlotUpdateSerializer",
     "StationStatusRecordSerializer",
-    "StationStatusWriteSerializer",
     "StationTypeSerializer",
     "StationTypeWriteSerializer",
     "StationUpdateSerializer",

@@ -1312,13 +1312,6 @@ components:
           readOnly: true
           description: Room of the station the bench is set up on; null when the bench
             is unplaced or the station has no room.
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          nullable: true
-          readOnly: true
-          description: 'Deprecated: use lifecycle_status, condition, availability
-            and activity_status.'
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -1407,7 +1400,6 @@ components:
       - setup_location_path
       - sku
       - station_slot
-      - status
       - type
       - uid
       - updated_at
@@ -2251,17 +2243,10 @@ components:
           items:
             $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
-        statuses:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabsChoiceReference'
-          readOnly: true
-          description: Deprecated four-value status.
       required:
       - groups
       - lifecycle_statuses
       - stations
-      - statuses
       - types
     BenchReferenceDataSerializersBenchReferenceDataDetailResponse:
       type: object
@@ -2411,13 +2396,6 @@ components:
           readOnly: true
           description: Room of the station the bench is set up on; null when the bench
             is unplaced or the station has no room.
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          nullable: true
-          readOnly: true
-          description: 'Deprecated: use lifecycle_status, condition, availability
-            and activity_status.'
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -2506,7 +2484,6 @@ components:
       - setup_location_path
       - sku
       - station_slot
-      - status
       - type
       - uid
       - updated_at
@@ -2573,8 +2550,7 @@ components:
       x-embedded-resource: true
     BenchStatusSummary:
       type: object
-      description: The deprecated four-value status (lifecycle, with out_of_service
-        from downtime), not bookings.
+      description: Counts by bench lifecycle status.
       properties:
         total_count:
           type: integer
@@ -3997,7 +3973,13 @@ components:
         name:
           type: string
         lifecycle_status:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         bench_group:
           allOf:
           - $ref: '#/components/schemas/DashboardBenchGroup'
@@ -4042,6 +4024,7 @@ components:
       - bench_group
       - bench_type
       - computing
+      - condition
       - current_booking
       - id
       - image_url
@@ -4064,7 +4047,13 @@ components:
         name:
           type: string
         lifecycle_status:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         bench_group:
           allOf:
           - $ref: '#/components/schemas/DashboardBenchGroup'
@@ -4126,6 +4115,7 @@ components:
       - bench_group
       - bench_type
       - computing
+      - condition
       - current_booking
       - equipment_by_category
       - id
@@ -4505,6 +4495,11 @@ components:
           additionalProperties:
             type: integer
           description: Breakdown of bench counts by lifecycle status.
+        condition_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Breakdown of bench counts by condition.
         activity_distribution:
           type: object
           additionalProperties:
@@ -4518,6 +4513,7 @@ components:
       required:
       - active_bookings_count
       - activity_distribution
+      - condition_distribution
       - favorited_benches_count
       - lifecycle_distribution
       - total_benches
@@ -17813,8 +17809,7 @@ components:
       description: 'Separate state fields of a room or station (design: resource-status-and-downtime.md).
 
 
-        Reads annotations from ``with_location_state``; ``status`` is the deprecated
-        seven-value field.'
+        Reads annotations from ``with_location_state``.'
       properties:
         id:
           type: integer
@@ -17925,13 +17920,6 @@ components:
           type: string
           format: uri
           readOnly: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          nullable: true
-          readOnly: true
-          description: 'Deprecated: computed from lifecycle_status, condition, access_policy
-            and activity_status.'
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -18015,7 +18003,6 @@ components:
       - remark
       - sku
       - slot_capacity
-      - status
       - uid
       - updated_at
       - usable_height_m
@@ -18700,37 +18687,6 @@ components:
           $ref: '#/components/schemas/RoomSlotListSerializersRoomSlotPagination'
       required:
       - pagination
-    RoomStatusChangeSerializersRoomDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/Room'
-      required:
-      - data
-    RoomStatusEnum:
-      enum:
-      - available
-      - reserved
-      - issue
-      - restricted
-      - closed
-      - maintenance
-      - retired
-      type: string
-      description: '* `available` - Available
-
-        * `reserved` - Reserved
-
-        * `issue` - Issue
-
-        * `restricted` - Restricted
-
-        * `closed` - Closed
-
-        * `maintenance` - Maintenance
-
-        * `retired` - Retired'
     RoomStatusRecord:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -18766,8 +18722,7 @@ components:
       - status
     RoomStatusSummary:
       type: object
-      description: The deprecated seven-value status, computed from lifecycle, condition,
-        access and activity.
+      description: Counts by room lifecycle status.
       properties:
         total_count:
           type: integer
@@ -18795,18 +18750,6 @@ components:
           $ref: '#/components/schemas/RoomStatusSummary'
       required:
       - data
-    RoomStatusWrite:
-      type: object
-      description: 'Deprecated: mapped onto lifecycle, access policy and downtime.
-        ``reserved`` cannot be set.'
-      properties:
-        status:
-          $ref: '#/components/schemas/RoomStatusEnum'
-        metadata:
-          type: object
-          additionalProperties: {}
-      required:
-      - status
     RoomUpdate:
       type: object
       description: Reject unsupported keys and return a stable error when SKU is supplied
@@ -19627,8 +19570,7 @@ components:
       description: 'Separate state fields of a room or station (design: resource-status-and-downtime.md).
 
 
-        Reads annotations from ``with_location_state``; ``status`` is the deprecated
-        seven-value field.'
+        Reads annotations from ``with_location_state``.'
       properties:
         id:
           type: integer
@@ -19734,13 +19676,6 @@ components:
           nullable: true
         utilities:
           readOnly: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          nullable: true
-          readOnly: true
-          description: 'Deprecated: computed from lifecycle_status, condition, access_policy
-            and activity_status.'
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -19836,7 +19771,6 @@ components:
       - slot
       - slot_count
       - slots_url
-      - status
       - type
       - uid
       - updated_at
@@ -20197,12 +20131,6 @@ components:
           items:
             $ref: '#/components/schemas/LabsStationRoomReference'
           readOnly: true
-        statuses:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabsChoiceReference'
-          readOnly: true
-          description: Deprecated seven-value status.
         lifecycle_statuses:
           type: array
           items:
@@ -20225,7 +20153,6 @@ components:
       - lifecycle_statuses
       - rooms
       - slot_statuses
-      - statuses
       - types
     StationReferenceDataSerializersStationReferenceDataDetailResponse:
       type: object
@@ -20528,14 +20455,6 @@ components:
           $ref: '#/components/schemas/StationSlot'
       required:
       - data
-    StationStatusChangeSerializersStationDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/Station'
-      required:
-      - data
     StationStatusRecord:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -20571,8 +20490,7 @@ components:
       - status
     StationStatusSummary:
       type: object
-      description: The deprecated seven-value status, computed from lifecycle, condition,
-        access and activity.
+      description: Counts by station lifecycle status.
       properties:
         total_count:
           type: integer
@@ -20600,18 +20518,6 @@ components:
           $ref: '#/components/schemas/StationStatusSummary'
       required:
       - data
-    StationStatusWrite:
-      type: object
-      description: 'Deprecated: mapped onto lifecycle, access policy and downtime.
-        ``reserved`` cannot be set.'
-      properties:
-        status:
-          $ref: '#/components/schemas/RoomStatusEnum'
-        metadata:
-          type: object
-          additionalProperties: {}
-      required:
-      - status
     StationType:
       type: object
       description: Base model serializer that automatically exposes created_at and

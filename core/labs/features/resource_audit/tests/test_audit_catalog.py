@@ -6,7 +6,6 @@ import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from core.labs.features.locations.public import record_room_status, record_station_status
 from core.labs.models import Bench, Equipment, EquipmentCategory, EquipmentKind, License, Room, RoomSlot, Station
 from core.labs.models.resource.license.license import (
     LicenseCategory,
@@ -15,7 +14,7 @@ from core.labs.models.resource.license.license import (
     LicenseType,
     LicenseVendor,
 )
-from tests.factories import UserFactory, grant_labs_role
+from tests.factories import UserFactory, grant_labs_role, set_condition
 
 URL = "/api/labs/audit-catalog"
 
@@ -179,10 +178,8 @@ def _by_uid(body):
 @pytest.mark.django_db
 class TestCatalogStatusAndDelta:
     def test_status_is_lifecycle_and_condition_comes_from_downtime(self, client, resources):
-        # The deprecated room/station status write maps onto downtime (resource-status-and-downtime.md).
-        record_station_status(station_id=resources["station"].pk, actor=None, status="available")
-        record_station_status(station_id=resources["station"].pk, actor=None, status="maintenance")
-        record_room_status(room_id=resources["room"].pk, actor=None, status="closed")
+        set_condition(resources["station"], "in_maintenance")
+        set_condition(resources["room"], "out_of_service")
         LicenseStatusRecord.objects.create(license=resources["license"], status="expired")
 
         items = _by_uid(client.get(URL).json())
@@ -222,7 +219,7 @@ class TestCatalogStatusAndDelta:
 
     def test_new_downtime_or_status_record_returns_the_resource(self, client, resources):
         since = timezone.now()
-        record_station_status(station_id=resources["station"].pk, actor=None, status="issue")
+        set_condition(resources["station"], "out_of_service")
         LicenseStatusRecord.objects.create(license=resources["license"], status="revoked")
 
         items = _by_uid(client.get(URL, {"changed_since": since.isoformat()}).json())

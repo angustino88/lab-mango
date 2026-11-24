@@ -6037,15 +6037,6 @@
           },
           {
             "in": "query",
-            "name": "status",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
-          },
-          {
-            "in": "query",
             "name": "type_id",
             "schema": {
               "type": "string",
@@ -7819,9 +7810,15 @@
             "in": "query",
             "name": "lifecycle_status",
             "schema": {
+              "enum": [
+                "planned",
+                "in_service",
+                "retired"
+              ],
               "type": "string",
               "minLength": 1
-            }
+            },
+            "description": "* `planned` - Planned\n* `in_service` - In service\n* `retired` - Retired"
           },
           {
             "in": "query",
@@ -9161,6 +9158,20 @@
           },
           {
             "in": "query",
+            "name": "condition",
+            "schema": {
+              "enum": [
+                "operational",
+                "in_maintenance",
+                "out_of_service"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `operational` - Operational\n* `in_maintenance` - In maintenance\n* `out_of_service` - Out of service"
+          },
+          {
+            "in": "query",
             "name": "has_computing",
             "schema": {
               "type": "boolean",
@@ -9202,13 +9213,12 @@
               "enum": [
                 "planned",
                 "in_service",
-                "out_of_service",
                 "retired"
               ],
               "type": "string",
               "minLength": 1
             },
-            "description": "Filter by lifecycle status (planned, in_service, out_of_service, retired).\n\n* `planned` - Planned\n* `in_service` - In service\n* `out_of_service` - Out of service\n* `retired` - Retired"
+            "description": "Filter by bench lifecycle status.\n\n* `planned` - Planned\n* `in_service` - In service\n* `retired` - Retired"
           },
           {
             "in": "query",
@@ -28929,15 +28939,6 @@
               "maxLength": 200,
               "minLength": 1
             }
-          },
-          {
-            "in": "query",
-            "name": "status",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
           }
         ],
         "tags": [
@@ -29591,106 +29592,6 @@
           }
         },
         "summary": "Change Lifecycle Rooms by Room ID"
-      }
-    },
-    "/api/labs/rooms/{room_id}/actions/change-status": {
-      "post": {
-        "operationId": "labs_rooms_actions_change_status_create_by_room_id",
-        "description": "HTTP mapping for domain commands and selector projections.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "room_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Rooms"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RoomStatusWrite"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/RoomStatusWrite"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/RoomStatusWrite"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RoomStatusChangeSerializersRoomDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Change Status Rooms by Room ID"
       }
     },
     "/api/labs/rooms/{room_id}/actions/force-delete": {
@@ -30822,7 +30723,7 @@
     "/api/labs/rooms/status-summary": {
       "get": {
         "operationId": "labs_rooms_status_summary_retrieve",
-        "description": "Non-deleted rooms counted by their stored lifecycle `status`.",
+        "description": "Count non-deleted resources by their stored lifecycle status.",
         "tags": [
           "Rooms"
         ],
@@ -31407,15 +31308,6 @@
           {
             "in": "query",
             "name": "room_id",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
-          },
-          {
-            "in": "query",
-            "name": "status",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -32083,106 +31975,6 @@
           }
         },
         "summary": "Change Lifecycle Stations by Station ID"
-      }
-    },
-    "/api/labs/stations/{station_id}/actions/change-status": {
-      "post": {
-        "operationId": "labs_stations_actions_change_status_create_by_station_id",
-        "description": "HTTP mapping for domain commands and selector projections.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "station_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Stations"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StationStatusWrite"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/StationStatusWrite"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/StationStatusWrite"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StationStatusChangeSerializersStationDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Change Status Stations by Station ID"
       }
     },
     "/api/labs/stations/{station_id}/actions/force-delete": {
@@ -33449,7 +33241,7 @@
     "/api/labs/stations/status-summary": {
       "get": {
         "operationId": "labs_stations_status_summary_retrieve",
-        "description": "Non-deleted stations counted by their stored lifecycle `status`.",
+        "description": "Count non-deleted resources by their stored lifecycle status.",
         "tags": [
           "Stations"
         ],
@@ -44415,16 +44207,6 @@
             "readOnly": true,
             "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true,
-            "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-          },
           "lifecycle_status": {
             "allOf": [
               {
@@ -44542,7 +44324,6 @@
           "setup_location_path",
           "sku",
           "station_slot",
-          "status",
           "type",
           "uid",
           "updated_at"
@@ -45731,21 +45512,12 @@
               "$ref": "#/components/schemas/LabsChoiceReference"
             },
             "readOnly": true
-          },
-          "statuses": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LabsChoiceReference"
-            },
-            "readOnly": true,
-            "description": "Deprecated four-value status."
           }
         },
         "required": [
           "groups",
           "lifecycle_statuses",
           "stations",
-          "statuses",
           "types"
         ]
       },
@@ -45967,16 +45739,6 @@
             "readOnly": true,
             "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true,
-            "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-          },
           "lifecycle_status": {
             "allOf": [
               {
@@ -46094,7 +45856,6 @@
           "setup_location_path",
           "sku",
           "station_slot",
-          "status",
           "type",
           "uid",
           "updated_at"
@@ -46185,7 +45946,7 @@
       },
       "BenchStatusSummary": {
         "type": "object",
-        "description": "The deprecated four-value status (lifecycle, with out_of_service from downtime), not bookings.",
+        "description": "Counts by bench lifecycle status.",
         "properties": {
           "total_count": {
             "type": "integer",
@@ -48127,7 +47888,20 @@
             "type": "string"
           },
           "lifecycle_status": {
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "condition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
           },
           "bench_group": {
             "allOf": [
@@ -48202,6 +47976,7 @@
           "bench_group",
           "bench_type",
           "computing",
+          "condition",
           "current_booking",
           "id",
           "image_url",
@@ -48228,7 +48003,20 @@
             "type": "string"
           },
           "lifecycle_status": {
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "condition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
           },
           "bench_group": {
             "allOf": [
@@ -48327,6 +48115,7 @@
           "bench_group",
           "bench_type",
           "computing",
+          "condition",
           "current_booking",
           "equipment_by_category",
           "id",
@@ -48854,6 +48643,13 @@
             },
             "description": "Breakdown of bench counts by lifecycle status."
           },
+          "condition_distribution": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Breakdown of bench counts by condition."
+          },
           "activity_distribution": {
             "type": "object",
             "additionalProperties": {
@@ -48870,6 +48666,7 @@
         "required": [
           "active_bookings_count",
           "activity_distribution",
+          "condition_distribution",
           "favorited_benches_count",
           "lifecycle_distribution",
           "total_benches",
@@ -67145,7 +66942,7 @@
       },
       "Room": {
         "type": "object",
-        "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+        "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
         "properties": {
           "id": {
             "type": "integer",
@@ -67299,16 +67096,6 @@
             "format": "uri",
             "readOnly": true
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true,
-            "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-          },
           "lifecycle_status": {
             "allOf": [
               {
@@ -67421,7 +67208,6 @@
           "remark",
           "sku",
           "slot_capacity",
-          "status",
           "uid",
           "updated_at",
           "usable_height_m",
@@ -68353,31 +68139,6 @@
           "pagination"
         ]
       },
-      "RoomStatusChangeSerializersRoomDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/Room"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "RoomStatusEnum": {
-        "enum": [
-          "available",
-          "reserved",
-          "issue",
-          "restricted",
-          "closed",
-          "maintenance",
-          "retired"
-        ],
-        "type": "string",
-        "description": "* `available` - Available\n* `reserved` - Reserved\n* `issue` - Issue\n* `restricted` - Restricted\n* `closed` - Closed\n* `maintenance` - Maintenance\n* `retired` - Retired"
-      },
       "RoomStatusRecord": {
         "type": "object",
         "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
@@ -68427,7 +68188,7 @@
       },
       "RoomStatusSummary": {
         "type": "object",
-        "description": "The deprecated seven-value status, computed from lifecycle, condition, access and activity.",
+        "description": "Counts by room lifecycle status.",
         "properties": {
           "total_count": {
             "type": "integer",
@@ -68462,22 +68223,6 @@
         },
         "required": [
           "data"
-        ]
-      },
-      "RoomStatusWrite": {
-        "type": "object",
-        "description": "Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set.",
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/RoomStatusEnum"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        },
-        "required": [
-          "status"
         ]
       },
       "RoomUpdate": {
@@ -69574,7 +69319,7 @@
       },
       "Station": {
         "type": "object",
-        "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+        "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
         "properties": {
           "id": {
             "type": "integer",
@@ -69727,16 +69472,6 @@
           "utilities": {
             "readOnly": true
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true,
-            "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-          },
           "lifecycle_status": {
             "allOf": [
               {
@@ -69864,7 +69599,6 @@
           "slot",
           "slot_count",
           "slots_url",
-          "status",
           "type",
           "uid",
           "updated_at",
@@ -70350,14 +70084,6 @@
             },
             "readOnly": true
           },
-          "statuses": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LabsChoiceReference"
-            },
-            "readOnly": true,
-            "description": "Deprecated seven-value status."
-          },
           "lifecycle_statuses": {
             "type": "array",
             "items": {
@@ -70387,7 +70113,6 @@
           "lifecycle_statuses",
           "rooms",
           "slot_statuses",
-          "statuses",
           "types"
         ]
       },
@@ -70784,18 +70509,6 @@
           "data"
         ]
       },
-      "StationStatusChangeSerializersStationDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/Station"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "StationStatusRecord": {
         "type": "object",
         "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
@@ -70845,7 +70558,7 @@
       },
       "StationStatusSummary": {
         "type": "object",
-        "description": "The deprecated seven-value status, computed from lifecycle, condition, access and activity.",
+        "description": "Counts by station lifecycle status.",
         "properties": {
           "total_count": {
             "type": "integer",
@@ -70880,22 +70593,6 @@
         },
         "required": [
           "data"
-        ]
-      },
-      "StationStatusWrite": {
-        "type": "object",
-        "description": "Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set.",
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/RoomStatusEnum"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        },
-        "required": [
-          "status"
         ]
       },
       "StationType": {

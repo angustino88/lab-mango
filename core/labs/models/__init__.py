@@ -62,7 +62,6 @@ from .resource.base.downtime import DowntimeBookingAccess, DowntimeKind, Downtim
 from .resource.base.resource import Department, Group
 from .resource.base.service_record import ResourceServiceRecord
 from .resource.base.status import (
-    LegacyLocationStatus,
     ResourceAccessPolicy,
     ResourceActivityStatus,
     ResourceAvailability,
@@ -116,11 +115,9 @@ from .resource.location import (
     Room,
     RoomObservation,
     RoomSlot,
-    RoomStatus,
     RoomStatusRecord,
     Station,
     StationSlot,
-    StationStatus,
     StationStatusRecord,
     StationType,
 )
@@ -196,7 +193,6 @@ __all__ = [
     "EnrollmentGrant",
     "LabProject",
     "LabSessionLog",
-    "LegacyLocationStatus",
     "SessionAccessType",
     "Material",
     "License",
@@ -250,12 +246,10 @@ __all__ = [
     "Room",
     "RoomObservation",
     "RoomSlot",
-    "RoomStatus",
     "RoomStatusRecord",
     "SpecificationDefinition",
     "Station",
     "StationSlot",
-    "StationStatus",
     "StationStatusRecord",
     "StationType",
     "SyncState",

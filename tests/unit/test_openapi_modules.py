@@ -151,12 +151,13 @@ def test_explicit_include_ids_annotation_is_not_rewritten_by_csv_hook(monkeypatc
     assert include_ids[0]["schema"]["type"] == "string"
 
 
-def test_dashboard_query_contract_documents_all_eleven_fields_and_optional_booleans():
+def test_dashboard_query_contract_documents_filters_and_optional_booleans():
     schema = SchemaGenerator().get_schema(request=None, public=True)
     parameters = _query_parameters(schema["paths"]["/api/labs/dashboard"]["get"])
     expected = {
         "activity_status",
         "bench_group",
+        "condition",
         "has_computing",
         "is_booked",
         "is_favorite",

@@ -646,12 +646,6 @@ paths:
           minLength: 1
         description: Comma-separated values; OR within this filter.
       - in: query
-        name: status
-        schema:
-          type: string
-          minLength: 1
-        description: Comma-separated values; OR within this filter.
-      - in: query
         name: type_id
         schema:
           type: string
@@ -1510,8 +1504,17 @@ paths:
       - in: query
         name: lifecycle_status
         schema:
+          enum:
+          - planned
+          - in_service
+          - retired
           type: string
           minLength: 1
+        description: '* `planned` - Planned
+
+          * `in_service` - In service
+
+          * `retired` - Retired'
       - in: query
         name: q
         schema:
@@ -1974,13 +1977,6 @@ components:
           readOnly: true
           description: Room of the station the bench is set up on; null when the bench
             is unplaced or the station has no room.
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          nullable: true
-          readOnly: true
-          description: 'Deprecated: use lifecycle_status, condition, availability
-            and activity_status.'
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -2069,7 +2065,6 @@ components:
       - setup_location_path
       - sku
       - station_slot
-      - status
       - type
       - uid
       - updated_at
@@ -2575,17 +2570,10 @@ components:
           items:
             $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
-        statuses:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabsChoiceReference'
-          readOnly: true
-          description: Deprecated four-value status.
       required:
       - groups
       - lifecycle_statuses
       - stations
-      - statuses
       - types
     BenchReferenceDataSerializersBenchReferenceDataDetailResponse:
       type: object
@@ -2735,13 +2723,6 @@ components:
           readOnly: true
           description: Room of the station the bench is set up on; null when the bench
             is unplaced or the station has no room.
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          nullable: true
-          readOnly: true
-          description: 'Deprecated: use lifecycle_status, condition, availability
-            and activity_status.'
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -2830,7 +2811,6 @@ components:
       - setup_location_path
       - sku
       - station_slot
-      - status
       - type
       - uid
       - updated_at
@@ -2897,8 +2877,7 @@ components:
       x-embedded-resource: true
     BenchStatusSummary:
       type: object
-      description: The deprecated four-value status (lifecycle, with out_of_service
-        from downtime), not bookings.
+      description: Counts by bench lifecycle status.
       properties:
         total_count:
           type: integer

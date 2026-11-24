@@ -428,7 +428,6 @@ SHEETS: tuple[Sheet, ...] = (
             _ACCESS,
             _CONDITION,
             _REMARK,
-            _LEGACY_STATUS,
         ),
     ),
     Sheet(
@@ -467,7 +466,6 @@ SHEETS: tuple[Sheet, ...] = (
             _ACCESS,
             _CONDITION,
             _REMARK,
-            _LEGACY_STATUS,
         ),
     ),
     Sheet(
@@ -556,7 +554,6 @@ SHEETS: tuple[Sheet, ...] = (
             Column("commissioning_date", "Commissioning Date", DATE, hint="YYYY-MM-DD"),
             _REMARK,
             Column("department", "Department", legacy=True),
-            _LEGACY_STATUS,
         ),
     ),
     # ---- C. Equipment -----------------------------------------------------------------------

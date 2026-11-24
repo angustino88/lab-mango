@@ -29,8 +29,6 @@ def test_enum_registry_preserves_existing_names_and_choice_hashes() -> None:
         "c6340131decdfe99": "PurchaseStatusEnum",
         "0ca2b20fe2f28609": "ResourceAuditResultEnum",
         "241789807f273812": "ResourceTypeEnum",
-        "2618318a7a17179a": "LegacyStationSlotStatusEnum",
-        "1f24ce8d87dafc9f": "RoomStatusEnum",
         "36424dd3c434b095": "SourceEnum",
         "bd28f179d97080db": "StateEnum",
         "e6f53645e41eca98": "StationSlotStatusEnum",  # in_service, out_of_service, retired (RS1)

@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 522,
+  "total_endpoints": 520,
   "generated_at": "2026-11-24",
   "endpoints": [
     {
@@ -16827,22 +16827,12 @@
                         "description": "(max nesting depth reached)"
                       },
                       "readOnly": true
-                    },
-                    "statuses": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "readOnly": true,
-                      "description": "Deprecated four-value status."
                     }
                   },
                   "required": [
                     "groups",
                     "lifecycle_statuses",
                     "stations",
-                    "statuses",
                     "types"
                   ]
                 }
@@ -16872,9 +16862,6 @@
                   {}
                 ],
                 "lifecycle_statuses": [
-                  {}
-                ],
-                "statuses": [
                   {}
                 ]
               }
@@ -18324,22 +18311,12 @@
                         "description": "(max nesting depth reached)"
                       },
                       "readOnly": true
-                    },
-                    "statuses": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "readOnly": true,
-                      "description": "Deprecated four-value status."
                     }
                   },
                   "required": [
                     "groups",
                     "lifecycle_statuses",
                     "stations",
-                    "statuses",
                     "types"
                   ]
                 }
@@ -18369,9 +18346,6 @@
                   {}
                 ],
                 "lifecycle_statuses": [
-                  {}
-                ],
-                "statuses": [
                   {}
                 ]
               }
@@ -19887,16 +19861,6 @@
           }
         },
         {
-          "name": "status",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated values; OR within this filter.",
-          "schema": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        {
           "name": "type_id",
           "in": "query",
           "required": false,
@@ -20058,17 +20022,6 @@
                       "readOnly": true,
                       "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
                     },
-                    "status": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "nullable": true,
-                      "readOnly": true,
-                      "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-                    },
                     "lifecycle_status": {
                       "allOf": [
                         {
@@ -20190,7 +20143,6 @@
                     "setup_location_path",
                     "sku",
                     "station_slot",
-                    "status",
                     "type",
                     "uid",
                     "updated_at"
@@ -20228,7 +20180,6 @@
                 "setup_location": {},
                 "station_slot": {},
                 "room": {},
-                "status": {},
                 "lifecycle_status": {},
                 "condition": {},
                 "availability": {},
@@ -20682,17 +20633,6 @@
                     "readOnly": true,
                     "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -20814,7 +20754,6 @@
                   "setup_location_path",
                   "sku",
                   "station_slot",
-                  "status",
                   "type",
                   "uid",
                   "updated_at"
@@ -20843,7 +20782,6 @@
               "setup_location": {},
               "station_slot": {},
               "room": {},
-              "status": {},
               "lifecycle_status": {},
               "condition": {},
               "availability": {},
@@ -21458,8 +21396,13 @@
           "name": "lifecycle_status",
           "in": "query",
           "required": false,
-          "description": "",
+          "description": "* `planned` - Planned\n* `in_service` - In service\n* `retired` - Retired",
           "schema": {
+            "enum": [
+              "planned",
+              "in_service",
+              "retired"
+            ],
             "type": "string",
             "minLength": 1
           }
@@ -21715,22 +21658,12 @@
                       "description": "(max nesting depth reached)"
                     },
                     "readOnly": true
-                  },
-                  "statuses": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "readOnly": true,
-                    "description": "Deprecated four-value status."
                   }
                 },
                 "required": [
                   "groups",
                   "lifecycle_statuses",
                   "stations",
-                  "statuses",
                   "types"
                 ]
               }
@@ -21751,9 +21684,6 @@
                 {}
               ],
               "lifecycle_statuses": [
-                {}
-              ],
-              "statuses": [
                 {}
               ]
             }
@@ -23110,7 +23040,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "The deprecated four-value status (lifecycle, with out_of_service from downtime), not bookings.",
+                "description": "Counts by bench lifecycle status.",
                 "properties": {
                   "total_count": {
                     "type": "integer",
@@ -23356,17 +23286,6 @@
                     "readOnly": true,
                     "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -23488,7 +23407,6 @@
                   "setup_location_path",
                   "sku",
                   "station_slot",
-                  "status",
                   "type",
                   "uid",
                   "updated_at"
@@ -23517,7 +23435,6 @@
               "setup_location": {},
               "station_slot": {},
               "room": {},
-              "status": {},
               "lifecycle_status": {},
               "condition": {},
               "availability": {},
@@ -23927,17 +23844,6 @@
                     "readOnly": true,
                     "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -24059,7 +23965,6 @@
                   "setup_location_path",
                   "sku",
                   "station_slot",
-                  "status",
                   "type",
                   "uid",
                   "updated_at"
@@ -24088,7 +23993,6 @@
               "setup_location": {},
               "station_slot": {},
               "room": {},
-              "status": {},
               "lifecycle_status": {},
               "condition": {},
               "availability": {},
@@ -24601,17 +24505,6 @@
                     "readOnly": true,
                     "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -24733,7 +24626,6 @@
                   "setup_location_path",
                   "sku",
                   "station_slot",
-                  "status",
                   "type",
                   "uid",
                   "updated_at"
@@ -24762,7 +24654,6 @@
               "setup_location": {},
               "station_slot": {},
               "room": {},
-              "status": {},
               "lifecycle_status": {},
               "condition": {},
               "availability": {},
@@ -25312,17 +25203,6 @@
                     "readOnly": true,
                     "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -25444,7 +25324,6 @@
                   "setup_location_path",
                   "sku",
                   "station_slot",
-                  "status",
                   "type",
                   "uid",
                   "updated_at"
@@ -25473,7 +25352,6 @@
               "setup_location": {},
               "station_slot": {},
               "room": {},
-              "status": {},
               "lifecycle_status": {},
               "condition": {},
               "availability": {},
@@ -26512,17 +26390,6 @@
                     "readOnly": true,
                     "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -26644,7 +26511,6 @@
                   "setup_location_path",
                   "sku",
                   "station_slot",
-                  "status",
                   "type",
                   "uid",
                   "updated_at"
@@ -26673,7 +26539,6 @@
               "setup_location": {},
               "station_slot": {},
               "room": {},
-              "status": {},
               "lifecycle_status": {},
               "condition": {},
               "availability": {},
@@ -27086,17 +26951,6 @@
                     "readOnly": true,
                     "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -27218,7 +27072,6 @@
                   "setup_location_path",
                   "sku",
                   "station_slot",
-                  "status",
                   "type",
                   "uid",
                   "updated_at"
@@ -27247,7 +27100,6 @@
               "setup_location": {},
               "station_slot": {},
               "room": {},
-              "status": {},
               "lifecycle_status": {},
               "condition": {},
               "availability": {},
@@ -31210,6 +31062,21 @@
           }
         },
         {
+          "name": "condition",
+          "in": "query",
+          "required": false,
+          "description": "* `operational` - Operational\n* `in_maintenance` - In maintenance\n* `out_of_service` - Out of service",
+          "schema": {
+            "enum": [
+              "operational",
+              "in_maintenance",
+              "out_of_service"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
           "name": "has_computing",
           "in": "query",
           "required": false,
@@ -31253,12 +31120,11 @@
           "name": "lifecycle_status",
           "in": "query",
           "required": false,
-          "description": "Filter by lifecycle status (planned, in_service, out_of_service, retired).\n\n* `planned` - Planned\n* `in_service` - In service\n* `out_of_service` - Out of service\n* `retired` - Retired",
+          "description": "Filter by bench lifecycle status.\n\n* `planned` - Planned\n* `in_service` - In service\n* `retired` - Retired",
           "schema": {
             "enum": [
               "planned",
               "in_service",
-              "out_of_service",
               "retired"
             ],
             "type": "string",
@@ -31352,7 +31218,22 @@
                       "type": "string"
                     },
                     "lifecycle_status": {
-                      "type": "string"
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "condition": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
                     },
                     "bench_group": {
                       "allOf": [
@@ -31434,6 +31315,7 @@
                     "bench_group",
                     "bench_type",
                     "computing",
+                    "condition",
                     "current_booking",
                     "id",
                     "image_url",
@@ -31465,7 +31347,8 @@
                 "id": 1,
                 "sku": "string",
                 "name": "string",
-                "lifecycle_status": "string",
+                "lifecycle_status": {},
+                "condition": {},
                 "bench_group": {},
                 "bench_type": {},
                 "location": {},
@@ -31636,7 +31519,22 @@
                     "type": "string"
                   },
                   "lifecycle_status": {
-                    "type": "string"
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "condition": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
                   },
                   "bench_group": {
                     "allOf": [
@@ -31744,6 +31642,7 @@
                   "bench_group",
                   "bench_type",
                   "computing",
+                  "condition",
                   "current_booking",
                   "equipment_by_category",
                   "id",
@@ -31768,7 +31667,8 @@
               "id": 1,
               "sku": "string",
               "name": "string",
-              "lifecycle_status": "string",
+              "lifecycle_status": {},
+              "condition": {},
               "bench_group": {},
               "bench_type": {},
               "location": {},
@@ -31946,6 +31846,13 @@
                     },
                     "description": "Breakdown of bench counts by lifecycle status."
                   },
+                  "condition_distribution": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer"
+                    },
+                    "description": "Breakdown of bench counts by condition."
+                  },
                   "activity_distribution": {
                     "type": "object",
                     "additionalProperties": {
@@ -31962,6 +31869,7 @@
                 "required": [
                   "active_bookings_count",
                   "activity_distribution",
+                  "condition_distribution",
                   "favorited_benches_count",
                   "lifecycle_distribution",
                   "total_benches",
@@ -31979,6 +31887,7 @@
               "active_bookings_count": 1,
               "favorited_benches_count": 1,
               "lifecycle_distribution": {},
+              "condition_distribution": {},
               "activity_distribution": {},
               "utilization_rate": 0.0
             }
@@ -99168,16 +99077,6 @@
             "maxLength": 200,
             "minLength": 1
           }
-        },
-        {
-          "name": "status",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated values; OR within this filter.",
-          "schema": {
-            "type": "string",
-            "minLength": 1
-          }
         }
       ],
       "request_body": null,
@@ -99212,7 +99111,7 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                  "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                   "properties": {
                     "id": {
                       "type": "integer",
@@ -99372,17 +99271,6 @@
                       "format": "uri",
                       "readOnly": true
                     },
-                    "status": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "nullable": true,
-                      "readOnly": true,
-                      "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                    },
                     "lifecycle_status": {
                       "allOf": [
                         {
@@ -99500,7 +99388,6 @@
                     "remark",
                     "sku",
                     "slot_capacity",
-                    "status",
                     "uid",
                     "updated_at",
                     "usable_height_m",
@@ -99549,7 +99436,6 @@
                 "coordinate_unit": "string",
                 "floor_plan_revision": "string",
                 "floor_plan_url": "https://example.com/resource",
-                "status": {},
                 "lifecycle_status": {},
                 "access_policy": {},
                 "condition": {},
@@ -99880,7 +99766,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -100040,17 +99926,6 @@
                     "format": "uri",
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -100168,7 +100043,6 @@
                   "remark",
                   "sku",
                   "slot_capacity",
-                  "status",
                   "uid",
                   "updated_at",
                   "usable_height_m",
@@ -100208,7 +100082,6 @@
               "coordinate_unit": "string",
               "floor_plan_revision": "string",
               "floor_plan_url": "https://example.com/resource",
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -100889,7 +100762,7 @@
       "method": "GET",
       "operation_id": "labs_rooms_status_summary_retrieve",
       "summary": "Get Rooms Status Summary",
-      "description": "Non-deleted rooms counted by their stored lifecycle `status`.",
+      "description": "Count non-deleted resources by their stored lifecycle status.",
       "tags": [
         "Rooms"
       ],
@@ -100905,7 +100778,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "The deprecated seven-value status, computed from lifecycle, condition, access and activity.",
+                "description": "Counts by room lifecycle status.",
                 "properties": {
                   "total_count": {
                     "type": "integer",
@@ -101392,7 +101265,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -101552,17 +101425,6 @@
                     "format": "uri",
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -101680,7 +101542,6 @@
                   "remark",
                   "sku",
                   "slot_capacity",
-                  "status",
                   "uid",
                   "updated_at",
                   "usable_height_m",
@@ -101720,7 +101581,6 @@
               "coordinate_unit": "string",
               "floor_plan_revision": "string",
               "floor_plan_url": "https://example.com/resource",
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -102007,7 +101867,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -102167,17 +102027,6 @@
                     "format": "uri",
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -102295,7 +102144,6 @@
                   "remark",
                   "sku",
                   "slot_capacity",
-                  "status",
                   "uid",
                   "updated_at",
                   "usable_height_m",
@@ -102335,7 +102183,6 @@
               "coordinate_unit": "string",
               "floor_plan_revision": "string",
               "floor_plan_url": "https://example.com/resource",
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -102778,7 +102625,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -102938,17 +102785,6 @@
                     "format": "uri",
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -103066,7 +102902,6 @@
                   "remark",
                   "sku",
                   "slot_capacity",
-                  "status",
                   "uid",
                   "updated_at",
                   "usable_height_m",
@@ -103106,7 +102941,6 @@
               "coordinate_unit": "string",
               "floor_plan_revision": "string",
               "floor_plan_url": "https://example.com/resource",
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -103492,7 +103326,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -103652,17 +103486,6 @@
                     "format": "uri",
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -103780,7 +103603,6 @@
                   "remark",
                   "sku",
                   "slot_capacity",
-                  "status",
                   "uid",
                   "updated_at",
                   "usable_height_m",
@@ -103820,636 +103642,6 @@
               "coordinate_unit": "string",
               "floor_plan_revision": "string",
               "floor_plan_url": "https://example.com/resource",
-              "status": {},
-              "lifecycle_status": {},
-              "access_policy": {},
-              "condition": {},
-              "availability": {},
-              "activity_status": {},
-              "max_occupancy": 1,
-              "power_capacity_w": 1,
-              "cooling_capacity_w": 1,
-              "network_port_capacity": 1,
-              "utilities": null,
-              "location_path": "string",
-              "created_at": "2026-10-20T12:00:00Z",
-              "updated_at": "2026-10-20T12:00:00Z"
-            }
-          }
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "422": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "409": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/rooms/{room_id}/actions/change-status",
-      "method": "POST",
-      "operation_id": "labs_rooms_actions_change_status_create_by_room_id",
-      "summary": "Change Status Rooms by Room ID",
-      "description": "HTTP mapping for domain commands and selector projections.",
-      "tags": [
-        "Rooms"
-      ],
-      "parameters": [
-        {
-          "name": "room_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": {
-        "content_type": "application/json",
-        "supported_content_types": [
-          "application/json",
-          "application/x-www-form-urlencoded",
-          "multipart/form-data"
-        ],
-        "required": true,
-        "description": "",
-        "schema": {
-          "type": "object",
-          "description": "Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set.",
-          "properties": {
-            "status": {
-              "enum": [
-                "available",
-                "reserved",
-                "issue",
-                "restricted",
-                "closed",
-                "maintenance",
-                "retired"
-              ],
-              "type": "string",
-              "description": "* `available` - Available\n* `reserved` - Reserved\n* `issue` - Issue\n* `restricted` - Restricted\n* `closed` - Closed\n* `maintenance` - Maintenance\n* `retired` - Retired"
-            },
-            "metadata": {
-              "type": "object",
-              "additionalProperties": {}
-            }
-          },
-          "required": [
-            "status"
-          ]
-        },
-        "example_payload": {
-          "status": "available",
-          "metadata": {}
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "uid": {
-                    "type": "string",
-                    "format": "uuid",
-                    "readOnly": true
-                  },
-                  "sku": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "label": {
-                    "type": "string",
-                    "readOnly": true,
-                    "nullable": true,
-                    "description": "Position within the parent location, e.g. R1C1 or U12."
-                  },
-                  "department": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "group": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "owner": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "remark": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "image_url": {
-                    "type": "string",
-                    "format": "uri",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "map_url": {
-                    "type": "string",
-                    "format": "uri",
-                    "readOnly": true
-                  },
-                  "length_m": {
-                    "type": "string",
-                    "format": "decimal",
-                    "pattern": "^-?\\d{0,6}(?:\\.\\d{0,3})?$",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "width_m": {
-                    "type": "string",
-                    "format": "decimal",
-                    "pattern": "^-?\\d{0,6}(?:\\.\\d{0,3})?$",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "area_m2": {
-                    "type": "string",
-                    "format": "decimal",
-                    "pattern": "^-?\\d{0,12}(?:\\.\\d{0,6})?$",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "country": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "city": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "building": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "floor": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "layout_rows": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "layout_columns": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "slot_capacity": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "usable_height_m": {
-                    "type": "string",
-                    "format": "decimal",
-                    "pattern": "^-?\\d{0,6}(?:\\.\\d{0,3})?$",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "coordinate_unit": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "floor_plan_revision": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "floor_plan_url": {
-                    "type": "string",
-                    "format": "uri",
-                    "readOnly": true
-                  },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
-                  "lifecycle_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "access_policy": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "condition": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "availability": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "activity_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "max_occupancy": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "power_capacity_w": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "cooling_capacity_w": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "network_port_capacity": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "utilities": {
-                    "readOnly": true
-                  },
-                  "location_path": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "created_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  },
-                  "updated_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  }
-                },
-                "required": [
-                  "access_policy",
-                  "activity_status",
-                  "area_m2",
-                  "availability",
-                  "building",
-                  "city",
-                  "condition",
-                  "cooling_capacity_w",
-                  "coordinate_unit",
-                  "country",
-                  "created_at",
-                  "department",
-                  "floor",
-                  "floor_plan_revision",
-                  "floor_plan_url",
-                  "group",
-                  "id",
-                  "image_url",
-                  "label",
-                  "layout_columns",
-                  "layout_rows",
-                  "length_m",
-                  "lifecycle_status",
-                  "location_path",
-                  "map_url",
-                  "max_occupancy",
-                  "name",
-                  "network_port_capacity",
-                  "owner",
-                  "power_capacity_w",
-                  "remark",
-                  "sku",
-                  "slot_capacity",
-                  "status",
-                  "uid",
-                  "updated_at",
-                  "usable_height_m",
-                  "utilities",
-                  "width_m"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "uid": "123e4567-e89b-12d3-a456-426614174000",
-              "sku": "string",
-              "name": "string",
-              "label": "string",
-              "department": {},
-              "group": {},
-              "owner": {},
-              "remark": "string",
-              "image_url": "https://example.com/resource",
-              "map_url": "https://example.com/resource",
-              "length_m": "string",
-              "width_m": "string",
-              "area_m2": "string",
-              "country": {},
-              "city": {},
-              "building": {},
-              "floor": "string",
-              "layout_rows": 1,
-              "layout_columns": 1,
-              "slot_capacity": 1,
-              "usable_height_m": "string",
-              "coordinate_unit": "string",
-              "floor_plan_revision": "string",
-              "floor_plan_url": "https://example.com/resource",
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -109546,16 +108738,6 @@
           }
         },
         {
-          "name": "status",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated values; OR within this filter.",
-          "schema": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        {
           "name": "type_id",
           "in": "query",
           "required": false,
@@ -109598,7 +108780,7 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                  "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                   "properties": {
                     "id": {
                       "type": "integer",
@@ -109758,17 +108940,6 @@
                     "utilities": {
                       "readOnly": true
                     },
-                    "status": {
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ],
-                      "nullable": true,
-                      "readOnly": true,
-                      "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                    },
                     "lifecycle_status": {
                       "allOf": [
                         {
@@ -109901,7 +109072,6 @@
                     "slot",
                     "slot_count",
                     "slots_url",
-                    "status",
                     "type",
                     "uid",
                     "updated_at",
@@ -109952,7 +109122,6 @@
                 "cooling_capacity_w": 1,
                 "network_port_capacity": 1,
                 "utilities": null,
-                "status": {},
                 "lifecycle_status": {},
                 "access_policy": {},
                 "condition": {},
@@ -110277,7 +109446,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -110437,17 +109606,6 @@
                   "utilities": {
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -110580,7 +109738,6 @@
                   "slot",
                   "slot_count",
                   "slots_url",
-                  "status",
                   "type",
                   "uid",
                   "updated_at",
@@ -110622,7 +109779,6 @@
               "cooling_capacity_w": 1,
               "network_port_capacity": 1,
               "utilities": null,
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -111347,15 +110503,6 @@
                     },
                     "readOnly": true
                   },
-                  "statuses": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "readOnly": true,
-                    "description": "Deprecated seven-value status."
-                  },
                   "lifecycle_statuses": {
                     "type": "array",
                     "items": {
@@ -111388,7 +110535,6 @@
                   "lifecycle_statuses",
                   "rooms",
                   "slot_statuses",
-                  "statuses",
                   "types"
                 ]
               }
@@ -111406,9 +110552,6 @@
                 {}
               ],
               "rooms": [
-                {}
-              ],
-              "statuses": [
                 {}
               ],
               "lifecycle_statuses": [
@@ -111483,7 +110626,7 @@
       "method": "GET",
       "operation_id": "labs_stations_status_summary_retrieve",
       "summary": "Get Stations Status Summary",
-      "description": "Non-deleted stations counted by their stored lifecycle `status`.",
+      "description": "Count non-deleted resources by their stored lifecycle status.",
       "tags": [
         "Stations"
       ],
@@ -111499,7 +110642,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "The deprecated seven-value status, computed from lifecycle, condition, access and activity.",
+                "description": "Counts by station lifecycle status.",
                 "properties": {
                   "total_count": {
                     "type": "integer",
@@ -111986,7 +111129,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -112146,17 +111289,6 @@
                   "utilities": {
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -112289,7 +111421,6 @@
                   "slot",
                   "slot_count",
                   "slots_url",
-                  "status",
                   "type",
                   "uid",
                   "updated_at",
@@ -112331,7 +111462,6 @@
               "cooling_capacity_w": 1,
               "network_port_capacity": 1,
               "utilities": null,
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -112612,7 +111742,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -112772,17 +111902,6 @@
                   "utilities": {
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -112915,7 +112034,6 @@
                   "slot",
                   "slot_count",
                   "slots_url",
-                  "status",
                   "type",
                   "uid",
                   "updated_at",
@@ -112957,7 +112075,6 @@
               "cooling_capacity_w": 1,
               "network_port_capacity": 1,
               "utilities": null,
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -113394,7 +112511,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -113554,17 +112671,6 @@
                   "utilities": {
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -113697,7 +112803,6 @@
                   "slot",
                   "slot_count",
                   "slots_url",
-                  "status",
                   "type",
                   "uid",
                   "updated_at",
@@ -113739,7 +112844,6 @@
               "cooling_capacity_w": 1,
               "network_port_capacity": 1,
               "utilities": null,
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -114128,7 +113232,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -114288,17 +113392,6 @@
                   "utilities": {
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -114431,7 +113524,6 @@
                   "slot",
                   "slot_count",
                   "slots_url",
-                  "status",
                   "type",
                   "uid",
                   "updated_at",
@@ -114473,656 +113565,6 @@
               "cooling_capacity_w": 1,
               "network_port_capacity": 1,
               "utilities": null,
-              "status": {},
-              "lifecycle_status": {},
-              "access_policy": {},
-              "condition": {},
-              "availability": {},
-              "activity_status": {},
-              "safety_classification": "string",
-              "image_url": "https://example.com/resource",
-              "active_bench_count": 1,
-              "allocated_power_w": 1,
-              "available_power_w": 1,
-              "available_slot_count": 1,
-              "location_path": "string",
-              "slot_count": 1,
-              "slots_url": "string",
-              "created_at": "2026-10-20T12:00:00Z",
-              "updated_at": "2026-10-20T12:00:00Z"
-            }
-          }
-        },
-        "404": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "422": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "409": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/stations/{station_id}/actions/change-status",
-      "method": "POST",
-      "operation_id": "labs_stations_actions_change_status_create_by_station_id",
-      "summary": "Change Status Stations by Station ID",
-      "description": "HTTP mapping for domain commands and selector projections.",
-      "tags": [
-        "Stations"
-      ],
-      "parameters": [
-        {
-          "name": "station_id",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "integer"
-          }
-        }
-      ],
-      "request_body": {
-        "content_type": "application/json",
-        "supported_content_types": [
-          "application/json",
-          "application/x-www-form-urlencoded",
-          "multipart/form-data"
-        ],
-        "required": true,
-        "description": "",
-        "schema": {
-          "type": "object",
-          "description": "Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set.",
-          "properties": {
-            "status": {
-              "enum": [
-                "available",
-                "reserved",
-                "issue",
-                "restricted",
-                "closed",
-                "maintenance",
-                "retired"
-              ],
-              "type": "string",
-              "description": "* `available` - Available\n* `reserved` - Reserved\n* `issue` - Issue\n* `restricted` - Restricted\n* `closed` - Closed\n* `maintenance` - Maintenance\n* `retired` - Retired"
-            },
-            "metadata": {
-              "type": "object",
-              "additionalProperties": {}
-            }
-          },
-          "required": [
-            "status"
-          ]
-        },
-        "example_payload": {
-          "status": "available",
-          "metadata": {}
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Base serializer for successful API responses.",
-            "properties": {
-              "data": {
-                "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "uid": {
-                    "type": "string",
-                    "format": "uuid",
-                    "readOnly": true
-                  },
-                  "sku": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "department": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "group": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "owner": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "remark": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "label": {
-                    "type": "string",
-                    "readOnly": true,
-                    "nullable": true,
-                    "description": "Position within the parent location, e.g. R1C1 or U12."
-                  },
-                  "type": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "room": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "slot": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "position": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true
-                  },
-                  "height_mm": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "width_mm": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "depth_mm": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "orientation_degrees": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "max_load_kg": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "bench_capacity": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "max_concurrent_users": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "usable_surface_mm2": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "power_capacity_w": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "power_reserved_w": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "cooling_capacity_w": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "network_port_capacity": {
-                    "type": "integer",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "utilities": {
-                    "readOnly": true
-                  },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
-                  "lifecycle_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "access_policy": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "condition": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "availability": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "activity_status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "readOnly": true
-                  },
-                  "safety_classification": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "image_url": {
-                    "type": "string",
-                    "format": "uri",
-                    "readOnly": true,
-                    "nullable": true
-                  },
-                  "active_bench_count": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "allocated_power_w": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "available_power_w": {
-                    "type": "integer",
-                    "nullable": true,
-                    "readOnly": true
-                  },
-                  "available_slot_count": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "location_path": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "slot_count": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "slots_url": {
-                    "type": "string",
-                    "readOnly": true
-                  },
-                  "created_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  },
-                  "updated_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  }
-                },
-                "required": [
-                  "access_policy",
-                  "active_bench_count",
-                  "activity_status",
-                  "allocated_power_w",
-                  "availability",
-                  "available_power_w",
-                  "available_slot_count",
-                  "bench_capacity",
-                  "condition",
-                  "cooling_capacity_w",
-                  "created_at",
-                  "department",
-                  "depth_mm",
-                  "group",
-                  "height_mm",
-                  "id",
-                  "image_url",
-                  "label",
-                  "lifecycle_status",
-                  "location_path",
-                  "max_concurrent_users",
-                  "max_load_kg",
-                  "name",
-                  "network_port_capacity",
-                  "orientation_degrees",
-                  "owner",
-                  "position",
-                  "power_capacity_w",
-                  "power_reserved_w",
-                  "remark",
-                  "room",
-                  "safety_classification",
-                  "sku",
-                  "slot",
-                  "slot_count",
-                  "slots_url",
-                  "status",
-                  "type",
-                  "uid",
-                  "updated_at",
-                  "usable_surface_mm2",
-                  "utilities",
-                  "width_mm"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "id": 1,
-              "uid": "123e4567-e89b-12d3-a456-426614174000",
-              "sku": "string",
-              "name": "string",
-              "department": {},
-              "group": {},
-              "owner": {},
-              "remark": "string",
-              "label": "string",
-              "type": {},
-              "room": {},
-              "slot": {},
-              "position": {},
-              "height_mm": 1,
-              "width_mm": 1,
-              "depth_mm": 1,
-              "orientation_degrees": 1,
-              "max_load_kg": 1,
-              "bench_capacity": 1,
-              "max_concurrent_users": 1,
-              "usable_surface_mm2": 1,
-              "power_capacity_w": 1,
-              "power_reserved_w": 1,
-              "cooling_capacity_w": 1,
-              "network_port_capacity": 1,
-              "utilities": null,
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -115743,7 +114185,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -115903,17 +114345,6 @@
                   "utilities": {
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -116046,7 +114477,6 @@
                   "slot",
                   "slot_count",
                   "slots_url",
-                  "status",
                   "type",
                   "uid",
                   "updated_at",
@@ -116088,7 +114518,6 @@
               "cooling_capacity_w": 1,
               "network_port_capacity": 1,
               "utilities": null,
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},
@@ -116398,7 +114827,7 @@
             "properties": {
               "data": {
                 "type": "object",
-                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+                "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
                 "properties": {
                   "id": {
                     "type": "integer",
@@ -116558,17 +114987,6 @@
                   "utilities": {
                     "readOnly": true
                   },
-                  "status": {
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    ],
-                    "nullable": true,
-                    "readOnly": true,
-                    "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-                  },
                   "lifecycle_status": {
                     "allOf": [
                       {
@@ -116701,7 +115119,6 @@
                   "slot",
                   "slot_count",
                   "slots_url",
-                  "status",
                   "type",
                   "uid",
                   "updated_at",
@@ -116743,7 +115160,6 @@
               "cooling_capacity_w": 1,
               "network_port_capacity": 1,
               "utilities": null,
-              "status": {},
               "lifecycle_status": {},
               "access_policy": {},
               "condition": {},

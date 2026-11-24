@@ -325,7 +325,7 @@ def test_create_only_refuses_an_existing_asset_tag(post_workbook):
     assert errors and errors[0]["sheet"] == "Rooms" and errors[0]["row"] == 4
 
 
-def test_v1_template_headers_and_statuses_are_mapped(post_workbook):
+def test_retired_room_status_is_ignored_and_equipment_status_is_mapped(post_workbook):
     sheets = {
         "Rooms": (
             ["Asset Tag (SKU) *", "Name", "Status", "Data Check"],
@@ -358,11 +358,11 @@ def test_v1_template_headers_and_statuses_are_mapped(post_workbook):
     assert response.status_code == 200, response.json()
     warnings = {(p["sheet"], p["code"]) for p in _problems(response, "warning")}
     assert ("Licenses", "sheet_not_imported") in warnings
-    assert ("Rooms", "status_mapped") in warnings
+    assert ("Rooms", "column_not_imported") in warnings
     assert ("Equipment", "column_not_imported") in warnings  # Purchase Price is not imported yet
     assert ("Power", "column_not_imported") not in warnings  # v1 auto columns (Name ...) are skipped silently
     room = Room.objects.get(sku="RM-V1")
-    assert ResourceDowntime.objects.for_resource(room).filter(condition="in_maintenance").exists()
+    assert not ResourceDowntime.objects.for_resource(room).exists()
     psu = Equipment.objects.get(sku="PSU-1")
     assert psu.channels == 3 and psu.power_rating == 300
     assert ResourceDowntime.objects.for_resource(psu).filter(condition="out_of_service").exists()

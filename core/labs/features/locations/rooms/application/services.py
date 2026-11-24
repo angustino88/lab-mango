@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from core.common.db.transactions import apply_fields, atomic_command
 from core.labs.features.base.immutable import drop_unchanged_immutable_fields
 from core.labs.features.equipment.public import close_placements_for_location, summarize_active_placements
-from core.labs.features.locations.application.lifecycle import apply_legacy_status, apply_lifecycle, record_initial
+from core.labs.features.locations.application.lifecycle import apply_lifecycle, record_initial
 from core.labs.features.locations.rooms.application.policies import RoomConflict, grid_positions
 from core.labs.models import ResourceChangeLog, ResourceDowntime
 from core.labs.models.resource.base.status import ResourceLifecycleStatus
@@ -215,16 +215,6 @@ def change_room_lifecycle(*, room_id, actor, lifecycle_status=None, access_polic
 
 
 @_room_atomic_command
-def record_room_status(*, room_id, actor, status, metadata=None):
-    """Deprecated seven-value ``status`` write, mapped onto lifecycle, access policy and downtime (RS3)."""
-    room = _lock_room(room_id)
-    return apply_legacy_status(
-        room, record_model=RoomStatusRecord, record_field="room", actor=actor, status=status, metadata=metadata,
-        has_active_children=_has_active_stations(room),
-    )
-
-
-@_room_atomic_command
 def record_room_observation(*, room_id, **data):
     room = Room.objects.get(pk=room_id)
     observation = RoomObservation(room=room)
@@ -236,5 +226,5 @@ def record_room_observation(*, room_id, **data):
 
 __all__ = [
     "change_room_lifecycle", "create_room", "delete_room", "force_delete_room", "generate_room_slots",
-    "record_room_observation", "record_room_status", "update_room",
+    "record_room_observation", "update_room",
 ]

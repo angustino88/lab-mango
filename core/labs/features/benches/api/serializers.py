@@ -29,13 +29,13 @@ from core.labs.models import (
     ResourceCondition,
     ResourceLifecycleStatus,
 )
-from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES, bench_availability
+from core.labs.models.resource.base.availability import bench_availability
 
 from .filters import BENCH_FILTERS
 
 
 class BenchStatusSummarySerializer(StatusSummarySerializer):
-    """The deprecated four-value status (lifecycle, with out_of_service from downtime), not bookings."""
+    """Counts by bench lifecycle status."""
 
 
 class StrictWriteMixin(ResourceWriteSerializerMixin):
@@ -162,9 +162,6 @@ class BenchSerializer(AppModelSerializer):
     room = serializers.SerializerMethodField(
         help_text="Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
     )
-    status = serializers.SerializerMethodField(
-        read_only=True, help_text="Deprecated: use lifecycle_status, condition, availability and activity_status."
-    )
     lifecycle_status = serializers.SerializerMethodField()
     condition = serializers.SerializerMethodField()
     availability = serializers.SerializerMethodField()
@@ -193,7 +190,6 @@ class BenchSerializer(AppModelSerializer):
             "setup_location",
             "station_slot",
             "room",
-            "status",
             "lifecycle_status",
             "condition",
             "availability",
@@ -226,11 +222,6 @@ class BenchSerializer(AppModelSerializer):
 
     def get_equipment_url(self, obj) -> str:
         return f"/api/labs/benches/{obj.pk}/equipment/"
-
-    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
-    def get_status(self, obj) -> dict[str, str] | None:
-        raw_status = getattr(obj, "legacy_status", None) or getattr(obj, "lifecycle_status", None)
-        return to_choice_reference(raw_status, LEGACY_BENCH_STATUSES)
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_lifecycle_status(self, obj) -> dict[str, str] | None:
@@ -352,7 +343,7 @@ class BenchSelectQuerySerializer(OptionsQueryMixin):
     bench_group_id = serializers.IntegerField(required=False, min_value=1)
     type_id = serializers.IntegerField(required=False, min_value=1)
     setup_location_id = serializers.IntegerField(required=False, min_value=1)
-    lifecycle_status = serializers.CharField(required=False)
+    lifecycle_status = serializers.ChoiceField(choices=ResourceLifecycleStatus.choices, required=False)
     favorite = serializers.BooleanField(required=False)
 
 
@@ -404,7 +395,6 @@ class BenchReferenceDataSerializer(serializers.Serializer):
     groups = BenchGroupSerializer(many=True, read_only=True)
     stations = BenchStationReferenceSerializer(many=True, read_only=True)
     lifecycle_statuses = ChoiceReferenceSerializer(many=True, read_only=True)
-    statuses = ChoiceReferenceSerializer(many=True, read_only=True, help_text="Deprecated four-value status.")
 
 
 class BookingBenchChoicesQuerySerializer(OptionsQueryMixin):

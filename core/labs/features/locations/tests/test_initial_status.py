@@ -1,11 +1,10 @@
-"""Room and station lifecycle is a stored column defaulting to ``in_service``; the deprecated seven-value
-``status`` is computed (resource-status-and-downtime.md, RS3)."""
+"""Room and station lifecycle and condition are independent."""
 
 import pytest
 from django.db import IntegrityError, transaction
 from rest_framework.test import APIClient
 
-from core.labs.models import Room, Station
+from core.labs.models import Bench, Room, Station
 from core.users.models import User
 from tests.factories import grant_labs_role, set_condition
 
@@ -36,7 +35,7 @@ def test_create_starts_available_with_one_record(client, path, model):
 
     assert response.status_code == 201, response.data
     body = response.data["data"]
-    assert body["status"] == {"value": "available", "label": "Available"}
+    assert "status" not in body
     assert body["lifecycle_status"] == {"value": "in_service", "label": "In service"}
     assert body["condition"]["value"] == "operational"
     assert body["availability"]["status"] == {"value": "available", "label": "Available"}
@@ -50,41 +49,33 @@ def test_create_starts_available_with_one_record(client, path, model):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(("path", "model"), KINDS)
-def test_deprecated_change_status_opens_downtime_and_appends_history(client, path, model):
+def test_change_status_action_has_been_removed(client, path, model):
     api, _ = client
-    created = api.post(f"/api/labs/{path}", {"sku": f"{path}-CHG", "name": "Chg"}, format="json").data["data"]
+    resource = model.objects.create(sku=f"{path}-CHG")
 
-    changed = api.post(
-        f"/api/labs/{path}/{created['id']}/actions/change-status", {"status": "maintenance"}, format="json"
+    response = api.post(
+        f"/api/labs/{path}/{resource.pk}/actions/change-status", {"status": "maintenance"}, format="json"
     )
 
-    assert changed.status_code == 200, changed.data
-    resource = model.objects.get(pk=created["id"])
-    assert resource.lifecycle_status == "in_service"
-    records = list(resource.status_records.all())
-    assert [record.status for record in records] == ["in_service", "in_service"]
-    assert records[0].metadata == {"legacy_status": "maintenance"}
-    detail = api.get(f"/api/labs/{path}/{created['id']}").data["data"]
-    assert detail["status"]["value"] == "maintenance"
-    assert detail["condition"]["value"] == "in_maintenance"
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(("path", "model"), KINDS)
-def test_status_filter_and_summary_read_the_computed_status(client, path, model):
+@pytest.mark.parametrize(("path", "model"), [*KINDS, ("benches", Bench)])
+def test_condition_filter_and_lifecycle_summary_are_independent(client, path, model):
     api, _ = client
     model.objects.create(sku=f"{path}-A")
     set_condition(model.objects.create(sku=f"{path}-M"), "in_maintenance")
 
-    listed = api.get(f"/api/labs/{path}", {"status": "maintenance"})
+    listed = api.get(f"/api/labs/{path}", {"condition": "in_maintenance"})
     summary = api.get(f"/api/labs/{path}/status-summary")
 
     assert listed.status_code == 200, listed.data
     assert [row["sku"] for row in listed.data["data"]] == [f"{path}-M"]
     assert summary.status_code == 200, summary.data
     counts = {row["status"]["value"]: row["resource_count"] for row in summary.data["data"]["statuses"]}
-    assert counts["available"] == 1
-    assert counts["maintenance"] == 1
+    assert counts == {"planned": 0, "in_service": 2, "retired": 0}
+    assert api.get(f"/api/labs/{path}", {"status": "maintenance"}).status_code == 400
     assert summary.data["data"]["unknown_status_count"] == 0
 
 

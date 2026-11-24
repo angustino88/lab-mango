@@ -34,34 +34,9 @@ from core.labs.models.resource.base.resource import Department, Group
 
 from .context import ImportRun, Row
 from .references import Catalog
-from .updates import apply_space_state, changed_fields, given_space_state
+from .updates import apply_space_state, changed_fields
 
 IMPORT_NOTE = "Imported from the data workbook."
-
-# Old seven-value room/station status (template v1) → (lifecycle, access, condition, note).
-_LEGACY_SPACE_STATUS: dict[str, tuple[str | None, str | None, str | None, str | None]] = {
-    "available": ("in_service", "open", None, None),
-    "reserved": ("in_service", None, None, "Reserved is computed from bookings; imported as in service."),
-    "issue": ("in_service", None, "out_of_service", None),
-    "closed": ("in_service", None, "out_of_service", None),
-    "maintenance": ("in_service", None, "in_maintenance", None),
-    "restricted": ("in_service", "restricted", None, None),
-    "retired": ("retired", None, None, None),
-}
-# Old bench status (template v1) → (lifecycle, condition, note).
-_LEGACY_BENCH_STATUS: dict[str, tuple[str, str | None, str | None]] = {
-    "planned": ("planned", None, None),
-    "available": ("in_service", None, None),
-    "reserved": ("in_service", None, "Reserved is computed from bookings; imported as in service."),
-    "active": ("in_service", None, "Active is computed from bookings and sessions; imported as in service."),
-    "maintenance": ("in_service", "in_maintenance", None),
-    "out of service": ("in_service", "out_of_service", None),
-    "retired": ("retired", None, None),
-}
-
-
-def _status_key(value: str) -> str:
-    return " ".join(value.lower().replace("-", " ").replace("_", " ").split())
 
 
 def _present(row: Row, keys: tuple[str, ...]) -> dict[str, Any]:
@@ -83,35 +58,18 @@ def _owned(run: ImportRun, catalog: Catalog, row: Row, *, with_department: bool 
     return data
 
 
-def space_state(run: ImportRun, row: Row, *, legacy: dict[str, tuple]) -> tuple[str, str | None, str | None]:
-    """Lifecycle, access and condition from the v2 columns, or from a v1 ``Status`` value."""
+def space_state(run: ImportRun, row: Row) -> tuple[str | None, str | None, str | None]:
+    """Read independently supplied lifecycle, access and condition values."""
     lifecycle = row.get("lifecycle_status")
     access = row.get("access_policy")
     condition = row.get("condition")
-    status = row.get("legacy_status")
-    if status is not None and lifecycle is None and access is None and condition is None:
-        mapped = legacy.get(_status_key(status))
-        if mapped is None:
-            raise run.fail(
-                row,
-                f"Unknown status '{status}'. Use the Lifecycle, Access and Condition columns.",
-                key="legacy_status",
-                code="invalid_value",
-            )
-        if len(mapped) == 4:
-            lifecycle, access, condition, note = mapped
-        else:
-            lifecycle, condition, note = mapped
-        if note:
-            run.row_warning(row, note, key="legacy_status", code="status_mapped")
-    lifecycle = lifecycle or "in_service"
     if lifecycle == "retired" and condition not in (None, "operational"):
         raise run.fail(row, "A retired resource has no condition; leave Condition empty.", key="condition")
-    return lifecycle, access, None if condition == "operational" else condition
+    return lifecycle, access, condition
 
 
 def open_downtime(run: ImportRun, resource_type: str, resource_id: int, condition: str | None) -> None:
-    if condition is None:
+    if condition is None or condition == "operational":
         return
     reason = DowntimeReason.MAINTENANCE if condition == "in_maintenance" else DowntimeReason.FAULT
     schedule_downtime(
@@ -131,7 +89,7 @@ def import_spaces(run: ImportRun) -> None:
     catalog = run.catalog
 
     def room(row: Row) -> str:
-        lifecycle, access, condition = space_state(run, row, legacy=_LEGACY_SPACE_STATUS)
+        lifecycle, access, condition = space_state(run, row)
         data = _present(
             row,
             (
@@ -187,7 +145,7 @@ def import_spaces(run: ImportRun) -> None:
     run.each("rooms", room)
 
     def station(row: Row) -> str:
-        lifecycle, access, condition = space_state(run, row, legacy=_LEGACY_SPACE_STATUS)
+        lifecycle, access, condition = space_state(run, row)
         data = _present(
             row,
             (
@@ -294,7 +252,7 @@ def import_spaces(run: ImportRun) -> None:
     run.each("station_slots", station_slot, natural_key="__row__")
 
     def bench(row: Row) -> str:
-        lifecycle, _, condition = space_state(run, row, legacy=_LEGACY_BENCH_STATUS)
+        lifecycle, _, condition = space_state(run, row)
         data = _present(
             row,
             (
@@ -368,7 +326,7 @@ def _metadata_free(change: Any) -> Any:
 
 
 def _update_room(run: ImportRun, row: Row, room: Room, data: dict[str, Any], state: tuple) -> str:
-    lifecycle, access, condition = given_space_state(row, state)
+    lifecycle, access, condition = state
     changes = changed_fields(room, data)
     if changes:
         update_room(room_id=room.pk, actor=run.actor, **changes)
@@ -391,7 +349,7 @@ def _update_room(run: ImportRun, row: Row, room: Room, data: dict[str, Any], sta
 
 
 def _update_station(run: ImportRun, row: Row, station: Station, data: dict[str, Any], state: tuple) -> str:
-    lifecycle, access, condition = given_space_state(row, state)
+    lifecycle, access, condition = state
     changes = changed_fields(station, data)
     if changes:
         update_station(station_id=station.pk, actor=run.actor, **changes)
@@ -410,7 +368,7 @@ def _update_station(run: ImportRun, row: Row, station: Station, data: dict[str, 
 
 
 def _update_bench(run: ImportRun, row: Row, bench: Bench, data: dict[str, Any], state: tuple) -> str:
-    lifecycle, _, condition = given_space_state(row, state)
+    lifecycle, _, condition = state
     changes = changed_fields(bench, data)
     if changes:
         update_bench(bench_id=bench.pk, actor=run.actor, **changes)

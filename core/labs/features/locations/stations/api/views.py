@@ -30,7 +30,6 @@ from .serializers import (
     StationSlotUpdateSerializer,
     StationStatusRecordSerializer,
     StationStatusSummarySerializer,
-    StationStatusWriteSerializer,
     StationTypeSerializer,
     StationTypeWriteSerializer,
     StationUpdateSerializer,
@@ -51,7 +50,7 @@ def _slot_projection(slot):
 
 
 class StationStatusSummaryAPIView(StationAPIView):
-    """Non-deleted stations counted by their stored lifecycle `status`."""
+    """Count non-deleted resources by their stored lifecycle status."""
 
     read_cache_namespace = "labs:locations"
     read_cache_ttl = 15
@@ -186,21 +185,6 @@ class StationLifecycleAPIView(StationAPIView):
             services.change_station_lifecycle,
             lookup={"station_id": station_id},
             project=_station_projection,
-        )
-
-
-class StationStatusAPIView(StationAPIView):
-    post_contract = operation(
-        "StationStatusChange", StationSerializer, request=StationStatusWriteSerializer
-    )
-
-    def handle_post(self, request, station_id, **kwargs):
-        serializer, error = self.validate_request()
-        if error is not None:
-            return error
-        return self._execute(
-            lambda: services.record_station_status(actor=request.user, station_id=station_id, **serializer.validated_data),
-            project=lambda record: selectors.get_station(station_id=record.station_id),
         )
 
 

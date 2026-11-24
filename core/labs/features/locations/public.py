@@ -8,7 +8,6 @@ from .rooms.application import (
     force_delete_room,
     generate_room_slots,
     record_room_observation,
-    record_room_status,
     update_room,
 )
 from .rooms.queries import (
@@ -33,7 +32,6 @@ from .stations.application import (
     delete_station_type,
     force_delete_station,
     place_station,
-    record_station_status,
     update_station,
     update_station_slot,
     update_station_type,
@@ -72,7 +70,6 @@ __all__ = (
     "room_mapping_rows",
     "room_slot_mapping_rows",
     "record_room_observation",
-    "record_room_status",
     "room_observations",
     "room_status_history",
     "update_room",
@@ -92,7 +89,6 @@ __all__ = (
     "station_mapping_rows",
     "station_slot_mapping_rows",
     "place_station",
-    "record_station_status",
     "station_history",
     "station_reference_data",
     "station_room_ids",

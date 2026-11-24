@@ -195,8 +195,7 @@ def test_bench_reads_separate_state_and_availability_source(client, coordinator,
         "booking_access": {"value": "closed", "label": "Closed to all bookings"},
     }
     assert payload["activity_status"]["value"] == "idle"
-    # The deprecated bench status keeps the old four values; only the bench's own downtime changes it.
-    assert payload["status"]["value"] == "in_service"
+    assert "status" not in payload
 
 
 @pytest.mark.django_db
@@ -211,30 +210,26 @@ def test_activity_rolls_up_from_bench_to_station_and_room(client, coordinator, r
     assert bench_data["activity_status"]["value"] == "active"
     assert station_data["activity_status"]["value"] == "active"
     assert room_data["activity_status"]["value"] == "active"
-    assert room_data["status"]["value"] == "reserved"  # deprecated value, computed from activity
+    assert room_data["lifecycle_status"]["value"] == "in_service"
 
 
 @pytest.mark.django_db
-def test_legacy_change_status_maps_onto_downtime_and_back(client, room):
+def test_changing_access_keeps_downtime_independent(client, room):
     path = f"/api/labs/rooms/{room.pk}"
+    maintenance = _schedule(client, "room", room.pk)
+    assert maintenance.status_code == 201, maintenance.data
+    window_id = maintenance.data["data"]["id"]
 
-    maintenance = client.post(f"{path}/actions/change-status", {"status": "maintenance"}, format="json")
-    assert maintenance.status_code == 200, maintenance.data
-    assert maintenance.data["data"]["status"]["value"] == "maintenance"
-    assert maintenance.data["data"]["condition"]["value"] == "in_maintenance"
-    assert maintenance.data["data"]["lifecycle_status"]["value"] == "in_service"
-
-    restricted = client.post(f"{path}/actions/change-status", {"status": "restricted"}, format="json")
+    restricted = client.post(f"{path}/actions/change-lifecycle", {"access_policy": "restricted"}, format="json")
+    assert restricted.status_code == 200, restricted.data
     assert restricted.data["data"]["access_policy"]["value"] == "restricted"
     assert restricted.data["data"]["condition"]["value"] == "in_maintenance"
 
-    available = client.post(f"{path}/actions/change-status", {"status": "available"}, format="json")
-    assert available.data["data"]["status"]["value"] == "available"
-    assert available.data["data"]["condition"]["value"] == "operational"
-    assert available.data["data"]["access_policy"]["value"] == "open"
-
-    reserved = client.post(f"{path}/actions/change-status", {"status": "reserved"}, format="json")
-    assert reserved.status_code in (400, 422)
+    ended = client.post(f"{URL}/{window_id}/actions/end")
+    assert ended.status_code == 200, ended.data
+    detail = client.get(path).data["data"]
+    assert detail["condition"]["value"] == "operational"
+    assert detail["access_policy"]["value"] == "restricted"
 
 
 @pytest.mark.django_db
@@ -251,7 +246,7 @@ def test_retiring_a_room_needs_its_stations_retired_first(client, room, station)
     assert refused.status_code == 409, refused.data
     assert retired_station.status_code == 200, retired_station.data
     assert retired_room.status_code == 200, retired_room.data
-    assert retired_room.data["data"]["status"]["value"] == "retired"
+    assert retired_room.data["data"]["lifecycle_status"]["value"] == "retired"
     assert back.status_code in (400, 422)  # retired is terminal
 
 
@@ -402,10 +397,10 @@ def test_benches_cannot_be_set_up_at_a_retired_station(client, station):
 
 
 @pytest.mark.django_db
-def test_deprecated_change_status_refuses_downtime_over_bookings(client, coordinator, room, bench):
+def test_room_downtime_conflict_lists_affected_bookings(client, coordinator, room, bench):
     booking = _book(bench, coordinator, *_window(hours_from_now=3))
 
-    refused = client.post(f"/api/labs/rooms/{room.pk}/actions/change-status", {"status": "issue"}, format="json")
+    refused = _schedule(client, "room", room.pk, condition="out_of_service", reason="fault")
 
     assert refused.status_code == 409, refused.data
     assert refused.data["error"]["code"] == "downtime_booking_conflict"

@@ -8,7 +8,7 @@ from model_utils.models import TimeStampedModel
 
 from core.common.models import UserStampedModel
 from core.labs.models.resource.base.resource import ResourceModel, ResourceStatusRecordModel
-from core.labs.models.resource.base.status import LegacyLocationStatus, ResourceAccessPolicy, ResourceLifecycleStatus
+from core.labs.models.resource.base.status import ResourceAccessPolicy, ResourceLifecycleStatus
 from core.labs.models.resource.location.physical_location import PhysicalLocationNode
 
 if TYPE_CHECKING:
@@ -24,10 +24,6 @@ class StationType(TimeStampedModel, UserStampedModel):
     class Meta:
         app_label = "labs"
         ordering = ("name",)
-
-
-# Deprecated seven-value status, now computed for old clients (never stored).
-StationStatus = LegacyLocationStatus
 
 
 class Station(ResourceModel, PhysicalLocationNode):

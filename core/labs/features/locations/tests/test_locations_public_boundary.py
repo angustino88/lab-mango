@@ -29,7 +29,7 @@ def _public_names(path: Path) -> list[str]:
 
 def test_exceptions_contain_only_stable_error_types():
     exceptions_path = FEATURE_ROOT / "exceptions.py"
-    assert _public_names(exceptions_path) == ["LocationBookingConflict", "LocationConflict", "RoomConflict"]
+    assert _public_names(exceptions_path) == ["LocationConflict", "RoomConflict"]
     assert not any(
         ".application" in imported or ".queries" in imported
         for imported in _absolute_imports(exceptions_path)
@@ -42,11 +42,11 @@ def test_public_module_is_the_room_station_command_and_query_facade():
         "LocationConflict", "RoomConflict",
         "get_station_type", "list_station_types",
         "change_room_lifecycle", "create_room", "delete_room", "force_delete_room", "generate_room_slots", "get_room", "get_room_for_mapping", "get_room_status_summary", "list_room_slots",
-        "list_rooms", "live_room_ids", "record_room_observation", "record_room_status", "room_mapping_rows", "room_observations",
+        "list_rooms", "live_room_ids", "record_room_observation", "room_mapping_rows", "room_observations",
         "room_slot_mapping_rows", "room_status_history", "update_room", "change_station_lifecycle", "create_station", "create_station_slot",
         "create_station_type", "delete_station", "delete_station_slot", "delete_station_type", "force_delete_station",
         "get_station", "get_station_for_mapping", "get_station_status_summary", "list_station_slots", "list_station_types", "list_stations", "place_station",
-        "record_station_status", "station_history", "station_mapping_rows", "station_reference_data", "station_room_ids", "station_slot_mapping_rows", "update_station",
+        "station_history", "station_mapping_rows", "station_reference_data", "station_room_ids", "station_slot_mapping_rows", "update_station",
         "update_station_slot", "update_station_type",
     }
     imports = {
@@ -56,14 +56,14 @@ def test_public_module_is_the_room_station_command_and_query_facade():
     }
     assert imports[".rooms.application"] == {
         "change_room_lifecycle", "create_room", "delete_room", "force_delete_room", "generate_room_slots", "record_room_observation",
-        "record_room_status", "update_room",
+        "update_room",
     }
     assert imports[".rooms.queries"] == {
         "get_room", "get_room_for_mapping", "list_room_slots", "list_rooms", "live_room_ids", "room_mapping_rows", "room_observations", "room_slot_mapping_rows", "room_status_history",
     }
     assert imports[".stations.application"] == {
         "change_station_lifecycle", "create_station", "create_station_slot", "create_station_type", "delete_station",
-        "delete_station_slot", "delete_station_type", "force_delete_station", "place_station", "record_station_status",
+        "delete_station_slot", "delete_station_type", "force_delete_station", "place_station",
         "update_station", "update_station_slot", "update_station_type",
     }
     assert imports[".stations.queries"] == {
@@ -90,7 +90,7 @@ def test_nested_application_and_query_packages_export_explicit_names():
     for layer, names in (
         ("rooms/application", {
             "change_room_lifecycle", "room_images", "create_room", "delete_room", "force_delete_room", "generate_room_slots",
-            "record_room_observation", "record_room_status", "update_room",
+            "record_room_observation", "update_room",
         }),
         ("rooms/queries", {
             "get_room", "get_room_for_mapping", "list_room_slots", "list_rooms", "live_room_ids", "room_mapping_rows", "room_observations", "room_slot_mapping_rows", "room_status_history",
@@ -98,7 +98,6 @@ def test_nested_application_and_query_packages_export_explicit_names():
         ("stations/application", {
             "change_station_lifecycle", "station_images", "create_station", "create_station_slot",
             "create_station_type", "delete_station", "delete_station_slot", "delete_station_type", "force_delete_station", "place_station",
-            "record_station_status",
             "update_station", "update_station_slot", "update_station_type",
         }),
         ("stations/queries", {
@@ -109,14 +108,14 @@ def test_nested_application_and_query_packages_export_explicit_names():
         assert set(_public_names(FEATURE_ROOT / layer / "__init__.py")) == names
     assert set(_public_names(FEATURE_ROOT / "rooms" / "application" / "services.py")) == {
         "change_room_lifecycle", "create_room", "delete_room", "force_delete_room", "generate_room_slots", "record_room_observation",
-        "record_room_status", "update_room",
+        "update_room",
     }
     assert set(_public_names(FEATURE_ROOT / "rooms" / "queries" / "selectors.py")) == {
         "get_room", "get_room_for_mapping", "list_room_slots", "list_rooms", "live_room_ids", "room_mapping_rows", "room_observations", "room_slot_mapping_rows", "room_status_history",
     }
     assert set(_public_names(FEATURE_ROOT / "stations" / "application" / "services.py")) == {
         "change_station_lifecycle", "create_station", "create_station_slot", "create_station_type", "delete_station",
-        "delete_station_slot", "delete_station_type", "force_delete_station", "place_station", "record_station_status",
+        "delete_station_slot", "delete_station_type", "force_delete_station", "place_station",
         "update_station", "update_station_slot", "update_station_type",
     }
     assert set(_public_names(FEATURE_ROOT / "stations" / "queries" / "selectors.py")) == {
@@ -145,7 +144,7 @@ def test_location_root_support_modules_are_layer_owned():
     }
     assert set(_public_names(FEATURE_ROOT / "api" / "filters.py")) == {"location_state_filters"}
     assert set(_public_names(FEATURE_ROOT / "application" / "lifecycle.py")) == {
-        "LIFECYCLE_TRANSITIONS", "apply_legacy_status", "apply_lifecycle", "ensure_lifecycle_transition",
+        "LIFECYCLE_TRANSITIONS", "apply_lifecycle", "ensure_lifecycle_transition",
         "record_initial",
     }
 

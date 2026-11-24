@@ -71,21 +71,17 @@ or an apply with errors), the importer deletes the files it wrote.
 | Data Check / Summary / Field Map | Removed | The Check endpoint is the data check |
 | Hidden sheets | `Lists` (choices for the dropdowns), `_Meta` (template version) | |
 
-v1 files still import: v1 sheet and column names are aliases. A v1 `Status` is mapped:
+The importer recognizes supported v1 sheet and column aliases. On Rooms, Stations, and Benches, a populated
+`Status` column is reported as ignored. Use `Lifecycle` and `Condition` on those sheets and `Access` on
+Rooms and Stations. Equipment still recognizes the following v1 `Status` values.
 
-| v1 value | Rooms / stations | Benches | Equipment |
-|---|---|---|---|
-| Available | in service, open | in service | in service |
-| Reserved / Active | in service + warning (computed from bookings) | in service + warning | — |
-| Issue / Closed | out-of-service downtime | — | — |
-| Maintenance | in-maintenance downtime | in-maintenance downtime | in-maintenance (condition) |
-| Out of service | — | out-of-service downtime | — |
-| Restricted | restricted access | — | — |
-| Retired | retired | retired | — |
-| Planned / On Order | — | planned | planned |
-| In-use / In-storage | — | — | in service (In-use without a bench placement is a warning) |
-| Broken | — | — | out of service (condition) |
-| Borrowed / Transferred / Lost | — | — | error: record it in the app after the import |
+| Equipment status in v1 | Imported state |
+|---|---|
+| Available, In-use, In-storage | In service. An in-use asset without a bench placement produces a warning. |
+| Maintenance | In-maintenance condition |
+| Planned, On Order | Planned |
+| Broken | Out-of-service condition |
+| Borrowed, Transferred, Lost | Import error. Record the change in the app. |
 
 ## 4. Sheets in slice 1
 
@@ -113,7 +109,7 @@ Costs, and the equipment purchase and calibration columns. Each is a later slice
 ## 6. Tests
 
 `core/labs/features/workbook_import/tests/`: check vs apply, the full happy path through every sheet type, matching
-existing references, all-or-nothing with error paths, create-only, the v1 headers and status mapping, administrator
+existing references, all-or-nothing with error paths, create-only, v1 headers, ignored space status and equipment status mapping, administrator
 access, a non-xlsx upload, the template round trip (download → check is valid with 0 created), and cell parsing
 (numbers, decimals with a comma, Yes/No, `YYYY-Qn`, utilities, choices, the formula guard on export).
 `test_upsert_export.py`: create mode names an existing tag (`already_exists`), an unchanged re-import in upsert

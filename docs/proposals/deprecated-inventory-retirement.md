@@ -11,11 +11,14 @@ Remove deprecated inventory contracts after their callers and stored data have m
 
 ## Space and slot status
 
-- Move dashboard, inventory, filters, summaries, and import callers to `lifecycle_status`, `condition`, `availability`, `activity_status`, and `access_policy` where supported.
-- Slot reads now expose `service_status` and `is_occupied`. Station-slot writes use `service_status`. Coordinate the API cutover, including any external slot clients. The remaining space-level status fields, filters, summaries, and write actions require moving their callers to the separate state fields first.
+- Dashboard, inventory, filters, summaries, and space workbook imports now use `lifecycle_status`, `condition`, `availability`, `activity_status`, and `access_policy` where supported.
+- Slot reads expose `service_status` and `is_occupied`. Station-slot writes use `service_status`.
+- Move room, station, and bench read and filter consumers from `status` to the applicable canonical fields. The space status-summary endpoints now count stored lifecycle values. Dashboard list and detail use choice objects for lifecycle and condition. Dashboard filters accept those values independently.
+- Replace room and station `change-status` writes with `change-lifecycle` for lifecycle and access and the downtime API for condition. Upload space worksheets with separate `Lifecycle`, `Access`, and `Condition` columns where supported.
+- Roll out the backend and generated frontend client together. Confirm external API, slot, and workbook consumers have moved before release. This stage uses the existing database schema.
 
 ## Remaining compatibility surfaces
 
-- Inventory dashboard and booking aliases, equipment device migration suggestions, procurement fields, analytics exports, support ticket adapters, and old route redirects separately. Identify their callers and replacement workflows before removing them.
+- Audit remaining dashboard and booking aliases, equipment workbook status, equipment device migration suggestions, procurement fields, analytics exports, support ticket adapters, and old route redirects. Identify their callers and replacement workflows before removing them.
 - Record the owner and cutover release for each public removal. Follow the request and response deprecation standards and coordinate deployed clients, agents, and workbook operators.
 - Regenerate backend OpenAPI and the frontend client from the same contract for each release. Run migration and API contract checks, focused frontend tests and build, and representative browser workflows. Obtain owner approval before merging breaking changes.

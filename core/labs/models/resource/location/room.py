@@ -8,7 +8,7 @@ from model_utils.models import TimeStampedModel
 
 from core.common.models import UserStampedModel
 from core.labs.models.resource.base.resource import ResourceModel, ResourceStatusRecordModel
-from core.labs.models.resource.base.status import LegacyLocationStatus, ResourceAccessPolicy, ResourceLifecycleStatus
+from core.labs.models.resource.base.status import ResourceAccessPolicy, ResourceLifecycleStatus
 from core.labs.models.resource.location.physical_location import PhysicalLocationNode
 
 
@@ -86,10 +86,6 @@ class Building(TimeStampedModel, UserStampedModel):
         indexes = [
             GinIndex(fields=("name",), opclasses=["gin_trgm_ops"], name="building_name_trgm_idx"),
         ]
-
-
-# Deprecated seven-value status, now computed for old clients (never stored).
-RoomStatus = LegacyLocationStatus
 
 
 class Room(ResourceModel, PhysicalLocationNode):
