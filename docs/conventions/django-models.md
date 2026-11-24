@@ -132,7 +132,11 @@ Model validation must protect invariants that are true regardless of the entry p
 - keep validation deterministic and free of network calls or broad database scans;
 - normalize user-entered labels and codes consistently before validation;
 - use Django `ValidationError` with field-specific keys;
-- use database constraints for uniqueness and race-sensitive invariants whenever possible.
+- use database constraints for uniqueness and race-sensitive invariants whenever possible;
+- in a command that writes from loaded, validated references, validate with
+  `core.common.models.validate_for_write` instead of `full_clean()`: same errors, without the queries that
+  repeat what the loaded instances, the field choices, `clean()` and PostgreSQL already guarantee
+  (ADR 009).
 
 Put workflows, permissions and side-effect orchestration in feature application
 commands/policies, and availability reads in queries. Models may expose small pure domain properties and methods,
