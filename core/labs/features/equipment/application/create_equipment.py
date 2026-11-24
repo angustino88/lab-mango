@@ -7,11 +7,14 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from core.labs.models import Equipment, EquipmentKind, EquipmentLifecycleState
+from core.common.models import validate_for_write
+from core.labs.features.equipment.exceptions import InvalidEquipmentStatus
+from core.labs.models import Equipment, EquipmentCondition, EquipmentKind, EquipmentLifecycleState
 from core.labs.models.resource.base.resource import Department, Group
 
 from ._category import TYPED_FIELDS, validate_category_fields
-from .change_state import record_initial_lifecycle
+from ._placement import lock_room, rest_equipment
+from .change_state import REASON_MAX_LENGTH, _clean, record_initial_lifecycle, set_condition_now
 from .computing_profile import create_profile
 
 CREATE_LIFECYCLE_STATES = frozenset({EquipmentLifecycleState.PLANNED, EquipmentLifecycleState.IN_SERVICE})
@@ -62,6 +65,12 @@ SHARED_CREATE_FIELDS = frozenset(
 @dataclass(frozen=True, slots=True)
 class CreateEquipmentInput:
     fields: tuple[tuple[str, Any], ...]
+    # Optional starting state, applied in the same transaction exactly as ``change_condition`` and
+    # ``place_equipment(room_id=...)`` would apply it right after the create: a condition other than
+    # ``operational`` opens a downtime window starting now; ``room_id`` stores the unit in that room.
+    condition: str | None = None
+    condition_reason: str = ""
+    room_id: int | None = None
 
 
 @transaction.atomic
@@ -119,18 +128,31 @@ def create_equipment(command: CreateEquipmentInput, *, actor):
     lifecycle_state = values.get("lifecycle_state", EquipmentLifecycleState.IN_SERVICE)
     if lifecycle_state not in CREATE_LIFECYCLE_STATES:
         raise ValidationError({"lifecycle_state": "New equipment is planned or in service."})
+    if command.condition is not None and command.condition not in EquipmentCondition.values:
+        raise ValidationError({"condition": "Select a valid condition."})
+    condition_reason = _clean(command.condition_reason, field="reason", limit=REASON_MAX_LENGTH)
     many_to_many = {name: values.pop(name) for name in list(values) if Equipment._meta.get_field(name).many_to_many}
     equipment = Equipment(**values, creator=actor, last_modified_by=actor)
     equipment.kind = kind
     validate_category_fields(equipment, category, {**values, **many_to_many})
-    equipment.full_clean()
+    # ``uid`` is generated here (never accepted from input); its unique index guards it.
+    validate_for_write(equipment, skip_unique=("uid",))
     equipment.save()
     for name, related in many_to_many.items():
-        getattr(equipment, name).set(related)
+        # A new unit has no links yet: ``add`` equals ``set`` (same m2m signals) without reading them first.
+        getattr(equipment, name).add(*related)
     record_initial_lifecycle(equipment, actor=actor)
     if category.monitored:
         create_profile(equipment, dict(computing or {}))
-        from core.labs.features.equipment.categories.computing.application import ensure_computing_activity
+        from core.labs.features.equipment.categories.computing.application import start_computing_activity
 
-        ensure_computing_activity(equipment)
+        start_computing_activity(equipment)
+    # A new unit is operational and has no windows, placement or loan; it is not visible to other
+    # transactions yet, so it needs no row lock. Lock order as in ``place_equipment``: unit, then room.
+    if command.condition is not None and command.condition != EquipmentCondition.OPERATIONAL:
+        if equipment.lifecycle_state != EquipmentLifecycleState.IN_SERVICE:
+            raise InvalidEquipmentStatus("The condition can change only while the equipment is in service.")
+        set_condition_now(equipment, command.condition, notes=condition_reason, actor=actor)
+    if command.room_id is not None:
+        rest_equipment(equipment, room=lock_room(command.room_id), actor=actor)
     return equipment

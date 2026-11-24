@@ -46,6 +46,17 @@ def ensure_computing_activity(computing: Equipment) -> ComputingActivity:
     return activity
 
 
+def start_computing_activity(computing: Equipment) -> ComputingActivity:
+    """Create the activity row of a unit created in this transaction (it cannot have one yet).
+
+    The same row ``ensure_computing_activity`` creates, in one INSERT; the one-to-one key still refuses a
+    second row.
+    """
+    return ComputingActivity.objects.create(
+        computing=computing, status=ComputingActivityStatus.OFFLINE, offline_at=timezone.now()
+    )
+
+
 def _apply_transition_timestamps(activity: ComputingActivity, previous_status: str, now: datetime) -> None:
     """Maintain inactive timestamps and the inactivity reminder counter."""
     if activity.status == previous_status:
@@ -176,6 +187,7 @@ def mark_stale_computing_activities_offline(*, now: datetime | None = None) -> i
 __all__ = (
     "SyncComputingActivityInput",
     "ensure_computing_activity",
+    "start_computing_activity",
     "mark_stale_computing_activities_offline",
     "sync_computing_activity",
 )

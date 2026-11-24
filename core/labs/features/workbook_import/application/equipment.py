@@ -126,6 +126,15 @@ def _remember_rdp_file(run: ImportRun, equipment_id: int) -> None:
         run.remember_file(field.storage, name)
 
 
+def _remember_created_rdp_file(run: ImportRun, created: Equipment) -> None:
+    """As ``_remember_rdp_file`` for a unit just created: its profile is already loaded on the unit."""
+    profile = created._state.fields_cache.get("computing_profile")
+    if profile is None:
+        _remember_rdp_file(run, created.pk)
+        return
+    run.remember_file(ComputingProfile._meta.get_field("rdp_file").storage, profile.rdp_file.name or None)
+
+
 def import_equipment(run: ImportRun) -> None:
     catalog = run.catalog
     details: dict[str, Row] = {}
@@ -253,18 +262,24 @@ def import_equipment(run: ImportRun) -> None:
                 create_fields[ref_key] = catalog.instance(ref_model, create_fields[ref_key])
         if "owner" in create_fields and isinstance(create_fields["owner"], int):
             create_fields["owner"] = catalog.user_instance(create_fields["owner"])
-        created = create_equipment(CreateEquipmentInput(fields=tuple(create_fields.items())), actor=run.actor)
-        catalog.register(Equipment, created.pk, sku=created.sku)
-        if category.monitored:
-            _remember_rdp_file(run, created.pk)
-        if condition is not None:
-            change_condition(
-                ChangeConditionInput(equipment_id=created.pk, condition=condition, reason=IMPORT_NOTE),
-                actor=run.actor,
-            )
+        room_id = None
         if row.get("storage_room") is not None:
             room_id = catalog.one(row, "storage_room", Room, "sku", row.get("storage_room"))
-            place_equipment(PlaceEquipmentInput(equipment_id=created.pk, room_id=room_id), actor=run.actor)
+        # The starting condition and storage room are set by the create command in the same transaction,
+        # as ``change_condition`` and ``place_equipment`` would set them right after it.
+        created = create_equipment(
+            CreateEquipmentInput(
+                fields=tuple(create_fields.items()),
+                condition=condition,
+                condition_reason=IMPORT_NOTE if condition is not None else "",
+                room_id=room_id,
+            ),
+            actor=run.actor,
+        )
+        catalog.register(Equipment, created.pk, sku=created.sku)
+        if category.monitored:
+            _remember_created_rdp_file(run, created)
+        if room_id is not None:
             storage[row.get("sku").casefold()] = row.number
         return "created"
 

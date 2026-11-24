@@ -24,7 +24,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 
-from core.common.models import UserStampedModel
+from core.common.models import UserStampedModel, validate_for_write
 from core.labs.models.booking.base import TsTzRange
 from core.labs.models.resource.base.generic_links import (
     resource_content_type,
@@ -167,7 +167,9 @@ class ResourceDowntimeManager(models.Manager["ResourceDowntime"]):
             starts_at=now,
             notes=notes,
         )
-        window.full_clean()
+        # The resource row lock is held, the current window was ended and no later window exists, so the
+        # new window cannot overlap another; the ``downtime_no_overlap`` exclusion constraint still guards.
+        validate_for_write(window, skip_constraints=("downtime_no_overlap",))
         window.save(actor=actor)
         return window
 
@@ -227,6 +229,9 @@ class ResourceDowntime(TimeStampedModel, UserStampedModel):
     )
 
     objects = ResourceDowntimeManager()
+
+    # ``clean()`` raises the same rule with a field message (``validate_for_write`` skips its query).
+    constraints_validated_in_clean = ("downtime_ends_after_start",)
 
     @classmethod
     def for_new_resource(cls, resource: models.Model, **fields) -> ResourceDowntime:
