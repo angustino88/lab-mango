@@ -740,6 +740,10 @@ paths:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1resources
   /api/support/tickets/{key}/watchers:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1watchers
+  /api/support/tickets/{key}/work-logs:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1work-logs
+  /api/support/tickets/{key}/work-logs/{work_log_id}:
+    $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1{key}~1work-logs~1{work_log_id}
   /api/support/tickets/stats:
     $ref: ./support-desk-tickets.yml#/paths/~1api~1support~1tickets~1stats
   /api/user-groups:

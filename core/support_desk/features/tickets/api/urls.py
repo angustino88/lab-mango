@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from . import views
+from . import views, work_logs
 
 urlpatterns = [
     # Ticket collections and detail
@@ -15,6 +15,12 @@ urlpatterns = [
     path("tickets/<str:key>/resources", views.TicketResourceLinkAPIView.as_view(), name="ticket-resources"),
     path("tickets/<str:key>/comments", views.TicketCommentListCreateAPIView.as_view(), name="ticket-comments"),
     path("tickets/<str:key>/comments/<int:comment_id>", views.TicketCommentDetailAPIView.as_view(), name="ticket-comment-detail"),
+    path("tickets/<str:key>/work-logs", work_logs.TicketWorkLogListCreateAPIView.as_view(), name="ticket-work-logs"),
+    path(
+        "tickets/<str:key>/work-logs/<int:work_log_id>",
+        work_logs.TicketWorkLogDetailAPIView.as_view(),
+        name="ticket-work-log-detail",
+    ),
     path("tickets/<str:key>/attachments", views.TicketAttachmentListCreateAPIView.as_view(), name="ticket-attachments"),
     path("tickets/<str:key>/attachments/<int:attachment_id>", views.TicketAttachmentDetailAPIView.as_view(), name="ticket-attachment-detail"),
     path("tickets/<str:key>/watchers", views.TicketWatcherAPIView.as_view(), name="ticket-watchers"),

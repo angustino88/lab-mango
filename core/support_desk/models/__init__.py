@@ -16,7 +16,7 @@ from core.support_desk.models.ticket import SupportTicket, get_next_ticket_numbe
 from core.support_desk.models.ticket_link import TicketLink
 from core.support_desk.models.transition import SupportStatusTransition
 from core.support_desk.models.watcher import TicketWatcher
-from core.support_desk.models.work_log import TicketWorkLog
+from core.support_desk.models.work_log import TicketWorkLog, TicketWorkLogCreateReceipt
 
 __all__ = [
     "CannedResponse",
@@ -36,5 +36,6 @@ __all__ = [
     "TicketResourceLink",
     "TicketWatcher",
     "TicketWorkLog",
+    "TicketWorkLogCreateReceipt",
     "get_next_ticket_number",
 ]

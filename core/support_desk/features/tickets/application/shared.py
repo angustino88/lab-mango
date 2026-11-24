@@ -26,12 +26,16 @@ def actor_or_none(actor: Any) -> Any:
     return actor if getattr(actor, "pk", None) else None
 
 
-def get_ticket_for_actor(ticket_key: str, actor: Any, *, select_related: tuple[str, ...] = ()) -> SupportTicket:
+def get_ticket_for_actor(
+    ticket_key: str, actor: Any, *, select_related: tuple[str, ...] = (), lock: bool = False
+) -> SupportTicket:
     """Load a ticket the actor is allowed to see, or raise :class:`TicketNotFoundError`.
 
     Invisible tickets deliberately look identical to non-existent ones so keys cannot be enumerated.
     """
     qs = SupportTicket.objects.all()
+    if lock:
+        qs = qs.select_for_update(of=("self",))
     if select_related:
         qs = qs.select_related(*select_related)
     ticket = qs.filter(key=ticket_key).first()

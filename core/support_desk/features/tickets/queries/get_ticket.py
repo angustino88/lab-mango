@@ -13,7 +13,6 @@ from core.support_desk.models.resource_link import TicketResourceLink
 from core.support_desk.models.ticket import SupportTicket
 from core.support_desk.models.ticket_link import TicketLink
 from core.support_desk.models.watcher import TicketWatcher
-from core.support_desk.models.work_log import TicketWorkLog
 
 
 def get_ticket_by_key(ticket_key: str, *, viewer: Any = None) -> SupportTicket | None:
@@ -60,10 +59,6 @@ def get_ticket_by_key(ticket_key: str, *, viewer: Any = None) -> SupportTicket |
             Prefetch(
                 "activities",
                 queryset=TicketActivity.objects.select_related("actor").order_by("occurred_at"),
-            ),
-            Prefetch(
-                "work_logs",
-                queryset=TicketWorkLog.objects.select_related("author").order_by("-started_at", "-id"),
             ),
         )
         .filter(key=ticket_key)

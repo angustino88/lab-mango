@@ -42,6 +42,7 @@ class TicketWorkLog(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
+    version = models.PositiveIntegerField(default=1)
 
     class Meta:
         verbose_name = "Ticket Work Log"
@@ -58,5 +59,25 @@ class TicketWorkLog(models.Model):
             ),
         ]
 
+    @property
+    def etag(self) -> str:
+        return f'"work-log-{self.pk}-v{self.version}"'
+
     def __str__(self) -> str:
         return f"WorkLog {self.id} ({self.time_spent_minutes}m) on {self.ticket.key}"
+
+
+class TicketWorkLogCreateReceipt(models.Model):
+    """Original response for a keyed work-log creation."""
+
+    ticket = models.ForeignKey("support_desk.SupportTicket", on_delete=models.CASCADE)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    key = models.UUIDField()
+    request_hash = models.CharField(max_length=64)
+    response_body = models.JSONField()
+    expires_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["actor", "key"], name="work_log_create_replay_scope"),
+        ]

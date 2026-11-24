@@ -7,6 +7,7 @@ from pathlib import Path
 
 import environ
 from celery.schedules import crontab
+from corsheaders.defaults import default_headers
 
 from config.openapi import ENUM_NAME_OVERRIDES
 
@@ -472,6 +473,8 @@ REST_FRAMEWORK = {
 
 CORS_URLS_REGEX = r"^/api/.*$"
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = (*default_headers, "idempotency-key", "if-match")
+CORS_EXPOSE_HEADERS = ["ETag", "Idempotency-Replayed", "Location"]
 
 # API PERFORMANCE, CONCURRENCY & READ CACHING
 # ------------------------------------------------------------------------------
