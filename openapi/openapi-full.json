@@ -3781,14 +3781,6 @@
           },
           {
             "in": "query",
-            "name": "creator",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          },
-          {
-            "in": "query",
             "name": "creator_id",
             "schema": {
               "type": "integer",
@@ -6037,15 +6029,6 @@
           },
           {
             "in": "query",
-            "name": "status",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
-          },
-          {
-            "in": "query",
             "name": "type_id",
             "schema": {
               "type": "string",
@@ -7819,9 +7802,15 @@
             "in": "query",
             "name": "lifecycle_status",
             "schema": {
+              "enum": [
+                "planned",
+                "in_service",
+                "retired"
+              ],
               "type": "string",
               "minLength": 1
-            }
+            },
+            "description": "* `planned` - Planned\n* `in_service` - In service\n* `retired` - Retired"
           },
           {
             "in": "query",
@@ -9161,6 +9150,20 @@
           },
           {
             "in": "query",
+            "name": "condition",
+            "schema": {
+              "enum": [
+                "operational",
+                "in_maintenance",
+                "out_of_service"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `operational` - Operational\n* `in_maintenance` - In maintenance\n* `out_of_service` - Out of service"
+          },
+          {
+            "in": "query",
             "name": "has_computing",
             "schema": {
               "type": "boolean",
@@ -9202,13 +9205,12 @@
               "enum": [
                 "planned",
                 "in_service",
-                "out_of_service",
                 "retired"
               ],
               "type": "string",
               "minLength": 1
             },
-            "description": "Filter by lifecycle status (planned, in_service, out_of_service, retired).\n\n* `planned` - Planned\n* `in_service` - In service\n* `out_of_service` - Out of service\n* `retired` - Retired"
+            "description": "Filter by bench lifecycle status.\n\n* `planned` - Planned\n* `in_service` - In service\n* `retired` - Retired"
           },
           {
             "in": "query",
@@ -13597,195 +13599,6 @@
         "summary": "Get Equipment Activity by Equipment ID"
       }
     },
-    "/api/labs/equipment/{equipment_id}/assignment": {
-      "get": {
-        "operationId": "labs_equipment_assignment_retrieve_by_equipment_id",
-        "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "equipment_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Get Equipment Assignment by Equipment ID"
-      },
-      "put": {
-        "operationId": "labs_equipment_assignment_update_by_equipment_id",
-        "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "equipment_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EquipmentAssignment"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/EquipmentAssignment"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/EquipmentAssignment"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Update Equipment Assignment by Equipment ID"
-      },
-      "delete": {
-        "operationId": "labs_equipment_assignment_destroy_by_equipment_id",
-        "description": "The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "equipment_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Equipment"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No response body"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Delete Equipment Assignment by Equipment ID"
-      }
-    },
     "/api/labs/equipment/{equipment_id}/hardware-ids": {
       "get": {
         "operationId": "labs_equipment_hardware_ids_retrieve_by_equipment_id",
@@ -14227,7 +14040,7 @@
     "/api/labs/equipment/{equipment_id}/placement": {
       "get": {
         "operationId": "labs_equipment_placement_retrieve_by_equipment_id",
-        "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+        "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.",
         "parameters": [
           {
             "in": "path",
@@ -14275,7 +14088,7 @@
       },
       "put": {
         "operationId": "labs_equipment_placement_update_by_equipment_id",
-        "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+        "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.",
         "parameters": [
           {
             "in": "path",
@@ -14372,7 +14185,7 @@
       },
       "delete": {
         "operationId": "labs_equipment_placement_destroy_by_equipment_id",
-        "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.\n\n``/assignment`` keeps showing bench placements only; this route shows every kind.",
+        "description": "Where a unit is: on a bench, at a station, in a room, or at an untracked place.",
         "parameters": [
           {
             "in": "path",
@@ -19992,23 +19805,91 @@
         "summary": "Delete Expected Devices by Expected Device ID"
       }
     },
-    "/api/labs/expected-devices/legacy-suggestions": {
+    "/api/labs/expenses": {
       "get": {
-        "operationId": "labs_expected_devices_legacy_suggestions_retrieve",
-        "description": "Entries of a computer's legacy device list, to register and expect on that computer.",
+        "operationId": "labs_expenses_retrieve",
+        "description": "List and create expense obligations for any supported lab resource (room, station, bench, equipment, license).",
         "parameters": [
           {
             "in": "query",
-            "name": "computing_id",
+            "name": "billing_period",
+            "schema": {
+              "enum": [
+                "one_time",
+                "monthly",
+                "quarterly",
+                "annual"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `one_time` - One-time\n* `monthly` - Monthly\n* `quarterly` - Quarterly\n* `annual` - Annual"
+          },
+          {
+            "in": "query",
+            "name": "expense_type",
+            "schema": {
+              "enum": [
+                "rent",
+                "utilities",
+                "maintenance",
+                "calibration",
+                "repair",
+                "service_contract",
+                "license_fee",
+                "insurance",
+                "service",
+                "other"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `rent` - Rent\n* `utilities` - Utilities\n* `maintenance` - Maintenance\n* `calibration` - Calibration\n* `repair` - Repair\n* `service_contract` - Service contract\n* `license_fee` - License fee\n* `insurance` - Insurance\n* `service` - Service (legacy)\n* `other` - Other"
+          },
+          {
+            "in": "query",
+            "name": "page",
             "schema": {
               "type": "integer",
               "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource_kind",
+            "schema": {
+              "enum": [
+                "room",
+                "station",
+                "bench",
+                "equipment",
+                "license"
+              ],
+              "type": "string",
+              "minLength": 1
             },
-            "required": true
+            "description": "* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment\n* `license` - License"
           }
         ],
         "tags": [
-          "Monitoring"
+          "Expenses"
         ],
         "security": [
           {
@@ -20023,7 +19904,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponse"
+                  "$ref": "#/components/schemas/ExpenseListSerializersExpensePaginatedResponse"
                 }
               }
             },
@@ -20050,7 +19931,85 @@
             "description": ""
           }
         },
-        "summary": "Get Expected Devices Legacy Suggestions"
+        "summary": "Get Expenses"
+      },
+      "post": {
+        "operationId": "labs_expenses_create",
+        "description": "List and create expense obligations for any supported lab resource (room, station, bench, equipment, license).",
+        "tags": [
+          "Expenses"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseCreate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseCreate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseSerializersExpenseDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Expenses"
       }
     },
     "/api/labs/expenses/{expense_id}/payments": {
@@ -20258,9 +20217,34 @@
           },
           {
             "in": "query",
+            "name": "resource_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource_kind",
+            "schema": {
+              "enum": [
+                "room",
+                "station",
+                "bench",
+                "equipment",
+                "license"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment\n* `license` - License"
+          },
+          {
+            "in": "query",
             "name": "room_id",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1
             }
           },
           {
@@ -20303,6 +20287,16 @@
             "description": ""
           },
           "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
             "content": {
               "application/json": {
                 "schema": {
@@ -23738,171 +23732,6 @@
         "summary": "Change Status Licenses by License ID"
       }
     },
-    "/api/labs/licenses/{license_id}/agreements": {
-      "get": {
-        "operationId": "labs_licenses_agreements_retrieve_by_license_id",
-        "description": "List and create commercial agreements for a license.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "license_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "in": "query",
-            "name": "page_size",
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1
-            }
-          }
-        ],
-        "tags": [
-          "Licenses"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LicenseAgreementListSerializersLicenseAgreementPaginatedResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Get Licenses Agreements by License ID"
-      },
-      "post": {
-        "operationId": "labs_licenses_agreements_create_by_license_id",
-        "description": "List and create commercial agreements for a license.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "license_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Licenses"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LicenseAgreementWrite"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/LicenseAgreementWrite"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/LicenseAgreementWrite"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LicenseAgreementSerializersLicenseAgreementDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Create Licenses Agreements by License ID"
-      }
-    },
     "/api/labs/licenses/{license_id}/history": {
       "get": {
         "operationId": "labs_licenses_history_retrieve_by_license_id",
@@ -26345,13 +26174,6 @@
           },
           {
             "in": "query",
-            "name": "computer_id",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
             "name": "computer_sku",
             "schema": {
               "type": "string",
@@ -26372,21 +26194,6 @@
             "schema": {
               "type": "string",
               "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "from_date_time",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "lab",
-            "schema": {
-              "type": "integer"
             }
           },
           {
@@ -26417,14 +26224,6 @@
           {
             "in": "query",
             "name": "to_date",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "to_date_time",
             "schema": {
               "type": "string",
               "format": "date-time"
@@ -26636,13 +26435,6 @@
           },
           {
             "in": "query",
-            "name": "computer_id",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
             "name": "computer_sku",
             "schema": {
               "type": "string",
@@ -26667,21 +26459,6 @@
           },
           {
             "in": "query",
-            "name": "from_date_time",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "lab",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
             "name": "subject_type",
             "schema": {
               "type": "string",
@@ -26691,14 +26468,6 @@
           {
             "in": "query",
             "name": "to_date",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "to_date_time",
             "schema": {
               "type": "string",
               "format": "date-time"
@@ -28929,15 +28698,6 @@
               "maxLength": 200,
               "minLength": 1
             }
-          },
-          {
-            "in": "query",
-            "name": "status",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
           }
         ],
         "tags": [
@@ -29593,106 +29353,6 @@
         "summary": "Change Lifecycle Rooms by Room ID"
       }
     },
-    "/api/labs/rooms/{room_id}/actions/change-status": {
-      "post": {
-        "operationId": "labs_rooms_actions_change_status_create_by_room_id",
-        "description": "HTTP mapping for domain commands and selector projections.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "room_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Rooms"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RoomStatusWrite"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/RoomStatusWrite"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/RoomStatusWrite"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RoomStatusChangeSerializersRoomDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Change Status Rooms by Room ID"
-      }
-    },
     "/api/labs/rooms/{room_id}/actions/force-delete": {
       "post": {
         "operationId": "labs_rooms_actions_force_delete_create_by_room_id",
@@ -29860,6 +29520,42 @@
         "parameters": [
           {
             "in": "query",
+            "name": "billing_period",
+            "schema": {
+              "enum": [
+                "one_time",
+                "monthly",
+                "quarterly",
+                "annual"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `one_time` - One-time\n* `monthly` - Monthly\n* `quarterly` - Quarterly\n* `annual` - Annual"
+          },
+          {
+            "in": "query",
+            "name": "expense_type",
+            "schema": {
+              "enum": [
+                "rent",
+                "utilities",
+                "maintenance",
+                "calibration",
+                "repair",
+                "service_contract",
+                "license_fee",
+                "insurance",
+                "service",
+                "other"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `rent` - Rent\n* `utilities` - Utilities\n* `maintenance` - Maintenance\n* `calibration` - Calibration\n* `repair` - Repair\n* `service_contract` - Service contract\n* `license_fee` - License fee\n* `insurance` - Insurance\n* `service` - Service (legacy)\n* `other` - Other"
+          },
+          {
+            "in": "query",
             "name": "page",
             "schema": {
               "type": "integer",
@@ -29906,7 +29602,7 @@
             },
             "description": ""
           },
-          "404": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
@@ -29916,7 +29612,7 @@
             },
             "description": ""
           },
-          "400": {
+          "404": {
             "content": {
               "application/json": {
                 "schema": {
@@ -30057,6 +29753,30 @@
             }
           },
           {
+            "in": "query",
+            "name": "resource_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource_kind",
+            "schema": {
+              "enum": [
+                "room",
+                "station",
+                "bench",
+                "equipment",
+                "license"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment\n* `license` - License"
+          },
+          {
             "in": "path",
             "name": "room_id",
             "schema": {
@@ -30068,7 +29788,8 @@
             "in": "query",
             "name": "room_id",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1
             }
           },
           {
@@ -30822,7 +30543,7 @@
     "/api/labs/rooms/status-summary": {
       "get": {
         "operationId": "labs_rooms_status_summary_retrieve",
-        "description": "Non-deleted rooms counted by their stored lifecycle `status`.",
+        "description": "Count non-deleted resources by their stored lifecycle status.",
         "tags": [
           "Rooms"
         ],
@@ -31407,15 +31128,6 @@
           {
             "in": "query",
             "name": "room_id",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "description": "Comma-separated values; OR within this filter."
-          },
-          {
-            "in": "query",
-            "name": "status",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -32083,106 +31795,6 @@
           }
         },
         "summary": "Change Lifecycle Stations by Station ID"
-      }
-    },
-    "/api/labs/stations/{station_id}/actions/change-status": {
-      "post": {
-        "operationId": "labs_stations_actions_change_status_create_by_station_id",
-        "description": "HTTP mapping for domain commands and selector projections.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "station_id",
-            "schema": {
-              "type": "integer"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Stations"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StationStatusWrite"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/StationStatusWrite"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/StationStatusWrite"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StationStatusChangeSerializersStationDetailResponse"
-                }
-              }
-            },
-            "description": ""
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Change Status Stations by Station ID"
       }
     },
     "/api/labs/stations/{station_id}/actions/force-delete": {
@@ -33449,7 +33061,7 @@
     "/api/labs/stations/status-summary": {
       "get": {
         "operationId": "labs_stations_status_summary_retrieve",
-        "description": "Non-deleted stations counted by their stored lifecycle `status`.",
+        "description": "Count non-deleted resources by their stored lifecycle status.",
         "tags": [
           "Stations"
         ],
@@ -44944,16 +44556,6 @@
             "readOnly": true,
             "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true,
-            "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-          },
           "lifecycle_status": {
             "allOf": [
               {
@@ -45014,18 +44616,6 @@
             "readOnly": true,
             "nullable": true
           },
-          "last_inspected_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "next_inspection_due_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -45070,10 +44660,8 @@
           "id",
           "image_url",
           "is_favorite",
-          "last_inspected_at",
           "lifecycle_status",
           "name",
-          "next_inspection_due_at",
           "owner",
           "remark",
           "requested_cooling_w",
@@ -45085,7 +44673,6 @@
           "setup_location_path",
           "sku",
           "station_slot",
-          "status",
           "type",
           "uid",
           "updated_at"
@@ -45556,16 +45143,6 @@
           "commissioning_date": {
             "type": "string",
             "format": "date",
-            "nullable": true
-          },
-          "last_inspected_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "next_inspection_due_at": {
-            "type": "string",
-            "format": "date-time",
             "nullable": true
           }
         },
@@ -46284,21 +45861,12 @@
               "$ref": "#/components/schemas/LabsChoiceReference"
             },
             "readOnly": true
-          },
-          "statuses": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LabsChoiceReference"
-            },
-            "readOnly": true,
-            "description": "Deprecated four-value status."
           }
         },
         "required": [
           "groups",
           "lifecycle_statuses",
           "stations",
-          "statuses",
           "types"
         ]
       },
@@ -46520,16 +46088,6 @@
             "readOnly": true,
             "description": "Room of the station the bench is set up on; null when the bench is unplaced or the station has no room."
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true,
-            "description": "Deprecated: use lifecycle_status, condition, availability and activity_status."
-          },
           "lifecycle_status": {
             "allOf": [
               {
@@ -46590,18 +46148,6 @@
             "readOnly": true,
             "nullable": true
           },
-          "last_inspected_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "next_inspection_due_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -46646,10 +46192,8 @@
           "id",
           "image_url",
           "is_favorite",
-          "last_inspected_at",
           "lifecycle_status",
           "name",
-          "next_inspection_due_at",
           "owner",
           "remark",
           "requested_cooling_w",
@@ -46661,7 +46205,6 @@
           "setup_location_path",
           "sku",
           "station_slot",
-          "status",
           "type",
           "uid",
           "updated_at"
@@ -46752,7 +46295,7 @@
       },
       "BenchStatusSummary": {
         "type": "object",
-        "description": "The deprecated four-value status (lifecycle, with out_of_service from downtime), not bookings.",
+        "description": "Counts by bench lifecycle status.",
         "properties": {
           "total_count": {
             "type": "integer",
@@ -47086,16 +46629,6 @@
           "commissioning_date": {
             "type": "string",
             "format": "date",
-            "nullable": true
-          },
-          "last_inspected_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "next_inspection_due_at": {
-            "type": "string",
-            "format": "date-time",
             "nullable": true
           }
         },
@@ -48704,7 +48237,20 @@
             "type": "string"
           },
           "lifecycle_status": {
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "condition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
           },
           "bench_group": {
             "allOf": [
@@ -48779,6 +48325,7 @@
           "bench_group",
           "bench_type",
           "computing",
+          "condition",
           "current_booking",
           "id",
           "image_url",
@@ -48805,7 +48352,20 @@
             "type": "string"
           },
           "lifecycle_status": {
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "condition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
           },
           "bench_group": {
             "allOf": [
@@ -48904,6 +48464,7 @@
           "bench_group",
           "bench_type",
           "computing",
+          "condition",
           "current_booking",
           "equipment_by_category",
           "id",
@@ -49431,6 +48992,13 @@
             },
             "description": "Breakdown of bench counts by lifecycle status."
           },
+          "condition_distribution": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Breakdown of bench counts by condition."
+          },
           "activity_distribution": {
             "type": "object",
             "additionalProperties": {
@@ -49447,6 +49015,7 @@
         "required": [
           "active_bookings_count",
           "activity_distribution",
+          "condition_distribution",
           "favorited_benches_count",
           "lifecycle_distribution",
           "total_benches",
@@ -51654,93 +51223,6 @@
           "data"
         ]
       },
-      "EquipmentAssignment": {
-        "type": "object",
-        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
-        "properties": {
-          "bench_id": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "role": {
-            "type": "string",
-            "default": "default",
-            "maxLength": 64
-          },
-          "position": {
-            "type": "integer",
-            "minimum": 0,
-            "default": 0
-          }
-        },
-        "required": [
-          "bench_id"
-        ]
-      },
-      "EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/EquipmentAssignmentResult"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "EquipmentAssignmentResult": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "equipment": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsUIDNamedReference"
-              }
-            ],
-            "readOnly": true
-          },
-          "bench": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsUIDNamedReference"
-              }
-            ],
-            "readOnly": true
-          },
-          "role": {
-            "type": "string",
-            "readOnly": true
-          },
-          "position": {
-            "type": "integer",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "bench",
-          "equipment",
-          "id",
-          "position",
-          "role"
-        ]
-      },
-      "EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/EquipmentAssignmentResult"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "EquipmentAvailability": {
         "type": "object",
         "properties": {
@@ -52238,9 +51720,6 @@
           "system_info": {
             "readOnly": true
           },
-          "monitored_devices": {
-            "readOnly": true
-          },
           "rdp_file": {
             "type": "string",
             "format": "uri",
@@ -52261,7 +51740,6 @@
           "disk_usage",
           "hostname",
           "ip_address",
-          "monitored_devices",
           "os_name",
           "rdp_file",
           "system_info",
@@ -52280,7 +51758,6 @@
       "EquipmentComputingProfileUpdate": {
         "type": "object",
         "properties": {
-          "monitored_devices": {},
           "technical_user_id": {
             "type": "integer",
             "nullable": true
@@ -56537,18 +56014,29 @@
             "type": "integer",
             "readOnly": true
           },
+          "resource_kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "resource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true
+          },
           "room": {
-            "type": "object",
-            "additionalProperties": {
-              "oneOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "nullable": true,
             "readOnly": true
           },
           "name": {
@@ -56623,10 +56111,139 @@
           "name",
           "notes",
           "reference",
+          "resource",
+          "resource_kind",
           "room",
           "start_date",
           "supplier",
           "updated_at"
+        ]
+      },
+      "ExpenseCreate": {
+        "type": "object",
+        "description": "Write shape for resource-scoped expenses across room, station, bench, equipment, or license.",
+        "properties": {
+          "resource_kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResourceTypeEnum"
+              }
+            ],
+            "description": "Target resource kind (room, station, bench, equipment, or license).\n\n* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment\n* `license` - License"
+          },
+          "resource_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Primary key of the target resource."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "expense_type": {
+            "$ref": "#/components/schemas/ExpenseTypeEnum"
+          },
+          "supplier": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ],
+            "description": "What the expense costs (FMT-2, FMT-7)."
+          },
+          "billing_period": {
+            "$ref": "#/components/schemas/BillingPeriodEnum"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cost",
+          "expense_type",
+          "name",
+          "resource_id",
+          "resource_kind",
+          "start_date"
+        ]
+      },
+      "ExpenseListSerializersExpensePaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/ExpenseListSerializersExpensePaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Expense"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "ExpenseListSerializersExpensePagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "ExpenseListSerializersExpensePaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/ExpenseListSerializersExpensePagination"
+          }
+        },
+        "required": [
+          "pagination"
         ]
       },
       "ExpensePayment": {
@@ -56794,6 +56411,18 @@
           "total"
         ]
       },
+      "ExpenseSerializersExpenseDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Expense"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "ExpenseTypeEnum": {
         "enum": [
           "rent",
@@ -56812,7 +56441,7 @@
       },
       "ExpenseWrite": {
         "type": "object",
-        "description": "Write shape for expenses (RW-1). The room is taken from the URL, never the body.",
+        "description": "Write shape for room-scoped expenses (RW-1). The room is taken from the URL, never the body.",
         "properties": {
           "name": {
             "type": "string",
@@ -57315,12 +56944,29 @@
             "format": "date",
             "nullable": true
           },
+          "resource_kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "resource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true
+          },
           "room": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/LabsNamedReference"
               }
             ],
+            "nullable": true,
             "readOnly": true
           }
         },
@@ -57335,6 +56981,8 @@
           "payment_status",
           "pending",
           "reference",
+          "resource",
+          "resource_kind",
           "room",
           "start_date",
           "supplier"
@@ -59524,93 +59172,6 @@
           "data"
         ]
       },
-      "LegacyDeviceSuggestion": {
-        "type": "object",
-        "description": "One entry of the computer's legacy device list and what is left to do for it.",
-        "properties": {
-          "pnp_id": {
-            "type": "string",
-            "description": "Windows PnP device instance ID from the legacy list (normalised)."
-          },
-          "label": {
-            "type": "string",
-            "description": "Label a coordinator gave the entry in the legacy list."
-          },
-          "is_port_bound": {
-            "type": "boolean",
-            "description": "Read from a USB port: register it for this computer only."
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Choice"
-              }
-            ],
-            "readOnly": true
-          },
-          "equipment": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsUIDNamedReference"
-              }
-            ],
-            "nullable": true,
-            "description": "Unit the ID is registered on, if any."
-          },
-          "expected_device_id": {
-            "type": "integer",
-            "nullable": true
-          }
-        },
-        "required": [
-          "equipment",
-          "expected_device_id",
-          "is_port_bound",
-          "label",
-          "pnp_id",
-          "status"
-        ],
-        "x-embedded-resource": true
-      },
-      "LegacyDeviceSuggestionList": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LegacyDeviceSuggestion"
-            }
-          }
-        },
-        "required": [
-          "items"
-        ]
-      },
-      "LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/LegacyDeviceSuggestionList"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "LegacyStationSlotStatusEnum": {
-        "enum": [
-          "available",
-          "in_service",
-          "maintenance",
-          "occupied",
-          "out_of_service",
-          "reserved",
-          "retired"
-        ],
-        "type": "string",
-        "description": "* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
-      },
       "License": {
         "type": "object",
         "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
@@ -59642,6 +59203,15 @@
             "nullable": true
           },
           "department": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true,
+            "nullable": true
+          },
+          "group": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/LabsNamedReference"
@@ -59772,6 +59342,7 @@
           "created_at",
           "department",
           "expires_at",
+          "group",
           "id",
           "image_url",
           "max_version",
@@ -59789,164 +59360,6 @@
           "uid",
           "updated_at",
           "vendor"
-        ]
-      },
-      "LicenseAgreement": {
-        "type": "object",
-        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "license": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsNamedReference"
-              }
-            ],
-            "readOnly": true
-          },
-          "price": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsMoney"
-              }
-            ],
-            "readOnly": true
-          },
-          "billing_period": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Choice"
-              }
-            ],
-            "readOnly": true
-          },
-          "start_date": {
-            "type": "string",
-            "format": "date",
-            "readOnly": true
-          },
-          "end_date": {
-            "type": "string",
-            "format": "date",
-            "readOnly": true,
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "billing_period",
-          "created_at",
-          "end_date",
-          "id",
-          "license",
-          "price",
-          "start_date"
-        ]
-      },
-      "LicenseAgreementListSerializersLicenseAgreementPaginatedResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "meta": {
-            "$ref": "#/components/schemas/LicenseAgreementListSerializersLicenseAgreementPaginationMeta"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LicenseAgreement"
-            }
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
-      "LicenseAgreementListSerializersLicenseAgreementPagination": {
-        "type": "object",
-        "properties": {
-          "count": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "page": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "page_size": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "next": {
-            "type": "string",
-            "nullable": true
-          },
-          "previous": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "count",
-          "next",
-          "page",
-          "page_size",
-          "previous"
-        ]
-      },
-      "LicenseAgreementListSerializersLicenseAgreementPaginationMeta": {
-        "type": "object",
-        "properties": {
-          "pagination": {
-            "$ref": "#/components/schemas/LicenseAgreementListSerializersLicenseAgreementPagination"
-          }
-        },
-        "required": [
-          "pagination"
-        ]
-      },
-      "LicenseAgreementSerializersLicenseAgreementDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/LicenseAgreement"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "LicenseAgreementWrite": {
-        "type": "object",
-        "description": "Reject unsupported keys and return a stable error when SKU is supplied on update.",
-        "properties": {
-          "price": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "billing_period": {
-            "$ref": "#/components/schemas/BillingPeriodEnum"
-          },
-          "start_date": {
-            "type": "string",
-            "format": "date"
-          },
-          "end_date": {
-            "type": "string",
-            "format": "date",
-            "nullable": true
-          }
-        },
-        "required": [
-          "price",
-          "start_date"
         ]
       },
       "LicenseAssignActionSerializersLicenseAssignmentResultDetailResponse": {
@@ -63332,23 +62745,7 @@
           "event_id": {
             "type": "string",
             "format": "uuid"
-          },
-          "source": {
-            "type": "string"
-          },
-          "event_type": {
-            "type": "string"
-          },
-          "category": {
-            "type": "string"
-          },
-          "object_name": {
-            "type": "string"
-          },
-          "object_id": {
-            "type": "string"
-          },
-          "details": {}
+          }
         }
       },
       "MonitoringEventDetailSerializersMonitoringEventDetailResponse": {
@@ -64333,16 +63730,6 @@
             "type": "string",
             "format": "date",
             "nullable": true
-          },
-          "last_inspected_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "next_inspection_due_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
           }
         }
       },
@@ -64972,18 +64359,6 @@
           "label": {
             "type": "string",
             "maxLength": 100
-          },
-          "is_active": {
-            "type": "boolean",
-            "description": "Deprecated: use service_status."
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LegacyStationSlotStatusEnum"
-              }
-            ],
-            "description": "Deprecated: use service_status.\n\n* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
           },
           "service_status": {
             "$ref": "#/components/schemas/StationSlotStatusEnum"
@@ -66332,22 +65707,16 @@
       },
       "PurchaseItemResourceCreate": {
         "type": "object",
-        "description": "Supply resource_kind, legacy resource_type_id, or both. At least one is required. If both are supplied, they must identify the same resource kind.",
+        "description": "Allocate a physical or license resource to a purchase item using its stable resource_kind.",
         "properties": {
           "resource_kind": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/ResourceKindEnum"
+                "$ref": "#/components/schemas/PurchaseItemResourceCreateResourceKindEnum"
               }
             ],
             "writeOnly": true,
-            "description": "Stable resource kind. Supply this or legacy resource_type_id; if both are supplied, they must match.\n\n* `bench` - bench\n* `equipment` - equipment\n* `license` - license\n* `station` - station"
-          },
-          "resource_type_id": {
-            "type": "integer",
-            "minimum": 1,
-            "writeOnly": true,
-            "description": "Legacy resource type ID."
+            "description": "Stable resource kind (bench, equipment, license, or station).\n\n* `bench` - bench\n* `equipment` - equipment\n* `license` - license\n* `station` - station"
           },
           "resource_id": {
             "type": "integer",
@@ -66364,20 +65733,19 @@
         },
         "required": [
           "acquisition_price",
-          "resource_id"
-        ],
-        "anyOf": [
-          {
-            "required": [
-              "resource_kind"
-            ]
-          },
-          {
-            "required": [
-              "resource_type_id"
-            ]
-          }
+          "resource_id",
+          "resource_kind"
         ]
+      },
+      "PurchaseItemResourceCreateResourceKindEnum": {
+        "enum": [
+          "bench",
+          "equipment",
+          "license",
+          "station"
+        ],
+        "type": "string",
+        "description": "* `bench` - bench\n* `equipment` - equipment\n* `license` - license\n* `station` - station"
       },
       "PurchaseItemResourceListSerializersPurchaseItemResourcePaginatedResponse": {
         "type": "object",
@@ -67528,16 +66896,6 @@
           "file"
         ]
       },
-      "ResourceKindEnum": {
-        "enum": [
-          "bench",
-          "equipment",
-          "license",
-          "station"
-        ],
-        "type": "string",
-        "description": "* `bench` - bench\n* `equipment` - equipment\n* `license` - license\n* `station` - station"
-      },
       "ResourceMappingData": {
         "type": "object",
         "properties": {
@@ -67765,7 +67123,7 @@
       },
       "Room": {
         "type": "object",
-        "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+        "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
         "properties": {
           "id": {
             "type": "integer",
@@ -67919,16 +67277,6 @@
             "format": "uri",
             "readOnly": true
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true,
-            "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-          },
           "lifecycle_status": {
             "allOf": [
               {
@@ -68041,7 +67389,6 @@
           "remark",
           "sku",
           "slot_capacity",
-          "status",
           "uid",
           "updated_at",
           "usable_height_m",
@@ -68756,15 +68103,6 @@
             ],
             "readOnly": true
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "readOnly": true,
-            "description": "Deprecated: available, occupied, blocked or retired (occupied is computed)."
-          },
           "service_status": {
             "allOf": [
               {
@@ -68851,7 +68189,6 @@
           "service_status",
           "slot_code",
           "slot_type",
-          "status",
           "updated_at",
           "utilities",
           "width_mm",
@@ -68983,31 +68320,6 @@
           "pagination"
         ]
       },
-      "RoomStatusChangeSerializersRoomDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/Room"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "RoomStatusEnum": {
-        "enum": [
-          "available",
-          "reserved",
-          "issue",
-          "restricted",
-          "closed",
-          "maintenance",
-          "retired"
-        ],
-        "type": "string",
-        "description": "* `available` - Available\n* `reserved` - Reserved\n* `issue` - Issue\n* `restricted` - Restricted\n* `closed` - Closed\n* `maintenance` - Maintenance\n* `retired` - Retired"
-      },
       "RoomStatusRecord": {
         "type": "object",
         "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
@@ -69057,7 +68369,7 @@
       },
       "RoomStatusSummary": {
         "type": "object",
-        "description": "The deprecated seven-value status, computed from lifecycle, condition, access and activity.",
+        "description": "Counts by room lifecycle status.",
         "properties": {
           "total_count": {
             "type": "integer",
@@ -69092,22 +68404,6 @@
         },
         "required": [
           "data"
-        ]
-      },
-      "RoomStatusWrite": {
-        "type": "object",
-        "description": "Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set.",
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/RoomStatusEnum"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        },
-        "required": [
-          "status"
         ]
       },
       "RoomUpdate": {
@@ -70204,7 +69500,7 @@
       },
       "Station": {
         "type": "object",
-        "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``; ``status`` is the deprecated seven-value field.",
+        "description": "Separate state fields of a room or station (design: resource-status-and-downtime.md).\n\nReads annotations from ``with_location_state``.",
         "properties": {
           "id": {
             "type": "integer",
@@ -70357,16 +69653,6 @@
           "utilities": {
             "readOnly": true
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true,
-            "description": "Deprecated: computed from lifecycle_status, condition, access_policy and activity_status."
-          },
           "lifecycle_status": {
             "allOf": [
               {
@@ -70494,7 +69780,6 @@
           "slot",
           "slot_count",
           "slots_url",
-          "status",
           "type",
           "uid",
           "updated_at",
@@ -70980,14 +70265,6 @@
             },
             "readOnly": true
           },
-          "statuses": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LabsChoiceReference"
-            },
-            "readOnly": true,
-            "description": "Deprecated seven-value status."
-          },
           "lifecycle_statuses": {
             "type": "array",
             "items": {
@@ -71017,7 +70294,6 @@
           "lifecycle_statuses",
           "rooms",
           "slot_statuses",
-          "statuses",
           "types"
         ]
       },
@@ -71068,20 +70344,6 @@
           "label": {
             "type": "string",
             "readOnly": true
-          },
-          "is_active": {
-            "type": "boolean",
-            "readOnly": true,
-            "description": "Deprecated: service_status is in_service."
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LabsChoiceReference"
-              }
-            ],
-            "readOnly": true,
-            "description": "Deprecated: available, occupied, out_of_service or retired (occupied is computed)."
           },
           "service_status": {
             "allOf": [
@@ -71153,7 +70415,6 @@
           "depth_mm",
           "height_mm",
           "id",
-          "is_active",
           "is_occupied",
           "label",
           "max_load_kg",
@@ -71163,7 +70424,6 @@
           "service_status",
           "slot_code",
           "station_id",
-          "status",
           "updated_at",
           "utilities",
           "width_mm"
@@ -71185,18 +70445,6 @@
           "label": {
             "type": "string",
             "maxLength": 100
-          },
-          "is_active": {
-            "type": "boolean",
-            "description": "Deprecated: use service_status."
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LegacyStationSlotStatusEnum"
-              }
-            ],
-            "description": "Deprecated: use service_status.\n\n* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
           },
           "service_status": {
             "$ref": "#/components/schemas/StationSlotStatusEnum"
@@ -71378,18 +70626,6 @@
             "type": "string",
             "maxLength": 100
           },
-          "is_active": {
-            "type": "boolean",
-            "description": "Deprecated: use service_status."
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LegacyStationSlotStatusEnum"
-              }
-            ],
-            "description": "Deprecated: use service_status.\n\n* `available` - available\n* `in_service` - in_service\n* `maintenance` - maintenance\n* `occupied` - occupied\n* `out_of_service` - out_of_service\n* `reserved` - reserved\n* `retired` - retired"
-          },
           "service_status": {
             "$ref": "#/components/schemas/StationSlotStatusEnum"
           },
@@ -71454,18 +70690,6 @@
           "data"
         ]
       },
-      "StationStatusChangeSerializersStationDetailResponse": {
-        "type": "object",
-        "description": "Base serializer for successful API responses.",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/Station"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "StationStatusRecord": {
         "type": "object",
         "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
@@ -71515,7 +70739,7 @@
       },
       "StationStatusSummary": {
         "type": "object",
-        "description": "The deprecated seven-value status, computed from lifecycle, condition, access and activity.",
+        "description": "Counts by station lifecycle status.",
         "properties": {
           "total_count": {
             "type": "integer",
@@ -71550,22 +70774,6 @@
         },
         "required": [
           "data"
-        ]
-      },
-      "StationStatusWrite": {
-        "type": "object",
-        "description": "Deprecated: mapped onto lifecycle, access policy and downtime. ``reserved`` cannot be set.",
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/RoomStatusEnum"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        },
-        "required": [
-          "status"
         ]
       },
       "StationType": {

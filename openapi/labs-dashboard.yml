@@ -41,6 +41,20 @@ paths:
           minimum: 1
         description: Filter benches by bench group identifier.
       - in: query
+        name: condition
+        schema:
+          enum:
+          - operational
+          - in_maintenance
+          - out_of_service
+          type: string
+          minLength: 1
+        description: '* `operational` - Operational
+
+          * `in_maintenance` - In maintenance
+
+          * `out_of_service` - Out of service'
+      - in: query
         name: has_computing
         schema:
           type: boolean
@@ -72,19 +86,15 @@ paths:
           enum:
           - planned
           - in_service
-          - out_of_service
           - retired
           type: string
           minLength: 1
-        description: 'Filter by lifecycle status (planned, in_service, out_of_service,
-          retired).
+        description: 'Filter by bench lifecycle status.
 
 
           * `planned` - Planned
 
           * `in_service` - In service
-
-          * `out_of_service` - Out of service
 
           * `retired` - Retired'
       - in: query
@@ -208,7 +218,13 @@ components:
         name:
           type: string
         lifecycle_status:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         bench_group:
           allOf:
           - $ref: '#/components/schemas/DashboardBenchGroup'
@@ -253,6 +269,7 @@ components:
       - bench_group
       - bench_type
       - computing
+      - condition
       - current_booking
       - id
       - image_url
@@ -275,7 +292,13 @@ components:
         name:
           type: string
         lifecycle_status:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         bench_group:
           allOf:
           - $ref: '#/components/schemas/DashboardBenchGroup'
@@ -337,6 +360,7 @@ components:
       - bench_group
       - bench_type
       - computing
+      - condition
       - current_booking
       - equipment_by_category
       - id
@@ -700,6 +724,11 @@ components:
           additionalProperties:
             type: integer
           description: Breakdown of bench counts by lifecycle status.
+        condition_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Breakdown of bench counts by condition.
         activity_distribution:
           type: object
           additionalProperties:
@@ -713,6 +742,7 @@ components:
       required:
       - active_bookings_count
       - activity_distribution
+      - condition_distribution
       - favorited_benches_count
       - lifecycle_distribution
       - total_benches
@@ -739,6 +769,20 @@ components:
       - display_name
       - id
       - username
+    LabsChoiceReference:
+      type: object
+      description: Standard `{value, label}` representation for enum and lifecycle
+        choices.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
     LabsNamedReference:
       type: object
       description: Compact `{id, name}` object representation of a related entity.

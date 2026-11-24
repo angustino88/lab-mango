@@ -84,7 +84,7 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
 
 ### Locations and physical placement
 
-**Models:** `Country`, `City`, `Building`, `Room`, `RoomSlot`, `RoomObservation`, `RoomStatusRecord`, `StationType`, `Station`, `StationSlot`, `StationStatusRecord`. `PhysicalLocationNode` is abstract. `RoomStatus` and `StationStatus` are choices, not models.
+**Models:** `Country`, `City`, `Building`, `Room`, `RoomSlot`, `RoomObservation`, `RoomStatusRecord`, `StationType`, `Station`, `StationSlot`, `StationStatusRecord`. `PhysicalLocationNode` is abstract. `ResourceLifecycleStatus`, `ResourceAccessPolicy`, `ResourceCondition`, `ResourceActivityStatus`, and `ResourceAvailability` are choices, not models.
 
 - Geography records are protected references from `Room`. A room owns its room slots; slots cascade when the room is deleted. `RoomObservation` and `RoomStatusRecord` are protected child histories.
 - A station can reference a room and optionally a room slot; its type is protected. The station's room-slot FK is set null if the slot is deleted. `StationSlot` belongs to a station; compatible bench types are many-to-many. Station status history protects its station.
@@ -107,13 +107,12 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
 - `EquipmentAssignment` connects equipment to a bench over an interval. Both FKs are protected. A conditional unique constraint permits at most one active bench assignment per equipment; a check enforces `unassigned_at >= assigned_at` when ended. There is no reciprocal active-capacity constraint per bench in this model.
 - Equipment lifecycle/status history, bench assignment, and equipment booking are distinct. Consult category model source for exact fields and deletion semantics.
 
-### Licenses, assignments, agreements, and payments
+### Licenses and assignments
 
-**Models:** `LicenseProduct`, `LicenseVendor`, `LicenseType`, `LicenseCategory`, `LicenseRestriction`, `License`, `LicenseStatusRecord`, `LicenseAssignment`, `LicenseAgreement`, `LicensePayment`. `LicenseStatus` and the shared `BillingPeriod` are choices.
+**Models:** `LicenseProduct`, `LicenseVendor`, `LicenseType`, `LicenseCategory`, `LicenseRestriction`, `License`, `LicenseStatusRecord`, `LicenseAssignment`. `LicenseStatus` is a choices enum.
 
 - `License` extends resource identity. Product, vendor, type, category, and optional restriction relations are protected. Status history protects its license.
 - `LicenseAssignment` links a license and equipment; both are protected. A conditional unique constraint prevents a duplicate active license/equipment pair, and a check validates the interval. The constraint does not limit a license to one equipment globally.
-- `LicenseAgreement` is the dated price/billing obligation; `LicensePayment` records payments against an agreement. An agreement is not a payment. Agreement period checks are database-enforced; the payment model has a date index, with no explicit amount check found in its source.
 
 ### Bookings and projects
 
@@ -291,3 +290,9 @@ Verified feature packages with `public.py` facades: locations, benches, equipmen
 Coverage check (2026-10-15): source search found 107 class declarations across 46 Python files, including choices, querysets, and abstract bases. The concrete model classes and abstract model bases have been inventoried by group above; choices and querysets are not models. The inventory is an architecture-level model coverage pass, not an exhaustive field-by-field schema audit; equipment category fields, every index, and all migration/deployment behavior were not individually listed.
 
 Source of truth for detailed fields and constraints: model modules under `core/labs/models/`; model registration exports: `core/labs/models/__init__.py`. The 2026-11-07 verification covers the routing additions, not a re-audit of the older inventory. No migrations were applied and no production schema, query plans, or Mermaid renderer were checked/run during this documentation update.
+
+### Bench inspection history
+
+Inspection history uses `ResourceServiceRecord` with kind `inspection`. A result of `unknown`
+means the source supplied a performed date without a result. The service-record date constraint
+requires any next due date to follow the performed date.

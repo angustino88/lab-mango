@@ -58,21 +58,8 @@ class ResourceAvailability(models.TextChoices):
     UNAVAILABLE = "unavailable", _("Unavailable")
 
 
-class LegacyLocationStatus(models.TextChoices):
-    """The deprecated seven-value room/station ``status``: computed for old clients, never stored."""
-
-    AVAILABLE = "available", _("Available")
-    RESERVED = "reserved", _("Reserved")
-    ISSUE = "issue", _("Issue")
-    RESTRICTED = "restricted", _("Restricted")
-    CLOSED = "closed", _("Closed")
-    MAINTENANCE = "maintenance", _("Maintenance")
-    RETIRED = "retired", _("Retired")
-
-
 __all__ = [
     "LIFECYCLE_TRANSITIONS",
-    "LegacyLocationStatus",
     "ResourceAccessPolicy",
     "ResourceActivityStatus",
     "ResourceAvailability",

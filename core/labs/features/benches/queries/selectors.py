@@ -18,7 +18,7 @@ from django.db.models.functions import Coalesce
 
 from core.labs.features.equipment.public import bench_assignment_subquery, bench_computers
 from core.labs.models import Bench, BenchFavorite, BenchGroup, BenchType, ResourceLifecycleStatus, Station
-from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES, with_bench_state
+from core.labs.models.resource.base.availability import with_bench_state
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 
@@ -61,7 +61,6 @@ def list_bench_options(
     bench_group_id=None,
     type_id=None,
     lifecycle_status=None,
-    status=None,
     favorite=None,
     q=None,
     search=None,
@@ -72,7 +71,6 @@ def list_bench_options(
     Reserved for selector data. Ordered by name, id (OPT-7).
     """
     search_term = q or search
-    status_val = lifecycle_status or status
     cond = Q(deleted_at__isnull=True)
     if setup_location_id is not None:
         cond &= Q(setup_location_id=setup_location_id)
@@ -81,10 +79,8 @@ def list_bench_options(
     if type_id is not None:
         cond &= Q(type_id=type_id)
     queryset = Bench.objects.all()
-    if status_val is not None:
-        # The deprecated value set (LEGACY_BENCH_STATUSES) still filters: out_of_service is downtime now.
-        queryset = with_bench_state(queryset)
-        cond &= Q(legacy_status=status_val)
+    if lifecycle_status is not None:
+        cond &= Q(lifecycle_status=lifecycle_status)
     if search_term:
         cond &= (Q(sku__icontains=search_term) | Q(name__icontains=search_term) | Q(description__icontains=search_term))
     if favorite is not None:
@@ -234,7 +230,6 @@ def reference_data():
         "lifecycle_statuses": [
             {"value": value, "label": str(label)} for value, label in ResourceLifecycleStatus.choices
         ],
-        "statuses": [{"value": value, "label": str(label)} for value, label in LEGACY_BENCH_STATUSES],
     }
 
 

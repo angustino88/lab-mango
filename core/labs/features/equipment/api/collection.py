@@ -116,7 +116,6 @@ class ComputingProfileSerializer(serializers.ModelSerializer):
             "os_name",
             "disk_usage",
             "system_info",
-            "monitored_devices",
             "rdp_file",
             "technical_user",
         )
@@ -159,7 +158,6 @@ class ComputingProfileCreateSerializer(serializers.Serializer):
 
 
 class ComputingProfileUpdateSerializer(serializers.Serializer):
-    monitored_devices = serializers.JSONField(required=False)
     technical_user_id = serializers.PrimaryKeyRelatedField(
         source="technical_user", queryset=TechnicalUser.objects.all(), allow_null=True, required=False
     )

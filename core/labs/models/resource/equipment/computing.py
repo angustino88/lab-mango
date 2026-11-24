@@ -44,7 +44,6 @@ class ComputingProfile(TimeStampedModel):
     os_name = models.CharField(max_length=255, blank=True, default="")
     disk_usage = models.JSONField(default=list, blank=True)
     system_info = models.JSONField(default=dict, blank=True)
-    monitored_devices = models.JSONField(default=dict, blank=True)
     rdp_file = models.FileField(upload_to="rdp_file/", null=True, blank=True)
     technical_user = models.ForeignKey(
         "labs.TechnicalUser",

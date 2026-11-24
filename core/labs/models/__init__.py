@@ -3,7 +3,6 @@ from .activity import (
     ComputingActivityStatus,
     LabSessionLog,
 )
-from .agents import AgentIdentity, EnrollmentGrant
 from .analytics import (
     ActiveLaboratoryObservation,
     ActiveUserObservation,
@@ -62,7 +61,6 @@ from .resource.base.downtime import DowntimeBookingAccess, DowntimeKind, Downtim
 from .resource.base.resource import Department, Group
 from .resource.base.service_record import ResourceServiceRecord
 from .resource.base.status import (
-    LegacyLocationStatus,
     ResourceAccessPolicy,
     ResourceActivityStatus,
     ResourceAvailability,
@@ -95,7 +93,6 @@ from .resource.equipment import (
 )
 from .resource.equipment.assignment import EquipmentAssignment, EquipmentPlacement
 from .resource.equipment.computing import ComputingProfile, TechnicalUser
-from .resource.license.agreement import LicenseAgreement
 from .resource.license.assignment import LicenseAssignment
 from .resource.license.check import (
     LicenseAlert,
@@ -108,7 +105,6 @@ from .resource.license.check import (
     LicenseObservationStatus,
 )
 from .resource.license.license import License, LicenseStatus, LicenseStatusRecord
-from .resource.license.payment import LicensePayment
 from .resource.location import (
     Building,
     City,
@@ -116,11 +112,9 @@ from .resource.location import (
     Room,
     RoomObservation,
     RoomSlot,
-    RoomStatus,
     RoomStatusRecord,
     Station,
     StationSlot,
-    StationStatus,
     StationStatusRecord,
     StationType,
 )
@@ -192,11 +186,8 @@ __all__ = [
     "Expense",
     "ExpensePayment",
     "ExpenseType",
-    "AgentIdentity",
-    "EnrollmentGrant",
     "LabProject",
     "LabSessionLog",
-    "LegacyLocationStatus",
     "SessionAccessType",
     "Material",
     "License",
@@ -209,8 +200,6 @@ __all__ = [
     "LicenseCheckTarget",
     "LicenseObservation",
     "LicenseObservationStatus",
-    "LicenseAgreement",
-    "LicensePayment",
     "LicenseStatus",
     "LicenseStatusRecord",
     "LaboratoryAvailabilityObservation",
@@ -250,12 +239,10 @@ __all__ = [
     "Room",
     "RoomObservation",
     "RoomSlot",
-    "RoomStatus",
     "RoomStatusRecord",
     "SpecificationDefinition",
     "Station",
     "StationSlot",
-    "StationStatus",
     "StationStatusRecord",
     "StationType",
     "SyncState",

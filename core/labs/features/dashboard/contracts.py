@@ -92,6 +92,7 @@ class DashboardBenchItemDTO:
     sku: str
     name: str
     lifecycle_status: str
+    condition: str
     bench_group: DashboardBenchGroupDTO | None
     bench_type: DashboardBenchTypeDTO | None
     location: DashboardLocationDTO | None
@@ -111,6 +112,7 @@ class DashboardSummaryDTO:
     active_bookings_count: int
     favorited_benches_count: int
     lifecycle_distribution: dict[str, int]
+    condition_distribution: dict[str, int]
     activity_distribution: dict[str, int]
     utilization_rate: float
 
@@ -121,6 +123,7 @@ class DashboardBenchDetailDTO:
     sku: str
     name: str
     lifecycle_status: str
+    condition: str
     bench_group: DashboardBenchGroupDTO | None
     bench_type: DashboardBenchTypeDTO | None
     location: DashboardLocationDTO | None

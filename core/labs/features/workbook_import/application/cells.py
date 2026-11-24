@@ -9,14 +9,12 @@ from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
-from django.utils import timezone
 
 from ..queries.sheets import (
     BOOL,
     CHOICE,
     CHOICE_VALUES,
     DATE,
-    DATETIME,
     DECIMAL,
     INT,
     TEXT,
@@ -103,22 +101,6 @@ def _date(value: Any) -> date:
         raise CellError("Enter a date as YYYY-MM-DD.") from error
 
 
-def _datetime(value: Any) -> datetime:
-    if isinstance(value, datetime):
-        moment = value
-    elif isinstance(value, date):
-        moment = datetime(value.year, value.month, value.day)
-    else:
-        raw = text(value).replace("T", " ")
-        try:
-            moment = datetime.fromisoformat(raw)
-        except ValueError as error:
-            raise CellError("Enter a date and time as YYYY-MM-DD hh:mm.") from error
-    if timezone.is_naive(moment):
-        moment = timezone.make_aware(moment, timezone.get_default_timezone())
-    return moment
-
-
 def _url(value: Any) -> str:
     raw = text(value)
     try:
@@ -178,8 +160,6 @@ def parse(value: Any, column: Column) -> Any:
         return _boolean(value)
     if kind == DATE:
         return _date(value)
-    if kind == DATETIME:
-        return _datetime(value)
     if kind == URL:
         return _url(value)
     if kind == UTILITIES:

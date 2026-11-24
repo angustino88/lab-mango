@@ -8,20 +8,80 @@ from decimal import Decimal
 from django.db.models import QuerySet
 from django.utils import timezone
 
-from core.labs.models import Expense, ExpensePayment, PaymentTransactionType, Room
+from core.labs.models import (
+    Bench,
+    Equipment,
+    Expense,
+    ExpensePayment,
+    License,
+    PaymentTransactionType,
+    Room,
+    Station,
+)
+
+_RESOURCE_MODELS = {
+    "room": Room,
+    "station": Station,
+    "bench": Bench,
+    "equipment": Equipment,
+    "license": License,
+}
 
 
-def list_room_expenses(*, room_id: int) -> QuerySet[Expense]:
-    # Raises Room.DoesNotExist (mapped to 404) when the room is missing.
-    Room.objects.get(pk=room_id)
-    return (
-        Expense.objects.filter(
-            resource_type__app_label="labs",
-            resource_type__model="room",
-            resource_id=room_id,
-        )
-        .prefetch_related("resource")
-        .order_by("-valid_from", "pk")
+def _resolve_resource_names(expenses: list[Expense]) -> dict[tuple[str, int], str]:
+    ids_by_kind: dict[str, set[int]] = defaultdict(set)
+    for expense in expenses:
+        if expense.resource_type:
+            ids_by_kind[expense.resource_type.model].add(expense.resource_id)
+
+    names: dict[tuple[str, int], str] = {}
+    for kind, ids in ids_by_kind.items():
+        model = _RESOURCE_MODELS.get(kind)
+        if model is None or not ids:
+            continue
+        for row_id, name, sku in model.objects.filter(pk__in=ids).values_list("pk", "name", "sku"):
+            names[(kind, row_id)] = name or sku or f"{kind.capitalize()} #{row_id}"
+    return names
+
+
+def list_expenses(
+    *,
+    resource_kind: str | None = None,
+    resource_id: int | None = None,
+    expense_type: str | None = None,
+    billing_period: str | None = None,
+) -> QuerySet[Expense]:
+    qs = Expense.objects.select_related("resource_type").prefetch_related("resource")
+
+    if resource_kind is not None:
+        model = _RESOURCE_MODELS.get(resource_kind)
+        if model is None:
+            return Expense.objects.none()
+        if resource_id is not None:
+            # Raises <Model>.DoesNotExist (mapped to 404) when missing or soft-deleted.
+            model.objects.get(pk=resource_id, deleted_at__isnull=True)
+            qs = qs.filter(resource_id=resource_id)
+        qs = qs.filter(resource_type__app_label="labs", resource_type__model=resource_kind)
+
+    if expense_type:
+        qs = qs.filter(expense_type=expense_type)
+    if billing_period:
+        qs = qs.filter(billing_period=billing_period)
+
+    return qs.order_by("-valid_from", "pk")
+
+
+def list_room_expenses(
+    *,
+    room_id: int,
+    expense_type: str | None = None,
+    billing_period: str | None = None,
+) -> QuerySet[Expense]:
+    return list_expenses(
+        resource_kind="room",
+        resource_id=room_id,
+        expense_type=expense_type,
+        billing_period=billing_period,
     )
 
 
@@ -34,6 +94,8 @@ def list_expense_payments(*, expense_id: int) -> QuerySet[ExpensePayment]:
 def get_financial_report(
     *,
     room_id: int | None = None,
+    resource_kind: str | None = None,
+    resource_id: int | None = None,
     expense_type: str | None = None,
     billing_period: str | None = None,
     status: str | None = None,
@@ -42,17 +104,26 @@ def get_financial_report(
     currency: str = "EUR",
 ) -> dict:
     """Generate a comprehensive financial report with derived payment statuses and metrics."""
+    effective_kind = resource_kind
+    effective_resource_id = resource_id
     if room_id is not None:
-        Room.objects.get(pk=room_id)
+        effective_kind = "room"
+        effective_resource_id = room_id
 
     expenses_qs = Expense.objects.select_related("resource_type").prefetch_related("payments")
 
-    if room_id is not None:
-        expenses_qs = expenses_qs.filter(
-            resource_type__app_label="labs",
-            resource_type__model="room",
-            resource_id=room_id,
-        )
+    if effective_kind is not None:
+        model = _RESOURCE_MODELS.get(effective_kind)
+        if model is None:
+            expenses_qs = Expense.objects.none()
+        else:
+            if effective_resource_id is not None:
+                model.objects.get(pk=effective_resource_id, deleted_at__isnull=True)
+                expenses_qs = expenses_qs.filter(resource_id=effective_resource_id)
+            expenses_qs = expenses_qs.filter(
+                resource_type__app_label="labs",
+                resource_type__model=effective_kind,
+            )
 
     if currency:
         expenses_qs = expenses_qs.filter(currency=currency)
@@ -66,10 +137,7 @@ def get_financial_report(
         expenses_qs = expenses_qs.filter(valid_from__lte=to_date)
 
     expenses = list(expenses_qs.order_by("-valid_from", "pk"))
-
-    # Map room ids to room names
-    room_ids = {e.resource_id for e in expenses if e.resource_type and e.resource_type.model == "room"}
-    rooms_by_id = {r.id: r.name for r in Room.objects.filter(id__in=room_ids)}
+    resource_names = _resolve_resource_names(expenses)
 
     today = timezone.now().date()
     items = []
@@ -104,7 +172,9 @@ def get_financial_report(
         if status and payment_status != status:
             continue
 
-        room_name = rooms_by_id.get(expense.resource_id, "")
+        kind = expense.resource_type.model if expense.resource_type else "room"
+        resource_name = resource_names.get((kind, expense.resource_id), "")
+        is_room = kind == "room"
 
         items.append({
             "id": expense.id,
@@ -120,8 +190,11 @@ def get_financial_report(
             "reference": expense.reference,
             "valid_from": expense.valid_from,
             "valid_until": expense.valid_until,
-            "room_id": expense.resource_id,
-            "room_name": room_name,
+            "resource_kind": kind,
+            "resource_id": expense.resource_id,
+            "resource_name": resource_name,
+            "room_id": expense.resource_id if is_room else None,
+            "room_name": resource_name if is_room else "",
         })
 
     total_budgeted = sum((item["amount"] for item in items), Decimal("0.00"))
@@ -142,13 +215,14 @@ def get_financial_report(
         t_entry["paid_amount"] += item["paid_amount"]
         t_entry["pending_amount"] += item["pending_amount"]
 
-        # By room
-        r_entry = room_map[item["room_id"]]
-        r_entry["room_name"] = item["room_name"]
-        r_entry["count"] += 1
-        r_entry["amount"] += item["amount"]
-        r_entry["paid_amount"] += item["paid_amount"]
-        r_entry["pending_amount"] += item["pending_amount"]
+        # By room (only room-attached expenses participate in room totals)
+        if item["room_id"] is not None:
+            r_entry = room_map[item["room_id"]]
+            r_entry["room_name"] = item["room_name"]
+            r_entry["count"] += 1
+            r_entry["amount"] += item["amount"]
+            r_entry["paid_amount"] += item["paid_amount"]
+            r_entry["pending_amount"] += item["pending_amount"]
 
         # By status
         s_entry = status_map[item["payment_status"]]
@@ -192,4 +266,4 @@ def get_financial_report(
     }
 
 
-__all__ = ["get_financial_report", "list_expense_payments", "list_room_expenses"]
+__all__ = ["get_financial_report", "list_expense_payments", "list_expenses", "list_room_expenses"]

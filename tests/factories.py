@@ -111,7 +111,7 @@ class EquipmentKindFactory(factory.django.DjangoModelFactory):
 
 
 PROFILE_FIELDS = frozenset(
-    {"hostname", "ip_address", "os_name", "disk_usage", "system_info", "monitored_devices", "rdp_file", "technical_user"}
+    {"hostname", "ip_address", "os_name", "disk_usage", "system_info", "rdp_file", "technical_user"}
 )
 
 

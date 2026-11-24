@@ -4,7 +4,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core.labs.features.licenses.application.assignments import AssignLicenseInput, assign_license
-from core.labs.models import Equipment, License
+from core.labs.models import Department, Equipment, Group, License
 from core.labs.models.resource.equipment.reference_data import EquipmentCategory, EquipmentKind
 from core.labs.models.resource.license.license import (
     LicenseCategory,
@@ -90,6 +90,21 @@ def test_create_returns_the_license_and_never_the_key(client, catalog):
     assert "identifier" not in data
     assert "SECRET-KEY-123" not in str(response.content)
     assert License.objects.get(pk=data["id"]).identifier == "SECRET-KEY-123"
+
+
+@pytest.mark.django_db
+def test_license_ownership_is_returned_and_can_be_cleared(client, catalog):
+    department = Department.objects.create(name="License department")
+    group = Group.objects.create(name="License group", department=department)
+    created = _create(client, catalog, department_id=department.pk, group_id=group.pk).data["data"]
+    assert created["department"] == {"id": department.pk, "name": department.name}
+    assert created["group"] == {"id": group.pk, "name": group.name}
+
+    url = f"{LIST_URL}/{created['id']}"
+    response = client.patch(url, {"department_id": None, "group_id": None}, format="json")
+    assert response.status_code == 200, response.data
+    assert response.data["data"]["department"] is None
+    assert response.data["data"]["group"] is None
 
 
 @pytest.mark.django_db

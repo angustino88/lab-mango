@@ -64,8 +64,6 @@ WRITE_FIELDS = (
     "requested_cooling_w",
     "required_utilities",
     "commissioning_date",
-    "last_inspected_at",
-    "next_inspection_due_at",
 )
 PLACEMENT_FIELDS = ("setup_location_id", "station_slot_id")
 

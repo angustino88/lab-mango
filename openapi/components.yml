@@ -1312,13 +1312,6 @@ components:
           readOnly: true
           description: Room of the station the bench is set up on; null when the bench
             is unplaced or the station has no room.
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          nullable: true
-          readOnly: true
-          description: 'Deprecated: use lifecycle_status, condition, availability
-            and activity_status.'
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -1355,16 +1348,6 @@ components:
         commissioning_date:
           type: string
           format: date
-          readOnly: true
-          nullable: true
-        last_inspected_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
-        next_inspection_due_at:
-          type: string
-          format: date-time
           readOnly: true
           nullable: true
         created_at:
@@ -1404,10 +1387,8 @@ components:
       - id
       - image_url
       - is_favorite
-      - last_inspected_at
       - lifecycle_status
       - name
-      - next_inspection_due_at
       - owner
       - remark
       - requested_cooling_w
@@ -1419,7 +1400,6 @@ components:
       - setup_location_path
       - sku
       - station_slot
-      - status
       - type
       - uid
       - updated_at
@@ -1753,14 +1733,6 @@ components:
         commissioning_date:
           type: string
           format: date
-          nullable: true
-        last_inspected_at:
-          type: string
-          format: date-time
-          nullable: true
-        next_inspection_due_at:
-          type: string
-          format: date-time
           nullable: true
       required:
       - sku
@@ -2271,17 +2243,10 @@ components:
           items:
             $ref: '#/components/schemas/LabsChoiceReference'
           readOnly: true
-        statuses:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabsChoiceReference'
-          readOnly: true
-          description: Deprecated four-value status.
       required:
       - groups
       - lifecycle_statuses
       - stations
-      - statuses
       - types
     BenchReferenceDataSerializersBenchReferenceDataDetailResponse:
       type: object
@@ -2431,13 +2396,6 @@ components:
           readOnly: true
           description: Room of the station the bench is set up on; null when the bench
             is unplaced or the station has no room.
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          nullable: true
-          readOnly: true
-          description: 'Deprecated: use lifecycle_status, condition, availability
-            and activity_status.'
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -2474,16 +2432,6 @@ components:
         commissioning_date:
           type: string
           format: date
-          readOnly: true
-          nullable: true
-        last_inspected_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
-        next_inspection_due_at:
-          type: string
-          format: date-time
           readOnly: true
           nullable: true
         created_at:
@@ -2523,10 +2471,8 @@ components:
       - id
       - image_url
       - is_favorite
-      - last_inspected_at
       - lifecycle_status
       - name
-      - next_inspection_due_at
       - owner
       - remark
       - requested_cooling_w
@@ -2538,7 +2484,6 @@ components:
       - setup_location_path
       - sku
       - station_slot
-      - status
       - type
       - uid
       - updated_at
@@ -2605,8 +2550,7 @@ components:
       x-embedded-resource: true
     BenchStatusSummary:
       type: object
-      description: The deprecated four-value status (lifecycle, with out_of_service
-        from downtime), not bookings.
+      description: Counts by bench lifecycle status.
       properties:
         total_count:
           type: integer
@@ -2852,14 +2796,6 @@ components:
         commissioning_date:
           type: string
           format: date
-          nullable: true
-        last_inspected_at:
-          type: string
-          format: date-time
-          nullable: true
-        next_inspection_due_at:
-          type: string
-          format: date-time
           nullable: true
       required:
       - sku
@@ -4037,7 +3973,13 @@ components:
         name:
           type: string
         lifecycle_status:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         bench_group:
           allOf:
           - $ref: '#/components/schemas/DashboardBenchGroup'
@@ -4082,6 +4024,7 @@ components:
       - bench_group
       - bench_type
       - computing
+      - condition
       - current_booking
       - id
       - image_url
@@ -4104,7 +4047,13 @@ components:
         name:
           type: string
         lifecycle_status:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
         bench_group:
           allOf:
           - $ref: '#/components/schemas/DashboardBenchGroup'
@@ -4166,6 +4115,7 @@ components:
       - bench_group
       - bench_type
       - computing
+      - condition
       - current_booking
       - equipment_by_category
       - id
@@ -4545,6 +4495,11 @@ components:
           additionalProperties:
             type: integer
           description: Breakdown of bench counts by lifecycle status.
+        condition_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Breakdown of bench counts by condition.
         activity_distribution:
           type: object
           additionalProperties:
@@ -4558,6 +4513,7 @@ components:
       required:
       - active_bookings_count
       - activity_distribution
+      - condition_distribution
       - favorited_benches_count
       - lifecycle_distribution
       - total_benches
@@ -6146,66 +6102,6 @@ components:
           $ref: '#/components/schemas/EnrollmentGrant'
       required:
       - data
-    EquipmentAssignment:
-      type: object
-      description: Reject unsupported keys and return a stable error when SKU is supplied
-        on update.
-      properties:
-        bench_id:
-          type: integer
-          minimum: 1
-        role:
-          type: string
-          default: default
-          maxLength: 64
-        position:
-          type: integer
-          minimum: 0
-          default: 0
-      required:
-      - bench_id
-    EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/EquipmentAssignmentResult'
-      required:
-      - data
-    EquipmentAssignmentResult:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        equipment:
-          allOf:
-          - $ref: '#/components/schemas/LabsUIDNamedReference'
-          readOnly: true
-        bench:
-          allOf:
-          - $ref: '#/components/schemas/LabsUIDNamedReference'
-          readOnly: true
-        role:
-          type: string
-          readOnly: true
-        position:
-          type: integer
-          readOnly: true
-      required:
-      - bench
-      - equipment
-      - id
-      - position
-      - role
-    EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/EquipmentAssignmentResult'
-      required:
-      - data
     EquipmentAvailability:
       type: object
       properties:
@@ -6571,8 +6467,6 @@ components:
           readOnly: true
         system_info:
           readOnly: true
-        monitored_devices:
-          readOnly: true
         rdp_file:
           type: string
           format: uri
@@ -6587,7 +6481,6 @@ components:
       - disk_usage
       - hostname
       - ip_address
-      - monitored_devices
       - os_name
       - rdp_file
       - system_info
@@ -6601,7 +6494,6 @@ components:
     EquipmentComputingProfileUpdate:
       type: object
       properties:
-        monitored_devices: {}
         technical_user_id:
           type: integer
           nullable: true
@@ -9699,12 +9591,18 @@ components:
         id:
           type: integer
           readOnly: true
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         room:
-          type: object
-          additionalProperties:
-            oneOf:
-            - type: integer
-            - type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
           readOnly: true
         name:
           type: string
@@ -9757,10 +9655,114 @@ components:
       - name
       - notes
       - reference
+      - resource
+      - resource_kind
       - room
       - start_date
       - supplier
       - updated_at
+    ExpenseCreate:
+      type: object
+      description: Write shape for resource-scoped expenses across room, station,
+        bench, equipment, or license.
+      properties:
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/ResourceTypeEnum'
+          description: 'Target resource kind (room, station, bench, equipment, or
+            license).
+
+
+            * `room` - Room
+
+            * `station` - Station
+
+            * `bench` - Bench
+
+            * `equipment` - Equipment
+
+            * `license` - License'
+        resource_id:
+          type: integer
+          minimum: 1
+          description: Primary key of the target resource.
+        name:
+          type: string
+          maxLength: 255
+        expense_type:
+          $ref: '#/components/schemas/ExpenseTypeEnum'
+        supplier:
+          type: string
+          maxLength: 255
+        reference:
+          type: string
+          maxLength: 255
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: What the expense costs (FMT-2, FMT-7).
+        billing_period:
+          $ref: '#/components/schemas/BillingPeriodEnum'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+      required:
+      - cost
+      - expense_type
+      - name
+      - resource_id
+      - resource_kind
+      - start_date
+    ExpenseListSerializersExpensePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/ExpenseListSerializersExpensePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Expense'
+      required:
+      - data
+      - meta
+    ExpenseListSerializersExpensePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    ExpenseListSerializersExpensePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/ExpenseListSerializersExpensePagination'
+      required:
+      - pagination
     ExpensePayment:
       type: object
       description: Read shape for payments; ``paid_date`` is a calendar date (NAM-3).
@@ -9877,6 +9879,14 @@ components:
       required:
       - paid_date
       - total
+    ExpenseSerializersExpenseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Expense'
+      required:
+      - data
     ExpenseTypeEnum:
       enum:
       - rent
@@ -9911,8 +9921,8 @@ components:
         * `other` - Other'
     ExpenseWrite:
       type: object
-      description: Write shape for expenses (RW-1). The room is taken from the URL,
-        never the body.
+      description: Write shape for room-scoped expenses (RW-1). The room is taken
+        from the URL, never the body.
       properties:
         name:
           type: string
@@ -10253,9 +10263,18 @@ components:
           type: string
           format: date
           nullable: true
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         room:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
           readOnly: true
       required:
       - billing_period
@@ -10268,6 +10287,8 @@ components:
       - payment_status
       - pending
       - reference
+      - resource
+      - resource_kind
       - room
       - start_date
       - supplier
@@ -11846,80 +11867,6 @@ components:
             $ref: '#/components/schemas/LeaderboardPersona'
       required:
       - data
-    LegacyDeviceSuggestion:
-      type: object
-      description: One entry of the computer's legacy device list and what is left
-        to do for it.
-      properties:
-        pnp_id:
-          type: string
-          description: Windows PnP device instance ID from the legacy list (normalised).
-        label:
-          type: string
-          description: Label a coordinator gave the entry in the legacy list.
-        is_port_bound:
-          type: boolean
-          description: 'Read from a USB port: register it for this computer only.'
-        status:
-          allOf:
-          - $ref: '#/components/schemas/Choice'
-          readOnly: true
-        equipment:
-          allOf:
-          - $ref: '#/components/schemas/LabsUIDNamedReference'
-          nullable: true
-          description: Unit the ID is registered on, if any.
-        expected_device_id:
-          type: integer
-          nullable: true
-      required:
-      - equipment
-      - expected_device_id
-      - is_port_bound
-      - label
-      - pnp_id
-      - status
-      x-embedded-resource: true
-    LegacyDeviceSuggestionList:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/LegacyDeviceSuggestion'
-      required:
-      - items
-    LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/LegacyDeviceSuggestionList'
-      required:
-      - data
-    LegacyStationSlotStatusEnum:
-      enum:
-      - available
-      - in_service
-      - maintenance
-      - occupied
-      - out_of_service
-      - reserved
-      - retired
-      type: string
-      description: '* `available` - available
-
-        * `in_service` - in_service
-
-        * `maintenance` - maintenance
-
-        * `occupied` - occupied
-
-        * `out_of_service` - out_of_service
-
-        * `reserved` - reserved
-
-        * `retired` - retired'
     License:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -11944,6 +11891,11 @@ components:
           readOnly: true
           nullable: true
         department:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        group:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
           readOnly: true
@@ -12031,6 +11983,7 @@ components:
       - created_at
       - department
       - expires_at
+      - group
       - id
       - image_url
       - max_version
@@ -12048,118 +12001,6 @@ components:
       - uid
       - updated_at
       - vendor
-    LicenseAgreement:
-      type: object
-      description: Base model serializer that automatically exposes created_at and
-        updated_at from TimeStampedModel.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        license:
-          allOf:
-          - $ref: '#/components/schemas/LabsNamedReference'
-          readOnly: true
-        price:
-          allOf:
-          - $ref: '#/components/schemas/LabsMoney'
-          readOnly: true
-        billing_period:
-          allOf:
-          - $ref: '#/components/schemas/Choice'
-          readOnly: true
-        start_date:
-          type: string
-          format: date
-          readOnly: true
-        end_date:
-          type: string
-          format: date
-          readOnly: true
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - billing_period
-      - created_at
-      - end_date
-      - id
-      - license
-      - price
-      - start_date
-    LicenseAgreementListSerializersLicenseAgreementPaginatedResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        meta:
-          $ref: '#/components/schemas/LicenseAgreementListSerializersLicenseAgreementPaginationMeta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/LicenseAgreement'
-      required:
-      - data
-      - meta
-    LicenseAgreementListSerializersLicenseAgreementPagination:
-      type: object
-      properties:
-        count:
-          type: integer
-          minimum: 0
-        page:
-          type: integer
-          minimum: 1
-        page_size:
-          type: integer
-          minimum: 1
-        next:
-          type: string
-          nullable: true
-        previous:
-          type: string
-          nullable: true
-      required:
-      - count
-      - next
-      - page
-      - page_size
-      - previous
-    LicenseAgreementListSerializersLicenseAgreementPaginationMeta:
-      type: object
-      properties:
-        pagination:
-          $ref: '#/components/schemas/LicenseAgreementListSerializersLicenseAgreementPagination'
-      required:
-      - pagination
-    LicenseAgreementSerializersLicenseAgreementDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/LicenseAgreement'
-      required:
-      - data
-    LicenseAgreementWrite:
-      type: object
-      description: Reject unsupported keys and return a stable error when SKU is supplied
-        on update.
-      properties:
-        price:
-          $ref: '#/components/schemas/Money'
-        billing_period:
-          $ref: '#/components/schemas/BillingPeriodEnum'
-        start_date:
-          type: string
-          format: date
-        end_date:
-          type: string
-          format: date
-          nullable: true
-      required:
-      - price
-      - start_date
     LicenseAssignActionSerializersLicenseAssignmentResultDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -14645,17 +14486,6 @@ components:
         event_id:
           type: string
           format: uuid
-        source:
-          type: string
-        event_type:
-          type: string
-        category:
-          type: string
-        object_name:
-          type: string
-        object_id:
-          type: string
-        details: {}
     MonitoringEventDetailSerializersMonitoringEventDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -15350,14 +15180,6 @@ components:
           type: string
           format: date
           nullable: true
-        last_inspected_at:
-          type: string
-          format: date-time
-          nullable: true
-        next_inspection_due_at:
-          type: string
-          format: date-time
-          nullable: true
     PatchedChannelUpdate:
       type: object
       properties:
@@ -15844,28 +15666,6 @@ components:
         label:
           type: string
           maxLength: 100
-        is_active:
-          type: boolean
-          description: 'Deprecated: use service_status.'
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LegacyStationSlotStatusEnum'
-          description: 'Deprecated: use service_status.
-
-
-            * `available` - available
-
-            * `in_service` - in_service
-
-            * `maintenance` - maintenance
-
-            * `occupied` - occupied
-
-            * `out_of_service` - out_of_service
-
-            * `reserved` - reserved
-
-            * `retired` - retired'
         service_status:
           $ref: '#/components/schemas/StationSlotStatusEnum'
         width_mm:
@@ -16840,16 +16640,14 @@ components:
       - resource_kind
     PurchaseItemResourceCreate:
       type: object
-      description: Supply resource_kind, legacy resource_type_id, or both. At least
-        one is required. If both are supplied, they must identify the same resource
-        kind.
+      description: Allocate a physical or license resource to a purchase item using
+        its stable resource_kind.
       properties:
         resource_kind:
           allOf:
-          - $ref: '#/components/schemas/ResourceKindEnum'
+          - $ref: '#/components/schemas/PurchaseItemResourceCreateResourceKindEnum'
           writeOnly: true
-          description: 'Stable resource kind. Supply this or legacy resource_type_id;
-            if both are supplied, they must match.
+          description: 'Stable resource kind (bench, equipment, license, or station).
 
 
             * `bench` - bench
@@ -16859,11 +16657,6 @@ components:
             * `license` - license
 
             * `station` - station'
-        resource_type_id:
-          type: integer
-          minimum: 1
-          writeOnly: true
-          description: Legacy resource type ID.
         resource_id:
           type: integer
           minimum: 1
@@ -16874,11 +16667,21 @@ components:
       required:
       - acquisition_price
       - resource_id
-      anyOf:
-      - required:
-        - resource_kind
-      - required:
-        - resource_type_id
+      - resource_kind
+    PurchaseItemResourceCreateResourceKindEnum:
+      enum:
+      - bench
+      - equipment
+      - license
+      - station
+      type: string
+      description: '* `bench` - bench
+
+        * `equipment` - equipment
+
+        * `license` - license
+
+        * `station` - station'
     PurchaseItemResourceListSerializersPurchaseItemResourcePaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -17727,20 +17530,6 @@ components:
             from the content.
       required:
       - file
-    ResourceKindEnum:
-      enum:
-      - bench
-      - equipment
-      - license
-      - station
-      type: string
-      description: '* `bench` - bench
-
-        * `equipment` - equipment
-
-        * `license` - license
-
-        * `station` - station'
     ResourceMappingData:
       type: object
       properties:
@@ -17913,8 +17702,7 @@ components:
       description: 'Separate state fields of a room or station (design: resource-status-and-downtime.md).
 
 
-        Reads annotations from ``with_location_state``; ``status`` is the deprecated
-        seven-value field.'
+        Reads annotations from ``with_location_state``.'
       properties:
         id:
           type: integer
@@ -18025,13 +17813,6 @@ components:
           type: string
           format: uri
           readOnly: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          nullable: true
-          readOnly: true
-          description: 'Deprecated: computed from lifecycle_status, condition, access_policy
-            and activity_status.'
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -18115,7 +17896,6 @@ components:
       - remark
       - sku
       - slot_capacity
-      - status
       - uid
       - updated_at
       - usable_height_m
@@ -18639,12 +18419,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/Choice'
           readOnly: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          readOnly: true
-          description: 'Deprecated: available, occupied, blocked or retired (occupied
-            is computed).'
         service_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -18713,7 +18487,6 @@ components:
       - service_status
       - slot_code
       - slot_type
-      - status
       - updated_at
       - utilities
       - width_mm
@@ -18807,37 +18580,6 @@ components:
           $ref: '#/components/schemas/RoomSlotListSerializersRoomSlotPagination'
       required:
       - pagination
-    RoomStatusChangeSerializersRoomDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/Room'
-      required:
-      - data
-    RoomStatusEnum:
-      enum:
-      - available
-      - reserved
-      - issue
-      - restricted
-      - closed
-      - maintenance
-      - retired
-      type: string
-      description: '* `available` - Available
-
-        * `reserved` - Reserved
-
-        * `issue` - Issue
-
-        * `restricted` - Restricted
-
-        * `closed` - Closed
-
-        * `maintenance` - Maintenance
-
-        * `retired` - Retired'
     RoomStatusRecord:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -18873,8 +18615,7 @@ components:
       - status
     RoomStatusSummary:
       type: object
-      description: The deprecated seven-value status, computed from lifecycle, condition,
-        access and activity.
+      description: Counts by room lifecycle status.
       properties:
         total_count:
           type: integer
@@ -18902,18 +18643,6 @@ components:
           $ref: '#/components/schemas/RoomStatusSummary'
       required:
       - data
-    RoomStatusWrite:
-      type: object
-      description: 'Deprecated: mapped onto lifecycle, access policy and downtime.
-        ``reserved`` cannot be set.'
-      properties:
-        status:
-          $ref: '#/components/schemas/RoomStatusEnum'
-        metadata:
-          type: object
-          additionalProperties: {}
-      required:
-      - status
     RoomUpdate:
       type: object
       description: Reject unsupported keys and return a stable error when SKU is supplied
@@ -19734,8 +19463,7 @@ components:
       description: 'Separate state fields of a room or station (design: resource-status-and-downtime.md).
 
 
-        Reads annotations from ``with_location_state``; ``status`` is the deprecated
-        seven-value field.'
+        Reads annotations from ``with_location_state``.'
       properties:
         id:
           type: integer
@@ -19841,13 +19569,6 @@ components:
           nullable: true
         utilities:
           readOnly: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          nullable: true
-          readOnly: true
-          description: 'Deprecated: computed from lifecycle_status, condition, access_policy
-            and activity_status.'
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -19943,7 +19664,6 @@ components:
       - slot
       - slot_count
       - slots_url
-      - status
       - type
       - uid
       - updated_at
@@ -20304,12 +20024,6 @@ components:
           items:
             $ref: '#/components/schemas/LabsStationRoomReference'
           readOnly: true
-        statuses:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabsChoiceReference'
-          readOnly: true
-          description: Deprecated seven-value status.
         lifecycle_statuses:
           type: array
           items:
@@ -20332,7 +20046,6 @@ components:
       - lifecycle_statuses
       - rooms
       - slot_statuses
-      - statuses
       - types
     StationReferenceDataSerializersStationReferenceDataDetailResponse:
       type: object
@@ -20370,16 +20083,6 @@ components:
         label:
           type: string
           readOnly: true
-        is_active:
-          type: boolean
-          readOnly: true
-          description: 'Deprecated: service_status is in_service.'
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LabsChoiceReference'
-          readOnly: true
-          description: 'Deprecated: available, occupied, out_of_service or retired
-            (occupied is computed).'
         service_status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -20433,7 +20136,6 @@ components:
       - depth_mm
       - height_mm
       - id
-      - is_active
       - is_occupied
       - label
       - max_load_kg
@@ -20443,7 +20145,6 @@ components:
       - service_status
       - slot_code
       - station_id
-      - status
       - updated_at
       - utilities
       - width_mm
@@ -20462,28 +20163,6 @@ components:
         label:
           type: string
           maxLength: 100
-        is_active:
-          type: boolean
-          description: 'Deprecated: use service_status.'
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LegacyStationSlotStatusEnum'
-          description: 'Deprecated: use service_status.
-
-
-            * `available` - available
-
-            * `in_service` - in_service
-
-            * `maintenance` - maintenance
-
-            * `occupied` - occupied
-
-            * `out_of_service` - out_of_service
-
-            * `reserved` - reserved
-
-            * `retired` - retired'
         service_status:
           $ref: '#/components/schemas/StationSlotStatusEnum'
         width_mm:
@@ -20621,28 +20300,6 @@ components:
         label:
           type: string
           maxLength: 100
-        is_active:
-          type: boolean
-          description: 'Deprecated: use service_status.'
-        status:
-          allOf:
-          - $ref: '#/components/schemas/LegacyStationSlotStatusEnum'
-          description: 'Deprecated: use service_status.
-
-
-            * `available` - available
-
-            * `in_service` - in_service
-
-            * `maintenance` - maintenance
-
-            * `occupied` - occupied
-
-            * `out_of_service` - out_of_service
-
-            * `reserved` - reserved
-
-            * `retired` - retired'
         service_status:
           $ref: '#/components/schemas/StationSlotStatusEnum'
         width_mm:
@@ -20691,14 +20348,6 @@ components:
           $ref: '#/components/schemas/StationSlot'
       required:
       - data
-    StationStatusChangeSerializersStationDetailResponse:
-      type: object
-      description: Base serializer for successful API responses.
-      properties:
-        data:
-          $ref: '#/components/schemas/Station'
-      required:
-      - data
     StationStatusRecord:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -20734,8 +20383,7 @@ components:
       - status
     StationStatusSummary:
       type: object
-      description: The deprecated seven-value status, computed from lifecycle, condition,
-        access and activity.
+      description: Counts by station lifecycle status.
       properties:
         total_count:
           type: integer
@@ -20763,18 +20411,6 @@ components:
           $ref: '#/components/schemas/StationStatusSummary'
       required:
       - data
-    StationStatusWrite:
-      type: object
-      description: 'Deprecated: mapped onto lifecycle, access policy and downtime.
-        ``reserved`` cannot be set.'
-      properties:
-        status:
-          $ref: '#/components/schemas/RoomStatusEnum'
-        metadata:
-          type: object
-          additionalProperties: {}
-      required:
-      - status
     StationType:
       type: object
       description: Base model serializer that automatically exposes created_at and

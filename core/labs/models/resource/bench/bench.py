@@ -63,9 +63,6 @@ class Bench(ResourceModel):
     requested_cooling_w = models.PositiveIntegerField(null=True, blank=True)
     required_utilities = models.JSONField(default=dict, blank=True)
     commissioning_date = models.DateField(null=True, blank=True)
-    # Deprecated: inspection history now lives in ResourceServiceRecord (kind=inspection).
-    last_inspected_at = models.DateTimeField(null=True, blank=True)
-    next_inspection_due_at = models.DateTimeField(null=True, blank=True)
 
     def clean(self) -> None:
         super().clean()

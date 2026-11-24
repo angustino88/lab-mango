@@ -24,19 +24,13 @@ from core.labs.models import (
     ComputingActivity,
     ComputingActivityStatus,
     LicenseAssignment,
+    ResourceCondition,
+    ResourceLifecycleStatus,
 )
-from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES, legacy_bench_status_expression
 from core.labs.models.resource.base.downtime import condition_expression
 from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 from ..exceptions import DashboardResourceNotFound
-
-
-def _with_legacy_status(queryset: QuerySet[Bench]) -> QuerySet[Bench]:
-    """The four-value bench status the dashboard contract shows (computed; resource-status-and-downtime.md)."""
-    return queryset.annotate(condition=condition_expression(Bench)).annotate(
-        legacy_status=legacy_bench_status_expression()
-    )
 
 
 def list_dashboard_benches(
@@ -45,6 +39,7 @@ def list_dashboard_benches(
     search: str | None = None,
     bench_group: int | None = None,
     lifecycle_status: str | None = None,
+    condition: str | None = None,
     activity_status: str | None = None,
     is_booked: bool | None = None,
     is_favorite: bool | None = None,
@@ -106,7 +101,7 @@ def list_dashboard_benches(
         )
         .prefetch_related(active_bookings_prefetch, active_assignments_prefetch)
     )
-    queryset = _with_legacy_status(queryset)
+    queryset = queryset.annotate(condition=condition_expression(Bench))
 
     if actor is not None and getattr(actor, "is_authenticated", False):
         queryset = queryset.annotate(
@@ -132,8 +127,10 @@ def list_dashboard_benches(
         queryset = queryset.filter(bench_group_id=bench_group)
 
     if lifecycle_status is not None:
-        # Dashboard keeps the four-value bench status: out_of_service is an in-service bench with downtime.
-        queryset = queryset.filter(Q(legacy_status=lifecycle_status))
+        queryset = queryset.filter(lifecycle_status=lifecycle_status)
+
+    if condition is not None:
+        queryset = queryset.filter(condition=condition)
 
     if location is not None:
         queryset = queryset.filter(
@@ -241,18 +238,18 @@ def get_dashboard_summary(actor: Any = None) -> dict[str, Any]:
             bench__in=benches,
         ).count()
 
-    lifecycle_distribution: dict[str, int] = {
-        choice[0]: 0 for choice in LEGACY_BENCH_STATUSES
-    }
-    lifecycle_rows = (
-        _with_legacy_status(benches)
-        .values("legacy_status")
-        .annotate(total=Count("id"))
+    lifecycle_distribution = dict.fromkeys(ResourceLifecycleStatus.values, 0)
+    lifecycle_distribution.update(
+        benches.values("lifecycle_status").annotate(total=Count("id")).values_list("lifecycle_status", "total")
     )
-    for row in lifecycle_rows:
-        status_key = row["legacy_status"]
-        if status_key in lifecycle_distribution:
-            lifecycle_distribution[status_key] = row["total"]
+
+    condition_distribution = dict.fromkeys(ResourceCondition.values, 0)
+    condition_distribution.update(
+        benches.annotate(condition=condition_expression(Bench))
+        .values("condition")
+        .annotate(total=Count("id"))
+        .values_list("condition", "total")
+    )
 
     activity_distribution: dict[str, int] = {
         choice[0]: 0 for choice in ComputingActivityStatus.choices
@@ -282,6 +279,7 @@ def get_dashboard_summary(actor: Any = None) -> dict[str, Any]:
         "active_bookings_count": active_bookings_count,
         "favorited_benches_count": favorited_benches_count,
         "lifecycle_distribution": lifecycle_distribution,
+        "condition_distribution": condition_distribution,
         "activity_distribution": activity_distribution,
         "utilization_rate": utilization_rate,
     }
@@ -353,7 +351,7 @@ def get_dashboard_bench_detail(bench_id: int, actor: Any = None) -> Bench:
             active_assignments_prefetch,
         )
     )
-    queryset = _with_legacy_status(queryset)
+    queryset = queryset.annotate(condition=condition_expression(Bench))
 
     if actor is not None and getattr(actor, "is_authenticated", False):
         queryset = queryset.annotate(

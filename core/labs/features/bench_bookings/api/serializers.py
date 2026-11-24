@@ -111,7 +111,6 @@ class BenchBookingListQuerySerializer(TemporalRangeQueryMixin, PageNumberQuerySe
     temporal_range_fields = ("starts_at_after", "starts_at_before")
 
     view_side = serializers.ChoiceField(choices=("my_booking", "booking_calendar"), required=False)
-    creator = serializers.CharField(required=False)
     creator_id = serializers.IntegerField(required=False, min_value=1)
     bench_id = serializers.IntegerField(required=False, min_value=1)
     project_id = serializers.IntegerField(required=False, min_value=1)

@@ -28,7 +28,6 @@ from .serializers import (
     RoomSlotSerializer,
     RoomStatusRecordSerializer,
     RoomStatusSummarySerializer,
-    RoomStatusWriteSerializer,
     RoomUpdateSerializer,
 )
 
@@ -42,7 +41,7 @@ def _room_projection(room):
 
 
 class RoomStatusSummaryAPIView(RoomAPIView):
-    """Non-deleted rooms counted by their stored lifecycle `status`."""
+    """Count non-deleted resources by their stored lifecycle status."""
 
     read_cache_namespace = "labs:locations"
     read_cache_ttl = 15
@@ -141,27 +140,6 @@ class RoomLifecycleAPIView(RoomAPIView):
             services.change_room_lifecycle,
             lookup={"room_id": room_id},
             project=_room_projection,
-        )
-
-
-class RoomStatusAPIView(RoomAPIView):
-    post_contract = operation(
-        "RoomStatusChange",
-        RoomSerializer,
-        request=RoomStatusWriteSerializer,
-    )
-
-    def handle_post(self, request, room_id, **kwargs):
-        serializer, error = self.validate_request()
-        if error is not None:
-            return error
-        return self._execute(
-            lambda: services.record_room_status(
-                actor=request.user,
-                room_id=room_id,
-                **serializer.validated_data,
-            ),
-            project=lambda record: selectors.get_room(room_id=record.room_id),
         )
 
 

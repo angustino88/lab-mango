@@ -10,7 +10,6 @@ from .services import (
     force_delete_room,
     generate_room_slots,
     record_room_observation,
-    record_room_status,
     update_room,
 )
 
@@ -21,5 +20,5 @@ room_images = ResourceImageCommands(Room)
 __all__ = [
     "room_images",
     "change_room_lifecycle", "create_room", "delete_room", "force_delete_room", "generate_room_slots",
-    "record_room_observation", "record_room_status", "update_room",
+    "record_room_observation", "update_room",
 ]

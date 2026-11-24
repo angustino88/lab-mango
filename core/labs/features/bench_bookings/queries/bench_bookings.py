@@ -26,7 +26,6 @@ def list_bench_bookings(
     *,
     actor: Any,
     view_side: str | None = None,
-    creator: str | None = None,
     creator_id: int | None = None,
     bench_id: int | None = None,
     project_id: int | None = None,
@@ -84,11 +83,6 @@ def list_bench_bookings(
 
     if creator_id is not None:
         bookings = bookings.filter(creator_id=creator_id)
-    elif creator:
-        if str(creator).isdigit():
-            bookings = bookings.filter(creator_id=int(creator))
-        else:
-            bookings = bookings.filter(creator__username__iexact=creator)
 
     if bench_id is not None:
         bookings = bookings.filter(bench_id=bench_id)

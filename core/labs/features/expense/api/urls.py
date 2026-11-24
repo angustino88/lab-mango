@@ -2,6 +2,7 @@
 from django.urls import path
 
 from .views import (
+    ExpenseListCreateAPIView,
     ExpensePaymentListCreateAPIView,
     FinancialReportAPIView,
     RoomExpenseListCreateAPIView,
@@ -9,6 +10,11 @@ from .views import (
 )
 
 urlpatterns = [
+    path(
+        "expenses",
+        ExpenseListCreateAPIView.as_view(),
+        name="expense-list",
+    ),
     path(
         "rooms/<int:room_id>/expenses",
         RoomExpenseListCreateAPIView.as_view(),

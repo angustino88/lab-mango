@@ -122,7 +122,7 @@ class AuditBySkuRequestSerializer(serializers.Serializer):
 
 
 class ResourceAuditListQuerySerializer(SearchQueryMixin, PageNumberQuerySerializer):
-    """Query filters for audits listing; free text is ``q`` (``search`` is a deprecated alias)."""
+    """Query filters for audits listing; free text uses ``q``."""
 
     search_target = "search"
 

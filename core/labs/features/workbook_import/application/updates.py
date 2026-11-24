@@ -53,22 +53,6 @@ def current_condition(resource: Any) -> str:
     return ResourceDowntime.objects.condition_of(resource)
 
 
-def given_space_state(
-    row: Row, computed: tuple[str | None, str | None, str | None]
-) -> tuple[str | None, str | None, str | None]:
-    """Lifecycle, access and condition the row asks for; ``None`` where the row leaves it blank.
-
-    ``computed`` is what ``space_state`` returned for the row (already validated, defaults filled in). A v1
-    ``Status`` stands for all three; otherwise only the columns the row fills in count. ``condition`` is
-    ``"operational"`` (not ``None``) when the row asks for it.
-    """
-    lifecycle, access, condition = computed
-    explicit = (row.get("lifecycle_status"), row.get("access_policy"), row.get("condition"))
-    if row.get("legacy_status") is not None and not any(value is not None for value in explicit):
-        return lifecycle, access, condition or "operational"
-    return explicit
-
-
 def apply_space_state(
     run: ImportRun,
     row: Row,
@@ -111,4 +95,4 @@ def apply_space_state(
     return changed
 
 
-__all__ = ["apply_space_state", "changed_fields", "current_condition", "given_space_state", "same_value"]
+__all__ = ["apply_space_state", "changed_fields", "current_condition", "same_value"]

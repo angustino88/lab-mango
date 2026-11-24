@@ -227,23 +227,14 @@ class PurchaseSerializer(AppModelSerializer):
 
 @extend_schema_serializer(
     component_name="PurchaseItemResourceCreate",
-    description=(
-        "Supply resource_kind, legacy resource_type_id, or both. At least one is required. "
-        "If both are supplied, they must identify the same resource kind."
-    ),
+    description="Allocate a physical or license resource to a purchase item using its stable resource_kind.",
 )
 class PurchaseItemResourceCreateSerializer(AppModelSerializer):
     resource_kind = serializers.ChoiceField(
         choices=tuple(RESOURCE_KIND_MODELS),
-        required=False,
+        required=True,
         write_only=True,
-        help_text="Stable resource kind. Supply this or legacy resource_type_id; if both are supplied, they must match.",
-    )
-    resource_type_id = serializers.IntegerField(
-        min_value=1,
-        required=False,
-        write_only=True,
-        help_text="Legacy resource type ID.",
+        help_text="Stable resource kind (bench, equipment, license, or station).",
     )
     resource_id = serializers.IntegerField(min_value=1)
     acquisition_price = MoneyField(
@@ -252,44 +243,18 @@ class PurchaseItemResourceCreateSerializer(AppModelSerializer):
 
     class Meta:
         model = PurchaseItemResource
-        fields = ("resource_kind", "resource_type_id", "resource_id", "acquisition_price")
+        fields = ("resource_kind", "resource_id", "acquisition_price")
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
-        resource_kind = attrs.get("resource_kind")
-        resource_type_id = attrs.get("resource_type_id")
-        if resource_kind is None and resource_type_id is None:
-            raise serializers.ValidationError({"resource_kind": "Supply either resource_kind or resource_type_id."})
-
-        kind_content_type: ContentType | None = None
-        if resource_kind is not None:
-            model = RESOURCE_KIND_MODELS[resource_kind]
-            if ("labs", model) not in PURCHASE_RESOURCE_MODELS:
-                raise serializers.ValidationError({"resource_kind": "Unsupported resource kind."})
-            kind_content_type = ContentType.objects.filter(app_label="labs", model=model).first()
-            if kind_content_type is None:
-                raise serializers.ValidationError({"resource_kind": "Resource kind is unavailable."})
-
-        if resource_type_id is not None:
-            legacy_content_type = ContentType.objects.filter(pk=resource_type_id).first()
-            if (
-                legacy_content_type is None
-                or (
-                    legacy_content_type.app_label,
-                    legacy_content_type.model,
-                )
-                not in PURCHASE_RESOURCE_MODELS
-            ):
-                raise serializers.ValidationError({"resource_type_id": "Unsupported resource type."})
-            if kind_content_type is not None and legacy_content_type.pk != kind_content_type.pk:
-                raise serializers.ValidationError(
-                    {"resource_type_id": "Must identify the same resource type as resource_kind."}
-                )
-            attrs["resource_type_id"] = legacy_content_type.pk
-        else:
-            if kind_content_type is None:
-                raise serializers.ValidationError({"resource_kind": "Resource kind is unavailable."})
-            attrs["resource_type_id"] = kind_content_type.pk
+        resource_kind = attrs["resource_kind"]
+        model = RESOURCE_KIND_MODELS[resource_kind]
+        if ("labs", model) not in PURCHASE_RESOURCE_MODELS:
+            raise serializers.ValidationError({"resource_kind": "Unsupported resource kind."})
+        kind_content_type = ContentType.objects.filter(app_label="labs", model=model).first()
+        if kind_content_type is None:
+            raise serializers.ValidationError({"resource_kind": "Resource kind is unavailable."})
+        attrs["resource_type_id"] = kind_content_type.pk
         return attrs
 
 

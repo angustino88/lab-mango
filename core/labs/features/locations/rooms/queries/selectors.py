@@ -1,5 +1,4 @@
-"""Room projections: lifecycle and access policy are stored; condition, activity, availability and the
-deprecated ``status`` are computed (``with_location_state``). History lives in status records."""
+"""Room projections: lifecycle and access policy are stored; condition, activity, availability are computed (``with_location_state``). History lives in status records."""
 
 from django.db.models import Exists, OuterRef, Q
 

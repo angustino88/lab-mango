@@ -38,7 +38,6 @@ def test_public_module_exports_license_commands_and_queries():
     assert set(_exports(public)) == {
         "AssignLicenseInput",
         "ChangeLicenseStatusInput",
-        "CreateLicenseAgreementInput",
         "CreateLicenseInput",
         "DeleteLicenseInput",
         "InvalidLicenseStatus",
@@ -50,7 +49,6 @@ def test_public_module_exports_license_commands_and_queries():
         "assign_license",
         "change_license_status",
         "create_license",
-        "create_license_agreement",
         "delete_license",
         "get_active_license",
         "get_license",
@@ -61,7 +59,6 @@ def test_public_module_exports_license_commands_and_queries():
         "get_license_for_mapping",
         "license_images",
         "license_mapping_rows",
-        "list_license_agreements",
         "list_license_status_history",
         "list_licenses",
         "unassign_license",
@@ -83,7 +80,7 @@ def test_api_uses_public_workflows_and_contract_errors():
 
 
 def test_application_commands_use_frozen_inputs_and_keyword_only_actor():
-    for filename in ("assignments.py", "status.py", "agreements.py", "inventory.py"):
+    for filename in ("assignments.py", "status.py", "inventory.py"):
         tree = _module(FEATURE_ROOT / "application" / filename)
         classes = [node for node in tree.body if isinstance(node, ast.ClassDef)]
         assert classes
@@ -106,14 +103,14 @@ def test_layer_package_exports_are_explicit_and_legacy_modules_absent():
     application = FEATURE_ROOT / "application" / "__init__.py"
     queries = FEATURE_ROOT / "queries" / "__init__.py"
     assert set(_exports(application)) == {
-        "AssignLicenseInput", "ChangeLicenseStatusInput", "CreateLicenseAgreementInput",
+        "AssignLicenseInput", "ChangeLicenseStatusInput",
         "CreateLicenseInput", "DeleteLicenseInput", "UnassignLicenseInput", "UpdateLicenseInput",
-        "assign_license", "change_license_status", "create_license", "create_license_agreement",
+        "assign_license", "change_license_status", "create_license",
         "delete_license", "license_images", "unassign_license", "update_license",
     }
     assert set(_exports(queries)) == {
         "active_license_assignment_mapping_rows", "get_active_license", "get_license",
-        "get_license_for_mapping", "license_mapping_rows", "list_license_agreements",
+        "get_license_for_mapping", "license_mapping_rows",
         "list_license_status_history", "list_licenses",
     }
     assert not (FEATURE_ROOT / "services").exists()
@@ -124,16 +121,13 @@ def test_layer_package_exports_are_explicit_and_legacy_modules_absent():
     assert set(_exports(FEATURE_ROOT / "application" / "status.py")) == {
         "ChangeLicenseStatusInput", "change_license_status",
     }
-    assert set(_exports(FEATURE_ROOT / "application" / "agreements.py")) == {
-        "CreateLicenseAgreementInput", "create_license_agreement",
-    }
     assert set(_exports(FEATURE_ROOT / "application" / "inventory.py")) == {
         "CreateLicenseInput", "DeleteLicenseInput", "UpdateLicenseInput",
         "create_license", "delete_license", "update_license",
     }
     assert set(_exports(FEATURE_ROOT / "queries" / "selectors.py")) == {
         "active_license_assignment_mapping_rows", "get_active_license", "get_license",
-        "get_license_for_mapping", "license_mapping_rows", "list_license_agreements",
+        "get_license_for_mapping", "license_mapping_rows",
         "list_license_status_history", "list_licenses",
     }
 

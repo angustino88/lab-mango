@@ -25,11 +25,6 @@ paths:
           type: string
           minLength: 1
       - in: query
-        name: creator
-        schema:
-          type: string
-          minLength: 1
-      - in: query
         name: creator_id
         schema:
           type: integer

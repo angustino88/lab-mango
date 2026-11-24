@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError
 from core.common.db.transactions import apply_fields, atomic_command
 from core.labs.features.base.immutable import drop_unchanged_immutable_fields
 from core.labs.features.equipment.public import close_placements_for_location, summarize_active_placements
-from core.labs.features.locations.application.lifecycle import apply_legacy_status, apply_lifecycle, record_initial
+from core.labs.features.locations.application.lifecycle import apply_lifecycle, record_initial
 from core.labs.features.locations.exceptions import LocationConflict
 from core.labs.features.locations.stations.application.policies import (
     validate_occupied_slot,
@@ -337,16 +337,6 @@ def change_station_lifecycle(*, station_id, actor, lifecycle_status=None, access
     return station
 
 
-@_atomic_command
-def record_station_status(*, station_id, actor, status, metadata=None):
-    """Deprecated seven-value ``status`` write, mapped onto lifecycle, access policy and downtime (RS3)."""
-    station = Station.objects.select_for_update().get(pk=station_id)
-    return apply_legacy_status(
-        station, record_model=StationStatusRecord, record_field="station", actor=actor, status=status,
-        metadata=metadata, has_active_children=_has_active_benches(station),
-    )
-
-
 def _save_type(instance, name, actor):
     instance.name = name.strip()
     if StationType.objects.filter(name=instance.name).exclude(pk=instance.pk).exists():
@@ -377,6 +367,6 @@ def delete_station_type(*, type_id, actor):
 
 __all__ = [
     "change_station_lifecycle", "create_station", "create_station_slot", "create_station_type", "delete_station",
-    "delete_station_slot", "delete_station_type", "force_delete_station", "place_station", "record_station_status",
+    "delete_station_slot", "delete_station_type", "force_delete_station", "place_station",
     "update_station", "update_station_slot", "update_station_type",
 ]

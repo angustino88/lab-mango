@@ -19,7 +19,6 @@ INT = "int"
 DECIMAL = "decimal"
 BOOL = "bool"
 DATE = "date"
-DATETIME = "datetime"
 URL = "url"
 UTILITIES = "utilities"
 CHOICE = "choice"
@@ -147,7 +146,6 @@ _CONDITION = Column(
     choices=list_range("condition"),
     choice_list="condition",
 )
-_LEGACY_STATUS = Column("legacy_status", "Status", legacy=True)
 _INTERFACES = _numbered("interfaces", "Interface", 4, sheet_range("Lookups", "A"), "Pick from Lookups > Interfaces")
 _DIMENSIONS = (
     Column("length_mm", "Length (mm)", INT),
@@ -429,7 +427,6 @@ SHEETS: tuple[Sheet, ...] = (
             _ACCESS,
             _CONDITION,
             _REMARK,
-            _LEGACY_STATUS,
         ),
     ),
     Sheet(
@@ -468,7 +465,6 @@ SHEETS: tuple[Sheet, ...] = (
             _ACCESS,
             _CONDITION,
             _REMARK,
-            _LEGACY_STATUS,
         ),
     ),
     Sheet(
@@ -555,11 +551,8 @@ SHEETS: tuple[Sheet, ...] = (
             Column("requested_cooling_w", "Requested Cooling (W)", INT),
             Column("required_utilities", "Required Utilities", UTILITIES, hint="Separate by commas"),
             Column("commissioning_date", "Commissioning Date", DATE, hint="YYYY-MM-DD"),
-            Column("last_inspected_at", "Last Inspection", DATETIME, hint="YYYY-MM-DD hh:mm"),
-            Column("next_inspection_due_at", "Next Inspection Due", DATETIME, hint="YYYY-MM-DD hh:mm"),
             _REMARK,
             Column("department", "Department", legacy=True),
-            _LEGACY_STATUS,
         ),
     ),
     # ---- C. Equipment -----------------------------------------------------------------------
@@ -627,7 +620,6 @@ SHEETS: tuple[Sheet, ...] = (
             _yes_no("calibration_required", "Calibration Required"),
             Column("details", "Details", hint="Free text notes", width=30),
             Column("remark", "Remarks", legacy=True),
-            _LEGACY_STATUS,
         ),
     ),
     Sheet(

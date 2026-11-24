@@ -223,3 +223,64 @@ class TestFinancialReportAPI:
         with patch(_PATCH_APIKEY, return_value=False):
             response = client.get("/api/labs/expenses/report")
             assert response.status_code in (401, 403)
+
+    def test_report_includes_license_expenses_and_keeps_by_room_room_only(self, admin_client, room):
+        from core.labs.models import License
+        from core.labs.models.resource.license.license import (
+            LicenseCategory,
+            LicenseProduct,
+            LicenseType,
+            LicenseVendor,
+        )
+
+        vendor = LicenseVendor.objects.create(name="Vector Report")
+        product = LicenseProduct.objects.create(name="CANalyzer", vendor=vendor)
+        lic_type = LicenseType.objects.create(name="Node-locked")
+        category = LicenseCategory.objects.create(name="Analysis")
+        lic = License.objects.create(
+            sku="LIC-REP-001",
+            name="CANalyzer Pro",
+            vendor=vendor,
+            product=product,
+            type=lic_type,
+            category=category,
+        )
+
+        today = timezone.now().date()
+        Expense.objects.create(
+            name="Room Rent",
+            expense_type=ExpenseType.RENT,
+            amount=Decimal("1000.00"),
+            currency="EUR",
+            valid_from=today,
+            resource=room,
+        )
+        Expense.objects.create(
+            name="CANalyzer Annual Fee",
+            expense_type=ExpenseType.LICENSE_FEE,
+            amount=Decimal("500.00"),
+            currency="EUR",
+            valid_from=today,
+            resource=lic,
+        )
+
+        all_resp = admin_client.get("/api/labs/expenses/report")
+        assert all_resp.status_code == 200, all_resp.content
+        data = all_resp.json()["data"]
+        assert data["summary"]["budgeted"] == {"amount": "1500.00", "currency": "EUR"}
+        assert len(data["by_room"]) == 1
+        assert data["by_room"][0]["room"]["id"] == room.id
+
+        by_name = {item["name"]: item for item in data["items"]}
+        assert by_name["CANalyzer Annual Fee"]["resource_kind"] == {"value": "license", "label": "License"}
+        assert by_name["CANalyzer Annual Fee"]["resource"] == {"id": lic.pk, "name": "CANalyzer Pro"}
+        assert by_name["CANalyzer Annual Fee"]["room"] is None
+        assert by_name["Room Rent"]["resource_kind"] == {"value": "room", "label": "Room"}
+        assert by_name["Room Rent"]["room"] == {"id": room.id, "name": room.name}
+
+        lic_resp = admin_client.get("/api/labs/expenses/report", {"resource_kind": "license", "resource_id": lic.pk})
+        assert lic_resp.status_code == 200, lic_resp.content
+        lic_data = lic_resp.json()["data"]
+        assert lic_data["summary"]["budgeted"] == {"amount": "500.00", "currency": "EUR"}
+        assert [i["name"] for i in lic_data["items"]] == ["CANalyzer Annual Fee"]
+        assert lic_data["by_room"] == []

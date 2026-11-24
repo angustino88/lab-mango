@@ -218,8 +218,6 @@ def _benches() -> list[dict[str, Any]]:
                         "requested_load_kg",
                         "requested_cooling_w",
                         "commissioning_date",
-                        "last_inspected_at",
-                        "next_inspection_due_at",
                         "remark",
                     )
                 },

@@ -13,20 +13,18 @@ from core.labs.features.benches.api.serializers import (
 
 def test_bench_serializer_contains_standard_contract_fields():
     fields = BenchSerializer.Meta.fields
-    assert "status" in fields
+    assert "status" not in fields
     assert "created_at" in fields
     assert "updated_at" in fields
     assert "created" not in fields
     assert "modified" not in fields
     assert "deleted_at" not in fields
     assert "current_status" not in fields
-    # Separate state fields (resource-status-and-downtime.md); ``status`` is the deprecated four-value field.
     assert {"lifecycle_status", "condition", "availability", "activity_status"} <= set(fields)
     assert "equipment_count" in fields
     assert "equipment_url" in fields
 
-    bench = SimpleNamespace(lifecycle_status="in_service", legacy_status="out_of_service", equipment_count=0)
-    assert BenchSerializer().get_status(bench) == {"value": "out_of_service", "label": "Out of service"}
+    bench = SimpleNamespace(lifecycle_status="in_service", equipment_count=0)
     assert BenchSerializer().get_lifecycle_status(bench) == {"value": "in_service", "label": "In service"}
 
 
@@ -99,4 +97,3 @@ def test_bench_serializer_serializes_station_slot_with_code_as_name():
     slot = StationSlot(id=118, position_index=1, slot_code="S2", label="Middle")
     serialized = BenchSerializer().fields["station_slot"].to_representation(slot)
     assert serialized == {"id": 118, "name": "S2"}
-

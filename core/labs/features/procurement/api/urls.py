@@ -1,7 +1,5 @@
 from django.urls import path
 
-# Register drf-spectacular serializer schema extensions.
-from . import schema as _schema  # noqa: F401
 from .views import (
     PurchaseDetailAPIView,
     PurchaseDraftHeaderAPIView,

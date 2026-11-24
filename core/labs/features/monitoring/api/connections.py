@@ -9,7 +9,7 @@ from rest_framework import serializers
 
 from core.common.api.api_views import AppListAPIView
 from core.common.api.pagination import PageNumberQuerySerializer
-from core.common.api.summary_serializers import choice_field, embedded_resource
+from core.common.api.summary_serializers import choice_field
 from core.common.domain.errors import BadRequest
 from core.labs.features.base import CommandAPIView, operation
 from core.labs.features.base.serializers import NamedReferenceSerializer, UIDNamedReferenceSerializer
@@ -29,17 +29,10 @@ from core.labs.features.monitoring.queries.connections import (
     list_device_connections,
 )
 from core.labs.features.monitoring.queries.expected import get_expected_device, list_expected_devices
-from core.labs.features.monitoring.queries.suggestions import legacy_device_suggestions
 from core.labs.models.monitoring import DeviceConnectionState, DeviceMatchStatus
 
 FRESHNESS_CHOICES = (("fresh", "Fresh"), ("stale", "Stale"), ("unknown", "Unknown"))
 PRESENCE_CHOICES = (("present", "Present"), ("missing", "Missing"), ("unconfirmed", "Unconfirmed"))
-SUGGESTION_STATUS_CHOICES = (
-    ("unregistered", "Not registered"),
-    ("registered", "Registered, not expected here"),
-    ("expected", "Expected here"),
-    ("ambiguous", "Registered on several units"),
-)
 
 
 def _utc_datetime(**kwargs) -> serializers.DateTimeField:
@@ -311,42 +304,3 @@ class ExpectedDeviceDetailAPIView(_MonitoringAPIView):
         return self._execute(
             lambda: delete_expected_device(expected_device_id=expected_device_id, actor=request.user), delete=True
         )
-
-
-@embedded_resource
-class LegacyDeviceSuggestionSerializer(serializers.Serializer):
-    """One entry of the computer's legacy device list and what is left to do for it."""
-
-    pnp_id = serializers.CharField(help_text="Windows PnP device instance ID from the legacy list (normalised).")
-    label = serializers.CharField(help_text="Label a coordinator gave the entry in the legacy list.")
-    is_port_bound = serializers.BooleanField(help_text="Read from a USB port: register it for this computer only.")
-    status = choice_field(SUGGESTION_STATUS_CHOICES)
-    equipment = UIDNamedReferenceSerializer(allow_null=True, help_text="Unit the ID is registered on, if any.")
-    expected_device_id = serializers.IntegerField(allow_null=True)
-
-
-class LegacyDeviceSuggestionListSerializer(serializers.Serializer):
-    items = LegacyDeviceSuggestionSerializer(many=True)
-
-
-class LegacyDeviceSuggestionQuerySerializer(serializers.Serializer):
-    computing_id = serializers.IntegerField(min_value=1)
-
-
-class LegacyDeviceSuggestionListAPIView(_MonitoringAPIView):
-    """Entries of a computer's legacy device list, to register and expect on that computer."""
-
-    schema_tags = ("Monitoring",)
-    get_contract = OperationContract(
-        query=LegacyDeviceSuggestionQuerySerializer,
-        success=ResponseContract.success("LegacyDeviceSuggestionList", LegacyDeviceSuggestionListSerializer),
-        bad_request=ResponseContract.problem(400),
-        not_found=ResponseContract.not_found(),
-    )
-
-    def handle_get(self, request):
-        params, error = self.validate_query()
-        if error is not None:
-            return error
-        assert params is not None
-        return self._execute(lambda: {"items": legacy_device_suggestions(computing_id=params["computing_id"])})

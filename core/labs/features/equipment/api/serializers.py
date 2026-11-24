@@ -768,29 +768,3 @@ class EquipmentOptionsQuerySerializer(OptionsQueryMixin):
     )
     assigned = serializers.BooleanField(required=False, allow_null=True, default=None)
     assignable = serializers.BooleanField(required=False, allow_null=True, default=None)
-
-
-class CategoryOptionsQuerySerializer(OptionsQueryMixin):
-    """Filter parameters for category Equipment options (ADR 002)."""
-
-    kind_id = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        help_text="Parent filter. Large Equipment selectors require q or at least one declared parent filter.",
-    )
-    type_id = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        help_text="Parent filter. Large Equipment selectors require q or at least one declared parent filter.",
-    )
-    manufacturer_id = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        help_text="Parent filter. Large Equipment selectors require q or at least one declared parent filter.",
-    )
-    lifecycle_state = serializers.ChoiceField(choices=EquipmentLifecycleState.choices, required=False)
-    status = serializers.ChoiceField(
-        choices=EquipmentDisplayStatus.choices, required=False, help_text="Filters the computed display_status."
-    )
-    assigned = serializers.BooleanField(required=False, allow_null=True, default=None)
-    assignable = serializers.BooleanField(required=False, allow_null=True, default=None)

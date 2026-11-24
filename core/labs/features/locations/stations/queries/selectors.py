@@ -8,7 +8,7 @@ from core.labs.models.resource.base.status import ResourceAccessPolicy, Resource
 from core.labs.models.resource.bench.bench import Bench
 from core.labs.models.resource.bench.bench_type import BenchType
 from core.labs.models.resource.location.room import Room
-from core.labs.models.resource.location.station import Station, StationStatus, StationStatusRecord, StationType
+from core.labs.models.resource.location.station import Station, StationStatusRecord, StationType
 from core.labs.models.resource.location.station_slot import StationSlot, StationSlotStatus
 
 
@@ -101,7 +101,6 @@ def station_reference_data():
         "types": StationType.objects.order_by("name", "pk"),
         "bench_types": BenchType.objects.filter(active=True).order_by("name", "pk"),
         "rooms": Room.objects.only("id", "sku", "name").order_by("sku", "pk"),
-        "statuses": [{"value": value, "label": str(label)} for value, label in StationStatus.choices],
         "lifecycle_statuses": [{"value": value, "label": str(label)} for value, label in ResourceLifecycleStatus.choices],
         "access_policies": [{"value": value, "label": str(label)} for value, label in ResourceAccessPolicy.choices],
         "slot_statuses": [{"value": value, "label": str(label)} for value, label in StationSlotStatus.choices],

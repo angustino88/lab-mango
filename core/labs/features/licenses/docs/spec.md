@@ -34,10 +34,6 @@ The Licenses feature tracks commercial software and firmware entitlements, seat 
 - **Fields:** `license` (FK `License`, PROTECT), `equipment` (FK `Equipment`, PROTECT), `assigned_at`, `unassigned_at` (nullable).
 - **Invariant:** A software license can be actively assigned (`unassigned_at IS NULL`) to at most one equipment unit at a time.
 
-### 2.3 `core.labs.models.LicenseAgreement` & `LicensePayment`
-- **`LicenseAgreement`**: `price` (DecimalField), `currency` (default "EUR"), `billing_period` (`one_time`, `monthly`, `quarterly`, `annual`), `valid_from`, `valid_until`.
-- **`LicensePayment`**: Financial records of disbursement against agreements (`amount`, `paid_at`, `reference`).
-
 ---
 
 ## 3. Options Standard Compliance (ADR 002)
@@ -62,7 +58,6 @@ The Licenses feature tracks commercial software and firmware entitlements, seat 
 | `POST /api/labs/licenses/{license_id}/actions/change-status` | `LicenseStatusAPIView` | Update lifecycle state. |
 | `GET /api/labs/licenses/{license_id}/history` | `LicenseHistoryAPIView` | Status records (`status`, `metadata`, `actor`, `created_at`), newest first, paginated; 404 for a missing or deleted license. |
 | `GET` / `PUT` / `DELETE /api/labs/licenses/{license_id}/image` | `LicenseImageAPIView` | Read, replace (multipart, one `file` part: JPEG/PNG/GIF/WebP, at most 5 MB) or remove the image; license reads return `image_url` (see `core/labs/features/base/docs/resource-images.md`). |
-| `GET/POST /api/labs/licenses/{license_id}/agreements` | `LicenseAgreementListCreateAPIView` | Commercial agreements list. |
 
 ---
 
@@ -108,6 +103,8 @@ license as in `GET /api/labs/licenses/{id}`.
 
 Status changes, assignment, agreements, images and acquisition price (from procurement allocation) keep
 their own routes.
+
+- License reads include nullable `department` and `group` references. Use `department_id` and `group_id` to set or clear them on create and update.
 
 ### 5.4 Assignment and seats
 - A license read (`GET /licenses`, `GET /licenses/{id}`, and the responses of the write routes) carries

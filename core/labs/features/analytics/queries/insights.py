@@ -6,18 +6,16 @@ from datetime import datetime
 from typing import Any
 
 from django.db.models import Sum
-from django.utils import timezone
 
 from core.labs.features.equipment.public import equipment_state_timelines
 from core.labs.models import (
-    Bench,
     BenchBooking,
     BookingStatus,
     LaboratoryVisitEvent,
     LabSessionLog,
 )
 
-from .calculations import calculate_official_working_hours, calculate_period_trend
+from .calculations import calculate_official_working_hours
 
 # Bookings that consumed (or still hold) bench time. Cancelled and expired bookings do not.
 _HOLDING_STATUSES = (BookingStatus.RESERVED, BookingStatus.IN_PROGRESS, BookingStatus.COMPLETED)
@@ -44,42 +42,6 @@ def _count_visits(start: datetime, end: datetime) -> int:
         occurred_at__gte=start,
         occurred_at__lt=end,
     ).count()
-
-
-def get_dashboard_summary(*, from_date_time: datetime, to_date_time: datetime) -> dict[str, Any]:
-    """Return headline KPI cards with current value, previous period value, and trend.
-
-    The previous period is the equal-length window immediately before the requested range.
-    Active users and active benches are point-in-time counts, so they carry no trend.
-    """
-    prev_start, prev_end = _previous_window(from_date_time, to_date_time)
-
-    current_bookings = _count_bookings(from_date_time, to_date_time)
-    previous_bookings = _count_bookings(prev_start, prev_end)
-
-    current_visits = _count_visits(from_date_time, to_date_time)
-    previous_visits = _count_visits(prev_start, prev_end)
-
-    active_benches = Bench.objects.filter(deleted_at__isnull=True).count()
-
-    return {
-        "generated_at": timezone.now(),
-        "period_start": from_date_time,
-        "period_end": to_date_time,
-        "bookings": {
-            "count": current_bookings,
-            "previous_count": previous_bookings,
-            "trend_percent": calculate_period_trend(previous_bookings, current_bookings),
-        },
-        "facility_visits": {
-            "count": current_visits,
-            "previous_count": previous_visits,
-            "trend_percent": calculate_period_trend(previous_visits, current_visits),
-        },
-        "active_benches": {
-            "count": active_benches,
-        },
-    }
 
 
 def get_booked_vs_used(*, from_date_time: datetime, to_date_time: datetime) -> dict[str, Any]:
@@ -200,6 +162,5 @@ def get_equipment_availability(*, from_date_time: datetime, to_date_time: dateti
 
 __all__ = [
     "get_booked_vs_used",
-    "get_dashboard_summary",
     "get_equipment_availability",
 ]

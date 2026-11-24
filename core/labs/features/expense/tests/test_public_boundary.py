@@ -38,6 +38,7 @@ def test_public_surface_exports_commands_queries_and_exception():
         "create_expense_payment",
         "get_financial_report",
         "list_expense_payments",
+        "list_expenses",
         "list_room_expenses",
     }
 

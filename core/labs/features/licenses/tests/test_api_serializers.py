@@ -2,7 +2,6 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 from core.labs.features.licenses.api.serializers import (
-    LicenseAgreementSerializer,
     LicenseSerializer,
     LicenseStatusRecordSerializer,
 )
@@ -48,19 +47,6 @@ def test_license_serializer_status_formats_as_choice_reference():
     obj = SimpleNamespace(current_status=LicenseStatus.AVAILABLE)
     ref = serializer.get_status(obj)
     assert ref == {"value": "available", "label": "Available"}
-
-
-def test_license_agreement_serializer_structures_price_and_created_at():
-    fields = LicenseAgreementSerializer.Meta.fields
-    assert "price" in fields
-    assert "created_at" in fields
-    assert "created" not in fields
-
-    agreement = SimpleNamespace(price=Decimal("150.00"), currency="EUR")
-    assert LicenseAgreementSerializer().get_price(agreement) == {
-        "amount": "150.00",
-        "currency": "EUR",
-    }
 
 
 def test_license_status_record_serializer_formats_status_and_created_at():

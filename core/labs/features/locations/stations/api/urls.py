@@ -17,7 +17,6 @@ urlpatterns = [
         views.StationLifecycleAPIView.as_view(),
         name="station-action-change-lifecycle",
     ),
-    path("stations/<int:station_id>/actions/change-status", views.StationStatusAPIView.as_view(), name="station-action-change-status"),
     path(
         "stations/<int:station_id>/actions/force-delete",
         views.StationForceDeleteAPIView.as_view(),

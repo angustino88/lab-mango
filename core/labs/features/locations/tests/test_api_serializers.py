@@ -3,19 +3,21 @@ from types import SimpleNamespace
 from core.labs.features.locations.rooms.api.serializers import (
     RoomCreateSerializer,
     RoomSerializer,
+    RoomSlotSerializer,
 )
 from core.labs.features.locations.stations.api.serializers import (
     StationCreateSerializer,
     StationPlacementSerializer,
     StationSerializer,
+    StationSlotSerializer,
+    StationSlotUpdateSerializer,
 )
 from core.labs.features.locations.stations.api.views import StationListCreateAPIView
-from core.labs.models import RoomStatus, StationStatus
 
 
 def test_room_serializer_contract():
     fields = RoomSerializer.Meta.fields
-    assert "status" in fields
+    assert "status" not in fields
     assert "operational_status" not in fields
     assert "created_at" in fields
     assert "updated_at" in fields
@@ -23,11 +25,6 @@ def test_room_serializer_contract():
     assert "modified" not in fields
     assert "deleted_at" not in fields
     assert "current_status" not in fields
-
-    room = SimpleNamespace(legacy_status=RoomStatus.AVAILABLE)
-    status_ref = RoomSerializer().get_status(room)
-    assert status_ref == {"value": "available", "label": "Available"}
-
 
 def test_room_create_serializer_accepts_relation_ids():
     serializer = RoomCreateSerializer(
@@ -49,7 +46,7 @@ def test_room_create_serializer_accepts_relation_ids():
 
 def test_station_serializer_contract_and_coordinates():
     fields = StationSerializer.Meta.fields
-    assert "status" in fields
+    assert "status" not in fields
     assert "operational_status" not in fields
     assert "position" in fields
     assert "created_at" in fields
@@ -60,10 +57,8 @@ def test_station_serializer_contract_and_coordinates():
     assert "current_status" not in fields
 
     station = SimpleNamespace(
-        legacy_status=StationStatus.AVAILABLE,
         position=[12.5, 34.0, 56.5],
     )
-    assert StationSerializer().get_status(station) == {"value": "available", "label": "Available"}
     assert StationSerializer().get_position(station) == {"x": 12.5, "y": 34.0, "z": 56.5}
 
 
@@ -136,3 +131,19 @@ def test_station_serializer_serializes_room_slot_with_code_as_name():
     serialized = StationSerializer().fields["slot"].to_representation(slot)
     assert serialized == {"id": 4171, "name": "R1C1"}
 
+
+def test_slot_read_schema_exposes_service_status_and_occupancy():
+    for serializer in (RoomSlotSerializer(), StationSlotSerializer()):
+        assert {"service_status", "is_occupied"} <= serializer.fields.keys()
+        assert "status" not in serializer.fields
+        assert "is_active" not in serializer.fields
+
+
+def test_station_slot_write_uses_service_status_as_the_transport_field():
+    serializer = StationSlotUpdateSerializer(data={"service_status": "out_of_service"}, partial=True)
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data == {"status": "out_of_service"}
+
+    serializer = StationSlotUpdateSerializer(data={"status": "occupied", "is_active": True}, partial=True)
+    assert not serializer.is_valid()
+    assert {"status", "is_active"} <= serializer.errors.keys()

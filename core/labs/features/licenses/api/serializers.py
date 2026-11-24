@@ -3,12 +3,10 @@ from typing import Any
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from core.common.api.money import MoneyField
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.summary_serializers import (
     StatusSummarySerializer,
     UserReferenceSerializer,
-    choice_field,
     embedded_resource,
 )
 from core.labs.features.base.resource_images import ResourceImageURLField
@@ -22,7 +20,7 @@ from core.labs.features.base.serializers import (
     to_choice_reference,
     to_money,
 )
-from core.labs.models import License, LicenseAgreement, LicenseStatus, LicenseStatusRecord
+from core.labs.models import License, LicenseStatus, LicenseStatusRecord
 from core.labs.models.resource.license.license import (
     LicenseCategory,
     LicenseProduct,
@@ -58,6 +56,7 @@ class LicenseSerializer(AppModelSerializer):
     image_url = ResourceImageURLField()
     owner = UserReferenceSerializer(read_only=True, allow_null=True)
     department = NamedReferenceSerializer(read_only=True, allow_null=True)
+    group = NamedReferenceSerializer(read_only=True, allow_null=True)
     product = NamedReferenceSerializer(read_only=True, allow_null=True)
     vendor = NamedReferenceSerializer(read_only=True, allow_null=True)
     type = NamedReferenceSerializer(read_only=True, allow_null=True)
@@ -78,6 +77,7 @@ class LicenseSerializer(AppModelSerializer):
             "name",
             "owner",
             "department",
+            "group",
             "remark",
             "image_url",
             "product",
@@ -222,53 +222,6 @@ class LicenseAssignmentResultSerializer(serializers.Serializer):
         return UIDNamedReferenceSerializer(obj.license).data
 
 
-class LicenseAgreementSerializer(AppModelSerializer):
-    license = NamedReferenceSerializer(read_only=True)
-    price = serializers.SerializerMethodField(read_only=True)
-    billing_period = choice_field(LicenseAgreement._meta.get_field("billing_period").choices)
-    start_date = serializers.DateField(source="valid_from", read_only=True)
-    end_date = serializers.DateField(source="valid_until", read_only=True, allow_null=True)
-
-    class Meta:
-        model = LicenseAgreement
-        fields = (
-            "id",
-            "license",
-            "price",
-            "billing_period",
-            "start_date",
-            "end_date",
-            "created_at",
-        )
-        read_only_fields = fields
-
-    @extend_schema_field(MoneySerializer)
-    def get_price(self, obj) -> dict[str, Any] | None:
-        return to_money(getattr(obj, "price", None), getattr(obj, "currency", None))
-
-
-class LicenseAgreementWriteSerializer(ResourceWriteSerializerMixin, serializers.ModelSerializer):
-    price = MoneyField(amount="price", currency="currency", min_value=0)
-    start_date = serializers.DateField(source="valid_from")
-    end_date = serializers.DateField(source="valid_until", required=False, allow_null=True)
-
-    class Meta:
-        model = LicenseAgreement
-        fields = (
-            "price",
-            "billing_period",
-            "start_date",
-            "end_date",
-        )
-
-    def validate(self, attrs):
-        valid_until = attrs.get("valid_until")
-        valid_from = attrs.get("valid_from")
-        if valid_until is not None and valid_from is not None and valid_until < valid_from:
-            raise serializers.ValidationError({"end_date": "Must be on or after start_date."})
-        return attrs
-
-
 class LicenseVendorSerializer(AppModelSerializer):
     class Meta:
         model = LicenseVendor
@@ -312,8 +265,6 @@ class LicenseProductOptionsQuerySerializer(OptionsQueryMixin):
 
 
 __all__ = (
-    "LicenseAgreementSerializer",
-    "LicenseAgreementWriteSerializer",
     "LicenseAssignmentRequestSerializer",
     "LicenseAssignmentResultSerializer",
     "LicenseCategorySerializer",

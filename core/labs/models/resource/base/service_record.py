@@ -31,8 +31,6 @@ class ResourceServiceRecordQuerySet(models.QuerySet):
 class ResourceServiceRecord(TimeStampedModel, UserStampedModel):
     """Calibration, inspection, maintenance or safety test of ANY lab resource.
 
-    One generic history replaces per-model fields such as
-    ``Bench.last_inspected_at`` and instrument-only calibration dates.
     Always link to the root model (see ``generic_links``).
     """
 
@@ -46,6 +44,7 @@ class ResourceServiceRecord(TimeStampedModel, UserStampedModel):
         PASS = "pass", _("Pass")
         FAIL = "fail", _("Fail")
         ADJUSTED = "adjusted", _("Adjusted")
+        UNKNOWN = "unknown", _("Not recorded")
 
     resource_content_type = models.ForeignKey(
         ContentType,

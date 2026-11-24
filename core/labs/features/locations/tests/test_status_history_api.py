@@ -40,9 +40,9 @@ def _resource(kind, room, station):
 @pytest.mark.parametrize("kind", ["room", "station"])
 def test_history_rows_name_the_actor(client, coordinator, room, station, kind):
     path, resource = _resource(kind, room, station)
-    for value in ("maintenance", "available"):
+    for value in ("restricted", "open"):
         changed = client.post(
-            f"/api/labs/{path}/{resource.pk}/actions/change-status", {"status": value}, format="json"
+            f"/api/labs/{path}/{resource.pk}/actions/change-lifecycle", {"access_policy": value}, format="json"
         )
         assert changed.status_code == 200, changed.data
 
@@ -50,9 +50,8 @@ def test_history_rows_name_the_actor(client, coordinator, room, station, kind):
 
     assert response.status_code == 200, response.data
     rows = response.data["data"]
-    # Records hold the lifecycle; the deprecated value written is kept in metadata.
     assert [row["status"]["value"] for row in rows] == ["in_service", "in_service"]
-    assert [row["metadata"]["legacy_status"] for row in rows] == ["available", "maintenance"]
+    assert [row["metadata"]["access_policy"] for row in rows] == ["open", "restricted"]
     assert rows[0]["actor"] == {
         "id": coordinator.pk,
         "username": coordinator.username,
@@ -63,13 +62,15 @@ def test_history_rows_name_the_actor(client, coordinator, room, station, kind):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind", ["room", "station"])
-def test_history_actor_is_null_when_unknown(client, room, station, kind):
+def test_history_preserves_existing_record_with_unknown_actor(client, room, station, kind):
     path, resource = _resource(kind, room, station)
-    resource.status_records.create(status="available")
+    resource.status_records.create(status="in_service", metadata={"legacy_status": "available"})
 
     rows = client.get(f"/api/labs/{path}/{resource.pk}/history").data["data"]
 
     assert rows[0]["actor"] is None
+    assert rows[0]["status"]["value"] == "in_service"
+    assert rows[0]["metadata"] == {"legacy_status": "available"}
 
 
 @pytest.mark.django_db
@@ -81,7 +82,7 @@ def test_history_query_count_does_not_grow_with_rows(client, room, station, kind
     def seed(count):
         for index in range(count):
             user = User.objects.create_user(username=f"loc-hist-{kind}-{resource.status_records.count()}-{index}")
-            record = resource.status_records.model(**{kind: resource, "status": "available"})
+            record = resource.status_records.model(**{kind: resource, "status": "in_service"})
             record.save(actor=user)
 
     def queries():

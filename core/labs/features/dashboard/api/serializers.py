@@ -14,15 +14,18 @@ from core.common.api.search import SearchQueryMixin
 from core.common.api.summary_serializers import embedded_resource, user_reference
 from core.common.api.wire_names import relation_object
 from core.infrastructure.storage.urls import get_media_url
-from core.labs.features.base.serializers import NamedReferenceSerializer
-from core.labs.models import ComputingActivityStatus
-from core.labs.models.resource.base.availability import LEGACY_BENCH_STATUSES
+from core.labs.features.base.serializers import (
+    ChoiceReferenceSerializer,
+    NamedReferenceSerializer,
+    to_choice_reference,
+)
+from core.labs.models import ComputingActivityStatus, ResourceCondition, ResourceLifecycleStatus
 
 
 class DashboardQueryFilterSerializer(SearchQueryMixin, PageNumberQuerySerializer):
     """Query parameter validation for dashboard bench listing.
 
-    ``q`` searches bench name, SKU, location, host and remote user (``search`` is a deprecated alias).
+    ``q`` searches bench name, SKU, location, host and remote user.
     """
 
     search_target = "search"
@@ -32,10 +35,11 @@ class DashboardQueryFilterSerializer(SearchQueryMixin, PageNumberQuerySerializer
         help_text="Filter benches by bench group identifier.",
     )
     lifecycle_status = serializers.ChoiceField(
-        choices=LEGACY_BENCH_STATUSES,
+        choices=ResourceLifecycleStatus.choices,
         required=False,
-        help_text="Filter by lifecycle status (planned, in_service, out_of_service, retired).",
+        help_text="Filter by bench lifecycle status.",
     )
+    condition = serializers.ChoiceField(choices=ResourceCondition.choices, required=False)
     activity_status = serializers.ChoiceField(
         choices=ComputingActivityStatus.choices,
         required=False,
@@ -250,7 +254,8 @@ class DashboardBenchSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     sku = serializers.CharField()
     name = serializers.CharField()
-    lifecycle_status = serializers.CharField()
+    lifecycle_status = ChoiceReferenceSerializer(read_only=True)
+    condition = ChoiceReferenceSerializer(read_only=True)
     bench_group = DashboardBenchGroupSerializer(allow_null=True)
     bench_type = DashboardBenchTypeSerializer(allow_null=True)
     location = DashboardLocationSerializer(allow_null=True)
@@ -404,7 +409,10 @@ class DashboardBenchSerializer(serializers.Serializer):
             "id": instance.id,
             "sku": instance.sku,
             "name": instance.name,
-            "lifecycle_status": getattr(instance, "legacy_status", None) or instance.lifecycle_status,
+            "lifecycle_status": to_choice_reference(instance.lifecycle_status, ResourceLifecycleStatus.choices),
+            "condition": to_choice_reference(
+                getattr(instance, "condition", ResourceCondition.OPERATIONAL), ResourceCondition.choices
+            ),
             "bench_group": bench_group_data,
             "bench_type": bench_type_data,
             "location": location_data,
@@ -434,6 +442,10 @@ class DashboardOperationalSummarySerializer(serializers.Serializer):
     lifecycle_distribution = serializers.DictField(
         child=serializers.IntegerField(),
         help_text="Breakdown of bench counts by lifecycle status.",
+    )
+    condition_distribution = serializers.DictField(
+        child=serializers.IntegerField(),
+        help_text="Breakdown of bench counts by condition.",
     )
     activity_distribution = serializers.DictField(
         child=serializers.IntegerField(),

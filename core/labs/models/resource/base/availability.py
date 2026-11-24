@@ -1,4 +1,4 @@
-"""Computed availability, activity and legacy status of rooms, stations and benches (never stored).
+"""Computed availability and activity of rooms, stations and benches (never stored).
 
 Design: ``docs/proposals/resource-status-and-downtime.md``. Two directions through the hierarchy
 room → station → bench:
@@ -34,8 +34,6 @@ from core.labs.models.resource.base.downtime import (
     downtime_reason_expression,
 )
 from core.labs.models.resource.base.status import (
-    LegacyLocationStatus,
-    ResourceAccessPolicy,
     ResourceActivityStatus,
     ResourceAvailability,
     ResourceCondition,
@@ -155,49 +153,8 @@ def booking_conflict_details(*, bench_booking_ids=(), equipment_booking_ids=()) 
     return details
 
 
-def legacy_status_expression(*, condition: str = "condition", activity: str = "activity_status") -> Case:
-    """Annotation: the deprecated seven-value room/station ``status``, from the separate facts.
-
-    Needs ``condition`` and ``activity_status`` annotations on the queryset (names configurable).
-    """
-    status = LegacyLocationStatus
-    return Case(
-        When(lifecycle_status=ResourceLifecycleStatus.RETIRED, then=Value(status.RETIRED.value)),
-        When(lifecycle_status=ResourceLifecycleStatus.PLANNED, then=Value(status.CLOSED.value)),
-        When(Q(**{condition: ResourceCondition.OUT_OF_SERVICE}), then=Value(status.ISSUE.value)),
-        When(Q(**{condition: ResourceCondition.IN_MAINTENANCE}), then=Value(status.MAINTENANCE.value)),
-        When(access_policy=ResourceAccessPolicy.RESTRICTED, then=Value(status.RESTRICTED.value)),
-        When(
-            Q(**{f"{activity}__in": (ResourceActivityStatus.ACTIVE, ResourceActivityStatus.SCHEDULED)}),
-            then=Value(status.RESERVED.value),
-        ),
-        default=Value(status.AVAILABLE.value),
-        output_field=CharField(),
-    )
-
-
-# The deprecated four-value bench ``status``: ``out_of_service`` is now an in-service bench with downtime.
-LEGACY_BENCH_STATUSES = (
-    *[(value, label) for value, label in ResourceLifecycleStatus.choices if value != ResourceLifecycleStatus.RETIRED],
-    (ResourceCondition.OUT_OF_SERVICE.value, ResourceCondition.OUT_OF_SERVICE.label),
-    (ResourceLifecycleStatus.RETIRED.value, ResourceLifecycleStatus.RETIRED.label),
-)
-
-
-def legacy_bench_status_expression(*, condition: str = "condition") -> Case:
-    """Annotation: the deprecated bench ``status`` (``planned``, ``in_service``, ``out_of_service``, ``retired``)."""
-    return Case(
-        When(
-            Q(lifecycle_status=ResourceLifecycleStatus.IN_SERVICE) & ~Q(**{condition: ResourceCondition.OPERATIONAL}),
-            then=Value(ResourceCondition.OUT_OF_SERVICE.value),
-        ),
-        default="lifecycle_status",
-        output_field=CharField(),
-    )
-
-
 def with_bench_state(queryset, *, now: datetime | None = None):
-    """Annotate a ``Bench`` queryset with its own and its parents' condition, its activity and legacy status.
+    """Annotate a ``Bench`` queryset with its own and its parents' condition, and its activity.
 
     Callers ``select_related("setup_location__room")`` to read the parents' lifecycle without extra queries.
     """
@@ -212,11 +169,11 @@ def with_bench_state(queryset, *, now: datetime | None = None):
         room_downtime_reason=downtime_reason_expression(Room, outer_ref="setup_location__room_id"),
         room_downtime_booking_access=downtime_booking_access_expression(Room, outer_ref="setup_location__room_id"),
         activity_status=activity_expression("bench", now=now),
-    ).annotate(legacy_status=legacy_bench_status_expression())
+    )
 
 
 def with_location_state(queryset, resource_type: str, *, now: datetime | None = None):
-    """Annotate a ``Room`` or ``Station`` queryset with condition, activity and the deprecated ``status``.
+    """Annotate a ``Room`` or ``Station`` queryset with condition and activity.
 
     A station also gets its room's condition (``room_condition``); select ``room`` for its lifecycle.
     """
@@ -230,7 +187,7 @@ def with_location_state(queryset, resource_type: str, *, now: datetime | None = 
         annotations["room_condition"] = condition_expression(Room, outer_ref="room_id")
         annotations["room_downtime_reason"] = downtime_reason_expression(Room, outer_ref="room_id")
         annotations["room_downtime_booking_access"] = downtime_booking_access_expression(Room, outer_ref="room_id")
-    return queryset.annotate(**annotations).annotate(legacy_status=legacy_status_expression())
+    return queryset.annotate(**annotations)
 
 
 def bench_availability(bench: Any) -> dict[str, Any]:
@@ -329,15 +286,12 @@ def level_of(resource_type: str, obj: Any, *, annotated: Any = None, prefix: str
 
 
 __all__ = [
-    "LEGACY_BENCH_STATUSES",
     "HierarchyLevel",
     "activity_expression",
     "bench_bookings_blocked_by_parents",
     "booking_conflict_details",
     "availability",
     "bench_availability",
-    "legacy_bench_status_expression",
-    "legacy_status_expression",
     "level_of",
     "location_availability",
     "with_bench_state",

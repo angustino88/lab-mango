@@ -71,54 +71,9 @@ _ID_ATTRIBUTES = {
     "owner": "owner_id",
 }
 
-# Old equipment status (template v1) → (lifecycle, condition, note, error).
-_LEGACY_EQUIPMENT_STATUS: dict[str, tuple[str | None, str | None, str | None, str | None]] = {
-    "in use": ("in_service", None, None, None),
-    "available": ("in_service", None, None, None),
-    "in storage": ("in_service", None, None, None),
-    "on order": ("planned", None, None, None),
-    "maintenance": ("in_service", "in_maintenance", None, None),
-    "broken": ("in_service", "out_of_service", None, None),
-    "borrowed": (
-        None,
-        None,
-        None,
-        "Borrowed needs a loan with a borrower: import the unit as In service and record the loan in the app.",
-    ),
-    "transferred": (
-        None,
-        None,
-        None,
-        "Transferred units are no longer in the lab: record the transfer in the app "
-        "after importing the unit as In service, or leave the unit out.",
-    ),
-    "lost": (None, None, None, "Lost units: import as In service, then record the loss in the app."),
-}
-
-
-def _status_key(value: str) -> str:
-    return " ".join(value.lower().replace("-", " ").replace("_", " ").split())
-
-
 def _equipment_state(run: ImportRun, row: Row) -> tuple[str, str | None]:
-    lifecycle = row.get("lifecycle_state")
+    lifecycle = row.get("lifecycle_state") or "in_service"
     condition = row.get("condition")
-    status = row.get("legacy_status")
-    if status is not None and lifecycle is None and condition is None:
-        mapped = _LEGACY_EQUIPMENT_STATUS.get(_status_key(status))
-        if mapped is None:
-            raise run.fail(
-                row,
-                f"Unknown status '{status}'. Use the Lifecycle and Condition columns.",
-                key="legacy_status",
-                code="invalid_value",
-            )
-        lifecycle, condition, _, error = mapped
-        if error:
-            raise run.fail(row, error, key="legacy_status", code="status_not_importable")
-        if _status_key(status) == "in use" and row.sheet.key == "equipment":
-            row.values["_expects_bench"] = True
-    lifecycle = lifecycle or "in_service"
     if lifecycle == "planned" and condition not in (None, "operational"):
         raise run.fail(row, "A planned unit has no condition yet; leave Condition empty.", key="condition")
     return lifecycle, None if condition == "operational" else condition
@@ -461,14 +416,6 @@ def import_equipment(run: ImportRun) -> None:
         return "created" if current is None else "updated"
 
     run.each("bench_placements", placement, natural_key="__row__")
-    for row in run.rows("equipment"):
-        if row.values.get("_expects_bench") and not row.failed and row.get("sku").casefold() not in placed:
-            run.row_warning(
-                row,
-                "Status In-use, but the unit has no row in Bench Placements.",
-                key="legacy_status",
-                code="status_mapped",
-            )
 
 
 __all__ = ["import_equipment"]

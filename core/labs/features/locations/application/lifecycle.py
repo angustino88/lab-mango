@@ -1,4 +1,4 @@
-"""Lifecycle and access-policy changes of rooms and stations, and the deprecated ``change-status`` mapping.
+"""Lifecycle and access-policy changes of rooms and stations.
 
 Design: ``docs/proposals/resource-status-and-downtime.md``. The caller holds the resource row lock and
 opens the transaction. Lifecycle history stays in the status records (``status`` holds the lifecycle
@@ -8,16 +8,10 @@ value; an access-policy change is recorded with ``metadata.access_policy``).
 from typing import Any
 
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 
-from core.labs.features.locations.exceptions import LocationBookingConflict, LocationConflict
+from core.labs.features.locations.exceptions import LocationConflict
 from core.labs.models import (
-    Bench,
-    BenchBooking,
-    DowntimeReason,
-    LegacyLocationStatus,
     ResourceAccessPolicy,
-    ResourceCondition,
     ResourceDowntime,
     ResourceLifecycleStatus,
     Room,
@@ -25,7 +19,6 @@ from core.labs.models import (
     Station,
     StationStatusRecord,
 )
-from core.labs.models.resource.base.availability import booking_conflict_details
 from core.labs.models.resource.base.status import LIFECYCLE_TRANSITIONS, ensure_lifecycle_transition
 
 
@@ -83,105 +76,8 @@ def record_initial(
     record_model(**{record_field: resource}, status=resource.lifecycle_status).save(actor=actor)
 
 
-def apply_legacy_status(
-    resource: Room | Station,
-    *,
-    record_model: type[RoomStatusRecord] | type[StationStatusRecord],
-    record_field: str,
-    actor,
-    status: str,
-    metadata: dict[str, Any] | None = None,
-    has_active_children: bool = False,
-):
-    """Map a deprecated seven-value ``status`` write onto lifecycle, access policy and downtime (RS3).
-
-    ``issue``, ``closed`` and ``maintenance`` open a window from now with no end, so they are refused
-    (``LocationBookingConflict``) while reserving bookings of the covered benches end after now.
-    ``reserved`` is computed from bookings now, so it cannot be set.
-    """
-    legacy = LegacyLocationStatus
-    metadata = {**({} if metadata is None else metadata), "legacy_status": status}
-    common = {"record_model": record_model, "record_field": record_field, "actor": actor}
-    if status == legacy.RESERVED:
-        raise ValidationError({"status": "Reserved is computed from bookings and cannot be set."})
-    if status == legacy.RETIRED:
-        return _record_anyway(
-            apply_lifecycle(
-                resource,
-                lifecycle_status=ResourceLifecycleStatus.RETIRED,
-                metadata=metadata,
-                has_active_children=has_active_children,
-                **common,
-            ),
-            resource,
-            metadata=metadata,
-            **common,
-        )
-    if status == legacy.RESTRICTED:
-        record = apply_lifecycle(resource, access_policy=ResourceAccessPolicy.RESTRICTED, metadata=metadata, **common)
-        return _record_anyway(record, resource, metadata=metadata, **common)
-    # Every other old value described a room or station that exists and is run by the lab.
-    lifecycle = ResourceLifecycleStatus.IN_SERVICE
-    access = ResourceAccessPolicy.OPEN if status == legacy.AVAILABLE else None
-    record = apply_lifecycle(resource, lifecycle_status=lifecycle, access_policy=access, metadata=metadata, **common)
-    if status == legacy.AVAILABLE:
-        ResourceDowntime.objects.end_current(resource, actor=actor)
-    else:
-        condition, reason = {
-            legacy.ISSUE: (ResourceCondition.OUT_OF_SERVICE, DowntimeReason.FAULT),
-            legacy.CLOSED: (ResourceCondition.OUT_OF_SERVICE, DowntimeReason.OTHER),
-            legacy.MAINTENANCE: (ResourceCondition.IN_MAINTENANCE, DowntimeReason.MAINTENANCE),
-        }[legacy(status)]
-        if ResourceDowntime.objects.condition_of(resource) != condition:
-            _ensure_no_reserving_bookings(resource)
-        ResourceDowntime.objects.start_now(resource, condition=condition, reason=reason, actor=actor)
-    return _record_anyway(record, resource, metadata=metadata, **common)
-
-
-def _ensure_no_reserving_bookings(resource: Room | Station) -> None:
-    """Lock the covered benches (room, then stations, then benches, in PK order) and refuse when bookings remain.
-
-    Same lock order and booking rule as ``downtime.schedule_downtime`` for an open-ended window from now.
-    """
-    if isinstance(resource, Room):
-        station_ids = list(
-            Station.objects.select_for_update().filter(room_id=resource.pk).order_by("pk").values_list("pk", flat=True)
-        )
-    else:
-        station_ids = [resource.pk]
-    bench_ids = list(
-        Bench.objects.select_for_update()
-        .filter(setup_location_id__in=station_ids)
-        .order_by("pk")
-        .values_list("pk", flat=True)
-    )
-    booking_ids = list(
-        BenchBooking.objects.filter(
-            bench_id__in=bench_ids,
-            status__in=BenchBooking.ACTIVE_STATUSES,
-            approval_status__in=BenchBooking.RESERVING_APPROVAL_STATUSES,
-            ends_at__gt=timezone.now(),
-        )
-        .order_by("pk")
-        .values_list("pk", flat=True)
-    )
-    if booking_ids:
-        raise LocationBookingConflict(details=booking_conflict_details(bench_booking_ids=booking_ids))
-
-
-def _record_anyway(record, resource, *, record_model, record_field, actor, metadata):
-    """The old endpoint always appended a record; keep that so its history shows every call."""
-    if record is not None:
-        return record
-    record = record_model(**{record_field: resource}, status=resource.lifecycle_status, metadata=metadata)
-    record.full_clean()
-    record.save(actor=actor)
-    return record
-
-
 __all__ = [
     "LIFECYCLE_TRANSITIONS",
-    "apply_legacy_status",
     "apply_lifecycle",
     "ensure_lifecycle_transition",
     "record_initial",

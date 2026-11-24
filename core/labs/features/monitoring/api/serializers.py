@@ -69,53 +69,24 @@ class MonitoringEventCreateSerializer(serializers.Serializer):
     agent_version = serializers.CharField(required=False, allow_blank=True, default="")
     event_id = serializers.UUIDField(required=False, default=uuid.uuid4)
 
-    # Compatibility write fields
-    source = serializers.CharField(required=False, allow_blank=True)
-    event_type = serializers.CharField(required=False, allow_blank=True)
-    category = serializers.CharField(required=False, allow_blank=True)
-    object_name = serializers.CharField(required=False, allow_blank=True)
-    object_id = serializers.CharField(required=False, allow_blank=True)
-    details = serializers.JSONField(required=False)
-
     def validate(self, attrs: dict) -> dict:
         if not attrs.get("computer_sku") and not attrs.get("computer_id"):
             raise serializers.ValidationError("Either computer_sku or computer_id must be provided.")
-        if "source" in attrs and "agent_id" not in attrs:
-            attrs["agent_id"] = attrs.pop("source")
-        if "event_type" in attrs:
-            raw_action = attrs.pop("event_type")
-            if raw_action in MonitoringEventAction.values:
-                attrs["action"] = raw_action
-            else:
-                attrs["action"] = MonitoringEventAction.CUSTOM.value
-                attrs["action_name"] = raw_action
-        if "category" in attrs:
-            attrs["subject_type"] = attrs.pop("category")
-        if "object_name" in attrs:
-            attrs["subject_name"] = attrs.pop("object_name")
-        if "object_id" in attrs:
-            attrs["subject_id"] = attrs.pop("object_id")
-        if "details" in attrs:
-            attrs["payload"] = attrs.pop("details")
         return attrs
 
 
 class MonitoringEventQuerySerializer(serializers.Serializer):
     computing_id = serializers.IntegerField(required=False, min_value=1)
-    computer_id = serializers.IntegerField(required=False)
     computer_sku = serializers.CharField(required=False)
     action = serializers.CharField(required=False)
     subject_type = serializers.CharField(required=False)
     bench_id = serializers.IntegerField(required=False)
-    lab = serializers.IntegerField(required=False)
     from_date = serializers.DateTimeField(required=False)
     to_date = serializers.DateTimeField(required=False)
-    from_date_time = serializers.DateTimeField(required=False)
-    to_date_time = serializers.DateTimeField(required=False)
 
 
 class MonitoringEventListQuerySerializer(PageNumberQuerySerializer, MonitoringEventQuerySerializer):
-    """Paging plus the event filters the list handler reads (``computer_id`` is the legacy alias)."""
+    """Paging plus the canonical monitoring event list filters."""
 
 
 __all__ = [

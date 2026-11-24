@@ -51,7 +51,7 @@ class TestBenchBookingList:
         for query in (
             {},
             {"view_side": "my_booking", "page": 1, "page_size": 10},
-            {"view_side": "my_booking", "page": 1, "page_size": 10, "creator": actor.username},
+            {"view_side": "my_booking", "page": 1, "page_size": 10, "creator_id": actor.pk},
         ):
             response = _client(actor).get(URL, query)
             assert response.status_code == 200
@@ -406,7 +406,7 @@ class TestBenchBookingList:
     def test_temporal_blank_does_not_validate_unrelated_blank_query_filters(
         self, api_client, value, detail_code, detail_message
     ):
-        query = {"creator": "", "status": "", "starts_at_after": value}
+        query = {"booking_code": "", "status": "", "starts_at_after": value}
         response = api_client.get(URL, query)
         assert response.status_code == 400
         self._assert_query_error(

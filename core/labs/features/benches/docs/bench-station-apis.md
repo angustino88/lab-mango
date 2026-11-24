@@ -131,11 +131,10 @@ The [explicit serializers](../api/serializers.py) accept:
 | `image` | Image upload, not an arbitrary nested resource |
 | `description`, `documentation_url`, `criticality` | Workspace text, validated URL, free-form classification; criticality is not a fixed enum |
 | `setup_location`, `station_slot` | Nullable positive IDs; station slot requires a matching station |
-| `lifecycle_status` | Not writable here (drift fixed in docs): set with `POST /api/labs/benches/{id}/actions/change-lifecycle` to `planned`, `in_service` or `retired` (terminal). Out of service is a downtime window (`/api/labs/downtimes`). Reads add `condition`, `availability` (follows station and room) and `activity_status`; `status` is the deprecated four-value field |
+| `lifecycle_status` | Not writable here (drift fixed in docs): set with `POST /api/labs/benches/{id}/actions/change-lifecycle` to `planned`, `in_service` or `retired` (terminal). Out of service is a downtime window (`/api/labs/downtimes`). Reads add `condition`, `availability` (follows station and room) and `activity_status` |
 | `requested_power_w`, `requested_load_kg`, `requested_cooling_w` | Nullable nonnegative integers; zero is valid; null contributes zero to station aggregates |
 | `required_utilities` | JSON object describing requirements, not a list |
 | `commissioning_date` | Nullable date |
-| `last_inspected_at`, `next_inspection_due_at` | Nullable date-times; no inspection ordering policy currently enforced |
 
 Ordinary bench resource read responses include the standard bench fields plus `id`,
 `uid`, `created_at`, `updated_at`, `setup_location_path`, `is_favorite`,
@@ -146,7 +145,7 @@ The dashboard clicked-bench endpoint returns category-grouped equipment, active
 license summaries, activity freshness, and booking schedule data. Resource mapping
 endpoints return graphic-only placement relationships and license summaries. All
 response fields are read-only.
-The compact select projection exposes only `id`, `sku`, `name`; its `status`/`lifecycle_status` filter uses the deprecated four values.
+The compact select projection exposes only `id`, `sku`, `name`; its `lifecycle_status` filter uses `ResourceLifecycleStatus` (`planned`, `in_service`, `retired`).
 Favorites expose `id`, `bench`, `created` (not the user's personal fields).
 
 The bench equipment subresource contains live assignments to non-deleted equipment,
@@ -173,20 +172,21 @@ This differs from placement PATCH, which requires at least one placement field.
   preserve existing values. Full detach sends both explicitly as null. Sending
   only `station_slot=null` keeps the station association. Sending only
   `setup_location=null` while a slot remains assigned fails domain validation.
-- A slot must belong to the selected station and be active. `available` and
-  `reserved` slots may be occupied; an `occupied` slot is allowed only when
-  staying in that same slot and no other current/historical bench owns it.
-  `maintenance`, `out_of_service`, `retired` and inactive slots reject placement.
+- A slot must belong to the selected station and have `service_status=in_service`.
+  Occupancy (`is_occupied`) is derived from live bench placement rather than a
+  mutated slot status; staying in the same slot is allowed only when no other
+  current/historical bench owns it. `out_of_service` and `retired` slots reject
+  placement.
 - A nonempty compatible-type set requires the bench's type, including rejecting
   an untyped bench. Empty compatibility means unrestricted. Slot power/load and
   utilities are checked in addition to station totals. Slot dimension/network
   fields are not additional bench-demand checks; there is no slot cooling limit.
-- Moving/detaching releases the old slot only if its status is `occupied`;
-  successful placement changes the new slot to `occupied` atomically.
-- Lifecycle is an explicit bench field, not equipment-derived status. No
-  transition graph or lifecycle-based placement exclusion currently exists.
-  `retired` is not soft deletion: every non-deleted configured bench still
-  contributes to capacity and selector counts, regardless of lifecycle.
+- Moving or detaching a bench updates its `station_slot` reference atomically;
+  slot occupancy is recomputed from live bench placement.
+- Lifecycle is an explicit bench field (`planned`, `in_service`, `retired`), not
+  equipment-derived status. `retired` is not soft deletion: every non-deleted
+  configured bench still contributes to capacity and selector counts, regardless
+  of lifecycle.
 - Bench DELETE rejects any assignment with `unassigned_at=null`, even if its
   equipment is deleted. Unassign first. Historical assignments are retained.
   Successful deletion clears placement, stamps `deleted_at`, and releases an
@@ -213,7 +213,7 @@ slot type; dimensions, load, utility and allocated room capacity must fit.
 Explicitly clear both `room` and `slot` to detach an occupied room placement.
 
 Station-slot writes accept `position_index` (zero-based), `slot_code`, `label`,
-`is_active`, `status`, `width_mm`, `depth_mm`, `height_mm`, `max_load_kg`,
+`service_status`, `width_mm`, `depth_mm`, `height_mm`, `max_load_kg`,
 `power_capacity_w`, `network_port_count`, `utilities`, `compatible_bench_types`
 (list of positive IDs). Codes are trimmed/uppercased and unique per station,
 as are position indexes. Configured positions, including inactive ones, must
@@ -230,21 +230,23 @@ requirements are ignored, true requires a truthy value, numbers require a
 numeric value at least as large, and other values require equality. This is a
 simple object policy, not a typed engineering-units schema.
 
-Station projections include `status`, `active_bench_count`,
-`allocated_power_w`, `available_power_w`, `available_slot_count`, `location_path`,
-and nested `bench_slots`. Available power subtracts reserved and allocated bench
-power; null station capacity yields null available power. Available-slot count
-requires active, `available`, unreferenced slots. Separate correlated subqueries
+Station projections include `lifecycle_status`, `access_policy`, `condition`,
+`availability`, `activity_status`, `active_bench_count`, `allocated_power_w`,
+`available_power_w`, `available_slot_count`, `location_path`, and nested
+`bench_slots`. Available power subtracts reserved and allocated bench power;
+null station capacity yields null available power. Available-slot count requires
+`in_service`, unoccupied, unreferenced slots. Separate correlated subqueries
 prevent equipment/bench/slot join fan-out from inflating aggregates.
 
-Station `status` is a stored column (like equipment `lifecycle_state`), default
-`available`, limited to the choices below by the `station_status_valid` check
-constraint. Creating a station writes a first history record with that value in the
-same transaction. Station status POST accepts `status` (`available`, `reserved`,
-`issue`, `restricted`, `closed`, `maintenance`, `retired`) and optional object
-`metadata`; under the station row lock it appends a history record and updates the
-column. Reading station projections does not create history. Stations have no
-`operational_status` field.
+Station `lifecycle_status` (`planned`, `in_service`, `retired`, default
+`in_service`, check constraint `station_lifecycle_valid`) and `access_policy`
+(`open`, `restricted`, default `open`, check constraint
+`station_access_policy_valid`) are stored columns. Creating a station writes an
+initial `StationStatusRecord` in the same transaction. Lifecycle and access
+changes go through `POST /api/labs/stations/{station_id}/actions/change-lifecycle`
+under the station row lock, appending a history record; condition changes use
+the downtime API (`/api/labs/downtimes`). Reading station projections does not
+create history. Stations have no `operational_status` or composite `status` field.
 Station types accept only `name`; DELETE is blocked by live or historical stations.
 
 ## Errors and response envelopes

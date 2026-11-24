@@ -236,8 +236,6 @@ paths:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}
   /api/labs/rooms/{room_id}/actions/change-lifecycle:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1change-lifecycle
-  /api/labs/rooms/{room_id}/actions/change-status:
-    $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1change-status
   /api/labs/rooms/{room_id}/actions/force-delete:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1rooms~1{room_id}~1actions~1force-delete
   /api/labs/rooms/{room_id}/actions/generate-slots:
@@ -268,8 +266,6 @@ paths:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}
   /api/labs/stations/{station_id}/actions/change-lifecycle:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1change-lifecycle
-  /api/labs/stations/{station_id}/actions/change-status:
-    $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1change-status
   /api/labs/stations/{station_id}/actions/force-delete:
     $ref: ./labs-locations.yml#/paths/~1api~1labs~1stations~1{station_id}~1actions~1force-delete
   /api/labs/stations/{station_id}/actions/place:
@@ -364,8 +360,6 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1actions~1return
   /api/labs/equipment/{equipment_id}/activity:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1activity
-  /api/labs/equipment/{equipment_id}/assignment:
-    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1assignment
   /api/labs/equipment/{equipment_id}/hardware-ids:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1hardware-ids
   /api/labs/equipment/{equipment_id}/hardware-ids/{hardware_id_id}:
@@ -482,8 +476,6 @@ paths:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices
   /api/labs/expected-devices/{expected_device_id}:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices~1{expected_device_id}
-  /api/labs/expected-devices/legacy-suggestions:
-    $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1expected-devices~1legacy-suggestions
   /api/labs/monitoring-events:
     $ref: ./labs-monitoring.yml#/paths/~1api~1labs~1monitoring-events
   /api/labs/monitoring-events/{id}:
@@ -500,6 +492,8 @@ paths:
     $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}~1actions~1change-booking-access
   /api/labs/downtimes/{downtime_id}/actions/end:
     $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}~1actions~1end
+  /api/labs/expenses:
+    $ref: ./labs-expense.yml#/paths/~1api~1labs~1expenses
   /api/labs/expenses/{expense_id}/payments:
     $ref: ./labs-expense.yml#/paths/~1api~1labs~1expenses~1{expense_id}~1payments
   /api/labs/expenses/report:
@@ -548,8 +542,6 @@ paths:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1assign
   /api/labs/licenses/{license_id}/actions/change-status:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1actions~1change-status
-  /api/labs/licenses/{license_id}/agreements:
-    $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1agreements
   /api/labs/licenses/{license_id}/history:
     $ref: ./labs-licenses.yml#/paths/~1api~1labs~1licenses~1{license_id}~1history
   /api/labs/licenses/{license_id}/image:

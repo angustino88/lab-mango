@@ -2,7 +2,6 @@
 
 from typing import Any, ClassVar
 
-from asgiref.sync import sync_to_async
 from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework import serializers, status
 from rest_framework.request import Request
@@ -21,7 +20,6 @@ from core.labs.features.equipment.api.serializers import (
     EquipmentTypeSerializer,
 )
 from core.labs.features.equipment.application import (
-    AssignEquipmentInput,
     CancelReservationInput,
     ChangeConditionInput,
     ChangeLifecycleInput,
@@ -36,9 +34,7 @@ from core.labs.features.equipment.application import (
     ReserveEquipmentBatchInput,
     ReturnEquipmentBatchInput,
     ReturnEquipmentInput,
-    UnassignEquipmentInput,
     UpdateReservationInput,
-    assign_equipment,
     cancel_reservation,
     change_condition,
     change_lifecycle,
@@ -54,12 +50,10 @@ from core.labs.features.equipment.application import (
     reserve_equipment_batch,
     return_equipment,
     return_equipment_batch,
-    unassign_equipment,
     update_reservation,
 )
 from core.labs.features.equipment.exceptions import LoanIdempotencyKeyRequired
 from core.labs.features.equipment.queries import (
-    get_active_equipment_assignment,
     list_equipment,
     list_equipment_options,
 )
@@ -90,8 +84,6 @@ from core.labs.features.equipment.queries.reference_data import (
 )
 from core.labs.features.equipment.queries.reservations import list_reservations
 from core.labs.features.equipment.queries.status_history import equipment_status_history
-from core.labs.models import Equipment
-from core.labs.models.resource.equipment.assignment import EquipmentAssignment
 
 from ..queries.summaries import (
     get_computing_activity_summary,
@@ -103,8 +95,6 @@ from .resource_filters import EQUIPMENT_FILTERS
 from .serializers import (
     ComputingActivitySummarySerializer,
     DepartmentSerializer,
-    EquipmentAssignmentResultSerializer,
-    EquipmentAssignmentSerializer,
     EquipmentChangeConditionSerializer,
     EquipmentChangeLifecycleSerializer,
     EquipmentExtendLoanSerializer,
@@ -180,65 +170,8 @@ class ComputingActivitySummaryAPIView(EquipmentAPIView):
         return self.respond(get_computing_activity_summary())
 
 
-_ASSIGNMENT_WRITE = dict(
-    request=EquipmentAssignmentSerializer,
-    success=ResponseContract.success("EquipmentAssignment", EquipmentAssignmentResultSerializer),
-    bad_request=ResponseContract.bad_request(),
-    validation_error=ResponseContract.problem(status.HTTP_422_UNPROCESSABLE_ENTITY),
-    not_found=ResponseContract.not_found(),
-    conflict=ResponseContract.conflict(),
-)
-
-
-class EquipmentAssignmentAPIView(EquipmentAPIView):
-    """The equipment's bench assignment, a singleton sub-resource: PUT sets it, DELETE releases it."""
-
-    put_contract = OperationContract(**_ASSIGNMENT_WRITE)
-    get_contract = OperationContract(
-        success=ResponseContract.success("EquipmentAssignmentDetail", EquipmentAssignmentResultSerializer),
-        not_found=ResponseContract.not_found(),
-    )
-    delete_contract = OperationContract(
-        success=ResponseContract.no_content(),
-        not_found=ResponseContract.not_found(),
-    )
-
-    def handle_put(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
-        serializer, error = self.validate_request()
-        if error is not None:
-            return error
-        assignment = assign_equipment(
-            AssignEquipmentInput(
-                equipment_id=equipment_id,
-                bench_id=serializer.validated_data["bench_id"],
-                role=serializer.validated_data["role"],
-                position=serializer.validated_data["position"],
-            ),
-            actor=request.user,
-        )
-        return self.respond(assignment)
-
-    async def get(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
-        try:
-            assignment = await sync_to_async(get_active_equipment_assignment)(equipment_id=equipment_id)
-        except EquipmentAssignment.DoesNotExist:
-            return self.respond_problem("not_found")
-        data = EquipmentAssignmentResultSerializer(assignment, context={"request": request}).data
-        return self.respond_data(data)
-
-    async def delete(self, request: Request, equipment_id: int, *args, **kwargs) -> Response:
-        try:
-            await sync_to_async(unassign_equipment)(UnassignEquipmentInput(equipment_id), actor=request.user)
-        except Equipment.DoesNotExist:
-            return self.respond_problem("not_found")
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 class EquipmentPlacementAPIView(EquipmentAPIView):
-    """Where a unit is: on a bench, at a station, in a room, or at an untracked place.
-
-    ``/assignment`` keeps showing bench placements only; this route shows every kind.
-    """
+    """Where a unit is: on a bench, at a station, in a room, or at an untracked place."""
 
     get_contract = OperationContract(
         success=ResponseContract.success("EquipmentPlacementDetail", EquipmentPlacementSerializer),

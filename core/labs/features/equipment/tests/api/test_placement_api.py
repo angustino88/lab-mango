@@ -43,8 +43,6 @@ def test_put_get_delete_room_placement(coordinator_client, unit):
 
     got = coordinator_client.get(url)
     assert got.status_code == 200 and got.data["data"]["id"] == body["id"]
-    # The bench-only assignment route does not report a room placement.
-    assert coordinator_client.get(f"{ROOT}{unit.pk}/assignment").status_code == 404
 
     assert coordinator_client.delete(url).status_code == 204
     assert coordinator_client.delete(url).status_code == 204
@@ -59,11 +57,9 @@ def test_put_moves_off_a_bench_in_one_call(coordinator_client, unit):
     on_bench = coordinator_client.put(url, {"bench_id": bench.pk, "role": "primary"}, format="json")
     assert on_bench.status_code == 200, on_bench.data
     assert on_bench.data["data"]["target_type"]["value"] == "bench"
-    assert coordinator_client.get(f"{ROOT}{unit.pk}/assignment").status_code == 200
     moved = coordinator_client.put(url, {"room_id": room.pk}, format="json")
     assert moved.status_code == 200, moved.data
     assert moved.data["data"]["target_type"]["value"] == "room"
-    assert coordinator_client.get(f"{ROOT}{unit.pk}/assignment").status_code == 404
 
 
 @pytest.mark.django_db
@@ -132,19 +128,3 @@ def test_list_placement_query_count_does_not_grow_with_rows(coordinator_client, 
     for index in range(2, 8):
         seed(index)
     assert count() == small
-
-
-@pytest.mark.django_db
-def test_put_sets_the_assignment_and_post_is_removed(coordinator_client, unit):
-    """ACT-1: the assignment is a sub-resource set with PUT; POST on it no longer exists."""
-    first, second = (Bench.objects.create(name=f"Assign bench {i}", sku=f"AS-BENCH-{i}") for i in (1, 2))
-    url = f"{ROOT}{unit.pk}/assignment"
-
-    put = coordinator_client.put(url, {"bench_id": first.pk}, format="json")
-    assert put.status_code == 200, put.content
-    assert put.data["data"]["bench"]["id"] == first.pk
-    assert "Deprecation" not in put
-
-    coordinator_client.delete(url)
-    post = coordinator_client.post(url, {"bench_id": second.pk}, format="json")
-    assert post.status_code == 405, post.content

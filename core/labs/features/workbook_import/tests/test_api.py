@@ -325,7 +325,7 @@ def test_create_only_refuses_an_existing_asset_tag(post_workbook):
     assert errors and errors[0]["sheet"] == "Rooms" and errors[0]["row"] == 4
 
 
-def test_v1_template_headers_and_statuses_are_mapped(post_workbook):
+def test_retired_status_columns_are_ignored_with_warnings(post_workbook):
     sheets = {
         "Rooms": (
             ["Asset Tag (SKU) *", "Name", "Status", "Data Check"],
@@ -336,7 +336,6 @@ def test_v1_template_headers_and_statuses_are_mapped(post_workbook):
             ["Asset Tag (SKU) *", "Name", "Category *", "Kind *", "Status", "Purchase Price"],
             [
                 ["PSU-1", "Supply", "Power", "PSU", "Broken", 100],
-                ["PSU-2", "Gone", "Power", "PSU", "Transferred", None],
             ],
         ),
         "Power": (
@@ -349,23 +348,17 @@ def test_v1_template_headers_and_statuses_are_mapped(post_workbook):
 
     response = post_workbook(sheets, apply=True)
 
-    assert response.status_code == 422
-    fields = {detail["field"]: detail for detail in response.json()["error"]["details"]}
-    assert fields["Equipment[5].Status"]["code"] == "status_not_importable"
-    equipment_rows = cast(list[Any], sheets["Equipment"][1])
-    equipment_rows.pop()
-    response = post_workbook(sheets, apply=True)
     assert response.status_code == 200, response.json()
     warnings = {(p["sheet"], p["code"]) for p in _problems(response, "warning")}
     assert ("Licenses", "sheet_not_imported") in warnings
-    assert ("Rooms", "status_mapped") in warnings
-    assert ("Equipment", "column_not_imported") in warnings  # Purchase Price is not imported yet
+    assert ("Rooms", "column_not_imported") in warnings
+    assert ("Equipment", "column_not_imported") in warnings
     assert ("Power", "column_not_imported") not in warnings  # v1 auto columns (Name ...) are skipped silently
     room = Room.objects.get(sku="RM-V1")
-    assert ResourceDowntime.objects.for_resource(room).filter(condition="in_maintenance").exists()
+    assert not ResourceDowntime.objects.for_resource(room).exists()
     psu = Equipment.objects.get(sku="PSU-1")
     assert psu.channels == 3 and psu.power_rating == 300
-    assert ResourceDowntime.objects.for_resource(psu).filter(condition="out_of_service").exists()
+    assert not ResourceDowntime.objects.for_resource(psu).exists()
 
 
 def test_only_labs_administrators_can_import(api_client, categories):
