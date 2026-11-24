@@ -133,18 +133,20 @@ def test_legacy_kind_post_creates_allocation_through_endpoint(api_client, user):
 
 
 @pytest.mark.parametrize(
-    "payload",
+    "payload_factory",
     (
-        {"resource_id": 1, "acquisition_price": {"amount": "1.00", "currency": "EUR"}},
-        {
+        lambda: {"resource_id": 1, "acquisition_price": {"amount": "1.00", "currency": "EUR"}},
+        lambda: {
             "resource_kind": "bench",
-            "resource_type_id": 1,
+            "resource_type_id": ContentType.objects.get_for_model(Equipment).pk,
             "resource_id": 1,
             "acquisition_price": {"amount": "1.00", "currency": "EUR"},
         },
     ),
+    ids=("missing_kind", "mismatched_resource_type_id"),
 )
-def test_invalid_kind_input_returns_422_without_creating_allocation(api_client, user, payload):
+def test_invalid_kind_input_returns_422_without_creating_allocation(api_client, user, payload_factory):
+    payload = payload_factory()
     with patch(
         "core.labs.features.procurement.api.views.public.create_purchase_item_resource",
     ) as create_allocation:

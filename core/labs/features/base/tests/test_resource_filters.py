@@ -25,16 +25,16 @@ from core.labs.models.resource.base.resource import ResourceModel
 
 
 @pytest.mark.parametrize(
-    "spec,selector",
+    "spec,selector,expected_state_filters,has_composite_status",
     [
-        (ROOM_FILTERS, list_rooms),
-        (STATION_FILTERS, list_stations),
-        (BENCH_FILTERS, list_benches),
-        (EQUIPMENT_FILTERS, list_equipment),
-        (LICENSE_FILTERS, list_licenses),
+        (ROOM_FILTERS, list_rooms, {"lifecycle_status", "access_policy", "condition", "activity_status"}, False),
+        (STATION_FILTERS, list_stations, {"lifecycle_status", "access_policy", "condition", "activity_status"}, False),
+        (BENCH_FILTERS, list_benches, {"lifecycle_status", "condition", "activity_status"}, False),
+        (EQUIPMENT_FILTERS, list_equipment, {"status"}, True),
+        (LICENSE_FILTERS, list_licenses, {"status"}, True),
     ],
 )
-def test_common_fields_work_for_every_resource(spec, selector):
+def test_common_fields_work_for_every_resource(spec, selector, expected_state_filters, has_composite_status):
     queryset = selector()
     assert issubclass(queryset.model, ResourceModel)
     serializer = spec.serializer("ResourceTestQuery")(
@@ -46,9 +46,16 @@ def test_common_fields_work_for_every_resource(spec, selector):
     assert filtered.query.order_by == ("-name", "pk")
     assert all(value in params for value in (1, 2, 3, 4, 5))
     assert "IN" in sql
-    assert {"id", "owner_id", "group_id", "status", "created_at_after", "created_at_before"} <= {
-        entry["name"] for entry in spec.metadata()["filters"]
-    }
+    filter_names = {entry["name"] for entry in spec.metadata()["filters"]}
+    assert {
+        "id",
+        "owner_id",
+        "group_id",
+        "created_at_after",
+        "created_at_before",
+        *expected_state_filters,
+    } <= filter_names
+    assert ("status" in filter_names) is has_composite_status
 
 
 @pytest.mark.parametrize(
@@ -73,7 +80,11 @@ def test_resource_metadata_uses_identical_envelope(view_class, spec):
 def test_equipment_assignment_and_room_and_bench_extensions_compile():
     for spec, selector, query in (
         (EQUIPMENT_FILTERS, list_equipment, "category=1,2&kind=3,4&type=5&manufacturer=6&assigned=false"),
-        (ROOM_FILTERS, list_rooms, "country_id=1,2&city_id=3&building_id=4&status=available"),
+        (
+            ROOM_FILTERS,
+            list_rooms,
+            "country_id=1,2&city_id=3&building_id=4&lifecycle_status=in_service&activity_status=idle",
+        ),
         (BENCH_FILTERS, list_benches, "setup_location_id=1,2&bench_group_id=3&type_id=4&favorite=false"),
     ):
         serializer = spec.serializer("ExtensionTestQuery")(data=QueryDict(query))
@@ -110,6 +121,12 @@ def test_all_resource_openapi_contracts_validate():
 
     schema = SchemaGenerator(patterns=[*benches, *equipment, *licenses, *locations]).get_schema(public=True)
     validate_schema(schema)
+    expected_state_params = {
+        "benches": {"lifecycle_status", "condition", "activity_status"},
+        "licenses": {"status"},
+        "rooms": {"lifecycle_status", "access_policy", "condition", "activity_status"},
+        "stations": {"lifecycle_status", "access_policy", "condition", "activity_status"},
+    }
     for collection in ("benches", "equipment", "licenses", "rooms", "stations"):
         endpoint = schema["paths"][f"/{collection}"]["get"]
         if collection == "equipment":
@@ -118,7 +135,9 @@ def test_all_resource_openapi_contracts_validate():
         if not parameters:
             continue
         assert parameters["owner_id"]["schema"]["type"] == "string"
-        assert {"q", "ordering", "status"} <= parameters.keys()
+        assert {"q", "ordering", *expected_state_params[collection]} <= parameters.keys()
+        if collection != "licenses":
+            assert "status" not in parameters
         assert "get" in schema["paths"][f"/{collection}/filters"]
     category_path = schema["paths"]["/equipment"]["get"]
     category_parameters = {item["name"]: item for item in category_path["parameters"]}
