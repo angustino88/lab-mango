@@ -297,9 +297,3 @@ Source of truth for detailed fields and constraints: model modules under `core/l
 Inspection history uses `ResourceServiceRecord` with kind `inspection`. A result of `unknown`
 means the source supplied a performed date without a result. The service-record date constraint
 requires any next due date to follow the performed date.
-
-The PostgreSQL table `labs_bench_inspection_retirement_snapshot` is owned by the retirement
-migrations and has no application model. It preserves the exact source pairs for data reconciliation
-and rollback, including due-only rows and pairs outside the service-record constraint. The table's
-primary key enforces one source snapshot per bench. Manage access and retention under the database's
-existing controls for lab inventory data.
