@@ -40,7 +40,7 @@ def test_global_rates_have_defaults_and_environment_overrides(overrides, expecte
     assert configured["DEFAULT_THROTTLE_RATES"] == {
         **expected,
         "auth_login": "10/min",
-        "auth_sso_login": "60/min",
+        "auth_sso_login": "10/min",
         "auth_otp": "5/min",
         "auth_refresh": "30/min",
         "auth_ip": "300/min",
@@ -63,7 +63,7 @@ def test_login_uses_atomic_auth_throttles_and_existing_auth_rates():
     assert PasswordLoginUsernameThrottle.scope == "auth_login"
     for scope, variable, default in (
         ("auth_login", "THROTTLE_AUTH_LOGIN", "10/min"),
-        ("auth_sso_login", "THROTTLE_AUTH_SSO_LOGIN", "60/min"),
+        ("auth_sso_login", "THROTTLE_AUTH_SSO_LOGIN", "10/min"),
         ("auth_otp", "THROTTLE_AUTH_OTP", "5/min"),
         ("auth_refresh", "THROTTLE_AUTH_REFRESH", "30/min"),
         ("auth_ip", "THROTTLE_AUTH_IP", "300/min"),

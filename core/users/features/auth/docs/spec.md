@@ -62,7 +62,7 @@ per-IP backstop ([throttles.py](../throttles.py)):
 
 | Endpoint | Per-identity budget | Per-IP backstop |
 |---|---|---|
-| `POST /api/aad-login` | — (no verified identity before the ID token is checked) | `auth_sso_login` (60/min) |
+| `POST /api/aad-login` | — (no verified identity before the ID token is checked) | `auth_sso_login` (10/min, same as before) |
 | `POST /api/refresh-token` | `auth_refresh` (30/min) per user, from the signature-verified cookie; unverifiable cookies count against the IP | `auth_ip` (300/min) |
 | `POST /api/login` (non-SSO only) | `auth_login` (10/min) per submitted username | `auth_ip` (300/min) |
 | `POST /api/send-otp` (non-SSO only) | `auth_otp` (5/min) per caller | — |

@@ -37,7 +37,7 @@ against signed tokens. The real risks are:
 | Default throttles | `FailOpenAnonRateThrottle` / `FailOpenUserRateThrottle`: same sliding-log semantics and rates. On a cache outage they allow the request, log, and trip the circuit. | `core/common/api/throttling.py`, `config/settings/base.py` |
 | Error mapping | Any cache outage error that reaches a view is `503 service_unavailable` + `Retry-After: 30`, not 500. | `core/common/api/exceptions.py`, `core/users/features/auth/api.py` |
 | Atomic auth throttle | `AtomicRateThrottle`: fixed window with cache `add` + `incr` (atomic in Redis via django-redis Lua, and in LocMem). Fails closed. | `core/common/api/throttling.py` |
-| Auth identities | aad-login: per IP `auth_sso_login` 60/min. refresh: per **verified** user `auth_refresh` 30/min plus per-IP `auth_ip` 300/min. Password login (non-SSO): per username plus `auth_ip`. OTP (non-SSO): per caller. | `core/users/features/auth/throttles.py`, auth views |
+| Auth identities | aad-login: per IP `auth_sso_login` 10/min (same rate as before, own env variable). refresh: per **verified** user `auth_refresh` 30/min plus per-IP `auth_ip` 300/min. Password login (non-SSO): per username plus `auth_ip`. OTP (non-SSO): per caller. | `core/users/features/auth/throttles.py`, auth views |
 | Trusted client IP | Optional `DJANGO_NUM_PROXIES` → `REST_FRAMEWORK["NUM_PROXIES"]`. Unset keeps DRF's current behavior (no deploy change); setting it makes per-IP budgets spoof-proof. | `config/settings/base.py`, `.env.example` |
 
 Alternatives considered:
@@ -71,8 +71,9 @@ Tests: `core/common/tests/test_redis_outage_resilience.py` and
   `auth_ip`). With SSO-only production this buys an attacker request volume, not access (tokens are signed).
   Setting it too low would put every user behind the router into one bucket, so confirm the hop count with
   `labmango-router` first.
-- **Behavior changes:** aad-login moves from `THROTTLE_AUTH_LOGIN` (10/min per IP) to
-  `THROTTLE_AUTH_SSO_LOGIN` (60/min per IP). Refresh moves from per IP to per user plus a per-IP backstop.
+- **Behavior changes:** aad-login keeps 10/min per IP but reads `THROTTLE_AUTH_SSO_LOGIN` instead of
+  `THROTTLE_AUTH_LOGIN` (deployments that override `THROTTLE_AUTH_LOGIN` must set both). Its per-IP budget can
+  still be shared by an office behind one address; raise it from access logs if needed. Refresh moves from per IP to per user plus a per-IP backstop.
   Cache outages return 503 instead of 500.
 - **Fail-open window:** while Redis is down, general API throttling is off (only per-worker semaphores bound
   load). Auth throttles still fail closed, so SSO sign-in and token refresh return 503 during an outage.
