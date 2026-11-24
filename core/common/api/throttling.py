@@ -29,10 +29,10 @@ logger = logging.getLogger(__name__)
 
 
 def client_ip(request: Any) -> str:
-    """Return the caller address, trusting ``X-Forwarded-For`` only for ``NUM_PROXIES`` hops.
+    """Return the caller address as DRF identifies it (``REST_FRAMEWORK["NUM_PROXIES"]``-aware).
 
-    ``REST_FRAMEWORK["NUM_PROXIES"]`` is always set (base settings default 0, production requires it),
-    so a client-supplied ``X-Forwarded-For`` never becomes the identity on its own.
+    With ``NUM_PROXIES`` unset (``DJANGO_NUM_PROXIES``), DRF keys on the whole ``X-Forwarded-For`` value,
+    which a client can vary; set it to make per-IP budgets spoof-proof.
     """
     return BaseThrottle().get_ident(request) or ""
 

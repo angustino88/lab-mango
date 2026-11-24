@@ -1,7 +1,7 @@
 # Redis outage resilience and auth throttle integrity
 
 > Status: implemented on branch `fix/redis-outage-and-auth-throttles`. Tier **T2** (authn, infra/config):
-> needs security + QA review and human approval before merge. Production deploy needs `DJANGO_NUM_PROXIES`.
+> needs security + QA review and human approval before merge. No new required setting.
 
 ## 1. Problems
 
@@ -38,7 +38,7 @@ against signed tokens. The real risks are:
 | Error mapping | Any cache outage error that reaches a view is `503 service_unavailable` + `Retry-After: 30`, not 500. | `core/common/api/exceptions.py`, `core/users/features/auth/api.py` |
 | Atomic auth throttle | `AtomicRateThrottle`: fixed window with cache `add` + `incr` (atomic in Redis via django-redis Lua, and in LocMem). Fails closed. | `core/common/api/throttling.py` |
 | Auth identities | aad-login: per IP `auth_sso_login` 60/min. refresh: per **verified** user `auth_refresh` 30/min plus per-IP `auth_ip` 300/min. Password login (non-SSO): per username plus `auth_ip`. OTP (non-SSO): per caller. | `core/users/features/auth/throttles.py`, auth views |
-| Trusted client IP | `REST_FRAMEWORK["NUM_PROXIES"]` from `DJANGO_NUM_PROXIES`. Default 0 (ignore `X-Forwarded-For`); **required** in production. | `config/settings/base.py`, `production.py`, `.env.example` |
+| Trusted client IP | Optional `DJANGO_NUM_PROXIES` → `REST_FRAMEWORK["NUM_PROXIES"]`. Unset keeps DRF's current behavior (no deploy change); setting it makes per-IP budgets spoof-proof. | `config/settings/base.py`, `.env.example` |
 
 Alternatives considered:
 - A token bucket / GCRA in Lua for every endpoint: not needed for this fix. The general API budget (300/min)
@@ -59,17 +59,18 @@ Tests: `core/common/tests/test_redis_outage_resilience.py` and
 | 5 requests, Redis answers after 0.2 s then fails | `[500]*5`, each waits | `[200]*5`, only the first waits |
 | Cache-dependent handler during outage | 500 | 503 + `Retry-After: 30` |
 | 20 parallel logins against a 5/min limit | **20 of 20** reached the credential check | exactly 5 (15 × 429) |
-| aad-login with a new `X-Forwarded-For` each time, 2/min | `[401, 401, 401]` (never limited) | `[401, 401, 429]` |
+| aad-login with a new spoofed `X-Forwarded-For` each time, 2/min | `[401, 401, 401]` (never limited) | `[401, 401, 429]` **only with `NUM_PROXIES` configured**; unset behaves as before |
 | 6 colleagues refresh from one IP, 3/min | users 4–6 got 429 | none throttled |
 | Login during outage stays fail-closed (503, no credential check) | pass | pass |
 | One user refreshing 4× at 3/min still gets 429 | pass | pass |
 
 ## 4. Deployment and residual risks
 
-- **Deploy blocker by design:** production settings fail to load without `DJANGO_NUM_PROXIES`. Set it to the
-  number of proxies that append to `X-Forwarded-For` (`labmango-router` owns that tier; record it in the
-  router contract). With a wrong value that is too low, every user shares the router's address: the
-  `auth_sso_login` and `auth_ip` budgets become company-wide.
+- **Spoofing is fixed only by configuration:** `DJANGO_NUM_PROXIES` is optional so deploys are not blocked.
+  While unset, a client can still vary `X-Forwarded-For` to get fresh per-IP budgets (`auth_sso_login`,
+  `auth_ip`). With SSO-only production this buys an attacker request volume, not access (tokens are signed).
+  Setting it too low would put every user behind the router into one bucket, so confirm the hop count with
+  `labmango-router` first.
 - **Behavior changes:** aad-login moves from `THROTTLE_AUTH_LOGIN` (10/min per IP) to
   `THROTTLE_AUTH_SSO_LOGIN` (60/min per IP). Refresh moves from per IP to per user plus a per-IP backstop.
   Cache outages return 503 instead of 500.

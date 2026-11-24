@@ -11,8 +11,8 @@ therefore pairs a per-identity budget with a broader per-IP backstop:
 | ``/api/login`` (non-SSO only) | ``auth_login`` per submitted username        | ``auth_ip`` |
 | ``/api/send-otp`` (non-SSO only) | ``auth_otp`` per caller                   | — |
 
-The client address comes from ``client_ip`` (``NUM_PROXIES``-aware), never from a raw
-``X-Forwarded-For`` value. All of these fail closed on a cache outage (503).
+The client address comes from ``client_ip`` (``NUM_PROXIES``-aware; spoof-proof only once
+``DJANGO_NUM_PROXIES`` is set). All of these fail closed on a cache outage (503).
 """
 
 from __future__ import annotations

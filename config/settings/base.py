@@ -474,10 +474,10 @@ REST_FRAMEWORK = {
         "auth_refresh": env("THROTTLE_AUTH_REFRESH", default="30/min"),  # per user
         "auth_ip": env("THROTTLE_AUTH_IP", default="300/min"),  # per client IP, login + refresh backstop
     },
-    # Reverse-proxy hops whose X-Forwarded-For entry is trusted for client-IP throttling. 0 means use
-    # REMOTE_ADDR and ignore X-Forwarded-For (a client-supplied header must never be the identity).
-    # Production requires an explicit value (config/settings/production.py).
-    "NUM_PROXIES": env.int("DJANGO_NUM_PROXIES", default=0),
+    # Optional: reverse-proxy hops whose X-Forwarded-For entry is trusted for client-IP throttles
+    # (0 = use REMOTE_ADDR only). Unset keeps DRF's default, which keys on the whole X-Forwarded-For
+    # value and can be spoofed; set it once the labmango-router hop count is confirmed.
+    "NUM_PROXIES": env.int("DJANGO_NUM_PROXIES", default=None),
 }
 
 CORS_URLS_REGEX = r"^/api/.*$"

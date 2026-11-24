@@ -55,13 +55,6 @@ CACHES = {
     }
 }
 
-# THROTTLING CLIENT IDENTITY
-# ------------------------------------------------------------------------------
-# Required: the number of reverse proxies in front of the app that append to X-Forwarded-For
-# (labmango-router owns that tier). Without it, client-IP throttles either trust a spoofable header
-# or put every user behind the proxy into one bucket. Set 0 only when clients connect directly.
-REST_FRAMEWORK["NUM_PROXIES"] = env.int("DJANGO_NUM_PROXIES")
-
 # SECURITY
 # ------------------------------------------------------------------------------
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

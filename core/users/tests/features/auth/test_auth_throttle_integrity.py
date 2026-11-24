@@ -2,7 +2,8 @@
 
 Production logs in through Entra SSO only (aad-login + refresh cookie), so the paths that matter are:
 - a concurrent burst must not slip past the limit (non-atomic read-then-write counter);
-- a client-supplied ``X-Forwarded-For`` must not give each request a fresh budget;
+- once ``DJANGO_NUM_PROXIES`` is set, a client-supplied ``X-Forwarded-For`` must not give each request a
+  fresh budget (unset keeps DRF's legacy keying, so this one is a configuration guarantee, not a code diff);
 - colleagues behind one shared IP (office NAT / proxy) must not exhaust each other's refresh budget.
 
 Rates are patched on DRF's shared ``DEFAULT_THROTTLE_RATES`` dict so the same test runs before and
@@ -74,11 +75,12 @@ def test_concurrent_burst_cannot_exceed_the_login_limit():
     assert statuses.count(429) == 15
 
 
-def test_spoofed_forwarded_for_does_not_reset_the_sso_login_budget():
-    """Before: a new X-Forwarded-For value is a new bucket, so the limit never triggers. After: 429."""
+def test_spoofed_forwarded_for_does_not_reset_the_sso_login_budget_when_proxies_are_configured():
+    """With one trusted proxy appending the real address, a spoofed prefix shares the real client's budget."""
     client = Client()
     with (
         _rates(auth_login="2/min", auth_sso_login="2/min"),
+        patch.object(api_settings, "NUM_PROXIES", 1),
         patch("core.users.features.auth.aad_login.api.aad_login", side_effect=AADAuthError("invalid")),
     ):
         statuses = [
@@ -86,7 +88,7 @@ def test_spoofed_forwarded_for_does_not_reset_the_sso_login_budget():
                 "/api/aad-login",
                 {"id_token": "synthetic-token", "nonce_secret": "n" * 43},
                 content_type="application/json",
-                HTTP_X_FORWARDED_FOR=f"203.0.113.{i}",
+                HTTP_X_FORWARDED_FOR=f"203.0.113.{i}, 198.51.100.7",  # spoofed prefix, router-appended client
             ).status_code
             for i in range(3)
         ]
