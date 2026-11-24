@@ -1,6 +1,6 @@
 # ADR 008 — Read .xlsx uploads with python-calamine
 
-- Status: **Proposed** (repository owner instruction, 2026-11-24: "remove the custom Rust reader, change completely to python-calamine, do not use openpyxl" for reading). Needs human approval before merge (T2: new dependency).
+- Status: **Accepted by the repository owner** (2026-11-24: "remove the custom Rust reader, change completely to python-calamine, do not use openpyxl" for reading; dependency approved 2026-11-24)
 - Date: 2026-11-24
 - Risk: T2 (new runtime dependency, AGENTS rule 7)
 - Scope: `core/infrastructure/spreadsheets/xlsx.py` `read_workbook`; its only caller is Workbook Import (Check and Apply)
