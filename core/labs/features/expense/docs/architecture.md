@@ -6,9 +6,9 @@
 
 ## 1. Purpose and scope
 
-**Verified.** The expense feature records room-scoped expense obligations (`Expense`) and the actual payments or refunds made against them (`ExpensePayment`). It exposes list and create endpoints only; there is no update or delete endpoint.
+**Verified.** The expense feature records ongoing resource-scoped expense obligations (`Expense`, including recurring `license_fee` costs) and the actual payments or refunds made against them (`ExpensePayment`). Supported target resources are `room`, `station`, `bench`, `equipment`, and `license` (`EXPENSE_RESOURCE_MODELS`). It exposes list and create endpoints only; there is no update or delete endpoint.
 
-**Does not own:** purchase orders and acquisition cost (procurement), license agreement terms and payments (licenses), or resource identity (the room and other resource features).
+**Does not own:** purchase orders and acquisition cost (procurement) or resource identity (the room, station, bench, equipment, and license features).
 
 ## 2. Responsibilities and ownership
 
@@ -16,7 +16,7 @@
 | --- | --- | --- |
 | `Expense` (obligation) | Yes (commands and reads) | Model centralized under `core/labs/models/finance/expense.py` |
 | `ExpensePayment` (actual payment or refund) | Yes | Child of `Expense`; does not redefine the obligation |
-| Room (the target resource) | No | Referenced through content type and object ID |
+| Target resource (`room`, `station`, `bench`, `equipment`, `license`) | No | Referenced through content type and object ID |
 | Procurement acquisition cost | No | Procurement feature |
 
 Models owned by this feature (link to authoritative docs; do not copy definitions):
@@ -26,19 +26,20 @@ Models owned by this feature (link to authoritative docs; do not copy definition
 
 **Verified.**
 
-- `public.py` exports the read selectors (`list_room_expenses`, `list_expense_payments`), the command inputs (`CreateExpenseInput`, `CreateExpensePaymentInput`), the commands, and `ExpenseConflict`.
+- `public.py` exports the read selectors (`list_expenses`, `list_room_expenses`, `list_expense_payments`, `get_financial_report`, `aggregate_expense_cash_flow`), the command inputs (`CreateExpenseInput`, `CreateExpensePaymentInput`), the commands, and `ExpenseConflict`.
 - `exceptions.py` defines `ExpenseConflict(ValueError)` with code `expense_conflict`. It has no HTTP concepts.
 - Commands are frozen dataclasses with keyword-only `actor`.
 - Routes in `api/urls.py`, included under `labs/` in `core/labs/api_urls.py`:
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET, POST | `/api/labs/rooms/<room_id>/expenses` | Room missing returns 404; invalid dates or amount return 422 |
+| GET, POST | `/api/labs/expenses` | Multi-resource collection (`resource_kind` + `resource_id` across room, station, bench, equipment, license); missing/soft-deleted target returns 404 |
+| GET, POST | `/api/labs/rooms/<room_id>/expenses` | Room-scoped shortcut; room missing returns 404; invalid dates or amount return 422 |
 | GET, POST | `/api/labs/expenses/<expense_id>/payments` | Expense missing returns 404 |
 
 **Verified (permissions).** Expense views set `permission_classes = FINANCE_ACCESS` (`finance.manage`, or an API key). Writes: holders of `finance.manage` (Lab Coordinators and Lab Administrators) and API keys. Plain-user writes and unauthenticated requests without an API key get 403. Reads: holders of `finance.manage` only (owner decision 2026-11-11); plain users and users without a Labs role get 403. API-key writes record no creator because the actor is `None`. Access-control change: requires human approval before merge (T2).
 
-**Verified (OpenAPI).** Responses use `drf_api_contracts`. The schema has not been regenerated and reviewed for this feature.
+**Verified (OpenAPI).** Responses use `drf_api_contracts` and are generated in `openapi/labs-expense.yml`.
 
 ## 4. Dependencies
 
@@ -47,7 +48,7 @@ Models owned by this feature (link to authoritative docs; do not copy definition
 | `core.common.api` (`AppListAPIView`) | Import | Shared code |
 | `core.labs.features.base.access` (`FINANCE_ACCESS`) | Import | Labs endpoint policies; who holds `finance.manage` is decided in `core.users` |
 | `core.labs.features.base` (`CommandAPIView`) | Import | Shared Labs base |
-| `core.labs.models` (`Expense`, `ExpensePayment`, `Room`) | Import | Models centralized |
+| `core.labs.models` (`Expense`, `ExpensePayment`, `Room`, `Station`, `Bench`, `Equipment`, `License`) | Import | Models centralized |
 
 ```mermaid
 flowchart LR
@@ -56,14 +57,14 @@ flowchart LR
   public --> queries["queries/selectors.py"]
   app --> models["core.labs.models expense"]
   queries --> models
-  app --> ct["ContentType allowlist (Room)"]
+  app --> ct["ContentType allowlist (EXPENSE_RESOURCE_MODELS)"]
 ```
 
 ## 5. Workflows
 
-### Create expense for a room
+### Create expense for a resource
 
-**Verified.** `create_expense` is `@transaction.atomic`. It loads the room (`DoesNotExist` maps to 404), checks the `Room` content type against `EXPENSE_RESOURCE_MODELS`, runs `full_clean()`, and saves with `actor`.
+**Verified.** `create_expense` is `@transaction.atomic`. It resolves `resource_kind` against `EXPENSE_RESOURCE_KIND_MODELS`, locks the live target resource row (`select_for_update().get(pk=..., deleted_at__isnull=True)`; `DoesNotExist` maps to 404), checks its content type against `EXPENSE_RESOURCE_MODELS`, runs `full_clean()`, and saves with `actor`.
 
 ### Record a payment
 
