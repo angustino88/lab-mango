@@ -56,7 +56,23 @@ The Authentication feature manages session establishment, token lifecycle, local
   Frontend guide: [frontend-login.md](frontend-login.md).
 
 ### 3.3 Rate Limiting & Throttling
-- All public endpoints enforce `ScopedRateThrottle` (`auth_login`, `auth_refresh`, `auth_otp`).
+Auth endpoints use atomic fixed-window counters (`core/common/api/throttling.py::AtomicRateThrottle`,
+cache `add` + `incr`), so concurrent bursts cannot pass the limit. Each pairs a per-identity budget with a
+per-IP backstop ([throttles.py](../throttles.py)):
+
+| Endpoint | Per-identity budget | Per-IP backstop |
+|---|---|---|
+| `POST /api/aad-login` | — (no verified identity before the ID token is checked) | `auth_sso_login` (60/min) |
+| `POST /api/refresh-token` | `auth_refresh` (30/min) per user, from the signature-verified cookie; unverifiable cookies count against the IP | `auth_ip` (300/min) |
+| `POST /api/login` (non-SSO only) | `auth_login` (10/min) per submitted username | `auth_ip` (300/min) |
+| `POST /api/send-otp` (non-SSO only) | `auth_otp` (5/min) per caller | — |
+
+- The client IP comes from `REST_FRAMEWORK["NUM_PROXIES"]` (`DJANGO_NUM_PROXIES`, required in production);
+  a client-supplied `X-Forwarded-For` is never trusted on its own.
+- Auth throttles fail closed: a cache outage returns `503 service_unavailable` with `Retry-After: 30` and
+  never reaches the credential check.
+- Rates are configurable with `THROTTLE_AUTH_SSO_LOGIN`, `THROTTLE_AUTH_REFRESH`, `THROTTLE_AUTH_LOGIN`,
+  `THROTTLE_AUTH_OTP` and `THROTTLE_AUTH_IP`.
 
 ---
 

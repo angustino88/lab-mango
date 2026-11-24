@@ -99,11 +99,13 @@ older than `ENTRA_BIND_DORMANT_WARNING_DAYS` is logged as a warning.
 - **Deployment (owner, 2026-11-11):** the proxy tier belongs to the separate `labmango-router`
   repository and is out of scope here. The backend must not hard-code assumptions about it.
 - **Proposal:**
-  - [ ] Make the trusted proxy depth an explicit, required production setting (`NUM_PROXIES` from the
-    environment), with a startup check that fails when it is unset.
+  - [x] Make the trusted proxy depth an explicit, required production setting (`NUM_PROXIES` from the
+    environment), with a startup check that fails when it is unset. (`DJANGO_NUM_PROXIES`; production
+    settings fail to load without it. Branch `fix/redis-outage-and-auth-throttles`.)
   - [ ] Record in the router contract which forwarded headers the backend trusts and how many hops add them.
-  - [ ] Add a test that two requests with different spoofed `X-Forwarded-For` prefixes share one counter.
-  - [ ] Add a per-username throttle on the non-production password login path.
+  - [x] Add a test that two requests with different spoofed `X-Forwarded-For` prefixes share one counter.
+    (`core/users/tests/features/auth/test_auth_throttle_integrity.py`)
+  - [x] Add a per-username throttle on the non-production password login path.
 
 #### H5. URS sync, the source of roles and account activation, defaults to unverified TLS
 

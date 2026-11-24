@@ -1,12 +1,12 @@
 from django.conf import settings
 from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework.request import Request
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.exceptions import TokenError
 
 from core.users.features.auth.api import AuthAPIView, PublicAuthAutoSchema
 from core.users.features.auth.cookies import set_refresh_cookie
 from core.users.features.auth.permissions import CookieCSRFPermission
+from core.users.features.auth.throttles import AuthIPThrottle, RefreshUserThrottle
 from core.users.features.auth.tokens import rotate_refresh
 
 from .serializer import RefreshTokenResponseSerializer
@@ -24,8 +24,7 @@ class UserRefreshTokenView(AuthAPIView):
     schema = PublicAuthAutoSchema()
     schema_tags = ("User Authentication",)
     permission_classes = [CookieCSRFPermission]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth_refresh"
+    throttle_classes = [RefreshUserThrottle, AuthIPThrottle]
     authentication_classes = []
 
     post_contract = OperationContract(

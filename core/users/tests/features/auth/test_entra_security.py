@@ -16,6 +16,7 @@ from django.core.cache import cache
 from django.db import IntegrityError, close_old_connections, transaction
 from django.test import Client
 from django.utils import timezone
+from rest_framework.settings import api_settings
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -235,7 +236,8 @@ def test_cookie_endpoints_require_csrf(path):
 @pytest.mark.django_db
 def test_entra_login_is_throttled():
     client = Client()
-    responses = [client.post("/api/aad-login", {}, content_type="application/json") for _ in range(11)]
+    with patch.dict(api_settings.DEFAULT_THROTTLE_RATES, {"auth_sso_login": "10/min"}):
+        responses = [client.post("/api/aad-login", {}, content_type="application/json") for _ in range(11)]
     assert responses[-1].status_code == 429
     assert responses[-1].json()["error"]["code"] == "rate_limited"
     assert "Retry-After" in responses[-1]

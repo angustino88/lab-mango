@@ -12,7 +12,7 @@ from redis.exceptions import TimeoutError as RedisTimeoutError
 @pytest.mark.parametrize("path", ["/api/login", "/api/aad-login", "/api/refresh-token"])
 def test_login_cache_outage_is_503_and_never_checks_credentials(error, path):
     with (
-        patch("rest_framework.throttling.ScopedRateThrottle.cache.get", side_effect=error("synthetic failure")),
+        patch("core.common.api.throttling.AtomicRateThrottle.cache.add", side_effect=error("synthetic failure")),
         patch("core.users.features.auth.login.api.do_login") as authenticate,
     ):
         response = Client().post(

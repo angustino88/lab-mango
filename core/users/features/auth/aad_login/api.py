@@ -4,13 +4,13 @@ from django.middleware.csrf import get_token
 from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
-from rest_framework.throttling import ScopedRateThrottle
 
 from core.users.features.auth.aad_login.serializer import AADLoginSerializer
 from core.users.features.auth.aad_login.service import AADAuthError, aad_login
 from core.users.features.auth.api import AuthAPIView, PublicAuthAutoSchema
 from core.users.features.auth.cookies import set_refresh_cookie
 from core.users.features.auth.permissions import CookieCSRFPermission
+from core.users.features.auth.throttles import SSOLoginIPThrottle
 
 from .serializer import AADLoginResponseSerializer, CSRFTokenResponseSerializer
 
@@ -46,8 +46,7 @@ class UserAADLoginView(AuthAPIView):
     schema_tags = ("User Authentication",)
     permission_classes = [CookieCSRFPermission]
     authentication_classes = []
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth_login"
+    throttle_classes = [SSOLoginIPThrottle]
 
     post_contract = OperationContract(
         request=AADLoginSerializer,

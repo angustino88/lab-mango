@@ -456,19 +456,28 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "config.schema.ProjectAutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
+    # Default throttles allow the request when the cache is down (core.common.api.throttling), so a
+    # Redis outage cannot turn every API into a 500.
     "DEFAULT_THROTTLE_CLASSES": (
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        "core.common.api.throttling.FailOpenAnonRateThrottle",
+        "core.common.api.throttling.FailOpenUserRateThrottle",
     ),
-    # Scoped throttles for public auth endpoints (see ScopedRateThrottle on each view).
-    # Counters live in the default cache (Redis in production, shared across workers).
+    # Auth endpoints use atomic, fail-closed throttles keyed per identity plus a per-IP backstop
+    # (core/users/features/auth/throttles.py). Counters live in the default cache (Redis in production,
+    # shared across workers).
     "DEFAULT_THROTTLE_RATES": {
         "anon": env("THROTTLE_ANON", default="60/min"),
         "user": env("THROTTLE_USER", default="300/min"),
-        "auth_login": env("THROTTLE_AUTH_LOGIN", default="10/min"),
-        "auth_otp": env("THROTTLE_AUTH_OTP", default="5/min"),
-        "auth_refresh": env("THROTTLE_AUTH_REFRESH", default="30/min"),
+        "auth_login": env("THROTTLE_AUTH_LOGIN", default="10/min"),  # per username (non-SSO login)
+        "auth_sso_login": env("THROTTLE_AUTH_SSO_LOGIN", default="60/min"),  # per client IP
+        "auth_otp": env("THROTTLE_AUTH_OTP", default="5/min"),  # per caller
+        "auth_refresh": env("THROTTLE_AUTH_REFRESH", default="30/min"),  # per user
+        "auth_ip": env("THROTTLE_AUTH_IP", default="300/min"),  # per client IP, login + refresh backstop
     },
+    # Reverse-proxy hops whose X-Forwarded-For entry is trusted for client-IP throttling. 0 means use
+    # REMOTE_ADDR and ignore X-Forwarded-For (a client-supplied header must never be the identity).
+    # Production requires an explicit value (config/settings/production.py).
+    "NUM_PROXIES": env.int("DJANGO_NUM_PROXIES", default=0),
 }
 
 CORS_URLS_REGEX = r"^/api/.*$"
@@ -484,6 +493,9 @@ API_MAX_CONCURRENT_SYNC_HANDLERS = env.int("API_MAX_CONCURRENT_SYNC_HANDLERS", d
 # Declarative versioned read-through cache + ETag/304 + singleflight stampede guard.
 API_READ_CACHE_ENABLED = env.bool("API_READ_CACHE_ENABLED", default=True)
 API_PAGINATION_COUNT_CACHE_TTL = env.int("API_PAGINATION_COUNT_CACHE_TTL", default=15)
+# After a cache outage error, fail-open readers and throttles skip Redis for this many seconds per
+# process instead of waiting for the socket timeout on every call (0 disables the circuit).
+API_CACHE_CIRCUIT_OPEN_SECONDS = env.float("API_CACHE_CIRCUIT_OPEN_SECONDS", default=10.0)
 # Short-TTL cache for user Labs roles and Entra binding checks (invalidated on commit).
 API_AUTH_CACHE_ENABLED = env.bool("API_AUTH_CACHE_ENABLED", default=True)
 API_AUTH_CACHE_TTL = env.int("API_AUTH_CACHE_TTL", default=120)

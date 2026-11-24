@@ -8,10 +8,10 @@ from drf_spectacular.generators import SchemaGenerator
 from jsonschema import validate
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.test import APIRequestFactory, force_authenticate
-from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from core.agents.api.views import AgentInfoAPIView
+from core.common.api.throttling import FailOpenAnonRateThrottle, FailOpenUserRateThrottle
 
 
 def document():
@@ -54,7 +54,9 @@ def test_info_safe_session_get_does_not_invent_a_csrf_error():
     assert response.status_code == 200
 
 
-@pytest.mark.parametrize("authenticated,throttle_class", [(False, AnonRateThrottle), (True, UserRateThrottle)])
+@pytest.mark.parametrize(
+    "authenticated,throttle_class", [(False, FailOpenAnonRateThrottle), (True, FailOpenUserRateThrottle)]
+)
 def test_info_configured_throttle_is_reachable(authenticated, throttle_class):
     cache.clear()
     try:
@@ -63,7 +65,7 @@ def test_info_configured_throttle_is_reachable(authenticated, throttle_class):
         if authenticated:
             force_authenticate(raw, user=get_user_model()(pk=1))
         request = view.initialize_request(raw)
-        assert view.throttle_classes == [AnonRateThrottle, UserRateThrottle]
+        assert view.throttle_classes == [FailOpenAnonRateThrottle, FailOpenUserRateThrottle]
         throttle = throttle_class()
         key = throttle.get_cache_key(request, view)
         cache.set(key, [throttle.timer()] * throttle.num_requests, throttle.duration)
