@@ -7,7 +7,7 @@ from .application import (
     create_expense_payment,
 )
 from .exceptions import ExpenseConflict
-from .queries import get_financial_report, list_expense_payments, list_room_expenses
+from .queries import get_financial_report, list_expense_payments, list_expenses, list_room_expenses
 from .queries.cash_flow import ExpenseCashFlowAggregate, aggregate_expense_cash_flow
 
 __all__ = [
@@ -20,5 +20,6 @@ __all__ = [
     "create_expense_payment",
     "get_financial_report",
     "list_expense_payments",
+    "list_expenses",
     "list_room_expenses",
 ]

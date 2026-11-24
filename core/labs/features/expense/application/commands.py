@@ -9,17 +9,27 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from core.common.domain.money import check_currency
-from core.labs.models import Expense, ExpensePayment, Room
+from core.labs.models import Bench, Equipment, Expense, ExpensePayment, License, Room, Station
 from core.labs.models.finance.expense import EXPENSE_RESOURCE_MODELS
+
+EXPENSE_RESOURCE_KIND_MODELS = {
+    "room": Room,
+    "station": Station,
+    "bench": Bench,
+    "equipment": Equipment,
+    "license": License,
+}
 
 
 @dataclass(frozen=True)
 class CreateExpenseInput:
-    room_id: int
     name: str
     expense_type: str
     amount: Decimal
     valid_from: date
+    resource_kind: str = "room"
+    resource_id: int | None = None
+    room_id: int | None = None
     currency: str = "EUR"
     billing_period: str = "one_time"
     supplier: str = ""
@@ -39,15 +49,36 @@ class CreateExpensePaymentInput:
     currency: str | None = None  # the submitted money's currency; must be the expense's (FMT-2)
 
 
-@transaction.atomic
-def create_expense(command: CreateExpenseInput, *, actor) -> Expense:
-    room = Room.objects.get(pk=command.room_id)
-    resource_type = ContentType.objects.get_for_model(Room)
+def _resolve_target_resource(command: CreateExpenseInput):
+    if command.room_id is not None:
+        if command.resource_id is not None and (command.resource_kind != "room" or command.resource_id != command.room_id):
+            raise ValidationError({"resource_id": "Conflicting target resource identifiers."})
+        resource_kind = "room"
+        resource_id = command.room_id
+    else:
+        resource_kind = command.resource_kind
+        resource_id = command.resource_id
+
+    model = EXPENSE_RESOURCE_KIND_MODELS.get(resource_kind)
+    if model is None:
+        raise ValidationError({"resource_kind": "Unsupported resource kind."})
+    if resource_id is None:
+        raise ValidationError({"resource_id": "This field is required."})
+
+    # Lock the target resource row so a concurrent soft-delete cannot slip in before commit.
+    resource = model.objects.select_for_update().get(pk=resource_id, deleted_at__isnull=True)
+    resource_type = ContentType.objects.get_for_model(model)
     if (resource_type.app_label, resource_type.model) not in EXPENSE_RESOURCE_MODELS:
         raise ValidationError({"resource_type": "This resource type cannot have expenses."})
+    return resource_type, resource
+
+
+@transaction.atomic
+def create_expense(command: CreateExpenseInput, *, actor) -> Expense:
+    resource_type, resource = _resolve_target_resource(command)
     expense = Expense(
         resource_type=resource_type,
-        resource_id=room.pk,
+        resource_id=resource.pk,
         name=command.name,
         expense_type=command.expense_type,
         amount=command.amount,

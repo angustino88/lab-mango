@@ -492,6 +492,8 @@ paths:
     $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}~1actions~1change-booking-access
   /api/labs/downtimes/{downtime_id}/actions/end:
     $ref: ./labs-downtime.yml#/paths/~1api~1labs~1downtimes~1{downtime_id}~1actions~1end
+  /api/labs/expenses:
+    $ref: ./labs-expense.yml#/paths/~1api~1labs~1expenses
   /api/labs/expenses/{expense_id}/payments:
     $ref: ./labs-expense.yml#/paths/~1api~1labs~1expenses~1{expense_id}~1payments
   /api/labs/expenses/report:

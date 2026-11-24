@@ -3,12 +3,20 @@ from rest_framework import serializers
 
 from core.common.api import AppModelSerializer
 from core.common.api.money import MoneyField
+from core.common.api.pagination import PageNumberQuerySerializer
 from core.common.api.summary_serializers import ChoiceSerializer, choice_field, embedded_resource, to_choice
 from core.labs.features.base.serializers import NamedReferenceSerializer
 from core.labs.models import Expense, ExpensePayment, PaymentTransactionType
 
 EXPENSE_TYPE_CHOICES = Expense._meta.get_field("expense_type").choices
 BILLING_PERIOD_CHOICES = Expense._meta.get_field("billing_period").choices
+RESOURCE_KIND_CHOICES = [
+    ("room", "Room"),
+    ("station", "Station"),
+    ("bench", "Bench"),
+    ("equipment", "Equipment"),
+    ("license", "License"),
+]
 PAYMENT_STATUS_CHOICES = [
     ("paid", "Paid"),
     ("partially_paid", "Partially paid"),
@@ -17,8 +25,26 @@ PAYMENT_STATUS_CHOICES = [
 ]
 
 
+class RoomExpenseListQuerySerializer(PageNumberQuerySerializer):
+    expense_type = serializers.ChoiceField(choices=EXPENSE_TYPE_CHOICES, required=False)
+    billing_period = serializers.ChoiceField(choices=BILLING_PERIOD_CHOICES, required=False)
+
+
+class ExpenseListQuerySerializer(RoomExpenseListQuerySerializer):
+    resource_kind = serializers.ChoiceField(choices=RESOURCE_KIND_CHOICES, required=False)
+    resource_id = serializers.IntegerField(min_value=1, required=False)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs.get("resource_id") is not None and attrs.get("resource_kind") is None:
+            raise serializers.ValidationError(
+                {"resource_kind": "resource_kind is required when filtering by resource_id."}
+            )
+        return attrs
+
+
 class ExpenseWriteSerializer(serializers.ModelSerializer):
-    """Write shape for expenses (RW-1). The room is taken from the URL, never the body."""
+    """Write shape for room-scoped expenses (RW-1). The room is taken from the URL, never the body."""
 
     expense_type = serializers.ChoiceField(choices=EXPENSE_TYPE_CHOICES)
     billing_period = serializers.ChoiceField(choices=BILLING_PERIOD_CHOICES, required=False)
@@ -34,6 +60,34 @@ class ExpenseWriteSerializer(serializers.ModelSerializer):
         )
 
 
+class ExpenseCreateSerializer(ExpenseWriteSerializer):
+    """Write shape for resource-scoped expenses across room, station, bench, equipment, or license."""
+
+    resource_kind = serializers.ChoiceField(
+        choices=RESOURCE_KIND_CHOICES,
+        required=True,
+        help_text="Target resource kind (room, station, bench, equipment, or license).",
+    )
+    resource_id = serializers.IntegerField(
+        min_value=1,
+        required=True,
+        help_text="Primary key of the target resource.",
+    )
+
+    class Meta(ExpenseWriteSerializer.Meta):
+        fields = ("resource_kind", "resource_id") + ExpenseWriteSerializer.Meta.fields
+
+
+def _resource_label(obj: Expense) -> str:
+    resource = obj.resource
+    if resource is not None:
+        name = getattr(resource, "name", "") or getattr(resource, "sku", "")
+        if name:
+            return str(name)
+    kind = obj.resource_type.model if obj.resource_type else "resource"
+    return f"{kind.capitalize()} #{obj.resource_id}"
+
+
 class ExpenseSerializer(AppModelSerializer):
     """Read shape for expenses."""
 
@@ -41,20 +95,33 @@ class ExpenseSerializer(AppModelSerializer):
     billing_period = choice_field(BILLING_PERIOD_CHOICES)
     start_date = serializers.DateField(source="valid_from", read_only=True)
     end_date = serializers.DateField(source="valid_until", read_only=True, allow_null=True)
+    resource_kind = serializers.SerializerMethodField(read_only=True)
+    resource = serializers.SerializerMethodField(read_only=True)
     room = serializers.SerializerMethodField(read_only=True)
     cost = MoneyField(read_only=True)
 
     class Meta:
         model = Expense
         fields = (
-            "id", "room", "name", "expense_type", "supplier", "reference", "cost",
+            "id", "resource_kind", "resource", "room", "name", "expense_type", "supplier", "reference", "cost",
             "billing_period", "start_date", "end_date", "notes",
             "created_at", "updated_at",
         )
         read_only_fields = fields
 
-    def get_room(self, obj) -> dict[str, int | str]:
-        return {"id": obj.resource_id, "name": getattr(obj.resource, "name", str(obj.resource_id))}
+    @extend_schema_field(ChoiceSerializer)
+    def get_resource_kind(self, obj: Expense) -> dict[str, str] | None:
+        return to_choice(obj.resource_type.model, RESOURCE_KIND_CHOICES)
+
+    @extend_schema_field(NamedReferenceSerializer)
+    def get_resource(self, obj: Expense) -> dict[str, int | str]:
+        return {"id": obj.resource_id, "name": _resource_label(obj)}
+
+    @extend_schema_field(NamedReferenceSerializer(allow_null=True))
+    def get_room(self, obj: Expense) -> dict[str, int | str] | None:
+        if obj.resource_type and obj.resource_type.model == "room":
+            return {"id": obj.resource_id, "name": _resource_label(obj)}
+        return None
 
 
 class ExpensePaymentWriteSerializer(serializers.ModelSerializer):
@@ -86,13 +153,27 @@ class ExpensePaymentSerializer(AppModelSerializer):
 
 
 class FinancialReportQuerySerializer(serializers.Serializer):
-    room_id = serializers.IntegerField(required=False)
+    room_id = serializers.IntegerField(min_value=1, required=False)
+    resource_kind = serializers.ChoiceField(choices=RESOURCE_KIND_CHOICES, required=False)
+    resource_id = serializers.IntegerField(min_value=1, required=False)
     expense_type = serializers.CharField(required=False)
     billing_period = serializers.CharField(required=False)
     status = serializers.CharField(required=False)
     from_date = serializers.DateField(required=False)
     to_date = serializers.DateField(required=False)
     currency = serializers.CharField(required=False, default="EUR")
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs.get("resource_id") is not None and attrs.get("resource_kind") is None:
+            raise serializers.ValidationError(
+                {"resource_kind": "resource_kind is required when filtering by resource_id."}
+            )
+        if attrs.get("room_id") is not None and attrs.get("resource_kind") not in (None, "room"):
+            raise serializers.ValidationError(
+                {"resource_kind": "Cannot combine room_id with a non-room resource_kind."}
+            )
+        return attrs
 
 
 def _report_currency(row, field) -> str:
@@ -158,6 +239,8 @@ class FinancialReportItemSerializer(serializers.Serializer):
     reference = serializers.CharField(allow_blank=True)
     start_date = serializers.DateField(source="valid_from")
     end_date = serializers.DateField(source="valid_until", allow_null=True)
+    resource_kind = serializers.SerializerMethodField()
+    resource = serializers.SerializerMethodField()
     room = serializers.SerializerMethodField()
 
 
@@ -182,6 +265,22 @@ def _get_room(self, row) -> dict:
     return _room(row)
 
 
+@extend_schema_field(NamedReferenceSerializer(allow_null=True))
+def _get_item_room(self, row) -> dict | None:
+    if row["room_id"] is None:
+        return None
+    return _room(row)
+
+
+@extend_schema_field(NamedReferenceSerializer)
+def _get_item_resource(self, row) -> dict:
+    kind = row["resource_kind"]
+    return {
+        "id": row["resource_id"],
+        "name": row["resource_name"] or f"{kind.capitalize()} #{row['resource_id']}",
+    }
+
+
 _with_choice_getters(FinancialReportTypeBreakdownSerializer, expense_type=("expense_type", EXPENSE_TYPE_CHOICES))
 _with_choice_getters(FinancialReportStatusBreakdownSerializer, status=("status", PAYMENT_STATUS_CHOICES))
 _with_choice_getters(FinancialReportPeriodBreakdownSerializer, billing_period=("billing_period", BILLING_PERIOD_CHOICES))
@@ -190,9 +289,11 @@ _with_choice_getters(
     expense_type=("expense_type", EXPENSE_TYPE_CHOICES),
     payment_status=("payment_status", PAYMENT_STATUS_CHOICES),
     billing_period=("billing_period", BILLING_PERIOD_CHOICES),
+    resource_kind=("resource_kind", RESOURCE_KIND_CHOICES),
 )
 FinancialReportRoomBreakdownSerializer.get_room = _get_room
-FinancialReportItemSerializer.get_room = _get_room
+FinancialReportItemSerializer.get_room = _get_item_room
+FinancialReportItemSerializer.get_resource = _get_item_resource
 
 
 class FinancialReportResponseSerializer(serializers.Serializer):
@@ -206,6 +307,8 @@ class FinancialReportResponseSerializer(serializers.Serializer):
 
 
 __all__ = [
+    "ExpenseCreateSerializer",
+    "ExpenseListQuerySerializer",
     "ExpensePaymentSerializer",
     "ExpensePaymentWriteSerializer",
     "ExpenseSerializer",
@@ -218,4 +321,5 @@ __all__ = [
     "FinancialReportStatusBreakdownSerializer",
     "FinancialReportSummarySerializer",
     "FinancialReportTypeBreakdownSerializer",
+    "RoomExpenseListQuerySerializer",
 ]

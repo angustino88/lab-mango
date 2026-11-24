@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 514,
+  "total_endpoints": 516,
   "generated_at": "2026-11-24",
   "endpoints": [
     {
@@ -69196,6 +69196,871 @@
       }
     },
     {
+      "endpoint": "/api/labs/expenses",
+      "method": "GET",
+      "operation_id": "labs_expenses_retrieve",
+      "summary": "Get Expenses",
+      "description": "List and create expense obligations for any supported lab resource (room, station, bench, equipment, license).",
+      "tags": [
+        "Expenses"
+      ],
+      "parameters": [
+        {
+          "name": "billing_period",
+          "in": "query",
+          "required": false,
+          "description": "* `one_time` - One-time\n* `monthly` - Monthly\n* `quarterly` - Quarterly\n* `annual` - Annual",
+          "schema": {
+            "enum": [
+              "one_time",
+              "monthly",
+              "quarterly",
+              "annual"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "expense_type",
+          "in": "query",
+          "required": false,
+          "description": "* `rent` - Rent\n* `utilities` - Utilities\n* `maintenance` - Maintenance\n* `calibration` - Calibration\n* `repair` - Repair\n* `service_contract` - Service contract\n* `license_fee` - License fee\n* `insurance` - Insurance\n* `service` - Service (legacy)\n* `other` - Other",
+          "schema": {
+            "enum": [
+              "rent",
+              "utilities",
+              "maintenance",
+              "calibration",
+              "repair",
+              "service_contract",
+              "license_fee",
+              "insurance",
+              "service",
+              "other"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        },
+        {
+          "name": "resource_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "resource_kind",
+          "in": "query",
+          "required": false,
+          "description": "* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment\n* `license` - License",
+          "schema": {
+            "enum": [
+              "room",
+              "station",
+              "bench",
+              "equipment",
+              "license"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "Read shape for expenses.",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "resource_kind": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "resource": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "room": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
+                      "readOnly": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "expense_type": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "supplier": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "reference": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "cost": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "billing_period": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "start_date": {
+                      "type": "string",
+                      "format": "date",
+                      "readOnly": true
+                    },
+                    "end_date": {
+                      "type": "string",
+                      "format": "date",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "notes": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    }
+                  },
+                  "required": [
+                    "billing_period",
+                    "cost",
+                    "created_at",
+                    "end_date",
+                    "expense_type",
+                    "id",
+                    "name",
+                    "notes",
+                    "reference",
+                    "resource",
+                    "resource_kind",
+                    "room",
+                    "start_date",
+                    "supplier",
+                    "updated_at"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "resource_kind": {},
+                "resource": {},
+                "room": {},
+                "name": "string",
+                "expense_type": {},
+                "supplier": "string",
+                "reference": "string",
+                "cost": {},
+                "billing_period": {},
+                "start_date": "2026-10-20",
+                "end_date": "2026-10-20",
+                "notes": "string",
+                "created_at": "2026-10-20T12:00:00Z",
+                "updated_at": "2026-10-20T12:00:00Z"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/expenses",
+      "method": "POST",
+      "operation_id": "labs_expenses_create",
+      "summary": "Create Expenses",
+      "description": "List and create expense obligations for any supported lab resource (room, station, bench, equipment, license).",
+      "tags": [
+        "Expenses"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "Write shape for resource-scoped expenses across room, station, bench, equipment, or license.",
+          "properties": {
+            "resource_kind": {
+              "allOf": [
+                {
+                  "enum": [
+                    "room",
+                    "station",
+                    "bench",
+                    "equipment",
+                    "license"
+                  ],
+                  "type": "string",
+                  "description": "* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment\n* `license` - License"
+                }
+              ],
+              "description": "Target resource kind (room, station, bench, equipment, or license).\n\n* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment\n* `license` - License"
+            },
+            "resource_id": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Primary key of the target resource."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "expense_type": {
+              "enum": [
+                "rent",
+                "utilities",
+                "maintenance",
+                "calibration",
+                "repair",
+                "service_contract",
+                "license_fee",
+                "insurance",
+                "service",
+                "other"
+              ],
+              "type": "string",
+              "description": "* `rent` - Rent\n* `utilities` - Utilities\n* `maintenance` - Maintenance\n* `calibration` - Calibration\n* `repair` - Repair\n* `service_contract` - Service contract\n* `license_fee` - License fee\n* `insurance` - Insurance\n* `service` - Service (legacy)\n* `other` - Other"
+            },
+            "supplier": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "reference": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "cost": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
+                  "properties": {
+                    "amount": {
+                      "type": "string",
+                      "description": "Decimal string; never a float.",
+                      "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "ISO 4217 code, uppercase.",
+                      "pattern": "^[A-Z]{3}$"
+                    }
+                  },
+                  "required": [
+                    "amount",
+                    "currency"
+                  ]
+                }
+              ],
+              "description": "What the expense costs (FMT-2, FMT-7).",
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "type": "string",
+                  "description": "Decimal string; never a float.",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code, uppercase.",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ]
+            },
+            "billing_period": {
+              "enum": [
+                "one_time",
+                "monthly",
+                "quarterly",
+                "annual"
+              ],
+              "type": "string",
+              "description": "* `one_time` - One-time\n* `monthly` - Monthly\n* `quarterly` - Quarterly\n* `annual` - Annual"
+            },
+            "start_date": {
+              "type": "string",
+              "format": "date"
+            },
+            "end_date": {
+              "type": "string",
+              "format": "date",
+              "nullable": true
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "cost",
+            "expense_type",
+            "name",
+            "resource_id",
+            "resource_kind",
+            "start_date"
+          ]
+        },
+        "example_payload": {
+          "resource_kind": {},
+          "resource_id": 1,
+          "name": "string",
+          "expense_type": "rent",
+          "supplier": "string",
+          "reference": "string",
+          "cost": {
+            "amount": "string",
+            "currency": "string"
+          },
+          "billing_period": "one_time",
+          "start_date": "2026-10-20",
+          "end_date": "2026-10-20",
+          "notes": "string"
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Read shape for expenses.",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "resource_kind": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "resource": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "room": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "expense_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "supplier": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "reference": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "cost": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "billing_period": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "start_date": {
+                    "type": "string",
+                    "format": "date",
+                    "readOnly": true
+                  },
+                  "end_date": {
+                    "type": "string",
+                    "format": "date",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "notes": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "billing_period",
+                  "cost",
+                  "created_at",
+                  "end_date",
+                  "expense_type",
+                  "id",
+                  "name",
+                  "notes",
+                  "reference",
+                  "resource",
+                  "resource_kind",
+                  "room",
+                  "start_date",
+                  "supplier",
+                  "updated_at"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "resource_kind": {},
+              "resource": {},
+              "room": {},
+              "name": "string",
+              "expense_type": {},
+              "supplier": "string",
+              "reference": "string",
+              "cost": {},
+              "billing_period": {},
+              "start_date": "2026-10-20",
+              "end_date": "2026-10-20",
+              "notes": "string",
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "endpoint": "/api/labs/expenses/report",
       "method": "GET",
       "operation_id": "labs_expenses_report_retrieve",
@@ -69247,12 +70112,40 @@
           }
         },
         {
+          "name": "resource_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "resource_kind",
+          "in": "query",
+          "required": false,
+          "description": "* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment\n* `license` - License",
+          "schema": {
+            "enum": [
+              "room",
+              "station",
+              "bench",
+              "equipment",
+              "license"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
           "name": "room_id",
           "in": "query",
           "required": false,
           "description": "",
           "schema": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 1
           }
         },
         {
@@ -69379,6 +70272,59 @@
           }
         },
         "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -103062,6 +104008,44 @@
       ],
       "parameters": [
         {
+          "name": "billing_period",
+          "in": "query",
+          "required": false,
+          "description": "* `one_time` - One-time\n* `monthly` - Monthly\n* `quarterly` - Quarterly\n* `annual` - Annual",
+          "schema": {
+            "enum": [
+              "one_time",
+              "monthly",
+              "quarterly",
+              "annual"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "expense_type",
+          "in": "query",
+          "required": false,
+          "description": "* `rent` - Rent\n* `utilities` - Utilities\n* `maintenance` - Maintenance\n* `calibration` - Calibration\n* `repair` - Repair\n* `service_contract` - Service contract\n* `license_fee` - License fee\n* `insurance` - Insurance\n* `service` - Service (legacy)\n* `other` - Other",
+          "schema": {
+            "enum": [
+              "rent",
+              "utilities",
+              "maintenance",
+              "calibration",
+              "repair",
+              "service_contract",
+              "license_fee",
+              "insurance",
+              "service",
+              "other"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
           "name": "page",
           "in": "query",
           "required": false,
@@ -103130,12 +104114,32 @@
                       "type": "integer",
                       "readOnly": true
                     },
+                    "resource_kind": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "resource": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
                     "room": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
                       "readOnly": true
                     },
                     "name": {
@@ -103213,6 +104217,8 @@
                     "name",
                     "notes",
                     "reference",
+                    "resource",
+                    "resource_kind",
                     "room",
                     "start_date",
                     "supplier",
@@ -103236,6 +104242,8 @@
             "data": [
               {
                 "id": 1,
+                "resource_kind": {},
+                "resource": {},
                 "room": {},
                 "name": "string",
                 "expense_type": {},
@@ -103252,7 +104260,7 @@
             ]
           }
         },
-        "404": {
+        "400": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -103305,7 +104313,7 @@
             }
           }
         },
-        "400": {
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -103391,7 +104399,7 @@
         "description": "",
         "schema": {
           "type": "object",
-          "description": "Write shape for expenses (RW-1). The room is taken from the URL, never the body.",
+          "description": "Write shape for room-scoped expenses (RW-1). The room is taken from the URL, never the body.",
           "properties": {
             "name": {
               "type": "string",
@@ -103524,20 +104532,32 @@
                     "type": "integer",
                     "readOnly": true
                   },
+                  "resource_kind": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "resource": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
                   "room": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        },
-                        {
-                          "type": "object",
-                          "description": "(max nesting depth reached)"
-                        }
-                      ]
-                    },
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
                     "readOnly": true
                   },
                   "name": {
@@ -103615,6 +104635,8 @@
                   "name",
                   "notes",
                   "reference",
+                  "resource",
+                  "resource_kind",
                   "room",
                   "start_date",
                   "supplier",
@@ -103629,6 +104651,8 @@
           "example_payload": {
             "data": {
               "id": 1,
+              "resource_kind": {},
+              "resource": {},
               "room": {},
               "name": "string",
               "expense_type": {},
@@ -103857,6 +104881,33 @@
           }
         },
         {
+          "name": "resource_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "resource_kind",
+          "in": "query",
+          "required": false,
+          "description": "* `room` - Room\n* `station` - Station\n* `bench` - Bench\n* `equipment` - Equipment\n* `license` - License",
+          "schema": {
+            "enum": [
+              "room",
+              "station",
+              "bench",
+              "equipment",
+              "license"
+            ],
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
           "name": "room_id",
           "in": "path",
           "required": true,
@@ -103871,7 +104922,8 @@
           "required": false,
           "description": "",
           "schema": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 1
           }
         },
         {

@@ -9591,12 +9591,18 @@ components:
         id:
           type: integer
           readOnly: true
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         room:
-          type: object
-          additionalProperties:
-            oneOf:
-            - type: integer
-            - type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
           readOnly: true
         name:
           type: string
@@ -9649,10 +9655,114 @@ components:
       - name
       - notes
       - reference
+      - resource
+      - resource_kind
       - room
       - start_date
       - supplier
       - updated_at
+    ExpenseCreate:
+      type: object
+      description: Write shape for resource-scoped expenses across room, station,
+        bench, equipment, or license.
+      properties:
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/ResourceTypeEnum'
+          description: 'Target resource kind (room, station, bench, equipment, or
+            license).
+
+
+            * `room` - Room
+
+            * `station` - Station
+
+            * `bench` - Bench
+
+            * `equipment` - Equipment
+
+            * `license` - License'
+        resource_id:
+          type: integer
+          minimum: 1
+          description: Primary key of the target resource.
+        name:
+          type: string
+          maxLength: 255
+        expense_type:
+          $ref: '#/components/schemas/ExpenseTypeEnum'
+        supplier:
+          type: string
+          maxLength: 255
+        reference:
+          type: string
+          maxLength: 255
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: What the expense costs (FMT-2, FMT-7).
+        billing_period:
+          $ref: '#/components/schemas/BillingPeriodEnum'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+      required:
+      - cost
+      - expense_type
+      - name
+      - resource_id
+      - resource_kind
+      - start_date
+    ExpenseListSerializersExpensePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/ExpenseListSerializersExpensePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Expense'
+      required:
+      - data
+      - meta
+    ExpenseListSerializersExpensePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    ExpenseListSerializersExpensePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/ExpenseListSerializersExpensePagination'
+      required:
+      - pagination
     ExpensePayment:
       type: object
       description: Read shape for payments; ``paid_date`` is a calendar date (NAM-3).
@@ -9769,6 +9879,14 @@ components:
       required:
       - paid_date
       - total
+    ExpenseSerializersExpenseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Expense'
+      required:
+      - data
     ExpenseTypeEnum:
       enum:
       - rent
@@ -9803,8 +9921,8 @@ components:
         * `other` - Other'
     ExpenseWrite:
       type: object
-      description: Write shape for expenses (RW-1). The room is taken from the URL,
-        never the body.
+      description: Write shape for room-scoped expenses (RW-1). The room is taken
+        from the URL, never the body.
       properties:
         name:
           type: string
@@ -10145,9 +10263,18 @@ components:
           type: string
           format: date
           nullable: true
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         room:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
           readOnly: true
       required:
       - billing_period
@@ -10160,6 +10287,8 @@ components:
       - payment_status
       - pending
       - reference
+      - resource
+      - resource_kind
       - room
       - start_date
       - supplier
@@ -16503,7 +16632,7 @@ components:
       properties:
         resource_kind:
           allOf:
-          - $ref: '#/components/schemas/ResourceKindEnum'
+          - $ref: '#/components/schemas/PurchaseItemResourceCreateResourceKindEnum'
           writeOnly: true
           description: 'Stable resource kind (bench, equipment, license, or station).
 
@@ -16526,6 +16655,20 @@ components:
       - acquisition_price
       - resource_id
       - resource_kind
+    PurchaseItemResourceCreateResourceKindEnum:
+      enum:
+      - bench
+      - equipment
+      - license
+      - station
+      type: string
+      description: '* `bench` - bench
+
+        * `equipment` - equipment
+
+        * `license` - license
+
+        * `station` - station'
     PurchaseItemResourceListSerializersPurchaseItemResourcePaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -17374,20 +17517,6 @@ components:
             from the content.
       required:
       - file
-    ResourceKindEnum:
-      enum:
-      - bench
-      - equipment
-      - license
-      - station
-      type: string
-      description: '* `bench` - bench
-
-        * `equipment` - equipment
-
-        * `license` - license
-
-        * `station` - station'
     ResourceMappingData:
       type: object
       properties:

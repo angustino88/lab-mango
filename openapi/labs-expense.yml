@@ -4,6 +4,172 @@ info:
   version: 1.0.0
   description: LabMango Backend REST API
 paths:
+  /api/labs/expenses:
+    get:
+      operationId: labs_expenses_retrieve
+      description: List and create expense obligations for any supported lab resource
+        (room, station, bench, equipment, license).
+      parameters:
+      - in: query
+        name: billing_period
+        schema:
+          enum:
+          - one_time
+          - monthly
+          - quarterly
+          - annual
+          type: string
+          minLength: 1
+        description: '* `one_time` - One-time
+
+          * `monthly` - Monthly
+
+          * `quarterly` - Quarterly
+
+          * `annual` - Annual'
+      - in: query
+        name: expense_type
+        schema:
+          enum:
+          - rent
+          - utilities
+          - maintenance
+          - calibration
+          - repair
+          - service_contract
+          - license_fee
+          - insurance
+          - service
+          - other
+          type: string
+          minLength: 1
+        description: '* `rent` - Rent
+
+          * `utilities` - Utilities
+
+          * `maintenance` - Maintenance
+
+          * `calibration` - Calibration
+
+          * `repair` - Repair
+
+          * `service_contract` - Service contract
+
+          * `license_fee` - License fee
+
+          * `insurance` - Insurance
+
+          * `service` - Service (legacy)
+
+          * `other` - Other'
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: resource_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: resource_kind
+        schema:
+          enum:
+          - room
+          - station
+          - bench
+          - equipment
+          - license
+          type: string
+          minLength: 1
+        description: '* `room` - Room
+
+          * `station` - Station
+
+          * `bench` - Bench
+
+          * `equipment` - Equipment
+
+          * `license` - License'
+      tags:
+      - Expenses
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseListSerializersExpensePaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Expenses
+    post:
+      operationId: labs_expenses_create
+      description: List and create expense obligations for any supported lab resource
+        (room, station, bench, equipment, license).
+      tags:
+      - Expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseSerializersExpenseDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Expenses
   /api/labs/expenses/{expense_id}/payments:
     get:
       operationId: labs_expenses_payments_retrieve_by_expense_id
@@ -129,9 +295,35 @@ paths:
           type: string
           format: date
       - in: query
+        name: resource_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: resource_kind
+        schema:
+          enum:
+          - room
+          - station
+          - bench
+          - equipment
+          - license
+          type: string
+          minLength: 1
+        description: '* `room` - Room
+
+          * `station` - Station
+
+          * `bench` - Bench
+
+          * `equipment` - Equipment
+
+          * `license` - License'
+      - in: query
         name: room_id
         schema:
           type: integer
+          minimum: 1
       - in: query
         name: status
         schema:
@@ -160,12 +352,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
       summary: Get Expenses Report
   /api/labs/rooms/{room_id}/expenses:
     get:
       operationId: labs_rooms_expenses_retrieve_by_room_id
       description: List and create expense obligations for a room.
       parameters:
+      - in: query
+        name: billing_period
+        schema:
+          enum:
+          - one_time
+          - monthly
+          - quarterly
+          - annual
+          type: string
+          minLength: 1
+        description: '* `one_time` - One-time
+
+          * `monthly` - Monthly
+
+          * `quarterly` - Quarterly
+
+          * `annual` - Annual'
+      - in: query
+        name: expense_type
+        schema:
+          enum:
+          - rent
+          - utilities
+          - maintenance
+          - calibration
+          - repair
+          - service_contract
+          - license_fee
+          - insurance
+          - service
+          - other
+          type: string
+          minLength: 1
+        description: '* `rent` - Rent
+
+          * `utilities` - Utilities
+
+          * `maintenance` - Maintenance
+
+          * `calibration` - Calibration
+
+          * `repair` - Repair
+
+          * `service_contract` - Service contract
+
+          * `license_fee` - License fee
+
+          * `insurance` - Insurance
+
+          * `service` - Service (legacy)
+
+          * `other` - Other'
       - in: query
         name: page
         schema:
@@ -194,13 +444,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/RoomExpenseListSerializersExpensePaginatedResponse'
           description: ''
-        '404':
+        '400':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
-        '400':
+        '404':
           content:
             application/json:
               schema:
@@ -285,6 +535,31 @@ paths:
         schema:
           type: string
           format: date
+      - in: query
+        name: resource_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: resource_kind
+        schema:
+          enum:
+          - room
+          - station
+          - bench
+          - equipment
+          - license
+          type: string
+          minLength: 1
+        description: '* `room` - Room
+
+          * `station` - Station
+
+          * `bench` - Bench
+
+          * `equipment` - Equipment
+
+          * `license` - License'
       - in: path
         name: room_id
         schema:
@@ -294,6 +569,7 @@ paths:
         name: room_id
         schema:
           type: integer
+          minimum: 1
       - in: query
         name: status
         schema:
@@ -365,12 +641,18 @@ components:
         id:
           type: integer
           readOnly: true
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         room:
-          type: object
-          additionalProperties:
-            oneOf:
-            - type: integer
-            - type: string
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
           readOnly: true
         name:
           type: string
@@ -423,10 +705,114 @@ components:
       - name
       - notes
       - reference
+      - resource
+      - resource_kind
       - room
       - start_date
       - supplier
       - updated_at
+    ExpenseCreate:
+      type: object
+      description: Write shape for resource-scoped expenses across room, station,
+        bench, equipment, or license.
+      properties:
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/ResourceTypeEnum'
+          description: 'Target resource kind (room, station, bench, equipment, or
+            license).
+
+
+            * `room` - Room
+
+            * `station` - Station
+
+            * `bench` - Bench
+
+            * `equipment` - Equipment
+
+            * `license` - License'
+        resource_id:
+          type: integer
+          minimum: 1
+          description: Primary key of the target resource.
+        name:
+          type: string
+          maxLength: 255
+        expense_type:
+          $ref: '#/components/schemas/ExpenseTypeEnum'
+        supplier:
+          type: string
+          maxLength: 255
+        reference:
+          type: string
+          maxLength: 255
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: What the expense costs (FMT-2, FMT-7).
+        billing_period:
+          $ref: '#/components/schemas/BillingPeriodEnum'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+      required:
+      - cost
+      - expense_type
+      - name
+      - resource_id
+      - resource_kind
+      - start_date
+    ExpenseListSerializersExpensePaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/ExpenseListSerializersExpensePaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Expense'
+      required:
+      - data
+      - meta
+    ExpenseListSerializersExpensePagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    ExpenseListSerializersExpensePaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/ExpenseListSerializersExpensePagination'
+      required:
+      - pagination
     ExpensePayment:
       type: object
       description: Read shape for payments; ``paid_date`` is a calendar date (NAM-3).
@@ -543,6 +929,14 @@ components:
       required:
       - paid_date
       - total
+    ExpenseSerializersExpenseDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Expense'
+      required:
+      - data
     ExpenseTypeEnum:
       enum:
       - rent
@@ -577,8 +971,8 @@ components:
         * `other` - Other'
     ExpenseWrite:
       type: object
-      description: Write shape for expenses (RW-1). The room is taken from the URL,
-        never the body.
+      description: Write shape for room-scoped expenses (RW-1). The room is taken
+        from the URL, never the body.
       properties:
         name:
           type: string
@@ -654,9 +1048,18 @@ components:
           type: string
           format: date
           nullable: true
+        resource_kind:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
         room:
           allOf:
           - $ref: '#/components/schemas/LabsNamedReference'
+          nullable: true
           readOnly: true
       required:
       - billing_period
@@ -669,6 +1072,8 @@ components:
       - payment_status
       - pending
       - reference
+      - resource
+      - resource_kind
       - room
       - start_date
       - supplier
@@ -895,6 +1300,23 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    ResourceTypeEnum:
+      enum:
+      - room
+      - station
+      - bench
+      - equipment
+      - license
+      type: string
+      description: '* `room` - Room
+
+        * `station` - Station
+
+        * `bench` - Bench
+
+        * `equipment` - Equipment
+
+        * `license` - License'
     RoomExpenseListSerializersExpensePaginatedResponse:
       type: object
       description: Base serializer for successful API responses.

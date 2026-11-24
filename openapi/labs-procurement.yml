@@ -1356,7 +1356,7 @@ components:
       properties:
         resource_kind:
           allOf:
-          - $ref: '#/components/schemas/ResourceKindEnum'
+          - $ref: '#/components/schemas/PurchaseItemResourceCreateResourceKindEnum'
           writeOnly: true
           description: 'Stable resource kind (bench, equipment, license, or station).
 
@@ -1379,6 +1379,20 @@ components:
       - acquisition_price
       - resource_id
       - resource_kind
+    PurchaseItemResourceCreateResourceKindEnum:
+      enum:
+      - bench
+      - equipment
+      - license
+      - station
+      type: string
+      description: '* `bench` - bench
+
+        * `equipment` - equipment
+
+        * `license` - license
+
+        * `station` - station'
     PurchaseItemResourceListSerializersPurchaseItemResourcePaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -1639,20 +1653,6 @@ components:
       - settled_at
       - total
       - transaction_type
-    ResourceKindEnum:
-      enum:
-      - bench
-      - equipment
-      - license
-      - station
-      type: string
-      description: '* `bench` - bench
-
-        * `equipment` - equipment
-
-        * `license` - license
-
-        * `station` - station'
     TransactionTypeEnum:
       enum:
       - payment

@@ -1,7 +1,7 @@
 # Feature Specification: Expense & Facility Finance (`core/labs/features/expense`)
 
 ## 1. Domain Overview & Purpose
-The Expense feature manages ongoing operational overhead costs (facility rent, building maintenance, power/cooling utilities, service contracts) associated with physical rooms.
+The Expense feature manages ongoing operational costs (facility rent, utilities, maintenance, calibration, repair, service contracts, software license fees, insurance) associated with lab resources (`room`, `station`, `bench`, `equipment`, or `license`).
 
 ---
 
@@ -9,9 +9,9 @@ The Expense feature manages ongoing operational overhead costs (facility rent, b
 
 ### 2.1 `core.labs.models.Expense`
 - **Fields:**
-  - `resource_type` (FK `ContentType`, restricted to `labs.room`), `resource_id` (PositiveBigIntegerField).
+  - `resource_type` (FK `ContentType`, restricted to `EXPENSE_RESOURCE_MODELS`: `labs.room`, `labs.station`, `labs.bench`, `labs.equipment`, `labs.license`), `resource_id` (PositiveBigIntegerField).
   - `name` (CharField(255)).
-  - `expense_type`: Enum (`rent`, `utilities`, `maintenance`, `service`, `other`).
+  - `expense_type`: Enum (`rent`, `utilities`, `maintenance`, `calibration`, `repair`, `service_contract`, `license_fee`, `insurance`, `service`, `other`).
   - `amount` (DecimalField, min 0.01), `currency` (default "EUR").
   - `billing_period`: Enum (`one_time`, `monthly`, `quarterly`, `annual`).
   - `valid_from` (DateField), `valid_until` (DateField, nullable).
@@ -27,8 +27,10 @@ The Expense feature manages ongoing operational overhead costs (facility rent, b
 
 | Method & Path | View Class | Purpose & Contract |
 |---|---|---|
+| `GET /api/labs/expenses` | `ExpenseListCreateAPIView` | List expenses across all resources; filters `resource_kind`, `resource_id`, `expense_type`, `billing_period`. |
+| `POST /api/labs/expenses` | `ExpenseListCreateAPIView` | Create an expense linked to a `room`, `station`, `bench`, `equipment`, or `license` via `resource_kind` + `resource_id`. |
 | `GET /api/labs/rooms/{room_id}/expenses` | `RoomExpenseListCreateAPIView` | List room-scoped expenses. |
 | `POST /api/labs/rooms/{room_id}/expenses` | `RoomExpenseListCreateAPIView` | Create expense for a room. |
 | `GET /api/labs/rooms/{room_id}/expenses/report` | `RoomFinancialReportAPIView` | Room expenditure metrics report. |
-| `POST /api/labs/expenses/{expense_id}/payments` | `ExpensePaymentListCreateAPIView` | Record payment against expense. |
-| `GET /api/labs/expenses/report` | `FinancialReportAPIView` | Canonical facilities financial report. |
+| `GET/POST /api/labs/expenses/{expense_id}/payments` | `ExpensePaymentListCreateAPIView` | List or record payments/refunds against an expense. |
+| `GET /api/labs/expenses/report` | `FinancialReportAPIView` | Canonical financial report; supports `room_id`, `resource_kind`, `resource_id`, `expense_type`, `billing_period`, `status`, `from_date`, `to_date`, `currency`. |
