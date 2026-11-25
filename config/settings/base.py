@@ -484,6 +484,18 @@ API_MAX_CONCURRENT_SYNC_HANDLERS = env.int("API_MAX_CONCURRENT_SYNC_HANDLERS", d
 # Declarative versioned read-through cache + ETag/304 + singleflight stampede guard.
 API_READ_CACHE_ENABLED = env.bool("API_READ_CACHE_ENABLED", default=True)
 API_PAGINATION_COUNT_CACHE_TTL = env.int("API_PAGINATION_COUNT_CACHE_TTL", default=15)
+# After a namespace bump, the previous entry may still be served (X-Cache: STALE) for this long,
+# but only to a request that waited CACHE_SINGLEFLIGHT_WAIT_TIMEOUT for a slow rebuild (0 disables).
+API_READ_CACHE_STALE_SECONDS = env.int("API_READ_CACHE_STALE_SECONDS", default=300)
+# Responses larger than this (identity + gzip bytes) are served but not cached (0 disables the cap).
+API_READ_CACHE_MAX_BYTES = env.int("API_READ_CACHE_MAX_BYTES", default=2 * 1024 * 1024)
+# Singleflight: the build lock outlives a slow build; waiters give up (serve stale or build) after
+# the wait timeout.
+CACHE_SINGLEFLIGHT_LOCK_TIMEOUT = env.float("CACHE_SINGLEFLIGHT_LOCK_TIMEOUT", default=30.0)
+CACHE_SINGLEFLIGHT_WAIT_TIMEOUT = env.float("CACHE_SINGLEFLIGHT_WAIT_TIMEOUT", default=10.0)
+# After a cache backend failure, skip optional cache calls in this process for this many seconds
+# (fail fast instead of one socket timeout per call). Invalidation bumps are always attempted.
+CACHE_CIRCUIT_BREAKER_SECONDS = env.float("CACHE_CIRCUIT_BREAKER_SECONDS", default=5.0)
 # Short-TTL cache for user Labs roles and Entra binding checks (invalidated on commit).
 API_AUTH_CACHE_ENABLED = env.bool("API_AUTH_CACHE_ENABLED", default=True)
 API_AUTH_CACHE_TTL = env.int("API_AUTH_CACHE_TTL", default=120)

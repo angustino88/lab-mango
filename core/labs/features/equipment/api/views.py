@@ -695,9 +695,11 @@ class EquipmentOptionsAPIView(OptionsAPIView):
     schema_tags = ("Equipment",)
     read_cache_namespace = "labs:equipment:inventory"
     read_cache_ttl = 30
+    # Options are the same for every caller, so one cache entry is shared across users.
+    select_uses_actor = False
 
     def select(self, *, actor: Any, filters: dict[str, Any]) -> Any:
-        return list_equipment_options(actor=actor, **filters)
+        return list_equipment_options(**filters)
 
 
 # 1. Equipment Categories

@@ -2,7 +2,7 @@
 
 import asyncio
 import inspect
-import json
+import re
 import time
 import weakref
 from collections.abc import Callable, Mapping
@@ -12,26 +12,35 @@ from urllib.parse import quote
 from adrf.views import APIView
 from asgiref.sync import sync_to_async
 from django.conf import settings
+from django.http import HttpResponse, HttpResponseNotModified
+from django.middleware.gzip import GZipMiddleware
 from django.shortcuts import get_object_or_404
 from django.utils.functional import classproperty
+from django.utils.text import compress_string
 from drf_api_contracts import OperationContract, ResponseSet
 from rest_framework import serializers, status
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
 
 from core.common.cache import (
+    FetchSource,
+    asingleflight_fetch,
     canonical_request_hash,
-    compute_strong_etag,
+    compute_body_etag,
     etag_matches,
     get_namespace_version,
-    safe_cache_get,
-    singleflight_get_or_set,
+    namespace_version_memo,
 )
 
 from .correlation import get_request_id
 from .pagination import ResultsSetPagination
 
 RESOURCE_FIELD_IMMUTABLE = "resource_field_immutable"
+
+_X_CACHE = {"hit": "HIT", "miss": "MISS", "stale": "STALE", "bypass": "BYPASS"}
+_ACCEPTS_GZIP = re.compile(r"\bgzip\b")
+_GZIP_MIDDLEWARE = ("core.common.api.middleware.SafeGZipMiddleware", "django.middleware.gzip.GZipMiddleware")
+_GZIP_MIN_BYTES = 200  # GZipMiddleware does not compress shorter bodies either
 
 # Per-event-loop semaphore bounding concurrent sync Django/ORM dispatches per worker process
 # so threadpools cannot exhaust PostgreSQL max_connections under high concurrency bursts.
@@ -53,16 +62,24 @@ def _get_worker_sync_semaphore() -> asyncio.Semaphore | None:
     return entry[1]
 
 
+def _gzip_enabled() -> bool:
+    return any(name in settings.MIDDLEWARE for name in _GZIP_MIDDLEWARE)
+
+
 class AppAPIView(APIView):
     responses: ResponseSet | None = None
     schema_tags: tuple[str, ...] | list[str] | None = None
 
     # Optional declarative read-through cache for GET handlers (opt-in per view).
     # Authorization always runs before cache lookup (inside DRF initial()).
+    # Use "user" whenever the handler output depends on request.user / the actor.
     read_cache_namespace: str | None = None
     read_cache_ttl: int = 0
     read_cache_scope: str = "global"  # "global" | "user"
     read_cache_etag: bool = True
+
+    # True while this request holds a slot of the per-worker sync semaphore for its whole dispatch.
+    _holds_sync_slot: bool = False
 
     @classproperty
     def view_is_async(cls) -> bool:
@@ -80,12 +97,19 @@ class AppAPIView(APIView):
 
     async def async_dispatch(self, request: Any, *args: Any, **kwargs: Any) -> Any:
         started = time.perf_counter()
-        semaphore = _get_worker_sync_semaphore()
-        if semaphore is None:
-            response = await super().async_dispatch(request, *args, **kwargs)
-        else:
-            async with semaphore:
+        with namespace_version_memo():
+            semaphore = _get_worker_sync_semaphore()
+            if semaphore is None or self._is_read_cached_request(request):
+                # Cached GETs take a slot only around the DB build on a miss (``_run_sync``), so
+                # cache hits and singleflight waiters never queue behind slow writes.
                 response = await super().async_dispatch(request, *args, **kwargs)
+            else:
+                async with semaphore:
+                    self._holds_sync_slot = True
+                    try:
+                        response = await super().async_dispatch(request, *args, **kwargs)
+                    finally:
+                        self._holds_sync_slot = False
         elapsed_ms = (time.perf_counter() - started) * 1000.0
         if (
             response is not None
@@ -95,6 +119,31 @@ class AppAPIView(APIView):
             response["Server-Timing"] = f"app;dur={elapsed_ms:.1f}"
         return response
 
+    async def _run_sync(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+        """Run sync request work on the request thread, bounded by the per-worker semaphore."""
+        semaphore = None if self._holds_sync_slot else _get_worker_sync_semaphore()
+        if semaphore is None:
+            return await sync_to_async(func)(*args, **kwargs)
+        async with semaphore:
+            return await sync_to_async(func)(*args, **kwargs)
+
+    # -- read cache -----------------------------------------------------------------------------
+
+    def _read_cache_configured(self) -> bool:
+        return (
+            bool(self.read_cache_namespace)
+            and int(self.read_cache_ttl or 0) > 0
+            and bool(getattr(settings, "API_READ_CACHE_ENABLED", False))
+        )
+
+    def _is_read_cached_request(self, request: Any) -> bool:
+        method = str(getattr(request, "method", "") or "").upper()
+        return (
+            method in {"GET", "HEAD"}
+            and getattr(self, "handle_get", None) is not None
+            and self._read_cache_configured()
+        )
+
     def get_read_cache_scope(self, request: Any) -> str:
         """Return the cache visibility partition key for ``request``."""
         if self.read_cache_scope == "user":
@@ -103,107 +152,103 @@ class AppAPIView(APIView):
             return f"user:{user_id}"
         return "global"
 
-    def _try_cached_get_hit(self, request: Any) -> tuple[Response | None, str | None, bool]:
-        """Fast lock-free cache read off the thread_sensitive DB thread.
-
-        Returns ``(cached_response, cache_key, cache_available)`` so a miss can reuse
-        ``cache_key`` in ``_run_cached_get_sync`` without repeating Redis version/get lookups.
-        """
-        namespace = self.read_cache_namespace
-        ttl = int(self.read_cache_ttl or 0)
-        if not namespace or ttl <= 0 or not getattr(settings, "API_READ_CACHE_ENABLED", False):
-            return None, None, False
-        ns_ver = get_namespace_version(namespace)
-        if ns_ver == 0:
-            return None, None, False
+    def _read_cache_key(self, request: Any) -> tuple[str, int] | None:
+        """Return ``(cache_key, namespace_generation)``, or ``None`` to bypass the cache."""
+        renderer = getattr(request, "accepted_renderer", None)
+        if getattr(renderer, "format", None) != "json":
+            return None
+        namespace = str(self.read_cache_namespace)
+        version = get_namespace_version(namespace)
+        if version == 0:
+            return None
         scope_key = self.get_read_cache_scope(request)
-        req_hash = canonical_request_hash(request)
-        cache_key = f"api:read:{namespace}:v{ns_ver}:{scope_key}:{req_hash}"
-        entry = safe_cache_get(cache_key)
-        if not isinstance(entry, dict) or not entry.get("cacheable"):
-            return None, cache_key, True
-        return self._build_cached_response(request, entry, cache_hit=True), cache_key, True
+        # The generation lives in the entry, not the key: a write overwrites the same key instead of
+        # orphaning one entry per generation, and the previous entry can be served as stale.
+        return f"api:read:{namespace}:{scope_key}:{canonical_request_hash(request)}", version
 
-    def _build_cached_response(self, request: Any, entry: dict[str, Any], *, cache_hit: bool) -> Response:
+    def _build_read_entry(
+        self, handler: Callable[..., Response], request: Any, version: int, *args: Any, **kwargs: Any
+    ) -> dict[str, Any]:
+        """Run the handler once and render the body once; the cached entry holds plain bytes."""
+        raw_response = handler(request, *args, **kwargs)
+        if raw_response.status_code != status.HTTP_200_OK or not isinstance(raw_response, Response):
+            return {"cacheable": False, "response": raw_response}
+        renderer = request.accepted_renderer
+        context = self.get_renderer_context()
+        context["response"] = raw_response
+        body = renderer.render(raw_response.data, request.accepted_media_type, context)
+        if isinstance(body, str):
+            body = body.encode(renderer.charset or "utf-8")
+        content_type = (
+            f"{renderer.media_type}; charset={renderer.charset}" if renderer.charset else renderer.media_type
+        )
+        etag = raw_response.headers.get("ETag") or (compute_body_etag(body) if self.read_cache_etag else "")
+        gz = None
+        if _gzip_enabled() and len(body) >= _GZIP_MIN_BYTES:
+            compressed = compress_string(body, max_random_bytes=GZipMiddleware.max_random_bytes)
+            if len(compressed) < len(body):
+                gz = compressed
+        max_bytes = int(getattr(settings, "API_READ_CACHE_MAX_BYTES", 0) or 0)
+        return {
+            "cacheable": not (max_bytes and len(body) + len(gz or b"") > max_bytes),
+            "v": version,
+            "exp": time.time() + int(self.read_cache_ttl),
+            "status": raw_response.status_code,
+            "content_type": content_type,
+            "body": body,
+            "gz": gz,
+            "etag": etag,
+        }
+
+    def _build_cached_response(self, request: Any, entry: dict[str, Any], *, source: FetchSource) -> HttpResponse:
+        accepts_gzip = bool(_ACCEPTS_GZIP.search(request.META.get("HTTP_ACCEPT_ENCODING", "")))
+        use_gzip = bool(entry.get("gz")) and accepts_gzip
         etag = str(entry.get("etag") or "")
+        if use_gzip and etag and not etag.startswith("W/"):
+            etag = f"W/{etag}"  # same as GZipMiddleware: a compressed body is a different representation
+        response: HttpResponse
         if self.read_cache_etag and etag and etag_matches(request.headers.get("If-None-Match"), etag):
-            not_modified = Response(status=status.HTTP_304_NOT_MODIFIED)
-            not_modified["ETag"] = etag
-            not_modified["Cache-Control"] = "private, no-cache"
-            not_modified["Vary"] = "Accept-Language, Accept-Encoding"
-            not_modified["X-Cache"] = "HIT" if cache_hit else "MISS"
-            return not_modified
-
-        response = Response(entry["data"], status=int(entry["status"]))
+            response = HttpResponseNotModified()
+        else:
+            body = entry["gz"] if use_gzip else entry["body"]
+            response = HttpResponse(body, status=int(entry["status"]), content_type=entry["content_type"])
+            response["Content-Length"] = str(len(body))
+            if use_gzip:
+                response["Content-Encoding"] = "gzip"
         if etag:
             response["ETag"] = etag
-        response.setdefault("Cache-Control", "private, no-cache")
-        response.setdefault("Vary", "Accept-Language, Accept-Encoding")
-        response["X-Cache"] = "HIT" if cache_hit else "MISS"
+        response["Cache-Control"] = "private, no-cache"
+        response["Vary"] = "Accept-Language, Accept-Encoding"
+        response["X-Cache"] = _X_CACHE[source]
         return response
 
-    def _run_cached_get_sync(
-        self,
-        handler: Callable[..., Response],
-        request: Any,
-        *args: Any,
-        precomputed_cache_key: str | None = None,
-        cache_available: bool | None = None,
-        **kwargs: Any,
-    ) -> Response:
-        namespace = self.read_cache_namespace
-        ttl = int(self.read_cache_ttl or 0)
-        if not namespace or ttl <= 0 or not getattr(settings, "API_READ_CACHE_ENABLED", False):
-            return handler(request, *args, **kwargs)
-
-        if cache_available is False:
-            # Fast path already detected an unreachable cache backend: bypass gracefully.
-            response = handler(request, *args, **kwargs)
+    async def _cached_get(self, handler: Callable[..., Response], request: Any, *args: Any, **kwargs: Any) -> Any:
+        key_and_version = await sync_to_async(self._read_cache_key, thread_sensitive=False)(request)
+        if key_and_version is None:
+            response = await self._run_sync(handler, request, *args, **kwargs)
             response["X-Cache"] = "BYPASS"
             return response
+        cache_key, version = key_and_version
+        stale_seconds = int(getattr(settings, "API_READ_CACHE_STALE_SECONDS", 300) or 0)
 
-        cache_key = precomputed_cache_key
-        skip_initial_get = cache_key is not None
-        if cache_key is None:
-            ns_ver = get_namespace_version(namespace)
-            if ns_ver == 0:
-                response = handler(request, *args, **kwargs)
-                response["X-Cache"] = "BYPASS"
-                return response
-            scope_key = self.get_read_cache_scope(request)
-            req_hash = canonical_request_hash(request)
-            cache_key = f"api:read:{namespace}:v{ns_ver}:{scope_key}:{req_hash}"
+        def is_fresh(entry: Any) -> bool:
+            return isinstance(entry, dict) and entry.get("v") == version and float(entry.get("exp", 0)) > time.time()
 
-        def _build_entry() -> dict[str, Any]:
-            raw_response = handler(request, *args, **kwargs)
-            if raw_response.status_code != status.HTTP_200_OK:
-                return {"cacheable": False, "response": raw_response}
-            # Normalize to plain JSON primitives so cached entries hold no ORM references.
-            rendered = json.dumps(raw_response.data, separators=(",", ":"), ensure_ascii=False, default=str)
-            normalized_data = json.loads(rendered)
-            etag = raw_response.headers.get("ETag") or (
-                compute_strong_etag(normalized_data) if self.read_cache_etag else ""
-            )
-            return {
-                "cacheable": True,
-                "status": raw_response.status_code,
-                "data": normalized_data,
-                "etag": etag,
-            }
-
-        entry, cache_hit = singleflight_get_or_set(
+        result = await asingleflight_fetch(
             cache_key,
-            _build_entry,
-            timeout=ttl,
-            cache_predicate=lambda item: bool(item.get("cacheable")),
-            skip_initial_get=skip_initial_get,
+            lambda: self._run_sync(self._build_read_entry, handler, request, version, *args, **kwargs),
+            timeout=int(self.read_cache_ttl) + stale_seconds,
+            is_fresh=is_fresh,
+            allow_stale=stale_seconds > 0,
+            cache_predicate=lambda entry: bool(entry.get("cacheable")),
         )
-        if not entry.get("cacheable"):
-            raw_resp: Response = entry["response"]
-            raw_resp["X-Cache"] = "BYPASS"
-            return raw_resp
-
-        return self._build_cached_response(request, entry, cache_hit=cache_hit)
+        entry = result.value
+        if "body" in entry:
+            source: FetchSource = result.source if entry.get("cacheable") else "bypass"
+            return self._build_cached_response(request, entry, source=source)
+        raw_response: Response = entry["response"]
+        raw_response["X-Cache"] = "BYPASS"
+        return raw_response
 
     async def _dispatch_sync_handler(
         self,
@@ -211,25 +256,13 @@ class AppAPIView(APIView):
         request: Any,
         *args: Any,
         **kwargs: Any,
-    ) -> Response:
+    ) -> Any:
         handler = getattr(self, f"handle_{method}", None)
         if handler is None:
             return self.http_method_not_allowed(request, *args, **kwargs)
-        if method == "get" and self.read_cache_namespace and self.read_cache_ttl > 0:
-            cached, cache_key, cache_available = await sync_to_async(
-                self._try_cached_get_hit, thread_sensitive=False
-            )(request)
-            if cached is not None:
-                return cached
-            return await sync_to_async(self._run_cached_get_sync)(
-                handler,
-                request,
-                *args,
-                precomputed_cache_key=cache_key,
-                cache_available=cache_available,
-                **kwargs,
-            )
-        return await sync_to_async(handler)(request, *args, **kwargs)
+        if method == "get" and self._read_cache_configured():
+            return await self._cached_get(handler, request, *args, **kwargs)
+        return await self._run_sync(handler, request, *args, **kwargs)
 
     def _allowed_methods(self) -> list[str]:
         """Advertise only the HTTP methods this view actually implements.

@@ -246,7 +246,7 @@ class EquipmentReferenceDataAPIView(EquipmentAPIView):
     """Everything the equipment form needs, optionally for one category."""
 
     read_cache_namespace = "labs:equipment:refdata"
-    read_cache_ttl = 600
+    read_cache_ttl = 60
     get_contract = OperationContract(
         query=EquipmentReferenceDataQuerySerializer,
         success=ResponseContract.success("EquipmentReferenceData", EquipmentReferenceDataSerializer),
@@ -291,7 +291,7 @@ class EquipmentCollectionAPIView(EquipmentListCreateAPIView):
 class EquipmentFiltersAPIView(FilterMetadataMixin, EquipmentAPIView):
     filter_spec = EquipmentCollectionAPIView.filter_spec
     read_cache_namespace = "labs:equipment:refdata"
-    read_cache_ttl = 600
+    read_cache_ttl = 60
     get_contract = OperationContract(
         query=PageNumberQuerySerializer,
         success=ResponseContract.success("EquipmentFilters", FilterMetadataSerializer),
