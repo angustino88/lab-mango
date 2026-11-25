@@ -5,7 +5,11 @@ __pycache__/
 .ruff_cache/
 .venv/
 .env
-.envs/
+# Plaintext env files stay local; commit only templates (*.example) and SOPS output (*.enc).
+.envs/**/*
+!.envs/**/
+!.envs/**/*.example
+!.envs/**/*.enc
 *.sqlite3
 .coverage
 htmlcov/
@@ -15,3 +19,8 @@ core/media/
 
 # Local identity stubs state (keys, tokens): tools/stubs/README.md
 .labmango-stub/
+
+# Docker deployment: collected static files and TLS/CA certificates are host-managed
+/staticfiles/
+/ssl_certifactes/*
+!/ssl_certifactes/README.md

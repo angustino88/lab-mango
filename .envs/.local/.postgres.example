@@ -1,0 +1,10 @@
+# Local Docker PostgreSQL (docker-compose.dev.yml). Copy to .envs/.local/.postgres.
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=labmango_local
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=debug
+
+# Read by Django and by compose/production/django/entrypoint (waits for the database).
+DATABASE_URL=postgresql://postgres:debug@postgres:5432/labmango_local
+CONN_MAX_AGE=0

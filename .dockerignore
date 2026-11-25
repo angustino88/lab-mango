@@ -1,0 +1,22 @@
+.git
+.github
+.venv
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+.env
+.envs
+staticfiles
+media
+core/media
+.labmango-stub
+nginx
+docker-compose*.yml
+# Only the corporate CA certificates are needed in the image; never the server TLS key.
+ssl_certifactes/*
+!ssl_certifactes/*.crt
+ssl_certifactes/server.crt
