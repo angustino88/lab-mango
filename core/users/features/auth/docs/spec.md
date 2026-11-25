@@ -70,8 +70,10 @@ per-IP backstop ([throttles.py](../throttles.py)):
 - The client IP comes from `REST_FRAMEWORK["NUM_PROXIES"]` (optional `DJANGO_NUM_PROXIES`). Unset keeps
   DRF's default, which keys on the whole `X-Forwarded-For` value and can be spoofed; set it to the
   `labmango-router` hop count to make per-IP budgets spoof-proof.
-- Auth throttles fail closed: a cache outage returns `503 service_unavailable` with `Retry-After: 30` and
-  never reaches the credential check.
+- Cache outage: `/api/aad-login` and `/api/refresh-token` keep counting in a process-local fixed window
+  (`local_fallback_on_outage`), so SSO users who reload the page are not locked out; each worker counts on
+  its own, so with `N` workers a client can reach up to `N` times the rate. `/api/login` and `/api/send-otp`
+  fail closed: `503 service_unavailable` with `Retry-After: 30`, never reaching the credential check.
 - Rates are configurable with `THROTTLE_AUTH_SSO_LOGIN`, `THROTTLE_AUTH_REFRESH`, `THROTTLE_AUTH_LOGIN`,
   `THROTTLE_AUTH_OTP` and `THROTTLE_AUTH_IP`.
 

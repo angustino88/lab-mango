@@ -1,4 +1,7 @@
-"""Throttle dependency failures fail closed without exposing connection details."""
+"""Password-login throttle failures fail closed without exposing connection details.
+
+SSO sign-in and refresh count locally during an outage instead: see test_auth_throttle_outage_fallback.py.
+"""
 
 from unittest.mock import patch
 
@@ -9,14 +12,13 @@ from redis.exceptions import TimeoutError as RedisTimeoutError
 
 
 @pytest.mark.parametrize("error", [RedisConnectionError, RedisTimeoutError])
-@pytest.mark.parametrize("path", ["/api/login", "/api/aad-login", "/api/refresh-token"])
-def test_login_cache_outage_is_503_and_never_checks_credentials(error, path):
+def test_login_cache_outage_is_503_and_never_checks_credentials(error):
     with (
         patch("core.common.api.throttling.AtomicRateThrottle.cache.add", side_effect=error("synthetic failure")),
         patch("core.users.features.auth.login.api.do_login") as authenticate,
     ):
         response = Client().post(
-            path,
+            "/api/login",
             {"username": "synthetic", "password": "synthetic-password"},
             content_type="application/json",
         )

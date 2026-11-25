@@ -7,14 +7,17 @@ Two failure policies, chosen per use:
   cache circuit (``core.common.cache``) so later requests skip the dead backend.
 * ``AtomicRateThrottle`` is for small, security-relevant budgets (authentication). It counts with an
   atomic ``add`` + ``incr`` per fixed window, so a concurrent burst cannot slip past the limit the way
-  DRF's read-then-write sliding log can. It fails closed: cache errors propagate and the exception
-  handler answers 503.
+  DRF's read-then-write sliding log can. By default it fails closed: cache errors propagate and the
+  exception handler answers 503. Subclasses that set ``local_fallback_on_outage = True`` keep counting
+  in a process-local fixed window instead (see ``LocalWindowCounter``), so the endpoint stays usable
+  and still rate-limited, per worker, while the shared cache is down.
 """
 
 from __future__ import annotations
 
 import hashlib
 import logging
+import threading
 import time
 from typing import Any
 
@@ -62,6 +65,48 @@ class FailOpenUserRateThrottle(_FailOpenMixin, UserRateThrottle):
     """``UserRateThrottle`` that allows the request when the cache backend is down."""
 
 
+class LocalWindowCounter:
+    """Thread-safe, process-local fixed-window counter used while the shared cache is unavailable.
+
+    Each worker process counts on its own, so with ``N`` workers a client can reach up to ``N`` times the
+    configured rate during an outage. Entries from finished windows are pruned once the table grows past
+    ``max_keys``; if every entry is still live, the oldest ones are dropped (which can only admit more).
+    """
+
+    def __init__(self, max_keys: int = 10_000) -> None:
+        self._max_keys = max_keys
+        self._lock = threading.Lock()
+        self._counts: dict[str, tuple[int, int]] = {}
+
+    def increment(self, key: str, window: int) -> int:
+        with self._lock:
+            stored_window, count = self._counts.get(key, (window, 0))
+            count = count + 1 if stored_window == window else 1
+            self._counts[key] = (window, count)
+            if len(self._counts) > self._max_keys:
+                self._prune(window)
+            return count
+
+    def _prune(self, window: int) -> None:
+        self._counts = {key: value for key, value in self._counts.items() if value[0] >= window}
+        overflow = len(self._counts) - self._max_keys
+        if overflow > 0:
+            for key in list(self._counts)[:overflow]:
+                del self._counts[key]
+
+    def clear(self) -> None:
+        with self._lock:
+            self._counts.clear()
+
+
+_local_counter = LocalWindowCounter()
+
+
+def reset_local_throttle_counters() -> None:
+    """Forget process-local fallback counts (tests and operational tooling)."""
+    _local_counter.clear()
+
+
 class AtomicRateThrottle(BaseThrottle):
     """Fixed-window counter using atomic cache ``add`` + ``incr``; fails closed.
 
@@ -74,6 +119,8 @@ class AtomicRateThrottle(BaseThrottle):
     scope: str = ""
     cache = default_cache
     THROTTLE_RATES = api_settings.DEFAULT_THROTTLE_RATES
+    # False: a cache outage propagates (503). True: count in a process-local window instead.
+    local_fallback_on_outage: bool = False
 
     def __init__(self) -> None:
         self._wait: float | None = None
@@ -99,11 +146,28 @@ class AtomicRateThrottle(BaseThrottle):
         window = int(now // duration)
         digest = hashlib.sha256(identity.encode()).hexdigest()
         key = f"throttle:atomic:{self.scope}:{digest}:{window}"
-        count = self._increment(key, timeout=duration + 1)
+        count = self._count(key, window=window, timeout=duration + 1)
         if count > num_requests:
             self._wait = (window + 1) * duration - now
             return False
         return True
+
+    def _count(self, key: str, *, window: int, timeout: int) -> int:
+        if not self.local_fallback_on_outage:
+            return self._increment(key, timeout=timeout)
+        if cache_circuit_open():
+            return _local_counter.increment(key, window)
+        try:
+            return self._increment(key, timeout=timeout)
+        except Exception as exc:
+            if not is_cache_outage(exc):
+                raise
+            record_cache_failure()
+            logger.warning(
+                "Throttle cache unavailable; counting in process-local window.",
+                extra={"throttle_scope": self.scope, "error_type": type(exc).__name__},
+            )
+            return _local_counter.increment(key, window)
 
     def _increment(self, key: str, *, timeout: int) -> int:
         self.cache.add(key, 0, timeout=timeout)

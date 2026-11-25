@@ -122,6 +122,7 @@ def api_exception_handler(exc: Exception, context: dict[str, Any]) -> Response |
     response = drf_exception_handler(exc, context)
     if response is None:
         request_id = get_request_id(context.get("request"))
+        logger.exception("Unhandled API error", extra={"request_id": request_id})
         return Response(
             {
                 "error": {

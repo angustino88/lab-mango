@@ -12,7 +12,11 @@ therefore pairs a per-identity budget with a broader per-IP backstop:
 | ``/api/send-otp`` (non-SSO only) | ``auth_otp`` per caller                   | — |
 
 The client address comes from ``client_ip`` (``NUM_PROXIES``-aware; spoof-proof only once
-``DJANGO_NUM_PROXIES`` is set). All of these fail closed on a cache outage (503).
+``DJANGO_NUM_PROXIES`` is set).
+
+Cache outage policy: SSO sign-in and refresh run on every page load, so their throttles count in a
+process-local window while the cache is down (``local_fallback_on_outage``; up to ``N`` x the rate with
+``N`` workers). Password login and OTP guard guessable secrets and fail closed (503).
 """
 
 from __future__ import annotations
@@ -34,10 +38,20 @@ class AuthIPThrottle(AtomicClientIPThrottle):
     scope = "auth_ip"
 
 
+class RefreshIPThrottle(AuthIPThrottle):
+    """``auth_ip`` backstop for refresh; keeps counting locally while the cache is down.
+
+    Same scope as ``AuthIPThrottle``, so login and refresh still share one per-address budget in the cache.
+    """
+
+    local_fallback_on_outage = True
+
+
 class SSOLoginIPThrottle(AtomicClientIPThrottle):
     """Per-address budget for Entra sign-in (no trustworthy identity before the token is verified)."""
 
     scope = "auth_sso_login"
+    local_fallback_on_outage = True
 
 
 class PasswordLoginUsernameThrottle(AtomicRateThrottle):
@@ -63,6 +77,7 @@ class RefreshUserThrottle(AtomicRateThrottle):
     """
 
     scope = "auth_refresh"
+    local_fallback_on_outage = True
 
     def get_identity(self, request: Any, view: Any) -> str | None:
         raw = request.COOKIES.get(settings.REFRESH_TOKEN_COOKIE_NAME)

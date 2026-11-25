@@ -1,3 +1,7 @@
+import socket
+import warnings
+from urllib.parse import urlparse
+
 from .base import *  # noqa
 from .base import env
 
@@ -19,11 +23,33 @@ CSRF_TRUSTED_ORIGINS = env.list(
 # ------------------------------------------------------------------------------
 # Single-process development does not require a Redis service. Multi-worker local
 # setups can opt into shared throttling with LOCAL_USE_REDIS_CACHE=True.
-if env.bool("LOCAL_USE_REDIS_CACHE", default=False):
+_LOCAL_CACHE_URL = env("CACHE_URL", default="redis://localhost:6379/1")
+
+
+def _redis_reachable(url: str, timeout: float = 0.3) -> bool:
+    """Return True if a TCP connection to the Redis host/port succeeds."""
+    parsed = urlparse(url)
+    try:
+        with socket.create_connection((parsed.hostname or "localhost", parsed.port or 6379), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+_use_redis_cache = env.bool("LOCAL_USE_REDIS_CACHE", default=False)
+if _use_redis_cache and not _redis_reachable(_LOCAL_CACHE_URL):
+    warnings.warn(
+        f"LOCAL_USE_REDIS_CACHE=True but Redis at {_LOCAL_CACHE_URL} is not reachable; "
+        "falling back to LocMemCache. Start Redis and restart the server to use it.",
+        stacklevel=1,
+    )
+    _use_redis_cache = False
+
+if _use_redis_cache:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": env("CACHE_URL", default="redis://localhost:6379/1"),
+            "LOCATION": _LOCAL_CACHE_URL,
             "OPTIONS": {
                 "SOCKET_CONNECT_TIMEOUT": 3,
                 "SOCKET_TIMEOUT": 3,

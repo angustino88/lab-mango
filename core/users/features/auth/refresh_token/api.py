@@ -6,7 +6,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from core.users.features.auth.api import AuthAPIView, PublicAuthAutoSchema
 from core.users.features.auth.cookies import set_refresh_cookie
 from core.users.features.auth.permissions import CookieCSRFPermission
-from core.users.features.auth.throttles import AuthIPThrottle, RefreshUserThrottle
+from core.users.features.auth.throttles import RefreshIPThrottle, RefreshUserThrottle
 from core.users.features.auth.tokens import rotate_refresh
 
 from .serializer import RefreshTokenResponseSerializer
@@ -24,7 +24,7 @@ class UserRefreshTokenView(AuthAPIView):
     schema = PublicAuthAutoSchema()
     schema_tags = ("User Authentication",)
     permission_classes = [CookieCSRFPermission]
-    throttle_classes = [RefreshUserThrottle, AuthIPThrottle]
+    throttle_classes = [RefreshUserThrottle, RefreshIPThrottle]
     authentication_classes = []
 
     post_contract = OperationContract(
