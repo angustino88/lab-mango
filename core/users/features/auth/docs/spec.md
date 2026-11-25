@@ -70,10 +70,10 @@ per-IP backstop ([throttles.py](../throttles.py)):
 - The client IP comes from `REST_FRAMEWORK["NUM_PROXIES"]` (optional `DJANGO_NUM_PROXIES`). Unset keeps
   DRF's default, which keys on the whole `X-Forwarded-For` value and can be spoofed; set it to the
   `labmango-router` hop count to make per-IP budgets spoof-proof.
-- Cache outage: `/api/aad-login` and `/api/refresh-token` keep counting in a process-local fixed window
-  (`local_fallback_on_outage`), so SSO users who reload the page are not locked out; each worker counts on
-  its own, so with `N` workers a client can reach up to `N` times the rate. `/api/login` and `/api/send-otp`
-  fail closed: `503 service_unavailable` with `Retry-After: 30`, never reaching the credential check.
+- Cache outage policy: SSO sign-in and refresh keep counting in a process-local fixed window
+  (`local_fallback_on_outage`), so users can still sign in and refresh while Redis is down; the limit then
+  applies per worker process. Password login and OTP (non-SSO only) fail closed: `503 service_unavailable`
+  with `Retry-After: 30`, never reaching the credential check.
 - Rates are configurable with `THROTTLE_AUTH_SSO_LOGIN`, `THROTTLE_AUTH_REFRESH`, `THROTTLE_AUTH_LOGIN`,
   `THROTTLE_AUTH_OTP` and `THROTTLE_AUTH_IP`.
 
@@ -85,10 +85,10 @@ per-IP backstop ([throttles.py](../throttles.py)):
 |---|---|---|---|---|
 | `POST /api/login` | `UserLoginView` | `LoginSerializer` (`username`, `password`) | `LoginResponseSerializer` (`token`, `user`) | 400 (`invalid_request`), 401 (`invalid_credentials`), 422, 503 |
 | `POST /api/logout` | `UserLogoutView` | Empty | 200 `EmptyPayloadSerializer` | 403 (`forbidden`) |
-| `POST /api/refresh-token` | `UserRefreshTokenView` | Cookie only (`refresh_token`) | `RefreshTokenResponseSerializer` (`token`, `user`) | 401 (`invalid_refresh_token`), 403, 503 |
+| `POST /api/refresh-token` | `UserRefreshTokenView` | Cookie only (`refresh_token`) | `RefreshTokenResponseSerializer` (`token`, `user`) | 401 (`invalid_refresh_token`), 403, 429 |
 | `POST /api/send-otp` | `SendUserOTPView` | `SendOTPSerializer` (`username`, `otp`) | `SendOTPResponseSerializer` (`message`) | 400, 403, 422, 503 (`service_unavailable`) |
 | `GET /api/csrf-token` | `CSRFTokenView` | Empty | `CSRFTokenResponseSerializer` (`csrf_token`) | — |
-| `POST /api/aad-login` | `UserAADLoginView` | `AADLoginSerializer` (`id_token`, `nonce_secret`) | `AADLoginResponseSerializer` (`token`, `user`) | 401 (`unauthorized`), 422, 503 |
+| `POST /api/aad-login` | `UserAADLoginView` | `AADLoginSerializer` (`id_token`, `nonce_secret`) | `AADLoginResponseSerializer` (`token`, `user`) | 401 (`unauthorized`), 422, 429 |
 
 ---
 

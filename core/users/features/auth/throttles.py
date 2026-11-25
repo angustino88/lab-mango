@@ -7,16 +7,21 @@ therefore pairs a per-identity budget with a broader per-IP backstop:
 | Endpoint          | Per-identity budget                                      | Per-IP backstop |
 |-------------------|----------------------------------------------------------|-----------------|
 | ``/api/aad-login``| none before the ID token is verified                     | ``auth_sso_login`` |
-| ``/api/refresh-token`` | ``auth_refresh`` per user, from the signature-verified cookie | ``auth_ip`` |
+| ``/api/refresh-token`` | ``auth_refresh`` per user, from the signature-verified cookie | ``auth_ip`` (shared budget) |
 | ``/api/login`` (non-SSO only) | ``auth_login`` per submitted username        | ``auth_ip`` |
 | ``/api/send-otp`` (non-SSO only) | ``auth_otp`` per caller                   | — |
 
 The client address comes from ``client_ip`` (``NUM_PROXIES``-aware; spoof-proof only once
 ``DJANGO_NUM_PROXIES`` is set).
 
-Cache outage policy: SSO sign-in and refresh run on every page load, so their throttles count in a
-process-local window while the cache is down (``local_fallback_on_outage``; up to ``N`` x the rate with
-``N`` workers). Password login and OTP guard guessable secrets and fail closed (503).
+Cache outage policy:
+
+* SSO sign-in and refresh (``SSOLoginIPThrottle``, ``RefreshUserThrottle``, ``RefreshIPThrottle``) keep
+  counting in a process-local window, so users can still sign in and refresh while Redis is down. The
+  limit then applies per worker. Guessing is not a risk on these paths: aad-login needs an ID token
+  signed by Entra and refresh needs a refresh token signed by this service.
+* Password login and OTP (non-SSO only) fail closed (503): they guard guessable secrets, so an
+  approximate per-worker limit is not acceptable there.
 """
 
 from __future__ import annotations
@@ -33,16 +38,13 @@ from core.common.api.throttling import AtomicClientIPThrottle, AtomicRateThrottl
 
 
 class AuthIPThrottle(AtomicClientIPThrottle):
-    """Broad per-address backstop shared by the public auth endpoints."""
+    """Broad per-address backstop for password login; fails closed on a cache outage."""
 
     scope = "auth_ip"
 
 
 class RefreshIPThrottle(AuthIPThrottle):
-    """``auth_ip`` backstop for refresh; keeps counting locally while the cache is down.
-
-    Same scope as ``AuthIPThrottle``, so login and refresh still share one per-address budget in the cache.
-    """
+    """Same ``auth_ip`` budget for refresh, counted locally while the cache is down."""
 
     local_fallback_on_outage = True
 
