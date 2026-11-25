@@ -63,7 +63,7 @@ services:
       - django
 
   redis:
-    image: redis:7.4.12-alpine
+    image: redis:8.10.3-alpine
     container_name: labmango-${BACKEND_NAME}-redis
     restart: unless-stopped
     ports:
