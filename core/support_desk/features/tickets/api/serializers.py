@@ -29,6 +29,7 @@ from core.support_desk.features.tickets.application.adapters import compute_reso
 from core.support_desk.features.tickets.application.policies import (
     can_view_internal_notes,
     can_view_restricted_attachments,
+    is_reopen_transition,
 )
 from core.support_desk.features.tickets.application.sla import sla_summary
 from core.support_desk.models.activity import TicketActivity
@@ -45,6 +46,10 @@ from core.support_desk.models.team import SupportTeam
 from core.support_desk.models.ticket import SupportTicket
 from core.support_desk.models.ticket_link import TicketLink
 from core.support_desk.models.transition import SupportStatusTransition
+
+
+class SupportPeopleOptionsQuerySerializer(OptionsQueryMixin):
+    is_assignee = serializers.BooleanField(required=False, default=False)
 
 
 class StatusOptionsQuerySerializer(OptionsQueryMixin):
@@ -411,6 +416,24 @@ class TicketListSerializer(serializers.ModelSerializer):
         return sla_summary(obj, at_risk_percent=self.context["sla_at_risk_percent"])
 
 
+@embedded_resource
+class AvailableTicketTransitionSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    status = RelationSerializer(source="to_status", read_only=True)
+    system_state = choice_field(SystemState.choices(), source="to_status.system_state")
+    is_final = serializers.BooleanField(source="to_status.is_final", read_only=True)
+    is_sla_paused = serializers.BooleanField(source="to_status.pauses_sla", read_only=True)
+    is_reason_required = serializers.SerializerMethodField()
+    is_resolution_required = serializers.BooleanField(source="requires_resolution", read_only=True)
+    is_reopen = serializers.SerializerMethodField()
+
+    def get_is_reopen(self, obj: SupportStatusTransition) -> bool:
+        return is_reopen_transition(self.context["ticket"], obj)
+
+    def get_is_reason_required(self, obj: SupportStatusTransition) -> bool:
+        return obj.requires_reason or self.get_is_reopen(obj)
+
+
 class TicketDetailSerializer(serializers.ModelSerializer):
     # REL-16: lists and details show these names; the catalog endpoints hold color, rank and state (REL-5).
     category = RelationSerializer(read_only=True, allow_null=True)
@@ -428,6 +451,9 @@ class TicketDetailSerializer(serializers.ModelSerializer):
     children = TicketRefSerializer(many=True, read_only=True)
     ticket_links = serializers.SerializerMethodField()
     watchers = WatcherSerializer(many=True, read_only=True)
+    status_system_state = choice_field(SystemState.choices(), source="status.system_state")
+    is_status_final = serializers.BooleanField(source="status.is_final", read_only=True)
+    available_transitions = serializers.SerializerMethodField()
     is_watching = serializers.SerializerMethodField()
     sla = serializers.SerializerMethodField()
     resource_links = TicketResourceLinkSerializer(many=True, read_only=True)
@@ -461,6 +487,9 @@ class TicketDetailSerializer(serializers.ModelSerializer):
             "children",
             "ticket_links",
             "watchers",
+            "status_system_state",
+            "is_status_final",
+            "available_transitions",
             "is_watching",
             "created_at",
             "updated_at",
@@ -490,6 +519,11 @@ class TicketDetailSerializer(serializers.ModelSerializer):
 
     def get_sla(self, obj: SupportTicket) -> dict[str, Any]:
         return sla_summary(obj)
+
+    @extend_schema_field(AvailableTicketTransitionSerializer(many=True))
+    def get_available_transitions(self, obj: SupportTicket) -> list[dict[str, Any]]:
+        transitions = getattr(obj, "available_transitions", ())
+        return list(AvailableTicketTransitionSerializer(transitions, many=True, context={"ticket": obj}).data)
 
     def get_is_watching(self, obj: SupportTicket) -> bool:
         user = self._user()

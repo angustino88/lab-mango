@@ -7,6 +7,7 @@ from core.support_desk.features.tickets.queries.options import (
     get_label_options,
     get_priority_options,
     get_status_options,
+    get_support_people_options,
     get_team_options,
 )
 from core.support_desk.features.tickets.queries.resource_history import get_resource_ticket_summary
@@ -19,6 +20,7 @@ __all__ = [
     "get_queue_stats",
     "get_resource_ticket_summary",
     "get_status_options",
+    "get_support_people_options",
     "get_team_options",
     "get_ticket_by_key",
     "list_tickets",

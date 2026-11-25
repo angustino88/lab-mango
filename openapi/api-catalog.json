@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 521,
+  "total_endpoints": 525,
   "generated_at": "2026-11-24",
   "endpoints": [
     {
@@ -136122,6 +136122,219 @@
       }
     },
     {
+      "endpoint": "/api/support/people/options",
+      "method": "GET",
+      "operation_id": "support_people_options_retrieve",
+      "summary": "Get People Options",
+      "description": "Find active people for assignment and watcher selection in Support Desk.",
+      "tags": [
+        "Support Desk"
+      ],
+      "parameters": [
+        {
+          "name": "include_ids",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated positive integers (at most 50) of retired rows to include.",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 50,
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "is_assignee",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Search text (1 to 100 characters).",
+          "schema": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "Standard selector options list",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Enveloped list of selector options.",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "Standard selector dropdown item: exactly {id, sku, name} (OPT-2, OPT-4).",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "sku": {
+                      "type": "string",
+                      "readOnly": true,
+                      "nullable": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "readOnly": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "sku"
+                  ]
+                },
+                "readOnly": true
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": [
+              {
+                "id": 1,
+                "sku": "string",
+                "name": "string"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "Invalid selector query parameters (invalid_query) or result cap exceeded (too_many_results).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "304": {
+          "description": "Not modified",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "403": {
+          "description": "Access denied by the existing API-key or authenticated-user permission policy.",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "endpoint": "/api/support/priorities",
       "method": "GET",
       "operation_id": "support_priorities_retrieve",
@@ -142040,6 +142253,27 @@
                     },
                     "readOnly": true
                   },
+                  "status_system_state": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "is_status_final": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "is_watching": {
                     "type": "boolean",
                     "readOnly": true
@@ -142176,6 +142410,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -142183,6 +142418,7 @@
                   "created_by",
                   "description",
                   "id",
+                  "is_status_final",
                   "is_watching",
                   "key",
                   "labels",
@@ -142195,6 +142431,7 @@
                   "sla",
                   "source",
                   "status",
+                  "status_system_state",
                   "subject",
                   "team",
                   "ticket_links",
@@ -142239,6 +142476,11 @@
                 {}
               ],
               "watchers": [
+                {}
+              ],
+              "status_system_state": {},
+              "is_status_final": true,
+              "available_transitions": [
                 {}
               ],
               "is_watching": true,
@@ -143156,6 +143398,27 @@
                     },
                     "readOnly": true
                   },
+                  "status_system_state": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "is_status_final": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "is_watching": {
                     "type": "boolean",
                     "readOnly": true
@@ -143292,6 +143555,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -143299,6 +143563,7 @@
                   "created_by",
                   "description",
                   "id",
+                  "is_status_final",
                   "is_watching",
                   "key",
                   "labels",
@@ -143311,6 +143576,7 @@
                   "sla",
                   "source",
                   "status",
+                  "status_system_state",
                   "subject",
                   "team",
                   "ticket_links",
@@ -143355,6 +143621,11 @@
                 {}
               ],
               "watchers": [
+                {}
+              ],
+              "status_system_state": {},
+              "is_status_final": true,
+              "available_transitions": [
                 {}
               ],
               "is_watching": true,
@@ -143884,6 +144155,27 @@
                     },
                     "readOnly": true
                   },
+                  "status_system_state": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "is_status_final": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "is_watching": {
                     "type": "boolean",
                     "readOnly": true
@@ -144020,6 +144312,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -144027,6 +144320,7 @@
                   "created_by",
                   "description",
                   "id",
+                  "is_status_final",
                   "is_watching",
                   "key",
                   "labels",
@@ -144039,6 +144333,7 @@
                   "sla",
                   "source",
                   "status",
+                  "status_system_state",
                   "subject",
                   "team",
                   "ticket_links",
@@ -144083,6 +144378,11 @@
                 {}
               ],
               "watchers": [
+                {}
+              ],
+              "status_system_state": {},
+              "is_status_final": true,
+              "available_transitions": [
                 {}
               ],
               "is_watching": true,
@@ -144628,6 +144928,27 @@
                     },
                     "readOnly": true
                   },
+                  "status_system_state": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "is_status_final": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "is_watching": {
                     "type": "boolean",
                     "readOnly": true
@@ -144764,6 +145085,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -144771,6 +145093,7 @@
                   "created_by",
                   "description",
                   "id",
+                  "is_status_final",
                   "is_watching",
                   "key",
                   "labels",
@@ -144783,6 +145106,7 @@
                   "sla",
                   "source",
                   "status",
+                  "status_system_state",
                   "subject",
                   "team",
                   "ticket_links",
@@ -144827,6 +145151,11 @@
                 {}
               ],
               "watchers": [
+                {}
+              ],
+              "status_system_state": {},
+              "is_status_final": true,
+              "available_transitions": [
                 {}
               ],
               "is_watching": true,
@@ -145373,6 +145702,27 @@
                     },
                     "readOnly": true
                   },
+                  "status_system_state": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "is_status_final": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "is_watching": {
                     "type": "boolean",
                     "readOnly": true
@@ -145509,6 +145859,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -145516,6 +145867,7 @@
                   "created_by",
                   "description",
                   "id",
+                  "is_status_final",
                   "is_watching",
                   "key",
                   "labels",
@@ -145528,6 +145880,7 @@
                   "sla",
                   "source",
                   "status",
+                  "status_system_state",
                   "subject",
                   "team",
                   "ticket_links",
@@ -145572,6 +145925,11 @@
                 {}
               ],
               "watchers": [
+                {}
+              ],
+              "status_system_state": {},
+              "is_status_final": true,
+              "available_transitions": [
                 {}
               ],
               "is_watching": true,
@@ -145934,10 +146292,16 @@
                     "duplicate",
                     "wont_fix",
                     "user_error",
-                    "vendor"
+                    "vendor",
+                    "fulfilled",
+                    "partially_fulfilled",
+                    "guidance_provided",
+                    "change_implemented",
+                    "declined",
+                    "withdrawn"
                   ],
                   "type": "string",
-                  "description": "* `fixed` - Fixed\n* `workaround` - Workaround\n* `cannot_reproduce` - Cannot Reproduce\n* `duplicate` - Duplicate\n* `wont_fix` - Wont Fix\n* `user_error` - User Error\n* `vendor` - Vendor"
+                  "description": "* `fixed` - Fixed\n* `workaround` - Workaround\n* `cannot_reproduce` - Cannot Reproduce\n* `duplicate` - Duplicate\n* `wont_fix` - Wont Fix\n* `user_error` - User Error\n* `vendor` - Vendor\n* `fulfilled` - Fulfilled\n* `partially_fulfilled` - Partially Fulfilled\n* `guidance_provided` - Guidance Provided\n* `change_implemented` - Change Implemented\n* `declined` - Declined\n* `withdrawn` - Withdrawn"
                 },
                 {
                   "enum": [
@@ -146155,6 +146519,27 @@
                     },
                     "readOnly": true
                   },
+                  "status_system_state": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "is_status_final": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "available_transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
                   "is_watching": {
                     "type": "boolean",
                     "readOnly": true
@@ -146291,6 +146676,7 @@
                   "activities",
                   "assignee",
                   "attachments",
+                  "available_transitions",
                   "category",
                   "children",
                   "comments",
@@ -146298,6 +146684,7 @@
                   "created_by",
                   "description",
                   "id",
+                  "is_status_final",
                   "is_watching",
                   "key",
                   "labels",
@@ -146310,6 +146697,7 @@
                   "sla",
                   "source",
                   "status",
+                  "status_system_state",
                   "subject",
                   "team",
                   "ticket_links",
@@ -146354,6 +146742,11 @@
                 {}
               ],
               "watchers": [
+                {}
+              ],
+              "status_system_state": {},
+              "is_status_final": true,
+              "available_transitions": [
                 {}
               ],
               "is_watching": true,
@@ -152751,6 +153144,1156 @@
           }
         },
         "428": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/support/work-logs",
+      "method": "GET",
+      "operation_id": "support_work_logs_retrieve",
+      "summary": "Get Work Logs",
+      "description": "Paginated work log entries matching the report scope and filters.",
+      "tags": [
+        "Support Desk"
+      ],
+      "parameters": [
+        {
+          "name": "author_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        },
+        {
+          "name": "scope",
+          "in": "query",
+          "required": false,
+          "description": "* `mine` - mine\n* `team` - team\n* `ticket` - ticket",
+          "schema": {
+            "enum": [
+              "mine",
+              "team",
+              "ticket"
+            ],
+            "type": "string",
+            "default": "mine",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "started_after",
+          "in": "query",
+          "required": false,
+          "description": "Inclusive lower bound.",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "started_before",
+          "in": "query",
+          "required": false,
+          "description": "Exclusive upper bound.",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "team_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "ticket_key",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "author": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "time_spent_minutes": {
+                      "type": "integer",
+                      "maximum": 14400,
+                      "minimum": 1,
+                      "description": "Effort spent in whole minutes (1 to 14,400)."
+                    },
+                    "started_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "description": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    },
+                    "can_manage": {
+                      "type": "boolean",
+                      "readOnly": true
+                    },
+                    "etag": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "ticket": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    }
+                  },
+                  "required": [
+                    "author",
+                    "can_manage",
+                    "created_at",
+                    "description",
+                    "etag",
+                    "id",
+                    "started_at",
+                    "ticket",
+                    "time_spent_minutes",
+                    "updated_at"
+                  ],
+                  "x-embedded-resource": true
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "author": {},
+                "time_spent_minutes": 1,
+                "started_at": "2026-10-20T12:00:00Z",
+                "description": "string",
+                "created_at": "2026-10-20T12:00:00Z",
+                "updated_at": "2026-10-20T12:00:00Z",
+                "can_manage": true,
+                "etag": "string",
+                "ticket": {}
+              }
+            ]
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/support/work-logs/contributors",
+      "method": "GET",
+      "operation_id": "support_work_logs_contributors_retrieve",
+      "summary": "Get Work Logs Contributors",
+      "description": "Paginated totals by contributor, ordered by effort.",
+      "tags": [
+        "Support Desk"
+      ],
+      "parameters": [
+        {
+          "name": "author_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        },
+        {
+          "name": "scope",
+          "in": "query",
+          "required": false,
+          "description": "* `mine` - mine\n* `team` - team\n* `ticket` - ticket",
+          "schema": {
+            "enum": [
+              "mine",
+              "team",
+              "ticket"
+            ],
+            "type": "string",
+            "default": "mine",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "started_after",
+          "in": "query",
+          "required": false,
+          "description": "Inclusive lower bound.",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "started_before",
+          "in": "query",
+          "required": false,
+          "description": "Exclusive upper bound.",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "team_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "ticket_key",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "total_minutes": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "readOnly": true
+                    },
+                    "entry_count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "readOnly": true
+                    },
+                    "ticket_count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "readOnly": true
+                    }
+                  },
+                  "required": [
+                    "entry_count",
+                    "id",
+                    "name",
+                    "ticket_count",
+                    "total_minutes"
+                  ],
+                  "x-embedded-resource": true
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "name": "string",
+                "total_minutes": 1,
+                "entry_count": 1,
+                "ticket_count": 1
+              }
+            ]
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/support/work-logs/summary",
+      "method": "GET",
+      "operation_id": "support_work_logs_summary_retrieve",
+      "summary": "Get Work Logs Summary",
+      "description": "Totals for all entries in a report, independent of pagination.",
+      "tags": [
+        "Support Desk"
+      ],
+      "parameters": [
+        {
+          "name": "author_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "scope",
+          "in": "query",
+          "required": false,
+          "description": "* `mine` - mine\n* `team` - team\n* `ticket` - ticket",
+          "schema": {
+            "enum": [
+              "mine",
+              "team",
+              "ticket"
+            ],
+            "type": "string",
+            "default": "mine",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "started_after",
+          "in": "query",
+          "required": false,
+          "description": "Inclusive lower bound.",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "started_before",
+          "in": "query",
+          "required": false,
+          "description": "Exclusive upper bound.",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "team_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "ticket_key",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "total_minutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "readOnly": true
+                  },
+                  "my_minutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "readOnly": true
+                  },
+                  "entry_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "readOnly": true
+                  },
+                  "ticket_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "readOnly": true
+                  },
+                  "contributor_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "contributor_count",
+                  "entry_count",
+                  "my_minutes",
+                  "ticket_count",
+                  "total_minutes"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "total_minutes": 1,
+              "my_minutes": 1,
+              "entry_count": 1,
+              "ticket_count": 1,
+              "contributor_count": 1
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {

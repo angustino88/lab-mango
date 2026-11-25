@@ -4,18 +4,25 @@ from typing import Any
 
 from django.db.models import Prefetch
 
-from core.support_desk.features.tickets.application.policies import can_view_ticket
+from core.support_desk.contracts import SupportRole, SystemState
+from core.support_desk.features.tickets.application.policies import (
+    can_transition_ticket,
+    can_view_ticket,
+    resolve_support_role,
+)
 from core.support_desk.models.activity import TicketActivity
 from core.support_desk.models.attachment import TicketAttachment
 from core.support_desk.models.comment import TicketComment
 from core.support_desk.models.label import SupportLabel
 from core.support_desk.models.resource_link import TicketResourceLink
+from core.support_desk.models.settings import SupportSettings
 from core.support_desk.models.ticket import SupportTicket
 from core.support_desk.models.ticket_link import TicketLink
+from core.support_desk.models.transition import SupportStatusTransition
 from core.support_desk.models.watcher import TicketWatcher
 
 
-def get_ticket_by_key(ticket_key: str, *, viewer: Any = None) -> SupportTicket | None:
+def get_ticket_by_key(ticket_key: str, *, viewer: Any = None, include_workflow: bool = False) -> SupportTicket | None:
     """Fetch complete ticket projection by its public key.
 
     If ``viewer`` is supplied and may not see the ticket, ``None`` is returned (indistinguishable from "missing").
@@ -66,7 +73,21 @@ def get_ticket_by_key(ticket_key: str, *, viewer: Any = None) -> SupportTicket |
     )
     if ticket is None:
         return None
-    if viewer is not None:
-        if not can_view_ticket(viewer, ticket):
-            return None
+    if viewer is not None and not can_view_ticket(viewer, ticket):
+        return None
+    if viewer is not None and include_workflow:
+        reopen_window_days = None
+        if ticket.status.system_state == SystemState.DONE and resolve_support_role(viewer) == SupportRole.REQUESTER:
+            reopen_window_days = SupportSettings.get_solo().reopen_window_days
+        transitions = (
+            SupportStatusTransition.objects.select_related("to_status")
+            .filter(from_status_id=ticket.status_id, to_status__is_active=True)
+            .exclude(to_status_id=ticket.status_id)
+            .order_by("to_status__sort_order", "id")
+        )
+        ticket.available_transitions = [
+            transition
+            for transition in transitions
+            if can_transition_ticket(viewer, ticket, transition, reopen_window_days=reopen_window_days)
+        ]
     return ticket

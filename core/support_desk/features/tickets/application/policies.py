@@ -111,10 +111,19 @@ def can_modify_ticket_fields(user: Any, ticket: SupportTicket) -> bool:
     return False
 
 
+def is_reopen_transition(ticket: SupportTicket, transition: SupportStatusTransition) -> bool:
+    return (
+        ticket.status.system_state == SystemState.DONE.value
+        and transition.to_status.system_state != SystemState.DONE.value
+    )
+
+
 def can_transition_ticket(
     user: Any,
     ticket: SupportTicket,
     transition: SupportStatusTransition,
+    *,
+    reopen_window_days: int | None = None,
 ) -> bool:
     role = resolve_support_role(user)
     if not role:
@@ -126,14 +135,15 @@ def can_transition_ticket(
         return False
 
     # Check reopening restrictions for requesters
-    if transition.to_status.system_state == SystemState.OPEN.value and ticket.status.system_state == SystemState.DONE.value:
+    if is_reopen_transition(ticket, transition):
         if role == SupportRole.REQUESTER:
             if ticket.requester_id != user.pk:
                 return False
             # Check reopen window
-            settings = SupportSettings.get_solo()
+            if reopen_window_days is None:
+                reopen_window_days = SupportSettings.get_solo().reopen_window_days
             resolved_time = ticket.resolved_at or ticket.closed_at or ticket.updated_at
-            if timezone.now() > resolved_time + timedelta(days=settings.reopen_window_days):
+            if timezone.now() > resolved_time + timedelta(days=reopen_window_days):
                 return False
 
     return True

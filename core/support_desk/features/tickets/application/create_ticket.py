@@ -7,6 +7,7 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 
+from core.common.domain.errors import Conflict
 from core.support_desk.contracts import ActivityEventType, SystemState, TicketSource, TicketType
 from core.support_desk.exceptions import (
     InvalidFieldValueError,
@@ -18,6 +19,7 @@ from core.support_desk.exceptions import (
 from core.support_desk.features.tickets.application.adapters import get_adapter
 from core.support_desk.features.tickets.application.notifications import queue_ticket_notifications
 from core.support_desk.features.tickets.application.policies import (
+    can_assign_ticket,
     can_create_ticket_on_behalf,
     can_link_resource,
     can_triage_ticket,
@@ -95,11 +97,16 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
     if not actor or not actor.is_authenticated:
         raise PermissionDeniedError("Authentication is required to create a ticket.")
 
-    # Idempotency check
-    if command.idempotency_key:
+    def previous_creation() -> SupportTicket | None:
+        if not command.idempotency_key:
+            return None
         existing = SupportTicket.objects.filter(idempotency_key=command.idempotency_key).first()
-        if existing:
-            return existing
+        if existing and existing.created_by_id != actor.pk:
+            raise Conflict("This ticket creation key is already in use.", code="idempotency_key_conflict")
+        return existing
+
+    if existing := previous_creation():
+        return existing
 
     app_settings = SupportSettings.get_solo()
 
@@ -154,10 +161,12 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
 
     # Determine assignee
     assignee = None
-    if command.assignee_id:
-        if not can_create_ticket_on_behalf(actor):
+    if command.assignee_id is not None:
+        if not can_assign_ticket(actor):
             raise PermissionDeniedError("Only support agents and administrators can pre-assign tickets.")
         assignee = User.objects.filter(pk=command.assignee_id, is_active=True).first()
+        if assignee is None:
+            raise InvalidFieldValueError("Select an active assignee.")
 
     # Agent-only triage fields
     if not is_agent and (command.team_id or command.labels or command.parent_key or command.watcher_ids):
@@ -213,7 +222,7 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
                 ticket.labels.set(get_or_create_labels(command.labels))
 
             TicketWatcher.objects.bulk_create(
-                [TicketWatcher(ticket=ticket, user=user, added_by=actor) for user in watchers if user.pk != requester.pk],
+                [TicketWatcher(ticket=ticket, user=user, added_by=actor) for user in watchers],
                 ignore_conflicts=True,
             )
 
@@ -244,6 +253,8 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
                 "team": team.name if team else "",
                 "source": ticket.source,
             }
+            if assignee:
+                activity_payload["assignee"] = actor_display_name(assignee)
             if command.impact or command.urgency:
                 activity_payload["impact"] = command.impact
                 activity_payload["urgency"] = command.urgency
@@ -264,10 +275,8 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
             queue_ticket_notifications(ticket, "ticket_created", actor)
     except IntegrityError:
         # Concurrent retry with the same idempotency key lost the race: hand back the winner.
-        if command.idempotency_key:
-            existing = SupportTicket.objects.filter(idempotency_key=command.idempotency_key).first()
-            if existing:
-                return existing
+        if existing := previous_creation():
+            return existing
         raise
 
     return ticket
