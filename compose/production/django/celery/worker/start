@@ -4,4 +4,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-exec celery -A config.celery_app worker -l INFO
+# Consume the default queue and the booking-notification queue (Teams/email delivery tasks are
+# routed there; see core/labs/features/bench_bookings/docs/notifications.md).
+exec celery -A config.celery_app worker -l INFO \
+	-Q "${CELERY_TASK_DEFAULT_QUEUE:-labmango_backend},${BOOKING_NOTIFICATIONS_QUEUE:-booking_notifications}"

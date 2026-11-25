@@ -39,6 +39,21 @@ EMAIL_HOST_PASSWORD=
 EMAIL_USE_TLS=True
 DJANGO_DEFAULT_FROM_EMAIL=LabMango <replace-with-sender-address>
 
+# Booking notifications: Teams (Power Automate workflow) and email
+# ------------------------------------------------------------------------------
+# Off by default. To enable: set the cutoff (UTC, events before it are never sent), the workflow
+# URL, its exact host and the tenant UUID, deploy, then run
+#   python manage.py provision_booking_notification_schedules --enable
+# Details: core/labs/features/bench_bookings/docs/notifications.md
+BOOKING_NOTIFICATIONS_ENABLED=False
+BOOKING_NOTIFICATIONS_EMAIL_ENABLED=False
+BOOKING_NOTIFICATIONS_TEAMS_ENABLED=False
+BOOKING_NOTIFICATIONS_ENABLEMENT_CUTOFF=
+BOOKING_NOTIFICATIONS_TEAMS_WORKFLOW_URL=
+BOOKING_NOTIFICATIONS_TEAMS_ALLOWED_HOSTS=
+BOOKING_NOTIFICATIONS_TEAMS_EXPECTED_TENANT_ID=
+BOOKING_NOTIFICATIONS_QUEUE=booking_notifications
+
 # Entra ID (production is SSO-only)
 # ------------------------------------------------------------------------------
 AAD_AUDIENCE=replace-with-entra-app-client-id

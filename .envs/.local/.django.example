@@ -31,6 +31,21 @@ LOCAL_USE_REDIS_CACHE=True
 DJANGO_EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 DEFAULT_FROM_EMAIL=noreply@localhost
 
+# Booking notifications: Teams (Power Automate workflow) and email
+# ------------------------------------------------------------------------------
+# Off by default. To enable: set the cutoff (UTC, events before it are never sent), the workflow
+# URL, its exact host and the tenant UUID, deploy, then run
+#   python manage.py provision_booking_notification_schedules --enable
+# Details: core/labs/features/bench_bookings/docs/notifications.md
+BOOKING_NOTIFICATIONS_ENABLED=False
+BOOKING_NOTIFICATIONS_EMAIL_ENABLED=False
+BOOKING_NOTIFICATIONS_TEAMS_ENABLED=False
+BOOKING_NOTIFICATIONS_ENABLEMENT_CUTOFF=
+BOOKING_NOTIFICATIONS_TEAMS_WORKFLOW_URL=
+BOOKING_NOTIFICATIONS_TEAMS_ALLOWED_HOSTS=
+BOOKING_NOTIFICATIONS_TEAMS_EXPECTED_TENANT_ID=
+BOOKING_NOTIFICATIONS_QUEUE=booking_notifications
+
 # Authentication integrations: leave empty unless testing them
 # ------------------------------------------------------------------------------
 LDAP_AUTH_URL=
@@ -49,6 +64,8 @@ NO_PROXY=localhost,127.0.0.1,postgres,redis
 
 # Optional integrations
 # ------------------------------------------------------------------------------
+# Power Automate workflow that sends the login OTP to Teams (local/LDAP login only;
+# production is Entra SSO and does not use it)
 OTP_PA_API=
 URS_API_URL=
 URS_API_VERIFY_SSL=False
