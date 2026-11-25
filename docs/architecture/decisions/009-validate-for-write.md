@@ -1,6 +1,6 @@
 # ADR 009 — Model validation without redundant queries (`validate_for_write`)
 
-- Status: **Proposed** (implemented on the import-performance branch; needs owner approval before merge, T2)
+- Status: **Accepted by the repository owner** (2026-11-25, "accept and open new pr"; implemented in this change)
 - Date: 2026-11-25
 - Risk: T2 (shared write-path behavior used by equipment and downtime writes)
 - Scope: `core/common/models/validation.py`; first callers `create_equipment`, `create_profile`,

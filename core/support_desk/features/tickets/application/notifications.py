@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from core.support_desk.contracts import OutboxChannel, OutboxStatus
+from core.support_desk.features.tickets.application.policies import can_view_ticket
 from core.support_desk.features.tickets.application.shared import actor_display_name
 from core.support_desk.models.outbox import NotificationOutbox
 from core.support_desk.models.ticket import SupportTicket
@@ -114,6 +115,10 @@ def queue_ticket_notifications(
     ) -> None:
         _fan_out(event_id, recipients, channels, body, exclude_pk=None if notify_actor else actor_pk)
 
+    assignee = ticket.assignee
+    if assignee and (not assignee.is_active or not can_view_ticket(assignee, ticket)):
+        assignee = None
+
     with transaction.atomic():
         if event_name == "ticket_created":
             send(
@@ -122,6 +127,13 @@ def queue_ticket_notifications(
                 payload(f"Ticket Created: {ticket.subject}", f"Your ticket [{ticket.key}] has been submitted successfully."),
                 notify_actor=True,  # confirmation goes to the requester even when they filed it themselves
             )
+            if assignee:
+                send(
+                    [assignee],
+                    BOTH_CHANNELS,
+                    payload(f"Ticket Assigned: {ticket.subject}", f"You have been assigned to ticket [{ticket.key}]."),
+                    notify_actor=True,
+                )
             send(
                 _team_or_all_agents(ticket),
                 IN_APP_ONLY,
@@ -130,9 +142,9 @@ def queue_ticket_notifications(
             send(_watchers(ticket), IN_APP_ONLY, payload(f"Watching: {ticket.subject}", f"You are watching [{ticket.key}]."))
 
         elif event_name == "ticket_assigned":
-            if ticket.assignee:
+            if assignee:
                 send(
-                    [ticket.assignee],
+                    [assignee],
                     BOTH_CHANNELS,
                     payload(f"Ticket Assigned: {ticket.subject}", f"You have been assigned to ticket [{ticket.key}]."),
                     notify_actor=True,  # self-assignment still gets a confirmation
@@ -157,8 +169,8 @@ def queue_ticket_notifications(
             if extra and extra.get("visibility") == "internal":
                 # Internal note: assignee, prior commenting agents and the team lead (in-app only)
                 recipients: list[Any] = []
-                if ticket.assignee:
-                    recipients.append(ticket.assignee)
+                if assignee:
+                    recipients.append(assignee)
                 prior_author_ids = (
                     ticket.comments.exclude(author_id=actor_pk).values_list("author_id", flat=True).distinct()
                 )
@@ -172,14 +184,14 @@ def queue_ticket_notifications(
                 )
             else:
                 send(
-                    [ticket.requester, ticket.assignee, *_watchers(ticket)],
+                    [ticket.requester, assignee, *_watchers(ticket)],
                     BOTH_CHANNELS,
                     payload(f"New Comment: {ticket.subject}", f"A new comment was added to ticket [{ticket.key}]."),
                 )
 
         elif event_name == "status_changed":
             send(
-                [ticket.requester, ticket.assignee, *_watchers(ticket)],
+                [ticket.requester, assignee, *_watchers(ticket)],
                 BOTH_CHANNELS,
                 payload(
                     f"Status Changed to {ticket.status.name}: {ticket.subject}",
@@ -201,7 +213,7 @@ def queue_ticket_notifications(
             )
 
         elif event_name == "ticket_reopened":
-            recipients = [ticket.assignee] if ticket.assignee else _team_or_all_agents(ticket)
+            recipients = [assignee] if assignee else _team_or_all_agents(ticket)
             send(
                 [*recipients, *_watchers(ticket)],
                 BOTH_CHANNELS,
@@ -212,7 +224,7 @@ def queue_ticket_notifications(
             sla_kind = (extra or {}).get("sla_kind", "resolution")
             lead = ticket.team.lead if getattr(ticket, "team", None) else None
             send(
-                [ticket.assignee, lead] if ticket.assignee or lead else _team_or_all_agents(ticket),
+                [assignee, lead] if assignee or lead else _team_or_all_agents(ticket),
                 BOTH_CHANNELS,
                 payload(
                     f"SLA Breached ({sla_kind}): {ticket.subject}",
