@@ -85,7 +85,7 @@ class TicketSource(_ChoiceEnum):
 
 
 class ResolutionCode(_ChoiceEnum):
-    """Why a ticket was resolved (Jira "resolution")."""
+    """Outcome recorded when a support ticket is resolved."""
 
     FIXED = "fixed"
     WORKAROUND = "workaround"
@@ -94,6 +94,12 @@ class ResolutionCode(_ChoiceEnum):
     WONT_FIX = "wont_fix"
     USER_ERROR = "user_error"
     VENDOR = "vendor"  # resolved by an external vendor / supplier
+    FULFILLED = "fulfilled"
+    PARTIALLY_FULFILLED = "partially_fulfilled"
+    GUIDANCE_PROVIDED = "guidance_provided"
+    CHANGE_IMPLEMENTED = "change_implemented"
+    DECLINED = "declined"
+    WITHDRAWN = "withdrawn"
 
 
 class LinkType(_ChoiceEnum):

@@ -10,9 +10,9 @@ from rest_framework import serializers
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from core.common.api.pagination import PageNumberQuerySerializer
+from core.common.api.pagination import PageNumberQuerySerializer, with_page_query
 from core.common.api.strict_json import StrictObjectJSONParser
-from core.common.api.summary_serializers import UserReferenceSerializer, embedded_resource
+from core.common.api.summary_serializers import UserReferenceSerializer, embedded_resource, user_display_name
 from core.common.domain.errors import BadRequest
 from core.support_desk.features.tickets.api.base import SupportAPIView, operation
 from core.support_desk.features.tickets.application.policies import can_manage_work_log
@@ -24,6 +24,11 @@ from core.support_desk.features.tickets.application.work_logs import (
     add_work_log,
     delete_work_log,
     update_work_log,
+)
+from core.support_desk.features.tickets.queries.work_log_reports import (
+    list_work_log_contributors,
+    summarize_work_logs,
+    work_logs_for_report,
 )
 from core.support_desk.models.work_log import MAX_WORK_LOG_MINUTES, MIN_WORK_LOG_MINUTES, TicketWorkLog
 
@@ -38,7 +43,7 @@ class TicketWorkLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TicketWorkLog
-        fields = (
+        fields: tuple[str, ...] = (
             "id",
             "author",
             "time_spent_minutes",
@@ -218,3 +223,116 @@ class TicketWorkLogDetailAPIView(SupportAPIView):
     def handle_delete(self, request: Request, key: str, work_log_id: int) -> Response:
         command = DeleteWorkLogInput(ticket_key=key, work_log_id=work_log_id, if_match=request.headers.get("If-Match"))
         return self._execute(lambda: delete_work_log(command, actor=request.user), delete=True)
+
+
+class WorkLogReportQuerySerializer(serializers.Serializer):
+    scope = serializers.ChoiceField(choices=["mine", "team", "ticket"], default="mine", required=False)
+    ticket_key = serializers.CharField(required=False, max_length=32)
+    team_id = serializers.IntegerField(required=False, min_value=1)
+    author_id = serializers.IntegerField(required=False, min_value=1)
+    started_after = serializers.DateTimeField(required=False, help_text="Inclusive lower bound.")
+    started_before = serializers.DateTimeField(required=False, help_text="Exclusive upper bound.")
+
+    def validate(self, attrs):
+        scope = attrs["scope"]
+        if ("ticket_key" in attrs) != (scope == "ticket"):
+            raise serializers.ValidationError({"ticket_key": "Supply a ticket key only for ticket reports."})
+        if "team_id" in attrs and scope != "team":
+            raise serializers.ValidationError({"team_id": "Team filtering is available only for team reports."})
+        if "author_id" in attrs and scope == "mine":
+            raise serializers.ValidationError({"author_id": "Personal reports are already scoped to your entries."})
+        start, end = attrs.get("started_after"), attrs.get("started_before")
+        if start and end and start >= end:
+            raise serializers.ValidationError({"started_before": "Must be later than started_after."})
+        return attrs
+
+
+@embedded_resource
+class WorkLogTicketSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    key = serializers.CharField(read_only=True)
+    subject = serializers.CharField(read_only=True)
+
+
+@embedded_resource
+class WorkLogReportEntrySerializer(TicketWorkLogSerializer):
+    ticket = WorkLogTicketSerializer(read_only=True)
+
+    class Meta(TicketWorkLogSerializer.Meta):
+        fields = (*TicketWorkLogSerializer.Meta.fields, "ticket")
+
+
+class WorkLogReportSummarySerializer(serializers.Serializer):
+    total_minutes = serializers.IntegerField(min_value=0, read_only=True)
+    my_minutes = serializers.IntegerField(min_value=0, read_only=True)
+    entry_count = serializers.IntegerField(min_value=0, read_only=True)
+    ticket_count = serializers.IntegerField(min_value=0, read_only=True)
+    contributor_count = serializers.IntegerField(min_value=0, read_only=True)
+
+
+@embedded_resource
+class WorkLogContributorSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.SerializerMethodField()
+    total_minutes = serializers.IntegerField(min_value=0, read_only=True)
+    entry_count = serializers.IntegerField(min_value=0, read_only=True)
+    ticket_count = serializers.IntegerField(min_value=0, read_only=True)
+
+    def get_name(self, obj) -> str:
+        return user_display_name(obj)
+
+
+class WorkLogReportListAPIView(SupportAPIView):
+    """Paginated work log entries matching the report scope and filters."""
+
+    get_contract = operation(
+        "WorkLogReportList",
+        WorkLogReportEntrySerializer,
+        query=with_page_query(WorkLogReportQuerySerializer),
+        many=True,
+    )
+
+    def handle_get(self, request: Request) -> Response:
+        filters, error = self.validate_query()
+        if error is not None:
+            return error
+        assert filters is not None
+        logs = work_logs_for_report(request.user, filters).select_related("author", "ticket")
+        return self.respond(logs)
+
+
+class WorkLogReportSummaryAPIView(SupportAPIView):
+    """Totals for all entries in a report, independent of pagination."""
+
+    get_contract = OperationContract(
+        query=WorkLogReportQuerySerializer,
+        success=ResponseContract.success("WorkLogReportSummary", WorkLogReportSummarySerializer),
+        bad_request=ResponseContract.bad_request(),
+        forbidden=ResponseContract.forbidden(),
+        not_found=ResponseContract.not_found(),
+    )
+
+    def handle_get(self, request: Request) -> Response:
+        filters, error = self.validate_query()
+        if error is not None:
+            return error
+        assert filters is not None
+        return self.respond(summarize_work_logs(work_logs_for_report(request.user, filters), request.user))
+
+
+class WorkLogContributorsAPIView(SupportAPIView):
+    """Paginated totals by contributor, ordered by effort."""
+
+    get_contract = operation(
+        "WorkLogContributors",
+        WorkLogContributorSerializer,
+        query=with_page_query(WorkLogReportQuerySerializer),
+        many=True,
+    )
+
+    def handle_get(self, request: Request) -> Response:
+        filters, error = self.validate_query()
+        if error is not None:
+            return error
+        assert filters is not None
+        return self.respond(list_work_log_contributors(work_logs_for_report(request.user, filters)))

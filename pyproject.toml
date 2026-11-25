@@ -47,6 +47,7 @@ dependencies = [
     # Storage 
     "django-storages[s3]>=1.14.0",
     "boto3>=1.28.0",
+    "python-calamine>=0.9.1,<0.10",
 ]
 
 [tool.uv.sources]

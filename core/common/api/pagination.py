@@ -1,8 +1,11 @@
 import hashlib
+from datetime import datetime, timedelta
+from datetime import timezone as dt_timezone
 from typing import Any
 
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.utils import timezone
 from django.utils.functional import cached_property
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
@@ -36,6 +39,20 @@ def with_page_query(query_serializer: type[serializers.Serializer]) -> type[seri
     )
 
 
+_CLOCK_PARAM_WINDOW = timedelta(minutes=2)
+
+
+def _has_clock_param(params: Any) -> bool:
+    """Whether a bound SQL parameter looks like ``timezone.now()`` taken while building the query."""
+    now = timezone.now()
+    for param in params or ():
+        if isinstance(param, datetime):
+            aware = param if timezone.is_aware(param) else timezone.make_aware(param, dt_timezone.utc)
+            if abs(now - aware) <= _CLOCK_PARAM_WINDOW:
+                return True
+    return False
+
+
 class _CachedCountPaginator(Paginator):
     """Django Paginator that caches exact ``COUNT(*)`` per versioned namespace and SQL filter."""
 
@@ -53,9 +70,14 @@ class _CachedCountPaginator(Paginator):
         if ns_ver == 0:
             return super().count
         try:
-            sql_key = str(self.object_list.order_by().query)
+            counted = self.object_list.order_by()
+            sql, params = counted.query.get_compiler(using=counted.db).as_sql()
         except Exception:  # noqa: BLE001
             return super().count
+        if _has_clock_param(params):
+            # A filter bound to "now" in Python yields a new key per request: never hits, only pollutes.
+            return super().count
+        sql_key = f"{sql}|{params!r}"
         sql_hash = hashlib.sha256(sql_key.encode("utf-8")).hexdigest()[:32]
         cache_key = f"api:count:{self._cache_namespace}:v{ns_ver}:{sql_hash}"
         cached = safe_cache_get(cache_key)

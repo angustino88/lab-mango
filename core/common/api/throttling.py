@@ -26,7 +26,7 @@ from django.core.exceptions import ImproperlyConfigured
 from rest_framework.settings import api_settings
 from rest_framework.throttling import AnonRateThrottle, BaseThrottle, SimpleRateThrottle, UserRateThrottle
 
-from core.common.cache import cache_circuit_open, is_cache_outage, record_cache_failure
+from core.common.cache import cache_available, is_cache_outage, record_cache_failure
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ def client_ip(request: Any) -> str:
 
 class _FailOpenMixin:
     def allow_request(self, request: Any, view: Any) -> bool:
-        if cache_circuit_open():
+        if not cache_available():
             return True
         try:
             return super().allow_request(request, view)  # type: ignore[misc]
@@ -155,7 +155,7 @@ class AtomicRateThrottle(BaseThrottle):
     def _count(self, key: str, *, window: int, timeout: int) -> int:
         if not self.local_fallback_on_outage:
             return self._increment(key, timeout=timeout)
-        if cache_circuit_open():
+        if not cache_available():
             return _local_counter.increment(key, window)
         try:
             return self._increment(key, timeout=timeout)

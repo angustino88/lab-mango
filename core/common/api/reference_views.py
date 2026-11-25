@@ -164,7 +164,7 @@ def reference_urlpatterns(
         permission_classes = access
         schema_tags = (tag,)
         read_cache_namespace = cache_namespace
-        read_cache_ttl = 300
+        read_cache_ttl = 60
         get_contract = OperationContract(
             query=query_serializer,
             success=ResponseContract.paginated(f"{name}ReferenceList", output_serializer),

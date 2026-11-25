@@ -2,14 +2,16 @@
 
 from typing import Any
 
+from django.contrib.auth import get_user_model
 from django.db.models import CharField, F, Q, Value
-from django.db.models.functions import NullIf
+from django.db.models.functions import Coalesce, NullIf
 
 from core.support_desk.models.category import SupportCategory
 from core.support_desk.models.label import SupportLabel
 from core.support_desk.models.priority import SupportPriority
 from core.support_desk.models.status import SupportStatus
 from core.support_desk.models.team import SupportTeam
+from core.users.public import LabsPermission, users_with_permission
 
 
 def get_category_options(*, actor: Any = None, q: str | None = None, search: str | None = None, include_ids: list[int] | None = None) -> list[dict[str, Any]]:
@@ -97,5 +99,28 @@ def get_label_options(*, actor: Any = None, q: str | None = None, search: str | 
         SupportLabel.objects.filter(cond)
         .annotate(sku=Value(None, output_field=CharField()))
         .values("id", "sku", "name")
+        .order_by("name", "id")
+    )
+
+
+def get_support_people_options(
+    *, q: str | None = None, include_ids: list[int] | None = None, is_assignee: bool = False
+):
+    """Return minimal active-user references for the support desk."""
+    users = (
+        users_with_permission(LabsPermission.SUPPORT_HANDLE)
+        if is_assignee
+        else get_user_model().objects.filter(is_active=True)
+    )
+    people = users.alias(
+        option_name=Coalesce(NullIf("display_name", Value("")), NullIf("name", Value("")), "username"),
+    )
+    match = Q(option_name__icontains=q) | Q(username__icontains=q) if q else Q(pk__in=[])
+    if include_ids:
+        match |= Q(pk__in=include_ids)
+    return (
+        people.filter(match)
+        .values("id")
+        .annotate(sku=Value(None, output_field=CharField()), name=F("option_name"))
         .order_by("name", "id")
     )

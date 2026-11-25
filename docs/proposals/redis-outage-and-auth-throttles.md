@@ -33,7 +33,7 @@ against signed tokens. The real risks are:
 
 | Area | Change | Files |
 |---|---|---|
-| Cache circuit | After one outage error, fail-open readers skip Redis for `API_CACHE_CIRCUIT_OPEN_SECONDS` (default 10 s, per process). Writes and invalidation bumps always try. Only Redis/timeout errors trip it. | `core/common/cache.py` |
+| Cache circuit | Uses the process-local breaker from `main` (`CACHE_CIRCUIT_BREAKER_SECONDS`, default 5 s): after a cache failure, optional cache calls skip Redis; invalidation bumps always try. This branch adds `is_cache_outage()` and `record_cache_failure()` so throttles share the same breaker. | `core/common/cache.py` |
 | Default throttles | `FailOpenAnonRateThrottle` / `FailOpenUserRateThrottle`: same sliding-log semantics and rates. On a cache outage they allow the request, log, and trip the circuit. | `core/common/api/throttling.py`, `config/settings/base.py` |
 | Error mapping | Any cache outage error that reaches a view is `503 service_unavailable` + `Retry-After: 30`, not 500. Other unhandled errors are now logged before the 500 envelope. | `core/common/api/exceptions.py`, `core/users/features/auth/api.py` |
 | Atomic auth throttle | `AtomicRateThrottle`: fixed window with cache `add` + `incr` (atomic in Redis via django-redis Lua, and in LocMem). Fails closed by default; subclasses with `local_fallback_on_outage = True` count in a process-local fixed window (`LocalWindowCounter`, bounded to 10 000 keys) while the cache is down. | `core/common/api/throttling.py` |

@@ -32,10 +32,11 @@ warning_count}`, `sheets[] {key, name, rows, created, existing, failed, ignored_
 
 | Choice | Why |
 |---|---|
-| The server parses the file (openpyxl, `core/infrastructure/spreadsheets`) | The rules (category fields, slot capacity, utilities, lifecycle) live in the backend. A single parser means the row numbers in the report are exact, and the frontend only uploads and renders the report |
+| The server parses the file (python-calamine reads, openpyxl writes the template and export; `core/infrastructure/spreadsheets`, [ADR 008](../../../../../docs/architecture/decisions/008-xlsx-reader-python-calamine.md)) | The rules (category fields, slot capacity, utilities, lifecycle) live in the backend. A single parser means the row numbers in the report are exact, and the frontend only uploads and renders the report |
 | One declaration (`queries/sheets.py`) drives both the template and the importer | The template and the importer cannot drift apart |
 | Check = run the real writes, then roll back | The preview shows exactly what Apply will do, including rows that depend on rows earlier in the same file |
 | One transaction; each row in a savepoint | All or nothing (WRT-7), but one bad row does not hide the problems of the other rows (ERR-7) |
+| New units are created with their starting condition and storage room in one create command; validation skips queries that cannot fail | About 3 times faster Check and Apply with the same results ([import performance](import-performance.md)) |
 | Every write goes through the owner's public command | `create_room`, `create_station`, `create_station_slot`, `generate_room_slots`, `create_bench`, `create_equipment`, `update_equipment`, `change_condition`, `place_equipment`, `schedule_downtime`, `change_*_lifecycle`. Reference rows use `core.reference_data.public.create_reference` |
 | Reference rows that exist are *matched*, never changed | A re-import of the template is safe. Create-only applies to spaces and equipment, where an existing asset tag is an error |
 | Names are resolved case-insensitively and scoped by their parent | Kind within its category, type within its kind, model within its manufacturer, city within its country. A name that is still ambiguous is an error that names the column to fill in |

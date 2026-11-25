@@ -41,12 +41,11 @@ CACHES = {
         "LOCATION": "",
     }
 }
-# One simulated outage must not leave the process-wide cache circuit open for later tests; the
-# circuit tests enable it explicitly.
-API_CACHE_CIRCUIT_OPEN_SECONDS = 0
 # Keep query-budget unit tests deterministic by default; cache tests and load tests opt in.
 API_READ_CACHE_ENABLED = env.bool("API_READ_CACHE_ENABLED", default=False)
 API_AUTH_CACHE_ENABLED = env.bool("API_AUTH_CACHE_ENABLED", default=False)
+# Outage tests patch the cache per test; a process-wide open breaker would leak into later tests.
+CACHE_CIRCUIT_BREAKER_SECONDS = 0
 
 # PASSWORDS  (fast hasher for test speed)
 # ------------------------------------------------------------------------------

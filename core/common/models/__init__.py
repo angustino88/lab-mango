@@ -8,6 +8,7 @@ from core.common.models.soft_delete import (
     TimestampedSoftDeleteQuerySet,
 )
 from core.common.models.user_stamped import UserStampedModel
+from core.common.models.validation import validate_for_write
 
 __all__ = [
     "AbstractOutboxLedger",
@@ -16,4 +17,5 @@ __all__ = [
     "TimestampedSoftDeleteMixin",
     "TimestampedSoftDeleteQuerySet",
     "UserStampedModel",
+    "validate_for_write",
 ]

@@ -1068,6 +1068,67 @@ paths:
             permission policy.
       x-owner: tickets
       summary: Get Labels Options
+  /api/support/people/options:
+    get:
+      operationId: support_people_options_retrieve
+      description: Find active people for assignment and watcher selection in Support
+        Desk.
+      parameters:
+      - in: query
+        name: include_ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 50
+          uniqueItems: true
+        description: Comma-separated positive integers (at most 50) of retired rows
+          to include.
+        style: form
+        explode: false
+      - in: query
+        name: is_assignee
+        schema:
+          type: boolean
+          default: false
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 1
+        description: Search text (1 to 100 characters).
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogOptionList'
+          description: Standard selector options list
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Invalid selector query parameters (invalid_query) or result
+            cap exceeded (too_many_results).
+        '304':
+          description: Not modified
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: Access denied by the existing API-key or authenticated-user
+            permission policy.
+      x-owner: tickets
+      summary: Get People Options
   /api/support/priorities:
     get:
       operationId: support_priorities_retrieve
@@ -3533,6 +3594,277 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Tickets Stats
+  /api/support/work-logs:
+    get:
+      operationId: support_work_logs_retrieve
+      description: Paginated work log entries matching the report scope and filters.
+      parameters:
+      - in: query
+        name: author_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: scope
+        schema:
+          enum:
+          - mine
+          - team
+          - ticket
+          type: string
+          default: mine
+          minLength: 1
+        description: '* `mine` - mine
+
+          * `team` - team
+
+          * `ticket` - ticket'
+      - in: query
+        name: started_after
+        schema:
+          type: string
+          format: date-time
+        description: Inclusive lower bound.
+      - in: query
+        name: started_before
+        schema:
+          type: string
+          format: date-time
+        description: Exclusive upper bound.
+      - in: query
+        name: team_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: ticket_key
+        schema:
+          type: string
+          maxLength: 32
+          minLength: 1
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkLogReportListWorkLogsWorkLogReportEntryPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Work Logs
+  /api/support/work-logs/contributors:
+    get:
+      operationId: support_work_logs_contributors_retrieve
+      description: Paginated totals by contributor, ordered by effort.
+      parameters:
+      - in: query
+        name: author_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: scope
+        schema:
+          enum:
+          - mine
+          - team
+          - ticket
+          type: string
+          default: mine
+          minLength: 1
+        description: '* `mine` - mine
+
+          * `team` - team
+
+          * `ticket` - ticket'
+      - in: query
+        name: started_after
+        schema:
+          type: string
+          format: date-time
+        description: Inclusive lower bound.
+      - in: query
+        name: started_before
+        schema:
+          type: string
+          format: date-time
+        description: Exclusive upper bound.
+      - in: query
+        name: team_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: ticket_key
+        schema:
+          type: string
+          maxLength: 32
+          minLength: 1
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkLogContributorsWorkLogsWorkLogContributorPaginatedResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Work Logs Contributors
+  /api/support/work-logs/summary:
+    get:
+      operationId: support_work_logs_summary_retrieve
+      description: Totals for all entries in a report, independent of pagination.
+      parameters:
+      - in: query
+        name: author_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: scope
+        schema:
+          enum:
+          - mine
+          - team
+          - ticket
+          type: string
+          default: mine
+          minLength: 1
+        description: '* `mine` - mine
+
+          * `team` - team
+
+          * `ticket` - ticket'
+      - in: query
+        name: started_after
+        schema:
+          type: string
+          format: date-time
+        description: Inclusive lower bound.
+      - in: query
+        name: started_before
+        schema:
+          type: string
+          format: date-time
+        description: Exclusive upper bound.
+      - in: query
+        name: team_id
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: ticket_key
+        schema:
+          type: string
+          maxLength: 32
+          minLength: 1
+      tags:
+      - Support Desk
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkLogReportSummaryWorkLogsWorkLogReportSummaryDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Work Logs Summary
 components:
   schemas:
     AdminCannedResponseCreate:
@@ -3930,6 +4262,45 @@ components:
           default: false
       required:
       - file
+    AvailableTicketTransition:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Relation'
+          readOnly: true
+        system_state:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        is_final:
+          type: boolean
+          readOnly: true
+        is_sla_paused:
+          type: boolean
+          readOnly: true
+        is_reason_required:
+          type: boolean
+          readOnly: true
+        is_resolution_required:
+          type: boolean
+          readOnly: true
+        is_reopen:
+          type: boolean
+          readOnly: true
+      required:
+      - id
+      - is_final
+      - is_reason_required
+      - is_reopen
+      - is_resolution_required
+      - is_sla_paused
+      - status
+      - system_state
+      x-embedded-resource: true
     BlankEnum:
       enum:
       - ''
@@ -4650,6 +5021,12 @@ components:
       - wont_fix
       - user_error
       - vendor
+      - fulfilled
+      - partially_fulfilled
+      - guidance_provided
+      - change_implemented
+      - declined
+      - withdrawn
       type: string
       description: '* `fixed` - Fixed
 
@@ -4663,7 +5040,19 @@ components:
 
         * `user_error` - User Error
 
-        * `vendor` - Vendor'
+        * `vendor` - Vendor
+
+        * `fulfilled` - Fulfilled
+
+        * `partially_fulfilled` - Partially Fulfilled
+
+        * `guidance_provided` - Guidance Provided
+
+        * `change_implemented` - Change Implemented
+
+        * `declined` - Declined
+
+        * `withdrawn` - Withdrawn'
     ResourceTicketDTOItem:
       type: object
       description: A ticket row of the resource's ticket summary (REL-15).
@@ -5342,6 +5731,18 @@ components:
           items:
             $ref: '#/components/schemas/Watcher'
           readOnly: true
+        status_system_state:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        is_status_final:
+          type: boolean
+          readOnly: true
+        available_transitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailableTicketTransition'
+          readOnly: true
         is_watching:
           type: boolean
           readOnly: true
@@ -5431,6 +5832,7 @@ components:
       - activities
       - assignee
       - attachments
+      - available_transitions
       - category
       - children
       - comments
@@ -5438,6 +5840,7 @@ components:
       - created_by
       - description
       - id
+      - is_status_final
       - is_watching
       - key
       - labels
@@ -5450,6 +5853,7 @@ components:
       - sla
       - source
       - status
+      - status_system_state
       - subject
       - team
       - ticket_links
@@ -5999,6 +6403,211 @@ components:
           type: integer
           nullable: true
           description: Defaults to the caller.
+    WorkLogContributor:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        total_minutes:
+          type: integer
+          minimum: 0
+          readOnly: true
+        entry_count:
+          type: integer
+          minimum: 0
+          readOnly: true
+        ticket_count:
+          type: integer
+          minimum: 0
+          readOnly: true
+      required:
+      - entry_count
+      - id
+      - name
+      - ticket_count
+      - total_minutes
+      x-embedded-resource: true
+    WorkLogContributorsWorkLogsWorkLogContributorPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/WorkLogContributorsWorkLogsWorkLogContributorPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkLogContributor'
+      required:
+      - data
+      - meta
+    WorkLogContributorsWorkLogsWorkLogContributorPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    WorkLogContributorsWorkLogsWorkLogContributorPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/WorkLogContributorsWorkLogsWorkLogContributorPagination'
+      required:
+      - pagination
+    WorkLogReportEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        author:
+          allOf:
+          - $ref: '#/components/schemas/UserReference'
+          readOnly: true
+        time_spent_minutes:
+          type: integer
+          maximum: 14400
+          minimum: 1
+          description: Effort spent in whole minutes (1 to 14,400).
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        can_manage:
+          type: boolean
+          readOnly: true
+        etag:
+          type: string
+          readOnly: true
+        ticket:
+          allOf:
+          - $ref: '#/components/schemas/WorkLogTicket'
+          readOnly: true
+      required:
+      - author
+      - can_manage
+      - created_at
+      - description
+      - etag
+      - id
+      - started_at
+      - ticket
+      - time_spent_minutes
+      - updated_at
+      x-embedded-resource: true
+    WorkLogReportListWorkLogsWorkLogReportEntryPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/WorkLogReportListWorkLogsWorkLogReportEntryPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkLogReportEntry'
+      required:
+      - data
+      - meta
+    WorkLogReportListWorkLogsWorkLogReportEntryPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    WorkLogReportListWorkLogsWorkLogReportEntryPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/WorkLogReportListWorkLogsWorkLogReportEntryPagination'
+      required:
+      - pagination
+    WorkLogReportSummary:
+      type: object
+      properties:
+        total_minutes:
+          type: integer
+          minimum: 0
+          readOnly: true
+        my_minutes:
+          type: integer
+          minimum: 0
+          readOnly: true
+        entry_count:
+          type: integer
+          minimum: 0
+          readOnly: true
+        ticket_count:
+          type: integer
+          minimum: 0
+          readOnly: true
+        contributor_count:
+          type: integer
+          minimum: 0
+          readOnly: true
+      required:
+      - contributor_count
+      - entry_count
+      - my_minutes
+      - ticket_count
+      - total_minutes
+    WorkLogReportSummaryWorkLogsWorkLogReportSummaryDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/WorkLogReportSummary'
+      required:
+      - data
     WorkLogRequest:
       type: object
       properties:
@@ -6014,6 +6623,23 @@ components:
           maxLength: 4000
       required:
       - time_spent_minutes
+    WorkLogTicket:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        key:
+          type: string
+          readOnly: true
+        subject:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - key
+      - subject
+      x-embedded-resource: true
   securitySchemes:
     cookieAuth:
       type: apiKey

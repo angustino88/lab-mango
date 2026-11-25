@@ -102,9 +102,17 @@ class OptionsAPIView(FeatureAPIView):
     max_results: int = OPTIONS_MAX_RESULTS
     owner: str | None = None
     query_serializer: type[serializers.Serializer] | None = None
+    # Whether ``select`` reads ``actor``. A selector whose rows depend on the actor must not share
+    # one cache entry across users, so a globally scoped read cache requires this to be False.
+    select_uses_actor: bool = True
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
+        if cls.read_cache_namespace and cls.read_cache_scope == "global" and cls.select_uses_actor:
+            raise TypeError(
+                f"{cls.__name__} caches options globally but select() may use the actor; set "
+                "read_cache_scope = 'user' or declare select_uses_actor = False."
+            )
         if getattr(cls, "query_serializer", None) is not None and not hasattr(cls, "get_contract"):
             cls.get_contract = OperationContract(
                 query=cls.query_serializer,
@@ -253,7 +261,7 @@ class OptionsAPIView(FeatureAPIView):
             error["Cache-Control"] = "no-store"
             return error
 
-        rows = self.select(actor=self.acting_user, filters=filters or {})
+        rows = self.select(actor=self.acting_user if self.select_uses_actor else None, filters=filters or {})
 
         cap = self.max_results
         if isinstance(rows, QuerySet):

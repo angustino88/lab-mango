@@ -69,7 +69,7 @@ def redis_down(delay: float = 0.0):
 
 @pytest.fixture(autouse=True)
 def _clean_cache_and_circuit(settings):
-    settings.API_CACHE_CIRCUIT_OPEN_SECONDS = 10
+    settings.CACHE_CIRCUIT_BREAKER_SECONDS = 10
     cache.clear()
     _reset_circuit()
     yield
@@ -78,11 +78,9 @@ def _clean_cache_and_circuit(settings):
 
 
 def _reset_circuit():
-    try:
-        from core.common.cache import reset_cache_circuit
-    except ImportError:  # before the fix there is no circuit to reset
-        return
-    reset_cache_circuit()
+    from core.common.cache import reset_cache_circuit_breaker
+
+    reset_cache_circuit_breaker()
 
 
 def _get(view_cls):
