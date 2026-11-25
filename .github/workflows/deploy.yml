@@ -1,0 +1,96 @@
+name: deploy
+
+# Deploys department backends after CI passes on main, or on demand.
+# Each department server runs a self-hosted runner labelled "labmango-<department>" and keeps its
+# own age key at /etc/labmango/age.key: secrets are decrypted on the server, never in GitHub.
+# Setup: scripts/deploy/README.md.
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      departments:
+        description: "Departments to deploy: comma-separated names, or 'all'"
+        required: true
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: Select departments
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      departments: ${{ steps.plan.outputs.departments }}
+      sha: ${{ steps.plan.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - id: plan
+        env:
+          # Manual runs: the input. Automatic runs: repository variable DEPLOY_DEPARTMENTS
+          # (comma-separated) when set, otherwise every department with encrypted configuration.
+          REQUESTED: ${{ inputs.departments || vars.DEPLOY_DEPARTMENTS || 'all' }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          available=$(for f in .envs/.production/*/.backend.enc; do [ -f "$f" ] && basename "$(dirname "$f")"; done)
+          if [ "$REQUESTED" = "all" ]; then
+            selected=$available
+          else
+            selected=$(printf '%s\n' "$REQUESTED" | tr ',' '\n' | tr -d ' ' | sed '/^$/d')
+            for d in $selected; do
+              printf '%s\n' "$available" | grep -qx -- "$d" || { echo "::error::Unknown department: $d"; exit 1; }
+            done
+          fi
+          departments=$(printf '%s\n' "$selected" | sed '/^$/d' | jq -R . | jq -cs .)
+          echo "Deploying $departments at $SHA"
+          echo "departments=$departments" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy ${{ matrix.department }}
+    needs: plan
+    if: needs.plan.outputs.departments != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        department: ${{ fromJSON(needs.plan.outputs.departments) }}
+    runs-on: [self-hosted, "labmango-${{ matrix.department }}"]
+    # Add required reviewers to these environments in the repository settings to gate production.
+    environment: ${{ matrix.department }}
+    concurrency:
+      group: deploy-${{ matrix.department }}
+      cancel-in-progress: false
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+
+      - name: Deploy
+        env:
+          DEPARTMENT: ${{ matrix.department }}
+        run: scripts/deploy/backend.sh deploy "$DEPARTMENT"
+
+      - name: Health check
+        env:
+          DEPARTMENT: ${{ matrix.department }}
+        run: |
+          port=$(sed -n 's/^UVICORN_PORT=//p' "${LABMANGO_DATA_DIR:-/srv/labmango}/$DEPARTMENT/.backend" | tr -d '"'"'"' \r')
+          for i in $(seq 1 30); do
+            # Proxy header as nginx/the router sends it, so the SSL redirect does not answer 301.
+            code=$(curl -sS -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' \
+              "http://127.0.0.1:${port}/healthz" || true)
+            if [ "$code" = "200" ]; then echo "healthy on port $port"; exit 0; fi
+            sleep 5
+          done
+          scripts/deploy/backend.sh logs "$DEPARTMENT" --tail 100 django
+          echo "::error::$DEPARTMENT did not become healthy on port $port"
+          exit 1

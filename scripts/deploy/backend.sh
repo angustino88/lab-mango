@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# Deploy and manage LabMango backends with docker-compose.prod.yml.
-# Each backend lives in .envs/.production/<backend>/ (see scripts/deploy/README.md):
-#   backend.env    non-secret topology, committed
-#   .django.enc    SOPS-encrypted secrets, committed   -> decrypted to .django on the server
-#   .postgres.enc  SOPS-encrypted secrets, committed   -> decrypted to .postgres on the server
+# Deploy and manage LabMango department backends with docker-compose.prod.yml.
+#
+# Committed (all SOPS-encrypted):   .envs/.production/<department>/{.backend,.django,.postgres}.enc
+# Server state (never committed):   $LABMANGO_DATA_DIR/<department>/  (default /srv/labmango/<department>)
+#   .backend .django .postgres      decrypted on every deploy, mode 600
+#   staticfiles/                    collectstatic output
+#   ssl/server.crt, ssl/server.key  nginx TLS (profile "nginx")
+# Optional extra CA certificates for the image build: $LABMANGO_DATA_DIR/ca-certificates/*.crt
+#
+# See scripts/deploy/README.md.
 set -euo pipefail
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -12,21 +17,32 @@ cd "$repo_root"
 
 envs_root=.envs/.production
 compose_file=docker-compose.prod.yml
-secret_files=(.django .postgres)
+config_files=(.backend .django .postgres)
 port_keys=(UVICORN_PORT REDIS_PORT NGINX_HTTP_PORT NGINX_HTTPS_PORT POSTGRES_PORT)
+data_dir=${LABMANGO_DATA_DIR:-/srv/labmango}
+
+# The server's age key: default location unless the caller set one.
+if [ -z "${SOPS_AGE_KEY:-}" ] && [ -z "${SOPS_AGE_KEY_FILE:-}" ] && [ -r /etc/labmango/age.key ]; then
+  export SOPS_AGE_KEY_FILE=/etc/labmango/age.key
+fi
 
 usage() {
   cat >&2 <<'EOF'
-Usage: scripts/deploy/backend.sh <command> [backend...]
+Usage: scripts/deploy/backend.sh <command> [department...]
 
-  list                      Backends in .envs/.production and their ports
-  init <backend>            Create a backend folder with the next free ports and editable secret files
-  encrypt <backend>         Encrypt .django/.postgres to .enc (needs SOPS_AGE_RECIPIENT)
-  decrypt <backend>         Decrypt .enc files (needs SOPS_AGE_KEY_FILE or SOPS_AGE_KEY)
-  deploy <backend>...|--all Decrypt, build and start the backend(s)
-  down <backend>            Stop and remove the backend's containers (volumes are kept)
-  ps|logs|restart|config <backend> [args]
-                            Pass through to docker compose for that backend
+Configuration (developer machine; files stay encrypted in git):
+  list                            Departments and their encrypted files
+  init <department>               Create plaintext .backend/.django/.postgres from the templates
+  encrypt <department> [--keep]   Encrypt them to *.enc (recipients from .sops.yaml) and delete the plaintext
+  edit <department> <file>        Edit an encrypted file in place: file is backend, django or postgres
+  updatekeys <department>         Re-encrypt after recipients changed in .sops.yaml
+
+Deployment (server; needs the server's age key, default /etc/labmango/age.key):
+  decrypt <department>            Decrypt to the state folder only
+  deploy <department>...|--all    Decrypt to the state folder, build and start
+  down <department>               Stop and remove containers (database volumes are kept)
+  ps|logs|restart|config <department> [args]
+                                  Pass through to docker compose for that department
 EOF
   exit 2
 }
@@ -36,156 +52,197 @@ info() { printf '==> %s\n' "$*" >&2; }
 
 validate_name() {
   [[ "$1" =~ ^[a-z0-9][a-z0-9_-]{0,39}$ ]] \
-    || die "backend name '$1' must be lowercase letters, digits, '-' or '_' (max 40 chars)"
+    || die "department name '$1' must be lowercase letters, digits, '-' or '_' (max 40 chars)"
 }
 
-backend_dir() { printf '%s/%s' "$envs_root" "$1"; }
+dept_dir() { printf '%s/%s' "$envs_root" "$1"; }
+state_dir() { printf '%s/%s' "$data_dir" "$1"; }
 
-require_backend() {
+require_dept() {
   validate_name "$1"
-  [ -f "$(backend_dir "$1")/backend.env" ] \
-    || die "no $(backend_dir "$1")/backend.env (create it with: scripts/deploy/backend.sh init $1)"
+  local f
+  for f in "${config_files[@]}"; do
+    [ -f "$(dept_dir "$1")/$f.enc" ] \
+      || die "missing $(dept_dir "$1")/$f.enc (create with: scripts/deploy/backend.sh init $1)"
+  done
 }
 
-all_backends() {
+all_depts() {
   local f
-  for f in "$envs_root"/*/backend.env; do
+  for f in "$envs_root"/*/.backend.enc; do
     [ -f "$f" ] && basename "$(dirname "$f")"
   done
 }
 
-# Read KEY from a backend.env without sourcing it.
+require_sops() { command -v sops >/dev/null || die "sops is not installed (scripts/sops/README.md)"; }
+
+# Read KEY from a dotenv file without sourcing it.
 env_value() {
   sed -n "s/^[[:space:]]*$2=\\(.*\\)$/\\1/p" "$1" | tail -n 1 | tr -d '"'"'"' \r'
 }
 
+sops_dotenv() { sops --input-type dotenv --output-type dotenv "$@"; }
+
 compose() {
   local name=$1; shift
-  local dir; dir=$(backend_dir "$name")
-  local declared; declared=$(env_value "$dir/backend.env" BACKEND_NAME)
-  [ "$declared" = "$name" ] || die "$dir/backend.env has BACKEND_NAME=$declared; it must be $name"
-  BACKEND_NAME=$name docker compose \
+  local state; state=$(state_dir "$name")
+  [ -f "$state/.backend" ] || die "$state/.backend not found; run: scripts/deploy/backend.sh deploy $name"
+  local declared; declared=$(env_value "$state/.backend" BACKEND_NAME)
+  [ "$declared" = "$name" ] || die "$name/.backend has BACKEND_NAME=$declared; it must be $name"
+  BACKEND_NAME=$name LABMANGO_STATE_DIR=$state docker compose \
     --project-name "labmango-$name" \
     --file "$compose_file" \
-    --env-file "$dir/backend.env" \
+    --env-file "$state/.backend" \
     "$@"
 }
 
-next_port() {
-  local key=$1 default=$2 max=0 b v
-  for b in $(all_backends); do
-    v=$(env_value "$(backend_dir "$b")/backend.env" "$key")
-    [[ "$v" =~ ^[0-9]+$ ]] && [ "$v" -gt "$max" ] && max=$v
-  done
-  if [ "$max" -eq 0 ]; then echo "$default"; else echo $((max + 1)); fi
-}
-
 cmd_list() {
-  printf '%-20s %-12s %-8s %-8s %-8s %-8s %-8s\n' BACKEND PROFILES UVICORN REDIS HTTP HTTPS POSTGRES
-  local b f
-  for b in $(all_backends); do
-    f=$(backend_dir "$b")/backend.env
-    printf '%-20s %-12s %-8s %-8s %-8s %-8s %-8s\n' "$b" "$(env_value "$f" COMPOSE_PROFILES)" \
-      "$(env_value "$f" UVICORN_PORT)" "$(env_value "$f" REDIS_PORT)" \
-      "$(env_value "$f" NGINX_HTTP_PORT)" "$(env_value "$f" NGINX_HTTPS_PORT)" \
-      "$(env_value "$f" POSTGRES_PORT)"
+  local d f
+  printf '%-24s %s\n' DEPARTMENT FILES
+  for d in "$envs_root"/*/; do
+    [ -d "$d" ] || continue
+    printf '%-24s' "$(basename "$d")"
+    for f in "${config_files[@]}"; do
+      if [ -f "$d/$f.enc" ]; then printf ' %s.enc' "$f"; else printf ' (missing %s.enc)' "$f"; fi
+    done
+    printf '\n'
   done
 }
 
 cmd_init() {
-  local name=$1 dir; validate_name "$name"; dir=$(backend_dir "$name")
-  [ -e "$dir/backend.env" ] && die "$dir/backend.env already exists"
+  local name=$1 dir f; validate_name "$name"; dir=$(dept_dir "$name")
   mkdir -p "$dir"
-  sed -e "s/^BACKEND_NAME=.*/BACKEND_NAME=$name/" \
-      -e "s/^UVICORN_PORT=.*/UVICORN_PORT=$(next_port UVICORN_PORT 9001)/" \
-      -e "s/^REDIS_PORT=.*/REDIS_PORT=$(next_port REDIS_PORT 6380)/" \
-      -e "s/^NGINX_HTTP_PORT=.*/NGINX_HTTP_PORT=$(next_port NGINX_HTTP_PORT 8081)/" \
-      -e "s/^NGINX_HTTPS_PORT=.*/NGINX_HTTPS_PORT=$(next_port NGINX_HTTPS_PORT 8443)/" \
-      -e "s/^POSTGRES_PORT=.*/POSTGRES_PORT=$(next_port POSTGRES_PORT 5432)/" \
-      "$envs_root/backend.env.example" > "$dir/backend.env"
-  local s
-  for s in "${secret_files[@]}"; do
-    if [ ! -e "$dir/$s" ]; then
-      (umask 077; cp "$envs_root/$s.example" "$dir/$s")
-    fi
+  for f in "${config_files[@]}"; do
+    [ -e "$dir/$f.enc" ] && die "$dir/$f.enc already exists; use: scripts/deploy/backend.sh edit $name ${f#.}"
   done
-  info "Created $dir"
-  info "Next: edit $dir/backend.env, $dir/.django and $dir/.postgres, then"
-  info "      scripts/deploy/backend.sh encrypt $name   and commit backend.env + *.enc"
+  (umask 077
+   sed "s/^BACKEND_NAME=.*/BACKEND_NAME=$name/" "$envs_root/.backend.example" > "$dir/.backend"
+   cp "$envs_root/.django.example" "$dir/.django"
+   cp "$envs_root/.postgres.example" "$dir/.postgres")
+  info "Created plaintext $dir/.backend, .django and .postgres (git-ignored)"
+  info "Next: fill in every replace-with-* value, then: scripts/deploy/backend.sh encrypt $name"
+}
+
+# Encrypt with .sops.yaml rules; SOPS_AGE_RECIPIENT overrides them when set.
+encrypt_file() {
+  local in=$1 out=$2
+  if [ -n "${SOPS_AGE_RECIPIENT:-}" ]; then
+    sops_dotenv --encrypt --age "$SOPS_AGE_RECIPIENT" --output "$out" "$in"
+  else
+    [ -f .sops.yaml ] || die "no .sops.yaml (copy .sops.yaml.example) and SOPS_AGE_RECIPIENT is not set"
+    sops_dotenv --encrypt --output "$out" "$in"
+  fi
 }
 
 cmd_encrypt() {
-  local name=$1 dir s; require_backend "$name"; dir=$(backend_dir "$name")
-  : "${SOPS_AGE_RECIPIENT:?Set SOPS_AGE_RECIPIENT to the age public key(s), comma-separated}"
-  command -v sops >/dev/null || die "sops is not installed (scripts/sops/README.md)"
-  for s in "${secret_files[@]}"; do
-    [ -f "$dir/$s" ] || die "missing plaintext $dir/$s"
-    if grep -q 'replace-with-' "$dir/$s"; then
-      printf 'warning: %s still contains replace-with-* placeholders\n' "$dir/$s" >&2
-    fi
-    sops --encrypt --age "$SOPS_AGE_RECIPIENT" --input-type dotenv --output-type dotenv \
-      --output "$dir/$s.enc" "$dir/$s"
-    info "Encrypted $dir/$s -> $dir/$s.enc"
+  local name=$1 keep=${2:-} dir f; validate_name "$name"; dir=$(dept_dir "$name"); require_sops
+  for f in "${config_files[@]}"; do
+    [ -f "$dir/$f" ] || die "missing plaintext $dir/$f"
+  done
+  [ "$(env_value "$dir/.backend" BACKEND_NAME)" = "$name" ] || die "$dir/.backend must set BACKEND_NAME=$name"
+  for f in "${config_files[@]}"; do
+    grep -q 'replace-with-' "$dir/$f" && printf 'warning: %s still contains replace-with-* values\n' "$dir/$f" >&2
+    encrypt_file "$dir/$f" "$dir/$f.enc"
+    info "Encrypted $dir/$f -> $dir/$f.enc"
+  done
+  if [ "$keep" != "--keep" ]; then
+    for f in "${config_files[@]}"; do rm -f "$dir/$f"; done
+    info "Removed plaintext files; change values later with: scripts/deploy/backend.sh edit $name <file>"
+  fi
+}
+
+cmd_edit() {
+  local name=$1 file=${2:-}; require_dept "$name"; require_sops
+  case "$file" in backend|django|postgres) ;; *) usage ;; esac
+  sops_dotenv "$(dept_dir "$name")/.$file.enc"
+}
+
+cmd_updatekeys() {
+  local name=$1 f; require_dept "$name"; require_sops
+  for f in "${config_files[@]}"; do
+    sops updatekeys --yes --input-type dotenv "$(dept_dir "$name")/$f.enc"
   done
 }
 
 cmd_decrypt() {
-  local name=$1 dir s; require_backend "$name"; dir=$(backend_dir "$name")
-  command -v sops >/dev/null || die "sops is not installed (scripts/sops/README.md)"
+  local name=$1 state f; require_dept "$name"; require_sops
   if [ -z "${SOPS_AGE_KEY:-}" ] && [ -z "${SOPS_AGE_KEY_FILE:-}" ]; then
-    die "set SOPS_AGE_KEY_FILE (or SOPS_AGE_KEY) to the server's age private key"
+    die "no age key: put the server key at /etc/labmango/age.key or set SOPS_AGE_KEY_FILE"
   fi
-  for s in "${secret_files[@]}"; do
-    [ -f "$dir/$s.enc" ] || die "missing $dir/$s.enc"
-    (umask 077; sops --decrypt --input-type dotenv --output-type dotenv \
-      --output "$dir/$s" "$dir/$s.enc")
-    chmod 600 "$dir/$s"
+  state=$(state_dir "$name")
+  mkdir -p "$state" 2>/dev/null || die "cannot create $state; create $data_dir owned by the deploy user"
+  chmod 700 "$state"
+  for f in "${config_files[@]}"; do
+    (umask 077; sops_dotenv --decrypt --output "$state/$f.tmp" "$(dept_dir "$name")/$f.enc") \
+      || die "cannot decrypt $name/$f.enc: this server's key is not a recipient for $name"
+    mv "$state/$f.tmp" "$state/$f"
   done
-  info "Decrypted secrets for $name"
+  info "Decrypted $name configuration to $state"
 }
 
-# Fail when two backends deployed on this host share a port.
+# Fail when two departments deployed together on this host share a port.
 check_ports() {
-  local seen="" b key v owner
-  for b in "$@"; do
+  local seen="" d key v owner
+  for d in "$@"; do
     for key in "${port_keys[@]}"; do
-      v=$(env_value "$(backend_dir "$b")/backend.env" "$key")
+      v=$(env_value "$(state_dir "$d")/.backend" "$key")
       [ -n "$v" ] || continue
       owner=$(printf '%s\n' "$seen" | awk -v p="$v" '$1 == p { print $2; exit }')
-      [ -z "$owner" ] || die "port $v is used by both $owner and $b/$key"
-      seen=$(printf '%s\n%s %s' "$seen" "$v" "$b/$key")
+      [ -z "$owner" ] || die "port $v is used by both $owner and $d/$key"
+      seen=$(printf '%s\n%s %s' "$seen" "$v" "$d/$key")
     done
   done
 }
 
+check_tls() {
+  local name=$1 state; state=$(state_dir "$name")
+  mkdir -p "$state/ssl"
+  case ",$(env_value "$state/.backend" COMPOSE_PROFILES)," in
+    *,nginx,*)
+      [ -f "$state/ssl/server.crt" ] && [ -f "$state/ssl/server.key" ] \
+        || die "profile nginx needs $state/ssl/server.crt and server.key" ;;
+  esac
+}
+
+# Extra CA certificates kept on the server are added to the image build context.
+stage_ca_certificates() {
+  local f
+  for f in "$data_dir"/ca-certificates/*.crt; do
+    [ -f "$f" ] && cp "$f" ssl_certifactes/
+  done
+  return 0
+}
+
 # Give the image's non-root django user the bind-mounted static folder.
 prepare_static() {
-  local name=$1 dir="staticfiles/$1" uid gid
+  local name=$1 dir uid gid
+  dir=$(state_dir "$name")/staticfiles
   mkdir -p "$dir"
   uid=$(docker run --rm --entrypoint id "labmango-backend:$name" -u)
   gid=$(docker run --rm --entrypoint id "labmango-backend:$name" -g)
   if [ "$(stat -c '%u' "$dir")" != "$uid" ]; then
-    chown "$uid:$gid" "$dir" 2>/dev/null || sudo chown "$uid:$gid" "$dir" \
-      || die "cannot chown $dir to $uid:$gid; run: sudo chown $uid:$gid $dir"
+    chown "$uid:$gid" "$dir" 2>/dev/null || sudo -n chown "$uid:$gid" "$dir" \
+      || die "cannot chown $dir to $uid:$gid; run once: sudo chown $uid:$gid $dir"
   fi
 }
 
 cmd_deploy() {
-  local backends=("$@") b
-  if [ "${backends[0]:-}" = "--all" ]; then
-    mapfile -t backends < <(all_backends)
-    [ "${#backends[@]}" -gt 0 ] || die "no backends in $envs_root"
+  local depts=("$@") d
+  if [ "${depts[0]:-}" = "--all" ]; then
+    mapfile -t depts < <(all_depts)
+    [ "${#depts[@]}" -gt 0 ] || die "no departments in $envs_root"
   fi
-  [ "${#backends[@]}" -gt 0 ] || usage
-  for b in "${backends[@]}"; do require_backend "$b"; done
-  check_ports "${backends[@]}"
-  for b in "${backends[@]}"; do
-    info "Deploying $b"
-    cmd_decrypt "$b"
-    compose "$b" build
-    prepare_static "$b"
-    compose "$b" up -d --remove-orphans
-    compose "$b" ps
+  [ "${#depts[@]}" -gt 0 ] || usage
+  for d in "${depts[@]}"; do require_dept "$d"; done
+  for d in "${depts[@]}"; do cmd_decrypt "$d"; check_tls "$d"; done
+  check_ports "${depts[@]}"
+  stage_ca_certificates
+  for d in "${depts[@]}"; do
+    info "Deploying $d ($(git rev-parse --short HEAD 2>/dev/null || echo 'unknown revision'))"
+    compose "$d" build
+    prepare_static "$d"
+    compose "$d" up -d --remove-orphans
+    compose "$d" ps
   done
 }
 
@@ -193,11 +250,13 @@ cmd_deploy() {
 command=$1; shift
 case "$command" in
   list) cmd_list ;;
-  init|encrypt|decrypt) [ $# -eq 1 ] || usage; "cmd_$command" "$1" ;;
+  init|updatekeys|decrypt) [ $# -eq 1 ] || usage; "cmd_$command" "$1" ;;
+  encrypt) [ $# -ge 1 ] || usage; cmd_encrypt "$@" ;;
+  edit) [ $# -eq 2 ] || usage; cmd_edit "$1" "$2" ;;
   deploy) cmd_deploy "$@" ;;
   down|ps|logs|restart|config)
     [ $# -ge 1 ] || usage
-    name=$1; shift; require_backend "$name"
+    name=$1; shift; validate_name "$name"
     compose "$name" "$command" "$@" ;;
   -h|--help|help) usage ;;
   *) usage ;;

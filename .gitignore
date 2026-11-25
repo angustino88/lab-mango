@@ -10,7 +10,6 @@ __pycache__/
 !.envs/**/
 !.envs/**/*.example
 !.envs/**/*.enc
-!.envs/.production/*/backend.env
 *.sqlite3
 .coverage
 htmlcov/

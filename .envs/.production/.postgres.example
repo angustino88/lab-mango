@@ -1,7 +1,7 @@
-# Template for one backend's database secrets (copied to .envs/.production/<backend>/.postgres by
+# Template for one department's database settings (copied to .envs/.production/<department>/.postgres by
 # scripts/deploy/backend.sh init). DATABASE_URL is read by Django and by the entrypoint.
-# Point it at the external database, or, with the "postgres" profile in backend.env, at
-# 127.0.0.1:<POSTGRES_PORT from backend.env>. POSTGRES_* initialise that container on first start.
+# Point it at the external database, or, with the "postgres" profile in .backend, at
+# 127.0.0.1:<POSTGRES_PORT from .backend>. POSTGRES_* initialise that container on first start.
 POSTGRES_HOST=127.0.0.1
 POSTGRES_PORT=5432
 POSTGRES_DB=labmango

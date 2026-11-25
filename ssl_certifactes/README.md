@@ -1,10 +1,11 @@
-# Certificates (not committed)
+# Extra CA certificates (not committed)
 
-Place deployment certificates here on the host. Everything except this README is git-ignored.
+Any `*.crt` placed here is trusted by the Django images at build time (for example a company proxy
+or internal API CA). Everything except this README is git-ignored.
 
-| File | Used by |
-|---|---|
-| `server.crt`, `server.key` | nginx TLS (`nginx/templates/default.conf.template`), mounted read-only at `/etc/nginx/ssl`. Override the folder per backend with `SSL_DIR` in its `backend.env`. |
-| any other `*.crt` | Optional extra CA certificates trusted by the Django images (for example a company proxy or internal API CA). |
+- Local development: put the files here yourself.
+- Department servers: keep them in `/srv/labmango/ca-certificates/`; `scripts/deploy/backend.sh deploy`
+  copies them here before building.
 
-`.dockerignore` keeps `server.crt` and `server.key` out of the Django image build context.
+nginx TLS certificates do not belong here: they live on each server in
+`/srv/labmango/<department>/ssl/` (see [scripts/deploy/README.md](../scripts/deploy/README.md)).

@@ -1,7 +1,7 @@
-# Template for one backend's secrets. scripts/deploy/backend.sh init <backend> copies it to
-# .envs/.production/<backend>/.django; fill in the replace-with-* values, then
-# scripts/deploy/backend.sh encrypt <backend> and commit only the .django.enc file.
-# Ports, BACKEND_ID and Redis URLs are NOT set here: they come from that backend's backend.env.
+# Template for one department's Django settings. scripts/deploy/backend.sh init <department> copies it to
+# .envs/.production/<department>/.django; fill in the replace-with-* values, then
+# scripts/deploy/backend.sh encrypt <department> (removes the plaintext) and commit the .enc files.
+# Ports, BACKEND_ID and Redis URLs are NOT set here: they come from the department's .backend.
 # Django
 # ------------------------------------------------------------------------------
 DJANGO_SETTINGS_MODULE=config.settings.production
@@ -23,7 +23,7 @@ UVICORN_HOST=0.0.0.0
 WEB_CONCURRENCY=2
 FORWARDED_ALLOW_IPS=127.0.0.1
 
-# Celery (CELERY_BROKER_URL and REDIS_URL are derived from REDIS_PORT in backend.env)
+# Celery (CELERY_BROKER_URL and REDIS_URL are derived from REDIS_PORT in .backend)
 # ------------------------------------------------------------------------------
 CELERY_TASK_DEFAULT_QUEUE=labmango_backend
 CELERY_TASK_DEFAULT_EXCHANGE=labmango_backend
@@ -47,7 +47,7 @@ AAD_TENANT_ID=replace-with-entra-tenant-id
 AAD_JWKS_URL=replace-with-entra-jwks-url
 ENTRA_FRONTEND_LOGIN_URL=/
 
-# Routing (BACKEND_ID is set from backend.env)
+# Routing (BACKEND_ID is set from .backend)
 # ------------------------------------------------------------------------------
 ROUTING_SYNC_STATIC_TOKEN_HASHES=
 

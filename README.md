@@ -37,13 +37,13 @@ cp .envs/.local/.postgres.example .envs/.local/.postgres
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-Production runs one Compose project per backend from `docker-compose.prod.yml`. Each backend's configuration is committed in `.envs/.production/<backend>/` (plaintext `backend.env` for ports and profiles, SOPS-encrypted `.django.enc` and `.postgres.enc` for secrets), so a server deploys any backend with:
+Production runs one backend per department from `docker-compose.prod.yml`. Each department's configuration is committed fully SOPS-encrypted in `.envs/.production/<department>/`, and `.sops.yaml` lets each department server decrypt only its own folder. After CI passes on `main`, `.github/workflows/deploy.yml` redeploys every department through a self-hosted runner on its server; the same step by hand is:
 
 ```bash
-scripts/deploy/backend.sh deploy <backend>
+scripts/deploy/backend.sh deploy <department>
 ```
 
-See [the deployment guide](scripts/deploy/README.md) for adding a backend, encryption keys, running several backends on one host, and the optional nginx (for backends without the router) and PostgreSQL services.
+See [the deployment guide](scripts/deploy/README.md) for server and runner setup, editing encrypted values, and the optional nginx (for backends without the router) and PostgreSQL services.
 
 ## Configuration and sensitive files
 

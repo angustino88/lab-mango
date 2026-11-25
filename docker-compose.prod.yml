@@ -1,15 +1,20 @@
-# Production stack for ONE backend. Several backends can run side by side on the same host.
-# Deploy with the helper, which decrypts the backend's SOPS files and sets the project name:
-#   scripts/deploy/backend.sh deploy <backend>
-# Per-backend configuration lives in .envs/.production/<backend>/:
-#   backend.env   non-secret topology (ports, profiles, image); committed in plaintext
-#   .django.enc   SOPS-encrypted Django settings; decrypted to .django on the server
-#   .postgres.enc SOPS-encrypted database settings; decrypted to .postgres on the server
-# Profiles (COMPOSE_PROFILES in backend.env): "nginx" when the backend runs without the router,
+# Production stack for ONE department backend. Departments deploy independently (own Compose project,
+# containers, image tag, Redis, volumes) and can share a host when their ports differ.
+# Deploy with the helper, which decrypts the department's files and sets the variables below:
+#   scripts/deploy/backend.sh deploy <department>
+# Committed, all SOPS-encrypted (.envs/.production/<department>/):
+#   .backend.enc   topology: ports, COMPOSE_PROFILES, optional image overrides
+#   .django.enc    Django settings
+#   .postgres.enc  database settings
+# Server state (LABMANGO_STATE_DIR = /srv/labmango/<department> by default), never in the checkout:
+#   .backend .django .postgres   decrypted on each deploy (mode 600)
+#   staticfiles/                 collectstatic output, served by nginx
+#   ssl/                         server.crt and server.key for nginx
+# Profiles (COMPOSE_PROFILES in .backend): "nginx" when the backend runs without the router,
 # "postgres" to run the database in a container instead of an external one.
 
 x-backend-env: &backend-env
-  # Topology values come from backend.env so ports and identity always match the compose setup.
+  # Topology values come from .backend so ports and identity always match the compose setup.
   BACKEND_ID: ${BACKEND_ID:-${BACKEND_NAME}}
   UVICORN_PORT: ${UVICORN_PORT}
   CELERY_BROKER_URL: redis://127.0.0.1:${REDIS_PORT}/0
@@ -31,10 +36,10 @@ services:
     depends_on:
       - redis
     volumes:
-      - ./staticfiles/${BACKEND_NAME}:/app/staticfiles
+      - ${LABMANGO_STATE_DIR:?run through scripts/deploy/backend.sh}/staticfiles:/app/staticfiles
     env_file:
-      - ./.envs/.production/${BACKEND_NAME}/.django
-      - ./.envs/.production/${BACKEND_NAME}/.postgres
+      - ${LABMANGO_STATE_DIR}/.django
+      - ${LABMANGO_STATE_DIR}/.postgres
     environment: *backend-env
     network_mode: host
     command: /start
@@ -52,8 +57,8 @@ services:
     volumes:
       # The nginx image renders templates/*.template into conf.d with these variables.
       - ./nginx/templates:/etc/nginx/templates:ro
-      - ${SSL_DIR:-./ssl_certifactes}:/etc/nginx/ssl:ro
-      - ./staticfiles/${BACKEND_NAME}:/static:ro
+      - ${LABMANGO_STATE_DIR}/ssl:/etc/nginx/ssl:ro
+      - ${LABMANGO_STATE_DIR:?run through scripts/deploy/backend.sh}/staticfiles:/static:ro
     depends_on:
       - django
 
@@ -73,7 +78,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - postgres_data_backups:/backups
     env_file:
-      - ./.envs/.production/${BACKEND_NAME}/.postgres
+      - ${LABMANGO_STATE_DIR}/.postgres
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
 

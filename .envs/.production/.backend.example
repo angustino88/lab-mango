@@ -1,0 +1,22 @@
+# Deployment topology for one department (encrypted like the other files).
+# scripts/deploy/backend.sh init <department> copies it to .envs/.production/<department>/.backend.
+# Departments on the same host need different UVICORN_PORT, REDIS_PORT, NGINX_* and POSTGRES_PORT.
+
+# Must equal the department folder name.
+BACKEND_NAME=replace-with-department
+# Identity reported to the router; defaults to BACKEND_NAME when empty.
+BACKEND_ID=
+
+# Optional services, comma-separated: "nginx" when this backend runs without the router,
+# "postgres" to run PostgreSQL in a container. Empty for neither.
+COMPOSE_PROFILES=nginx
+
+# Host ports (host networking: they must be free on the server)
+UVICORN_PORT=9001
+REDIS_PORT=6380
+NGINX_HTTP_PORT=8081
+NGINX_HTTPS_PORT=8443
+POSTGRES_PORT=5432
+
+# Optional image overrides, e.g. a registry mirror reachable from this server
+# POSTGRES_IMAGE=postgres:15.3-alpine
