@@ -29,24 +29,21 @@ For API response envelopes and OpenAPI contracts, see [the API response contract
 
 ## Docker
 
-Environment templates live in `.envs/` (`.local` for development, `.production` for deployment). Copy each `*.example` to the same name without the suffix, or decrypt them with `scripts/sops` ([SOPS guide](scripts/sops/README.md)). Plaintext env files are git-ignored.
-
 Local development (Django + Uvicorn with auto-reload on port 8000, PostgreSQL, Redis, Celery worker and beat):
 
 ```bash
+cp .envs/.local/.django.example .envs/.local/.django
+cp .envs/.local/.postgres.example .envs/.local/.postgres
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-Production (host networking; Uvicorn on `UVICORN_PORT`, default 9001; Redis on `127.0.0.1:6380`):
+Production runs one Compose project per backend from `docker-compose.prod.yml`. Each backend's configuration is committed in `.envs/.production/<backend>/` (plaintext `backend.env` for ports and profiles, SOPS-encrypted `.django.enc` and `.postgres.enc` for secrets), so a server deploys any backend with:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+scripts/deploy/backend.sh deploy <backend>
 ```
 
-- `compose/` holds the Dockerfiles and start scripts. The production image needs the corporate CA certificates in `ssl_certifactes/` ([details](ssl_certifactes/README.md)).
-- `nginx/conf.d/default.conf` is for hosts where the backend runs without the router in front: TLS on 8443 (`ssl_certifactes/server.crt` and `server.key`), HTTP 8081 redirects to HTTPS, and `/internal/` is blocked on the public listener.
-- The database is external by default (`DATABASE_URL` in `.envs/.production/.postgres`). Add `--profile postgres` to also run PostgreSQL in a container.
-- `./staticfiles` is bind-mounted and written by `collectstatic` as the non-root `django` user; make it writable for that user on the host.
+See [the deployment guide](scripts/deploy/README.md) for adding a backend, encryption keys, running several backends on one host, and the optional nginx (for backends without the router) and PostgreSQL services.
 
 ## Configuration and sensitive files
 

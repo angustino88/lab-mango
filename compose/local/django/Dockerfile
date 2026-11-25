@@ -16,8 +16,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Optional corporate CA certificates: any ssl_certifactes/*.crt in the build context is trusted.
-# Missing certificates do not fail the build (developers outside the corporate network).
+# Optional extra CA certificates: every ssl_certifactes/*.crt in the build context is trusted.
+# None present: the build still succeeds.
 RUN --mount=type=bind,source=.,target=/ctx \
     (cp /ctx/ssl_certifactes/*.crt /usr/local/share/ca-certificates/ 2>/dev/null || true) \
     && update-ca-certificates

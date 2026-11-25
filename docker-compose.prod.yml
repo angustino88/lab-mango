@@ -1,13 +1,23 @@
-# Production stack. Copy the .envs/.production/*.example files to .envs/.production/.django and
-# .envs/.production/.postgres (or decrypt them with scripts/sops) before running:
-#   docker compose -f docker-compose.prod.yml up -d --build
-# Services use host networking: Django listens on UVICORN_PORT (default 9001), Redis on 127.0.0.1:6380.
-# nginx (TLS on 8443, redirect on 8081) is for hosts where the backend runs without the router in front.
-# The postgres service is optional (profile "postgres"); by default DATABASE_URL points at an external database.
+# Production stack for ONE backend. Several backends can run side by side on the same host.
+# Deploy with the helper, which decrypts the backend's SOPS files and sets the project name:
+#   scripts/deploy/backend.sh deploy <backend>
+# Per-backend configuration lives in .envs/.production/<backend>/:
+#   backend.env   non-secret topology (ports, profiles, image); committed in plaintext
+#   .django.enc   SOPS-encrypted Django settings; decrypted to .django on the server
+#   .postgres.enc SOPS-encrypted database settings; decrypted to .postgres on the server
+# Profiles (COMPOSE_PROFILES in backend.env): "nginx" when the backend runs without the router,
+# "postgres" to run the database in a container instead of an external one.
+
+x-backend-env: &backend-env
+  # Topology values come from backend.env so ports and identity always match the compose setup.
+  BACKEND_ID: ${BACKEND_ID:-${BACKEND_NAME}}
+  UVICORN_PORT: ${UVICORN_PORT}
+  CELERY_BROKER_URL: redis://127.0.0.1:${REDIS_PORT}/0
+  REDIS_URL: redis://127.0.0.1:${REDIS_PORT}/1
 
 volumes:
-  labmango_production_postgres_data: {}
-  labmango_production_postgres_data_backups: {}
+  postgres_data: {}
+  postgres_data_backups: {}
 
 services:
   django: &django
@@ -16,56 +26,60 @@ services:
     build:
       context: .
       dockerfile: ./compose/production/django/Dockerfile
-    image: labmango_production_django
-    container_name: labmango_backend_django
+    image: labmango-backend:${BACKEND_NAME:?run through scripts/deploy/backend.sh or set BACKEND_NAME}
+    container_name: labmango-${BACKEND_NAME}-django
     depends_on:
       - redis
     volumes:
-      - ./staticfiles:/app/staticfiles
+      - ./staticfiles/${BACKEND_NAME}:/app/staticfiles
     env_file:
-      - ./.envs/.production/.django
-      - ./.envs/.production/.postgres
+      - ./.envs/.production/${BACKEND_NAME}/.django
+      - ./.envs/.production/${BACKEND_NAME}/.postgres
+    environment: *backend-env
     network_mode: host
     command: /start
 
   nginx:
+    profiles: ["nginx"]
     image: nginx:1.27.3
-    container_name: labmango_backend_nginx
+    container_name: labmango-${BACKEND_NAME}-nginx
     restart: unless-stopped
     network_mode: host
+    environment:
+      UVICORN_PORT: ${UVICORN_PORT}
+      NGINX_HTTP_PORT: ${NGINX_HTTP_PORT:-8081}
+      NGINX_HTTPS_PORT: ${NGINX_HTTPS_PORT:-8443}
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./ssl_certifactes:/etc/nginx/ssl:ro
-      - ./staticfiles:/static:ro
+      # The nginx image renders templates/*.template into conf.d with these variables.
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ${SSL_DIR:-./ssl_certifactes}:/etc/nginx/ssl:ro
+      - ./staticfiles/${BACKEND_NAME}:/static:ro
     depends_on:
       - django
 
   redis:
     image: redis:7-alpine
-    container_name: labmango_backend_redis
+    container_name: labmango-${BACKEND_NAME}-redis
     restart: unless-stopped
     ports:
-      - "127.0.0.1:6380:6379"
+      - "127.0.0.1:${REDIS_PORT}:6379"
 
   postgres:
     profiles: ["postgres"]
-    build:
-      context: .
-      dockerfile: ./compose/production/postgres/Dockerfile
-    image: labmango_production_postgres
-    container_name: labmango_backend_postgres
+    image: ${POSTGRES_IMAGE:-postgres:15.3-alpine}
+    container_name: labmango-${BACKEND_NAME}-postgres
     restart: unless-stopped
     volumes:
-      - labmango_production_postgres_data:/var/lib/postgresql/data
-      - labmango_production_postgres_data_backups:/backups
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_backups:/backups
     env_file:
-      - ./.envs/.production/.postgres
+      - ./.envs/.production/${BACKEND_NAME}/.postgres
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
 
   celeryworker:
     <<: *django
-    container_name: labmango_backend_celeryworker
+    container_name: labmango-${BACKEND_NAME}-celeryworker
     depends_on:
       - redis
     network_mode: host
@@ -74,7 +88,7 @@ services:
 
   celerybeat:
     <<: *django
-    container_name: labmango_backend_celerybeat
+    container_name: labmango-${BACKEND_NAME}-celerybeat
     depends_on:
       - redis
     network_mode: host

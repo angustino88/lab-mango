@@ -1,7 +1,7 @@
-# Production database. Copy to .envs/.production/.postgres and replace every replace-with-* value.
-# DATABASE_URL is read by Django and by compose/production/django/entrypoint.
-# Point it at the external database, or at 127.0.0.1:5432 when running the optional
-# postgres service (docker compose -f docker-compose.prod.yml --profile postgres up -d).
+# Template for one backend's database secrets (copied to .envs/.production/<backend>/.postgres by
+# scripts/deploy/backend.sh init). DATABASE_URL is read by Django and by the entrypoint.
+# Point it at the external database, or, with the "postgres" profile in backend.env, at
+# 127.0.0.1:<POSTGRES_PORT from backend.env>. POSTGRES_* initialise that container on first start.
 POSTGRES_HOST=127.0.0.1
 POSTGRES_PORT=5432
 POSTGRES_DB=labmango

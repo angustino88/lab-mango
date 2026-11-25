@@ -4,7 +4,7 @@ Place deployment certificates here on the host. Everything except this README is
 
 | File | Used by |
 |---|---|
-| `RB_IssuingCA_RSA_G21.crt`, `RB_RootCA_RSA_G01.crt` | Required by `compose/production/django/Dockerfile` (trusted CA bundle). Optional for the local image. |
-| `server.crt`, `server.key` | nginx TLS on port 8443 (`nginx/conf.d/default.conf`), mounted read-only at `/etc/nginx/ssl`. |
+| `server.crt`, `server.key` | nginx TLS (`nginx/templates/default.conf.template`), mounted read-only at `/etc/nginx/ssl`. Override the folder per backend with `SSL_DIR` in its `backend.env`. |
+| any other `*.crt` | Optional extra CA certificates trusted by the Django images (for example a company proxy or internal API CA). |
 
-`.dockerignore` keeps `server.crt`/`server.key` out of the Django image build context.
+`.dockerignore` keeps `server.crt` and `server.key` out of the Django image build context.

@@ -53,14 +53,11 @@ RUN apt-get update && \
         ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# Bosch CA certificates
-COPY ./ssl_certifactes/RB_IssuingCA_RSA_G21.crt \
-    /usr/local/share/ca-certificates/RB_IssuingCA_RSA_G21.crt
-
-COPY ./ssl_certifactes/RB_RootCA_RSA_G01.crt \
-    /usr/local/share/ca-certificates/RB_RootCA_RSA_G01.crt
-
-RUN update-ca-certificates
+# Optional extra CA certificates: every ssl_certifactes/*.crt in the build context is trusted
+# (.dockerignore keeps the nginx server certificate and key out). None present: build still succeeds.
+RUN --mount=type=bind,source=.,target=/ctx \
+    (cp /ctx/ssl_certifactes/*.crt /usr/local/share/ca-certificates/ 2>/dev/null || true) \
+    && update-ca-certificates
 
 # Copy venv from build stage
 COPY --from=build-stage /app/.venv /app/.venv
