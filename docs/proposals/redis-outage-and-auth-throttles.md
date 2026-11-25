@@ -35,9 +35,11 @@ against signed tokens. The real risks are:
 |---|---|---|
 | Cache circuit | After one outage error, fail-open readers skip Redis for `API_CACHE_CIRCUIT_OPEN_SECONDS` (default 10 s, per process). Writes and invalidation bumps always try. Only Redis/timeout errors trip it. | `core/common/cache.py` |
 | Default throttles | `FailOpenAnonRateThrottle` / `FailOpenUserRateThrottle`: same sliding-log semantics and rates. On a cache outage they allow the request, log, and trip the circuit. | `core/common/api/throttling.py`, `config/settings/base.py` |
-| Error mapping | Any cache outage error that reaches a view is `503 service_unavailable` + `Retry-After: 30`, not 500. | `core/common/api/exceptions.py`, `core/users/features/auth/api.py` |
-| Atomic auth throttle | `AtomicRateThrottle`: fixed window with cache `add` + `incr` (atomic in Redis via django-redis Lua, and in LocMem). Fails closed. | `core/common/api/throttling.py` |
+| Error mapping | Any cache outage error that reaches a view is `503 service_unavailable` + `Retry-After: 30`, not 500. Other unhandled errors are now logged before the 500 envelope. | `core/common/api/exceptions.py`, `core/users/features/auth/api.py` |
+| Atomic auth throttle | `AtomicRateThrottle`: fixed window with cache `add` + `incr` (atomic in Redis via django-redis Lua, and in LocMem). Fails closed by default; subclasses with `local_fallback_on_outage = True` count in a process-local fixed window (`LocalWindowCounter`, bounded to 10 000 keys) while the cache is down. | `core/common/api/throttling.py` |
+| Auth outage policy | SSO sign-in (`SSOLoginIPThrottle`) and refresh (`RefreshUserThrottle`, `RefreshIPThrottle`) use the local fallback, so users can still sign in and refresh while Redis is down. Password login and OTP (non-SSO) still fail closed (503). | `core/users/features/auth/throttles.py`, `core/users/features/auth/refresh_token/api.py` |
 | Auth identities | aad-login: per IP `auth_sso_login` 10/min (same rate as before, own env variable). refresh: per **verified** user `auth_refresh` 30/min plus per-IP `auth_ip` 300/min. Password login (non-SSO): per username plus `auth_ip`. OTP (non-SSO): per caller. | `core/users/features/auth/throttles.py`, auth views |
+| Local dev cache | `LOCAL_USE_REDIS_CACHE=True` with Redis unreachable at startup warns and falls back to `LocMemCache` (local settings only; production unchanged). | `config/settings/local.py` |
 | Trusted client IP | Optional `DJANGO_NUM_PROXIES` → `REST_FRAMEWORK["NUM_PROXIES"]`. Unset keeps DRF's current behavior (no deploy change); setting it makes per-IP budgets spoof-proof. | `config/settings/base.py`, `.env.example` |
 
 Alternatives considered:
@@ -49,8 +51,9 @@ Alternatives considered:
 
 ## 3. Evidence: same tests before and after
 
-Tests: `core/common/tests/test_redis_outage_resilience.py` and
-`core/users/tests/features/auth/test_auth_throttle_integrity.py`. Both are database-free.
+Tests: `core/common/tests/test_redis_outage_resilience.py`,
+`core/users/tests/features/auth/test_auth_throttle_integrity.py` and
+`core/users/tests/features/auth/test_auth_throttle_outage_fallback.py`. All are database-free.
 
 | Test | Before (main) | After |
 |---|---|---|
@@ -61,7 +64,10 @@ Tests: `core/common/tests/test_redis_outage_resilience.py` and
 | 20 parallel logins against a 5/min limit | **20 of 20** reached the credential check | exactly 5 (15 × 429) |
 | aad-login with a new spoofed `X-Forwarded-For` each time, 2/min | `[401, 401, 401]` (never limited) | `[401, 401, 429]` **only with `NUM_PROXIES` configured**; unset behaves as before |
 | 6 colleagues refresh from one IP, 3/min | users 4–6 got 429 | none throttled |
-| Login during outage stays fail-closed (503, no credential check) | pass | pass |
+| Password login during outage stays fail-closed (503, no credential check) | pass | pass |
+| aad-login while Redis is down | 500 (503 with the earlier fail-closed throttle) | reaches the Entra check (401 with a synthetic token) |
+| aad-login while Redis is down, 2/min, 3 requests | `[500, 500, 500]` | `[401, 401, 429]` (per worker) |
+| One user refreshing 4× at 3/min while Redis is down; another user once | all 500 | `[401, 401, 401, 429]`; other user 401 |
 | One user refreshing 4× at 3/min still gets 429 | pass | pass |
 
 ## 4. Deployment and residual risks
@@ -76,11 +82,17 @@ Tests: `core/common/tests/test_redis_outage_resilience.py` and
   still be shared by an office behind one address; raise it from access logs if needed. Refresh moves from per IP to per user plus a per-IP backstop.
   Cache outages return 503 instead of 500.
 - **Fail-open window:** while Redis is down, general API throttling is off (only per-worker semaphores bound
-  load). Auth throttles still fail closed, so SSO sign-in and token refresh return 503 during an outage.
-  This is the existing owner decision, kept as is.
+  load).
+- **Auth during an outage (owner decision changed):** the frontend calls `/api/aad-login` on every page load,
+  so failing closed would lock out everyone who reloads while Redis is down. SSO sign-in and refresh now
+  count in a process-local window instead. Each worker counts on its own, so with `N` workers a client can
+  reach up to `N` times the rate, and the atomic burst guarantee holds only per worker. Guessing is not a
+  risk on these paths (aad-login needs an Entra-signed ID token, refresh a refresh token signed by this
+  service). Password login and OTP keep failing closed.
 - Fixed windows can admit up to twice the rate across a window boundary.
 - Not changed here: Celery and WebSocket pub/sub still depend on Redis. Direct `cache.*` users (agent nonce,
   import progress, routing selectors, WS task ownership) still fail closed; behind views that use the shared
   exception handler they now return 503 (not verified for each view).
-- Not run locally: the database-backed suites, including `test_auth_throttling.py` and
-  `test_entra_security.py::test_entra_login_is_throttled`. Both were updated for the new classes.
+- Database-backed suites `core/users/tests` and `core/common/tests` (including `test_auth_throttling.py` and
+  `test_entra_security.py::test_entra_login_is_throttled`) pass against a local PostgreSQL. Not run: a real
+  Redis outage with several workers; the per-worker multiplier is reasoned, not measured.
